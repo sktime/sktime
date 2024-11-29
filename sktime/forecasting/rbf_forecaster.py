@@ -10,7 +10,194 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.transformations.series.basisfunction import RBFTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("torch", severity="warning")
+if _check_soft_dependencies("torch", severity="warning"):
+    import torch
+    import torch.nn as nn
+
+else:
+    class nn:
+        """dummy class"""
+
+
+class LazyLinear(nn.Module):
+    r"""A lazy linear layer initialized based on the input dims.
+
+    This layer is useful when the input size is dynamic or unknown at the
+    initialization stage, enabling flexible architecture design.
+
+    Parameters
+    ----------
+    out_features : int
+        Number of output features for the linear layer.
+    """
+
+    def __init__(self, out_features):
+        super().__init__()
+        self.out_features = out_features
+        self.linear = None
+
+    def forward(self, x):
+        """Initialize and apply the linear layer if not already initialized.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor to be passed through the linear layer.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor after linear transformation.
+        """
+        if self.linear is None:
+            self.linear = nn.Linear(x.shape[-1], self.out_features).to(x.device)
+        return self.linear(x)
+
+
+
+class RBFLayer(nn.Module):
+    r"""RBF layer to transform input data into a new feature space.
+
+    This layer applies an RBF transformation to each input feature,
+    expanding the feature space based on distances to predefined center points.
+
+    Parameters
+    ----------
+    in_features : int
+        Number of input features.
+    out_features : int
+        Number of output features (or RBF centers).
+    centers : array-like, optional (default=None)
+        The centers :math:`c_k` for the RBF transformation.
+        If None, centers are evenly spaced.
+    gamma : float, optional (default=1.0)
+        Parameter controlling the spread of the RBF.
+    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
+                optional (default="gaussian")
+        The type of RBF kernel to apply.
+    """
+
+    def __init__(
+            self,
+            in_features,
+            out_features,
+            centers=None,
+            gamma=1.0,
+            rbf_type="gaussian",
+    ):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+
+        if centers is None:
+            centers = torch.linspace(-1, 1, out_features).reshape(-1, 1)
+            centers = centers.repeat(1, in_features).numpy()
+
+        self.rbf_transformer = RBFTransformer(
+            centers=centers,
+            gamma=gamma,
+            rbf_type=rbf_type,
+            apply_to="values",
+            use_torch=True,
+        )
+
+    def forward(self, x):
+        """Apply the RBF transformation to the input data.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input data tensor.
+
+        Returns
+        -------
+        torch.Tensor
+            Transformed tensor with RBF features.
+        """
+        if len(x.shape) == 1:
+            x = x.unsqueeze(0)
+
+        x_np = x.detach().cpu().numpy()
+        self.rbf_transformer.fit(x_np)
+
+        x_rbf = self.rbf_transformer.transform(x_np)
+
+        x_rbf = torch.from_numpy(x_rbf).float().to(x.device)
+        return x_rbf
+
+
+
+class RBFNetwork(nn.Module):
+    r"""Neural network with an RBF layer followed by fully connected layers.
+
+    This model is designed to use RBF-transformed features as input for a series
+    of linear transformations, enabling effective learning from non-linear
+    representations.
+
+    Parameters
+    ----------
+    input_size : int
+        Number of input features.
+    hidden_size : int
+        Number of units in the RBF layer.
+    output_size : int
+        Number of output features for the network.
+    centers : array-like, optional (default=None)
+        Center points for the RBF layer.
+    gamma : float, optional (default=1.0)
+        Scaling factor controlling the spread of the RBF layer.
+    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
+                optional (default="gaussian")
+        Type of RBF kernel to apply.
+    linear_layers : list of int, optional (default=[64, 32])
+        Sizes of linear layers following the RBF layer.
+    """
+
+    def __init__(
+            self,
+            input_size,
+            hidden_size,
+            output_size,
+            centers=None,
+            gamma=1.0,
+            rbf_type="gaussian",
+            linear_layers=[64, 32],
+    ):
+        super().__init__()
+
+        self.rbf_layer = RBFLayer(
+            in_features=input_size,
+            out_features=hidden_size,
+            centers=centers,
+            gamma=gamma,
+            rbf_type=rbf_type,
+        )
+
+        layers = []
+
+        for linear_size in linear_layers:
+            layers.extend([LazyLinear(linear_size), nn.ReLU(), nn.Dropout(0.1)])
+
+        layers.append(LazyLinear(output_size))
+
+        self.sequential_layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        """Pass input data through the RBF and sequential layers.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input data tensor.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor after passing through RBF and linear layers.
+        """
+        x = self.rbf_layer(x)
+        x = self.sequential_layers(x)
+        return x
 
 
 class RBFForecaster(BaseDeepNetworkPyTorch):
@@ -122,7 +309,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         self.use_cuda = use_cuda
 
-        import torch
+        if self._check_torch_availability():
+            import torch
 
         self._cuda_available = torch.cuda.is_available()
         self._use_cuda_actual = self.use_cuda and self._cuda_available
@@ -139,13 +327,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "Please install torch to use this forecaster. "
                 "Instructions can be found at https://pytorch.org/get-started/locally/"
             )
+        return True
+
 
     def build_network(self, input_size):
         """Build the RBF network architecture."""
-        LazyLinear = self._create_lazy_linear()
-        RBFLayer = self._create_rbf_layer()
-
-        RBFNetwork = self._create_rbf_network(LazyLinear, RBFLayer)
         output_size = 1
 
         self.model = RBFNetwork(
@@ -243,200 +429,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
 
-    def _create_lazy_linear(self):
-        """Dynamically create LazyLinear class with torch import."""
-        import torch.nn as nn
-
-        class LazyLinear(nn.Module):
-            r"""A lazy linear layer initialized based on the input dims.
-
-            This layer is useful when the input size is dynamic or unknown at the
-            initialization stage, enabling flexible architecture design.
-
-            Parameters
-            ----------
-            out_features : int
-                Number of output features for the linear layer.
-            """
-
-            def __init__(self, out_features):
-                super().__init__()
-                self.out_features = out_features
-                self.linear = None
-
-            def forward(self, x):
-                """Initialize and apply the linear layer if not already initialized.
-
-                Parameters
-                ----------
-                x : torch.Tensor
-                    Input tensor to be passed through the linear layer.
-
-                Returns
-                -------
-                torch.Tensor
-                    Output tensor after linear transformation.
-                """
-                if self.linear is None:
-                    self.linear = nn.Linear(x.shape[-1], self.out_features).to(x.device)
-                return self.linear(x)
-
-        return LazyLinear
-
-    def _create_rbf_layer(self):
-        """Dynamically create RBFLayer class with torch import."""
-        import torch
-        import torch.nn as nn
-
-        class RBFLayer(nn.Module):
-            r"""RBF layer to transform input data into a new feature space.
-
-            This layer applies an RBF transformation to each input feature,
-            expanding the feature space based on distances to predefined center points.
-
-            Parameters
-            ----------
-            in_features : int
-                Number of input features.
-            out_features : int
-                Number of output features (or RBF centers).
-            centers : array-like, optional (default=None)
-                The centers :math:`c_k` for the RBF transformation.
-                If None, centers are evenly spaced.
-            gamma : float, optional (default=1.0)
-                Parameter controlling the spread of the RBF.
-            rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
-                        optional (default="gaussian")
-                The type of RBF kernel to apply.
-            """
-
-            def __init__(
-                self,
-                in_features,
-                out_features,
-                centers=None,
-                gamma=1.0,
-                rbf_type="gaussian",
-            ):
-                super().__init__()
-                self.in_features = in_features
-                self.out_features = out_features
-
-                if centers is None:
-                    centers = torch.linspace(-1, 1, out_features).reshape(-1, 1)
-                    centers = centers.repeat(1, in_features).numpy()
-
-                self.rbf_transformer = RBFTransformer(
-                    centers=centers,
-                    gamma=gamma,
-                    rbf_type=rbf_type,
-                    apply_to="values",
-                    use_torch=True,
-                )
-
-            def forward(self, x):
-                """Apply the RBF transformation to the input data.
-
-                Parameters
-                ----------
-                x : torch.Tensor
-                    Input data tensor.
-
-                Returns
-                -------
-                torch.Tensor
-                    Transformed tensor with RBF features.
-                """
-                if len(x.shape) == 1:
-                    x = x.unsqueeze(0)
-
-                x_np = x.detach().cpu().numpy()
-                self.rbf_transformer.fit(x_np)
-
-                x_rbf = self.rbf_transformer.transform(x_np)
-
-                x_rbf = torch.from_numpy(x_rbf).float().to(x.device)
-                return x_rbf
-
-        return RBFLayer
-
-    def _create_rbf_network(self, LazyLinear, RBFLayer):
-        """Dynamically create RBFNetwork class with torch import."""
-        import torch.nn as nn
-
-        class RBFNetwork(nn.Module):
-            r"""Neural network with an RBF layer followed by fully connected layers.
-
-            This model is designed to use RBF-transformed features as input for a series
-            of linear transformations, enabling effective learning from non-linear
-            representations.
-
-            Parameters
-            ----------
-            input_size : int
-                Number of input features.
-            hidden_size : int
-                Number of units in the RBF layer.
-            output_size : int
-                Number of output features for the network.
-            centers : array-like, optional (default=None)
-                Center points for the RBF layer.
-            gamma : float, optional (default=1.0)
-                Scaling factor controlling the spread of the RBF layer.
-            rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
-                        optional (default="gaussian")
-                Type of RBF kernel to apply.
-            linear_layers : list of int, optional (default=[64, 32])
-                Sizes of linear layers following the RBF layer.
-            """
-
-            def __init__(
-                self,
-                input_size,
-                hidden_size,
-                output_size,
-                centers=None,
-                gamma=1.0,
-                rbf_type="gaussian",
-                linear_layers=[64, 32],
-            ):
-                super().__init__()
-
-                self.rbf_layer = RBFLayer(
-                    in_features=input_size,
-                    out_features=hidden_size,
-                    centers=centers,
-                    gamma=gamma,
-                    rbf_type=rbf_type,
-                )
-
-                layers = []
-
-                for linear_size in linear_layers:
-                    layers.extend([LazyLinear(linear_size), nn.ReLU(), nn.Dropout(0.1)])
-
-                layers.append(LazyLinear(output_size))
-
-                self.sequential_layers = nn.Sequential(*layers)
-
-            def forward(self, x):
-                """Pass input data through the RBF and sequential layers.
-
-                Parameters
-                ----------
-                x : torch.Tensor
-                    Input data tensor.
-
-                Returns
-                -------
-                torch.Tensor
-                    Output tensor after passing through RBF and linear layers.
-                """
-                x = self.rbf_layer(x)
-                x = self.sequential_layers(x)
-                return x
-
-        return RBFNetwork
 
     def plot_predictions(self, y_train, y_test, y_pred):
         """Plot the training data, actual values, and predictions."""
