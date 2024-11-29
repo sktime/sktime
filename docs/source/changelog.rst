@@ -16,6 +16,9 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.34.1 - 2024-11-29
+---------------------------
+
 
 Version 0.34.0 - 2024-10-19
 ---------------------------
