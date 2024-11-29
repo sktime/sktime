@@ -15,8 +15,9 @@ if _check_soft_dependencies("torch", severity="warning"):
     import torch.nn as nn
 
 else:
+
     class nn:
-        """dummy class"""
+        """dummy class."""
 
 
 class LazyLinear(nn.Module):
@@ -54,7 +55,6 @@ class LazyLinear(nn.Module):
         return self.linear(x)
 
 
-
 class RBFLayer(nn.Module):
     r"""RBF layer to transform input data into a new feature space.
 
@@ -78,12 +78,12 @@ class RBFLayer(nn.Module):
     """
 
     def __init__(
-            self,
-            in_features,
-            out_features,
-            centers=None,
-            gamma=1.0,
-            rbf_type="gaussian",
+        self,
+        in_features,
+        out_features,
+        centers=None,
+        gamma=1.0,
+        rbf_type="gaussian",
     ):
         super().__init__()
         self.in_features = in_features
@@ -126,7 +126,6 @@ class RBFLayer(nn.Module):
         return x_rbf
 
 
-
 class RBFNetwork(nn.Module):
     r"""Neural network with an RBF layer followed by fully connected layers.
 
@@ -154,14 +153,14 @@ class RBFNetwork(nn.Module):
     """
 
     def __init__(
-            self,
-            input_size,
-            hidden_size,
-            output_size,
-            centers=None,
-            gamma=1.0,
-            rbf_type="gaussian",
-            linear_layers=[64, 32],
+        self,
+        input_size,
+        hidden_size,
+        output_size,
+        centers=None,
+        gamma=1.0,
+        rbf_type="gaussian",
+        linear_layers=[64, 32],
     ):
         super().__init__()
 
@@ -329,7 +328,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             )
         return True
 
-
     def build_network(self, input_size):
         """Build the RBF network architecture."""
         output_size = 1
@@ -428,7 +426,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 current_window[-1] = pred_scaled.ravel()[0]
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
-
 
     def plot_predictions(self, y_train, y_test, y_pred):
         """Plot the training data, actual values, and predictions."""
