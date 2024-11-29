@@ -25,11 +25,11 @@ def get_test_class_registry():
         TestAllEarlyClassifiers,
     )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+    from sktime.detection.tests.test_all_detectors import TestAllDetectors
     from sktime.dists_kernels.tests.test_all_dist_kernels import (
         TestAllPairwiseTransformers,
         TestAllPanelTransformers,
     )
-    from sktime.detection.tests.test_all_detectors import TestAllDetectors
     from sktime.forecasting.tests.test_all_forecasters import (
         TestAllForecasters,
         TestAllGlobalForecasters,
