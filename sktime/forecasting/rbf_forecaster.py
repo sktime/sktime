@@ -17,7 +17,13 @@ if _check_soft_dependencies("torch", severity="warning"):
 else:
 
     class nn:
-        """dummy class."""
+        """dummy class if torch is not available."""
+
+        class Module:
+            """dummy class if torch is not available."""
+
+            def __init__(self, *args, **kwargs):
+                raise ImportError("torch is not available. Please install torch first.")
 
 
 class LazyLinear(nn.Module):
