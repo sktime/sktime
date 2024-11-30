@@ -224,6 +224,7 @@ class SubLOF(BaseDetector):
         """
         if isinstance(X, pd.Series):
             X = X.to_frame()
+        X["__id"] = pd.RangeIndex(len(X))
 
         y_all = []
         for interval, model in self.models.items():
@@ -232,8 +233,8 @@ class SubLOF(BaseDetector):
             if len(X_subset) == 0:
                 continue
 
-            y_subset = model.predict(X_subset)
-            anomaly_indexes = np.where(y_subset == -1)[0]
+            y_subset = model.predict(X_subset.iloc[:, [0]])
+            anomaly_indexes = np.where(y_subset == -1)[0] + X_subset["__id"].iloc[0]
             y_all.append(pd.Series(anomaly_indexes))
 
         if len(y_all) == 0:
