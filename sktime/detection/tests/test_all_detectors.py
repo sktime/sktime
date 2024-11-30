@@ -10,6 +10,28 @@ from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils.validation.detection import check_learning_type, check_task
 
+INTEGER_DTYPES = np.array(
+    [
+        "int",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+    ]
+)
+
 
 class DetectorFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for time series detector (outlier, change point, etc) tests.
@@ -47,6 +69,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
     def test_output_type(self, estimator_instance):
         """Test detector output type."""
         estimator = estimator_instance
+        task = estimator_instance.get_tag("task")
 
         X_train = make_detection_problem(
             n_timepoints=50, estimator_type=estimator.get_tag("distribution_type")
@@ -55,8 +78,15 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         X_test = make_detection_problem(
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
-        y_test = estimator.predict(X_test)
-        assert isinstance(y_test, pd.Series)
+        y_pred = estimator.predict(X_test)
+        assert isinstance(y_pred, pd.Series)
+        assert isinstance(y_pred.index, pd.RangeIndex)
+
+        if task in ["anomaly_detection", "change_point_detection"]:
+            assert y_pred.dtype in INTEGER_DTYPES
+        elif task in ["segmentation"]:
+            assert y_pred.dtype == "interval"
+            assert y_pred.dtype.subtype in INTEGER_DTYPES
 
     def test_transform_output_type(self, estimator_instance):
         """Test output type for the transform method."""
