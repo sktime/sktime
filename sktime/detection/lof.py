@@ -227,8 +227,6 @@ class SubLOF(BaseDetector):
 
         y_all = []
         for interval, model in self.models.items():
-            print(X.index)
-            print(interval)
             X_subset = X.loc[(X.index >= interval.left) & (X.index < interval.right)]
 
             if len(X_subset) == 0:
