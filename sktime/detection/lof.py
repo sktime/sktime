@@ -5,6 +5,7 @@ __author__ = ["Alex-JG3"]
 import datetime
 import math
 
+import numpy as np
 import pandas as pd
 from sklearn.neighbors import LocalOutlierFactor
 
@@ -91,8 +92,6 @@ class SubLOF(BaseDetector):
         you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set; and note that the
         results obtained this way may differ from the standard LOF results.
-
-        .. versionadded:: 0.20
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -193,9 +192,15 @@ class SubLOF(BaseDetector):
     @staticmethod
     def _split_into_intervals(x, interval_size):
         """Split the range of ``x`` into equally sized intervals."""
+        from sktime.utils.validation.series import is_integer_index
+
         x_max = x.max()
         x_min = x.min()
-        n_intervals = math.floor((x_max - x_min) / interval_size) + 1
+        x_span = x_max - x_min
+
+        if isinstance(interval_size, int) and not is_integer_index(x):
+            interval_size = x.freq * interval_size
+        n_intervals = math.floor(x_span / interval_size) + 1
 
         if x_max >= x_min + (n_intervals - 1) * interval_size:
             n_intervals += 1
@@ -214,7 +219,7 @@ class SubLOF(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series or an IntervalSeries
+        y_pred : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
         if isinstance(X, pd.Series):
@@ -222,72 +227,22 @@ class SubLOF(BaseDetector):
 
         y_all = []
         for interval, model in self.models.items():
+            print(X.index)
+            print(interval)
             X_subset = X.loc[(X.index >= interval.left) & (X.index < interval.right)]
 
             if len(X_subset) == 0:
                 continue
 
             y_subset = model.predict(X_subset)
-            anomaly_indexes = X_subset.index[y_subset == -1]
+            anomaly_indexes = np.where(y_subset == -1)[0]
             y_all.append(pd.Series(anomaly_indexes))
 
         if len(y_all) == 0:
-            return pd.Series()
+            return self._empty_sparse()
 
-        return pd.concat(y_all, ignore_index=True).reset_index(drop=True)
-
-    def fit_predict(self, X, Y=None):
-        """Fit to data, then predict it.
-
-        Fits model to X and Y with given annotation parameters
-        and returns the annotations made by the model.
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data to be transformed
-        Y : pd.Series or np.ndarray, optional (default=None)
-            Unused, defaults to none.
-
-        Returns
-        -------
-        self : pd.Series
-            Series containing the locations of the anomalies in X.
-        """
-        model_params = {
-            "n_neighbors": self.n_neighbors,
-            "algorithm": self.algorithm,
-            "leaf_size": self.leaf_size,
-            "metric": self.metric,
-            "p": self.p,
-            "metric_params": self.metric_params,
-            "contamination": self.contamination,
-            "novelty": self.novelty,
-            "n_jobs": self.n_jobs,
-        }
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
-
-        intervals = self._split_into_intervals(X.index, self.window_size)
-        self.models = {
-            interval: LocalOutlierFactor(**model_params) for interval in intervals
-        }
-
-        y_all = []
-        for interval, model in self.models.items():
-            X_subset = X.loc[(X.index >= interval.left) & (X.index < interval.right)]
-
-            if len(X_subset) == 0:
-                continue
-
-            y_subset = model.fit_predict(X_subset)
-            anomaly_indexes = X_subset.index[y_subset == -1].tolist()
-            y_all += anomaly_indexes
-
-        if len(y_all) == 0:
-            return pd.Series()
-
-        return pd.Series(y_all)
+        y_pred = pd.concat(y_all, ignore_index=True).reset_index(drop=True)
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -303,9 +258,18 @@ class SubLOF(BaseDetector):
         -------
         params : dict or list of dict
         """
-        params = {
+        params0 = {
             "n_neighbors": 5,
             "window_size": datetime.timedelta(days=25),
             "novelty": True,
         }
-        return params
+        params1 = {
+            "n_neighbors": 3,
+            "window_size": 3,
+            "algorithm": "brute",
+            "leaf_size": 10,
+            "metric": "minkowski",
+            "novelty": True,
+            "p": 3,
+        }
+        return [params0, params1]
