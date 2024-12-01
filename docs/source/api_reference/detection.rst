@@ -166,14 +166,6 @@ Window-based Anomaly Detection
 
     SubLOF
 
-.. currentmodule:: sktime.detection.skchange.moving_window
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MovingWindow
-
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
