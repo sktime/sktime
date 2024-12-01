@@ -25,6 +25,31 @@ Composition
     DetectorPipeline
     DetectorAsTransformer
 
+Change Point Detection
+----------------------
+
+.. currentmodule:: sktime.detection.skchange_cp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingWindow
+    PELT
+    SeededBinarySegmentation
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularChangepoints
+    ZeroChangepoints
+
 Time Series Segmentation
 ------------------------
 
@@ -126,22 +151,6 @@ Naive Baselines
     :template: class.rst
 
     ZeroSegments
-
-Change Point Detection
-----------------------
-
-Naive Baselines
-^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.detection.dummy
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DummyRegularChangepoints
-    ZeroChangepoints
-
 
 Time Series Anomaly Detection
 -----------------------------
