@@ -3,6 +3,9 @@
 # documentation for PatchTST:
 # https://huggingface.co/docs/transformers/main/en/model_doc/patchtst#transformers.PatchTSTConfig
 
+import warnings
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -125,7 +128,24 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = HFPatchTSTForecaster() #initialize an full model
+    >>> forecaster = HFPatchTSTForecaster(
+    ... config = {
+    ...     "patch_length": 1,
+    ...      "context_length": 2,
+    ...      "patch_stride": 1,
+    ...      "d_model": 64,
+    ...      "num_attention_heads": 2,
+    ...      "ffn_dim": 32,
+    ...      "head_dropout": 0.3,
+    ...    },
+    ...    training_args = {
+    ...         "output_dir":"/PatchTST/",
+    ...         "overwrite_output_dir":True,
+    ...         "learning_rate":1e-4,
+    ...         "num_train_epochs":1,
+    ...         "per_device_train_batch_size":16,
+    ...    }
+    ... ) #initialize an full model
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
@@ -139,12 +159,20 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ... )
     >>> from sklearn.preprocessing import StandardScaler
     >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas")
-    >>> scaler = scaler.fit(dataset_path.values)
-    >>> df = scaler.transform(dataset_path)
+    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
+    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
+    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", fit_strategy = "zero-shot"
+    ...     model_path="namctin/patchtst_etth1_forecast",
+    ...     fit_strategy = "zero-shot",
+    ...     training_args = {
+    ...         "output_dir":"/PatchTST/",
+    ...         "overwrite_output_dir":True,
+    ...         "learning_rate":1e-4,
+    ...         "num_train_epochs":1,
+    ...         "per_device_train_batch_size":16,
+    ...     }
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -159,12 +187,20 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ... )
     >>> from sklearn.preprocessing import StandardScaler
     >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas")
-    >>> scaler = scaler.fit(dataset_path.values)
-    >>> df = scaler.transform(dataset_path)
+    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
+    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
+    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", fit_strategy = "minimal"
+    ...     model_path="namctin/patchtst_etth1_forecast",
+    ...     fit_strategy = "minimal",
+    ...     training_args = {
+    ...         "output_dir":"/PatchTST/",
+    ...         "overwrite_output_dir":True,
+    ...         "learning_rate":1e-4,
+    ...         "num_train_epochs":1,
+    ...         "per_device_train_batch_size":16,
+    ...     }
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = list(range(1,97))) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -201,18 +237,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         # model variables except for forecast_columns
         model_path=None,
         fit_strategy="full",
-        patch_length=2,
-        context_length=4,
-        patch_stride=2,
-        random_mask_ratio=0.4,
-        d_model=128,
-        num_attention_heads=16,
-        ffn_dim=256,
-        head_dropout=0.2,
-        # dataset and training config
-        batch_size=64,
-        learning_rate=1e-4,
-        epochs=10,
         validation_split=0.2,
         config=None,
         training_args=None,
@@ -221,38 +245,17 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ):
         self.model_path = model_path
         self.fit_strategy = fit_strategy
-        # model config parameters
-        self.patch_length = patch_length
-        self.context_length = context_length
-        self.patch_stride = patch_stride
-        self.random_mask_ratio = random_mask_ratio
-        self.d_model = d_model
-        self.num_attention_heads = num_attention_heads
-        self.ffn_dim = ffn_dim
-        self.head_dropout = head_dropout
-
         # dataset and training parameters
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.epochs = epochs
         self.validation_split = validation_split
         self.config = config
-        self._config = self.config if self.config else {}
         self.training_args = training_args
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+
+        self._config = deepcopy(self.config)
         super().__init__()
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
-
-        if not self._config:
-            self._config["patch_length"] = self.patch_length
-            self._config["patch_stride"] = self.patch_stride
-            self._config["random_mask_ratio"] = self.random_mask_ratio
-            self._config["d_model"] = self.d_model
-            self._config["num_attention_heads"] = self.num_attention_heads
-            self._config["ffn_dim"] = self.ffn_dim
-            self._config["head_dropout"] = self.head_dropout
 
     def _fit(self, y, fh, X=None):
         """Fits the model.
@@ -270,23 +273,31 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self : a reference to the object
         """
         self._y = y
-        self.fh_ = max(fh.to_relative(self.cutoff))
+        self.fh_ = int(max(fh.to_relative(self.cutoff)))
         self.y_columns = y.columns
         # if no model_path was given, initialize new full model from config
         if not self.model_path:
             self._config["num_input_channels"] = len(self.y_columns)
-            self._config["prediction_length"] = int(self.fh_)
-            if "context_length" not in self._config.keys():
-                context_length = self.context_length
+            if "prediction_length" in self._config.keys():
+                if self._config["prediction_length"] > self.fh_:
+                    warnings.warn(
+                        "Found prediction length inside config larger"
+                        "than passed fh, will use larger of the two"
+                    )
+                elif self._config["prediction_length"] <= self.fh_:
+                    warnings.warn(
+                        "Found fh length inside config larger"
+                        "than passed prediction_length, will use larger of the two"
+                    )
+                    self._config["prediction_length"] = int(self.fh_)
             else:
-                context_length = self._config["context_length"]
-                del self._config["context_length"]
-            context_length = int(context_length)
+                self._config["prediction_length"] = int(self.fh_)
+            context_length = self._config["context_length"]
+            del self._config["context_length"]
             config = PatchTSTConfig(
                 context_length=context_length,
                 **self._config,
             )
-
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
@@ -317,17 +328,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 eval_dataset = None
 
             # initialize training_args
-            if self.training_args:
-                training_args = TrainingArguments(**self.training_args)
-            else:
-                training_args = TrainingArguments(
-                    output_dir="/PatchTST/",
-                    overwrite_output_dir=True,
-                    learning_rate=self.learning_rate,
-                    num_train_epochs=self.epochs,
-                    per_device_train_batch_size=self.batch_size,
-                    label_names=["future_values"],
-                )
+            training_args = TrainingArguments(**self.training_args)
 
             # Create the early stopping callback
 
@@ -455,13 +456,22 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         """
         params_set = []
         params1 = {
-            "random_mask_ratio": 0.4,
-            "d_model": 64,
-            "num_attention_heads": 4,
-            "ffn_dim": 32,
-            "head_dropout": 0.2,
-            "batch_size": 16,
-            "epochs": 1,
+            "config": {
+                "patch_length": 2,
+                "context_length": 4,
+                "patch_stride": 2,
+                "d_model": 32,
+                "num_attention_heads": 1,
+                "ffn_dim": 16,
+                "head_dropout": 0.3,
+            },
+            "training_args": {
+                "output_dir": "/PatchTST/",
+                "overwrite_output_dir": True,
+                "learning_rate": 1e-4,
+                "num_train_epochs": 1,
+                "per_device_train_batch_size": 16,
+            },
             "validation_split": 0.0,
         }
         params_set.append(params1)
@@ -475,9 +485,14 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "ffn_dim": 32,
                 "head_dropout": 0.3,
             },
+            "training_args": {
+                "output_dir": "/PatchTST/",
+                "overwrite_output_dir": True,
+                "learning_rate": 1e-4,
+                "num_train_epochs": 1,
+                "per_device_train_batch_size": 16,
+            },
             "validation_split": 0.0,
-            "batch_size": 32,
-            "epochs": 1,
         }
         params_set.append(params2)
 
