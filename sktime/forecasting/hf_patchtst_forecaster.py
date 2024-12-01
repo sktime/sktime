@@ -78,30 +78,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         model with the argument `model_path` and ignore any passed `y`.
         Note that both "minimal" and "zero-shot" fit_strategy requires a mandatory
         passed in `model_path`.
-    patch_length : int, optional, default = 2
-        Length of each patch that will segment every univariate series.
-    context_length : int, optional, default = 4
-        Number of previous time steps used to forecast.
-    patch_stride : int, optional, default = 2
-        Length of the non-overlapping region between patches. If patch_stride
-        is less than patch_length, then there will be overlapping patches. If
-        patch_stride = patch_length, then there will be no overlapping patches.
-    random_mask_ratio : float, optional, default = 0.4
-        Masking ratio applied to mask the input data during random pretraining.
-    d_model : int, optional, default = 128
-        Dimension of the weight matrices in the transformer layers.
-    num_attention_heads : int, optional, default = 16
-        Number of attention heads for each attention layer in the transformer block
-    ffn_dim : int, optional, default = 256
-        Dimensionality of the feed forward layer in the transformer encoder.
-    head_dropout : float, optional, default = 0.2
-        Dropout probability for a head.
-    batch_size : int, optional, default = 64
-        Size of every batch during training. Reduce if you have reduced gpu power.
-    learning_rate : float, optional, default = 1e-4
-        Leaning rate that is used during training.
-    epochs : int, optional, default = 10
-        Number of epochs to use during training.
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
     config : dict, optional, default = {}
