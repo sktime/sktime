@@ -1531,8 +1531,8 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
-# Detectors
-# ---------
+# Detector tags
+# --------------
 
 
 class capability__update(_BaseTag):
@@ -1569,6 +1569,98 @@ class capability__update(_BaseTag):
         "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
         "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class task(_BaseTag):
+    """Subtype tag for detectors: type of detection task.
+
+    - String name: ``"task"``
+    - Public property tag
+    - Values: string, one of ``"change_point_detection"``,
+      ``"anomaly_detection"``, ``"segmentation"``
+    - Example: ``"anomaly_detection"``
+    - Default: ``"None"``
+
+    The ``task`` tag of an object indicates the category of the detection task.
+    This ensures compatibility with task-specific operations and return types.
+
+    The possible values are:
+
+    * ``"segmentation"``: Divides the time series into discrete chunks based on
+      certain criteria. The same label can be applied to multiple disconnected regions
+      of the time series.
+    * ``"change_point_detection"``: Identifies points where the statistical
+      properties of the time series change significantly.
+    * ``"anomaly_detection"``: Detects points that deviate significantly from
+      the normal statistical properties of the time series.
+    """
+
+    _tags = {
+        "tag_name": "task",
+        "parent_type": "detector",
+        "tag_type": (
+            "str",
+            ["change_point_detection", "anomaly_detection", "segmentation"],
+        ),
+        "short_descr": "what is the category of the detection task?",
+        "user_facing": True,
+    }
+
+
+class learning_type(_BaseTag):
+    """Learning type of the detection task.
+
+    - String name: ``"learning_type"``
+    - Public property tag
+    - Values: string, one of ``"supervised"``, ``"unsupervised"``, ``"semi_supervised"``
+    - Example: ``"unsupervised"``
+    - Default: ``"unsupervised"``
+
+    The tag specifies the type of learning the estimator employs for the detection task.
+
+    The possible values are:
+
+    * ``"supervised"``: The detector learns from labelled data.
+    * ``"unsupervised"``: The detector learns from unlabelled data.
+    * If ``semi_supervised``, the detector learns from a combination of labelled and
+      unlabelled data.
+    """
+
+    _tags = {
+        "tag_name": "learning_type",
+        "parent_type": "detector",
+        "tag_type": ("str", ["supervised", "unsupervised"]),
+        "short_descr": "What is the learning type used by the detector?",
+        "user_facing": True,
+    }
+
+
+class distribution_type(_BaseTag):
+    """Distribution of the data.
+
+    - String name: ``"distribution_type"``
+    - Public property tag
+    - Values: string, specifying the type of distribution
+    - Example: ``"Poisson"``
+    - Default: ``"None"``
+
+    This tag specifies the type of observation probability distribution that the
+    estimator operates on.
+
+    Possible values include, but are not limited to:
+
+    * ``"Poisson"``: Assumes the data follows a Poisson distribution
+    * ``"Gaussian"``: Assumes the data follows a Gaussian (normal) distribution
+    * Other distributions may be specified depending on the algorithm's design.
+    """
+
+    _tags = {
+        "tag_name": "distribution_type",
+        "parent_type": "detector",
+        "tag_type": "str",
+        "short_descr": "what data distribution type is assumed by the detector",
         "user_facing": True,
     }
 

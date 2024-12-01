@@ -1,1 +1,1 @@
-"""Time series annotation tests."""
+"""Tests for time series detectors."""
