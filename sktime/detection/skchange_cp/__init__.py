@@ -1,1 +1,1 @@
-"""Provides placeholders for skchange estimators in the sktime registry."""
+"""Placeholders for skchange change point detectors."""

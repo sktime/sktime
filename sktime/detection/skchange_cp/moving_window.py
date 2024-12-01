@@ -60,11 +60,18 @@ class MovingWindow(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["Tveten"],
+        "maintainers": ["Tveten"],
+        "python_dependencies": "skchange>=0.6.0",
+        # estimator type
+        # --------------
+        "task": "change_point_detection",
+        "learning_type": "unsupervised",
         "capability:missing_values": False,
         "capability:multivariate": True,
         "fit_is_empty": False,
-        "learning_type": "unsupervised",
-        "python_dependencies": "skchange>=0.6.0",
     }
 
     def __init__(
