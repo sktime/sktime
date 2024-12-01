@@ -88,4 +88,4 @@ class MovingWindow(BaseDetector):
         self.level = level
         self.min_detection_interval = min_detection_interval
 
-        super.__init__()
+        super().__init__()

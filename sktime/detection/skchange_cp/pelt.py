@@ -65,4 +65,5 @@ class PELT(BaseDetector):
         self.cost = cost
         self.penalty_scale = penalty_scale
         self.min_segment_length = min_segment_length
+
         super().__init__()

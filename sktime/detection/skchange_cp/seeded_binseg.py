@@ -97,4 +97,5 @@ class SeededBinarySegmentation(BaseDetector):
         self.min_segment_length = min_segment_length
         self.max_interval_length = max_interval_length
         self.growth_factor = growth_factor
+
         super().__init__()
