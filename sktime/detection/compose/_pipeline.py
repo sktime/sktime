@@ -369,7 +369,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
 
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.annotation.lof import SubLOF
+        from sktime.detection.lof import SubLOF
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
