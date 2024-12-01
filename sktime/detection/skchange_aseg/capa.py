@@ -80,6 +80,8 @@ class CAPA(BaseDetector):
         "python_dependencies": "skchange>=0.6.0",
         # estimator type
         # --------------
+        "task": "segmentation",
+        "learning_type": "unsupervised",
         "capability:missing_values": False,
         "capability:multivariate": True,
         "fit_is_empty": False,
