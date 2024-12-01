@@ -3193,12 +3193,41 @@
       ]
     },
     {
+      "login": "tajir0",
+      "name": "Jinrong Tang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36022362",
+      "profile": "https://github.com/tajir0",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
       "login": "mjste",
       "name": "Michał Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
       "profile": "https://github.com/mjste",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "alyssadsouza",
+      "name": "Alyssa D'Souza",
+      "avatar_url": "https://avatars.githubusercontent.com/alyssadsouza",
+      "profile": "https://github.com/alyssadsouza",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ShivamJ07",
+      "name": "Shivam Singal",
+      "avatar_url": "https://avatars.githubusercontent.com/ShivamJ07",
+      "profile": "https://github.com/ShivamJ07",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]
