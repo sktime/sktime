@@ -51,3 +51,7 @@ class StatThresholdAnomaliser(BaseDetector):
         self.stat_lower = stat_lower
         self.stat_upper = stat_upper
         super().__init__()
+
+    def get_test_params():
+        """Return dummy test params for the placeholder."""
+        return {"change_detector": None}
