@@ -735,17 +735,16 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
-
         # convert the numpy series to pandas series
         if isinstance(y_sparse, np.ndarray):
             y_sparse = pd.Series(y_sparse, index=pd.RangeIndex(len(y_sparse)))
 
         if isinstance(y_sparse.index, pd.IntervalIndex):
             # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
+            y_sparse = BaseDetector._sparse_segments_to_dense(y_sparse, index)
         else:
             # Anomaly/changepoint detection case
-            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
+            y_sparse = BaseDetector._sparse_points_to_dense(y_sparse, index)
         return y_sparse
 
     @staticmethod
@@ -964,7 +963,6 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
-
         # Check if y_sparse is a numpy array and convert to pandas Series
         if isinstance(y_sparse, np.ndarray):
             # Find maximum and minimum using numpy
