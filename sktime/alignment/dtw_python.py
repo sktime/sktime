@@ -44,6 +44,32 @@ class AlignerDTW(BaseAligner):
         open_end = whether alignment open ended at end (high index)
     variable_to_align : string, default = first variable in X[0] as passed to fit
         which variable to use for univariate alignment
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw import AlignerDTW
+    >>> X = [
+    >>>     pd.DataFrame({'col1': np.random.randn(100)}),
+    >>>     pd.DataFrame({'col1': np.random.randn(100)})
+    >>> ]
+    >>> aligner = AlignerDTW(dist_method='euclidean', step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    >>> alignment_df = aligner.get_alignment()
+
+    Advanced usage example with open-ended alignment:
+    >>> aligner_advanced = AlignerDTW(
+    >>>     dist_method='cityblock', window_type='sakoechiba', open_begin=True,
+    >>>     open_end=True
+    >>> )
+    >>> X_advanced = [
+    >>>     pd.DataFrame({'col1': np.random.randn(150)}),
+    >>>     pd.DataFrame({'col1': np.random.randn(150)})
+    >>> ]
+    >>> aligner_advanced.fit(X_advanced)
+    >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
 
     _tags = {
@@ -232,6 +258,34 @@ class AlignerDTWfromDist(BaseAligner):
         whether to perform open-ended alignments
         open_begin = whether alignment open ended at start (low index)
         open_end = whether alignment open ended at end (high index)
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw import AlignerDTWfromDist
+    >>> from sktime.dists_kernels import ScipyDist
+    >>> X = [
+    >>>     pd.DataFrame({'col1': np.random.randn(100)}),
+    >>>     pd.DataFrame({'col1': np.random.randn(100)})
+    >>> ]
+    >>> dist_trafo = ScipyDist()
+    >>> aligner = AlignerDTWfromDist(dist_trafo=dist_trafo, step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    >>> alignment_df = aligner.get_alignment()
+
+    Advanced usage example with custom distance transformation:
+    >>> dist_trafo_custom = ScipyDist('cityblock')
+    >>> aligner_custom = AlignerDTWfromDist(
+    >>>     dist_trafo=dist_trafo_custom, window_type='sakoechiba', open_begin=True
+    >>> )
+    >>> X_custom = [
+    >>>     pd.DataFrame({'col1': np.random.randn(200)}),
+    >>>     pd.DataFrame({'col1': np.random.randn(200)})
+    >>> ]
+    >>> aligner_custom.fit(X_custom)
+    >>> alignment_df_custom = aligner_custom.get_alignment()
     """
 
     _tags = {
