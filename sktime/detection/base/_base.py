@@ -215,6 +215,7 @@ class BaseDetector(BaseEstimator):
         y : pd.Series with RangeIndex
             Labels for sequence ``X``, in sparse format.
             Values are ``iloc`` references to indices of ``X``.
+            The index is always a ``RangeIndex``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.

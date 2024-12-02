@@ -1,4 +1,4 @@
-"""Tests for sktime annotators."""
+"""Tests for sktime detectors."""
 
 __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
@@ -6,12 +6,12 @@ __all__ = []
 import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.annotation import make_detection_problem
-from sktime.utils.validation.annotation import check_learning_type, check_task
+from sktime.utils._testing.detection import make_detection_problem
+from sktime.utils.validation.detection import check_learning_type, check_task
 
 
-class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
-    """Fixture generator for time series annotator (outlier, change point, etc) tests.
+class DetectorFixtureGenerator(BaseFixtureGenerator):
+    """Fixture generator for time series detector (outlier, change point, etc) tests.
 
     Fixtures parameterized
     ----------------------
@@ -24,9 +24,9 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllAnnotators
+    # note: this should be separate from TestAllDetectors
     #   additional fixtures, parameters, etc should be added here
-    #   TestAllAnnotators should contain the tests only
+    #   TestAllDetectors should contain the tests only
 
     estimator_type_filter = "detector"
 
@@ -40,11 +40,11 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
     ]
 
 
-class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
-    """Module level tests for all sktime annotators."""
+class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
+    """Module level tests for all sktime detectors."""
 
     def test_output_type(self, estimator_instance):
-        """Test annotator output type."""
+        """Test detector output type."""
         estimator = estimator_instance
 
         X_train = make_detection_problem(
@@ -101,7 +101,7 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
         assert isinstance(y_test.index.dtype, pd.IntervalDtype)
         assert pd.api.types.is_integer_dtype(y_test)
 
-    def test_annotator_tags(self, estimator_class):
+    def test_detector_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""
         check_task(estimator_class.get_class_tag("task"))
         check_learning_type(estimator_class.get_class_tag("learning_type"))
