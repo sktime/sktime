@@ -260,6 +260,9 @@ class BaseDetector(BaseEstimator):
 
         y = self._predict(X=X_inner)
 
+        # deal with legacy return format with intervals in index
+        y = self._coerce_intervals_to_values(y)
+
         return y
 
     def transform(self, X):
@@ -520,8 +523,30 @@ class BaseDetector(BaseEstimator):
         return y_dense
 
     def _coerce_to_df(self, y):
+        """Coerce output to a DataFrame.
+
+        Also deals with the following downwards cases:
+
+        * IntervalIndex containing segments -> DataFrame with "ilocs" column
+        """
+        if isinstance(y.index, pd.IntervalIndex):
+            if isinstance(y, pd.Series):
+                y = pd.DataFrame(y.index, columns=["ilocs"])
+            elif isinstance(y, pd.DataFrame):
+                y_index = y.index
+                y_index = pd.DataFrame(y_index, columns=["ilocs"])
+                y = y.reset_index(drop=True)
+                y = pd.concat([y_index, y], axis=1)
+
         if not isinstance(y, pd.DataFrame):
-            y = pd.DataFrame(y, columns=["ilocs"])
+            y = pd.DataFrame(y, columns=["ilocs"], dtype="int64")
+
+        return y
+
+    def _coerce_intervals_to_values(self, y):
+        if isinstance(y.index, pd.IntervalIndex):
+            if isinstance(y, pd.Series):
+                y = pd.Series(y.index)
         return y
 
     def _check_X(self, X):
@@ -701,11 +726,13 @@ class BaseDetector(BaseEstimator):
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
-            return self.change_points_to_segments(
-                self.predict_points(X), start=0, end=len(X)
-            )
+            y_pred_pts = self.predict_points(X)
+            y_pred = self.change_points_to_segments(y_pred_pts, start=0, end=len(X))
         elif task == "segmentation":
-            return self._predict_segments(X)
+            y_pred = self._predict_segments(X)
+
+        y_pred = self._coerce_to_df(y_pred)
+        return y_pred
 
     def predict_points(self, X):
         """Predict changepoints/anomalies on test/deployment data.
@@ -745,10 +772,13 @@ class BaseDetector(BaseEstimator):
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
-            return self._predict_points(X)
+            y_pred = self._predict_points(X)
         elif task == "segmentation":
-            segments = pd.DataFrame(self.predict_segments(X))
-            return self.segments_to_change_points(segments)
+            y_pred_seg = pd.DataFrame(self.predict_segments(X))
+            y_pred = self.segments_to_change_points(y_pred_seg)
+
+        y_pred = self._coerce_to_df(y_pred)
+        return y_pred
 
     def _predict_segments(self, X):
         """Predict segments on test/deployment data.
