@@ -387,9 +387,9 @@ class GreedyGaussianSegmentation(BaseDetector):
     max_shuffles: int, default=250
         Maximum number of shuffles
     verbose: bool, default=False
-        If True, verbose output is enabled.
+        If  ``True``, verbose output is enabled.
     random_state: int or np.random.RandomState, default=None
-        Either random seed or an instance of np.random.RandomState
+        Either random seed or an instance of ``np.random.RandomState``
 
     Attributes
     ----------
@@ -398,7 +398,16 @@ class GreedyGaussianSegmentation(BaseDetector):
 
     Notes
     -----
-    Based on the work from Hallac, D., Nystrup, P. & Boyd, S., 2019.
+    Based on the work from [1]_.
+    - source code adapted based on: https://github.com/cvxgrp/GGS
+    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
+    References
+    ----------
+    .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
+       "Greedy Gaussian segmentation of multivariate time series.",
+       Adv Data Anal Classif 13, 727-751 (2019).
+       https://doi.org/10.1007/s11634-018-0335-0
 
     """
 
@@ -450,9 +459,9 @@ class GreedyGaussianSegmentation(BaseDetector):
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
             1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series. If true,
-            the values of the time series are the values of the series. If pd.DataFrame,
-            each column represents a feature of the time series.
+            dimension and columns representing features of the time series.
+            If pd.Series, the values of the time series are the values of the series.
+            If pd.DataFrame, each column represents a feature of the time series.
         y: array_like, optional
             Placeholder for compatibility with sklearn-api, not used, default=None.
 

@@ -3,6 +3,7 @@
 __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
 
+import numpy as np
 import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
