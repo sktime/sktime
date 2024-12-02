@@ -1,4 +1,4 @@
-"""Pipeline for time series annotators."""
+"""Pipeline for time series detectors."""
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.detection.base import BaseDetector
@@ -10,15 +10,15 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
 
     Parameters
     ----------
-    steps : list of sktime transformers and annotation estimators, or
-        list of tuples (str, estimator) of ``sktime`` transformers or annotators.
+    steps : list of sktime transformers and detectors, or
+        list of tuples (str, estimator) of ``sktime`` transformers or detectors.
         The list must contain exactly one forecaster.
         These are "blueprint" transformers resp forecasters,
-        annotator/transformer states do not change when ``fit`` is called.
+        detector/transformer states do not change when ``fit`` is called.
 
     Attributes
     ----------
-    steps_ : list of tuples (str, estimator) of ``sktime`` transformers or annotators
+    steps_ : list of tuples (str, estimator) of ``sktime`` transformers or detectors
         clones of estimators in ``steps`` which are fitted in the pipeline
         is always in (str, estimator) format, even if ``steps`` is just a list
         strings not passed in ``steps`` are replaced by unique generated strings
@@ -29,7 +29,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.annotation.lof import SubLOF
+    >>> from sktime.detection.lof import SubLOF
     >>> from sktime.transformations.series.detrend import Detrender
     >>>
     >>> n = 100
@@ -113,7 +113,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
 
     @property
     def estimator_(self):
-        """Return reference to the annotator in the pipeline.
+        """Return reference to the detector in the pipeline.
 
         Valid after _fit.
         """
@@ -123,7 +123,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         """Get list of scityes (str) from names/estimator list."""
         return [scitype(x[1], raise_on_unknown=False) for x in estimators]
 
-    def _get_first_annotator_index(self, estimators):
+    def _get_first_detector_index(self, estimators):
         """Get the index of the first forecaster in the list."""
         sts = self._get_pipeline_scitypes(estimators)
         for i, s in enumerate(sts):
@@ -138,7 +138,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         ----------
         estimators : list of estimators, or list of (name, estimator) pairs
         allow_postproc : bool, optional, default=False
-            whether transformers after the annotator are allowed
+            whether transformers after the detector are allowed
 
         Returns
         -------
@@ -168,11 +168,11 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         # validate names
         self._check_names(names)
 
-        ann_ind = self._get_first_annotator_index(estimator_tuples)
+        ann_ind = self._get_first_detector_index(estimator_tuples)
 
         if not allow_postproc and ann_ind != len(estimators) - 1:
             TypeError(
-                f"in {self_name}, last estimator must be a time series annotator, "
+                f"in {self_name}, last estimator must be a time series detector, "
                 f"but found a transformer"
             )
 
@@ -243,7 +243,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         comp_dict = {name: comp for (name, comp) in fitted_estimator_tuples}
         return comp_dict
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -252,8 +252,8 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         ----------
         X : pd.DataFrame
             training data to fit model to, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+        y : pd.Series, optional
+            ground truth detections for training if detector is supervised
 
         Returns
         -------
@@ -278,13 +278,13 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
                 t = transformer.clone()
-                X = t.fit_transform(X=X, y=Y)
+                X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
-        # fit annotator
-        name, annotator = self.steps_[-1]
-        f = annotator.clone()
-        f.fit(X=X, Y=Y)
+        # fit detector
+        name, detector = self.steps_[-1]
+        f = detector.clone()
+        f.fit(X=X, y=y)
         self.steps_[-1] = (name, f)
 
         return self
@@ -355,7 +355,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------
