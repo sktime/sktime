@@ -58,7 +58,6 @@ class AlignerDTW(BaseAligner):
     >>> aligner = AlignerDTW(dist_method='euclidean', step_pattern='symmetric2')
     >>> aligner.fit(X)
     >>> alignment_df = aligner.get_alignment()
-    >>> print(alignment_df)
 
     Advanced usage example with open-ended alignment:
     >>> aligner_advanced = AlignerDTW(
@@ -71,8 +70,7 @@ class AlignerDTW(BaseAligner):
     >>> ]
     >>> aligner_advanced.fit(X_advanced)
     >>> alignment_df_advanced = aligner_advanced.get_alignment()
-    >>> print(alignment_df_advanced)
- """
+    """
 
     _tags = {
         # packaging info
@@ -276,7 +274,6 @@ class AlignerDTWfromDist(BaseAligner):
     >>> aligner = AlignerDTWfromDist(dist_trafo=dist_trafo, step_pattern='symmetric2')
     >>> aligner.fit(X)
     >>> alignment_df = aligner.get_alignment()
-    >>> print(alignment_df)
 
     Advanced usage example with custom distance transformation:
     >>> dist_trafo_custom = ScipyDist('cityblock')
@@ -289,10 +286,7 @@ class AlignerDTWfromDist(BaseAligner):
     >>> ]
     >>> aligner_custom.fit(X_custom)
     >>> alignment_df_custom = aligner_custom.get_alignment()
-    >>> print(alignment_df_custom)
-   """
-
-
+    """
 
     _tags = {
         # packaging info
