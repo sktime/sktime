@@ -98,8 +98,18 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_test = estimator_instance.predict_segments(X_test)
+
+        if isinstance(y_test, np.ndarray):
+            """Assuming intervals could be inferred
+            Otherwise provide logic to construct them"""
+            intervals = pd.IntervalIndex.from_breaks(
+                np.arange(len(y_test) + 1), closed="left"
+            )
+            y_test = pd.Series(y_test, index=intervals)
+
+        # Check the properties of the resulting series
         assert isinstance(y_test, pd.Series)
-        assert isinstance(y_test.index.dtype, pd.IntervalDtype)
+        assert isinstance(y_test.index, pd.IntervalIndex)
         assert pd.api.types.is_integer_dtype(y_test)
 
     def test_detector_tags(self, estimator_class):

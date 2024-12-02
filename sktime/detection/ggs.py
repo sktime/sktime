@@ -401,6 +401,7 @@ class GreedyGaussianSegmentation(BaseDetector):
     Based on the work from Hallac, D., Nystrup, P. & Boyd, S., 2019.
 
     """
+
     _tags = {
         "fit_is_empty": True,
         "task": "segmentation",
@@ -449,7 +450,7 @@ class GreedyGaussianSegmentation(BaseDetector):
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
             1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series. If pd.Series,
+            dimension and columns representing features of the time series. If true,
             the values of the time series are the values of the series. If pd.DataFrame,
             each column represents a feature of the time series.
         y: array_like, optional
@@ -475,7 +476,7 @@ class GreedyGaussianSegmentation(BaseDetector):
         Returns
         -------
         y_pred : array_like
-            1D array with predicted segmentation, where each segment is labeled by its index.
+            1D array of segment labels indexed by segment.
         """
         if isinstance(X, pd.Series):
             X = X.values[:, np.newaxis]
@@ -485,14 +486,16 @@ class GreedyGaussianSegmentation(BaseDetector):
             X = X[:, np.newaxis]
         elif len(X.shape) > 2:
             raise ValueError("X must not have more than two dimensions.")
-        
+
         # Initialize and find change points
         self._adaptee.initialize_intermediates()
         self.change_points_ = self._adaptee.find_change_points(X)
 
         # Assign labels based on detected change points
         labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(zip(self.change_points_[:-1], self.change_points_[1:])):
+        for i, (start, stop) in enumerate(
+            zip(self.change_points_[:-1], self.change_points_[1:])
+        ):
             labels[start:stop] = i
         return labels
 
@@ -508,7 +511,7 @@ class GreedyGaussianSegmentation(BaseDetector):
         Returns
         -------
         y_pred : array_like
-            1D array with predicted segmentation, where each segment is labeled by its index.
+            1D array of segment labels indexed by segment
         """
         return self.fit(X, None).predict(X)
 
@@ -525,4 +528,5 @@ class GreedyGaussianSegmentation(BaseDetector):
         -------
         params : dict or list of dict
         """
-        return {"k_max": 10, "lamb": 1.0}
+        if parameter_set == "default":
+            return cls(k_max=10, lamb=1.0)
