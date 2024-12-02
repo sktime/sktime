@@ -288,9 +288,10 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y = self.predict(X)
-        y_dense = self.sparse_to_dense(y, pd.RangeIndex(len(X)))
-        return pd.DataFrame(y_dense)
+        y_sparse = self.predict(X)
+        y_dense = self.sparse_to_dense(y_sparse, pd.RangeIndex(len(X)))
+        y_dense = self._coerce_to_df(y_dense)
+        return y_dense
 
     def transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
@@ -513,8 +514,15 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y = self.fit_predict(X, y=y, Y=Y)
-        return self.sparse_to_dense(y, index=X.index)
+        y_sparse = self.fit_predict(X, y=y, Y=Y)
+        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+        y_dense = self._coerce_to_df(y_dense)
+        return y_dense
+
+    def _coerce_to_df(self, y):
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(y, columns=["ilocs"])
+        return y
 
     def _check_X(self, X):
         """Check input data.
@@ -787,7 +795,8 @@ class BaseDetector(BaseEstimator):
             * If the index of ``y_sparse`` is not a set of intervals, the values of the
               series should represent the indexes of changepoints/anomalies.
         index : array-like
-            Indices that are to be annotated according to ``y_sparse``.
+            Larger set of indices which contains event indices in ``y_sparse``,
+            to be used as the index of the returned series.
 
         Returns
         -------
