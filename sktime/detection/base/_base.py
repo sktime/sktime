@@ -205,6 +205,14 @@ class BaseDetector(BaseEstimator):
     def predict(self, X):
         """Create labels on test/deployment data.
 
+        This method returns a list-like type specific to the detection task,
+        e.g., segments for segmentation, anomalies for anomaly detection.
+
+        The encoding varies by task and learning_type (tags), see below.
+
+        For returns that are type consistent across tasks, see
+        ``predict_points`` and ``predict_segments``.
+
         Parameters
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
@@ -212,14 +220,35 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
-            The index is always a ``RangeIndex``.
+        y : pd.Series or pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            ``pd.Series`` if task (tag) is ``"unsupervised"``,
+            ``pd.DataFrame`` otherwise.
+
+            Each (axis 0) index of ``y`` is a detected event.
+
+            If ``pd.Series``, values are ``iloc`` references to indices of ``X``,
+            signifying the integer location of the detected event in ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects,
+              left-closed intervals signifying segments.
+
+            If ``pd.DataFrame``, has the following columns:
+
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the intervals are intervals between changepoints/anomalies, and
+              potential labels are consecutive integers starting from 0.
+            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         self.check_is_fitted()
 
@@ -363,15 +392,35 @@ class BaseDetector(BaseEstimator):
             Training data to update model with, time series.
         y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
+        y : pd.Series or pd.DataFrame with RangeIndex
+            Detected or predicted events.
 
-        Returns
-        -------
-        Y : pd.Series
-            Labels for sequence X exact format depends on detection type.
+            ``pd.Series`` if task (tag) is ``"unsupervised"``,
+            ``pd.DataFrame`` otherwise.
 
-        Notes
-        -----
-        Updates fitted model that updates attributes ending in "_".
+            Each (axis 0) index of ``y`` is a detected event.
+
+            If ``pd.Series``, values are ``iloc`` references to indices of ``X``,
+            signifying the integer location of the detected event in ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects,
+              left-closed intervals signifying segments.
+
+            If ``pd.DataFrame``, has the following columns:
+
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the intervals are intervals between changepoints/anomalies, and
+              potential labels are consecutive integers starting from 0.
+            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         X_inner = self._check_X(X)
 
@@ -396,13 +445,35 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.Series or pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            ``pd.Series`` if task (tag) is ``"unsupervised"``,
+            ``pd.DataFrame`` otherwise.
+
+            Each (axis 0) index of ``y`` is a detected event.
+
+            If ``pd.Series``, values are ``iloc`` references to indices of ``X``,
+            signifying the integer location of the detected event in ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects,
+              left-closed intervals signifying segments.
+
+            If ``pd.DataFrame``, has the following columns:
+
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the intervals are intervals between changepoints/anomalies, and
+              potential labels are consecutive integers starting from 0.
+            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
@@ -419,7 +490,7 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Data to be transformed
-        Y : pd.Series or np.ndarray, optional (default=None)
+        y : pd.Series or np.ndarray, optional (default=None)
             Target values of data to be predicted.
 
         Returns
@@ -586,6 +657,10 @@ class BaseDetector(BaseEstimator):
     def predict_segments(self, X):
         """Predict segments on test/deployment data.
 
+        The main difference to ``predict`` is that this method always returns
+        a ``pd.DataFrame`` with segments of interest, even if the task is not
+        segmentation.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -593,15 +668,23 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with IntervalIndex
-            A series with an index of intervals. Each interval is the range of a
-            segment and the corresponding value is the label of the segment.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+
+            ``pd.DataFrame`` with the following columns:
+
+            * ``"ilocs"`` - always. Values are left-closed intervals with
+              left/right values being ``iloc`` references to indices of ``X``,
+              signifying segments.
+            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
-              the labels are consecutive integers starting from 0.
-            * If ``task`` is "segmentation", the values are segmentation labels.
+              potential labels are consecutive integers starting from 0.
+            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -617,6 +700,10 @@ class BaseDetector(BaseEstimator):
     def predict_points(self, X):
         """Predict changepoints/anomalies on test/deployment data.
 
+        The main difference to ``predict`` is that this method always returns
+        a ``pd.DataFrame`` with points of interest, even if the task is not
+        anomaly or change point detection.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -624,14 +711,24 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+
+            ``pd.DataFrame`` with the following columns:
+
+            * ``"ilocs"`` - always. Values are integers, ``iloc``
+              references to indices of ``X``, signifying points of interest.
+            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or anomaly clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are consecutive
+            * If ``task`` is ``"segmentation"``, the values are consecutive
               segment boundaries.
+
+            The ``"labels"`` are potential labels for the points of interest.
         """
         self.check_is_fitted()
         X = check_series(X)
