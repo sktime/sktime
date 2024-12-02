@@ -2560,9 +2560,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         for i in range(fh_max):
             # Generate predictions.
             y_pred_vector = self.estimator_.predict(X_last)
-            y_pred_curr = _create_fcst_df(
-                [index_range[i]], self._y, fill=y_pred_vector
-            )
+            y_pred_curr = _create_fcst_df([index_range[i]], self._y, fill=y_pred_vector)
             y_pred.update(y_pred_curr)
 
             # # Update last window with previous prediction.
