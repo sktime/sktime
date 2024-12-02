@@ -5,7 +5,7 @@ from sktime.detection.base import BaseDetector
 from sktime.registry import scitype
 
 
-class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
+class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     """Pipeline for time series anomaly, changepoint detection, segmentation.
 
     Parameters
@@ -68,7 +68,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         super().__init__()
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated AnnotatorPipeline.
+        """Magic * method, return (left) concatenated DetectorPipeline.
 
         Implemented for ``other`` being a transformer, otherwise returns
         ``NotImplemented``.
@@ -82,7 +82,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         -------
         TransformedTargetForecaster object,
             concatenation of ``other`` (first) with ``self`` (last).
-            not nested, contains only non-AnnotatorPipeline ``sktime`` steps
+            not nested, contains only non-DetectorPipeline ``sktime`` steps
         """
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
@@ -107,9 +107,9 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
 
         # if all the names are equal to class names, we eat them away
         if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
-            return AnnotatorPipeline(steps=list(new_ests))
+            return DetectorPipeline(steps=list(new_ests))
         else:
-            return AnnotatorPipeline(steps=list(zip(new_names, new_ests)))
+            return DetectorPipeline(steps=list(zip(new_names, new_ests)))
 
     @property
     def estimator_(self):
@@ -369,7 +369,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
 
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.annotation.lof import SubLOF
+        from sktime.detection.lof import SubLOF
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
@@ -392,3 +392,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         params3 = {"steps": [Detrender(), lof]}
 
         return [params1, params2, params3]
+
+
+# todo 1.0.0 - remove alias, i.e., remove this line
+AnnotatorPipeline = DetectorPipeline

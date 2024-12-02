@@ -5,9 +5,14 @@ __author__ = ["klam-data", "mgorlin", "pyyim"]
 import pytest
 from numpy import array_equal
 
-from sktime.annotation.datagen import piecewise_poisson
+from sktime.detection.datagen import piecewise_poisson
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(piecewise_poisson),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "lambdas, lengths, random_state, output",
     [
