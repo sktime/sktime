@@ -241,6 +241,14 @@ Auto-correlation-based features
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.signature
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureMoments
+
 .. currentmodule:: sktime.transformations.panel.signature_based
 
 .. autosummary::
