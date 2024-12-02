@@ -48,8 +48,8 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
-    DummyRegularChangepoints
-    ZeroChangepoints
+    DummyRegularChangePoints
+    ZeroChangePoints
 
 
 Time Series Point Anomaly Detection
@@ -221,11 +221,3 @@ Naive Baselines
     :template: class.rst
 
     ZeroSegments
-
-
-Data Generation
----------------
-
-.. automodule:: sktime.detection.datagen
-    :no-members:
-    :no-inherited-members:
