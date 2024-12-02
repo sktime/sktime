@@ -36,6 +36,7 @@ VALID_AGG_FUNCS = {
     "gmean": {"unweighted": gmean, "weighted": _weighted_geometric_mean},
 }
 
+
 # this is the base class for ensemble forecasters
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
@@ -122,9 +123,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        backend = None,
-        backend_params = None,
-        n_jobs = None,
+        backend=None,
+        backend_params=None,
+        n_jobs=None,
     ):
         # Handle the deprecation of n_jobs
         warnings.warn(
@@ -134,10 +135,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         )
         # this is used to inherit from the parent class
         super().__init__(
-            forecasters=forecasters,
-            backend = backend,
-            backend_params = backend_params
-
+            forecasters=forecasters, backend=backend, backend_params=backend_params
         )
         self.method = method
         self.regressor = regressor
@@ -161,17 +159,19 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        
         # check the forecasters
         _, forecasters = self._check_forecasters()
 
-        if self.backend == 'utils':
+        if self.backend == "utils":
             # parallelize the fitting of the forecasters
-            n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
+            n_jobs = self.backend_params.get(
+                "n_jobs", -1
+            )  # default to -1 (use all processors)
             Parallel(n_jobs=n_jobs)(
-                delayed(self._fit_forecaster)(forecaster, y, X, fh) for forecaster in forecasters
+                delayed(self._fit_forecaster)(forecaster, y, X, fh)
+                for forecaster in forecasters
             )
-        
+
         else:
             # if backend in not utils, fall back to the default implementation
             for forecaster in forecasters:
@@ -244,19 +244,26 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-
         # return the predictions of the ensemble models
-        if self.backend == 'utils':
-            n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
+        if self.backend == "utils":
+            n_jobs = self.backend_params.get(
+                "n_jobs", -1
+            )  # default to -1 (use all processors)
             y_pred_df = pd.concat(
                 Parallel(n_jobs=n_jobs)(
-                       delayed(self._predict_forecaster)(forecaster, fh, X) for forecaster in self.forecasters_
-                ), axis = 1
+                    delayed(self._predict_forecaster)(forecaster, fh, X)
+                    for forecaster in self.forecasters_
+                ),
+                axis=1,
             )
         else:
             # if backend is not equal to utils, fallback to sequential prediction
             y_pred_df = pd.concat(
-                [self._predict_forecaster(forecaster, fh, X) for forecaster in self.forecasters_], axis=1
+                [
+                    self._predict_forecaster(forecaster, fh, X)
+                    for forecaster in self.forecasters_
+                ],
+                axis=1,
             )
 
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
