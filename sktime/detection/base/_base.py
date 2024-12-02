@@ -242,13 +242,15 @@ class BaseDetector(BaseEstimator):
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
-            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
             column is as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the intervals are intervals between changepoints/anomalies, and
-              potential labels are consecutive integers starting from 0.
-            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
+              ``"ilocs"`` contains the iloc index of the event, and
+              labels (if present) signify types of events.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, and labels (if present)
+              are types of segments.
         """
         self.check_is_fitted()
 
