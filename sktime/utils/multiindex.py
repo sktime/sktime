@@ -9,18 +9,16 @@ import pandas as pd
 
 
 def apply_split(y, iloc_ix):
-    """Generate plain indices to split data.
+    """Generates indices to apply split from indexer onto dataset.
 
     Parameters
     ----------
-    y : sktime compatible tabular data container, Panel, Table scitype
-         numpy1D iterable, of shape [n_instances]
-    iloc_ix: generator object containing indices for splitting
+    y : sktime or compatible multiindex data container
+    iloc_ix: 1D numpy array containing indices for splitting
 
-    Yields
+    Returns
     ------
-    y_iloc : ndarray
-        The dataset indices for splitting.
+    y_iloc : 1D numpy array containing plain indices for splitting.
     """
     if not isinstance(y, pd.MultiIndex):
         zeros = [0] * len(y)
