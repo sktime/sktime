@@ -5,7 +5,7 @@ from sktime.datatypes import MTYPE_LIST_SERIES
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
-__all__ = ["AnnotatorAsTransformer"]
+__all__ = ["AnnotatorAsTransformer", "DetectorAsTransformer"]
 
 
 MTYPE_LIST_FOR_ANNOTATORS = MTYPE_LIST_SERIES
@@ -13,7 +13,7 @@ MTYPE_LIST_FOR_ANNOTATORS = MTYPE_LIST_SERIES
 MTYPE_LIST_FOR_ANNOTATORS = ["pd.Series"]
 
 
-class AnnotatorAsTransformer(BaseTransformer):
+class DetectorAsTransformer(BaseTransformer):
     """Use an anomaly, changepoint detector, segmentation estimator as a transformer.
 
     This adapter is used in coercions, when passing an annotator to a transformer slot.
@@ -22,11 +22,11 @@ class AnnotatorAsTransformer(BaseTransformer):
     into its cluster assignment.
 
     The adapter dispatches ``BaseTransformer.transform`` to
-    ``BaseSeriesAnnotator.transform``.
+    ``BaseDetector.transform``.
 
     Parameters
     ----------
-    estimator : sktime annotator, i.e., estimator inheriting from BaseSeriesAnnotator
+    estimator : sktime annotator, i.e., estimator inheriting from BaseDetector
         this is a "blueprint" clusterer, state does not change when ``fit`` is called
 
     Attributes
@@ -36,13 +36,13 @@ class AnnotatorAsTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.annotation.compose import AnnotatorAsTransformer
+    >>> from sktime.annotation.compose import DetectorAsTransformer
     >>> from sktime.annotation.stray import STRAY
     >>> from sktime.utils._testing import _make_hierarchical
     >>> X = _make_hierarchical()
-    >>> t = AnnotatorAsTransformer(STRAY())
+    >>> t = DetectorAsTransformer(STRAY())
     >>> t.fit(X)
-    AnnotatorAsTransformer(...)
+    DetectorAsTransformer(...)
     >>> Xt = t.transform(X)
     """
 
@@ -150,3 +150,7 @@ class AnnotatorAsTransformer(BaseTransformer):
         params2 = {"estimator": SubLOF.create_test_instance()}
 
         return [params1, params2]
+
+
+# todo 1.0.0 - remove alias, i.e., remove this line
+AnnotatorAsTransformer = DetectorAsTransformer

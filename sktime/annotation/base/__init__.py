@@ -4,4 +4,4 @@
 
 __all__ = ["BaseSeriesAnnotator"]
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base._base import BaseSeriesAnnotator
