@@ -221,13 +221,40 @@ class MyDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
+        y : pd.Series or pd.DataFrame with RangeIndex
+            Detected events, one event per row.
+
+            Each (axis 0) index of ``y`` is a detected event.
             Values are ``iloc`` references to indices of ``X``.
+
+            The exact format depends on the learning task.
+
+            ``pd.Series`` if task (tag) is ``"unsupervised"``,
+            ``pd.DataFrame`` otherwise.
+
+            If ``pd.Series``, values are ``iloc`` references to indices of ``X``,
+            signifying the integer location of the detected event in ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects,
+              left-closed intervals signifying segments.
+
+            If ``pd.DataFrame``, has the following columns:
+
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`` case,
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index of the event, and
+              labels (if present) signify types of events.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, and labels (if present)
+              are types of segments.
         """
 
         # implement here

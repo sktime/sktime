@@ -238,7 +238,7 @@ class BaseDetector(BaseEstimator):
 
             If ``pd.DataFrame``, has the following columns:
 
-            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`` case,
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
@@ -416,7 +416,7 @@ class BaseDetector(BaseEstimator):
 
             If ``pd.DataFrame``, has the following columns:
 
-            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`` case,
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
@@ -469,7 +469,7 @@ class BaseDetector(BaseEstimator):
 
             If ``pd.DataFrame``, has the following columns:
 
-            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`´ case,
+            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`` case,
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
