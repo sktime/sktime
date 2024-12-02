@@ -2660,6 +2660,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+<<<<<<< HEAD
         y_cols = self._y.columns
 
         fh_rel = fh.to_relative(self.cutoff)
@@ -2706,6 +2707,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
+=======
+>>>>>>> fa524f8af (Update _reduce.py)
         y_cols = self._y.columns
 
         fh_rel = fh.to_relative(self.cutoff)
