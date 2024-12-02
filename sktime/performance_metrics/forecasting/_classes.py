@@ -1889,12 +1889,28 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
 
 class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
-    """
-    Mean Squared Error Percentage (MSE%) forecasting error metric.
+    r"""Mean Squared Error Percentage (MSE%) and root-MSE% forecasting error metrics.
 
     Calculates the mean squared error percentage between the true and predicted values.
     Optionally, the root mean squared error percentage (RMSE%) can be computed by
-    setting `square_root=True`.
+    setting ``square_root=True``.
+
+    The Mean Squared Error Percentage (MSE%) is calculated as:
+
+    .. math::
+        \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
+                            { \\sum_{i=1}^{n} \\frac{y_i}{n} }
+
+    where:
+    - \\( y_i \\) are the true values,
+    - \\( \\hat{y}_i \\) are the predicted values,
+    - \\( n \\) is the number of observations.
+
+    If ``square_root`` is set to True,
+    the Root Mean Squared Error Percentage (RMSE%) is computed:
+
+    .. math::
+        \\text{RMSE%} = \\sqrt{ \\text{MSE%} }
 
     Parameters
     ----------
@@ -1945,94 +1961,82 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
             - If `multioutput='raw_values'`, returns a Series with the MSPE for
             each output.
             - Otherwise, returns a scalar value representing the aggregated MSPE.
-
-        Notes
-        -----
-        The Mean Squared Error Percentage (MSE%) is calculated as:
-
-        .. math::
-            \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
-                                { \\sum_{i=1}^{n} \\frac{y_i}{n} }
-
-        where:
-        - \\( y_i \\) are the true values,
-        - \\( \\hat{y}_i \\) are the predicted values,
-        - \\( n \\) is the number of observations.
-
-        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSE%)
-        is computed:
-
-        .. math::
-            \\text{RMSE%} = \\sqrt{ \\text{MSE%} }
-
         """
         multioutput = self.multioutput
         raw_values = (y_true - y_pred) ** 2
         raw_values = self._get_weighted_df(raw_values, **kwargs)
-        msqe = raw_values.mean()
+        num = raw_values.mean()
+        denom = y_true.mean()
+
+        msqe = num / denom
 
         if self.square_root:
             msqe = msqe.pow(0.5)
 
-        msqe = msqe / (np.sum(y_true.mean()))
-
         return self._handle_multioutput(msqe, multioutput)
 
-    # def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-    #     """Return the metric evaluated at each time point.
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
 
-    #     private _evaluate_by_index containing core logic, called from evaluate_by_index
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
 
-    #     Parameters
-    #     ----------
-    #     y_true : time series in sktime compatible pandas based data container format
-    #         Ground truth (correct) target values
-    #         y can be in one of the following formats:
-    #         Series scitype: pd.DataFrame
-    #         Panel scitype: pd.DataFrame with 2-level row MultiIndex
-    #         Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-    #     y_pred :time series in sktime compatible data container format
-    #         Forecasted values to evaluate
-    #         must be of same format as y_true, same indices and columns if indexed
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
 
-    #     Returns
-    #     -------
-    #     loss : pd.Series or pd.DataFrame
-    #         Calculated metric, by time point (default=jackknife pseudo-values).
-    #         pd.Series if self.multioutput="uniform_average" or array-like
-    #             index is equal to index of y_true
-    #             entry at index i is metric at time i, averaged over variables
-    #         pd.DataFrame if self.multioutput="raw_values"
-    #             index and columns equal to those of y_true
-    #             i,j-th entry is metric at time i, at variable j
-    #     """
-    #     multioutput = self.multioutput
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
 
-    #     raw_values_mse = (y_true - y_pred) ** 2
-    #     raw_values_p = np.sum(y_true.mean())
+        raw_values_mse = (y_true - y_pred) ** 2
+        raw_values_p = y_true
 
-    #     n = raw_values_mse.shape[0]
+        # what we need to do is efficiently
+        # compute msqe but using data with the i-th time point removed
+        # msqe[i] = msqe(all data minus i-th time point)
 
-    #     if self.square_root:
-    #         rmsep = raw_values_mse.pow(0.5)
-    #         rmsep = rmsep / raw_values_p
-    #         sum = rmsep.sum(axis=0)
-    #         rmsep_jackknife = (sum - rmsep) / (n - 1)
-    #     else:
-    #         rmsep = raw_values_mse / raw_values_p
-    #         sum = rmsep.sum(axis=0)
-    #         rmsep_jackknife = (sum - rmsep) / (n - 1)
+        n = raw_values_mse.shape[0]
 
-    #     pseudo_values = n * rmsep - (n - 1) * rmsep_jackknife
-    #     pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+        num_mean = raw_values_mse.mean()
+        denom_mean = raw_values_p.mean()
 
-    #     if multioutput == "raw_values":
-    #         return pseudo_values
+        num_jk = num_mean * ( 1 + 1 / (n - 1) ) - raw_values_mse / (n - 1)
+        denom_jk = denom_mean * ( 1 + 1 / (n - 1) ) - raw_values_p / (n - 1)
 
-    #     if multioutput == "uniform_average":
-    #         return pseudo_values.mean(axis=1)
+        msep_jk = num_jk / denom_jk
+        msep = num_mean / denom_mean
 
-    #     return self._handle_multioutput(pseudo_values, multioutput)
+        if self.square_root:
+            msep_jk = msep_jk.pow(0.5)
+            msep = msep.pow(0.5)
+
+        pseudo_values = n * msep - (n - 1) * msep_jk
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        if multioutput == "raw_values":
+            return pseudo_values
+
+        if multioutput == "uniform_average":
+            return pseudo_values.mean(axis=1)
+
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
