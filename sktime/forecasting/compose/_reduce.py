@@ -2657,7 +2657,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_alt  # y_pred
 
-    def _predict_out_of_sample_v2(self, X_pool, fh):
+    def _predict_out_of_sample_v1(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Prior state before PR 7380 - left for comparison and potential refactor.
