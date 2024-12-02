@@ -2030,12 +2030,6 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         pseudo_values = n * msep - (n - 1) * msep_jk
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        if multioutput == "raw_values":
-            return pseudo_values
-
-        if multioutput == "uniform_average":
-            return pseudo_values.mean(axis=1)
-
         return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
