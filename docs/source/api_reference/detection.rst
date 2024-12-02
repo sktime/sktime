@@ -188,11 +188,3 @@ Naive Baselines
 
     DummyRegularAnomalies
     ZeroAnomalies
-
-
-Data Generation
----------------
-
-.. automodule:: sktime.detection.datagen
-    :no-members:
-    :no-inherited-members:
