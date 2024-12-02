@@ -30,7 +30,7 @@ def test_clasp_sparse():
     scores = clasp.predict_scores(ts)
 
     assert len(found_cps) == 1 and found_cps[0] == 893
-    assert len(scores) == 1 and scores[0] > 0.74
+    assert len(scores) == 1 and scores.iloc[0, 0] > 0.74
 
 
 @pytest.mark.skipif(

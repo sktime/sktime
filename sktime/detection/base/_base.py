@@ -296,8 +296,9 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
+        scores = self._predict_scores(X_inner)
 
-        return self._predict_scores(X_inner)
+        return pd.DataFrame(scores)
 
     def update(self, X, y=None, Y=None):
         """Update model with new data and optional ground truth labels.
@@ -639,7 +640,8 @@ class BaseDetector(BaseEstimator):
         if task in ["anomaly_detection", "change_point_detection"]:
             return self._predict_points(X)
         elif task == "segmentation":
-            return self.segments_to_change_points(self.predict_segments(X))
+            segments = pd.DataFrame(self.predict_segments(X))
+            return self.segments_to_change_points(segments)
 
     def _predict_segments(self, X):
         """Predict segments on test/deployment data.
