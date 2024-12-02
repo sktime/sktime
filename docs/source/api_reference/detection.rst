@@ -47,8 +47,8 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
-    DummyRegularChangepoints
-    ZeroChangepoints
+    DummyRegularChangePoints
+    ZeroChangePoints
 
 Time Series Segmentation
 ------------------------
