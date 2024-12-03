@@ -4,7 +4,6 @@ __author__ = ["patrickzib"]
 __all__ = []
 
 import pytest
-from pandas.api.types import is_interval_dtype
 
 from sktime.datasets import load_gun_point_segmentation
 from sktime.detection.clasp import ClaSPSegmentation
