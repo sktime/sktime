@@ -89,6 +89,7 @@ Time series anomalies, changepoints, segmentation
 * [ENH] add ``skchange`` change point detectors as placeholder records (:pr:`7458`) :user:`ShivamJ07`, :user:`fkiraly`
 * [ENH] add placeholder records for ``skchange`` segment anomaly detectors (:pr:`7470`) :user:`fkiraly`
 * [ENH] update ``DetectorPipeline`` and ``DetectorAsTransformer`` inner calls and docstrings (:pr:`7475`) :user:`fkiraly`
+* [ENH] homogenization of sktime and skchange detection API - ``predict``, ``predict_points``, ``predict_segments`` (:pr:`7476`) :user:`fkiraly`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
