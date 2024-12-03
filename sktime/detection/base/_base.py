@@ -305,7 +305,7 @@ class BaseDetector(BaseEstimator):
         """
         y_sparse = self.predict(X)
         y_dense = self.sparse_to_dense(y_sparse, pd.RangeIndex(len(X)))
-        y_dense = self._coerce_to_df(y_dense)
+        y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
     def transform_scores(self, X):
@@ -561,10 +561,10 @@ class BaseDetector(BaseEstimator):
         """
         y_sparse = self.fit_predict(X, y=y, Y=Y)
         y_dense = self.sparse_to_dense(y_sparse, index=X.index)
-        y_dense = self._coerce_to_df(y_dense)
+        y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
-    def _coerce_to_df(self, y):
+    def _coerce_to_df(self, y, columns=None):
         """Coerce output to a DataFrame.
 
         Also deals with the following downwards cases:
@@ -572,18 +572,18 @@ class BaseDetector(BaseEstimator):
         * IntervalIndex containing segments -> DataFrame with "ilocs" column
         """
         if not isinstance(y, (pd.Series, pd.DataFrame)):
-            y = pd.DataFrame(y, columns=["ilocs"], dtype="int64")
+            y = pd.DataFrame(y, columns=columns, dtype="int64")
         if isinstance(y.index, pd.IntervalIndex):
             if isinstance(y, pd.Series):
-                y = pd.DataFrame(y.index, columns=["ilocs"])
+                y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
                 y_index = y.index
-                y_index = pd.DataFrame(y_index, columns=["ilocs"])
+                y_index = pd.DataFrame(y_index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
         if not isinstance(y, pd.DataFrame):
-            y = pd.DataFrame(y, columns=["ilocs"], dtype="int64")
+            y = pd.DataFrame(y, columns=columns, dtype="int64")
 
         return y
 
@@ -777,7 +777,7 @@ class BaseDetector(BaseEstimator):
         elif task == "segmentation":
             y_pred = self._predict_segments(X)
 
-        y_pred = self._coerce_to_df(y_pred)
+        y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
         return y_pred
 
     def predict_points(self, X):
@@ -823,7 +823,7 @@ class BaseDetector(BaseEstimator):
             y_pred_seg = pd.DataFrame(self.predict_segments(X))
             y_pred = self.segments_to_change_points(y_pred_seg)
 
-        y_pred = self._coerce_to_df(y_pred)
+        y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
         return y_pred
 
     def _predict_segments(self, X):
