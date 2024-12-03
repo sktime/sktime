@@ -38,6 +38,25 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+The core API for time series detectors has changed, and has been homogenized with the API of ``skchange``.
+
+The changes are in parts breaking, and require adjustments in the user code.
+The changes were necessary to ensure a consistent API for time series detectors.
+
+* ``BaseDetector.predict`` now returns a ``pd.DataFrame``. This ``DataFrame`` always
+  has a ``RangeIndex``, with individual rows corresponding to individual events.
+  The ``DataFrame`` has at least a column ``"ilocs"``, which contains the integer indices of the detected events,
+  in reference to the argument ``X`` passed to ``predict``.
+  The format, for an entry, can be a single integer or a left-closed ``pd.Interval`` of integers,
+  indicating either a single point or a segment of points.
+* an additional column ``"labels"`` may be present in cases of labelled events.
+* ``BaseDetector.predict_points`` and ``predict_segments`` now also return ``pd.DataFrame``,
+  following the same format as ``predict``, with the difference that ``predict_points``
+  coerces detected events to points, taking start and end points of segments as separate points.
+  ``predict_segments`` coerces detected events to segments, possibly single-index segments.
+* ``BaseDetector.transform`` now always returns a ``pd.DataFrame`` with, which has
+  at least a column ``"transform"`` containing the transformed series.
+
 Enhancements
 ~~~~~~~~~~~~
 
@@ -138,6 +157,7 @@ Documentation
 * [DOC] add rubric for time series detectors to estimator overview (:pr:`7389`) :user:`gavinkatz001`
 * [DOC] provide proper mathematical description in docstring of sliding window splitter. (:pr:`7376`) :user:`keitaVigano`
 * [DOC] add detector tags to estimator overview, fix API reference (:pr:`7473`) :user:`fkiraly`
+* [DOC] improve formatting of forecasting metrics (:pr:`7474`) :user:`fkiraly`
 
 Maintenance
 ~~~~~~~~~~~
