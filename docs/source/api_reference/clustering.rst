@@ -1,4 +1,3 @@
-
 .. _clustering_ref:
 
 Time series clustering
@@ -64,6 +63,20 @@ Density-based
     :template: class.rst
 
     TimeSeriesDBSCAN
+
+Spatio-temporal clustering
+--------------------------
+
+Spatio-temporal clusterers assume that the time series are, or include,
+observations of locations in space.
+
+.. currentmodule:: sktime.clustering.spatio_temporal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STDBSCAN
 
 Base
 ----

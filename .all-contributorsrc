@@ -3191,6 +3191,14 @@
       "contributions": [
         "doc"
       ]
+     },
+     {
+      "login": "vagechirkov",
+      "name": "Valerii Chirkov",
+      "avatar_url": "https://avatars.githubusercontent.com/vagechirkov",
+      "profile": "https://github.com/vagechirkov",
+      "contributions": [
+        "code",
     },
     {
       "login": "tajir0",
@@ -3210,6 +3218,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+        "login": "Sohaib-Ahmed21",
+        "name": "Sohaib Ahmed",
+        "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
+        "profile": "https://github.com/Sohaib-Ahmed21",
+        "contributions": [
+          "code"
+        ]
     },
     {
       "login": "alyssadsouza",

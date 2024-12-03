@@ -5,7 +5,13 @@ import pandas
 import pytest
 
 from sktime.datasets import load_longley
-from sktime.forecasting.neuralforecast import NeuralForecastLSTM, NeuralForecastRNN
+from sktime.forecasting.neuralforecast import (
+    NeuralForecastDilatedRNN,
+    NeuralForecastGRU,
+    NeuralForecastLSTM,
+    NeuralForecastRNN,
+    NeuralForecastTCN,
+)
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
@@ -15,9 +21,26 @@ y, X = load_longley()
 y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_univariate_y_without_X(model_class) -> None:
@@ -39,9 +62,26 @@ def test_neural_forecast_univariate_y_without_X(model_class) -> None:
     pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_univariate_y_with_X(model_class) -> None:
@@ -80,9 +120,26 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
     pandas.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
@@ -100,9 +157,26 @@ def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
     pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_non_default_loss(model_class) -> None:
@@ -129,9 +203,26 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
     pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
@@ -157,9 +248,26 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
         model.predict()
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_auto_freq(model_class) -> None:
@@ -180,7 +288,16 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
     assert offset_freq == offset_auto_freq
 
 
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.parametrize(
     "freq",
     [
@@ -203,7 +320,15 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
     ],
 )
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None:
@@ -245,9 +370,26 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
         (pandas.period_range(start="2024-01-01", periods=10).drop(["2024-01-02"]), "D"),
     ],
 )
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_auto_freq_on_valid_index(
@@ -277,9 +419,26 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
         pandas.Index([1, 2, 3, 4, 5, 7])
     ],
 )
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
@@ -304,9 +463,26 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
         pandas.to_datetime(["2000-01-01", "2000-01-02", "2000-01-04", "2000-01-05"]),
     ],
 )
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_neural_forecast_with_auto_freq_on_missing_date_like(
