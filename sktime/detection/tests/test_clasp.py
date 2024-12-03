@@ -28,7 +28,7 @@ def test_clasp_sparse():
     found_cps = clasp.predict(ts)
     scores = clasp.predict_scores(ts)
 
-    assert len(found_cps) == 1 and found_cps[0] == 893
+    assert len(found_cps) == 1 and found_cps.ilocs[0] == 893
     assert len(scores) == 1 and scores.iloc[0, 0] > 0.74
 
 
