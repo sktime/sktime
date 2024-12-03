@@ -571,6 +571,8 @@ class BaseDetector(BaseEstimator):
 
         * IntervalIndex containing segments -> DataFrame with "ilocs" column
         """
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            y = pd.DataFrame(y, columns=["ilocs"], dtype="int64")
         if isinstance(y.index, pd.IntervalIndex):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=["ilocs"])
@@ -919,6 +921,10 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
+        if isinstance(y_sparse, pd.DataFrame):
+            y_sparse = y_sparse.iloc[:, 0]
+        if not isinstance(y_sparse, pd.Series):
+            y_sparse = pd.Series(y_sparse, dtype="int64")
         if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
             # Segmentation case
             y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
@@ -1009,6 +1015,10 @@ class BaseDetector(BaseEstimator):
               datatype index will be returned. The values of the series will be the
               labels of segments.
         """
+        if isinstance(y_dense, pd.DataFrame):
+            y_sparse = y_dense.iloc[:, 0]
+        if not isinstance(y_dense, pd.Series):
+            y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:
             # y_dense is a series of change points
             change_points = np.where(y_dense.values != 0)[0]

@@ -15,5 +15,5 @@ def test_dummy_changepoints():
     expected_ds = pd.DataFrame([0, 0, 1, 0, 0, 1, 0, 0, 1, 0], columns=["ilocs"])
     assert y_cp_ds.equals(expected_ds)
 
-    expected_sp = pd.Series([2, 5, 8])
+    expected_sp = pd.DataFrame([2, 5, 8], columns=["ilocs"])
     assert y_cp_sp.equals(expected_sp)
