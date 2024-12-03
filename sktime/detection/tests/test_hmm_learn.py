@@ -27,7 +27,7 @@ def test_GaussianHMM_wrapper():
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
-    sktime_predict = sktime_model.predict(X=data)
+    sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)
 
 
@@ -48,7 +48,7 @@ def test_GMMHMM_wrapper():
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
-    sktime_predict = sktime_model.predict(X=data)
+    sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)
 
 
@@ -69,5 +69,5 @@ def test_PoissonHMM_wrapper():
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
-    sktime_predict = sktime_model.predict(X=data)
+    sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)
