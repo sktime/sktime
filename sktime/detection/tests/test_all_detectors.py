@@ -55,7 +55,8 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
         y_test = estimator.predict(X_test)
-        assert isinstance(y_test, pd.Series)
+        assert isinstance(y_test, pd.DataFrame)
+        assert isinstance(y_test.index, pd.RangeIndex)
 
     def test_transform_output_type(self, estimator_instance):
         """Test output type for the transform method."""
@@ -83,7 +84,10 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_pred = estimator_instance.predict_points(X_test)
-        assert isinstance(y_pred, pd.Series)
+        assert isinstance(y_pred, pd.DataFrame)
+        assert isinstance(y_pred.index, pd.RangeIndex)
+        assert "ilocs" in y_pred.columns
+        assert pd.api.types.is_integer_dtype(y_pred["ilocs"].dtype), y_pred
 
     def test_predict_segments(self, estimator_instance):
         X_train = make_detection_problem(
@@ -96,10 +100,13 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             n_timepoints=10,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
-        y_test = estimator_instance.predict_segments(X_test)
-        assert isinstance(y_test, pd.Series)
-        assert isinstance(y_test.index.dtype, pd.IntervalDtype)
-        assert pd.api.types.is_integer_dtype(y_test)
+        y_pred = estimator_instance.predict_segments(X_test)
+        assert isinstance(y_pred, pd.DataFrame)
+        assert isinstance(y_pred.index, pd.RangeIndex)
+        assert "ilocs" in y_pred.columns
+        ilocs_dtype = y_pred["ilocs"].dtype
+        assert isinstance(y_pred["ilocs"].dtype, pd.IntervalDtype)
+        assert pd.api.types.is_integer_dtype(ilocs_dtype.subtype)
 
     def test_detector_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""

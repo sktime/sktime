@@ -4,7 +4,6 @@ __author__ = ["patrickzib"]
 __all__ = []
 
 import pytest
-from pandas.api.types import is_interval_dtype
 
 from sktime.datasets import load_gun_point_segmentation
 from sktime.detection.clasp import ClaSPSegmentation
@@ -29,7 +28,7 @@ def test_clasp_sparse():
     found_cps = clasp.predict(ts)
     scores = clasp.predict_scores(ts)
 
-    assert len(found_cps) == 1 and found_cps[0] == 893
+    assert len(found_cps) == 1 and found_cps.ilocs[0] == 893
     assert len(scores) == 1 and scores.iloc[0, 0] > 0.74
 
 
@@ -76,5 +75,4 @@ def test_clasp_predict_segments():
     segments = clasp.predict_segments(ts)
 
     assert len(segments) == 2  # With one change point there should be 2 two segments
-    assert is_interval_dtype(segments.index)
-    assert segments.index[-1].left == 893
+    assert segments.values[-1][0].left == 893

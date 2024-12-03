@@ -41,7 +41,7 @@ def test_fit_predict(X, expected_change_points):
     """Tese the fit_predict method for binary segmentation."""
     model = BinarySegmentation(threshold=1, min_cp_distance=1)
     change_points = model.fit_predict(X)
-    assert change_points.values.tolist() == expected_change_points
+    assert change_points.values.flatten().tolist() == expected_change_points
 
 
 @pytest.mark.skipif(

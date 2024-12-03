@@ -192,8 +192,29 @@ class MyDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             Training data to fit model to time series.
-        y : pd.Series, optional
-            Ground truth labels for training, if detector is supervised.
+
+        y : pd.DataFrame with RangeIndex
+            Known events for training, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -221,13 +242,28 @@ class MyDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
 
         # implement here
