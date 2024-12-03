@@ -76,5 +76,4 @@ def test_clasp_predict_segments():
     segments = clasp.predict_segments(ts)
 
     assert len(segments) == 2  # With one change point there should be 2 two segments
-    assert is_interval_dtype(segments.index)
-    assert segments.index[-1].left == 893
+    assert segments.values[-1].left == 893
