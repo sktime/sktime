@@ -93,6 +93,8 @@ Core Developers
      - :user:`pranavvp16`
    * - Sagar Mishra
      - :user:`achieveordie`
+   * - Sai Revanth Gowravajhala
+     - :user:`SaiRevanth25`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
