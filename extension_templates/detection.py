@@ -192,8 +192,29 @@ class MyDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             Training data to fit model to time series.
-        y : pd.Series, optional
-            Ground truth labels for training, if detector is supervised.
+
+        y : pd.DataFrame with RangeIndex
+            Known events for training, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -221,40 +242,28 @@ class MyDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series or pd.DataFrame with RangeIndex
-            Detected events, one event per row.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
 
-            Each (axis 0) index of ``y`` is a detected event.
-            Values are ``iloc`` references to indices of ``X``.
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
 
-            The exact format depends on the learning task.
-
-            ``pd.Series`` if task (tag) is ``"unsupervised"``,
-            ``pd.DataFrame`` otherwise.
-
-            If ``pd.Series``, values are ``iloc`` references to indices of ``X``,
-            signifying the integer location of the detected event in ``X``.
-
-            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects,
-              left-closed intervals signifying segments.
-
-            If ``pd.DataFrame``, has the following columns:
-
-            * ``"ilocs"`` - always. Values are as above in the ``pd.Series`` case,
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
-              segmentation, or segment clustering.
+              segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
-            column is as follows:
+            column describe the event in a given row as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              ``"ilocs"`` contains the iloc index of the event, and
-              labels (if present) signify types of events.
+              ``"ilocs"`` contains the iloc index at which the event takes place.
             * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
-              intervals of iloc based segments, and labels (if present)
-              are types of segments.
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
 
         # implement here
