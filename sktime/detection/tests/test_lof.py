@@ -77,4 +77,5 @@ def test_predict(X, y_expected):
     model = SubLOF(3, window_size=5, novelty=True)
     model.fit(X)
     y_actual = model.predict(X)
+    y_actual = y_actual.iloc[:, 0]
     pd.testing.assert_series_equal(y_actual, y_expected)

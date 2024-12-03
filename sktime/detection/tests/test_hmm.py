@@ -43,6 +43,7 @@ def test_hmm_basic_gauss():
     gauss_test = HMM(emi_funcs, transition_matrix)
     gauss_test.fit(gauss_data)
     predicted_labels = gauss_test.predict(gauss_data)
+    predicted_labels = predicted_labels.iloc[:, 0]
     assert len(predicted_labels == labels) >= 0.95 * len(predicted_labels)
 
 

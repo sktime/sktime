@@ -273,7 +273,7 @@ class BaseDetector(BaseEstimator):
         y = self._predict(X=X_inner)
 
         # deal with legacy return format with intervals in index
-        y = self._coerce_to_df(y)
+        y = self._coerce_to_df(y, columns=["ilocs"])
 
         return y
 
