@@ -22,13 +22,13 @@ Version 0.34.1 - 2024-11-29
 Highlights
 ~~~~~~~~~~
 
-* detectors
-* [ENH] in forecasting metrics, allow a callable to be passed as ``sample_weight`` for dynamic weight generation (:pr:`7288`) :user:`MarkusSagen`
-* [ENH] Interface new ``neuralforecast`` estimators (:pr:`7434`) :user:`yarnabrina`
-* [ENH] Box-Cox bias adjustment for forecasters (:pr:`7268`) :user:`sanskarmodi8`, :user:`talat-khattatov`
-* [ENH] Signature Moments transformer  (:pr:`7320`) :user:`VectorNd`
-* [ENH] Spatio-Temporal DBSCAN (:pr:`7353`) :user:`vagechirkov`, :user:`vectornd`
-* [ENH] SCINet forecaster (:pr:`7400`) :user:`Sohaib-Ahmed21`
+* Full rework of ``detectors`` API, module is now maturing. :user:`tveten`, :user:`alex-jg3`, :user:`fkiraly`, :user:`alyssadsouza`, :user:`ShivamJ07`, :user:`RobotPsychologist`
+* in forecasting metrics, allow a callable to be passed as ``sample_weight`` for dynamic weight generation (:pr:`7288`) :user:`MarkusSagen`
+* Interface new ``neuralforecast`` estimators (:pr:`7434`) :user:`yarnabrina`
+* Box-Cox bias adjustment for forecasters (:pr:`7268`) :user:`sanskarmodi8`, :user:`talat-khattatov`
+* SCINet forecaster (:pr:`7400`) :user:`Sohaib-Ahmed21`
+* Spatio-Temporal DBSCAN clusterer (:pr:`7353`) :user:`vagechirkov`, :user:`vectornd`
+* Signature moments transformer  (:pr:`7320`) :user:`VectorNd`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -37,6 +37,15 @@ Dependency changes
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+Forecasting metrics now allow a callable to be passed as ``sample_weight`` for dynamic weight generation.
+The precise contract the callables need to satisfy is documented in the docstrings.
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The core API for time series detectors has changed, and has been homogenized with the API of ``skchange``.
 
@@ -118,7 +127,7 @@ Time series classification
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Spatio-Temporal DBSCAN (:pr:`7353`) :user:`vagechirkov`, :user:`vectornd`
+* [ENH] Spatio-Temporal DBSCAN clusterer (:pr:`7353`) :user:`vagechirkov`, :user:`vectornd`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
