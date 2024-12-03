@@ -544,6 +544,8 @@ class BaseDetector(BaseEstimator):
         return y
 
     def _coerce_intervals_to_values(self, y):
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            y = pd.Series(y, dtype="int64")
         if isinstance(y.index, pd.IntervalIndex):
             if isinstance(y, pd.Series):
                 y = pd.Series(y.index)
