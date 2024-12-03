@@ -24,7 +24,7 @@ Highlights
 
 * Full rework of ``detectors`` API, module is now maturing. :user:`tveten`, :user:`alex-jg3`, :user:`fkiraly`, :user:`alyssadsouza`, :user:`ShivamJ07`, :user:`RobotPsychologist`
 * in forecasting metrics, allow a callable to be passed as ``sample_weight`` for dynamic weight generation (:pr:`7288`) :user:`MarkusSagen`
-* Interface new ``neuralforecast`` estimators (:pr:`7434`) :user:`yarnabrina`
+* Interfaces to new ``neuralforecast`` estimators (:pr:`7434`) :user:`yarnabrina`
 * Box-Cox bias adjustment for forecasters (:pr:`7268`) :user:`sanskarmodi8`, :user:`talat-khattatov`
 * SCINet forecaster (:pr:`7400`) :user:`Sohaib-Ahmed21`
 * Spatio-Temporal DBSCAN clusterer (:pr:`7353`) :user:`vagechirkov`, :user:`vectornd`
