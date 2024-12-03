@@ -55,7 +55,8 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
         y_test = estimator.predict(X_test)
-        assert isinstance(y_test, pd.Series)
+        assert isinstance(y_test, pd.DataFrame)
+        assert isinstance(y_test.index, pd.RangeIndex)
 
     def test_transform_output_type(self, estimator_instance):
         """Test output type for the transform method."""
