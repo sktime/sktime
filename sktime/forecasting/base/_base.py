@@ -120,7 +120,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
+        "remember_data": False,  # whether to remember data in fit - self._X, self._y
     }
 
     _config_doc = {
