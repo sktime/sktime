@@ -89,8 +89,14 @@ class BaseHMMLearn(BaseDetector):
         """
         X, series, index = self._fix_input(X)
         X_prime = self._hmm_estimator.predict(X)
-        if series:
-            X_prime = pd.Series(X_prime, index=index)
+        breaks = [0]
+        vals = [X_prime[0]]
+        for row in range(1,len(X_prime)):
+            if(X_prime[row] != X_prime[row-1]):
+                breaks.append(row)
+                vals.append(X_prime[row])
+        breaks.append(len(X_prime)-1)
+        X_prime = pd.Series(vals, index=pd.IntervalIndex.from_breaks(breaks))
         return X_prime
 
     def sample(self, n_samples=1, random_state=None, currstate=None):

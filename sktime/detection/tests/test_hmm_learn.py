@@ -2,6 +2,7 @@
 
 __author__ = ["miraep8", "klam-data", "pyyim", "mgorlin"]
 
+import pandas as pd
 import pytest
 from numpy import array_equal
 
@@ -29,6 +30,14 @@ def test_GaussianHMM_wrapper():
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
+    breaks = [0]
+    vals = [hmmlearn_predict[0]]
+    for row in range(1,len(hmmlearn_predict)):
+        if(hmmlearn_predict[row] != hmmlearn_predict[row-1]):
+            breaks.append(row)
+            vals.append(hmmlearn_predict[row])
+    breaks.append(len(hmmlearn_predict)-1)
+    hmmlearn_predict = pd.Series(vals, index=pd.IntervalIndex.from_breaks(breaks))
     assert array_equal(hmmlearn_predict, sktime_predict)
 
 
@@ -52,6 +61,14 @@ def test_GMMHMM_wrapper():
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
+    breaks = [0]
+    vals = [hmmlearn_predict[0]]
+    for row in range(1,len(hmmlearn_predict)):
+        if(hmmlearn_predict[row] != hmmlearn_predict[row-1]):
+            breaks.append(row)
+            vals.append(hmmlearn_predict[row])
+    breaks.append(len(hmmlearn_predict)-1)
+    hmmlearn_predict = pd.Series(vals, index=pd.IntervalIndex.from_breaks(breaks))
     assert array_equal(hmmlearn_predict, sktime_predict)
 
 

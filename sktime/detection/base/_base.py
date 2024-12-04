@@ -250,6 +250,8 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y = self.predict(X)
+        if(isinstance(X, np.ndarray)):
+            X = pd.Series(X)
         y_dense = self.sparse_to_dense(y, X.index)
         return pd.DataFrame(y_dense)
 
