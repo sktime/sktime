@@ -965,39 +965,30 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
-        # Check if y_sparse is a numpy array and convert to pandas Series
-        if isinstance(y_sparse, np.ndarray):
-            # Find maximum and minimum using numpy
-            maximum = np.max(y_sparse)
-            minimum = np.min(y_sparse)
+        # Find maximum and minimum using numpy
+        maximum = np.max(y_sparse)
+        minimum = np.min(y_sparse)
 
-            # Get indices of max and min values using np.where
-            index_of_maximum = np.where(y_sparse == maximum)
-            index_of_minimum = np.where(y_sparse == minimum)
+        # Get indices of max and min values using np.where
+        index_of_maximum = np.where(y_sparse == maximum)
+        index_of_minimum = np.where(y_sparse == minimum)
 
-            # Get the corresponding values using the indices
-            max_value = y_sparse[index_of_maximum]
-            min_value = y_sparse[index_of_minimum]
+        # You could return the indices as change points or process further as needed
+        change_points = np.concatenate([index_of_minimum[0], index_of_maximum[0]])
 
-            # Verify using assert
-            assert np.any(max_value == np.max(y_sparse))
-            assert np.any(min_value == np.min(y_sparse))
-
-            # You could return the indices as change points or process further as needed
-            change_points = np.concatenate([index_of_minimum[0], index_of_maximum[0]])
-
-            return pd.Series(change_points)
+        return pd.Series(change_points)
 
         # If it's a pandas Series, the previous logic works
-        if not isinstance(y_sparse.index, pd.IntervalIndex):
-            raise ValueError("y_sparse.index must be of type pd.IntervalIndex")
+        # if not isinstance(y_sparse.index, pd.IntervalIndex):
+        #     print("Not an interval index")
+        #     raise ValueError("y_sparse.index must be of type pd.IntervalIndex")
 
-        if len(y_sparse) == 0:
-            return BaseDetector._empty_sparse()
+        # if len(y_sparse) == 0:
+        #     return BaseDetector._empty_sparse()
 
-        # Extract the left bounds of the intervals and return them as a Series
-        change_points = pd.Series(y_sparse.index.left)
-        return change_points
+        # # Extract the left bounds of the intervals and return them as a Series
+        # change_points = pd.Series(y_sparse.index.left)
+        # return change_points
 
 
 class BaseSeriesAnnotator(BaseDetector):
