@@ -69,13 +69,18 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             or the `~PreTrainedModel.save_pretrained` method
     fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
         String to set the fit_strategy of the model.
-        If set to `full`, it will
-        re-initialize an full model with the specified config or
-        estimator arguments.
-        If set to "minimal" will use the `model_path`
+
+        - If set to `full`, it will re-initialize an full model with
+        the specified config or estimator arguments.
+
+        - If set to "minimal" will use the `model_path`
         argument and the passed in `y` in fit to fine-tune the model.
-        If set to "zero-shot", it will load the model in zero-shot forecasting
+        The trained weights on the pre-trained model will be further
+        fine-tuned using the passed dataset.
+
+        - If set to "zero-shot", it will load the model in zero-shot forecasting
         model with the argument `model_path` and ignore any passed `y`.
+
         Note that both "minimal" and "zero-shot" fit_strategy requires a mandatory
         passed in `model_path`.
     validation_split : float, optional, default = 0.2
@@ -225,6 +230,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.validation_split = validation_split
         self.config = config
         self.training_args = training_args
+        self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
 
@@ -252,7 +258,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.fh_ = int(max(fh.to_relative(self.cutoff)))
         self.y_columns = y.columns
         # if no model_path was given, initialize new full model from config
-        if not self.model_path:
+        if not self.model_path and self.fit_strategy == "full":
             self._config["num_input_channels"] = len(self.y_columns)
             if "prediction_length" in self._config.keys():
                 if self._config["prediction_length"] > self.fh_:
@@ -277,14 +283,15 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
-            self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
-            if not isinstance(self.model.model, PatchTSTModel):
-                raise ValueError(
-                    "This estimator requires a `PatchTSTModel`, but "
-                    f"found {self.model.model.__class__.__name__}"
-                )
+            if self.fit_strategy == "minimal" or self.fit_strategy == "zero-shot":
+                self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
+                if not isinstance(self.model.model, PatchTSTModel):
+                    raise ValueError(
+                        "This estimator requires a `PatchTSTModel`, but "
+                        f"found {self.model.model.__class__.__name__}"
+                    )
 
-        if self.fit_strategy != "zero-shot":
+        if self.fit_strategy == "full" or self.fit_strategy == "zero-shot":
             # initialize dataset
             y_train, y_test = temporal_train_test_split(
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
@@ -292,19 +299,19 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             train_dataset = PyTorchDataset(
                 y_train,
                 context_length=self.model.config.context_length,
-                prediction_length=self.fh_,
+                prediction_length=self.model.config.prediction_length,
             )
             if self.validation_split != 0.0:
                 eval_dataset = PyTorchDataset(
                     y_test,
                     context_length=self.model.config.context_length,
-                    prediction_length=self.fh_,
+                    prediction_length=self.model.config.prediction_length,
                 )
             else:
                 eval_dataset = None
 
             # initialize training_args
-            training_args = TrainingArguments(**self.training_args)
+            training_args = TrainingArguments(**self._training_args)
 
             # Create the early stopping callback
 
