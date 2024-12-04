@@ -247,18 +247,16 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     # The following detectors are not interface compliant. See PR 6958
-    "PoissonHMM": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
-    "HMM": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
+    # "PoissonHMM": [
+    #     "test_predict_points",
+    #     "test_predict_segments",
+    #     "test_transform_output_type",
+    # ],
+    # "HMM": [
+    #     "test_predict_points",
+    #     "test_predict_segments",
+    #     "test_transform_output_type",
+    # ],
     "ClaSPSegmentation": [
         "test_predict_points",
         "test_predict_segments",
