@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._base_peftable import BasePeftable
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -24,7 +25,7 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import Trainer, TrainingArguments
 
 
-class TinyTimeMixerForecaster(_BaseGlobalForecaster):
+class TinyTimeMixerForecaster(BasePeftable):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -188,36 +189,41 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 }
             )
 
-    def _fit(self, y, X, fh):
-        """Fit forecaster to training data.
+    def get_model(self, fh):
+        """Return the underlying model."""
+        if not hasattr(self, "model"):
+            config = self._get_config(fh)
+            self.model, info = self._load_model(config)
 
-        private _fit containing the core logic, called from fit
+        return self.model
+    
+    def set_model(self, model):
+        """Set the underlying model."""
+        self.model = model
 
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+    def get_train_dataset(self, y, X, fh) -> tuple[Dataset, Dataset]:
+        """Return the training dataset."""
+        return self._get_train_test_data(y, self._get_config(fh))
 
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+    def _get_train_test_data(self, y, config):
 
-        Returns
-        -------
-        self : reference to self
-        """
+        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+
+        train = PyTorchDataset(
+            y=y_train,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
+        test = PyTorchDataset(
+            y=y_test,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
+
+        return train, test
+
+
+    def _get_config(self, fh):
         if self.use_source_package:
             from tsfm_public.models.tinytimemixer import (
                 TinyTimeMixerConfig,
@@ -229,6 +235,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerForPrediction,
             )
 
+        """Return the configuration."""
         # Get the Configuration
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
@@ -281,6 +288,19 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         config = config.from_dict(_config)
 
+        return config
+    
+    def _load_model(self, config):
+        if self.use_source_package:
+            from tsfm_public.models.tinytimemixer import (
+                TinyTimeMixerForPrediction,
+            )
+        elif _check_soft_dependencies("torch", severity="error"):
+            from sktime.libs.granite_ttm import (
+                TinyTimeMixerForPrediction,
+            )
+
+
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
@@ -291,6 +311,42 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             output_loading_info=True,
             ignore_mismatched_sizes=True,
         )
+        return self.model, info
+
+    def _fit(self, y, X, fh):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+
+        config = self._get_config(fh)
+
+        self.model, info = self._load_model(config)
 
         if len(info["mismatched_keys"]) == 0:
             return  # No need to fit
