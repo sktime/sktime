@@ -156,10 +156,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         # handle numpy 2 incompatible soft dependencies
         # for rationale, see _handle_numpy2_softdeps
-        self._handle_numpy2_softdeps()
+        # currently none incompatible, so commented out
+        # self._handle_numpy2_softdeps()
 
-    # TODO 0.35.0: check list of numpy 2 incompatible soft deps
-    # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
 
@@ -179,7 +178,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["pmdarima"]
+        NOT_NP2_COMPATIBLE = []
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:
