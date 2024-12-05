@@ -1813,8 +1813,7 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        # todo 0.35.0: check if numpy<2 is still needed
-        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
+        if _check_soft_dependencies(["pmdarima"], severity="none"):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()

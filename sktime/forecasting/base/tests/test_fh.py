@@ -745,11 +745,9 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
-# todo 0.35.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_estimator_deps(AutoARIMA, severity="none")
-    or _check_soft_dependencies("numpy>=2.0", severity="none"),
+    or not _check_estimator_deps(AutoARIMA, severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 def test_auto_arima():
