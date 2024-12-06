@@ -54,7 +54,7 @@ if _check_soft_dependencies("utilsforecast", severity="none"):
 
 import numpy as np
 
-from sktime.libs.timesfm import patched_decoder, xreg_lib
+from sktime.libs.timesfm.jax import patched_decoder, xreg_lib
 
 _TOL = 1e-6
 

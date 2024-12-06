@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from sktime.libs.timesfm import time_features
+from sktime.libs.timesfm.jax import time_features
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("tensorflow", severity="none"):
