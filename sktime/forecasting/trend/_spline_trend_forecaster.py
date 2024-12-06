@@ -40,8 +40,8 @@ class SplineTrendForecaster(BaseForecaster):
         degree=1,
         with_intercept=True,
         prediction_intervals=False,
-        knots="quantile",
-        extrapolation="periodic",
+        knots="uniform",
+        extrapolation="constant",
     ):
         self.regressor = regressor
         self.degree = degree
