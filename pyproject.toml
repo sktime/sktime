@@ -55,7 +55,7 @@ dependencies = [
   "numpy<2.2,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.12.0",  # base module for sklearn compatible base API
+  "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
@@ -105,7 +105,7 @@ all_extras = [
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
   'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  "skpro>=2,<2.8.0",
+  "skpro>=2,<2.9.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -147,7 +147,7 @@ all_extras_pandas2 = [
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
   'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  'skpro>=2,<2.8.0',
+  'skpro>=2,<2.9.0',
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -201,7 +201,7 @@ forecasting = [
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   'prophet<1.2,>=1.1; python_version < "3.13"',
   'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  "skpro>=2,<2.8.0",
+  "skpro>=2,<2.9.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'tbats<1.2,>=1.1; python_version < "3.12"',
