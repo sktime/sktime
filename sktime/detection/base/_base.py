@@ -140,8 +140,29 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Training data to fit model to (time series).
-        y : pd.Series, optional
-            Ground truth labels for training if detector is supervised.
+
+        y : pd.DataFrame with RangeIndex, optional.
+            Known events for traininmg, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -205,6 +226,14 @@ class BaseDetector(BaseEstimator):
     def predict(self, X):
         """Create labels on test/deployment data.
 
+        This method returns a list-like type specific to the detection task,
+        e.g., segments for segmentation, anomalies for anomaly detection.
+
+        The encoding varies by task and learning_type (tags), see below.
+
+        For returns that are type consistent across tasks, see
+        ``predict_points`` and ``predict_segments``.
+
         Parameters
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
@@ -212,14 +241,28 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
-            The index is always a ``RangeIndex``.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
         self.check_is_fitted()
 
@@ -228,6 +271,9 @@ class BaseDetector(BaseEstimator):
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         y = self._predict(X=X_inner)
+
+        # deal with legacy return format with intervals in index
+        y = self._coerce_to_df(y, columns=["ilocs"])
 
         return y
 
@@ -257,9 +303,10 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y = self.predict(X)
-        y_dense = self.sparse_to_dense(y, pd.RangeIndex(len(X)))
-        return pd.DataFrame(y_dense)
+        y_sparse = self.predict(X)
+        y_dense = self.sparse_to_dense(y_sparse, pd.RangeIndex(len(X)))
+        y_dense = self._coerce_to_df(y_dense, columns=["labels"])
+        return y_dense
 
     def transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
@@ -361,17 +408,53 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with, time series.
-        y : pd.Series, optional
-            Ground truth labels for training if detector is supervised.
+        y : pd.DataFrame with RangeIndex, optional.
+            Known events for training, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
-        Y : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
 
-        Notes
-        -----
-        Updates fitted model that updates attributes ending in "_".
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
         X_inner = self._check_X(X)
 
@@ -391,18 +474,54 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Data to be transformed
-        y : pd.Series or np.ndarray, optional (default=None)
-            Target values of data to be predicted.
+
+        y : pd.DataFrame with RangeIndex, optional.
+            Known events for training, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
@@ -419,7 +538,7 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Data to be transformed
-        Y : pd.Series or np.ndarray, optional (default=None)
+        y : pd.Series or np.ndarray, optional (default=None)
             Target values of data to be predicted.
 
         Returns
@@ -440,8 +559,41 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y = self.fit_predict(X, y=y, Y=Y)
-        return self.sparse_to_dense(y, index=X.index)
+        y_sparse = self.fit_predict(X, y=y, Y=Y)
+        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+        y_dense = self._coerce_to_df(y_dense, columns=["labels"])
+        return y_dense
+
+    def _coerce_to_df(self, y, columns=None):
+        """Coerce output to a DataFrame.
+
+        Also deals with the following downwards cases:
+
+        * IntervalIndex containing segments -> DataFrame with "ilocs" column
+        """
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            y = pd.DataFrame(y, columns=columns, dtype="int64")
+        if isinstance(y.index, pd.IntervalIndex):
+            if isinstance(y, pd.Series):
+                y = pd.DataFrame(y.index, columns=columns)
+            elif isinstance(y, pd.DataFrame):
+                y_index = y.index
+                y_index = pd.DataFrame(y_index, columns=columns)
+                y = y.reset_index(drop=True)
+                y = pd.concat([y_index, y], axis=1)
+
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(y, columns=columns, dtype="int64")
+
+        return y
+
+    def _coerce_intervals_to_values(self, y):
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            y = pd.Series(y, dtype="int64")
+        if isinstance(y.index, pd.IntervalIndex):
+            if isinstance(y, pd.Series):
+                y = pd.Series(y.index)
+        return y
 
     def _check_X(self, X):
         """Check input data.
@@ -586,6 +738,10 @@ class BaseDetector(BaseEstimator):
     def predict_segments(self, X):
         """Predict segments on test/deployment data.
 
+        The main difference to ``predict`` is that this method always returns
+        a ``pd.DataFrame`` with segments of interest, even if the task is not
+        segmentation.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -593,30 +749,44 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with IntervalIndex
-            A series with an index of intervals. Each interval is the range of a
-            segment and the corresponding value is the label of the segment.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+
+            ``pd.DataFrame`` with the following columns:
+
+            * ``"ilocs"`` - always. Values are left-closed intervals with
+              left/right values being ``iloc`` references to indices of ``X``,
+              signifying segments.
+            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or segment clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
-              the labels are consecutive integers starting from 0.
-            * If ``task`` is "segmentation", the values are segmentation labels.
+              potential labels are consecutive integers starting from 0.
+            * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         self.check_is_fitted()
         X = check_series(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
-            return self.change_points_to_segments(
-                self.predict_points(X), start=0, end=len(X)
-            )
+            y_pred_pts = self.predict_points(X)
+            y_pred = self.change_points_to_segments(y_pred_pts, start=0, end=len(X))
         elif task == "segmentation":
-            return self._predict_segments(X)
+            y_pred = self._predict_segments(X)
+
+        y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
+        return y_pred
 
     def predict_points(self, X):
         """Predict changepoints/anomalies on test/deployment data.
 
+        The main difference to ``predict`` is that this method always returns
+        a ``pd.DataFrame`` with points of interest, even if the task is not
+        anomaly or change point detection.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -624,24 +794,37 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+
+            ``pd.DataFrame`` with the following columns:
+
+            * ``"ilocs"`` - always. Values are integers, ``iloc``
+              references to indices of ``X``, signifying points of interest.
+            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation, or anomaly clustering.
+
+            The meaning of segments in the ``"ilocs"`` column and ``"labels"``
+            column is as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are consecutive
+            * If ``task`` is ``"segmentation"``, the values are consecutive
               segment boundaries.
+
+            The ``"labels"`` are potential labels for the points of interest.
         """
         self.check_is_fitted()
         X = check_series(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
-            return self._predict_points(X)
+            y_pred = self._predict_points(X)
         elif task == "segmentation":
-            segments = pd.DataFrame(self.predict_segments(X))
-            return self.segments_to_change_points(segments)
+            y_pred_seg = pd.DataFrame(self.predict_segments(X))
+            y_pred = self.segments_to_change_points(y_pred_seg)
+
+        y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
+        return y_pred
 
     def _predict_segments(self, X):
         """Predict segments on test/deployment data.
@@ -688,7 +871,8 @@ class BaseDetector(BaseEstimator):
             * If the index of ``y_sparse`` is not a set of intervals, the values of the
               series should represent the indexes of changepoints/anomalies.
         index : array-like
-            Indices that are to be annotated according to ``y_sparse``.
+            Larger set of indices which contains event indices in ``y_sparse``,
+            to be used as the index of the returned series.
 
         Returns
         -------
@@ -737,17 +921,18 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
-        # convert the numpy series to pandas series
-        if isinstance(y_sparse, np.ndarray):
-            y_sparse = pd.Series(y_sparse, index=pd.RangeIndex(len(y_sparse)))
-
-        if isinstance(y_sparse.index, pd.IntervalIndex):
+        if isinstance(y_sparse, pd.DataFrame):
+            y_sparse = y_sparse.iloc[:, 0]
+        if not isinstance(y_sparse, pd.Series):
+            y_sparse = pd.Series(y_sparse, dtype="int64")
+        if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
             # Segmentation case
-            y_sparse = BaseDetector._sparse_segments_to_dense(y_sparse, index)
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
+            return y_dense
         else:
             # Anomaly/changepoint detection case
-            y_sparse = BaseDetector._sparse_points_to_dense(y_sparse, index)
-        return y_sparse
+            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
+            return y_dense
 
     @staticmethod
     def _sparse_points_to_dense(y_sparse, index):
@@ -830,6 +1015,10 @@ class BaseDetector(BaseEstimator):
               datatype index will be returned. The values of the series will be the
               labels of segments.
         """
+        if isinstance(y_dense, pd.DataFrame):
+            y_sparse = y_dense.iloc[:, 0]
+        if not isinstance(y_dense, pd.Series):
+            y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:
             # y_dense is a series of change points
             change_points = np.where(y_dense.values != 0)[0]
@@ -965,30 +1154,10 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
-        # Find maximum and minimum using numpy
-        maximum = np.max(y_sparse)
-        minimum = np.min(y_sparse)
-
-        # Get indices of max and min values using np.where
-        index_of_maximum = np.where(y_sparse == maximum)
-        index_of_minimum = np.where(y_sparse == minimum)
-
-        # You could return the indices as change points or process further as needed
-        change_points = np.concatenate([index_of_minimum[0], index_of_maximum[0]])
-
-        return pd.Series(change_points)
-
-        # If it's a pandas Series, the previous logic works
-        # if not isinstance(y_sparse.index, pd.IntervalIndex):
-        #     print("Not an interval index")
-        #     raise ValueError("y_sparse.index must be of type pd.IntervalIndex")
-
-        # if len(y_sparse) == 0:
-        #     return BaseDetector._empty_sparse()
-
-        # # Extract the left bounds of the intervals and return them as a Series
-        # change_points = pd.Series(y_sparse.index.left)
-        # return change_points
+        if len(y_sparse) == 0:
+            return BaseDetector._empty_sparse()
+        change_points = pd.Series(y_sparse.index.left)
+        return change_points
 
 
 class BaseSeriesAnnotator(BaseDetector):
