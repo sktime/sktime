@@ -79,7 +79,7 @@ class SplineTrendForecaster(BaseForecaster):
         else:
             regressor = clone(self.regressor)
 
-        # make pipeline with polynomial features
+        # make pipeline with spline features
         self.regressor_ = make_pipeline(
             SplineTransformer(
                 degree=self.degree,
