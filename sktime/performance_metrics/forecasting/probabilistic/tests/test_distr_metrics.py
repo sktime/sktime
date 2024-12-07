@@ -12,7 +12,6 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
 )
 from sktime.proba.normal import Normal
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
