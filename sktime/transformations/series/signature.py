@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-
+from itertools import product
 from sktime.transformations.base import BaseTransformer
 
 
@@ -57,13 +57,13 @@ class SignatureMoments(BaseTransformer):
     >>> from sktime.transformations.series.signature import SignatureMoments
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = SignatureMoments(degree=2, use_index=True)
+    >>> transformer = SignatureMoments(degree=2, use_index=False)
     >>> Xt = transformer.fit_transform(y)
     """
 
     _tags = {
-        "authors": ["VectorNd", "fkiraly"],
-        "maintainers": "VectorNd",
+        "authors": ["AdiTyaPal0710","VectorNd", "fkiraly"],
+        "maintainers": ["VectorNd","AdiTyaPal0710"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
@@ -72,14 +72,16 @@ class SignatureMoments(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    """
     def __init__(self, degree=2, use_index=True, normalize_prod=False):
         self.degree = degree
         self.use_index = use_index
         self.normalize_prod = normalize_prod
         super().__init__()
 
+    
     def _transform(self, X, y=None):
-        """Compute the signature features for the input time series."""
+        #Compute the signature features for the input time series.
         n_timepoints, n_channels = X.shape
 
         if self.use_index:
@@ -98,7 +100,7 @@ class SignatureMoments(BaseTransformer):
         return pd.DataFrame(signature_matrix, columns=feature_names)
 
     def _compute_signature(self, data):
-        """Compute signature features for a single instance."""
+        #Compute signature features for a single instance.
         n_channels, _ = data.shape
 
         feature_names = []
@@ -114,7 +116,7 @@ class SignatureMoments(BaseTransformer):
         return signature_row, feature_names
 
     def _compute_mean_product(self, data, indices):
-        """Compute mean product of the specified data dimensions."""
+        #Compute mean product of the specified data dimensions.
         length = len(indices)
         ix = indices
 
@@ -149,10 +151,10 @@ class SignatureMoments(BaseTransformer):
             return data_mean
         else:
             raise NotImplementedError("Degree higher than 3 is not implemented.")
-
+    
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
+        #Return testing parameter settings for the estimator.
 
         Parameters
         ----------
@@ -168,8 +170,67 @@ class SignatureMoments(BaseTransformer):
             ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
-        """
+        
         params0 = {"degree": 1, "use_index": True}
         params1 = {"degree": 3, "use_index": False}
         params2 = {"degree": 2, "use_index": True, "normalize_prod": True}
         return [params0, params1, params2]
+    """
+
+    def __init__(self, degree=2, use_index=False, use_smaller_equal=False):
+        if degree < 1:
+            raise ValueError("`degree` must be an integer >= 1.")
+        self.degree = degree
+        self.use_index = use_index
+        self.use_smaller_equal = use_smaller_equal
+        super().__init__()
+
+    def _transform(self, X, y=None):
+        """Transform the input time series into signature moments."""
+        if isinstance(X, pd.DataFrame):
+            X = X.to_numpy()
+
+        n_timepoints, n_channels = X.shape
+
+        if self.use_index:
+            time_index = np.arange(n_timepoints).reshape(-1, 1)
+            X = np.hstack([X, time_index])  # Add time index as a feature
+            n_channels += 1
+
+        features = {}
+        # Generate combinations (allowing duplicates) for each degree
+        for degree in range(1, self.degree + 1):
+            combs = product(range(n_channels), repeat=degree)
+            for comb in combs:
+                column_name = "".join(map(str, comb))
+                features[column_name] = self._compute_signature(X, comb)
+
+        return pd.DataFrame([features])
+
+    def _compute_signature(self, data, indices):
+        """Compute the mean product for a given combination of dimensions."""
+        selected_data = data[:, indices]
+        n, k = selected_data.shape  # n = number of timepoints, k = combination size
+        product_sum = 0.0
+        count = 0.0
+
+        # Generate all valid time index combinations of length k
+        time_combinations = product(range(n), repeat=k)
+        for time_comb in time_combinations:
+            prod = 1.0
+            for idx, time_idx in enumerate(time_comb):
+                prod *= selected_data[time_idx, idx]
+            product_sum += prod
+            count += 1.0
+
+        return product_sum / count if count > 0 else 0.0
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the transformer."""
+        params0 = {"degree": 1, "use_index": False, "use_smaller_equal": False}
+        params1 = {"degree": 2, "use_index": True, "use_smaller_equal": True}
+        params2 = {"degree": 3, "use_index": False, "use_smaller_equal": True}
+        return [params0, params1, params2]
+
+    
