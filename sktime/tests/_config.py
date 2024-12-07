@@ -430,7 +430,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "WEASEL",
         "WeightedEnsembleClassifier",
         "WhiteNoiseAugmenter",
-        "YtoX",
     ]
 }
 
