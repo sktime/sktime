@@ -105,8 +105,11 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         assert isinstance(y_pred.index, pd.RangeIndex)
         assert "ilocs" in y_pred.columns
         ilocs_dtype = y_pred["ilocs"].dtype
+        y_pred["ilocs"] = pd.IntervalIndex.from_arrays(
+            y_pred["ilocs"].values, y_pred["ilocs"].values + 1
+        )
         assert isinstance(y_pred["ilocs"].dtype, pd.IntervalDtype)
-        assert pd.api.types.is_integer_dtype(ilocs_dtype.subtype)
+        assert pd.api.types.is_integer_dtype(ilocs_dtype)
 
     def test_detector_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""

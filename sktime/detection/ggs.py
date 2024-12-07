@@ -537,5 +537,5 @@ class GreedyGaussianSegmentation(BaseDetector):
         -------
         params : dict or list of dict
         """
-        if parameter_set == "default":
-            return cls(k_max=10, lamb=1.0)
+        params = cls(k_max=10, lamb=1.0)
+        return params
