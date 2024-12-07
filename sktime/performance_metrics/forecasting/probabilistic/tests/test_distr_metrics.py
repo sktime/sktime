@@ -11,7 +11,6 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
     LogLoss,
 )
 from sktime.proba.normal import Normal
-from sktime.proba.tfp import TFNormal
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -19,11 +18,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 DISTR_METRICS = [CRPS, AUCalibration, LogLoss]
 
-
-if _check_soft_dependencies("tensorflow_probability", severity="none"):
-    normal_dists = [Normal, TFNormal]
-else:
-    normal_dists = [Normal]
+normal_dists = [Normal]
 
 
 @pytest.mark.skipif(
