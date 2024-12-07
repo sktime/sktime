@@ -5,9 +5,10 @@ __author__ = ["fkiraly"]
 
 __all__ = ["Mixture"]
 
+from sktime.proba._error import _proba_error
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("skpro", severity="none"):
     from skpro.distributions.mixture import Mixture
 else:
-    from sktime.proba._mixture import Mixture
+    _proba_error()
