@@ -222,7 +222,7 @@ class _DartsRegressionAdapter(BaseForecaster):
             future_known_dataset = None
             future_unknown_dataset = None
 
-        return future_known_dataset, future_unknown_dataset
+        return future_unknown_dataset, future_known_dataset
 
     @classmethod
     @abc.abstractmethod

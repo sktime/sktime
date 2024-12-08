@@ -3099,6 +3099,15 @@
       ]
     },
     {
+    },
+      "login":"JoanJaraBosch",
+      "name": "Joan Jara Bosch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23338637?s=400&u=09e492e4748ad689737db76333281debdf55d65d&v=4",
+      "profile": "https://github.com/JoanJaraBosch",
+      "contributions": [
+        "bug"
+        ]
+    },
       "login":"markussagen",
       "name": "Markus Sagen",
       "avatar_url": "https://avatars.githubusercontent.com/u/20767068?v=4",
@@ -3107,6 +3116,7 @@
         "code",
         "example"
       ]
+},
     },
     {
       "login": "Z-Fran",
