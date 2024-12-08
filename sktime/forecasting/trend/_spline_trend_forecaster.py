@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements SplineTrendForecaster."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "jgyasu"]
+__author__ = ["jgyasu", "tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["SplineTrendForecaster"]
 
 import numpy as np
@@ -12,22 +12,86 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 
 
-class SplineTrendForecaster(BaseForecaster):
-    """Forecast time series data with a spline trend."""
+class SplineTrendForecaster(PolynomialTrendForecaster):
+    """
+    Forecast time series data with a spline trend.
+
+    Parameters
+    ----------
+    regressor : sklearn regressor estimator object, default=None
+        Define the regression model type. If not set, defaults to
+        sklearn.linear_model.LinearRegression.
+    degree : int, default=1
+        Degree of the polynomial function.
+    with_intercept : bool, default=True
+        If True, includes a feature in which all polynomial powers are
+        zero (i.e., a column of ones, acting as an intercept term in a linear
+        model).
+    prediction_intervals : bool, default=False
+        Whether to compute prediction intervals. If True, additional
+        calculations are done during fit to enable prediction intervals
+        to be calculated during predict. The prediction intervals are
+        based on an OLS regression model fitted to the data and calculated
+        according to Section 7.9 in [1]. Formulas are modified appropriately
+        if `with_intercept` is False.
+    n_knots : int, default=5
+        Number of knots of the splines if `knots` equals one of {'uniform', 'quantile'}.
+        Must be at least 2. Ignored if `knots` is array-like.
+    knots : {'uniform', 'quantile'}or array-like of shape (n_knots, n_features),
+        default='uniform'
+        Determines knot positions such that first knot <= features <= last knot.
+        - 'uniform': `n_knots` are distributed uniformly between the
+        min and max values of the features.
+        - 'quantile': `n_knots` are distributed uniformly along the quantiles
+        of the features.
+        - array-like: Specifies sorted knot positions, including the boundary knots.
+        Internally, additional knots are added before the first knot and after
+        the last knot based on the spline degree.
+    extrapolation : {'error', 'constant', 'linear', 'continue', 'periodic'},
+        default='constant'
+        Determines how to handle values outside the min and max values of the
+        training features:
+        - 'error': Raises a ValueError.
+        - 'constant': Uses the spline value at the minimum or maximum feature as
+        constant extrapolation.
+        - 'linear': Applies linear extrapolation.
+        - 'continue': Extrapolates as is (equivalent to `extrapolate=True` in
+        `scipy.interpolate.BSpline`).
+        - 'periodic': Uses periodic splines with a periodicity equal to the distance
+        between the first and last knot, enforcing equal function values and
+        derivatives at these knots.
+    include_bias : bool, default=True
+        If False, the last spline element inside the feature range is dropped.
+        B-splines sum to one over the basis functions, implicitly including
+        a bias term, i.e., a column of ones.
+
+    References
+    ----------
+    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
+    and practice, 3rd edition. OTexts: Melbourne, Australia. OTexts.com/fpp3.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import SplineTrendForecaster
+    >>> y = load_airline()
+    >>> forecaster = SplineTrendForecaster(
+    ...     degree=1,
+    ...     n_knots=5,
+    ...     knots="uniform",
+    ...     extrapolation="constant"
+    ... )
+    >>> forecaster.fit(y)
+    SplineTrendForecaster()
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    """
 
     _tags = {
-        "authors": [
-            "tensorflow-as-tf",
-            "mloning",
-            "aiwalter",
-            "fkiraly",
-            "ericjb",
-            "jgyasu",
-        ],
+        "authors": ["jgyasu", "tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -40,21 +104,23 @@ class SplineTrendForecaster(BaseForecaster):
         degree=1,
         with_intercept=True,
         prediction_intervals=False,
+        n_knots=5,
         knots="uniform",
         extrapolation="constant",
     ):
-        self.regressor = regressor
-        self.degree = degree
-        self.with_intercept = with_intercept
-        self.regressor_ = self.regressor
-        self.prediction_intervals = prediction_intervals
+        super().__init__(
+            regressor=regressor,
+            degree=degree,
+            with_intercept=with_intercept,
+            prediction_intervals=prediction_intervals,
+        )
+        self.n_knots = n_knots
         self.knots = knots
         self.extrapolation = extrapolation
         # prediction_intervals : bool, default=False
         # By default, the extra information needed to later generate the prediction
         # intervals is not calculated. If set to True, the extra information is
         # calculated and stored in the forecaster.
-        super().__init__()
 
         self.set_tags(**{"capability:pred_int": prediction_intervals})
 
@@ -83,9 +149,10 @@ class SplineTrendForecaster(BaseForecaster):
         self.regressor_ = make_pipeline(
             SplineTransformer(
                 degree=self.degree,
+                n_knots=self.n_knots,
                 knots=self.knots,
                 extrapolation=self.extrapolation,
-                include_bias=self.with_intercept,
+                include_bias=False,
             ),
             regressor,
         )
@@ -197,18 +264,27 @@ class SplineTrendForecaster(BaseForecaster):
                 "degree": 2,
                 "with_intercept": False,
                 "prediction_intervals": False,
+                "n_knots": 5,
+                "knots": "uniform",
+                "extrapolation": "constant",
             },
             {
                 "regressor": RandomForestRegressor(),
                 "degree": 2,
                 "with_intercept": True,
                 "prediction_intervals": True,
+                "n_knots": 5,
+                "knots": "uniform",
+                "extrapolation": "constant",
             },
             {
                 "regressor": RandomForestRegressor(),
                 "degree": 2,
                 "with_intercept": False,
                 "prediction_intervals": True,
+                "n_knots": 5,
+                "knots": "uniform",
+                "extrapolation": "constant",
             },
         ]
 
