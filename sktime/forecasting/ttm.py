@@ -20,10 +20,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import Trainer, TrainingArguments
-
-
 class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
@@ -218,6 +214,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        from transformers import Trainer, TrainingArguments
+
         if self.use_source_package:
             from tsfm_public.models.tinytimemixer import (
                 TinyTimeMixerConfig,
