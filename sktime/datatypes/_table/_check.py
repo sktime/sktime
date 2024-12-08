@@ -164,7 +164,32 @@ def _check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 
 
 class TablePdSeries(ScitypeTable):
-    """Data type: pandas.Series based specification of data frame table.
+    """Data type: pandas.Series based specification of tabular data.
+
+    Name: ``"pd_Series_Table"``
+
+    Short description:
+
+    a pandas ``Series`` representing tabular data,
+    with rows = instances, single column = feature
+
+    Long description:
+
+    The ``"pd_Series_Table"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: pandas.Series`` follows the specification iff:
+
+    * structure convention: ``obj.index`` can be any valid pandas index.
+    * feature: the single column of ``obj`` corresponds to a feature
+    * feature name: the name of the single column ``obj.name``
+    * instances: rows of ``obj`` correspond to different instances
+
+    Capabilities:
+
+    * can represent univariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
