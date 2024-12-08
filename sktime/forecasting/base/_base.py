@@ -853,7 +853,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
-        Note: currently only implemented for Series (non-panel, non-hierarchical) y.
+        Note:
+
+        * currently only implemented for Series (non-panel, non-hierarchical) y.
+        * requires ``skpro`` installed for the distribution objects returned.
 
         State required:
             Requires state to be "fitted", i.e., ``self.is_fitted=True``.
@@ -874,7 +877,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-
             If ``fh`` is not None and not of type ``ForecastingHorizon``,
             it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
 
@@ -884,7 +886,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * if ``fh`` is of type ``pd.Index``, it is interpreted
               as an absolute horizon, and coerced
               to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
-
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -898,7 +899,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Returns
         -------
-        pred_dist : sktime BaseDistribution
+        pred_dist : skpro BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
@@ -916,21 +917,25 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "automated vectorization for predict_proba is not implemented"
             )
 
-        # todo 0.35.0: replace warning by soft dependency exception
-        if not _check_soft_dependencies("skpro", severity="none"):
-            warn(
-                "From sktime version 0.38.0, forecasters' predict_proba will "
-                "require skpro to be present in the python environment, "
-                "for distribution objects to represent distributional forecasts. "
-                "Until 0.35.0, predict_proba will continue working without skpro, "
-                "defaulting to return objects in sktime.proba if skpro is not present. "
-                "From 0.35.0, an error will be raised if skpro is not present "
-                "in the environment. "
-                "To silence this message, ensure skpro is installed in the environment "
-                "when calling forecasters' predict_proba. ",
-                obj=self,
-                stacklevel=2,
-            )
+        # predict_proba requires skpro to provide the distribution object returns
+        # "silent" exception for user convenience is Normal distribution,
+        # which has a minimal implementation living in sktime
+        # this is not signposted to users though, to avoid too high reliance
+        msg = (
+            "Forecasters' predict_proba requires "
+            "skpro to be present in the python environment, "
+            "for distribution objects to represent distributional forecasts. "
+            "To silence this message, ensure skpro is installed in the environment "
+            "when calling forecasters' predict_proba."
+        )
+        non_default_pred_proba = not self._has_implementation_of("_predict_proba")
+        skpro_present = _check_soft_dependencies("skpro", severity="none")
+
+        if not non_default_pred_proba and not skpro_present:
+            warn(msg, obj=self, stacklevel=2)
+
+        if non_default_pred_proba and not skpro_present:
+            raise ImportError(msg)
 
         self.check_is_fitted()
 
