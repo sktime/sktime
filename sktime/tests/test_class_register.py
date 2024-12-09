@@ -35,7 +35,6 @@ def get_test_class_registry():
         TestAllGlobalForecasters,
     )
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
-    from sktime.proba.tests.test_all_distrs import TestAllDistributions
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.split.tests.test_all_splitters import TestAllSplitters
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
@@ -55,7 +54,6 @@ def get_test_class_registry():
     testclass_dict["aligner"] = TestAllAligners
     testclass_dict["classifier"] = TestAllClassifiers
     testclass_dict["detector"] = TestAllDetectors
-    testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["global_forecaster"] = TestAllGlobalForecasters

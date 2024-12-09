@@ -158,7 +158,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.35.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.36.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
