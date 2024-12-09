@@ -546,6 +546,31 @@ def _index_equally_spaced(index):
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
 
+    Represents a single time series stored as an `xarray.DataArray`.
+    
+    Characteristics:
+    - Supports both univariate and multivariate series.
+    - Index (time) must be monotonic and equally spaced, if specified.
+    - Features (variables) must have unique names.
+
+    Example:
+    #syntax
+    from sktime.datatypes import get_examples
+    #Fetch examples for SeriesXarray
+    example = get_examples(mtype="xr.DataArray")[0]
+    print(example)
+
+    output:
+
+    <xarray.DataArray (dim_0: 4, dim_1: 1)>
+    array([[ 1. ],
+           [ 4. ],
+           [ 0.5],
+           [-3. ]])
+    Coordinates:
+      * dim_0    (dim_0) int32 0 1 2 3
+      * dim_1    (dim_1) <U1 'a'
+
     Parameters
     ----------
     is_univariate: bool
