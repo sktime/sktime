@@ -15,10 +15,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-    from transformers import AutoConfig, Trainer, TrainingArguments
-
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -173,6 +169,8 @@ class HFTransformersForecaster(BaseForecaster):
         self.peft_config = peft_config
 
     def _fit(self, y, X, fh):
+        from transformers import AutoConfig, Trainer, TrainingArguments
+
         # Load model and extract config
         config = AutoConfig.from_pretrained(self.model_path)
 
@@ -305,6 +303,8 @@ class HFTransformersForecaster(BaseForecaster):
         trainer.train()
 
     def _predict(self, fh, X=None):
+        import transformers
+
         if self.deterministic:
             transformers.set_seed(42)
 
