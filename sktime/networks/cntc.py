@@ -47,13 +47,71 @@ class CNTCNetwork(BaseDeepNetwork):
             networks, Contextual long short-term memory, Attention, Multilayer
             perceptron},
        }
+
+    
+    Examples
+    --------
+    Simple Usage
+    ------------
+    >>> from sktime.networks.cntc import CNTCNetwork
+    >>> import numpy as np
+
+    # Initialize the network
+    >>> cntc = CNTCNetwork(random_state=42)
+
+    # Create dummy time series data (3 samples, 10 time steps, 1 feature)
+    >>> X = np.random.randn(3, 10, 1)
+    >>> input_shape = X.shape[1:]
+
+    # Build the network
+    >>> input_layer, output_layer = cntc.build_network(input_shape=input_shape)
+
+    # Display the input and output layer shapes
+    >>> print("Input layer shape:", input_layer[0].shape)
+    >>> print("Output layer shape:", output_layer.shape)
+
+    Advanced Usage
+    --------------
+    >>> from sktime.networks.cntc import CNTCNetwork
+    >>> import numpy as np
+    >>> from tensorflow.keras.models import Model
+
+    # Initialize the network with customized parameters
+    >>> cntc = CNTCNetwork(
+    ...     random_state=42,
+    ...     rnn_layer=128,
+    ...     filter_sizes=(32, 16),
+    ...     kernel_sizes=(3, 3),
+    ...     lstm_size=16,
+    ...     dense_size=128,
+    ... )
+
+    # Generate synthetic time series data
+    >>> X = np.random.randn(50, 100, 3)  # 50 samples, 100 time steps, 3 features
+    >>> input_shape = X.shape[1:]
+
+    # Build the network and create a Keras model
+    >>> input_layer, output_layer = cntc.build_network(input_shape=input_shape)
+    >>> model = Model(inputs=input_layer, outputs=output_layer)
+
+    # Compile and train the model on the generated data
+    >>> model.compile(optimizer="adam", loss="mse")
+    >>> y = np.random.randn(50, 128)  # Dummy target data
+    >>> model.fit(X, y, epochs=5, batch_size=16)
+
+    # Predict with the trained model
+    >>> predictions = model.predict(X)
+    >>> print("Predictions shape:", predictions.shape)
+    
+    }   
     """
 
     _tags = {
         "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow", "keras-self-attention"],
-    }
+
+
 
     def __init__(
         self,
