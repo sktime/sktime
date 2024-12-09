@@ -3213,6 +3213,15 @@
       ]
     },
     {
+      "login": "PranavBhatP",
+      "name": "PranavBhatP",
+      "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
+      "profile" :"https://github.com/PranavBhatP",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "mjste",
       "name": "Michał Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
@@ -3222,13 +3231,13 @@
       ]
     },
     {
-        "login": "Sohaib-Ahmed21",
-        "name": "Sohaib Ahmed",
-        "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
-        "profile": "https://github.com/Sohaib-Ahmed21",
-        "contributions": [
-          "code"
-        ]
+      "login": "Sohaib-Ahmed21",
+      "name": "Sohaib Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
+      "profile": "https://github.com/Sohaib-Ahmed21",
+      "contributions": [
+        "code"
+      ]
     },
     {
       "login": "alyssadsouza",
