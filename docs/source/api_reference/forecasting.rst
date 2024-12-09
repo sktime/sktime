@@ -238,6 +238,14 @@ Trend forecasters
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
 
+.. currentmodule:: sktime.forecasting.mstl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MSTL
+
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
