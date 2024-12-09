@@ -5,13 +5,12 @@
 __author__ = ["Dehelaan"]
 __all__ = ["SplineTrendForecaster"]
 
+from sklearn.base import clone
+from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer
-from sklearn.linear_model import LinearRegression
-from sklearn.base import clone
 
-from sktime.forecasting.trend import _DelegatedForecaster
-from sktime.forecasting.trend import TrendForecaster
+from sktime.forecasting.trend import TrendForecaster, _DelegatedForecaster
 
 
 class SplineTrendForecaster(_DelegatedForecaster):
@@ -63,7 +62,14 @@ class SplineTrendForecaster(_DelegatedForecaster):
         "capability:pred_int": True,
     }
 
-    def __init__(self, regressor=None, degree=1, n_knots=4, extrapolation="constant", include_bias=True):
+    def __init__(
+        self,
+        regressor=None,
+        degree=1,
+        n_knots=4,
+        extrapolation="constant",
+        include_bias=True,
+    ):
         self.degree = degree
         self.n_knots = n_knots
         self.extrapolation = extrapolation
@@ -76,7 +82,8 @@ class SplineTrendForecaster(_DelegatedForecaster):
                 n_knots=self.n_knots,
                 extrapolation=self.extrapolation,
                 include_bias=self.include_bias,
-            ),clone(self.regressor),
+             ),
+            clone(self.regressor),
         )
 
         spline_forecaster = TrendForecaster(spline_regressor)
