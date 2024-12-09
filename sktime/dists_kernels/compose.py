@@ -69,6 +69,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
 
     def __init__(self, pw_trafo, transformers):
         self.pw_trafo = pw_trafo
+        self.pw_trafo_ = pw_trafo.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
@@ -105,6 +106,15 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.pw_trafo)]
+
+    @property
+    def steps_(self):
+        """Concatenated list of sktime transformers and pairwise panel transformer."""
+        return self._transformers + [self._coerce_estimator_tuple(self.pw_trafo_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated PwTrafoPanelPipeline, trafos on left.
@@ -155,10 +165,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        trafos = self.transformers_.clone()
-        pw_trafo = self.pw_trafo
-
-        Xt = trafos.fit_transform(X)
+        Xt = self.transformers_.fit_transform(X)
 
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
@@ -166,9 +173,10 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         if X2 is None:
             X2t = None
         else:
-            X2t = trafos.fit_transform(X2)
+            X2t = self.transformers_.fit_transform(X2)
 
-        distmat = pw_trafo.transform(Xt, X2t)
+        distmat = self.pw_trafo_.transform(Xt, X2t)
+
         return distmat
 
     def get_params(self, deep=True):
