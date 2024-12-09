@@ -153,7 +153,8 @@ def test_evaluate_common_configs(
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([evaluate] + PROBA_METRICS),
+    not run_test_for_class([evaluate] + PROBA_METRICS)
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("return_data", [True, False])
@@ -339,7 +340,8 @@ def test_evaluate_bigger_X(cls):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([evaluate] + PROBA_METRICS),
+    not run_test_for_class([evaluate] + PROBA_METRICS)
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_columns", [1, 2])
