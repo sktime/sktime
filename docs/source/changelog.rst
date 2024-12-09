@@ -16,6 +16,66 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.35.0 - 2024-12-09
+---------------------------
+
+Maintenance release with scheduled deprecations and change actions.
+
+For the last non-maintenance content update, see 0.34.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``scikit-base`` bounds have been updated to ``>=0.6.1,<0.13.0``
+* ``skpro`` (probability distributions soft dependency) bounds have been updated to ``>=2,<2.9.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* From ``sktime 0.38.0``, forecasters' ``predict_proba`` will
+  require ``skpro`` to be present in the python environment,
+  for distribution objects to represent distributional forecasts.
+  Since ``sktime 0.35.0``, an error is raised upon call of
+  forecaster ``predict_proba`` if ``skpro`` is not present
+  in the environment.
+  Users of forecasters' ``predict_proba`` should ensure
+  that ``skpro`` is installed in the environment.
+
+* The probability distributions module ``sktime.proba`` deprecated and will
+  be fully replaced by ``skpro`` in ``sktime 0.38.0``.
+  Until ``sktime 0.38.0``, imports from ``sktime.proba`` will continue working,
+  defaulting to ``sktime.proba`` if ``skpro`` is not present,
+  otherwise redirecting imports to ``skpro`` objects.
+  Since ``sktime 0.35.0``, an error is raised if ``skpro`` is not present
+  in the environment, otherwise imports are redirected to ``skpro``.
+  Direct or indirect users of ``sktime.proba`` should ensure ``skpro`` is
+  installed in the environment.
+  Direct users of the ``sktime.proba`` module should,
+  in addition, replace any imports from
+  ``sktime.proba`` with imports from ``skpro.distributions``.
+
+* in ``neuralforecast`` facing estimator interfaces, the default for the
+  ``broadcasting`` parameter has been consistently changed to ``False``.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.12.0,>=0.6.1`` to ``>=0.6.1,<0.13.0`` (:pr:`7392`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.8.0,>=2`` to ``>=2,<2.9.0`` (:pr:`7406`) :user:`dependabot[bot]`
+* [MNT] bound ``peft<0.14.0`` (:pr:`7495`) :user:`fkiraly`
+* [MNT] 0.35.0 deprecations and change actions (:pr:`7485`) :user:`fkiraly`
+* [MNT] remove top level import of transformers (:pr:`7491`) :user:`yarnabrina`
+* [MNT] add upper bound to skforecast autoreg adapter (:pr:`7488`) :user:`yarnabrina`
+* [DOC] fix failing cells in detection notebook after ``skchange`` update (:pr:`7483`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
 Version 0.34.1 - 2024-11-29
 ---------------------------
 
