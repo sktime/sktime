@@ -82,7 +82,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
                 n_knots=self.n_knots,
                 extrapolation=self.extrapolation,
                 include_bias=self.include_bias,
-             ),
+            ),
             clone(self.regressor),
         )
 
