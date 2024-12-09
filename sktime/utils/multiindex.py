@@ -1,10 +1,36 @@
 #!/usr/bin/env python3 -u
 """Multiindex formatting related utilities."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ksharma6"]
 __all__ = []
 
+import numpy as np
 import pandas as pd
+
+
+def apply_split(y, iloc_ix):
+    """Generates indices to apply split from indexer onto dataset.
+
+    Parameters
+    ----------
+    y : sktime or compatible multiindex data container
+    iloc_ix: 1D numpy array containing indices for splitting
+
+    Returns
+    ------
+    y_iloc : 1D numpy array containing plain indices for splitting.
+    """
+    if not isinstance(y, pd.MultiIndex):
+        zeros = [0] * len(y)
+        y = pd.MultiIndex.from_arrays([zeros, y])
+
+    inst_ix = y.droplevel(-1).unique()
+    iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
+
+    y_loc = inst_ix[np.array(iloc_ix)]
+    y_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in y_loc]
+    y_iloc = np.concatenate(y_np)
+    return y_iloc
 
 
 def underscore_join(iterable):
