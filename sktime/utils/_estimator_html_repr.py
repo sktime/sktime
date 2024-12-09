@@ -185,7 +185,9 @@ def _write_base_object_html(
         )
 
 
-with open(Path(__file__).parent / "_estimator_html_repr.css") as style_file:
+with open(
+    Path(__file__).parent / "_estimator_html_repr.css", encoding="utf-8"
+) as style_file:
     # use the style defined in the css file
     _STYLE = style_file.read()
 
