@@ -73,6 +73,8 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
@@ -91,8 +93,6 @@ Core Developers
      - :user:`miraep8`
    * - Pranav Prajapati
      - :user:`pranavvp16`
-   * - Sagar Mishra
-     - :user:`achieveordie`
    * - Sai Revanth Gowravajhala
      - :user:`SaiRevanth25`
    * - Svea Marie Meyer
@@ -130,8 +130,6 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Łukasz Mentel
@@ -148,6 +146,10 @@ Former Core Developers
      - :user:`prockenschaub`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
    * - Stanislav Khrapov
