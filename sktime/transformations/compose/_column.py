@@ -201,6 +201,13 @@ class ColumnEnsembleTransformer(
             tags_to_clone = ["scitype:transform-output", "scitype:transform-labels"]
             self.clone_tags(transformers[0][1], tags_to_clone)
 
+    def _sk_visual_block_(self):
+        """Return visual block for HTML representation."""
+        from sklearn.utils import _visual_block
+
+        names, transformers, columns = zip(*self.transformers)
+        return _visual_block("parallel", transformers, names=names, columns=columns)
+
     @property
     def _transformers(self):
         """Make internal list of transformers.
