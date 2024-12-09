@@ -1156,7 +1156,7 @@ class BaseDetector(BaseEstimator):
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
-        change_points = pd.Series(y_sparse.index.left)
+        change_points = pd.Series(y_sparse.index)
         return change_points
 
 
