@@ -68,11 +68,13 @@ Maintenance
 * [MNT] remove top level import of transformers (:pr:`7491`) :user:`yarnabrina`
 * [MNT] add upper bound to skforecast autoreg adapter (:pr:`7488`) :user:`yarnabrina`
 * [DOC] fix failing cells in detection notebook after ``skchange`` update (:pr:`7483`) :user:`fkiraly`
+* [BUG] Fix codec error on traditional Chinese Windows systems (:pr:`7498`) :user:`fnhirwa`
 
 Contributors
 ~~~~~~~~~~~~
 
 :user:`fkiraly`,
+:user:`fnhirwa`,
 :user:`yarnabrina`
 
 
