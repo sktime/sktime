@@ -73,6 +73,8 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
