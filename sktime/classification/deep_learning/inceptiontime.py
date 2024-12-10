@@ -60,7 +60,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     ...     n_estimators=5,
     ...     bootstrap=False) # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
-    InceptionTimeClassifier(...)
+    BaggingClassifier(...)
     """
 
     _tags = {
