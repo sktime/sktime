@@ -46,13 +46,12 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     The `InceptionTimeClassifier` here, is a single instance of InceptionTime model.
     The original InceptionTime paper recommends to ensemble 5 instances
     of InceptionTime model to match with the benchmark standards. To build an
-    ensemble of models following the original paper use the `BaggingClassifier` with
+    ensemble of models following the original paper, use the `BaggingClassifier` with
     `n_estimators=5`, `bootstrap=False` using `InceptionTimeClassifier` as estimator.
 
     Examples
     --------
-    Single instance
-    ---------------
+    For single instance of InceptionTime classifiers :
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
@@ -61,8 +60,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     InceptionTimeClassifier(...)
 
-    Ensemble of 5 instances
-    -----------------------
+    Ensemble of 5 instances:
     >>> from sktime.classification.ensemble import BaggingClassifier
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
