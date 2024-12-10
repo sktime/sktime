@@ -462,21 +462,3 @@ class _SeriesUnivPosGluontsListDataset(_SeriesUnivPos):
 
         pd_df = _SeriesUnivPosPdDataFrame().build()
         return convert_pandas_to_listDataset(pd_df)
-
-class _SeriesUnivPosSeriesXarray(_SeriesUnivPos):
-    """Class for handling SeriesXarray data type."""
-    
-    _tags = {
-        "mtype": "series_xarray",
-        "python_dependencies": "xarray",
-        "lossy": False,
-    }
-
-    def build(self):
-        import xarray as xr
-
-        # Creating a simple example of an xr.DataArray
-        return xr.DataArray(
-            [[1], [4], [0.5], [3]],  # Data values
-            coords=[[0, 1, 2, 3], ["a"]],  # Coordinates (time index and feature names)
-        )

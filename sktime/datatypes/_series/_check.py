@@ -550,35 +550,49 @@ class SeriesXarray(ScitypeSeries):
 
     Short description:
     
-    An `xarray.DataArray` representing a time series, where:
+    An ``xarray.DataArray`` representing a single time series, where:
+
     - Each row corresponds to a time point.
     - Columns represent variables or features.
     - Coordinates provide additional metadata for the time index and variables.
 
     Long description:
 
-    The ``"xr.DataArray"`` :term:`mtype` is a concrete specification
-    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    The ``"xr.DataArray"`` :term:``mtype`` is a concrete specification
+    that implements the ``Series`` :term:``scitype``, i.e., the abstract
     type for time series data.
 
     An object ``obj: xarray.DataArray`` follows the specification iff:
 
     * structure convention:
-      - ``obj`` is a 2D array-like structure with shape `(n_timepoints, n_features)`.
-      - ``obj.coords`` must include:
+
+      - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
+      - ``obj.coords`` must include: 
+      
         - A time-like index (`dim_0`) which is either `Int64Index`, `RangeIndex`,
           `DatetimeIndex`, or `PeriodIndex`, and it must be monotonic.
         - A variable-like index (`dim_1`) for feature/variable names (optional).
+
     * time index:
-      - The `dim_0` coordinate is interpreted as the time index.
+
+      - The ``dim_0`` coordinate is interpreted as the time index.
+
     * time points:
-      - Each row of `obj` represents a single time point.
-      - Rows with the same `dim_0` value correspond to the same time point.
+
+      - Each row of ``obj`` represents a single time point.
+      - Rows with the same ``dim_0`` value correspond to the same time point.
+
     * variables:
+
       - Columns represent different variables (or features).
-      - Column names are stored in `dim_1` if present.
-    * variable names: the variable names are the column names (`dim_1`), if present.
+      - Column names are stored in ``dim_1`` if present.
+
+    * variable names:
+
+      - The variable names are the column names (``dim_1``), if present.
+
     * metadata:
+
       - Additional metadata (e.g., attributes) may be included in ``obj.attrs``.
 
     Capabilities:
