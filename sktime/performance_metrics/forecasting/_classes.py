@@ -221,12 +221,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
@@ -316,12 +314,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
@@ -530,12 +526,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
@@ -988,25 +982,41 @@ def make_forecasting_scorer(
     func : callable
         Callable to convert to a forecasting scorer class.
         Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
+
     name : str, default=None
         Name to use for the forecasting scorer loss class.
+
     greater_is_better : bool, default=False
         If True then maximizing the metric is better.
         If False then minimizing the metric is better.
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     Returns
     -------
@@ -1044,17 +1054,26 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     ----------
     sp : int, default = 1
         Seasonal periodicity of the data
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1156,17 +1175,26 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
     ----------
     sp : int, default = 1
         Seasonal periodicity of data.
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1269,17 +1297,26 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1381,17 +1418,26 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -1494,20 +1540,33 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -1614,20 +1673,33 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -1757,20 +1829,34 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -1944,6 +2030,174 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         return [params1, params2]
 
 
+class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
+    r"""Mean Squared Error Percentage (MSE%) and root-MSE% forecasting error metrics.
+
+    Calculates the mean squared error percentage between the true and predicted values.
+    Optionally, the root mean squared error percentage (RMSE%) can be computed by
+    setting ``square_root=True``.
+
+    The Mean Squared Error Percentage (MSE%) is calculated as:
+
+    .. math::
+        \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
+                            { \\sum_{i=1}^{n} \\frac{y_i}{n} }
+
+    where:
+    - \\( y_i \\) are the true values,
+    - \\( \\hat{y}_i \\) are the predicted values,
+    - \\( n \\) is the number of observations.
+
+    If ``square_root`` is set to True,
+    the Root Mean Squared Error Percentage (RMSE%) is computed:
+
+    .. math::
+        \\text{RMSE%} = \\sqrt{ \\text{MSE%} }
+
+    Parameters
+    ----------
+    square_root : bool, default = False
+        Whether to take the square root of the metric
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
+    """
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        self.multioutput = multioutput
+
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        r"""
+        Evaluate the Mean Squared Error Percentage (MSE%) between `y_true` and `y_pred`.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (actual) target values.
+            Can be a Series or DataFrame for univariate or multivariate forecasts.
+
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted target values.
+            Must have the same shape as `y_true`.
+
+        Returns
+        -------
+        loss : float or pd.Series
+            The calculated Mean Squared Error Percentage.
+            - If `multioutput='raw_values'`, returns a Series with the MSPE for
+            each output.
+            - Otherwise, returns a scalar value representing the aggregated MSPE.
+        """
+        multioutput = self.multioutput
+        raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        num = raw_values.mean()
+        denom = y_true.mean()
+
+        msqe = num / denom
+
+        if self.square_root:
+            msqe = msqe.pow(0.5)
+
+        return self._handle_multioutput(msqe, multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values_mse = (y_true - y_pred) ** 2
+        raw_values_p = y_true
+
+        # what we need to do is efficiently
+        # compute msqe but using data with the i-th time point removed
+        # msqe[i] = msqe(all data minus i-th time point)
+
+        n = raw_values_mse.shape[0]
+
+        num_mean = raw_values_mse.mean()
+        denom_mean = raw_values_p.mean()
+
+        num_jk = num_mean * (1 + 1 / (n - 1)) - raw_values_mse / (n - 1)
+        denom_jk = denom_mean * (1 + 1 / (n - 1)) - raw_values_p / (n - 1)
+
+        msep_jk = num_jk / denom_jk
+        msep = num_mean / denom_mean
+
+        if self.square_root:
+            msep_jk = msep_jk.pow(0.5)
+            msep = msep.pow(0.5)
+
+        pseudo_values = n * msep - (n - 1) * msep_jk
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, multioutput)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {"square_root": True}
+        return [params1, params2]
+
+
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
@@ -1965,20 +2219,34 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2074,20 +2342,33 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2164,20 +2445,34 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         Whether to take the square root of the mean squared error.
         If True, returns root geometric mean squared error (RGMSE)
         If False, returns geometric mean squared error (GMSE)
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2275,7 +2570,7 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
-    r"""Mean absolute percentage error (MAPE) or symmetric version.
+    r"""Mean absolute percentage error (MAPE) or symmetric MAPE.
 
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
@@ -2315,20 +2610,34 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
-        if str, must be one of {'raw_values', 'uniform_average'}
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2497,20 +2806,34 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
-        if str, must be one of {'raw_values', 'uniform_average'}
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2594,7 +2917,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
-    """Mean squared percentage error (MSPE)  or square root version.
+    """Mean squared percentage error (MSPE), or RMSPE, or symmetric MSPE, RMSPE.
 
     If ``square_root`` is False then calculates MSPE and if ``square_root`` is True
     then calculates root mean squared percentage error (RMSPE). If ``symmetric``
@@ -2617,20 +2940,34 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2719,7 +3056,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
 
 
 class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
-    """Median squared percentage error (MdSPE)  or square root version.
+    """Median squared percentage error (MdSPE), or RMdSPE, or symmetric MdSPE, RMDsPE.
 
     If ``square_root`` is False then calculates MdSPE and if ``square_root`` is True
     then calculates root median squared percentage error (RMdSPE). If ``symmetric``
@@ -2746,20 +3083,34 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2859,20 +3210,33 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -2939,20 +3303,33 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -3020,17 +3397,25 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
 
     See Also
     --------
@@ -3105,20 +3490,34 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     ----------
     square_root : bool, default = False
         Whether to take the square root of the metric
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -3241,20 +3640,34 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -3385,20 +3798,34 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         the reverse is true.
     b : int or float
         Multiplicative penalty to apply to calculated errors.
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     See Also
     --------
@@ -3517,20 +3944,34 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     ----------
     relative_loss_function : function
         Function to use in calculation relative loss.
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+        * If array-like, values used as weights to average the errors.
+        * If ``'raw_values'``,
+          returns a full set of errors in case of multioutput input.
+        * If ``'uniform_average'``,
+          errors of all outputs are averaged with uniform weight.
+
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If ``'uniform_average'`` (default),
+          errors are mean-averaged across levels.
+        * If ``'uniform_average_time'``,
+          metric is applied to all data, ignoring level index.
+        * If ``'raw_values'``,
+          does not average errors across levels, hierarchy is retained.
+
     sample_weight_generator : callable, default=None
         Callable to generate sample weights based on the true (and or predicted) values.
         Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
+        Must follow ``SampleWeightGenerator`` interface,
+        or have one of the following signatures:
+        ``y_true: pd.DataFrame -> 1D array-like``,
+        or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
     References
     ----------

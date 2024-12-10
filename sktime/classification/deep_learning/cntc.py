@@ -116,14 +116,12 @@ class CNTCClassifier(BaseDeepClassifier):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
-        is the number of dimensions, m is the series length. Keras/tensorflow assume
-        data is in shape (m,d). This method also assumes (m,d). Transpose should
-        happen in fit.
+        is the number of dimensions, m is the series length.
 
         Parameters
         ----------
         input_shape : tuple
-            The shape of the data fed into the input layer, should be (m,d)
+            The shape of the data fed into the input layer, should be (d,m)
         n_classes: int
             The number of classes, which becomes the size of the output layer
 
@@ -230,8 +228,6 @@ class CNTCClassifier(BaseDeepClassifier):
         if self.callbacks is None:
             self._callbacks = []
         y_onehot = self._convert_y_to_keras(y)
-        # Transpose to conform to Keras input style.
-        X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
@@ -275,8 +271,6 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         import numpy as np
 
-        # Transpose to work correctly with keras
-        X = X.transpose((0, 2, 1))
         X2 = self.prepare_input(X)
         probs = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
 

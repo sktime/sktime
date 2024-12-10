@@ -241,6 +241,14 @@ Auto-correlation-based features
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.signature
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureMoments
+
 .. currentmodule:: sktime.transformations.panel.signature_based
 
 .. autosummary::
@@ -590,6 +598,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.basisfunction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFTramsformer
 
 .. currentmodule:: sktime.transformations.series.peak
 
