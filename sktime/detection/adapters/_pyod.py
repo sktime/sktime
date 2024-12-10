@@ -34,6 +34,12 @@ class PyODDetector(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "satya-pattnaik", "fkiraly"],
+        "maintainers": "satya-pattnaik",
+        # estimator type
+        # --------------
         "python_dependencies": "pyod",
         "task": "anomaly_detection",
         "learning_type": "unsupervised",

@@ -215,6 +215,12 @@ class ClaSPSegmentation(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ermshaua", "patrickzib"],
+        "maintainers": "ermshaua",
+        # estimator type
+        # --------------
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "univariate-only": True,

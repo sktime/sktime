@@ -129,6 +129,12 @@ class HMM(BaseDetector):
 
     # plan to update to make multivariate.
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "miraep8",
+        "maintainers": "miraep8",
+        # estimator type
+        # --------------
         "univariate-only": True,
         "fit_is_empty": True,
         "task": "segmentation",

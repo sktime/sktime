@@ -38,6 +38,12 @@ class ClusterSegmenter(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Ankit-1204",
+        "maintainers": "Ankit-1204",
+        # estimator type
+        # --------------
         "task": "segmentation",
         "learning_type": "unsupervised",
     }
