@@ -546,7 +546,7 @@ def _index_equally_spaced(index):
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
     
-    Name: ``"xr.DataArray"``
+    Name: ``xr.DataArray``
 
     Short description:
     
@@ -558,7 +558,7 @@ class SeriesXarray(ScitypeSeries):
 
     Long description:
 
-    The ``"xr.DataArray"`` :term:``mtype`` is a concrete specification
+    The ``xr.DataArray`` :term:``mtype`` is a concrete specification
     that implements the ``Series`` :term:``scitype``, i.e., the abstract
     type for time series data.
 
@@ -568,10 +568,10 @@ class SeriesXarray(ScitypeSeries):
 
       - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
       - ``obj.coords`` must include: 
-      
-        - A time-like index (`dim_0`) which is either `Int64Index`, `RangeIndex`,
-          `DatetimeIndex`, or `PeriodIndex`, and it must be monotonic.
-        - A variable-like index (`dim_1`) for feature/variable names (optional).
+
+        - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
+          ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
+        - A variable-like index (``dim_1``) for feature/variable names (optional).
 
     * time index:
 
