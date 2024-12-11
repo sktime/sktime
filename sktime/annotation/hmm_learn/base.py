@@ -1,14 +1,16 @@
-"""Hidden Markov Model based annotation from hmmlearn.
+"""Hidden Markov Model based detection from hmmlearn.
 
 This code provides a base interface template for models
-from hmmlearn for using that library for annotation of time series.
+from hmmlearn for using that library for detection of time series.
 
 Please see the original library
 (https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
 """
+
 import numpy as np
 import pandas as pd
-from sktime.detection.hmm_learn.base import BaseHMMLearn
+
+from sktime.detection.base import BaseDetector
 
 __author__ = ["miraep8"]
 __all__ = ["BaseHMMLearn"]
@@ -87,14 +89,8 @@ class BaseHMMLearn(BaseDetector):
         """
         X, series, index = self._fix_input(X)
         X_prime = self._hmm_estimator.predict(X)
-        breaks = [0]
-        vals = [X_prime[0]]
-        for row in range(1,len(X_prime)):
-            if(X_prime[row] != X_prime[row-1]):
-                breaks.append(row)
-                vals.append(X_prime[row])
-        breaks.append(len(X_prime)-1)
-        X_prime = pd.Series(vals, index=pd.IntervalIndex.from_breaks(breaks))
+        if series:
+            X_prime = pd.Series(X_prime, index=index)
         return X_prime
 
     def sample(self, n_samples=1, random_state=None, currstate=None):

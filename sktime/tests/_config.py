@@ -246,17 +246,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    # The following detectors are not interface compliant. See PR 6958
-    # "PoissonHMM": [
-    #     "test_predict_points",
-    #     "test_predict_segments",
-    #     "test_transform_output_type",
-    # ],
-    # "HMM": [
-    #     "test_predict_points",
-    #     "test_predict_segments",
-    #     "test_transform_output_type",
-    # ],
     "ClaSPSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -284,18 +273,6 @@ EXCLUDED_TESTS = {
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
-    ],
-    "GaussianHMM": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
-    "GMMHMM": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
     ],
 }
 
