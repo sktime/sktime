@@ -1,7 +1,4 @@
-"""Directed Chamfer distance between two sets of points."""
-
-import numpy as np
-import pandas as pd
+"""Count of detection, possibly in excess or deviation of a target count."""
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
