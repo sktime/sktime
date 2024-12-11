@@ -37,6 +37,8 @@ class DetectionCount(BaseDetectionMetric):
         self.target = target
         self.excess_only = excess_only
 
+        super().__init__()
+
     def _evaluate(self, y_true, y_pred, X):
         """Evaluate the desired metric on given inputs.
 

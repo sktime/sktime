@@ -43,6 +43,8 @@ class DirectedChamfer(BaseDetectionMetric):
     def __init__(self, normalize=False):
         self.normalize = normalize
 
+        super().__init__()
+
     def _evaluate(self, y_true, y_pred, X=None):
         """Evaluate the desired metric on given inputs.
 
