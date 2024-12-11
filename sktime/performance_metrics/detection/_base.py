@@ -5,7 +5,7 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
 
 
-class BaseDetectionErrorMetric(BaseMetric):
+class BaseDetectionMetric(BaseMetric):
     """Base class for defining detection error metrics in sktime."""
 
     _tags = {
@@ -73,6 +73,9 @@ class BaseDetectionErrorMetric(BaseMetric):
 
         # pass to inner function
         out = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, X=X_inner)
+
+        if not isinstance(out, float):
+            out = float(out)
         return out
 
     def _evaluate(self, y_true, y_pred, X=None):
@@ -109,7 +112,9 @@ class BaseDetectionErrorMetric(BaseMetric):
         SCITYPES = ["Series"]
         INNER_MTYPES = ["pd.DataFrame"]
 
-        def _coerce_to_df(y, var_name="y"):
+        def _coerce_to_df(y, var_name="y", allow_none=False):
+            if allow_none and y is None:
+                return None
             valid, msg, _ = check_is_scitype(
                 y, scitype=SCITYPES, return_metadata=[], var_name=var_name
             )
@@ -120,6 +125,6 @@ class BaseDetectionErrorMetric(BaseMetric):
 
         y_true = _coerce_to_df(y_true, var_name="y_true")
         y_pred = _coerce_to_df(y_pred, var_name="y_pred")
-        y_pred = _coerce_to_df(X, var_name="X")
+        X = _coerce_to_df(X, var_name="X", allow_none=True)
 
         return y_true, y_pred, X
