@@ -51,7 +51,9 @@ class BaseDetectionMetric(BaseMetric):
         ----------
         y_true : time series in ``sktime`` compatible data container format.
             Ground truth (correct) event locations, in ``X``.
-            Not required for unsupervised metrics.
+
+            Not required if unsupervised metric,
+            that is, if tag ``requires_y_true`` is False.
 
             Should be ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D),
             of ``Series`` scitype = individual time series.
@@ -66,6 +68,8 @@ class BaseDetectionMetric(BaseMetric):
             Time series that is being labelled.
             If not provided, assumes ``RangeIndex`` for ``X``, and that
             values in ``X`` do not matter.
+
+            Required if tag ``requires_X`` is True.
 
         Returns
         -------
