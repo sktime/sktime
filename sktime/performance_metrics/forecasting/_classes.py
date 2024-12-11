@@ -710,7 +710,7 @@ class BaseForecastingErrorMetric(BaseMetric):
                 return y.X_multiindex
 
             valid, msg, metadata = check_is_scitype(
-                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
+                y, scitype=SCITYPES, return_metadata=[], var_name=var_name
             )
             if not valid:
                 raise TypeError(msg)
