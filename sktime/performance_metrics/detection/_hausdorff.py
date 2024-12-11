@@ -18,8 +18,8 @@ class DirectedHausdorff(BaseDetectionMetric):
 
         d(A, B) = \max_i \left| a_i - b'_i \right|
 
-    where :math:`b'_i = \arg \min_{b\in B} |a_i - b|` is the closest
-    element of :math:`B`, to :math:`a_i`.
+    where :math:`b'_i` is the true event closest to :math:`a_i`,
+    that is, :math:`b'_i = \arg \min_{b\in B} |a_i - b|`.
 
     If ``X`` is provided, the time points are taken as the location indices in ``X``.
     Otherwise, it is assumed that ``X`` has a ``RangeIndex``.
