@@ -1,7 +1,12 @@
 """Feature Selection Methods."""
 
 __author__ = ["aykut-uz"]
-__all__ = ["BaseFeatureSelection", "OMPFeatureSelection", "LassoFeatureSelection", "XGBFeatureSelection"]
+__all__ = ["BaseFeatureSelection",
+           "CoefficientFeatureSelection",
+           "OMPFeatureSelection",
+           "LassoFeatureSelection", 
+           "XGBFeatureSelection"]
+
 from sktime.transformations.base import BaseTransformer
 import numpy as np
 from sklearn.base import clone
@@ -133,7 +138,7 @@ class OMPFeatureSelection(CoefficientFeatureSelection):
             n_features=n_features)
 
 
-class LassoFeatureSelection(BaseFeatureSelection):
+class LassoFeatureSelection(CoefficientFeatureSelection):
     """
     Performs feature selection using Lasso regressions.
     """
