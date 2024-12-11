@@ -1,10 +1,16 @@
 """Tests for the directed Hausdorff distance."""
 
 import pandas as pd
+import pytest
 
 from sktime.performance_metrics.detection._hausdorff import DirectedHausdorff
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DirectedHausdorff),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_hausdorff():
     """Test the directed Hausdorff distance."""
     y_pred = pd.DataFrame({"ilocs": [0, 1, 3, 4, 5]})  # locs are 1, 2, 5, 42, 43

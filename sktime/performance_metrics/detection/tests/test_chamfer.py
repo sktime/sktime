@@ -1,10 +1,16 @@
 """Tests for the directed Chamfer distance."""
 
 import pandas as pd
+import pytest
 
 from sktime.performance_metrics.detection._chamfer import DirectedChamfer
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DirectedChamfer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_chamfer():
     """Test the directed Chamfer distance."""
     y_pred = pd.DataFrame({"ilocs": [0, 1, 3, 4, 5]})  # locs are 1, 2, 5, 42, 43
