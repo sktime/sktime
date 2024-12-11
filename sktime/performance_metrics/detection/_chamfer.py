@@ -1,15 +1,34 @@
-"""Directed Hausdorff distance between two sets of points."""
+"""Directed Chamfer distance between two sets of points."""
 
 import numpy as np
 import pandas as pd
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
+from sktime.performance_metrics.detection.utils import _find_closest_elements+
 
 
-class DirectedHausdorff(BaseDetectionMetric):
-    """Directed Hausdorff metric between event points.
+class DirectedChamfer(BaseDetectionMetric):
+    r"""Directed Chamfer distance between event points.
 
-    
+    For detected time points :math:`A = (a_1, a_2, \ldots, a_n)` and true time points
+    :math:`B = (b_1, b_2, \ldots, b_m)`,
+    the directed (unnormalized) Chamfer distance is defined as:
+
+    .. math::
+
+        d(A, B) = \sum_{i=1}^{n} \left| a_i - b_{\text{closest}(a_i)} \right|
+
+    where :math:`b_{\text{closest}(a_i)} = \arg \min_{j} |a_i - b_j|`.
+
+    If ``X`` is provided, the time points are taken as the location indices in ``X``.
+    Otherwise, it is assumed that ``X`` has a ``RangeIndex``.
+
+    Parameters
+    ----------
+    normalize : bool, default=False
+        If True, the Chamfer distance is normalized by the number of detected events,
+        i.e., divided by :math:`n`.
+        If unnormalized, too many detections will be penalized.
     """
 
     _tags = {
@@ -17,6 +36,9 @@ class DirectedHausdorff(BaseDetectionMetric):
         "requires_X": False,
         "lower_is_better": True,
     }
+
+    def __init__(self, normalize=False):
+        self.normalize = normalize
 
     def _evaluate(self, y_true, y_pred, X=None):
         """Evaluate the desired metric on given inputs.
@@ -63,46 +85,32 @@ class DirectedHausdorff(BaseDetectionMetric):
         y_true_closest = np.array(y_true_closest)
 
         distance = np.sum(np.abs(y_true_closest - y_pred_locs))
+
+        if self.normalize:
+            distance /= len(y_pred_locs)
+
         return distance
 
-    def _find_closest_elements(self, a, b):
-        """Find the closest element in b for each element in a.
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        a : 1D array-like
-            An ordered (sorted) list of elements.
-        b : 1D array-like
-            Another ordered (sorted) list of elements.
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
-        closest : list, same length as a
-            a list of closest elements in ``b`` for each element in ``a``.
-            In case of ties, the first closest element is chosen.
-
-        Examples
-        --------
-        >>> a = [1, 3, 5]
-        >>> b = [2, 3.1, 3.2, 4, 6]
-        >>> pointer = DirectedHausdorff()._find_closest_elements(a, b)
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        # Pointers for traversing A and B
-        i, j = 0, 0
-        n, m = len(a), len(b)
+        param1 = {}
+        param2 = {"normalize": True}
 
-        # List to store the result
-        result = []
-
-        while i < n:
-            # Move pointer j in b to get the closest value to a[i]
-            while j + 1 < m and abs(b[j + 1] - a[i]) < abs(b[j] - a[i]):
-                j += 1
-
-            # Append the closest value in b for a[i]
-            result.append(b[j])
-
-            # Move to the next element in a
-            i += 1
-
-        return result
+        return [param1, param2]

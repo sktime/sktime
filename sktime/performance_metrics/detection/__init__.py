@@ -1,5 +1,5 @@
 """Metrics for detection tasks."""
 
-from sktime.performance_metrics.detection._hausdorff import DirectedHausdorff
+from sktime.performance_metrics.detection._chamfer import DirectedChamfer
 
-__all__ = ["DirectedHausdorff"]
+__all__ = ["DirectedChamfer"]
