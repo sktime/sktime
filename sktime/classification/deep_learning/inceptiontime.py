@@ -51,6 +51,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Examples
     --------
+    >>> from sktime.classification.ensemble import BaggingClassifier
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
