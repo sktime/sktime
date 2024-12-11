@@ -1933,6 +1933,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does metric require a predictive benchmark?",
     ),
     (
+        "requires_y_true",
+        "metric",
+        "bool",
+        "does metric require ground truth? If False, unsupervised metric",
+    ),
+    (
         "scitype:y_pred",
         "metric",
         "str",

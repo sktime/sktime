@@ -11,10 +11,11 @@ class BaseDetectionMetric(BaseMetric):
     _tags = {
         "scitype:y": "points",  # or segments
         "requires_X": False,
+        "requires_y_true": True,  # if False, is unsupervised metric
         "lower_is_better": True,
     }
 
-    def __call__(self, y_true, y_pred, X=None):
+    def __call__(self, y_true, y_pred=None, X=None):
         """Evaluate the desired metric on given inputs.
 
         Parameters
@@ -29,6 +30,7 @@ class BaseDetectionMetric(BaseMetric):
         y_pred : time series in ``sktime`` compatible data container format
             Detected events to evaluate against ground truth.
             Must be of same format as ``y_true``, same indices and columns if indexed.
+            Not required for unsupervised metrics.
 
         X : optional, pd.DataFrame, pd.Series or np.ndarray
             Time series that is being labelled.
@@ -42,13 +44,15 @@ class BaseDetectionMetric(BaseMetric):
         """
         return self.evaluate(y_true, y_pred, X)
 
-    def evaluate(self, y_true, y_pred, X=None):
+    def evaluate(self, y_true=None, y_pred=None, X=None):
         """Evaluate the desired metric on given inputs.
 
         Parameters
         ----------
         y_true : time series in ``sktime`` compatible data container format.
             Ground truth (correct) event locations, in ``X``.
+            Not required for unsupervised metrics.
+
             Should be ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D),
             of ``Series`` scitype = individual time series.
 
@@ -78,7 +82,7 @@ class BaseDetectionMetric(BaseMetric):
             out = float(out)
         return out
 
-    def _evaluate(self, y_true, y_pred, X=None):
+    def _evaluate(self, y_true, y_pred, X):
         """Evaluate the desired metric on given inputs.
 
         private _evaluate containing core logic, called from evaluate
@@ -123,8 +127,16 @@ class BaseDetectionMetric(BaseMetric):
             y_inner = convert_to(y, to_type=INNER_MTYPES)
             return y_inner
 
-        y_true = _coerce_to_df(y_true, var_name="y_true")
+        allow_none_y_true = self.get_tag("requires_y_true")
+        allow_none_X = self.get_tag("requires_X")
+
+        # catch the case where y_pred is passed as single positional arg
+        if allow_none_y_true and y_pred is None and y_true is not None:
+            y_pred = y_true
+            y_true = None
+
+        y_true = _coerce_to_df(y_true, var_name="y_true", allow_none=allow_none_y_true)
         y_pred = _coerce_to_df(y_pred, var_name="y_pred")
-        X = _coerce_to_df(X, var_name="X", allow_none=True)
+        X = _coerce_to_df(X, var_name="X", allow_none=allow_none_X)
 
         return y_true, y_pred, X
