@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
-from sktime.performance_metrics.detection.utils import _find_closest_elements+
+from sktime.performance_metrics.detection.utils import _find_closest_elements
 
 
 class DirectedChamfer(BaseDetectionMetric):
@@ -82,7 +82,7 @@ class DirectedChamfer(BaseDetectionMetric):
         y_true_locs = y_true_locs.to_numpy()
         y_pred_locs = y_pred_locs.to_numpy()
 
-        y_true_closest = self._find_closest_elements(y_pred_locs, y_true_locs)
+        y_true_closest = _find_closest_elements(y_pred_locs, y_true_locs)
         y_true_closest = np.array(y_true_closest)
 
         distance = np.sum(np.abs(y_true_closest - y_pred_locs))

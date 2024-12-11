@@ -1,4 +1,4 @@
-"""Tests for the directed Chamfer metric."""
+"""Tests for the directed Chamfer distance."""
 
 import pandas as pd
 
@@ -6,7 +6,7 @@ from sktime.performance_metrics.detection._chamfer import DirectedChamfer
 
 
 def test_hausdorff():
-    """Test the directed Chamfer metric."""
+    """Test the directed Chamfer distance."""
     y_pred = pd.DataFrame({"ilocs": [0, 1, 3, 4, 5]})  # locs are 1, 2, 5, 42, 43
     y_true = pd.DataFrame({"ilocs": [0, 2, 3]})  # locs are 1, 4, 5
     X = pd.DataFrame({"foo": [8, 4, 3, 7, 10, 12]}, index=[1, 2, 4, 5, 42, 43])
