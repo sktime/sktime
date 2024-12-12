@@ -82,7 +82,6 @@ def test_rename_multiindex():
     assert (expected_orig == orig).all()
 
 
-
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.utils.multiindex"]),
     reason="Run if multiindex module has changed.",
