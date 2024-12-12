@@ -213,6 +213,22 @@ class metric(_BaseScitypeOfObject):
         return BaseMetric
 
 
+class metric_detection(_BaseScitypeOfObject):
+    """Performance metric for time series detection tasks."""
+
+    _tags = {
+        "scitype_name": "metric_detection",
+        "short_descr": "performance metric for detectors",
+        "parent_scitype": "metric",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.performance_metrics.detection._base import BaseDetectionMetric
+
+        return BaseDetectionMetric
+
+
 class network(_BaseScitypeOfObject):
     """Deep learning network for time series."""
 
