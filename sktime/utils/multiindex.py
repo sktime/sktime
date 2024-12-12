@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 """Multiindex formatting related utilities."""
 
-__author__ = ["fkiraly", "ksharma6"]
+__author__ = ["fkiraly"]
 __all__ = []
 
 import numpy as np
