@@ -225,10 +225,10 @@ class metric_forecasting(_BaseScitypeOfObject):
     @classmethod
     def get_base_class(cls):
         from sktime.performance_metrics.forecasting._classes import (
-            BaseForecastingMetric,
+            BaseForecastingErrorMetric,
         )
 
-        return BaseForecastingMetric
+        return BaseForecastingErrorMetric
 
 
 class network(_BaseScitypeOfObject):
