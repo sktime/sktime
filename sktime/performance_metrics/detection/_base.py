@@ -16,7 +16,7 @@ class BaseDetectionMetric(BaseMetric):
         "lower_is_better": True,
     }
 
-    def __call__(self, y_true, y_pred=None, X=None):
+    def __call__(self, y_true=None, y_pred=None, X=None):
         """Evaluate the desired metric on given inputs.
 
         Parameters
