@@ -12,24 +12,6 @@ from sktime.utils.multiindex import apply_split, flatten_multiindex, rename_mult
     not run_test_module_changed(["sktime.utils.multiindex"]),
     reason="Run if multiindex module has changed.",
 )
-def test_apply_split():
-    """Test apply_split() and check shapes"""
-    mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
-
-    iloc_ix = iter([0, 2, 3])
-
-    result = apply_split(mi, iloc_ix)
-
-    expected = np.array([0, 2, 3])
-
-    assert isinstance(result, pd.MultiIndex)
-    assert expected == result
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed(["sktime.utils.multiindex"]),
-    reason="Run if multiindex module has changed.",
-)
 def test_flatten_multiindex():
     """Test flatten_multiindex contract."""
     mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
@@ -98,3 +80,22 @@ def test_rename_multiindex():
 
     assert isinstance(orig, pd.Index)
     assert (expected_orig == orig).all()
+
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_split():
+    """Test apply_split() and check shapes"""
+    mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
+
+    iloc_ix = [1]
+
+    result = apply_split(mi, iloc_ix)
+
+    expected = np.array([2, 3])
+
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, expected)
