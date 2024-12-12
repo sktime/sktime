@@ -21,11 +21,11 @@ def get_test_class_registry():
         keys are scitypes, values are test classes TestAll[Scitype]
     """
     from sktime.alignment.tests.test_all_aligners import TestAllAligners
-    from sktime.annotation.tests.test_all_annotators import TestAllAnnotators
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
     )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+    from sktime.detection.tests.test_all_detectors import TestAllDetectors
     from sktime.dists_kernels.tests.test_all_dist_kernels import (
         TestAllPairwiseTransformers,
         TestAllPanelTransformers,
@@ -35,7 +35,6 @@ def get_test_class_registry():
         TestAllGlobalForecasters,
     )
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
-    from sktime.proba.tests.test_all_distrs import TestAllDistributions
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.split.tests.test_all_splitters import TestAllSplitters
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
@@ -54,13 +53,14 @@ def get_test_class_registry():
     # so also imply estimator and object tests, or only object tests
     testclass_dict["aligner"] = TestAllAligners
     testclass_dict["classifier"] = TestAllClassifiers
-    testclass_dict["distribution"] = TestAllDistributions
+    testclass_dict["detector"] = TestAllDetectors
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["global_forecaster"] = TestAllGlobalForecasters
     testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["series-annotator"] = TestAllAnnotators
+    # todo 1.0.0 - remove series-annotator
+    testclass_dict["series-annotator"] = TestAllDetectors
     testclass_dict["splitter"] = TestAllSplitters
     testclass_dict["transformer"] = TestAllTransformers
     testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
