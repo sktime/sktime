@@ -9,7 +9,7 @@ class BaseDetectionMetric(BaseMetric):
     """Base class for defining detection error metrics in sktime."""
 
     _tags = {
-        "object_type": ["metric:detection", "metric"],
+        "object_type": ["metric_detection", "metric"],
         "scitype:y": "points",  # or segments
         "requires_X": False,
         "requires_y_true": True,  # if False, is unsupervised metric
