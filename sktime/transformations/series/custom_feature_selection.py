@@ -10,21 +10,22 @@ __all__ = ["BaseFeatureSelection",
 from sktime.transformations.base import BaseTransformer
 import numpy as np
 from sklearn.base import clone
+import pandas as pd
 import warnings
+from abc import ABCMeta, abstractmethod
 
 def get_top_n(number_list, n):
     return np.argsort(number_list)[-n:]
 
-class BaseFeatureSelection(BaseTransformer):
+class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
     _tags = {
+        "authors": ["aykut-uz"],
+        "maintainers": ["aykut-uz"],
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "scitype:instancewise": True, 
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "pd.Series", 
         "fit_is_empty": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
@@ -33,7 +34,7 @@ class BaseFeatureSelection(BaseTransformer):
     def __init__(
             self,
             selector,
-            n_features=6,
+            n_features,
             random_state=None,
     ):
         self.n_features = n_features
@@ -41,6 +42,7 @@ class BaseFeatureSelection(BaseTransformer):
         self.random_state = random_state
         super().__init__()
     
+    @abstractmethod
     def _get_score(self,):
         """
         A private method that returns a score of a feature based on the feature selection technique.
@@ -48,7 +50,7 @@ class BaseFeatureSelection(BaseTransformer):
         -------
         A list of scores ordered according to features in the data matrix.
         """
-        raise NotImplementedError
+        pass
 
     def _fit(self, X, y=None):
         """
@@ -68,6 +70,12 @@ class BaseFeatureSelection(BaseTransformer):
         self.y_ = y
         self.n_features_ = self.n_features
         self.selector_ = clone(self.selector)
+        self.score_ = None
+        self.top_n_indices_ = None
+        self.selected_feature_names_ = None
+        self.selected_feature_scores_ = None
+        if isinstance(X, pd.Series):
+            return self
         self.selector_.fit(X, y)
         self.score_ = self._get_score()
         self.top_n_indices_ = get_top_n(self.score_, self.n_features_)
@@ -88,6 +96,8 @@ class BaseFeatureSelection(BaseTransformer):
         -------
         Reduced data matrix X with the top n=n_features features selected by the feature selection method.
         """
+        if isinstance(X, pd.Series):
+            return X
         X_selected = X.loc[:, self.selected_feature_names_]
         return X_selected
 
@@ -114,7 +124,7 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
         A list of absolute coefficients as scores ordered according to features in the data matrix.
         """
         try:
-            coefficients = getattr(self.selector_, self.coefficient_attribute)
+            coefficients = np.asarray(getattr(self.selector_, self.coefficient_attribute))
         except AttributeError:
             raise AttributeError(f"The passed selector of type {type(self.selector_)} has no attribute {self.coefficient_attribute}.")
         non_zero_scores = sum(coefficients != 0)
@@ -127,6 +137,33 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
         return np.abs(coefficients)
 
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+            """Return testing parameter settings for the estimator.
+
+            Parameters
+            ----------
+            parameter_set : str, default="default"
+                Name of the set of test parameters to return, for use in tests. If no
+                special parameters are defined for a value, will return ``"default"`` set.
+
+
+            Returns
+            -------
+            params : dict or list of dict, default = {}
+                Parameters to create testing instances of the class
+                Each dict are parameters to construct an "interesting" test instance, i.e.,
+                ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+                instance.
+                ``create_test_instance`` uses the first (or only) dictionary in ``params``
+            """
+            from sklearn.linear_model import OrthogonalMatchingPursuit
+            params = [
+                {"n_features":1, "coeffcient_selector":OrthogonalMatchingPursuit()}
+            ]
+            return params
+
+
 class OMPFeatureSelection(CoefficientFeatureSelection):
     """
     Performs feature selection using Orthogonal Matching Pursuit (OMP).
@@ -136,6 +173,29 @@ class OMPFeatureSelection(CoefficientFeatureSelection):
         super().__init__(
             selector=OrthogonalMatchingPursuit(n_nonzero_coefs=n_features), 
             n_features=n_features)
+    
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+            """Return testing parameter settings for the estimator.
+
+            Parameters
+            ----------
+            parameter_set : str, default="default"
+                Name of the set of test parameters to return, for use in tests. If no
+                special parameters are defined for a value, will return ``"default"`` set.
+
+
+            Returns
+            -------
+            params : dict or list of dict, default = {}
+                Parameters to create testing instances of the class
+                Each dict are parameters to construct an "interesting" test instance, i.e.,
+                ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+                instance.
+                ``create_test_instance`` uses the first (or only) dictionary in ``params``
+            """
+            params = [{"n_features":1}]
+            return params
 
 
 class LassoFeatureSelection(CoefficientFeatureSelection):
@@ -143,7 +203,7 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
     Performs feature selection using Lasso regressions.
     """
     def __init__(self, 
-                n_features=10, 
+                n_features, 
                 alpha=1.0,
                 random_state=None,
     ):
@@ -154,6 +214,31 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
             n_features=n_features
         )
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+            """Return testing parameter settings for the estimator.
+
+            Parameters
+            ----------
+            parameter_set : str, default="default"
+                Name of the set of test parameters to return, for use in tests. If no
+                special parameters are defined for a value, will return ``"default"`` set.
+
+
+            Returns
+            -------
+            params : dict or list of dict, default = {}
+                Parameters to create testing instances of the class
+                Each dict are parameters to construct an "interesting" test instance, i.e.,
+                ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+                instance.
+                ``create_test_instance`` uses the first (or only) dictionary in ``params``
+            """
+            params = [
+                {"n_features":1, "alpha":2.0},
+                {"n_features":1, "alpha":3.0, "random_state":10}
+            ]
+            return params
 
 class XGBFeatureSelection(BaseFeatureSelection):
     """
@@ -161,7 +246,7 @@ class XGBFeatureSelection(BaseFeatureSelection):
     """
     def __init__(
             self,
-            n_features=10,
+            n_features,
             importance_type="gain",
             model_params=None,
             random_state=None,
@@ -193,3 +278,29 @@ class XGBFeatureSelection(BaseFeatureSelection):
             if feature in scores:
                 importance_scores_all[i] = scores[feature]
         return importance_scores_all
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+            """Return testing parameter settings for the estimator.
+
+            Parameters
+            ----------
+            parameter_set : str, default="default"
+                Name of the set of test parameters to return, for use in tests. If no
+                special parameters are defined for a value, will return ``"default"`` set.
+
+
+            Returns
+            -------
+            params : dict or list of dict, default = {}
+                Parameters to create testing instances of the class
+                Each dict are parameters to construct an "interesting" test instance, i.e.,
+                ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+                instance.
+                ``create_test_instance`` uses the first (or only) dictionary in ``params``
+            """
+            params = [
+                {"n_features":1,},
+                {"n_features":1, "model_params":{"n_estimators":14}, "random_state":10}
+            ]
+            return params
