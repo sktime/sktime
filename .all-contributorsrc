@@ -3155,6 +3155,109 @@
         "example",
         "tutorial"
       ]
+    },
+    {
+      "login": "VectorNd",
+      "name": "Rishabh Kamboj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111004091?v=4",
+      "profile": "https://github.com/VectorNd",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jusssch",
+      "name": "Julius Schmid",
+      "avatar_url": "https://avatars.githubusercontent.com/jusssch",
+      "profile": "https://github.com/jusssch",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jgyfutub",
+      "name": "Vedant Pandey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97391064?s=400&v=4",
+      "profile": "https://github.com/jgyfutub",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manolotis",
+      "name": "Manuel Muñoz Sánchez",
+      "avatar_url": "https://avatars.githubusercontent.com/manolotis",
+      "profile": "https://github.com/manolotis",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "vagechirkov",
+      "name": "Valerii Chirkov",
+      "avatar_url": "https://avatars.githubusercontent.com/vagechirkov",
+      "profile": "https://github.com/vagechirkov",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "tajir0",
+      "name": "Jinrong Tang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36022362",
+      "profile": "https://github.com/tajir0",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "mjste",
+      "name": "Michał Stefanik",
+      "avatar_url": "https://avatars.githubusercontent.com/mjste",
+      "profile": "https://github.com/mjste",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+        "login": "Sohaib-Ahmed21",
+        "name": "Sohaib Ahmed",
+        "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
+        "profile": "https://github.com/Sohaib-Ahmed21",
+        "contributions": [
+          "code"
+        ]
+    },
+    {
+      "login": "alyssadsouza",
+      "name": "Alyssa D'Souza",
+      "avatar_url": "https://avatars.githubusercontent.com/alyssadsouza",
+      "profile": "https://github.com/alyssadsouza",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ShivamJ07",
+      "name": "Shivam Singal",
+      "avatar_url": "https://avatars.githubusercontent.com/ShivamJ07",
+      "profile": "https://github.com/ShivamJ07",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "gavinkatz001",
+      "name": "Gavin Katz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124807974?v=4",
+      "profile": "https://github.com/gavinkatz001",
+      "contributions": [
+        "doc",
+        "code"
+      ]
     }
   ]
 }
