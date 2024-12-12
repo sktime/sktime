@@ -131,8 +131,8 @@ class BaseDetectionMetric(BaseMetric):
             y_inner = convert_to(y, to_type=INNER_MTYPES)
             return y_inner
 
-        allow_none_y_true = self.get_tag("requires_y_true")
-        allow_none_X = self.get_tag("requires_X")
+        allow_none_y_true = not self.get_tag("requires_y_true")
+        allow_none_X = not self.get_tag("requires_X")
 
         # catch the case where y_pred is passed as single positional arg
         if allow_none_y_true and y_pred is None and y_true is not None:
