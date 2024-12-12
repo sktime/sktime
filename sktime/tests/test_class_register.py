@@ -35,6 +35,9 @@ def get_test_class_registry():
         TestAllGlobalForecasters,
     )
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
+    from sktime.performance_metrics.detection.tests.test_all_metrics_detection import (
+        TestAllDetectionMetrics,
+    )
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.split.tests.test_all_splitters import TestAllSplitters
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
@@ -57,6 +60,7 @@ def get_test_class_registry():
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["global_forecaster"] = TestAllGlobalForecasters
+    testclass_dict["metric_detection"] = TestAllDetectionMetrics
     testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
     # todo 1.0.0 - remove series-annotator
