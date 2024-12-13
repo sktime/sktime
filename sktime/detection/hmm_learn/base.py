@@ -20,6 +20,7 @@ class BaseHMMLearn(BaseDetector):
     """Base class for all HMM wrappers, handles required overlap between packages."""
 
     _tags = {
+        "authors": ["miraep8"],
         "capability:multivariate": False,
         "univariate-only": True,
         "fit_is_empty": False,
