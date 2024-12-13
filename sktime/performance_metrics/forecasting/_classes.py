@@ -127,6 +127,7 @@ class BaseForecastingErrorMetric(BaseMetric):
     """
 
     _tags = {
+        "object_type": ["metric_forecasting", "metric"],
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
