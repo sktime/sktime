@@ -213,6 +213,24 @@ class metric(_BaseScitypeOfObject):
         return BaseMetric
 
 
+class metric_forecasting(_BaseScitypeOfObject):
+    """Performance metric for time series forecasting."""
+
+    _tags = {
+        "scitype_name": "metric_forecasting",
+        "short_descr": "performance metric for forecasting",
+        "parent_scitype": "metric",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.performance_metrics.forecasting._classes import (
+            BaseForecastingErrorMetric,
+        )
+
+        return BaseForecastingErrorMetric
+
+
 class network(_BaseScitypeOfObject):
     """Deep learning network for time series."""
 
