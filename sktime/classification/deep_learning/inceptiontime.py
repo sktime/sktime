@@ -56,6 +56,17 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Examples
     --------
+    Single instance of InceptionTime model:
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeClassifier(...)
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier``
+    as follows:
     >>> from sktime.classification.ensemble import BaggingClassifier
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
@@ -64,7 +75,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     >>> clf = BaggingClassifier(
     ...     InceptionTimeClassifier(),
     ...     n_estimators=5,
-    ...     bootstrap=False) # doctest: +SKIP
+    ...     bootstrap=False
+    ... )  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     BaggingClassifier(...)
     """
