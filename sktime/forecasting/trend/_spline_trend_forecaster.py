@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer
 
-from sktime.forecasting.trend import TrendForecaster, _DelegatedForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class SplineTrendForecaster(_DelegatedForecaster):
@@ -75,6 +75,8 @@ class SplineTrendForecaster(_DelegatedForecaster):
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.regressor = regressor if regressor is not None else LinearRegression()
+
+        from sktime.forecasting.trend import TrendForecaster
 
         spline_regressor = make_pipeline(
             SplineTransformer(
