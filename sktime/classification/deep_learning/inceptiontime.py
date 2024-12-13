@@ -1,6 +1,5 @@
 """InceptionTime for classification."""
 
-__author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
 
 from copy import deepcopy
@@ -17,7 +16,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
-
 
     Described in [1]_, InceptionTime is a deep learning model designed for
     time series classification. It is based on the Inception architecture
