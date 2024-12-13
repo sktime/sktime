@@ -15,6 +15,22 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class InceptionTimeClassifier(BaseDeepClassifier):
     """InceptionTime Deep Learning Classifier.
 
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+
+    Described in [1]_, InceptionTime is a deep learning model designed for
+    time series classification. It is based on the Inception architecture
+    for images. The model is made up of a series of Inception modules.
+
+    ``InceptionTimeClassifier`` is a single instance of InceptionTime model
+    described in the original publication [1]_, which uses an ensemble of 5
+    single instances.
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier`` with
+    ``n_estimators=5``, ``bootstrap=False``, and ``estimator`` being an instance of
+    this ``InceptionTimeClassifier``.
+
     Parameters
     ----------
     n_epochs : int, default=1500
@@ -40,15 +56,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
-
-    The `InceptionTimeClassifier` here, is a single instance of InceptionTime model.
-    The original InceptionTime paper recommends to ensemble 5 instances
-    of InceptionTime model to match with the benchmark standards. To build an
-    ensemble of models following the original paper, use the `BaggingClassifier` with
-    `n_estimators=5`, `bootstrap=False` using `InceptionTimeClassifier` as estimator.
-
     Examples
     --------
     >>> from sktime.classification.ensemble import BaggingClassifier
@@ -67,7 +74,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["james-large"],
+        "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
     }
