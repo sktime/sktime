@@ -120,7 +120,7 @@ def apply_split(y, iloc_ix):
     if not isinstance(iloc_ix, np.ndarray):
         iloc_ix = np.array(iloc_ix)
 
-    inst_ix = y.get_level_values(0).unique()
+    inst_ix = y.droplevel(-1).unique()
     iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
 
     y_loc = inst_ix[np.array(iloc_ix)]
