@@ -1,6 +1,5 @@
 """InceptionTime for classification."""
 
-__author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
 
 from copy import deepcopy
@@ -14,6 +13,21 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 class InceptionTimeClassifier(BaseDeepClassifier):
     """InceptionTime Deep Learning Classifier.
+
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    Described in [1]_, InceptionTime is a deep learning model designed for
+    time series classification. It is based on the Inception architecture
+    for images. The model is made up of a series of Inception modules.
+
+    ``InceptionTimeClassifier`` is a single instance of InceptionTime model
+    described in the original publication [1]_, which uses an ensemble of 5
+    single instances.
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier`` with
+    ``n_estimators=5``, ``bootstrap=False``, and ``estimator`` being an instance of
+    this ``InceptionTimeClassifier``.
 
     Parameters
     ----------
@@ -40,11 +54,9 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
-
     Examples
     --------
+    Single instance of InceptionTime model:
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
@@ -52,12 +64,27 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     InceptionTimeClassifier(...)
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier``
+    as follows:
+    >>> from sktime.classification.ensemble import BaggingClassifier
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = BaggingClassifier(
+    ...     InceptionTimeClassifier(),
+    ...     n_estimators=5,
+    ...     bootstrap=False
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    BaggingClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["james-large"],
+        "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
     }
