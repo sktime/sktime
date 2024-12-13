@@ -2,7 +2,6 @@
 
 __author__ = ["miraep8", "klam-data", "pyyim", "mgorlin"]
 
-import pandas as pd
 import pytest
 from numpy import array_equal
 
