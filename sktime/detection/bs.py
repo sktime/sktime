@@ -53,6 +53,12 @@ class BinarySegmentation(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "fit_is_empty": True,
         "univariate-only": True,
         "task": "change_point_detection",
