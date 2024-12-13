@@ -104,12 +104,10 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to ``Adam``
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
-    broadcasting : bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.35.0
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
     lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
         user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
     lr_scheduler_kwargs : dict (default=None)
@@ -217,8 +215,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: Optional[dict] = None,
-        # TODO change the default value to False in v0.35.0
-        broadcasting: bool = True,
+        broadcasting: bool = False,
         lr_scheduler=None,
         lr_scheduler_kwargs: Optional[dict] = None,
     ):
@@ -504,12 +501,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to ``Adam``
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
-    broadcasting : bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.35.0
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
     lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
         user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
     lr_scheduler_kwargs : dict (default=None)
@@ -612,8 +607,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: Optional[dict] = None,
-        # TODO change the default value to False in v0.35.0
-        broadcasting: bool = True,
+        broadcasting: bool = False,
         lr_scheduler=None,
         lr_scheduler_kwargs: Optional[dict] = None,
     ):
@@ -899,10 +893,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     broadcasting : bool (default=False)
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
 
     Notes
     -----
@@ -1297,12 +1290,10 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to ``Adam``
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
-    broadcasting : bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.35.0
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
     lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
         user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
     lr_scheduler_kwargs : dict (default=None)
@@ -1703,10 +1694,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     broadcasting : bool (default=False)
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
 
     Notes
     -----
