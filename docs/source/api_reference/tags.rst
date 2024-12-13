@@ -156,6 +156,28 @@ transform a single time series object (``"transformer"`` type).
     transform_returns_same_time_index
 
 
+.. _detector_tags:
+
+Tags for detectors
+------------------
+
+This section lists tags applying to time series detectors (``"detector"`` types).
+These tags are used to describe capabilities, properties, and behavior of
+detectors.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    task
+    learning_type
+    capability__update
+    capability__multivariate
+    capability__missing_values
+
 .. _dev_common_tags:
 
 Common developer tags

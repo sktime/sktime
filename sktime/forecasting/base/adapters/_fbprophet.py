@@ -24,7 +24,7 @@ class _ProphetAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": ["prophet", "numpy<2.0"],
+        "python_dependencies": "prophet",
     }
 
     def _convert_int_to_date(self, y):

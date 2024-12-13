@@ -30,6 +30,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
@@ -56,15 +57,16 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
           - windows-latest
         sktime-component:
           - alignment
-          - annotation
           - classification
           - clustering
+          - detection
           - forecasting
           - networks
           - param_est
@@ -93,6 +95,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
@@ -125,6 +128,7 @@ jobs:
           --ignore sktime/annotation
           --ignore sktime/classification
           --ignore sktime/clustering
+          --ignore sktime/detection
           --ignore sktime/forecasting
           --ignore sktime/networks
           --ignore sktime/param_est

@@ -40,6 +40,19 @@ class DropNA(BaseTransformer):
         If True, drops the same rows/columns in transform as in fit. If false,
         drops rows/columns according to the NAs seen in transform (equivalent
         to PandasTransformAdaptor(method="dropna")).
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.dropna import DropNA
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> X = pd.DataFrame({'a': [1, 2, np.nan, 4], 'b': [5, np.nan, 7, 8]})
+    >>> transformer = DropNA(axis=0, how='any')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> print(X_transformed)
+       a    b
+    0  1.0  5.0
+    3  4.0  8.0
     """
 
     _tags = {

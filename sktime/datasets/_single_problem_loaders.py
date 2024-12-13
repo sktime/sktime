@@ -1543,8 +1543,8 @@ def load_m5(
     - dept_id
     - date
 
-    Example
-    -------
+    Examples
+    --------
     >>> data = load_m5()
     >>> data.head()
     """
