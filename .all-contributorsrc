@@ -3257,6 +3257,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "gavinkatz001",
+      "name": "Gavin Katz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124807974?v=4",
+      "profile": "https://github.com/gavinkatz001",
+      "contributions": [
+        "doc",
+        "code"
+      ]
     }
   ]
 }
