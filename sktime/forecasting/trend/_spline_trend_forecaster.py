@@ -116,22 +116,15 @@ class SplineTrendForecaster(_DelegatedForecaster):
             {},
             {
                 "regressor": RandomForestRegressor(),
-                "degree": 1,
+                "degree": 2,
                 "include_bias": False,
-                "n_knots": 4,
+                "n_knots": 6,
             },
             {
-                "n_knots": 4,
-                "degree": 2,
+                "degree": 3,
+                "n_knots": 5,
+                "extrapolation": "linear",
                 "include_bias": True,
-                "extrapolation": "periodic",
-            },
-            {
-                "regressor": RandomForestRegressor(),
-                "n_knots": 4,
-                "degree": 2,
-                "include_bias": False,
-                "extrapolation": "periodic",
             },
         ]
 
