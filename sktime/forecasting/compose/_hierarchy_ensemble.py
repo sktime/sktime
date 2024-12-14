@@ -188,11 +188,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         x = X
 
         # check forecasters
-        self.forecasters_ = self._check_forecasters(y, z)
+        forecasters_ = self._check_forecasters(y, z)
+        self.forecasters_ = self._ensure_clone(forecasters_)
         self.fitted_list = []
 
         if y.index.nlevels == 1:
-            frcstr = self.forecasters_[0][1].clone()
+            frcstr = self.forecasters_[0][1]
             frcstr.fit(y, fh=fh, X=X)
             self.fitted_list.append([frcstr, y.index])
             return self
@@ -201,7 +202,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             hier_dict = self._get_hier_dict(z)
             for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
-                    frcstr = forecaster.clone()
+                    frcstr = forecaster
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
                     if X is not None:
                         x = X.loc[df.index]
@@ -211,7 +212,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
             for key, nodes in node_dict.items():
-                frcstr = frcstr_dict[key].clone()
+                frcstr = frcstr_dict[key]
                 df = z[z.index.droplevel(-1).isin(nodes)]
                 if X is not None:
                     x = X.loc[df.index]
@@ -593,6 +594,21 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
 
         return forecasters
+
+    def _ensure_clone(self, forecasters):
+        """Ensure that forecasters are cloned.
+
+        This should be done by _check_forecasters, but the function is hard to
+        understand and debug. This function is a safety net to ensure that
+        all forecasters are cloned.
+
+        This function, and _check_forecasters, should be refactored to be more
+        readable and maintainable.
+        """
+        forecasters_ = []
+        for name, forecaster, level_nd in forecasters:
+            forecasters_.append((name, forecaster.clone(), level_nd))
+        return forecasters_
 
     @classmethod
     def get_test_params(cls):
