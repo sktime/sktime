@@ -3090,7 +3090,7 @@
       ]
     },
     {
-      "login":"vedantag17",
+      "login": "vedantag17",
       "name": "Vedant Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
       "profile": "https://github.com/vedantag17",
@@ -3108,7 +3108,7 @@
       ]
     },
     {
-      "login":"markussagen",
+      "login": "markussagen",
       "name": "Markus Sagen",
       "avatar_url": "https://avatars.githubusercontent.com/u/20767068?v=4",
       "profile": "https://github.com/markussagen",
@@ -3141,7 +3141,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/116151399?v=4",
       "profile": "https://github.com/phoeenniixx",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3231,13 +3232,13 @@
       ]
     },
     {
-        "login": "Sohaib-Ahmed21",
-        "name": "Sohaib Ahmed",
-        "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
-        "profile": "https://github.com/Sohaib-Ahmed21",
-        "contributions": [
-          "code"
-        ]
+      "login": "Sohaib-Ahmed21",
+      "name": "Sohaib Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
+      "profile": "https://github.com/Sohaib-Ahmed21",
+      "contributions": [
+        "code"
+      ]
     },
     {
       "login": "alyssadsouza",
@@ -3255,6 +3256,34 @@
       "profile": "https://github.com/ShivamJ07",
       "contributions": [
         "bug",
+        "code"
+      ]
+    },
+    {
+      "login":"Adarsh2345",
+      "name":"Adarsh J",
+      "avatar_url":"https://avatars.githubusercontent.com/u/130629672?v=4",
+      "profile":"https://github.com/Adarsh2345",
+      "contributions": [
+         "doc"
+      ]
+    },
+    {
+      "login": "skinan",
+      "name": "Muhammad Sakib Khan Inan",
+      "avatar_url": "https://avatars.githubusercontent.com/skinan",
+      "profile": "https://github.com/skinan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "gavinkatz001",
+      "name": "Gavin Katz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124807974?v=4",
+      "profile": "https://github.com/gavinkatz001",
+      "contributions": [
+        "doc",
         "code"
       ]
     }
