@@ -1827,6 +1827,10 @@ class visual_block_kind(_BaseTag):
     such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
     ``_HeterogenousMetaEstimator``.
 
+    The html display is triggered by calling the ``_repr_html_`` method on any
+    ``scikit-base`` estimator, which returns a html representation of the estimator,
+    used by default in jupyter notebooks, or also other html display environments.
+
     Possible values are:
 
     * ``"single"``: the meta-estimator is displayed as a single block in the notebook.
