@@ -27,7 +27,7 @@ def get_test_class_registry():
     testclass_dict = {}
 
     for base_class in base_classes:
-        scitype_str = base_class.get_tag("scitype_name")
+        scitype_str = base_class.get_class_tag("scitype_name")
         test_class = base_class.get_test_class()
 
         if test_class is not None:
