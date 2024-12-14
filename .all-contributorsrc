@@ -3132,7 +3132,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/116151399?v=4",
       "profile": "https://github.com/phoeenniixx",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3256,6 +3257,15 @@
       "profile": "https://github.com/y-mx",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Adarsh2345",
+      "name": "Adarsh J",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130629672?v=4",
+      "profile": "https://github.com/Adarsh2345",
+      "contributions": [
+         "doc"
       ]
     },
     {

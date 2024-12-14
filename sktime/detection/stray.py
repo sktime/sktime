@@ -76,6 +76,12 @@ class STRAY(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        "maintainers": "KatieBuc",
+        # estimator type
+        # --------------
         "handles-missing-data": True,
         "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
