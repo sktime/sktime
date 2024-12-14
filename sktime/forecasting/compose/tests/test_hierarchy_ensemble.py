@@ -231,12 +231,12 @@ def test_get_fitted_params():
     y = _bottom_hier_datagen(no_bottom_nodes=7, no_levels=2, random_seed=123)
 
     forecasters = [
-        ('naive', NaiveForecaster(), 0),
-        ('trend', TrendForecaster(), 1),
+        ("naive", NaiveForecaster(), 0),
+        ("trend", TrendForecaster(), 1),
     ]
     forecaster = HierarchyEnsembleForecaster(
         forecasters=forecasters,
-        by='level',
+        by="level",
         default=PolynomialTrendForecaster(degree=2),
     )
     forecaster.fit(y, fh=[1, 2, 3])
