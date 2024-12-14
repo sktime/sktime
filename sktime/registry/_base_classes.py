@@ -200,7 +200,9 @@ class early_classifier(_BaseScitypeOfObject):
 
     @classmethod
     def get_test_class(cls):
-        from sktime.classification.early_classification.tests.test_all_early_classifiers import TestAllEarlyClassifiers  # noqa E501
+        from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
+            TestAllEarlyClassifiers,  # noqa E501
+        )  # noqa E501
 
         return TestAllEarlyClassifiers
 
@@ -406,7 +408,9 @@ class transformer(_BaseScitypeOfObject):
 
     @classmethod
     def get_test_class(cls):
-        from sktime.transformations.tests.test_all_transformers import TestAllTransformers  # noqa E501
+        from sktime.transformations.tests.test_all_transformers import (
+            TestAllTransformers,
+        )
 
         return TestAllTransformers
 
@@ -428,7 +432,9 @@ class transformer_pairwise(_BaseScitypeOfObject):
 
     @classmethod
     def get_test_class(cls):
-        from sktime.dists_kernels.tests.test_all_dist_kernels import TestAllPairwiseTransformers  # noqa E501
+        from sktime.dists_kernels.tests.test_all_dist_kernels import (
+            TestAllPairwiseTransformers,
+        )
 
         return TestAllPairwiseTransformers
 
@@ -450,7 +456,9 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
 
     @classmethod
     def get_test_class(cls):
-        from sktime.dists_kernels.tests.test_all_dist_kernels import TestAllPanelTransformers  # noqa E501
+        from sktime.dists_kernels.tests.test_all_dist_kernels import (
+            TestAllPanelTransformers,
+        )
 
         return TestAllPanelTransformers
 
