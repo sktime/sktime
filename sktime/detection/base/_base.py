@@ -1049,7 +1049,7 @@ class BaseDetector(BaseEstimator):
         pd.Series
             An empty series with a RangeIndex.
         """
-        return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64")
+        return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
