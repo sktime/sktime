@@ -97,6 +97,8 @@ class SplineTrendForecaster(BaseForecaster):
         self.knots = knots
         self.extrapolation = extrapolation
 
+        super().__init__()
+
     def _fit(self, y, X, fh):
         """Fit to training data.
 
