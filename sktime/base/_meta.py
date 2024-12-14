@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.utils._estimator_html_repr import _VisualBlock
 
 
 class _HeterogenousMetaEstimator:
@@ -29,6 +30,8 @@ class _HeterogenousMetaEstimator:
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
+
+    _tags = {"visual_block_kind": "serial"}
 
     def get_params(self, deep=True):
         """Get parameters of estimator.
@@ -729,6 +732,20 @@ class _HeterogenousMetaEstimator:
             self.set_tags(**{mid_tag_name: mid_tag_val})
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
+
+    def _sk_visual_block_(self):
+        steps = getattr(self, self._steps_attr)
+
+        names, estimators = zip(*steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind", tag_value_default="serial"),
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
 
 
 def flatten(obj):

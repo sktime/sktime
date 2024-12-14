@@ -58,6 +58,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
         "capability:inverse_transform": False,
+        "visual_block_kind": "parallel",
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
     }
