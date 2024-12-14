@@ -161,6 +161,16 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     def _transformers(self, value):
         self.transformers_._steps = value
 
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.classifier)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
@@ -472,6 +482,16 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.classifier)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
