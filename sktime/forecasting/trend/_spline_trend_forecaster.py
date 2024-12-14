@@ -2,7 +2,7 @@
 
 """SplineTrendForecaster implementation."""
 
-__author__ = ["Dehelaan"]
+__author__ = ["jgyasu", "Dehelaan"]
 __all__ = ["SplineTrendForecaster"]
 
 from sklearn.base import clone
@@ -64,7 +64,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "authors": ["Dehelaan"],
+        "authors": ["jgyasu", "Dehelaan"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -103,7 +103,6 @@ class SplineTrendForecaster(_DelegatedForecaster):
         self.forecasters_ = TrendForecaster(spline_regressor)
         super().__init__()
 
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -126,6 +125,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
         from sklearn.ensemble import RandomForestRegressor
 
         params_list = [
+            {},
             {
                 "regressor": RandomForestRegressor(),
                 "degree": 1,
