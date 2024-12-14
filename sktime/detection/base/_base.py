@@ -923,7 +923,7 @@ class BaseDetector(BaseEstimator):
         """
         if not isinstance(y_sparse, pd.DataFrame):
             y_sparse = pd.DataFrame(y_sparse, dtype="int64")
-        if y_sparse.ilocs.dtype == "interval":
+        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype == "interval":
             # Segmentation case
             y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
