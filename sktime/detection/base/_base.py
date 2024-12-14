@@ -950,7 +950,7 @@ class BaseDetector(BaseEstimator):
             y_sparse and 0 otherwise.
         """
         y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
-        y_dense[y_sparse.values] = 1
+        y_dense[y_sparse.values.flatten()] = 1
         return y_dense
 
     @staticmethod
