@@ -94,7 +94,7 @@ def test_hmm_behaves_as_expected_on_simple_input():
     # generate synthetic data (or of course use your own!)
     obs = asarray([3.7, 3.2, 3.4, 3.6, -5.1, -5.2, -4.9])
     hmm_est = hmm_est.fit(obs)
-    labels = hmm_est.predict(obs)
+    labels = hmm_est.transform(obs)
     labels = labels.values.flatten()
     ground_truth = asarray([0, 0, 0, 0, 1, 1, 1])
     assert array_equal(labels, ground_truth)
