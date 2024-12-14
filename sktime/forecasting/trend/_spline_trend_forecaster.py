@@ -2,7 +2,7 @@
 
 """SplineTrendForecaster implementation."""
 
-__author__ = ["jgyasu"]
+__author__ = ["jgyasu", "Dehelaan"]
 __all__ = ["SplineTrendForecaster"]
 
 from sklearn.base import clone
@@ -73,7 +73,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "authors": ["jgyasu"],
+        "authors": ["jgyasu", "Dehelaan"],
         "maintainers": ["jgyasu"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
