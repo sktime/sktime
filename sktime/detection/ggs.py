@@ -516,7 +516,7 @@ class GreedyGaussianSegmentation(BaseDetector):
     def fit_predict(self, X) -> npt.ArrayLike:
         """Perform segmentation.
 
-        Parameters
+        Parameterscls
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
             1D array of time series values, or 2D array with index along the first
@@ -542,5 +542,5 @@ class GreedyGaussianSegmentation(BaseDetector):
         -------
         params : dict or list of dict
         """
-        if parameter_set == "default":
-            return cls(k_max=10, lamb=1.0)
+        params = {"k_max": 10, "lamb": 1.0}
+        return params
