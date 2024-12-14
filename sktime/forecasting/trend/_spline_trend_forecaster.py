@@ -1,21 +1,19 @@
-# !/usr/bin/env python3 -u
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements SplineTrendForecaster."""
+# Copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+"""SplineTrendForecaster implementation."""
 
 __author__ = ["jgyasu"]
 __all__ = ["SplineTrendForecaster"]
 
-import numpy as np
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer
 
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class SplineTrendForecaster(PolynomialTrendForecaster):
+class SplineTrendForecaster(_DelegatedForecaster):
     r"""Forecast time series data with a spline trend.
 
     Parameters
@@ -55,18 +53,6 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
         If True, includes a feature in which all polynomial powers are
         zero (i.e., a column of ones, acting as an intercept term in a linear
         model).
-    prediction_intervals : bool, default=False
-        Whether to compute prediction intervals. If True, additional
-        calculations are done during fit to enable prediction intervals
-        to be calculated during predict. The prediction intervals are
-        based on an OLS regression model fitted to the data and calculated
-        according to Section 7.9 in [1]. Formulas are modified appropriately
-        if `with_intercept` is False.
-
-    References
-    ----------
-    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
-    and practice, 3rd edition. OTexts: Melbourne, Australia. OTexts.com/fpp3.
 
     Examples
     --------
@@ -84,13 +70,15 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
+    _delegate_name = "forecaster_"
+
     _tags = {
         "authors": ["jgyasu"],
         "maintainers": ["jgyasu"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
     }
 
     def __init__(
@@ -101,45 +89,22 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
         knots="uniform",
         extrapolation="constant",
         with_intercept=True,
-        prediction_intervals=False,
     ):
-        super().__init__(
-            regressor=regressor,
-            degree=degree,
-            with_intercept=with_intercept,
-            prediction_intervals=prediction_intervals,
-        )
+        self.regressor = regressor
+        self.degree = degree
         self.n_knots = n_knots
         self.knots = knots
         self.extrapolation = extrapolation
-        # prediction_intervals : bool, default=False
-        # By default, the extra information needed to later generate the prediction
-        # intervals is not calculated. If set to True, the extra information is
-        # calculated and stored in the forecaster.
+        self.with_intercept = with_intercept
 
-    def _fit(self, y, X, fh):
-        """Fit to training data.
+        super().__init__()
 
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series with which to fit the forecaster.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
             regressor = clone(self.regressor)
 
-        # make pipeline with spline features
-        self.regressor_ = make_pipeline(
+        spline_regressor = make_pipeline(
             SplineTransformer(
                 n_knots=self.n_knots,
                 degree=self.degree,
@@ -150,23 +115,9 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
             regressor,
         )
 
-        # we regress index on series values
-        # the sklearn X is obtained from the index of y
-        # the sklearn y can be taken as the y seen here
-        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
+        from sktime.forecasting.trend import TrendForecaster
 
-        # fit regressor
-        self.regressor_.fit(X_sklearn, y)
-
-        if self.prediction_intervals:
-            # calculate and save values needed for the prediction interval method
-            fitted_values = self.regressor_.predict(X_sklearn)
-            residuals = y - fitted_values
-            p = self.degree + int(self.with_intercept)
-            self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
-            self.train_index_ = y.index
-
-        return self
+        self.forecaster_ = TrendForecaster(spline_regressor)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -198,7 +149,6 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
                 "knots": "uniform",
                 "extrapolation": "constant",
                 "with_intercept": False,
-                "prediction_intervals": False,
             },
             {
                 "regressor": RandomForestRegressor(),
@@ -207,7 +157,6 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
                 "knots": "quantile",
                 "extrapolation": "linear",
                 "with_intercept": True,
-                "prediction_intervals": True,
             },
             {
                 "regressor": RandomForestRegressor(),
@@ -216,7 +165,6 @@ class SplineTrendForecaster(PolynomialTrendForecaster):
                 "knots": "uniform",
                 "extrapolation": "periodic",
                 "with_intercept": False,
-                "prediction_intervals": True,
             },
         ]
 
