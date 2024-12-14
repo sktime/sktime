@@ -41,7 +41,7 @@ def arr_to_seg(arr):
 
     # Create intervals and segments
     intervals = [
-        pd.Interval(block[0], block[-1] + 1, closed='left') for block in block_indices
+        pd.Interval(block[0], block[-1] + 1, closed="left") for block in block_indices
     ]
     segments = [arr[block[0]] for block in block_indices]
 
