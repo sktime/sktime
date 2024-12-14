@@ -61,19 +61,20 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> y = _bottom_hier_datagen(
-    ...         no_bottom_nodes=7,
-    ...         no_levels=2,
-    ...         random_seed=123
+    ...     no_bottom_nodes=7,
+    ...     no_levels=2,
+    ...     random_seed=123,
     ... )
 
     >>> # Example of by = 'level'
     >>> forecasters = [
     ...     ('naive', NaiveForecaster(), 0),
-    ...     ('trend', TrendForecaster(), 1)
+    ...     ('trend', TrendForecaster(), 1),
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(
-    ...                 forecasters=forecasters,
-    ...                 by='level', default = PolynomialTrendForecaster(degree=2)
+    ...     forecasters=forecasters,
+    ...     by='level',
+    ...     default=PolynomialTrendForecaster(degree=2),
     ... )
     >>> forecaster.fit(y, fh=[1, 2, 3])
     HierarchyEnsembleForecaster(...)
