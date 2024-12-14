@@ -40,13 +40,12 @@ def arr_to_seg(arr):
     block_indices = np.split(np.arange(len(arr)), block_starts)
 
     # Create intervals and segments
-    intervals = [pd.Interval(block[0], block[-1] + 1, closed='left') for block in block_indices]
+    intervals = [
+        pd.Interval(block[0], block[-1] + 1, closed='left') for block in block_indices
+    ]
     segments = [arr[block[0]] for block in block_indices]
 
     # Create DataFrame
-    df = pd.DataFrame({
-        'ilocs': pd.IntervalIndex(intervals),
-        'labels': segments
-    })
+    df = pd.DataFrame({"ilocs": pd.IntervalIndex(intervals), "labels": segments})
 
     return df
