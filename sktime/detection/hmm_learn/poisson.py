@@ -64,14 +64,14 @@ class PoissonHMM(BaseHMMLearn):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm_learn import PoissonHMM # doctest: +SKIP
-    >>> from sktime.annotation.datagen import piecewise_poisson # doctest: +SKIP
-    >>> data = piecewise_poisson( # doctest: +SKIP
+    >>> from sktime.detection.hmm_learn import PoissonHMM
+    >>> from sktime.detection.datagen import piecewise_poisson
+    >>> data = piecewise_poisson(
     ...    lambdas=[1, 2, 3], lengths=[2, 4, 8], random_state=7
     ...    ).reshape((-1, 1))
-    >>> model = PoissonHMM(n_components=3) # doctest: +SKIP
-    >>> model = model.fit(data) # doctest: +SKIP
-    >>> labeled_data = model.predict(data) # doctest: +SKIP
+    >>> model = PoissonHMM(n_components=3)
+    >>> model = model.fit(data)
+    >>> labeled_data = model.predict(data)
     """
 
     _tags = {

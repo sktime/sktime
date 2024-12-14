@@ -19,6 +19,7 @@ class GaussianHMM(BaseHMMLearn):
         Number of states
     covariance_type : {"spherical", "diag", "full", "tied"}, optional
         The type of covariance parameters to use:
+
         * "spherical" --- each state uses a single variance value that
             applies to all features.
         * "diag" --- each state uses a diagonal covariance matrix
@@ -28,6 +29,7 @@ class GaussianHMM(BaseHMMLearn):
         * "tied" --- all mixture components of each state use **the same**
             full covariance matrix (note that this is not the same as for
             ``GaussianHMM``).
+
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent
         overfitting. Defaults to 1e-3.
@@ -84,6 +86,7 @@ class GaussianHMM(BaseHMMLearn):
     covars_ : array
         Covariance parameters for each state.
         The shape depends on :attr:`covariance_type`:
+
         * (n_components, )                        if "spherical",
         * (n_components, n_features)              if "diag",
         * (n_components, n_features, n_features)  if "full",
@@ -91,8 +94,8 @@ class GaussianHMM(BaseHMMLearn):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm_learn import GaussianHMM # doctest: +SKIP
-    >>> from sktime.annotation.datagen import piecewise_normal # doctest: +SKIP
+    >>> from sktime.detection.hmm_learn import GaussianHMM # doctest: +SKIP
+    >>> from sktime.detection.datagen import piecewise_normal # doctest: +SKIP
     >>> data = piecewise_normal( # doctest: +SKIP
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
