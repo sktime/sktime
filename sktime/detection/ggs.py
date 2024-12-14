@@ -412,6 +412,11 @@ class GreedyGaussianSegmentation(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "lmmentel",
+        # estimator type
+        # --------------
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
