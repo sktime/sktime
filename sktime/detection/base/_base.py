@@ -923,13 +923,13 @@ class BaseDetector(BaseEstimator):
         """
         if not isinstance(y_sparse, pd.DataFrame):
             y_sparse = pd.DataFrame(y_sparse, dtype="int64")
-        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype == "interval":
-            # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
-            return y_dense
-        else:
+        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype != "interval":
             # Anomaly/changepoint detection case
             y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
+            return y_dense
+        else:
+            # Segmentation case
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
 
     @staticmethod
@@ -972,6 +972,9 @@ class BaseDetector(BaseEstimator):
             according to ``y_sparse``. Indexes that do not fall within any index are
             labelled -1.
         """
+        if len(y_sparse) == 0:
+            return pd.DataFrame(0, index=index, dtype="int64", columns=["labels"])
+
         seg_index = y_sparse.set_index("ilocs").index
         index_rg = pd.RangeIndex(len(index))
 
@@ -984,6 +987,7 @@ class BaseDetector(BaseEstimator):
 
         if "labels" not in y_sparse.columns:
             y_dense = pd.DataFrame({"labels": interval_ixs}, index=index_rg)
+            return y_dense
         else:
             y_dense = y_sparse.labels.loc[interval_ixs]
             y_dense = y_dense.reset_index(drop=True)
@@ -1045,7 +1049,7 @@ class BaseDetector(BaseEstimator):
         pd.Series
             An empty series with a RangeIndex.
         """
-        return pd.Series(index=pd.RangeIndex(0), dtype="int64")
+        return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64")
 
     @staticmethod
     def _empty_segments():
@@ -1056,7 +1060,13 @@ class BaseDetector(BaseEstimator):
         pd.Series
             An empty series with an IntervalIndex.
         """
-        return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
+        empty_segs = pd.DataFrame(
+            pd.IntervalIndex([]),
+            index=pd.RangeIndex(0),
+            dtype="int64",
+            columns=["ilocs"],
+        )
+        return empty_segs
 
     @staticmethod
     def change_points_to_segments(y_sparse, start=None, end=None):
