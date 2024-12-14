@@ -2111,6 +2111,12 @@ ESTIMATOR_TAG_REGISTER = [
         "dict",
         "deprecated tag for dependency import aliases",
     ),
+    (
+        "visual_block_kind",
+        "estimator",
+        ("str", ["single", "serial", "parallel"]),
+        "how to display html represantation of a meta-estimator in jupyter notebook",
+    ),
 ]
 
 # construct the tag register from all classes in this module
