@@ -95,6 +95,7 @@ class object(_BaseScitypeOfObject):
 
         return TestAllObjects
 
+
 class estimator(_BaseScitypeOfObject):
     """Estimator objects, i.e., objects with fit method."""
 
