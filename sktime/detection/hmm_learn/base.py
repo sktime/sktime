@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
+from sktime.detection.utils._arr_to_seg import arr_to_seg
 
 __author__ = ["miraep8"]
 __all__ = ["BaseHMMLearn"]
@@ -93,11 +94,10 @@ class BaseHMMLearn(BaseDetector):
         annotated_x : array-like, shape = [num_observations]
             Array of predicted class labels, same size as input.
         """
-        X, series, index = self._fix_input(X)
+        X, _, _ = self._fix_input(X)
         X_prime = self._hmm_estimator.predict(X)
-        if series:
-            X_prime = pd.Series(X_prime, index=index)
-        return X_prime
+
+        return arr_to_seg(X_prime)
 
     def sample(self, n_samples=1, random_state=None, currstate=None):
         """Interface class which allows users to sample from their HMM."""
