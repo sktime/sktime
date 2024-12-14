@@ -191,10 +191,15 @@ class GaussianHMM(BaseHMMLearn):
         -------
         params : dict or list of dict
         """
-        params = {
+        params0 = {
             "n_components": 3,
             "covariance_type": "diag",
             "min_covar": 1e-3,
         }
+        params1 = {
+            "n_components": 2,
+            "covariance_type": "full",
+            "min_covar": 1e-2,
+        }
 
-        return params
+        return [params0, params1]

@@ -157,8 +157,12 @@ class PoissonHMM(BaseHMMLearn):
         -------
         params : dict or list of dict
         """
-        params = {
+        params0 = {
             "n_components": 3,
         }
+        params1 = {
+            "n_components": 5,
+            "algorithm": "map",
+        }
 
-        return params
+        return [params0, params1]
