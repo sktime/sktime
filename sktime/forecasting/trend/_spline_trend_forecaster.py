@@ -26,6 +26,15 @@ class SplineTrendForecaster(_DelegatedForecaster):
         Degree of the splines (1 for linear, 2 for quadratic, etc.).
     n_knots : int, default=4
         Number of knots for the spline transformation.
+    knots : {'uniform', 'quantile'}or array-like of shape (n_knots, n_features),
+        default='uniform'
+        Determines knot positions such that first knot <= features <= last knot.
+        - 'uniform': `n_knots` are distributed uniformly between the
+        min and max values of the features.
+        - 'quantile': `n_knots` are distributed uniformly along the quantiles
+        of the features.
+        - array-like: Specifies sorted knot positions, including the boundary knots.
+        Internally, additional knots are added before the first knot and after
     extrapolation : {'constant', 'linear', 'periodic', 'continue'}, default='constant'
         Extrapolation strategy for splines beyond the range of the data.
     include_bias : bool, default=True
@@ -52,7 +61,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
-    _delegate_name = "forecaster_"
+    #_delegate_name = "forecaster_"
 
     _tags = {
         "authors": ["Dehelaan"],
@@ -64,14 +73,18 @@ class SplineTrendForecaster(_DelegatedForecaster):
 
     def __init__(
         self,
+        forecaster,
         regressor=None,
         degree=1,
         n_knots=4,
+        knots="uniform",
         extrapolation="constant",
         include_bias=True,
     ):
+        self.forecaster= forecaster
         self.degree = degree
         self.n_knots = n_knots
+        self.knots = knots
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.regressor = regressor if regressor is not None else LinearRegression()
@@ -82,14 +95,16 @@ class SplineTrendForecaster(_DelegatedForecaster):
             SplineTransformer(
                 degree=self.degree,
                 n_knots=self.n_knots,
+                knots=self.knots,
                 extrapolation=self.extrapolation,
                 include_bias=self.include_bias,
             ),
             clone(self.regressor),
         )
 
-        spline_forecaster = TrendForecaster(spline_regressor)
-        super().__init__(forecaster=spline_forecaster)
+        self.forecasters = TrendForecaster(spline_regressor)
+        super().__init__()
+
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -113,18 +128,24 @@ class SplineTrendForecaster(_DelegatedForecaster):
         from sklearn.ensemble import RandomForestRegressor
 
         params_list = [
-            {},
             {
                 "regressor": RandomForestRegressor(),
-                "degree": 2,
+                "degree": 1,
                 "include_bias": False,
-                "n_knots": 6,
+                "n_knots": 4,
             },
             {
-                "degree": 3,
-                "n_knots": 5,
-                "extrapolation": "linear",
+                "n_knots": 4,
+                "degree": 2,
                 "include_bias": True,
+                "extrapolation": "periodic",
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "n_knots": 4,
+                "degree": 2,
+                "include_bias": False,
+                "extrapolation": "periodic",
             },
         ]
 
