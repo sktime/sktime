@@ -21,6 +21,7 @@ class GMMHMM(BaseHMMLearn):
         Number of states in the GMM.
     covariance_type : {"spherical", "diag", "full", "tied"}, optional
         The type of covariance parameters to use:
+
         * "spherical" --- each state uses a single variance value that
             applies to all features.
         * "diag" --- each state uses a diagonal covariance matrix
@@ -30,6 +31,7 @@ class GMMHMM(BaseHMMLearn):
         * "tied" --- all mixture components of each state use **the same**
             full covariance matrix (note that this is not the same as for
             ``GaussianHMM``).
+
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent
         overfitting. Defaults to 1e-3.
@@ -90,6 +92,7 @@ class GMMHMM(BaseHMMLearn):
     covars_ : array
         Covariance parameters for each mixture components in each state.
         The shape depends on :attr:`covariance_type`:
+
         * (n_components, n_mix)                          if "spherical",
         * (n_components, n_mix, n_features)              if "diag",
         * (n_components, n_mix, n_features, n_features)  if "full"
@@ -97,14 +100,14 @@ class GMMHMM(BaseHMMLearn):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm_learn import GMMHMM # doctest: +SKIP
-    >>> from sktime.annotation.datagen import piecewise_normal # doctest: +SKIP
-    >>> data = piecewise_normal( # doctest: +SKIP
+    >>> from sktime.detection.hmm_learn import GMMHMM
+    >>> from sktime.detection.datagen import piecewise_normal # doctest: +SKIP
+    >>> data = piecewise_normal(
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
-    >>> model = GMMHMM(n_components=3) # doctest: +SKIP
-    >>> model = model.fit(data) # doctest: +SKIP
-    >>> labeled_data = model.predict(data) # doctest: +SKIP
+    >>> model = GMMHMM(n_components=3)
+    >>> model = model.fit(data)
+    >>> labeled_data = model.predict(data)
     """
 
     def __init__(
