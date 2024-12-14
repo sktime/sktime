@@ -26,7 +26,7 @@ def test_GaussianHMM_wrapper():
     sktime_model = GaussianHMM(n_components=3, random_state=7)
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
-    hmmlearn_predict = hmmlearn_model.predict(X=data)
+    hmmlearn_predict = hmmlearn_model.transform(X=data).values.flatten()
     sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)
 
@@ -47,7 +47,7 @@ def test_GMMHMM_wrapper():
     sktime_model = GMMHMM(n_components=3, random_state=7)
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
-    hmmlearn_predict = hmmlearn_model.predict(X=data)
+    hmmlearn_predict = hmmlearn_model.transform(X=data).values.flatten()
     sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)
 
@@ -68,6 +68,6 @@ def test_PoissonHMM_wrapper():
     sktime_model = PoissonHMM(n_components=3, random_state=42)
     hmmlearn_model.fit(X=data)
     sktime_model.fit(X=data)
-    hmmlearn_predict = hmmlearn_model.predict(X=data)
+    hmmlearn_predict = hmmlearn_model.transform(X=data).values.flatten()
     sktime_predict = sktime_model.predict(X=data).values.flatten()
     assert array_equal(hmmlearn_predict, sktime_predict)

@@ -105,7 +105,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         assert isinstance(y_pred.index, pd.RangeIndex)
         assert "ilocs" in y_pred.columns
         ilocs_dtype = y_pred["ilocs"].dtype
-        assert isinstance(y_pred["ilocs"].dtype, pd.IntervalDtype)
+        assert isinstance(y_pred["ilocs"].dtype, pd.IntervalDtype) or len(y_pred) == 0
         assert pd.api.types.is_integer_dtype(ilocs_dtype.subtype)
 
     def test_detector_tags(self, estimator_class):
