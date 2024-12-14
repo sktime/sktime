@@ -61,7 +61,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
-    #_delegate_name = "forecaster_"
+    _delegate_name = "forecaster_"
 
     _tags = {
         "authors": ["Dehelaan"],
@@ -73,7 +73,6 @@ class SplineTrendForecaster(_DelegatedForecaster):
 
     def __init__(
         self,
-        forecaster,
         regressor=None,
         degree=1,
         n_knots=4,
@@ -81,7 +80,6 @@ class SplineTrendForecaster(_DelegatedForecaster):
         extrapolation="constant",
         include_bias=True,
     ):
-        self.forecaster= forecaster
         self.degree = degree
         self.n_knots = n_knots
         self.knots = knots
@@ -102,7 +100,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
             clone(self.regressor),
         )
 
-        self.forecasters = TrendForecaster(spline_regressor)
+        self.forecasters_ = TrendForecaster(spline_regressor)
         super().__init__()
 
 
