@@ -177,12 +177,6 @@ class clusterer(_BaseScitypeOfObject):
 
         return BaseClusterer
 
-    @classmethod
-    def get_test_class(cls):
-        from sktime.clustering.tests.test_all_clusterers import TestAllClusterers
-
-        return TestAllClusterers
-
 
 class early_classifier(_BaseScitypeOfObject):
     """Early time series classifier."""
