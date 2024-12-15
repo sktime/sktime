@@ -1,0 +1,25 @@
+name: Auto Assign Issue
+
+on:
+  issue_comment:
+    types:
+      - created
+      - edited
+
+permissions: read-all
+
+jobs:
+  take-issue:
+    name: Auto Assign Issue
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    timeout-minutes: 10
+    steps:
+      - name: take an issue
+        uses: bdougie/take-action@v1.6.1
+        with:
+          message: Thank you for assigning yourself this issue, please let us know if you have any questions.
+          issueCurrentlyAssignedMessage: It seems like this issue is already assigned to a contributor.
+          trigger: .take
+          token: ${{ secrets.GITHUB_TOKEN }}
