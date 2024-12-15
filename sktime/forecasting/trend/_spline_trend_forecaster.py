@@ -14,18 +14,18 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class SplineTrendForecaster(_DelegatedForecaster):
-    r"""Forecast time series data using a spline regression model.
-
-    Uses an `sklearn` regressor specified by the `regressor` parameter
-    to perform regression on time series values against their corresponding indices,
-    after transformation with `SplineTransformer`.
+    r"""Forecast time series data with a spline trend.
 
     Parameters
     ----------
+    regressor : sklearn regressor estimator object, default=None
+        Define the regression model type. If not set, defaults to
+        sklearn.linear_model.LinearRegression.
+    n_knots : int, default=5
+        Number of knots of the splines if `knots` equals one of {'uniform', 'quantile'}.
+        Must be at least 2. Ignored if `knots` is array-like.
     degree : int, default=1
-        Degree of the splines (1 for linear, 2 for quadratic, etc.).
-    n_knots : int, default=4
-        Number of knots for the spline transformation.
+        Degree of the polynomial function.
     knots : {'uniform', 'quantile'}or array-like of shape (n_knots, n_features),
         default='uniform'
         Determines knot positions such that first knot <= features <= last knot.
@@ -35,29 +35,38 @@ class SplineTrendForecaster(_DelegatedForecaster):
         of the features.
         - array-like: Specifies sorted knot positions, including the boundary knots.
         Internally, additional knots are added before the first knot and after
-    extrapolation : {'constant', 'linear', 'periodic', 'continue'}, default='constant'
-        Extrapolation strategy for splines beyond the range of the data.
-    include_bias : bool, default=True
-        Whether to include a bias term in the spline features.
-    regressor : sklearn estimator, default=LinearRegression()
-        The regressor to use for fitting the transformed features.
-
-    Attributes
-    ----------
-    regressor_ : sklearn regressor estimator object
-        The fitted regressor object.
-        This is a fitted `sklearn` pipeline with steps
-        `SplineTransformer(degree, n_knots, include_bias)`, followed by
-        a clone of the `regressor`.
+        the last knot based on the spline degree.
+    extrapolation : {'error', 'constant', 'linear', 'continue', 'periodic'},
+        default='constant'
+        Determines how to handle values outside the min and max values of the
+        training features:
+        - 'error': Raises a ValueError.
+        - 'constant': Uses the spline value at the minimum or maximum feature as
+        constant extrapolation.
+        - 'linear': Applies linear extrapolation.
+        - 'continue': Extrapolates as is (equivalent to `extrapolate=True` in
+        `scipy.interpolate.BSpline`).
+        - 'periodic': Uses periodic splines with a periodicity equal to the distance
+        between the first and last knot, enforcing equal function values and
+        derivatives at these knots.
+    with_intercept : bool, default=True
+        If True, includes a feature in which all polynomial powers are
+        zero (i.e., a column of ones, acting as an intercept term in a linear
+        model).
 
     Examples
     --------
-    >>> from sktime.forecasting.trend import SplineTrendForecaster
     >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import SplineTrendForecaster
     >>> y = load_airline()
-    >>> forecaster = SplineTrendForecaster(extrapolation="linear", degree=2)
+    >>> forecaster = SplineTrendForecaster(
+    ...     n_knots=5,
+    ...     degree=1,
+    ...     knots="uniform",
+    ...     extrapolation="constant"
+    ... )
     >>> forecaster.fit(y)
-    SplineTrendForecaster(...)
+    SplineTrendForecaster()
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
@@ -65,43 +74,50 @@ class SplineTrendForecaster(_DelegatedForecaster):
 
     _tags = {
         "authors": ["jgyasu", "Dehelaan"],
+        "maintainers": ["jgyasu"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
     }
 
     def __init__(
         self,
         regressor=None,
+        n_knots=5,
         degree=1,
-        n_knots=4,
         knots="uniform",
         extrapolation="constant",
-        include_bias=True,
+        with_intercept=True,
     ):
+        self.regressor = regressor
         self.degree = degree
         self.n_knots = n_knots
         self.knots = knots
         self.extrapolation = extrapolation
-        self.include_bias = include_bias
-        self.regressor = regressor if regressor is not None else LinearRegression()
+        self.with_intercept = with_intercept
 
         super().__init__()
-        from sktime.forecasting.trend import TrendForecaster
+
+        if self.regressor is None:
+            regressor = LinearRegression(fit_intercept=False)
+        else:
+            regressor = clone(self.regressor)
 
         spline_regressor = make_pipeline(
             SplineTransformer(
-                degree=self.degree,
                 n_knots=self.n_knots,
+                degree=self.degree,
                 knots=self.knots,
                 extrapolation=self.extrapolation,
-                include_bias=self.include_bias,
+                include_bias=self.with_intercept,
             ),
-            clone(self.regressor),
+            regressor,
         )
 
-        self.forecasters_ = TrendForecaster(spline_regressor)
+        from sktime.forecasting.trend import TrendForecaster
+
+        self.forecaster_ = TrendForecaster(spline_regressor)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -128,22 +144,27 @@ class SplineTrendForecaster(_DelegatedForecaster):
             {},
             {
                 "regressor": RandomForestRegressor(),
-                "degree": 1,
-                "include_bias": False,
-                "n_knots": 4,
-            },
-            {
-                "n_knots": 4,
+                "n_knots": 5,
                 "degree": 2,
-                "include_bias": True,
-                "extrapolation": "periodic",
+                "knots": "uniform",
+                "extrapolation": "constant",
+                "with_intercept": False,
             },
             {
                 "regressor": RandomForestRegressor(),
                 "n_knots": 4,
+                "degree": 1,
+                "knots": "quantile",
+                "extrapolation": "linear",
+                "with_intercept": True,
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "n_knots": 3,
                 "degree": 2,
-                "include_bias": False,
+                "knots": "uniform",
                 "extrapolation": "periodic",
+                "with_intercept": False,
             },
         ]
 

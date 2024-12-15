@@ -5,6 +5,7 @@
 __all__ = [
     "TrendForecaster",
     "PolynomialTrendForecaster",
+    "SplineTrendForecaster",
     "STLForecaster",
     "CurveFitForecaster",
     "ProphetPiecewiseLinearTrendForecaster",
