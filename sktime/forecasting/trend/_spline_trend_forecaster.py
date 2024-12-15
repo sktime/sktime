@@ -1,21 +1,19 @@
-# !/usr/bin/env python3 -u
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements SplineTrendForecaster."""
+# Copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["jgyasu"]
+"""SplineTrendForecaster implementation."""
+
+__author__ = ["jgyasu", "Dehelaan"]
 __all__ = ["SplineTrendForecaster"]
 
-import pandas as pd
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class SplineTrendForecaster(BaseForecaster):
+class SplineTrendForecaster(_DelegatedForecaster):
     r"""Forecast time series data with a spline trend.
 
     Parameters
@@ -72,8 +70,10 @@ class SplineTrendForecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
+    _delegate_name = "forecaster_"
+
     _tags = {
-        "authors": ["jgyasu"],
+        "authors": ["jgyasu", "Dehelaan"],
         "maintainers": ["jgyasu"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
@@ -92,36 +92,19 @@ class SplineTrendForecaster(BaseForecaster):
     ):
         self.regressor = regressor
         self.degree = degree
-        self.with_intercept = with_intercept
         self.n_knots = n_knots
         self.knots = knots
         self.extrapolation = extrapolation
+        self.with_intercept = with_intercept
 
         super().__init__()
 
-    def _fit(self, y, X, fh):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series with which to fit the forecaster.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
             regressor = clone(self.regressor)
 
-        # make pipeline with spline features
-        self.regressor_ = make_pipeline(
+        spline_regressor = make_pipeline(
             SplineTransformer(
                 n_knots=self.n_knots,
                 degree=self.degree,
@@ -132,38 +115,9 @@ class SplineTrendForecaster(BaseForecaster):
             regressor,
         )
 
-        # we regress index on series values
-        # the sklearn X is obtained from the index of y
-        # the sklearn y can be taken as the y seen here
-        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
+        from sktime.forecasting.trend import TrendForecaster
 
-        # fit regressor
-        self.regressor_.fit(X_sklearn, y)
-
-        return self
-
-    def _predict(self, fh=None, X=None):
-        """Make forecasts for the given forecast horizon.
-
-        Parameters
-        ----------
-        fh : int, list or np.array
-            The forecast horizon with the steps ahead to predict
-        X : pd.DataFrame, default=None
-            Exogenous variables (ignored)
-
-        Returns
-        -------
-        y_pred : pd.Series
-            Point predictions for the forecast
-        """
-        # use relative fh as time index to predict
-        fh = self.fh.to_absolute_index(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh)
-        y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=fh)
-        y_pred.name = self._y.name
-        return y_pred
+        self.forecaster_ = TrendForecaster(spline_regressor)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
