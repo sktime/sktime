@@ -160,7 +160,6 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         assert np.allclose(res, res_noix)
 
-
     def test_metric_weights(estimator_class):
         """Test that weights are correctly applied to the metric."""
         metric = estimator_class
