@@ -545,11 +545,11 @@ def _index_equally_spaced(index):
 
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
-    
+
     Name: ``xr.DataArray``
 
     Short description:
-    
+
     An ``xarray.DataArray`` representing a single time series, where:
 
     - Each row corresponds to a time point.
@@ -567,7 +567,7 @@ class SeriesXarray(ScitypeSeries):
     * structure convention:
 
       - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
-      - ``obj.coords`` must include: 
+      - ``obj.coords`` must include:
 
         - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
           ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
