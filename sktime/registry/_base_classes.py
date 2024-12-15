@@ -275,11 +275,17 @@ class metric_detection(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.performance_metrics.forecasting._classes import (
-            BaseForecastingErrorMetric,
-        )
+        from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
-        return BaseForecastingErrorMetric
+        return BaseDetectionMetric
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.performance_metrics.detection.tests.test_all_metrics_detection import (  # noqa E501
+            TestAllDetectionMetrics,  # noqa E501
+        )  # noqa E501
+
+        return TestAllDetectionMetrics
 
 
 class metric_forecasting(_BaseScitypeOfObject):
@@ -293,9 +299,11 @@ class metric_forecasting(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.performance_metrics.detection._base import BaseDetectionMetric
+        from sktime.performance_metrics.forecasting._classes import (
+            BaseForecastingErrorMetric,
+        )
 
-        return BaseDetectionMetric
+        return BaseForecastingErrorMetric
 
 
 class network(_BaseScitypeOfObject):
