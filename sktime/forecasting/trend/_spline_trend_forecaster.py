@@ -87,6 +87,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
         self.include_bias = include_bias
         self.regressor = regressor if regressor is not None else LinearRegression()
 
+        super().__init__()
         from sktime.forecasting.trend import TrendForecaster
 
         spline_regressor = make_pipeline(
@@ -101,7 +102,6 @@ class SplineTrendForecaster(_DelegatedForecaster):
         )
 
         self.forecasters_ = TrendForecaster(spline_regressor)
-        super().__init__()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
