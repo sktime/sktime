@@ -52,7 +52,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
 
     Examples
     --------
-    >>>from sktime.forecasting.trend import SplineTrendForecaster
+    >>> from sktime.forecasting.trend import SplineTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = SplineTrendForecaster(extrapolation="linear", degree=2)
