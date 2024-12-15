@@ -174,7 +174,6 @@ class SplineTrendForecaster(_DelegatedForecaster):
                 "regressor": RandomForestRegressor(),
                 "n_knots": 3,
                 "degree": 2,
-                "include_bias": False,
                 "knots": "uniform",
                 "extrapolation": "periodic",
                 "with_intercept": False,
