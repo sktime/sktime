@@ -48,7 +48,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
     @pytest.mark.parametrize("n_columns", [1, 2])
     @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-    def test_metric_output_direct(estimator_class, multioutput, n_columns):
+    def test_metric_output_direct(self, estimator_class, multioutput, n_columns):
         """Test output is of correct type, dependent on multioutput.
 
         Also tests that four ways to call the metric yield equivalent results:
@@ -99,7 +99,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
     @pytest.mark.parametrize("n_columns", [1, 2])
     @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-    def test_metric_output_by_instance(estimator_class, multioutput, n_columns):
+    def test_metric_output_by_instance(self, estimator_class, multioutput, n_columns):
         """Test output of evaluate_by_index for type, dependent on multioutput."""
         # create numpy weights based on n_columns
         metric = estimator_class
@@ -132,7 +132,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         assert (res.index == y_true.index).all()
 
-    def test_uniform_average_time(estimator_class):
+    def test_uniform_average_time(self, estimator_class):
         """Tests that uniform_average_time indeed ignores index."""
         metric = estimator_class
 
@@ -160,7 +160,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         assert np.allclose(res, res_noix)
 
-    def test_metric_weights(estimator_class):
+    def test_metric_weights(self, estimator_class):
         """Test that weights are correctly applied to the metric."""
         metric = estimator_class
 

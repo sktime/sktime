@@ -265,30 +265,12 @@ class metric(_BaseScitypeOfObject):
 
 
 class metric_forecasting(_BaseScitypeOfObject):
-    """Performance metric for time series forecasting."""
+    """Performance metric for time series forecasting, point forecasts."""
 
     _tags = {
         "scitype_name": "metric_forecasting",
-        "short_descr": "performance metric for forecasting",
+        "short_descr": "performance metric for point forecasting",
         "parent_scitype": "metric",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.performance_metrics.forecasting._classes import (
-            BaseForecastingErrorMetric,
-        )
-
-        return BaseForecastingErrorMetric
-
-
-class metric_forecasting_point(_BaseScitypeOfObject):
-    """Performance metric for time series forecasting, of point predictions."""
-
-    _tags = {
-        "scitype_name": "metric_forecasting_point",
-        "short_descr": "performance metric for forecasting, point forecasts",
-        "parent_scitype": "metric_forecasting",
     }
 
     @classmethod
@@ -306,6 +288,24 @@ class metric_forecasting_point(_BaseScitypeOfObject):
         )
 
         return TestAllForecastingPtMetrics
+
+
+class metric_forecasting_proba(_BaseScitypeOfObject):
+    """Performance metric for time series forecasting, probabilistic forecasts."""
+
+    _tags = {
+        "scitype_name": "metric_forecasting_proba",
+        "short_descr": "performance metric for probabilisticforecasting",
+        "parent_scitype": "metric",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.performance_metrics.forecasting.probabilistic._classes import (
+            _BaseProbaForecastingErrorMetric,
+        )
+
+        return _BaseProbaForecastingErrorMetric
 
 
 class network(_BaseScitypeOfObject):
