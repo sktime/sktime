@@ -24,7 +24,32 @@ def get_top_n(number_list, n):
 
 
 class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
-    """Abstract class for feature selection defining the logic of fit and transform."""
+    """Abstract class for feature selection defining fit and transform methods logic.
+
+    The class uses a specified selector to perform feature selection.
+    It fits the selector to input data, calculates scores for each feature
+    using the _get_score method (to be implemented by child classes),
+    and stores the top n features and their respective scores.
+
+    Attributes
+    ----------
+    n_features : int
+        Number of features to select.
+    selector : object
+        Feature selection algorithm to use.
+    random_state : int, optional
+        Random state for reproducibility.
+
+    Methods
+    -------
+    _get_score()
+        Abstract method to calculate scores for each feature in a dataset.
+    _fit(X, y=None)
+        Fits the transformer to X and y.
+    _transform(X, y=None)
+        Transforms the input data by selecting top n features.
+
+    """
 
     _tags = {
         "authors": ["aykut-uz"],
@@ -71,7 +96,9 @@ class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
         """Core logic of fit.
 
         Fit the transformer to X and y.
-        Private _fit will be called in fit() and contains core logic
+        This method saves the input data, clones the selector, fits the selector to the
+        data, calculates feature scores and stores the top n feature names and their
+        respective scores.
 
         Parameters
         ----------
@@ -130,7 +157,24 @@ class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
 
 
 class CoefficientFeatureSelection(BaseFeatureSelection):
-    """A feature selection wrapper for coefficient-based feature selection."""
+    """A feature selection wrapper for coefficient-based feature selection.
+
+    This class selects features based on the absolute value of their coefficient in a
+    regression model. The specific regression model is provided via
+    the `selector` parameter.
+
+    Parameters
+    ----------
+    n_features : int
+        Number of features to select.
+    selector : object
+        The regression model to use as a base for feature selection.
+    coefficient_attribute : str, optional
+        Name of the attribute of the 'selector' object that holds the coefficients.
+        Defaults to "coef_".
+    random_state : int, RandomState instance or None, optional
+        Controls the randomness of the estimator. Default is None.
+    """
 
     def __init__(
         self, n_features, selector, coefficient_attribute="coef_", random_state=None
@@ -160,12 +204,14 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
                 f"""The passed selector of type {type(self.selector_)} has \
                 no attribute {self.coefficient_attribute}."""
             )
-        non_zero_scores = sum(coefficients != 0)
-        if non_zero_scores < self.n_features_:
+        number_non_zero_scores = np.count_nonzero(coefficients)
+        if number_non_zero_scores < self.n_features_:
             warnings.warn(
-                f"""Lasso regression has {non_zero_scores} non-zero coefficients, \
-                but {self.n_features_} are required. {self.n_features_
-                - non_zero_scores} of the selected features have a zero coefficient.
+                f"""Selector {type(self.selector_.__name__)} has \
+                {number_non_zero_scores} non-zero coefficients, \
+                but {self.n_features_} are required. \
+                {self.n_features_ - number_non_zero_scores} of the selected \
+                features have a zero coefficient.
                 """
             )
         return np.abs(coefficients)
@@ -200,7 +246,26 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
 
 
 class OMPFeatureSelection(CoefficientFeatureSelection):
-    """Perform feature selection using Orthogonal Matching Pursuit (OMP)."""
+    """Perform feature selection using Orthogonal Matching Pursuit (OMP).
+
+    The Orthogonal Matching Pursuit algorithm approximates the fit of a
+    linear model with constraints imposed on the number of non-zero coefficients
+    (i.e., the L0 pseudo-norm).
+
+    Parameters
+    ----------
+    n_features : int
+        Number of non-zero coefficients to target in the approximation.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.extended_feature_selection \
+    ... import OMPFeatureSelection
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> feature_selector = OMPFeatureSelection(n_features=3)
+    >>> X_transformed = feature_selector.fit_transform(X, y)
+    """
 
     def __init__(self, n_features):
         from sklearn.linear_model import OrthogonalMatchingPursuit
@@ -235,7 +300,27 @@ class OMPFeatureSelection(CoefficientFeatureSelection):
 
 
 class LassoFeatureSelection(CoefficientFeatureSelection):
-    """Perform feature selection using Lasso regressions."""
+    """Perform feature selection using Lasso regressions.
+
+    Parameters
+    ----------
+    n_features : int
+        The number of features to select.
+    alpha : float, default=1.0
+        The regularization strength of the Lasso regression.
+    random_state : int or RandomState instance, default=None
+        Controls the randomness of the estimator.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.extended_feature_selection \
+    ... import LassoFeatureSelection
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> feature_selector = LassoFeatureSelection(n_features=3, \
+    ... alpha=2.0, random_state=10)
+    >>> X_transformed = feature_selector.fit_transform(X, y)
+    """
 
     def __init__(
         self,
@@ -280,7 +365,38 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
 
 
 class XGBFeatureSelection(BaseFeatureSelection):
-    """Perform feature selection using XGBRegressors feature importance."""
+    """Perform feature selection using XGBRegressors feature importance.
+
+    Parameters
+    ----------
+    n_features : int
+        The number of features to select.
+    importance_type : str, optional
+        The feature importance type, by default "gain".
+    model_params : dict, optional
+        The parameters for the model, by default None.
+    random_state : int, optional
+        The seed used by the random number generator, by default None.
+
+    Attributes
+    ----------
+    importance_type : str
+        The feature importance type.
+    model_params : dict
+        The parameters for the model.
+    model_params_ : dict
+        A copy of the model parameters.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.extended_feature_selection \
+    ... import XGBFeatureSelection
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> model_params = {"n_estimators":100}
+    >>> feature_selector = XGBFeatureSelection(n_features=3, model_params=model_params)
+    >>> X_transformed = feature_selector.fit_transform(X, y)
+    """
 
     def __init__(
         self,
@@ -318,7 +434,7 @@ class XGBFeatureSelection(BaseFeatureSelection):
         booster = self.selector_.get_booster()
         scores = booster.get_score(importance_type=self.importance_type)
         # Note: get_score() does not include zero score features!
-        importance_scores_all = np.zeros(self.X_.shape[0])
+        importance_scores_all = np.zeros(self.X_.shape[1])
         for i, feature in enumerate(self.X_.columns):
             if feature in scores:
                 importance_scores_all[i] = scores[feature]

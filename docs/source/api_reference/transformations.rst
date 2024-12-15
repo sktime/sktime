@@ -697,6 +697,19 @@ These transformers select features in `X` based on `y`.
 
     FeatureSelection
 
+.. currentmodule:: sktime.transformations.series.extended_feature_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseFeatureSelection
+    CoefficientFeatureSelection
+    OMPFeatureSelection
+    LassoFeatureSelection
+    XGBFeatureSelection
+
+
 .. currentmodule:: sktime.transformations.panel.channel_selection
 
 .. autosummary::
