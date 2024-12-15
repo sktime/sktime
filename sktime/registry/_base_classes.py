@@ -282,6 +282,32 @@ class metric_forecasting(_BaseScitypeOfObject):
         return BaseForecastingErrorMetric
 
 
+class metric_forecasting_point(_BaseScitypeOfObject):
+    """Performance metric for time series forecasting, of point predictions."""
+
+    _tags = {
+        "scitype_name": "metric_forecasting_point",
+        "short_descr": "performance metric for forecasting, point forecasts",
+        "parent_scitype": "metric_forecasting",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.performance_metrics.forecasting._classes import (
+            BaseForecastingErrorMetric,
+        )
+
+        return BaseForecastingErrorMetric
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.performance_metrics.forecasting.tests.test_all_metrics_forecasting import (  # noqa E501
+            TestAllForecastingPtMetrics,  # noqa E501
+        )
+
+        return TestAllForecastingPtMetrics
+
+
 class network(_BaseScitypeOfObject):
     """Deep learning network for time series."""
 
