@@ -259,13 +259,19 @@ class OMPFeatureSelection(CoefficientFeatureSelection):
 
     Examples
     --------
-    >>> from sktime.transformations.series.extended_feature_selection \
-    ... import OMPFeatureSelection
+    >>> from sktime.transformations.series.extended_feature_selection import (
+    ...     OMPFeatureSelection
+    ...     )
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
     >>> feature_selector = OMPFeatureSelection(n_features=3)
     >>> X_transformed = feature_selector.fit_transform(X, y)
     """
+
+    _tags = {
+        **BaseFeatureSelection._tags,
+        "python_dependencies": ["scikit-learn"],
+    }
 
     def __init__(self, n_features):
         from sklearn.linear_model import OrthogonalMatchingPursuit
@@ -313,14 +319,20 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
 
     Examples
     --------
-    >>> from sktime.transformations.series.extended_feature_selection \
-    ... import LassoFeatureSelection
+    >>> from sktime.transformations.series.extended_feature_selection import (
+    ...     LassoFeatureSelection
+    ...     )
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> feature_selector = LassoFeatureSelection(n_features=3, \
-    ... alpha=2.0, random_state=10)
+    >>> feature_selector = LassoFeatureSelection(n_features=3,
+    ...                     alpha=2.0, random_state=10)
     >>> X_transformed = feature_selector.fit_transform(X, y)
     """
+
+    _tags = {
+        **BaseFeatureSelection._tags,
+        "python_dependencies": ["scikit-learn"],
+    }
 
     def __init__(
         self,
@@ -389,14 +401,20 @@ class XGBFeatureSelection(BaseFeatureSelection):
 
     Examples
     --------
-    >>> from sktime.transformations.series.extended_feature_selection \
-    ... import XGBFeatureSelection
+    >>> from sktime.transformations.series.extended_feature_selection import (
+    ...     XGBFeatureSelection
+    ...     )
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
     >>> model_params = {"n_estimators":100}
     >>> feature_selector = XGBFeatureSelection(n_features=3, model_params=model_params)
     >>> X_transformed = feature_selector.fit_transform(X, y)
     """
+
+    _tags = {
+        **BaseFeatureSelection._tags,
+        "python_dependencies": ["xgboost"],
+    }
 
     def __init__(
         self,
