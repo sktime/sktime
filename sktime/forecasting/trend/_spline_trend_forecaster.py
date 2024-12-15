@@ -16,19 +16,29 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 class SplineTrendForecaster(_DelegatedForecaster):
     r"""Forecast time series data with a spline trend.
 
+    Uses an ``sklearn`` regressor specified by the ``regressor`` parameter
+    to perform regression on time series values against their corresponding indices,
+    after transformation of the indices with ``SplineTransformer``.
+
     Parameters
     ----------
     regressor : sklearn regressor estimator object, default=None
         Define the regression model type. If not set, defaults to
-        sklearn.linear_model.LinearRegression.
+        ``sklearn.linear_model.LinearRegression``.
+
     n_knots : int, default=5
-        Number of knots of the splines if `knots` equals one of {'uniform', 'quantile'}.
-        Must be at least 2. Ignored if `knots` is array-like.
+        Number of knots of the splines if ``knots`` is one of {'uniform', 'quantile'}.
+        Must be at least 2. Ignored if ``knots`` is array-like.
+
     degree : int, default=1
-        Degree of the polynomial function.
+        Degree of the splines (1 for linear, 2 for quadratic, etc.).
+    n_knots : int, default=4
+        Number of knots for the spline transformation.
+
     knots : {'uniform', 'quantile'}or array-like of shape (n_knots, n_features),
         default='uniform'
         Determines knot positions such that first knot <= features <= last knot.
+
         - 'uniform': `n_knots` are distributed uniformly between the
         min and max values of the features.
         - 'quantile': `n_knots` are distributed uniformly along the quantiles
@@ -36,10 +46,12 @@ class SplineTrendForecaster(_DelegatedForecaster):
         - array-like: Specifies sorted knot positions, including the boundary knots.
         Internally, additional knots are added before the first knot and after
         the last knot based on the spline degree.
+
     extrapolation : {'error', 'constant', 'linear', 'continue', 'periodic'},
         default='constant'
         Determines how to handle values outside the min and max values of the
         training features:
+
         - 'error': Raises a ValueError.
         - 'constant': Uses the spline value at the minimum or maximum feature as
         constant extrapolation.
@@ -49,6 +61,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
         - 'periodic': Uses periodic splines with a periodicity equal to the distance
         between the first and last knot, enforcing equal function values and
         derivatives at these knots.
+
     with_intercept : bool, default=True
         If True, includes a feature in which all polynomial powers are
         zero (i.e., a column of ones, acting as an intercept term in a linear
@@ -61,12 +74,12 @@ class SplineTrendForecaster(_DelegatedForecaster):
     >>> y = load_airline()
     >>> forecaster = SplineTrendForecaster(
     ...     n_knots=5,
-    ...     degree=1,
+    ...     degree=2,
     ...     knots="uniform",
     ...     extrapolation="constant"
     ... )
     >>> forecaster.fit(y)
-    SplineTrendForecaster()
+    SplineTrendForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
@@ -143,9 +156,8 @@ class SplineTrendForecaster(_DelegatedForecaster):
         params_list = [
             {},
             {
-                "regressor": RandomForestRegressor(),
                 "n_knots": 5,
-                "degree": 2,
+                "degree": 1,
                 "knots": "uniform",
                 "extrapolation": "constant",
                 "with_intercept": False,

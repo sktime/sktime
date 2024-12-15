@@ -9,6 +9,7 @@ __all__ = [
     "STLForecaster",
     "CurveFitForecaster",
     "ProphetPiecewiseLinearTrendForecaster",
+    "SplineTrendForecaster",
 ]
 
 from sktime.forecasting.trend._curve_fit_forecaster import CurveFitForecaster
