@@ -33,7 +33,7 @@ class ForecastingMetricPtFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   ForecastingMetricsPt should contain the tests only
 
-    estimator_type_filter = "metric_forecasting_point"
+    estimator_type_filter = "metric_forecasting"
 
     fixture_sequence = [
         "estimator_class",
