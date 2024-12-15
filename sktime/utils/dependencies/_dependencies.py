@@ -141,7 +141,7 @@ def _check_soft_dependencies(
                 )
             msg = msg + (
                 f"To install the requirement {package!r}, please run: "
-                "pip install {package}` "
+                f"pip install {package}` "
             )
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
