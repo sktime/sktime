@@ -1933,6 +1933,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does metric require a predictive benchmark?",
     ),
     (
+        "requires_y_true",
+        "metric",
+        "bool",
+        "does metric require ground truth? If False, unsupervised metric",
+    ),
+    (
         "scitype:y_pred",
         "metric",
         "str",
@@ -2110,6 +2116,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "visual_block_kind",
+        "estimator",
+        ("str", ["single", "serial", "parallel"]),
+        "how to display html represantation of a meta-estimator in jupyter notebook",
     ),
 ]
 
