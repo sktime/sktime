@@ -401,6 +401,13 @@ class BaggingForecaster(BaseForecaster):
         fcst = YfromX.create_test_instance()
         params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
 
+        mbb_2 = MovingBlockBootstrapTransformer(block_length=12)
+        fcst_2 = YfromX.create_test_instance()
+        param_2 = {"bootstrap_transformer": mbb_2, "forecaster": fcst_2}
+
+        
+        params=[params,params_2]
+
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
         if _check_soft_dependencies("statsmodels", severity="none"):
