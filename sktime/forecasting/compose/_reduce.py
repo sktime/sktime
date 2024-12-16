@@ -2314,12 +2314,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window_length=10,
         impute_method="bfill",
         pooling="local",
+        forecaster = None,
     ):
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+        self.forecaster = forecaster
         super().__init__()
 
         warn(
@@ -2375,8 +2377,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
-        self.lagger_y_to_X_ = lagger_y_to_X
+            if self.forecaster is not None:
+                lagger_y_to_X = lagger_y_to_X * Imputer(method="forecaster", forecaster=self.forecaster)
+            elif impute_method is not None:
+                lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+            self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
 
