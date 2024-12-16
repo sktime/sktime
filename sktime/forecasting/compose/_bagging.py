@@ -399,7 +399,7 @@ class BaggingForecaster(BaseForecaster):
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
-        params_1 = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+        params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
 
         mbb_2 = MovingBlockBootstrapTransformer(block_length=12)
         fcst_2 = YfromX.create_test_instance()
