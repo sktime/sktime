@@ -398,18 +398,16 @@ class BaggingForecaster(BaseForecaster):
             NaiveForecaster,
         )  # <-- Import NaiveForecaster
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.transformations.series.detrend import (
-            Detrender,
-        )  # <-- Import Detrender
+        from sktime.transformations.panel.compose import ColumnConcatenator
         from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
         params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
 
-        detrender = Detrender(forecaster=NaiveForecaster(strategy="mean"))
+        column_concat = ColumnConcatenator()  # Transformer that outputs a Panel
         naive_fcst = NaiveForecaster(strategy="drift")
-        params_2 = {"bootstrap_transformer": detrender, "forecaster": naive_fcst}
+        params_2 = {"bootstrap_transformer": column_concat, "forecaster": naive_fcst}
 
         params = [params_1, params_2]
 
