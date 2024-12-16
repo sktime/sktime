@@ -394,16 +394,22 @@ class BaggingForecaster(BaseForecaster):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.compose import YfromX
+        from sktime.forecasting.naive import (
+            NaiveForecaster,
+        )  # <-- Import NaiveForecaster
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+        from sktime.transformations.series.detrend import (
+            Detrender,
+        )  # <-- Import Detrender
         from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
         params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
 
-        mbb_2 = MovingBlockBootstrapTransformer(block_length=12)
-        fcst_2 = YfromX.create_test_instance()
-        params_2 = {"bootstrap_transformer": mbb_2, "forecaster": fcst_2}
+        detrender = Detrender(forecaster=NaiveForecaster(strategy="mean"))
+        naive_fcst = NaiveForecaster(strategy="drift")
+        params_2 = {"bootstrap_transformer": detrender, "forecaster": naive_fcst}
 
         params = [params_1, params_2]
 
