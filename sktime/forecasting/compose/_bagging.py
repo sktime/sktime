@@ -398,19 +398,16 @@ class BaggingForecaster(BaseForecaster):
             NaiveForecaster,
         )  # <-- Import NaiveForecaster
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.transformations.panel.summarize import WindowSummarizer
+        from sktime.transformations.series.adapt import TabularToPanel
         from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
         params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
 
-        summarizer = WindowSummarizer(
-            summarize_callable={"mean": (np.mean, {"axis": 0})},
-            window_length=5,
-        )
+        tabular_to_panel = TabularToPanel()
         naive_fcst = NaiveForecaster(strategy="drift")
-        params_2 = {"bootstrap_transformer": summarizer, "forecaster": naive_fcst}
+        params_2 = {"bootstrap_transformer": tabular_to_panel, "forecaster": naive_fcst}
 
         params = [params_1, params_2]
 
