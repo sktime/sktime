@@ -92,6 +92,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             "profiling_sorting": PROFILING_SORTING,
             "profiling_filename": PROFILING_FILENAME,
             "profile": PROFILING,
+            "distributor": None,
         }
 
         # Replace defaults with user defined parameters
@@ -619,6 +620,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor
         )
 
         self.selector_ = FeatureSelector(
@@ -667,6 +669,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
