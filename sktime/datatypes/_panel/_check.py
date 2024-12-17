@@ -1184,7 +1184,7 @@ def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pan
 
 
 class PanelGluontsList(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonTS representation of univariate and multivariate time series.
 
     Parameters
     ----------
