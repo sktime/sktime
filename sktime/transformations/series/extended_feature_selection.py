@@ -207,7 +207,7 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
         number_non_zero_scores = np.count_nonzero(coefficients)
         if number_non_zero_scores < self.n_features_:
             warnings.warn(
-                f"""Selector {type(self.selector_.__name__)} has \
+                f"""Selector {type(self.selector_).__name__} has \
                 {number_non_zero_scores} non-zero coefficients, \
                 but {self.n_features_} are required. \
                 {self.n_features_ - number_non_zero_scores} of the selected \
