@@ -1186,6 +1186,45 @@ def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pan
 class PanelGluontsList(ScitypePanel):
     """Data type: polars.DataFrame based specification of panel of time series.
 
+    Name: ``"gluonts_ListDataset_panel"``
+
+    Short description:
+
+    A ``gluonts.dataset.common.ListDataset``, a ``list`` of ``dict``,
+    with list index = instances, ``dict['target']`` rows = time points,
+    ``dict['target']`` cols = variables, and ``dict['start']`` marking the interval.
+
+    Long description:
+
+    The ``"gluonts_ListDataset_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a list of ``dict``.
+      Each ``dict`` contains two keys, ``"start"`` and ``"target"``. 
+      ``"start"`` maps to the interval (e.g., `pandas.Period`) of the series. 
+      ``"target"`` maps to a 1D or 2D ``numpy`` array (depending on whether it is uni- or multi-variate).
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]['start']`` correspond to different, distinct time points,
+      at which instance ``i`` is observed.
+    * time index: ``obj[i]['start']`` is interpreted as the time index for instance ``i``.
+    * variables: columns of ``obj[i]['target']`` correspond to different variables available
+      for instance ``i``.
+    * variable names: None, since ``numpy`` being a numerical library does not carry metadata like column names.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
