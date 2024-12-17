@@ -159,6 +159,23 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return Aggregator().fit_transform(y)
 
+    @property
+    def fitted_list(self):
+        """Deprecated attribute.
+
+        TODO 0.37.0: Remove this property entirely.
+        """
+        import warnings
+
+        warnings.warn(
+            """The fitted_list property is deprecated
+            and will be removed in future versions.
+            Please use forecasters_ instead.
+            """,
+            DeprecationWarning,
+        )
+        return self.fitted_list_
+
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -175,7 +192,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        # Creating  aggregated levels in data
+        # Creating aggregated levels in data
         if _check_index_no_total(y):
             z = self._aggregate(y)
         else:
@@ -187,36 +204,45 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         x = X
 
-        # check forecasters
+        # Check forecasters
         self.forecasters_ = self._check_forecasters(y, z)
-        self.fitted_list = []
+        self.fitted_list_ = []
 
         if y.index.nlevels == 1:
-            frcstr = self.forecasters_[0][1].clone()
-            frcstr.fit(y, fh=fh, X=X)
-            self.fitted_list.append([frcstr, y.index])
+            forecaster = self.forecasters_[0][1].clone()
+            forecaster.fit(y, fh=fh, X=X)
+            self.forecasters_[0][1] = forecaster
+            self.fitted_list_.append([forecaster, y.index])
             return self
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
             for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
-                    frcstr = forecaster.clone()
+                    forecaster = forecaster.clone()
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
                     if X is not None:
                         x = X.loc[df.index]
-                    frcstr.fit(df, fh=fh, X=x)
-                    self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
+                    forecaster.fit(df, fh=fh, X=x)
+                    self.fitted_list_.append(
+                        [forecaster, df.index.droplevel(-1).unique()]
+                    )
+                    self.forecasters_ = [
+                        (name, forecaster if f == forecaster else f, level)
+                        for name, f, level in self.forecasters_
+                    ]
 
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
             for key, nodes in node_dict.items():
-                frcstr = frcstr_dict[key].clone()
+                forecaster = frcstr_dict[key].clone()
                 df = z[z.index.droplevel(-1).isin(nodes)]
                 if X is not None:
                     x = X.loc[df.index]
-                frcstr.fit(df, fh=fh, X=x)
-                self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
+                forecaster.fit(df, fh=fh, X=x)
+                self.fitted_list_.append([forecaster, df.index.droplevel(-1).unique()])
+                frcstr_dict[key] = forecaster
+
         return self
 
     def _get_hier_dict(self, z):
