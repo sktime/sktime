@@ -21,14 +21,14 @@ def _is_valid_detection(obj, type="points"):
         return False
 
     if type == "points":
-        return _is_points_like(obj)
+        return _is_points_dtype(obj)
     elif type == "segments":
-        return _is_valid_segments_like(obj)
+        return _is_segments_dtype(obj)
 
     return False
 
 
-def _is_points_like(obj):
+def _is_points_dtype(obj):
     """Check if the input is points-like.
 
     Assumes validity of input is checked elsewhere.
@@ -41,7 +41,7 @@ def _is_points_like(obj):
     return pd.api.types.is_integer_dtype(obj.ilocs.dtype)
 
 
-def _is_valid_segments_like(obj):
+def _is_segments_dtype(obj):
     """Check if the input is valid segments-like.
 
     Assumes validity of input is checked elsewhere.
