@@ -80,6 +80,7 @@ class BaseDetector(BaseEstimator):
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
