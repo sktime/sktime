@@ -1190,9 +1190,10 @@ class PanelGluontsList(ScitypePanel):
 
     Short description:
 
-    A ``gluonts.dataset.common.ListDataset``, a ``list`` of ``dict``,
+    A ``list`` of ``dict``,
     with list index = instances, ``dict['target']`` rows = time points,
     ``dict['target']`` cols = variables, and ``dict['start']`` marking the interval.
+    Similar to ``gluonts.dataset.common.ListDataset``.
 
     Long description:
 
