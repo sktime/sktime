@@ -58,7 +58,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         y_pred = estimator.predict(X_test)
 
         detector_type = estimator.get_tag("task")
-        if detector_type in ["anomaly_detection", "change_point_detection"]
+        if detector_type in ["anomaly_detection", "change_point_detection"]:
             expected_y_pred_type = "points"
         elif detector_type == "segmentation":
             expected_y_pred_type = "segments"
