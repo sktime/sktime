@@ -315,7 +315,7 @@ def _get_pkg_version(package_name):
 
 
 def _check_python_version(
-        obj, package=None, msg=None, severity="error", prereleases=True
+    obj, package=None, msg=None, severity="error", prereleases=True
 ):
     """Check if system python version is compatible with requirements of obj.
 
@@ -338,7 +338,7 @@ def _check_python_version(
           function returns False if one of packages is not installed, otherwise True
         * "none" - does not raise exception or warning
           function returns False if one of packages is not installed, otherwise True
-    
+
     prereleases: str, default = True
         if include prereleases while checking, if False will not include prereleases
 
