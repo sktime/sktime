@@ -314,7 +314,9 @@ def _get_pkg_version(package_name):
     return pkg_env_version
 
 
-def _check_python_version(obj, package=None, msg=None, severity="error", prereleases=True):
+def _check_python_version(
+        obj, package=None, msg=None, severity="error", prereleases=True
+):
     """Check if system python version is compatible with requirements of obj.
 
     Parameters
