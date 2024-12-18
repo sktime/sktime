@@ -1,6 +1,6 @@
 """Multi Channel Deep Convolution Neural Network (MCDCNN)."""
 
-__author__ = ["James Large", "Withington"]
+__author__ = ["James-Large", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
@@ -10,7 +10,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
     """
     Multi Channel Deep Convolutional Neural Network (MCDCNN).
 
-    Adapted from the implementation from Fawaz et. al:
+    Adapted from the implementation of Fawaz et. al:
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
 
     Parameters
@@ -35,7 +35,10 @@ class MCDCNNNetwork(BaseDeepNetwork):
         The seed to any random action.
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["hfawaz", "James-Large", "Withington"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

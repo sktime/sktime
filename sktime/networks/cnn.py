@@ -9,7 +9,7 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class CNNNetwork(BaseDeepNetwork):
     """Establish the network structure for a CNN.
 
-    Adapted from the implementation used in [1]
+    Adapted from the implementation used in [1]_.
 
     Parameters
     ----------
@@ -31,18 +31,18 @@ class CNNNetwork(BaseDeepNetwork):
     random_state    : int, default = 0
         seed to any needed random actions
 
-    Notes
-    -----
-    Adapted from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
-
     References
     ----------
     .. [1] Zhao et al. Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

@@ -14,6 +14,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class ResNetRegressor(BaseDeepRegressor):
     """Residual Neural Network Regressor adopted from [1].
 
+    Adapted from the implementation by hfawaz in
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
+
     Parameters
     ----------
     n_epochs       : int, default = 1500
@@ -37,12 +40,6 @@ class ResNetRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-
-    Notes
-    -----
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
-
     References
     ----------
         .. [1] Wang et. al, Time series classification from
@@ -62,7 +59,8 @@ class ResNetRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "Withington"],
+        "authors": ["hfawaz", "James-Large", "Withington"],
+        # hfawaz for dl-4-tsc
         "maintainers": ["Withington"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

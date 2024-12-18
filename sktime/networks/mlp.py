@@ -9,17 +9,15 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class MLPNetwork(BaseDeepNetwork):
     """Establish the network structure for a MLP.
 
-    Adapted from the implementation used in [1]
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+
+    Implements a simple MLP network, as in [1]_.
 
     Parameters
     ----------
     random_state    : int, default = 0
         seed to any needed random actions
-
-    Notes
-    -----
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
 
     References
     ----------
@@ -31,7 +29,10 @@ class MLPNetwork(BaseDeepNetwork):
     1578--1585}, year={2017}, organization={IEEE} }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class MCDCNNRegressor(BaseDeepRegressor):
     """Multi Channel Deep Convolutional Neural Regressor, adopted from [1]_.
 
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
+
     Parameters
     ----------
     n_epochs : int, optional (default=120)
@@ -56,11 +59,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
     random_state : int, optional (default=0)
         The seed to any random action.
 
-    Notes
-    -----
-    Adapted from the implementation of Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
-
     References
     ----------
     .. [1] Zheng et. al, Time series classification using multi-channels deep
@@ -80,7 +78,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large"],
+        "authors": ["hfawaz", "James-Large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }

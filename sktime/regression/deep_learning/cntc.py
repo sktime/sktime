@@ -12,6 +12,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class CNTCRegressor(BaseDeepRegressor):
     """Contextual Time-series Neural Regressor (CNTC), as described in [1].
 
+    Adapted from the implementation from Fullah et. al
+    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
+
     Parameters
     ----------
     n_epochs       : int, default = 2000
@@ -38,11 +41,6 @@ class CNTCRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
 
-    Notes
-    -----
-    Adapted from the implementation from Fullah et. al
-    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
-
     References
     ----------
     .. [1] Network originally defined in:
@@ -63,7 +61,12 @@ class CNTCRegressor(BaseDeepRegressor):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "AmaduFullah",
+            "James-Large",
+            "Withington",
+            "AurumnPegasus",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow", "keras-self-attention"],
     }
