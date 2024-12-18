@@ -153,13 +153,16 @@ class BaseDetectionMetric(BaseMetric):
         X = _coerce_to_df(X, var_name="X", allow_none=allow_none_X)
 
         # coerce to detection type
-        y_true = self._coerce_to_detection_type(y_true, X)
+        y_true = self._coerce_to_detection_type(y_true, X, allow_none=allow_none_y_true)
         y_pred = self._coerce_to_detection_type(y_pred, X)
 
         return y_true, y_pred, X
 
-    def _coerce_to_detection_type(self, y, X):
+    def _coerce_to_detection_type(self, y, X, allow_none=False):
         """Coerce input to detection type."""
+        if allow_none and y is None:
+            return None
+
         detection_type = self.get_tag("scitype:y")
 
         if _is_points_dtype(y) and detection_type == "segments":
