@@ -45,3 +45,24 @@ def _get_example_points_2():
     """
     points = pd.Series([2, 3, 7], name="ilocs")
     return pd.DataFrame({"ilocs": points})
+
+
+def _get_example_segments_3():
+    """Generate example 3 for segmentation output.
+
+    - overlapping
+    - exhaustive
+    - labeled
+    """
+    segs = pd.IntervalIndex.from_tuples([(0, 3), (2, 5), (3, 7), (7, 10)], "left")
+    labels = pd.Series([0, 1, 2, 3])
+    return pd.DataFrame({"ilocs": segs, "labels": labels})
+
+
+def _get_example_points_3():
+    """Generate example 3 as points only.
+
+    Corresponds to example 3 for point output.
+    """
+    pts = [2, 3, 5, 7]
+    return pd.DataFrame({"ilocs": pts})
