@@ -2,6 +2,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.detection._datatypes._check import (
+    _is_points_dtype,
+    _is_segments_dtype,
+)
+from sktime.detection._datatypes._convert import (
+    _convert_points_to_segments,
+    _convert_segments_to_points,
+)
 from sktime.performance_metrics.base import BaseMetric
 
 
@@ -144,4 +152,19 @@ class BaseDetectionMetric(BaseMetric):
         y_pred = _coerce_to_df(y_pred, var_name="y_pred")
         X = _coerce_to_df(X, var_name="X", allow_none=allow_none_X)
 
+        # coerce to detection type
+        y_true = self._coerce_to_detection_type(y_true, X)
+        y_pred = self._coerce_to_detection_type(y_pred, X)
+
         return y_true, y_pred, X
+
+    def _coerce_to_detection_type(self, y, X):
+        """Coerce input to detection type."""
+        detection_type = self.get_tag("scitype:y")
+
+        if _is_points_dtype(y) and detection_type == "segments":
+            y = _convert_points_to_segments(y, len_X=len(X))
+        elif _is_segments_dtype(y) and detection_type == "points":
+            y = _convert_segments_to_points(y, len_X=len(X))
+        else:
+            return y
