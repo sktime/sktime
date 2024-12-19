@@ -386,6 +386,9 @@ def _check_python_version(
             f" but system python version is {sys.version}."
         )
 
+        if "rc" in sys_version:
+            msg += " This is due to the release candidate status of your system Python."
+
         if package is not None:
             msg += (
                 f" This is due to python version requirements of the {package} package."

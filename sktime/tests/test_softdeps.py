@@ -12,9 +12,11 @@ __author__ = ["mloning", "fkiraly"]
 import pkgutil
 import re
 from importlib import import_module
+from unittest.mock import patch
 
 import pytest
 
+from sktime.base._base import BaseObject
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
@@ -325,3 +327,43 @@ def test_est_fit_without_modulenotfound(estimator):
             f'to the "python_dependencies" tag, and python version bounds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
+
+
+@patch("sktime.utils.dependencies._dependencies.sys")
+@pytest.mark.parametrize(
+    "mock_release_version, prereleases, expect_exception",
+    [
+        (True, True, False),
+        (True, False, True),
+        (False, False, False),
+    ],
+)
+def test_check_python_version(
+    mock_sys, mock_release_version, prereleases, expect_exception
+):
+    if mock_release_version:
+        mock_sys.version = "3.8.1rc"
+    else:
+        mock_sys.version = "3.8.1"
+
+    class DummyObjectClass(BaseObject):
+        _tags = {
+            "python_version": ">=3.7.1",  # PEP 440 version specifier, e.g., ">=3.7"
+            "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+            "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        }
+        """Define dummy class to test set_tags."""
+
+    dummy_object_instance = DummyObjectClass()
+
+    try:
+        _check_python_version(dummy_object_instance, prereleases=prereleases)
+    except ModuleNotFoundError:
+        if expect_exception:
+            pass
+        else:
+            assert False, (
+                "ModuleNotFoundError should be NOT raised by:",
+                f"\t - mock_release_version: {mock_release_version},",
+                f"\t - prereleases: {prereleases},",
+            )
