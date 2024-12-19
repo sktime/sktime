@@ -164,10 +164,14 @@ class BaseDetectionMetric(BaseMetric):
             return None
 
         detection_type = self.get_tag("scitype:y")
+        if X is None:
+            len_X = None
+        else:
+            len_X = len(X)
 
         if _is_points_dtype(y) and detection_type == "segments":
-            y = _convert_points_to_segments(y, len_X=len(X))
+            y = _convert_points_to_segments(y, len_X=len_X)
         elif _is_segments_dtype(y) and detection_type == "points":
-            y = _convert_segments_to_points(y, len_X=len(X))
+            y = _convert_segments_to_points(y, len_X=len_X)
         else:
             return y
