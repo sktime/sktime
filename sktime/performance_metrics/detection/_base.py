@@ -173,5 +173,4 @@ class BaseDetectionMetric(BaseMetric):
             y = _convert_points_to_segments(y, len_X=len_X)
         elif _is_segments_dtype(y) and detection_type == "points":
             y = _convert_segments_to_points(y, len_X=len_X)
-        else:
-            return y
+        return y
