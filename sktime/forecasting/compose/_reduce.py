@@ -2314,12 +2314,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window_length=10,
         impute_method="bfill",
         pooling="local",
+        forecaster = None,
     ):
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+        self.forecaster = forecaster
         super().__init__()
 
         warn(
@@ -2374,7 +2376,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
+
+        if self.forecaster is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method="forecaster", forecaster=self.forecaster)
+        elif impute_method is not None:
             lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
         self.lagger_y_to_X_ = lagger_y_to_X
 
@@ -2482,7 +2487,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
+
+            if self.forecaster is not None:
+                lag_plus = lag_plus * Imputer(method="forecaster", forecaster=self.forecaster)
+            elif self.impute_method is not None:
                 lag_plus = lag_plus * Imputer(method=self.impute_method)
 
             Xtt = lag_plus.fit_transform(Xt)
@@ -2534,7 +2542,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.transform(y)
 
         lag_plus = Lag(lags=1, index_out="extend")
-        if self.impute_method is not None:
+        
+        if self.forecaster is not None:
+            lag_plus = lag_plus * Imputer(method="forecaster", forecaster=self.forecaster)
+        elif self.impute_method is not None:
             lag_plus = lag_plus * Imputer(method=self.impute_method)
 
         Xtt = lag_plus.fit_transform(Xt)
