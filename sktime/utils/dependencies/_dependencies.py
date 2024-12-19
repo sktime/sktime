@@ -314,7 +314,9 @@ def _get_pkg_version(package_name):
     return pkg_env_version
 
 
-def _check_python_version(obj, package=None, msg=None, severity="error"):
+def _check_python_version(
+    obj, package=None, msg=None, severity="error", prereleases=True
+):
     """Check if system python version is compatible with requirements of obj.
 
     Parameters
@@ -337,6 +339,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         * "none" - does not raise exception or warning
           function returns False if one of packages is not installed, otherwise True
 
+    prereleases: str, default = True
+        if include prereleases while checking, if False will not include prereleases
+
     Returns
     -------
     compatible : bool, whether obj is compatible with system python version
@@ -354,7 +359,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         return True
 
     try:
-        est_specifier = SpecifierSet(est_specifier_tag)
+        est_specifier = SpecifierSet(est_specifier_tag, prereleases=prereleases)
     except InvalidSpecifier:
         msg_version = (
             f"wrong format for python_version tag, "
@@ -380,6 +385,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
             f"{class_name} requires python version to be {est_specifier},"
             f" but system python version is {sys.version}."
         )
+
+        if "rc" in sys_version:
+            msg += " This is due to the release candidate status of your system Python."
 
         if package is not None:
             msg += (
