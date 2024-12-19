@@ -340,6 +340,7 @@ def _check_python_version(
           function returns False if one of packages is not installed, otherwise True
 
     prereleases: str, default = True
+        Whether prerelease versions are considered compatible.
         If True, allows prerelease versions to be considered compatible.
         If False, always considers prerelease versions as incompatible, i.e., always
         raises error, warning, or returns False, if the system python version is a
