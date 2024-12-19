@@ -171,7 +171,7 @@ class TablePdSeries(ScitypeTable):
     Short description:
 
     a pandas ``Series`` representing tabular data,
-    with rows = instances, single column = feature
+    with rows = instances, single feature
 
     Long description:
 
@@ -182,8 +182,8 @@ class TablePdSeries(ScitypeTable):
     An object ``obj: pandas.Series`` follows the specification iff:
 
     * structure convention: ``obj.index`` can be any valid pandas index.
-    * feature: the single column of ``obj`` corresponds to a feature
-    * feature name: the name of the single column ``obj.name``
+    * feature: the series ``obj`` represents a single feature
+    * feature name: the ``name`` attribute of the ``pd.Series`` object
     * instances: rows of ``obj`` correspond to different instances
 
     Capabilities:
