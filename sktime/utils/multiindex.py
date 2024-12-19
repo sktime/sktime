@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
+import numpy as np
 import pandas as pd
 
 
@@ -83,3 +84,46 @@ def rename_multiindex(idx, feature_names_out, idx_name="index"):
             'must be one of "flat", "multiindex", "original", "auto", '
             f"but found {feature_names_out}"
         )
+
+
+def apply_split(y, iloc_ix):
+    """Generate iloc indices to split according to first MultiIndex level.
+
+    Applies iloc_ix to the leftmost (0-th) level of a MultiIndex y.
+
+    Parameters
+    ----------
+    y : pd.MultiIndex or pd.Index
+        Index to split, coerced to MultiIndex if not already
+    iloc_ix: 1D np.ndarray of integer
+        iloc indices to apply to the first level of y
+
+    Returns
+    -------
+    y_iloc : ndarray
+        iloc indices for y after applying iloc_ix to the first level
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.utils.multiindex import apply_split
+    >>> y = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0), (1, 1)])
+    >>> iloc_ix = np.array([1, 0])
+    >>> apply_split(y, iloc_ix)
+    array([2, 3, 0, 1])
+    """
+    if not isinstance(y, pd.MultiIndex):
+        zeros = [0] * len(y)
+        y = pd.MultiIndex.from_arrays([zeros, y])
+
+    if not isinstance(iloc_ix, np.ndarray):
+        iloc_ix = np.array(iloc_ix)
+
+    inst_ix = y.droplevel(-1).unique()
+    iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
+
+    y_loc = inst_ix[np.array(iloc_ix)]
+    y_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in y_loc]
+    y_iloc = np.concatenate(y_np)
+    return y_iloc
