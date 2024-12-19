@@ -188,7 +188,7 @@ class TablePdSeries(ScitypeTable):
 
     Capabilities:
 
-    * can represent univariate data
+    * cannot represent multivariate data
     * can represent missing values
 
     Parameters are inferred by check.
