@@ -215,7 +215,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     @classmethod
