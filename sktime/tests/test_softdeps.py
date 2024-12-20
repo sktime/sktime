@@ -335,6 +335,7 @@ def test_est_fit_without_modulenotfound(estimator):
         (True, True, False),
         (True, False, True),
         (False, False, False),
+        (False, True, False),
     ],
 )
 def test_check_python_version(
@@ -359,12 +360,19 @@ def test_check_python_version(
 
     try:
         _check_python_version(dummy_object_instance, prereleases=prereleases)
-    except ModuleNotFoundError:
-        if expect_exception:
-            pass
-        else:
+    except ModuleNotFoundError as exception:
+        expected_msg = (
+            f"{type(dummy_object_instance).__name__} requires python version "
+            "to be {dummy_object_instance._tags['python_version']}, "
+            "but system python version is {mock_sys.version}. "
+            "This is due to the release candidate status of your system Python."
+        )
+
+        if not expect_exception and not exception.msg == expected_msg:
+            # Throw Error since exception is not expected or has not the correct message
             assert False, (
                 "ModuleNotFoundError should be NOT raised by:",
-                f"\t - mock_release_version: {mock_release_version},",
-                f"\t - prereleases: {prereleases},",
+                f"\n\t - mock_release_version: {mock_release_version},",
+                f"\n\t - prereleases: {prereleases},",
+                f"\nERROR MESSAGE: {exception.msg}",
             )
