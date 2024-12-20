@@ -1,4 +1,3 @@
-
 .. _clustering_ref:
 
 Time series clustering
@@ -15,8 +14,8 @@ A full table with tag based search is also available on the
 (select "clustering" in the "Estimator type" dropdown).
 
 
-Clustering models
------------------
+Partitioning based
+------------------
 
 .. currentmodule:: sktime.clustering.k_means
 
@@ -43,6 +42,9 @@ Clustering models
 
     TimeSeriesKShapes
 
+Spectral and kernel clustering
+------------------------------
+
 .. currentmodule:: sktime.clustering.kernel_k_means
 
 .. autosummary::
@@ -50,6 +52,31 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKernelKMeans
+
+Density-based
+-------------
+
+.. currentmodule:: sktime.clustering.dbscan
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesDBSCAN
+
+Spatio-temporal clustering
+--------------------------
+
+Spatio-temporal clusterers assume that the time series are, or include,
+observations of locations in space.
+
+.. currentmodule:: sktime.clustering.spatio_temporal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STDBSCAN
 
 Base
 ----

@@ -13,7 +13,6 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import is_scitype
-from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -160,7 +159,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.34.0 - check why this cannot be easily removed
+                        # todo 0.36.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -275,18 +274,6 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
-
-    def _sk_visual_block_(self):
-        names, estimators = zip(*self._steps)
-
-        name_details = [str(est) for est in estimators]
-        return _VisualBlock(
-            "serial",
-            estimators,
-            names=names,
-            name_details=name_details,
-            dash_wrapped=False,
-        )
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -1813,7 +1800,7 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        # todo 0.34.0: check if numpy<2 is still needed
+        # todo 0.36.0: check if numpy<2 is still needed
         if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
@@ -1915,6 +1902,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
+        "visual_block_kind": "serial",
     }
 
     _delegate_name = "estimator_"
@@ -1929,6 +1917,14 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
+
+    @property
+    def _steps(self):
+        return getattr(self.estimator_, self.steps_arg)
+
+    @property
+    def steps_(self):
+        return getattr(self.estimator_, self.steps_arg)
 
     def _set_permuted_estimator(self):
         """Set self.estimator_ based on permutation arg."""

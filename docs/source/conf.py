@@ -457,6 +457,15 @@ def _make_estimator_overview(app):
             "authors",
             "maintainers",
         ],
+        "detector": [
+            "task",
+            "learning_type",
+            "capability:multivariate",
+            "capability:missing_values",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
     }
 
     # todo: replace later by code similar to below

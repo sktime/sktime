@@ -122,7 +122,7 @@ Direct and recursive - ``sktime`` native 2nd generation
     :template: class.rst
 
     DirectReductionForecaster
-
+    RecursiveReductionForecaster
 
 Direct and recursive - 3rd party
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,6 +211,18 @@ Wrappers that add prediction intervals to any forecaster.
     EnbPIForecaster
 
 
+Calibration and bias adjustment
+-------------------------------
+
+.. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BoxCoxBiasAdjustedForecaster
+
+
 Trend forecasters
 -----------------
 
@@ -225,6 +237,7 @@ Trend forecasters
     STLForecaster
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
+    SplineTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -337,6 +350,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     VARMAX
 
+.. currentmodule:: sktime.forecasting.vecm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VECM
+
 Auto-ARIMA models
 ~~~~~~~~~~~~~~~~~
 
@@ -439,7 +460,7 @@ Structural time series models
     DynamicFactor
 
 Deep learning based forecasters
----------------------------------------------
+-------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
 
@@ -452,29 +473,13 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+.. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.timesfm_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimesFMForecaster
-
-.. currentmodule:: sktime.forecasting.ttm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TinyTimeMixerForecaster
+    SCINetForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
@@ -512,6 +517,50 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+
+
+Pre-trained and foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
 
 Intermittent time series forecasters
 ------------------------------------
