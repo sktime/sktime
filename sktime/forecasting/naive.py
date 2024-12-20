@@ -163,7 +163,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         n_timepoints = y.shape[0]
 
-        if not hasattr(self, "_y"):
+        if not hasattr(self, "_y") or self._y is None:
             self._y = y
 
         if self.strategy in ("last", "mean"):
