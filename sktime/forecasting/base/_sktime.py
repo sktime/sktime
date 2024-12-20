@@ -16,6 +16,9 @@ from sktime.utils.datetime import _shift
 class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
+    # makes extensive use of the remembered data _y, _X
+    _config = {"remember_data": True}
+
     def __init__(self, window_length=None):
         super().__init__()
         self.window_length = window_length
