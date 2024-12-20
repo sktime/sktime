@@ -154,8 +154,9 @@ class ForecastKnownValues(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
+            feature_names = self._y_metadata["feature_names"]
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
-            y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
+            y_pred = y_pred.reindex(feature_names, axis=1, **reindex_params)
         # TypeError happens if indices are incompatible types
         except TypeError:
             if self.fill_value is None:
