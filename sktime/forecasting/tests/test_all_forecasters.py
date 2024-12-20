@@ -742,10 +742,14 @@ class TestAllForecasters(
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
 
-    def test__y_and_cutoff(self, estimator_instance, n_columns):
+    @pytest.mark.parametrize("remember_data", [True, False])
+    def test__y_and_cutoff(self, estimator_instance, n_columns, remember_data):
         """Check cutoff and _y."""
         # check _y and cutoff is None after construction
-        f = estimator_instance
+        f = estimator_instance.clone()
+
+        if remember_data:
+            f.set_config(remember_data=True)
 
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
@@ -760,8 +764,12 @@ class TestAllForecasters(
         # action:uncomments the line above
         # why: fails for multivariates cause they are DataFrames
         # solution: look for a general solution for Series and DataFrames
-        assert len(f._y) > 0
         assert f.cutoff == y_train.index[-1]
+
+        if not remember_data:
+            return None
+
+        assert len(f._y) > 0
 
         # check data pointers
         np.testing.assert_array_equal(f._y.index, y_train.index)
