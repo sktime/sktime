@@ -1,0 +1,59 @@
+# Improving sktime's Notebook Example Navigation: Task-Based Organization (Addresses Issue #7521)
+
+This document proposes improvements to the navigation of the "Notebook Examples" section in the `sktime` documentation, specifically addressing the lack of clear organization and the difficulty in finding task-specific examples, as highlighted in issue #7521.
+
+# Improving sktime's Notebook Example Navigation: Focus on Task-Based Organization
+
+This document proposes improvements to the navigation of the "Notebook Examples" section in the `sktime` documentation, specifically addressing the need for better organization based on machine learning tasks. This directly addresses the issue raised regarding the lack of subheadings and difficulty in finding relevant examples.
+
+## Current Issue
+
+The current "Notebook Examples" section lacks sufficient organization, particularly around the Notebook Examples. This makes it difficult for users to quickly find examples related to specific time series tasks.
+
+## Proposed Solutions (Focused on the Issue)
+
+The core improvement focuses on organizing notebooks by common machine learning tasks related to time series data:
+
+1.  **Categorization by Learning Task:** Organize the notebooks into subsections based on the following tasks:
+
+    *   **Classification:** Examples demonstrating time series classification techniques.
+    *   **Regression:** Examples demonstrating time series regression techniques.
+    *   **Clustering:** Examples showcasing time series clustering algorithms.
+    *   **Forecasting:** Examples related to point forecasting, probabilistic forecasting, hierarchical forecasting, etc.
+    *   **Detection (Anomaly/Change Point):** Examples focused on detecting anomalies and change points in time series data.
+
+## Example of Improved Structure
+
+The following demonstrates a possible improved structure for the "Notebook Examples" section, focusing *only* on the task-based organization:
+Notebook Examples
+├── Classification
+│   ├── Time Series Classification with sktime.ipynb
+│   └── ... (more specific classification examples)
+├── Regression
+│   ├── Time Series Regression with sktime.ipynb
+|   └── ...
+├── Clustering
+│   ├── Time Series Clustering with sktime.ipynb
+│   └
+├── Forecasting
+│   ├── Introduction to Forecasting with sktime.ipynb
+│   ├── Probabilistic Forecasting.ipynb
+│   ├── Hierarchical Forecasting.ipynb
+│   └── (more specific forecasting examples)
+├── Detection (Anomaly/Change Point)
+├── Anomaly, changepoint, and segment detection with sktime and skchange.ipynb
+└── ...
+## Rationale and Benefits (Related to the Issue)
+
+This task-based organization directly addresses the core issue by:
+
+*   **Improving Navigation:** Users can quickly find relevant examples based on their specific learning task of interest (classification, regression, forecasting, etc.).
+*   **Enhancing Discoverability:** By grouping similar examples, users can more easily discover the range of `sktime`'s capabilities for each task.
+
+## Addressing Other Suggested Improvements (Out of Scope for this Focused Contribution)
+
+While other suggestions like sections for "Data Types," "Data Transformations," "Benchmarks," and smaller, more focused notebooks are valuable, they are considered out of scope for *this specific contribution*. This contribution focuses solely on the core issue of task-based organization within the "Notebook Examples" section. These other suggestions could be addressed in separate, follow-up contributions.
+
+## Conclusion
+
+By implementing this task-based organization, we directly address the stated issue of poor navigation within the "Notebook Examples" section. This focused approach provides a clear improvement while allowing for other enhancements to be addressed separately.
