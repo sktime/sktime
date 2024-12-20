@@ -422,7 +422,7 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # fill NaN with observed values
                 y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
-        y_pred.name = self._y_metadata["feature_names"][0]
+        y_pred.name = self._y.name
 
         return y_pred
 
