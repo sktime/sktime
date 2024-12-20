@@ -8,16 +8,42 @@ tested with various configurations for correct output.
 
 __author__ = ["ksharma6"]
 
+__all__ = [
+    
+]
+
 import numpy as np
 import pandas as pd
+import pytest
 
-from sktime.classification.model_evaluation._functions import (
+from sktime.datasets import load_italy_power_demand, load_basic_motions
+
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.dists_kernels import FlatDist, ScipyDist
+from sktime.classification.model_evaluation import evaluate
+from sktime.classification.model_evaluation._functions import(
     _check_scores,
-    _get_column_order_and_datatype,
+    _get_column_order_and_datatype
 )
+
+
+from sklearn import metrics
+
+
+
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
-# METRICS = [accuracy_score()]
+
+
+
+
+
+
+
+
+
+
+METRICS = [metrics.accuracy_score(), ]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
