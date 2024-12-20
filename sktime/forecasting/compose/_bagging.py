@@ -395,12 +395,22 @@ class BaggingForecaster(BaseForecaster):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.compose import YfromX
+        from sktime.forecasting.naive import (
+            NaiveForecaster,
+        )  # <-- Import NaiveForecaster
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+        from sktime.transformations.panel.random_intervals import RandomIntervals
         from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
-        params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+        params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
+
+        random_intervals = RandomIntervals()
+        naive_fcst = NaiveForecaster(strategy="drift")
+        params_2 = {"bootstrap_transformer": random_intervals, "forecaster": naive_fcst}
+
+        params = [params_1, params_2]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
