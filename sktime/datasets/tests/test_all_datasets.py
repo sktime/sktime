@@ -11,6 +11,13 @@ import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
+_tag_constraints = [
+    (
+        "n_instances should be equal to the sum of test and train instances",
+        lambda x: x["n_instances"] == x["n_instances_train"] + x["n_instances_test"],
+    ),
+]
+
 
 class DatasetFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for classifier tests.
