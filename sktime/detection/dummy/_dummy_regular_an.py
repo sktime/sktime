@@ -25,7 +25,7 @@ class DummyRegularAnomalies(BaseDetector):
     >>> from sktime.detection.dummy import DummyRegularAnomalies
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> d = DummyRegularAnomalies(step_size=3)
-    >>> d.fit_transform(y)
+    >>> yt = d.fit_transform(y)
     """
 
     _tags = {
@@ -61,7 +61,10 @@ class DummyRegularAnomalies(BaseDetector):
         self :
             Reference to self.
         """
-        self.first_index_ = X.index[0]
+        X_index = X.index
+        if isinstance(X_index, pd.DatetimeIndex):
+            X_index = pd.PeriodIndex(X_index)
+        self.first_index_ = X_index[0]
         return self
 
     def _predict(self, X):
@@ -87,6 +90,9 @@ class DummyRegularAnomalies(BaseDetector):
         step_size = self.step_size
 
         X_index = X.index
+        if isinstance(X_index, pd.DatetimeIndex):
+            X_index = pd.PeriodIndex(X_index)
+
         first_index = self.first_index_
 
         offset = X_index - first_index
@@ -97,8 +103,10 @@ class DummyRegularAnomalies(BaseDetector):
             offset = pd.Index(offset)
 
         change_point_indicator = offset % step_size == step_size - 1
-        X_ix_cp = X_index[change_point_indicator]
-        change_points = pd.Series(X_ix_cp)
+
+        X_range = pd.RangeIndex(len(X))
+        X_ix_cp = X_range[change_point_indicator]
+        change_points = pd.Series(X_ix_cp, dtype="int64")
         return change_points
 
     @classmethod

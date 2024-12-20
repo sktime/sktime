@@ -12,8 +12,8 @@ def test_dummy_changepoints():
     y_cp_ds = d.fit_transform(y)
     y_cp_sp = d.fit_predict(y)
 
-    expected_ds = pd.Series([0, 0, 1, 0, 0, 1, 0, 0, 1, 0])
+    expected_ds = pd.DataFrame([0, 0, 1, 0, 0, 1, 0, 0, 1, 0], columns=["labels"])
     assert y_cp_ds.equals(expected_ds)
 
-    expected_sp = pd.Series([2, 5, 8])
+    expected_sp = pd.DataFrame([2, 5, 8], columns=["ilocs"])
     assert y_cp_sp.equals(expected_sp)

@@ -53,6 +53,12 @@ class BinarySegmentation(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "fit_is_empty": True,
         "univariate-only": True,
         "task": "change_point_detection",
@@ -175,7 +181,7 @@ class BinarySegmentation(BaseDetector):
             X, self.threshold, self.min_cp_distance, self.max_iter
         )
         change_points.sort()
-        return pd.Series(X.index[change_points])
+        return pd.Series(change_points, dtype="int64")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

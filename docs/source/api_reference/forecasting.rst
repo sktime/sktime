@@ -237,6 +237,7 @@ Trend forecasters
     STLForecaster
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
+    SplineTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -471,6 +472,14 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
     LTSFTransformerForecaster
+
+.. currentmodule:: sktime.forecasting.scinet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SCINetForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
