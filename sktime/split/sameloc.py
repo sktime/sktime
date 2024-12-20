@@ -23,6 +23,36 @@ class SameLocSplitter(BaseSplitter):
     Splits ``y`` in ``split`` and ``split_loc`` such that ``loc`` indices of splits
     are identical to loc indices of ``cv`` applied to ``y_template``.
 
+    Let :math:`Y_{template}` represent the reference time series
+    with index :math:`I_{template} \subseteq T`, where
+    `T` denotes the space of loc indices. Similarly, let `Y` represent the target
+    time series with index :math:`I \subseteq T`.
+
+    This splitter applies a given splitting scheme :math:`S` (defined by a
+    BaseSplitter instance, `cv`) to :math:`Y_{template}`,
+    generating loc-based train-test splits:
+
+    .. math::
+
+        S(I_{template}) = { (I_{train}^k, I_{test}^k) }_{k=1}^K
+
+    where :math:`K` is the total number of splits.
+
+    The SameLocSplitter then maps these loc-based indices
+    :math:`I_{train}^k` and :math:`I_{test}^k`
+    to their corresponding positional indices (`iloc`) in
+    :math:`I`.
+
+    The final train-test splits for :math:`Y` are therefore:
+
+    .. math::
+
+        S(I) = { (f(I_{train}^k), f(I_{test}^k)) }_{k=1}^K.
+
+    This splitter is useful when you need to replicate train-test splits across multiple
+    time series with consistent loc-based indexing.
+
+
     Parameters
     ----------
     cv : BaseSplitter
