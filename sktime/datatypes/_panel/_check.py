@@ -1203,7 +1203,7 @@ class PanelGluontsList(ScitypePanel):
 
     An object ``obj: list`` follows the specification iff:
 
-    * structure convention: ``obj`` must be a list of ``dict``.
+    * structure convention: ``obj`` must be a ``list`` of ``dict``.
       Each ``dict`` contains two keys, ``"start"`` and ``"target"``. 
       ``"start"`` maps to the interval (e.g., `pandas.Period`) of the series. 
       ``"target"`` maps to a 1D or 2D ``numpy`` array (depending on whether it is uni- or multi-variate).
