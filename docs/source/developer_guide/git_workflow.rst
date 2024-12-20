@@ -10,15 +10,16 @@ GitHub, clone, and develop on a new branch.
 
 The workflow consists of two main parts:
 
-* **Creating a fork**: This sets up your own copy of the ``sktime`` repository on GitHub.
-  This needs to be done only once, when you start contributing to ``sktime``.
+* **Creating a fork and cloning the repository**: This section will help you set up your own forked copy of the ``sktime``
+repository on GitHub and a local copy of the forked repository on your machine. This needs to be done only once, when you
+start contributing to ``sktime``.
 * **Developing a feature**: This is the process of developing a new feature, e.g.,
   a bugfix or new estimator.
   This is done every time you want to contribute a new feature.
 
 
-Creating a fork - Initial one time setup
-----------------------------------------
+Creating a fork and cloning the repository - initial one time setup
+-------------------------------------------------------------------
 
 1.  Fork the `project
     repository <https://github.com/sktime/sktime>`__ by
@@ -57,8 +58,8 @@ Creating a fork - Initial one time setup
        > upstream  https://github.com/sktime/sktime.git (push)
 
 
-Contributing a feature - for every new feature
-----------------------------------------------
+Developing a feature - repeat for every new feature
+---------------------------------------------------
 
 1.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:
