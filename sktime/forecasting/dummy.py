@@ -153,18 +153,16 @@ class ForecastKnownValues(BaseForecaster):
 
         fh_abs = fh.to_absolute_index(self.cutoff)
 
+        feat_names = self._y_metadata["feature_names"]
         try:
-            feature_names = self._y_metadata["feature_names"]
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
-            y_pred = y_pred.reindex(feature_names, axis=1, **reindex_params)
+            y_pred = y_pred.reindex(feat_names, axis=1, **reindex_params)
         # TypeError happens if indices are incompatible types
         except TypeError:
             if self.fill_value is None:
-                y_pred = pd.DataFrame(index=fh_abs, columns=self._y.columns)
+                y_pred = pd.DataFrame(index=fh_abs, columns=feat_names)
             else:
-                y_pred = pd.DataFrame(
-                    self.fill_value, index=fh_abs, columns=self._y.columns
-                )
+                y_pred = pd.DataFrame(self.fill_value, index=fh_abs, columns=feat_names)
 
         return y_pred
 
