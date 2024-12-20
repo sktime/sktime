@@ -783,6 +783,7 @@ class TestAllForecasters(
 
     def test__y_when_refitting(self, estimator_instance, n_columns):
         """Test that _y is updated when forecaster is refitted."""
+        estimator_instance = estimator_instance.clone().set_config(remember_data=True)
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=FH0)
         estimator_instance.fit(y_train[3:], fh=FH0)
