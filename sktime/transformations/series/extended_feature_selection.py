@@ -1,14 +1,5 @@
 """Feature Selection Methods."""
 
-__author__ = ["aykut-uz"]
-__all__ = [
-    "BaseFeatureSelection",
-    "CoefficientFeatureSelection",
-    "OMPFeatureSelection",
-    "LassoFeatureSelection",
-    "XGBFeatureSelection",
-]
-
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -17,6 +8,15 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
+
+__author__ = ["aykut-uz"]
+__all__ = [
+    "BaseFeatureSelection",
+    "CoefficientFeatureSelection",
+    "OMPFeatureSelection",
+    "LassoFeatureSelection",
+    "XGBFeatureSelection",
+]
 
 
 def get_top_n(number_list, n):
@@ -71,6 +71,11 @@ class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
         n_features,
         random_state=None,
     ):
+        if not isinstance(n_features, (int, np.integer)) or n_features < 1:
+            raise ValueError(
+                f"n_features must be positive integer but was {n_features}"
+            )
+
         self.n_features = n_features
         self.selector = selector
         self.random_state = random_state
@@ -121,6 +126,13 @@ class BaseFeatureSelection(BaseTransformer, metaclass=ABCMeta):
         self.selected_feature_scores_ = None
         if isinstance(X, pd.Series):
             return self
+        if X.shape[1] < self.n_features_:
+            self.n_features_ = X.shape[1]
+            warnings.warn(
+                f"Requested number of selected features is {self.n_features}, "
+                f"but data matrix X has only {X.shape[1]} features. "
+                f"n_features is set to {X.shape[1]}."
+            )
         self.selector_.fit(X, y)
         self.score_ = self._get_score()
         self.top_n_indices_ = get_top_n(self.score_, self.n_features_)
@@ -201,18 +213,17 @@ class CoefficientFeatureSelection(BaseFeatureSelection):
             )
         except AttributeError:
             raise AttributeError(
-                f"""The passed selector of type {type(self.selector_)} has \
-                no attribute {self.coefficient_attribute}."""
+                f"The passed selector of type {type(self.selector_)} has "
+                f" no attribute {self.coefficient_attribute}."
             )
         number_non_zero_scores = np.count_nonzero(coefficients)
         if number_non_zero_scores < self.n_features_:
             warnings.warn(
-                f"""Selector {type(self.selector_).__name__} has \
-                {number_non_zero_scores} non-zero coefficients, \
-                but {self.n_features_} are required. \
-                {self.n_features_ - number_non_zero_scores} of the selected \
-                features have a zero coefficient.
-                """
+                f"Selector {type(self.selector_).__name__} has "
+                f"{number_non_zero_scores} non-zero coefficients "
+                f"but {self.n_features_} are required. "
+                f"{self.n_features_ - number_non_zero_scores} of the "
+                f"selected features have a zero coefficient."
             )
         return np.abs(coefficients)
 
@@ -334,19 +345,14 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
         "python_dependencies": ["scikit-learn"],
     }
 
-    def __init__(
-        self,
-        n_features,
-        alpha=1.0,
-        random_state=None,
-    ):
+    def __init__(self, n_features, **model_params):
         from sklearn.linear_model import Lasso
 
-        self.alpha = alpha
+        self.model_params = model_params
         super().__init__(
-            selector=Lasso(alpha=alpha, random_state=random_state),
+            selector=Lasso(**self.model_params),
             n_features=n_features,
-            random_state=random_state,
+            random_state=model_params.get("random_state", None),
         )
 
     @classmethod
@@ -371,7 +377,11 @@ class LassoFeatureSelection(CoefficientFeatureSelection):
         """
         params = [
             {"n_features": 1, "alpha": 2.0},
-            {"n_features": 1, "alpha": 3.0, "random_state": 10},
+            {
+                "n_features": 1,
+                "random_state": 10,
+                "alpha": 3.0,
+            },
         ]
         return params
 
@@ -416,24 +426,15 @@ class XGBFeatureSelection(BaseFeatureSelection):
         "python_dependencies": ["xgboost"],
     }
 
-    def __init__(
-        self,
-        n_features,
-        importance_type="gain",
-        model_params=None,
-        random_state=None,
-    ):
+    def __init__(self, n_features, importance_type="gain", **model_params):
         from xgboost import XGBRegressor
 
         self.importance_type = importance_type
         self.model_params = model_params
-        self.model_params_ = dict() if self.model_params is None else self.model_params
-        if random_state is None and model_params is not None:
-            random_state = model_params.get("random_state", None)
         super().__init__(
-            selector=XGBRegressor(random_state=random_state, **self.model_params_),
+            selector=XGBRegressor(**self.model_params),
             n_features=n_features,
-            random_state=random_state,
+            random_state=model_params.get("random_state", None),
         )
 
     def _get_score(self):
@@ -479,9 +480,7 @@ class XGBFeatureSelection(BaseFeatureSelection):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {
-                "n_features": 1,
-            },
-            {"n_features": 1, "model_params": {"n_estimators": 14}, "random_state": 10},
+            {"n_features": 1},
+            {"n_features": 1, "n_estimators": 14, "random_state": 10},
         ]
         return params
