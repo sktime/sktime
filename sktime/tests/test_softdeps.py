@@ -16,7 +16,6 @@ from unittest.mock import patch
 
 import pytest
 
-from sktime.base._base import BaseObject
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
@@ -341,6 +340,8 @@ def test_est_fit_without_modulenotfound(estimator):
 def test_check_python_version(
     mock_sys, mock_release_version, prereleases, expect_exception
 ):
+    from sktime.base._base import BaseObject
+
     if mock_release_version:
         mock_sys.version = "3.8.1rc"
     else:
