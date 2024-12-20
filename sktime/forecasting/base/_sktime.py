@@ -57,10 +57,10 @@ class _BaseWindowForecaster(BaseForecaster):
 
         # ensure pd.Series name attribute is preserved
         if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
-            y_pred.name = self._y.name
+            y_pred.name = self._y_metadata["feature_names"][0]
         if isinstance(y_pred, pd.DataFrame) and isinstance(self._y, pd.Series):
             y_pred = y_pred.iloc[:, 0]
-            y_pred.name = self._y.name
+            y_pred.name = self._y_metadata["feature_names"][0]
 
         return y_pred
 
