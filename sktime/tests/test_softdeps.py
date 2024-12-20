@@ -340,7 +340,7 @@ def test_est_fit_without_modulenotfound(estimator):
 def test_check_python_version(
     mock_sys, mock_release_version, prereleases, expect_exception
 ):
-    from sktime.base._base import BaseObject
+    from sktime.base import BaseObject
 
     if mock_release_version:
         mock_sys.version = "3.8.1rc"
