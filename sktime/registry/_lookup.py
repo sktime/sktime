@@ -174,13 +174,17 @@ def all_estimators(
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
-    def _coerce_to_list_of_str(obj):
+    def _coerce_to_str(obj):
         if isinstance(obj, (list, tuple)):
-            return [_coerce_to_list_of_str(o) for o in obj]
+            return [_coerce_to_str(o) for o in obj]
         if isclass(obj):
             obj = obj.get_tag("object_type")
-        if not isinstance(obj, list):
-            obj = [obj]
+        return obj
+
+    def _coerce_to_list_of_str(obj):
+        obj = _coerce_to_str(obj)
+        if isinstance(obj, str):
+            return [obj]
         return obj
 
     estimator_types = _coerce_to_list_of_str(estimator_types)
