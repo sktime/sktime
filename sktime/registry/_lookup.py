@@ -15,6 +15,7 @@ __author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
 
 
 from copy import deepcopy
+from inspect import isclass
 from operator import itemgetter
 from pathlib import Path
 
@@ -173,16 +174,29 @@ def all_estimators(
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
-    if estimator_types:
-        clsses = _check_estimator_types(estimator_types)
-        if not isinstance(estimator_types, list):
-            estimator_types = [estimator_types]
-        CLASS_LOOKUP = {x: y for x, y in zip(estimator_types, clsses)}
-    else:
-        CLASS_LOOKUP = None
+    def _coerce_to_list_of_str(obj):
+        if isinstance(obj, (list, tuple)):
+            return [_coerce_to_list_of_str(o) for o in obj]
+        if isclass(obj):
+            obj = obj.get_tag("object_type")
+        if not isinstance(obj, list):
+            obj = [obj]
+        return obj
+
+    estimator_types = _coerce_to_list_of_str(estimator_types)
+
+    if estimator_types is not None and filter_tags is not None:
+        if "object_type" in filter_tags:
+            obj_field = filter_tags["object_type"]
+            obj_field = _coerce_to_list_of_str(obj_field)
+            obj_field = obj_field + estimator_types
+            filter_tags = filter_tags.copy()
+            filter_tags["object_type"] = obj_field
+    elif estimator_types is not None:
+        filter_tags = {"object_type": estimator_types}
 
     result = all_objects(
-        object_types=estimator_types,
+        object_types=None,
         filter_tags=filter_tags,
         exclude_objects=exclude_estimators,
         return_names=return_names,
@@ -192,7 +206,6 @@ def all_estimators(
         package_name="sktime",
         path=ROOT,
         modules_to_ignore=MODULES_TO_IGNORE,
-        class_lookup=CLASS_LOOKUP,
     )
 
     return result
