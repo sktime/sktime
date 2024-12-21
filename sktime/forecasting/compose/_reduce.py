@@ -131,7 +131,7 @@ def _sliding_window_transform(
     if pooling == "global":
         kwargs = ({"transformers": transformers})
         _sliding_window_trans_f = _sliding_window_transform_global
-    else:
+    else:  #if pooling == "local":
         kwargs = ({"fh": fh, "windows_identical": windows_identical})
         _sliding_window_trans_f = _sliding_window_transform_local
 
