@@ -189,7 +189,7 @@ def all_estimators(
         return obj
 
     estimator_types = _coerce_to_list_of_str(estimator_types)
-    estimator_types = [x for y in _get_all_descendants(estimator_types) for x in y]
+    estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
     estimator_types = list(set(estimator_types))
 
     if estimator_types is not None and filter_tags is not None:
