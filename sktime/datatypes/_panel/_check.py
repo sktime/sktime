@@ -1204,29 +1204,29 @@ class PanelGluontsList(ScitypePanel):
     An object ``obj: list`` follows the specification iff:
 
     * structure convention: ``obj`` must be a ``list`` of ``dict``.
-      Each ``dict`` must contain a key ``"target"``which 
-      maps to a 1D ``numpy.ndarray`` for a univariate, and 
+      Each ``dict`` must contain a key ``"target"``which
+      maps to a 1D ``numpy.ndarray`` for a univariate, and
       2D ``numpy.ndarray`` for a multivariate time series.
-      Optionally, it may also contain a key ``"start"`` 
+      Optionally, it may also contain a key ``"start"``
       that maps to a ``pandas.Period`` object.
-      eg: ``pandas.Period("2024-01-01", freq="D")`` for a time series starting 
-      on 2024-01-01 and sampled daily.     
+      eg: ``pandas.Period("2024-01-01", freq="D")`` for a time series starting
+      on 2024-01-01 and sampled daily.
     * instances: instances correspond to different list elements of ``obj``.
     * instance index: the instance index of an instance is the list index at which
       it is located in ``obj``. That is, the data at ``obj[i]``
       correspond to observations of the instance with index ``i``.
     * time points: rows of ``obj[i]['target']`` correspond to
-      different, distinct time points, at which 
+      different, distinct time points, at which
       instance ``i`` is observed.
     * time index: the time index is implicit and by-convention.
       The ``j``-th element (for an integer ``j``) of instance ``i`` is interpreted
-      as an observation at the time point ``j``. 
-      If ``"start"`` key is present, the time index for 
+      as an observation at the time point ``j``.
+      If ``"start"`` key is present, the time index for
       the ``j``-th element of instance ``i`` is ``obj[i]['start'] + j``.
     * variables: columns of ``obj[i]['target']`` correspond to different variables
       available for instance ``i``.
     * variable names: ``numpy`` mtypes cannot represent variable names. If required,
-      then variable names are assigned ``"value_{k}`` 
+      then variable names are assigned ``"value_{k}``
       where ``k`` is the feature column index.
 
     Capabilities:
