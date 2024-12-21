@@ -55,13 +55,13 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
             1. using the __call__ dunder
             2. calling the evaluate method
         """
-        metric = estimator_instance.set_params(multioutput=multioutput)
-
         # create numpy weights based on n_columns
         if multioutput == "numpy":
             if n_columns == 1:
                 return None
             multioutput = np.random.rand(n_columns)
+
+        metric = estimator_instance.set_params(multioutput=multioutput)
 
         # create test data
         y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
@@ -104,12 +104,12 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
     ):
         """Test output of evaluate_by_index for type, dependent on multioutput."""
         # create numpy weights based on n_columns
-        metric = estimator_instance.set_params(multioutput=multioutput)
-
         if multioutput == "numpy":
             if n_columns == 1:
                 return None
             multioutput = np.random.rand(n_columns)
+
+        metric = estimator_instance.set_params(multioutput=multioutput)
 
         # create test data
         y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
