@@ -182,6 +182,15 @@
       ]
     },
     {
+      "login": "jgyasu",
+      "name": "Jigyasu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94278611?s=400&u=19941ae4723ef841b3a3c7df996214efadc98c45&v=4",
+      "profile": "https://www.linkedin.com/in/jgyasu/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "jesellier",
       "name": "jesellier",
       "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
@@ -3285,6 +3294,15 @@
       "contributions": [
         "doc",
         "code"
+      ]
+    },
+    {
+      "login": "VjayRam",
+      "name": "Vijay Ram Enaganti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76694566?v=4",
+      "profile": "https://github.com/VjayRam",
+      "contributions": [
+        "doc"
       ]
     }
   ]
