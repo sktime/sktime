@@ -543,7 +543,7 @@ def _construct_child_tree(mode="class"):
     dict: keys = classes/strings, value = tuple of child classes/strings
         dict of child classes or scitype strings, according to parent_scitype tag
     """
-    return _construct_child_tree_cached(mode=mode).copy
+    return _construct_child_tree_cached(mode=mode).copy()
 
 
 @lru_cache
