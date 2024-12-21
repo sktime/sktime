@@ -363,12 +363,12 @@ def test_check_python_version(
     except ModuleNotFoundError as exception:
         expected_msg = (
             f"{type(dummy_object_instance).__name__} requires python version "
-            "to be {dummy_object_instance._tags['python_version']}, "
-            "but system python version is {mock_sys.version}. "
+            f"to be {dummy_object_instance.get_tags()['python_version']}, "
+            f"but system python version is {mock_sys.version}. "
             "This is due to the release candidate status of your system Python."
         )
 
-        if not expect_exception and not exception.msg == expected_msg:
+        if not expect_exception or not exception.msg == expected_msg:
             # Throw Error since exception is not expected or has not the correct message
             assert False, (
                 "ModuleNotFoundError should be NOT raised by:",
