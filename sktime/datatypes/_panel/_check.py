@@ -1235,6 +1235,7 @@ class PanelGluontsList(ScitypePanel):
     * can represent panels of unequally supported series
     * can represent panels of series with different sets of variables
     * can represent missing values
+    * can support unequally supported, but not unequally spaced series.
 
     Parameters
     ----------
