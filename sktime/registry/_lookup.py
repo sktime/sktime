@@ -22,6 +22,7 @@ from pathlib import Path
 import pandas as pd
 from skbase.lookup import all_objects
 
+from sktime.base import BaseObject
 from sktime.registry._base_classes import (
     _get_all_descendants,
     get_base_class_for_str,
@@ -204,7 +205,7 @@ def all_estimators(
         filter_tags = {"object_type": estimator_types}
 
     result = all_objects(
-        object_types=None,
+        object_types=BaseObject,
         filter_tags=filter_tags,
         exclude_objects=exclude_estimators,
         return_names=return_names,
