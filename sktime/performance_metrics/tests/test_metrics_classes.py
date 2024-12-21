@@ -84,9 +84,10 @@ def test_custom_metric(greater_is_better):
     def custom_mape(y_true, y_pred) -> float:
         eps = np.finfo(np.float64).eps
 
-        result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
+        mapes = np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps)
+        result = np.mean(mapes, axis=0)
 
-        return float(result)
+        return result
 
     fc_scorer = make_forecasting_scorer(
         func=custom_mape,

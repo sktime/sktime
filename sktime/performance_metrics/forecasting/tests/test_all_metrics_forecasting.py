@@ -160,9 +160,10 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         assert np.allclose(res, res_noix)
 
-    def test_metric_weights(self, estimator_class):
+    def test_metric_weights(self, estimator_instance):
         """Test that weights are correctly applied to the metric."""
-        metric = estimator_class
+        metric_obj = estimator_instance
+        metric = type(metric_obj)
 
         y_true = np.array([3, -0.5, 2, 7, 2])
         y_pred = np.array([2.5, 0.5, 2, 8, 2.25])
@@ -175,7 +176,10 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
             "y_train": y_true,
         }
 
-        metric_obj = metric()
+        # skip for private metrics such as dynamic error metrics
+        if metric.__name__.startswith("_"):
+            return None
+
         if metric_obj(**y_kwargs) == metric_obj(sample_weight=wts, **y_kwargs):
             raise ValueError(f"Metric {metric} does not handle sample_weight correctly")
 
