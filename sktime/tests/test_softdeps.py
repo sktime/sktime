@@ -368,7 +368,7 @@ def test_check_python_version(
             "This is due to the release candidate status of your system Python."
         )
 
-        if not expect_exception or not exception.msg == expected_msg:
+        if not expect_exception or exception.msg != expected_msg:
             # Throw Error since exception is not expected or has not the correct message
             raise AssertionError(
                 "ModuleNotFoundError should be NOT raised by:",
