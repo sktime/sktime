@@ -23,6 +23,7 @@ import pandas as pd
 from skbase.lookup import all_objects
 
 from sktime.registry._base_classes import (
+    _get_all_descendants,
     get_base_class_for_str,
     get_obj_scitype_list,
 )
@@ -187,7 +188,10 @@ def all_estimators(
             return [obj]
         return obj
 
-    estimator_types = _coerce_to_list_of_str(estimator_types)
+    if estimator_types is not None:
+        estimator_types = _coerce_to_list_of_str(estimator_types)
+        estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
+        estimator_types = list(set(estimator_types))
 
     if estimator_types is not None and filter_tags is not None:
         if "object_type" in filter_tags:
