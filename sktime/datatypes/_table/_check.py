@@ -290,6 +290,30 @@ def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
 class TableNp1D(ScitypeTable):
     """Data type: 1D np.ndarray based specification of data frame table.
 
+    Name: ``"numpy1D"``
+
+    Short description:
+
+    a 1D numpy ``ndarray`` representing a univariate data table,
+    with elements as instances of single feature
+
+    Long description:
+
+    The ``"numpy1D"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: np.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` is a 1D numpy array.
+    * feature: the array ``obj`` represents a single feature
+    * instances: elements of ``obj`` correspond to different instances
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
+
     Parameters are inferred by check.
 
     Parameters
