@@ -93,23 +93,14 @@ class RandIndex(BaseDetectionMetric):
         list of dict
             Each dict represents a segment with 'start', 'end', and 'label'.
         """
-        required_columns = {"start", "end"}
-        if not required_columns.issubset(y.columns):
-            raise ValueError(f"{var_name} must contain 'start' and 'end' columns.")
+        seg_ix = y.set_index("ilocs").index
+        seg_dict = {"start": seg_ix.left, "end": seg_ix.right}
+        if "label" in y.columns:
+            seg_dict["label"] = y["label"]
+        else:
+            seg_dict["label"] = range(len(y))
 
-        # Assign unique labels if 'label' is not present
-        if "label" not in y.columns:
-            y = y.copy()
-            y["label"] = [f"segment_{i}" for i in range(len(y))]
-
-        # Validate that 'end' is greater than or equal to 'start' for all segments
-        if not (y["end"] >= y["start"]).all():
-            raise ValueError(
-                f"In {var_name}, all 'end' values must be greater than or equal to 'start' values."  # noqa: E501
-            )
-
-        segments = y.to_dict("records")
-        return segments
+        return seg_dict
 
     def _assign_unique_ids(self, segments, prefix):
         """Assign unique cluster IDs to each segment.
