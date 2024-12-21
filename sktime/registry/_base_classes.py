@@ -440,7 +440,7 @@ class transformer_pairwise(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "transformer-pairwise",
         "short_descr": "pairwise transformer for tabular data, distance or kernel",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
     }
 
     @classmethod
@@ -464,7 +464,7 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "transformer-pairwise-panel",
         "short_descr": "pairwise transformer for panel data, distance or kernel",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
     }
 
     @classmethod
@@ -797,7 +797,7 @@ class transformer_series_to_primitives(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "series-to-primitives-trafo",
         "short_descr": "time series to primitives transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -814,7 +814,7 @@ class transformer_series_to_series(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "series-to-series-trafo",
         "short_descr": "time series to time series transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -831,7 +831,7 @@ class transformer_panel_to_tabular(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "panel-to-tabular-trafo",
         "short_descr": "panel to tabular transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -848,7 +848,7 @@ class transformer_panel_to_panel(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "panel-to-panel-trafo",
         "short_descr": "panel to panel transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
