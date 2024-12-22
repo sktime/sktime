@@ -136,8 +136,8 @@ class EnbPIForecaster(BaseForecaster):
         if isinstance(bootstrap_transformer, BaseTimeSeriesBootstrap):
             warn(
                 "Passing directly bootstrapper from tsbootstrap is deprecated."
-                + "And will change in version 0.37.0",
-                +"Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
+                + "And will change in version 0.37.0"
+                + "Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
                 DeprecationWarning,
             )
             self.bootstrap_transformer_ = TSBootstrapAdapter(bootstrap_transformer)
@@ -266,7 +266,7 @@ class EnbPIForecaster(BaseForecaster):
                 {},
                 {
                     "forecaster": NaiveForecaster(),
-                    "bootstrap_transformer": BlockBootstrap(),
+                    "bootstrap_transformer": BlockBootstrap(block_length=10),
                 },
             ]
         else:

@@ -86,7 +86,8 @@ class TSBootstrapAdapter(BaseTransformer):
         -------
         transformed version of X
         """
-        bootstrapped_samples = self.bootstrap.bootstrap(
+        # Need to be cloned otherwise it helds a inner state and fails during update
+        bootstrapped_samples = self.bootstrap.clone().bootstrap(
             X, test_ratio=0, return_indices=True
         )
 
