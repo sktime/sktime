@@ -66,6 +66,7 @@ class TablePdDataFrame(ScitypeTable):
     * features: columns of ``obj`` correspond to different features
     * feature names: column names ``obj.columns``
     * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
 
     Capabilities:
 
@@ -185,6 +186,7 @@ class TablePdSeries(ScitypeTable):
     * feature: the series ``obj`` represents a single feature
     * feature name: the ``name`` attribute of the ``pd.Series`` object
     * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
 
     Capabilities:
 
@@ -289,6 +291,33 @@ def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
 
 class TableNp1D(ScitypeTable):
     """Data type: 1D np.ndarray based specification of data frame table.
+
+    Name: ``"numpy1D"``
+
+    Short description:
+
+    a 1D numpy ``ndarray`` representing a univariate data table,
+    with elements as instances of single feature
+
+    Long description:
+
+    The ``"numpy1D"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: np.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` is a 1D numpy array.
+    * feature: the array ``obj`` represents a single feature
+    * instances: elements of ``obj`` correspond to different instances
+    * instance index: The instance index is implicit and by-convention.
+      The ``i``-th entry (for an integer ``i``) is interpreted as the ``i``-th instance.
+      That is, the index is always interpreted as zero-indexed integer.
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
