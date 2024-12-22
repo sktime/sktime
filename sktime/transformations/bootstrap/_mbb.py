@@ -676,14 +676,14 @@ def _moving_block_bootstrap(
         )
 
     if block_length == 1 and not replacement:
-        mbb_indices = range(len(ts_index))
+        mbb_indices = np.arange(len(ts_index))
         rng.shuffle(mbb_indices)
     elif block_length == 1:
         mbb_indices = rng.choice(
-            range(len(ts_index)), size=ts_length, replace=replacement
+            np.arange(len(ts_index)), size=ts_length, replace=replacement
         )
     else:
-        ts_int_indexes = range(len(ts_index))
+        ts_int_indexes = np.arange(len(ts_index))
         total_num_blocks = int(ts_length / block_length) + 2
         block_origns = rng.choice(
             ts_length - block_length + 1, size=total_num_blocks, replace=replacement
