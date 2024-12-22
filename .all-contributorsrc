@@ -3297,6 +3297,18 @@
       ]
     },
     {
+<<<<<<< HEAD
+=======
+      "login": "b9junkers",
+      "name": "Shounak Shirodkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54496663?v=4",
+      "profile": "https://github.com/b9junkers",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+>>>>>>> a6e12ea524b101cd03a1e1c055e82c33a64f3467
       "login": "VjayRam",
       "name": "Vijay Ram Enaganti",
       "avatar_url": "https://avatars.githubusercontent.com/u/76694566?v=4",
