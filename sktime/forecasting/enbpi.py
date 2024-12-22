@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements EnbPIForecaster."""
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -9,6 +11,7 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+from sktime.transformations.bootstrap import TSBootstrapAdapter
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -62,7 +65,7 @@ class EnbPIForecaster(BaseForecaster):
     Examples
     --------
     >>> from tsbootstrap import MovingBlockBootstrap
-    >>> from sktime.forecasting.compose import EnbPIForecaster
+    >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.difference import Differencer
@@ -71,7 +74,7 @@ class EnbPIForecaster(BaseForecaster):
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
     ...    forecaster=NaiveForecaster(sp=12),
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
-    >>> forecaster.fit(y, fh=range(12))
+    >>> forecaster.fit(y, fh=range(12)) # Range is broken
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
 
@@ -128,13 +131,32 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        from tsbootstrap import MovingBlockBootstrap
+        from tsbootstrap import BaseTimeSeriesBootstrap, MovingBlockBootstrap
 
-        self.bootstrap_transformer_ = (
-            clone(bootstrap_transformer)
-            if bootstrap_transformer is not None
-            else MovingBlockBootstrap()
-        )
+        if isinstance(bootstrap_transformer, BaseTimeSeriesBootstrap):
+            warn(
+                "Passing directly bootstrapper from tsbootstrap is deprecated."
+                + "And will change in version 0.37.0",
+                +"Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
+                DeprecationWarning,
+            )
+            self.bootstrap_transformer_ = TSBootstrapAdapter(bootstrap_transformer)
+        else:
+            self.bootstrap_transformer_ = bootstrap_transformer
+
+        if self.bootstrap_transformer is None:
+            warn(
+                "The default value for the bootstrap_transformer will change to the"
+                + "sktime MovingBlockBootstrap in version 0.37.0."
+                + "If you want to use the current behavior"
+                + "Please bass  TSBootstrapAdapter(MovingBlockBootstrap())"
+            )
+
+            self.bootstrap_transformer_ = (
+                clone(bootstrap_transformer)
+                if bootstrap_transformer is not None
+                else TSBootstrapAdapter(MovingBlockBootstrap())
+            )
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -144,16 +166,16 @@ class EnbPIForecaster(BaseForecaster):
         self.random_state_ = check_random_state(self.random_state)
 
         # fit/transform the transformer to obtain bootstrap samples
-        bs_ts_index = list(
-            self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True)
-        )
-        self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
-        bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
+        bs_ts_index = self.bootstrap_transformer_.fit_transform(y)
+
+        self.indexes = bs_ts_index["resampled_index"].values.reshape((-1, len(y)))
+        bootstrapped_ts = bs_ts_index[y.columns]
 
         self.forecasters = []
         self._preds = []
         # Fit Models per Bootstrap Sample
-        for bs_ts in bootstrapped_ts:
+        for bs_index in bootstrapped_ts.index.get_level_values(0).unique():
+            bs_ts = bootstrapped_ts.loc[bs_index]
             bs_df = pd.DataFrame(bs_ts, index=y.index)
             forecaster = clone(self.forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
@@ -177,7 +199,7 @@ class EnbPIForecaster(BaseForecaster):
     def _predict_interval(self, fh, X, coverage):
         preds = []
         for forecaster in self.forecasters:
-            preds.append(forecaster.predict(fh=fh, X=X))
+            preds.append(forecaster.predict(fh=fh, X=X).values)
 
         train_targets = self._y.copy()
         train_targets.index = pd.RangeIndex(len(train_targets))
