@@ -188,6 +188,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "returns_indices": False,
     }
 
     def __init__(
@@ -235,6 +236,8 @@ class STLBootstrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
         self.return_indices = return_indices
+        if return_indices:
+            self.set_tags(returns_indices=True)
 
         super().__init__()
 
@@ -509,6 +512,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "returns_indices": False,
     }
 
     def __init__(
@@ -527,7 +531,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         self.random_state = random_state
         self.return_indices = return_indices
         if return_indices:
-            self.set_tags(return_indices=True)
+            self.set_tags(returns_indices=True)
 
         super().__init__()
 

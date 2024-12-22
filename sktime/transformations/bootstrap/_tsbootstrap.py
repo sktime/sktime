@@ -57,16 +57,20 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
-        "returns_indices": True,
+        "returns_indices": False,
     }
 
     def __init__(
         self,
         bootstrap,
         include_actual=False,
+        return_indices=False,
     ):
         self.bootstrap = bootstrap
         self.include_actual = include_actual
+        self.return_indices = return_indices
+        if return_indices:
+            self.set_tags(return_indices=True)
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -110,7 +114,12 @@ class TSBootstrapAdapter(BaseTransformer):
             bootstrapped_samples = [X_actual] + bootstrapped_samples
             spl_keys = ["actual"] + spl_keys
 
-        return pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
+        df = pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
+        if self.return_indices:
+            return df
+        else:
+            del df["resampled_index"]
+            return df
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

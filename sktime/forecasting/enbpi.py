@@ -157,6 +157,10 @@ class EnbPIForecaster(BaseForecaster):
                 if bootstrap_transformer is not None
                 else TSBootstrapAdapter(MovingBlockBootstrap())
             )
+        if self.bootstrap_transformer_.get_tags("returns_indices") is False:
+            raise ValueError(
+                "The bootstrap_transformer needs to be able to return indices"
+            )
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
