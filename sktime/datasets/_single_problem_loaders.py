@@ -1578,7 +1578,7 @@ def load_m5(
 
             _download_and_extract(
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=path_to_data_dir,
+                extract_path=extract_path,
             )
         else:
             path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
