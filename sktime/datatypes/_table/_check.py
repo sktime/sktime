@@ -66,6 +66,7 @@ class TablePdDataFrame(ScitypeTable):
     * features: columns of ``obj`` correspond to different features
     * feature names: column names ``obj.columns``
     * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
 
     Capabilities:
 
@@ -185,6 +186,7 @@ class TablePdSeries(ScitypeTable):
     * feature: the series ``obj`` represents a single feature
     * feature name: the ``name`` attribute of the ``pd.Series`` object
     * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
 
     Capabilities:
 
@@ -308,6 +310,9 @@ class TableNp1D(ScitypeTable):
     * structure convention: ``obj`` is a 1D numpy array.
     * feature: the array ``obj`` represents a single feature
     * instances: elements of ``obj`` correspond to different instances
+    * instance index: The instance index is implicit and by-convention.
+      The ``i``-th entry (for an integer ``i``) is interpreted as the ``i``-th instance.
+      That is, the index is always interpreted as zero-indexed integer.
 
     Capabilities:
 
