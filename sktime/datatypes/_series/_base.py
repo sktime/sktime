@@ -25,7 +25,7 @@ class ScitypeSeries(BaseDatatype):
 
     The value :math:`y_i` is interpreted to be "observed at time point" :math:`t_i`.
 
-    The indices are assumed distinct and ordered, i.e., `:math:t_{i-1} < t_i`
+    The indices are assumed distinct and ordered, i.e., :math:`t_{i-1} < t_i`
     for all :math:`i`.
 
     Concrete types implementing the ``Series`` data type must specify:
