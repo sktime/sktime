@@ -297,6 +297,7 @@ def test_forecastx_exog_for_forecaster_x():
     fh = [1, 2, 3]
 
     model_supporting_exogenous = YfromX(LinearRegression())
+    model_supporting_exogenous.set_config(remember_data=True)
 
     cols_to_forecast = ["GNPDEFL", "GNP"]
 

@@ -282,9 +282,8 @@ class MockForecaster(BaseForecaster):
             Point predictions
         """
         index = fh.to_absolute_index(self.cutoff)
-        return pd.DataFrame(
-            self.prediction_constant, index=index, columns=self._y.columns
-        )
+        columns = self._y_metadata["feature_names"]
+        return pd.DataFrame(self.prediction_constant, index=index, columns=columns)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.

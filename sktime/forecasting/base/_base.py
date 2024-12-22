@@ -120,7 +120,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
+        "remember_data": False,  # whether to remember data in fit - self._X, self._y
     }
 
     _config_doc = {
@@ -1604,6 +1604,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
             self._y_mtype_last_seen = y_metadata["mtype"]
+            self.feature_names_in_ = y_metadata["feature_names"]
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
             req_vec_because_cols = (
@@ -1796,6 +1797,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             else:
                 self._y = update_data(self._y, y)
 
+        if y is not None:
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
