@@ -11,8 +11,12 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
 
     Returns
     -------
-    gluonts.dataset.common.ListDataset
-        A gluonTS ListDataset formed from `pd_dataframe`
+    list_dataset: list
+        A list of dict where each dict represents a time series with the following keys:
+        - "start": The starting timestamp.
+        - "target": The values of the time series.
+        - "freq": The frequency of the time series.
+        - "one_dim_target": A boolean value indicating the target is one-dimensional.
 
     Examples
     --------
@@ -36,9 +40,6 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     >>> from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
     >>> X_list_dataset = convert_pandas_to_listDataset(X)
     """
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
-
     # For non-multiindexed DataFrames
     if not isinstance(pd_dataframe.index, pd.MultiIndex):
         start_datetime = pd_dataframe.index[0]
@@ -56,13 +57,16 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
             start_datetime = pd.Timestamp(start_datetime)
             freq = "D"
 
-        return ListDataset(
-            [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
-            freq=freq,
-            one_dim_target=False,
-        )
+        return [
+            {
+                "start": start_datetime,
+                "target": target_values,
+                "freq": freq,
+                "one_dim_target": False,
+            }
+        ]
 
-    dataset = []
+    list_dataset = []
 
     # By maintaining 2 levels in the DataFrame's indices
     # we can access each series and its timestep values with ease!
@@ -81,10 +85,10 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
         target_values = data[target_column]
         target_values = target_values.reset_index(drop=True)
 
-        dataset.append(
+        list_dataset.append(
             {
-                FieldName.START: start_datetime,
-                FieldName.TARGET: target_values,
+                "start": start_datetime,
+                "target": target_values,
             }
         )
 
@@ -101,13 +105,10 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     if freq is None:
         freq = "D"
 
-    # Converting the dataset to a GluonTS ListDataset
-    list_dataset = ListDataset(
-        dataset,
-        freq=freq,
-        one_dim_target=False,
-    )
-
+    # Adding additional parameters to each series in list_dataset
+    for entry in list_dataset:
+        entry["freq"] = freq
+        entry["one_dim_target"] = False
     return list_dataset
 
 
