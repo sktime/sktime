@@ -1250,7 +1250,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30T")
+    y = y.asfreq("30MIN")
     y = y.squeeze("columns")
     if api_version is None:
         return y

@@ -1,5 +1,7 @@
 """USChange dataset for forecasting growth rates of consumption and income."""
 
+import functools
+
 from sktime.datasets._single_problem_loaders import load_uschange
 from sktime.datasets.forecasting._base import _ForecastingDatasetFromLoader
 
@@ -33,7 +35,7 @@ class USChange(_ForecastingDatasetFromLoader):
     rate for the US from 1960 to 2016.
 
     Dimensionality:     multivariate
-    Columns:            ['Quarter', 'Consumption', 'Income', 'Production',
+    Columns:            ['Consumption', 'Income', 'Production',
                          'Savings', 'Unemployment']
     Series length:      188
     Frequency:          Quarterly
@@ -55,17 +57,20 @@ class USChange(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": True,
-        "n_instances": 188,
-        "n_instances_train": 0,  # Can vary if a default split is defined
-        "n_instances_test": 0,
+        "n_instances": 187,
+        "n_timepoints": 187,
+        "n_timepoints_train": 0,  # Can vary if a default split is defined
+        "n_timepoints_test": 0,
         "frequency": "Q",
         "n_dimensions": 5,  # 5 explanatory variables
         "n_panels": 1,
         "n_hierarchy_levels": 0,
     }
 
-    loader_func = load_uschange
+    loader_func = functools.partial(
+        load_uschange,
+        y_name=["Consumption", "Income", "Production", "Savings", "Unemployment"],
+    )
 
-    def __init__(self, y_name="Consumption"):
-        self.y_name = y_name
+    def __init__(self):
         super().__init__()

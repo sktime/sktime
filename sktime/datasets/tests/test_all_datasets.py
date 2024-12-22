@@ -11,13 +11,6 @@ import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
-_tag_constraints = [
-    (
-        "n_instances should be equal to the sum of test and train instances",
-        lambda x: x["n_instances"] == x["n_instances_train"] + x["n_instances_test"],
-    ),
-]
-
 
 class DatasetFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for classifier tests.
@@ -75,10 +68,3 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         with contextwrapper:
             y_test = estimator_instance.load("y_test")
             assert len(y_test) == n_instances_test
-
-    def test_tag_is_univariate(self, estimator_instance):
-        expected = estimator_instance.get_tag("is_univariate")
-        y = estimator_instance.load("y")
-
-        is_univariate = y.ndim == 1 or y.shape[1] == 1
-        assert expected == is_univariate

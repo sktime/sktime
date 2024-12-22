@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for classification datasets."""
 
-__author__ = ["fkiraly"]
+__author__ = ["felipeangelimvieira"]
 
 
 from sktime.datasets.base import BaseDataset, _DatasetFromLoaderMixin
@@ -13,25 +13,75 @@ __all__ = [
 
 
 class BaseForecastingDataset(BaseDataset):
-    """Base class for classification datasets."""
+    """Base class for Forecasting datasets.
+
+    Tags
+    ----
+
+    is_univariate: bool, default=True
+        Whether the dataset is univariate. In the case of Forecasting dataset,
+        this refers to the dimensionality of the `y` dataframe.
+    is_equally_spaced: bool, default=True
+        Whether the all obserations in the dataset are equally spaced.
+    has_nans: bool, default=False
+        True if the dataset contains NaN values, False otherwise.
+    has_exogenous: bool, default=False
+        True if the dataset contains exogenous variables, False otherwise.
+    n_instances: int, default=None
+        Number of instances in the dataset. Should be equal to y.shape[0].
+    n_instances_train: int, default=None
+        Number of instances in the training set. None if the dataset does not
+        have a train/test split. Should be equal to y_train.shape[0].
+    n_instances_test: int, default=None
+        Number of instances in the test set. None if the dataset does not
+        have a train/test split. Sould be equal to y_test.shape[0].
+    n_timepoints: int, default=None
+        Number of timepoints in the dataset, per series. If the dataset is composed
+        of series of diffferent lengths, this should be equal the max length
+        seen in the dataset.
+    n_timepoints_train: int, default=None
+        Number of timepoints in the training set, per series. If the dataset is composed
+        of series of diffferent lengths, this should be equal the max length seen
+        in the training set.
+    n_timepoints_test: int, default=None
+        Number of timepoints in the test set, per series. If the dataset is composed
+        of series of diffferent lengths, this should be equal the max length seen
+        in the test set.
+    frequency: str, default=None
+        Frequency of the time series in the dataset. Can be an integer if the
+        frequency is not related to a time unit.
+    n_dimensions: int, default=1
+        Number of dimensions in the dataset. This is the number of columns in
+        the `y` dataframe.
+    n_panels: int, default=1
+        Number of panels in the dataset. This is the number of unique time series
+        in the dataset.
+    n_hierarchy_levels: int, default=0
+        Number of levels in the hierarchy of the dataset. This is the number of
+        index levels in the `y` dataframe, excluding the time index.
+
+
+    """
 
     _tags = {
         "object_type": "forecasting_dataset",
         # Estimator type
         "is_univariate": True,
-        "is_one_series": True,
-        "is_one_panel": True,
         "is_equally_spaced": True,
-        "is_empty": False,
         "has_nans": False,
         "has_exogenous": False,
         "n_instances": None,
-        "n_instances_train": None,
-        "n_instances_test": None,
+        "n_instances_train": 0,
+        "n_instances_test": 0,
+        "n_timepoints": None,
+        "n_timepoints_train": None,
+        "n_timepoints_test": None,
         "frequency": "M",
         "n_dimensions": 1,
+        "is_one_panel": True,
         "n_panels": 1,
-        "n_hierarchy_levels": 0,  # Number of levels  in the hierarchy (equivalent to
+        "n_hierarchy_levels": 0,
+        "is_one_series": True,  # Number of levels  in the hierarchy (equivalent to
         #  number of index levels excluding the time index)
     }
 
@@ -56,10 +106,10 @@ class BaseForecastingDataset(BaseDataset):
         """
         # Validate args
         if any([_x in args for _x in ["X_test", "y_test"]]):
-            if not self.get_tag("n_instances_test", 0):
+            if not self.get_tag("n_timepoints_test", 0):
                 raise ValueError("Test data split not available for this dataset. ")
         if any([_x in args for _x in ["X_train", "y_train"]]):
-            if not self.get_tag("n_instances_train", 0):
+            if not self.get_tag("n_timepoints_train", 0):
                 raise ValueError("Train data split not available for this dataset. ")
 
         return self._load(*args)

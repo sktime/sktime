@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base classes for classification datasets."""
 
-__author__ = ["fkiraly"]
+__author__ = ["felipeangelimvieira"]
 
 
 from sktime.datasets.base import BaseDataset, _DatasetFromLoaderMixin
@@ -13,19 +13,30 @@ __all__ = [
 
 
 class BaseClassificationDataset(BaseDataset):
-    """Base class for classification datasets."""
+    """Base class for classification datasets.
+
+    Tags
+    ----
+
+    is_univariate: bool, default=True
+        Whether the dataset is univariate. In the case of classification dataset,
+        this refers to the dimensionality of X dataframe, i.e., how many series are
+        related to a class label.
+    n_instances: int, default=None
+        Number of instances in the dataset.
+    n_instances_train: int, default=None
+        Number of instances in the training set.
+    n_instances_test: int, default=None
+        Number of instances in the test set.
+    n_classes: int, default=2
+        Number of classes in the dataset.
+
+    """
 
     _tags = {
         "object_type": "classification_dataset",
         # Estimator type
         "is_univariate": True,
-        "n_panels": 1,
-        "is_one_panel": True,
-        "is_equally_spaced": True,
-        "is_equal_length": True,
-        "is_equal_index": False,
-        "is_empty": False,
-        "has_nans": False,
         "n_instances": None,
         "n_instances_train": None,
         "n_instances_test": None,

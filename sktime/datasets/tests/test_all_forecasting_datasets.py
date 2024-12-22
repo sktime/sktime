@@ -8,6 +8,21 @@ import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
+_tag_constraints = [
+    (
+        "n_dimensions should be equal to one if 'is_univariate' is True",
+        lambda x: x["n_dimensions"] == 1 if x["is_univariate"] else True,
+    ),
+    (
+        "n_panels should be equal to one if 'is_one_panel' is True",
+        lambda x: x["n_panels"] == 1 if x["is_one_panel"] else True,
+    ),
+    (
+        "hierarchical datasets should have n_panels greater than one",
+        lambda x: x["n_panels"] > 1 if x["n_hierarchy_levels"] > 0 else True,
+    ),
+]
+
 
 class ForecastingDatasetFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for classifier tests.
@@ -59,3 +74,13 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         y = estimator_instance.load("y")
         n_hierarchy_levels = y.index.nlevels - 1
         assert n_hierarchy_levels == expected
+
+    def test_tag_constraints(self, estimator_instance):
+        tags = estimator_instance.get_tags()
+        for constraint in _tag_constraints:
+            assert constraint[1](tags), constraint[0]
+
+    def test_tag_is_univariate(self, estimator_instance):
+        is_univariate = estimator_instance.get_tag("is_univariate")
+        y = estimator_instance.load("y")
+        assert y.shape[1] == 1 if is_univariate else y.shape[1] > 1

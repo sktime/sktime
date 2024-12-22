@@ -1,13 +1,11 @@
 """Unit tests for all time series regressors."""
 
 __author__ = ["felipeangelimvieira"]
-import numpy as np
-import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
-class ClassificationDatasetFixtureGenerator(BaseFixtureGenerator):
+class RegressionDatasetFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for classifier tests.
 
     Fixtures parameterized
@@ -25,20 +23,11 @@ class ClassificationDatasetFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   TestAllRegressors should contain the tests only
 
-    estimator_type_filter = "classification_dataset"
+    estimator_type_filter = "regression_dataset"
 
 
-class TestAllClassificationDatasets(ClassificationDatasetFixtureGenerator, QuickTester):
+class TestAllRegressionDatasets(RegressionDatasetFixtureGenerator, QuickTester):
     """Module level tests for all sktime regressors."""
-
-    def test_tag_n_classes(self, estimator_instance):
-        n_classes = estimator_instance.get_tag("n_classes")
-        y = estimator_instance.load("y")
-
-        if isinstance(y, (pd.DataFrame, pd.Series)):
-            y = y.values
-        unique_y_values = np.unique(y)
-        assert len(unique_y_values) == n_classes
 
     def test_tag_is_univariate(self, estimator_instance):
         is_univariate = estimator_instance.get_tag("is_univariate")

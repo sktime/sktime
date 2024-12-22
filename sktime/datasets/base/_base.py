@@ -12,7 +12,7 @@ Inspection methods:
     hyper-parameter inspection   - get_params()
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "felipeangelimvieira"]
 
 __all__ = ["BaseDataset", "_DatasetFromLoaderMixin"]
 
@@ -28,16 +28,6 @@ class BaseDataset(BaseObject):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "object_type": "dataset",  # type of object
-        # Estimator type
-        "is_univariate": True,
-        "is_one_series": False,
-        "n_panels": 1,
-        "is_one_panel": True,
-        "is_equally_spaced": True,
-        "is_equal_length": True,
-        "is_equal_index": False,
-        "has_nans": False,
-        "frequency": "M",
     }
 
     def __init__(self):

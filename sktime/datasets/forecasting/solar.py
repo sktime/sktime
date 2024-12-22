@@ -1,5 +1,7 @@
 """Solar dataset for time series forecasting."""
 
+import pandas as pd
+
 from sktime.datasets._single_problem_loaders import load_solar
 from sktime.datasets.forecasting._base import _ForecastingDatasetFromLoader
 
@@ -54,10 +56,9 @@ class Solar(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,  # May depend on API data quality
         "has_exogenous": False,  # The series itself is standalone
-        "n_instances": None,  # Dynamic depending on the time range
-        "n_instances_train": 0,  # Can vary dynamically
-        "n_instances_test": 0,
-        "frequency": "H",  # Half-hourly data
+        "n_instances": None,  # Only one series is returned
+        "n_timepoints": None,  # Dynamic depending on the time range
+        "frequency": "30min",  # Half-hourly data
         "n_dimensions": 1,
         "n_panels": 1,
         "n_hierarchy_levels": 0,
@@ -79,3 +80,18 @@ class Solar(_ForecastingDatasetFromLoader):
         self.return_full_df = return_full_df
         self.api_version = api_version
         super().__init__()
+
+        start = pd.to_datetime(self.start)
+        end = pd.to_datetime(self.end)
+        n_timepoints = (end - start).days * 24 + 1
+
+        n_dimensions = 3 if return_full_df else 1
+
+        self.set_tags(
+            {
+                "n_timepoints": n_timepoints,
+                "n_instances": n_timepoints,
+                "n_dimensions": n_dimensions,
+                "is_univariate": n_dimensions == 1,
+            }
+        )

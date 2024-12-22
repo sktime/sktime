@@ -31,14 +31,6 @@ class PLAID(_ClassificationDatasetFromLoader):
 
     _tags = {
         "is_univariate": True,
-        "is_one_series": False,
-        "n_panels": 1,
-        "is_one_panel": True,
-        "is_equally_spaced": True,
-        "is_equal_length": False,
-        "is_equal_index": False,
-        "is_empty": False,
-        "has_nans": False,
         "n_instances": 1074,
         "n_instances_train": 537,
         "n_instances_test": 537,
