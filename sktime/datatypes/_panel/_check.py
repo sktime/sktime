@@ -970,6 +970,37 @@ def _check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
 class PanelDask(ScitypePanel):
     """Data type: dask data frame based specification of panel of time series.
+    Name: ``"dask_panel"``
+
+    Short description:
+
+    A ``dask.dataframe.DataFrame``,with rows = instances, columns = variables.
+
+    Long description:
+
+    The ``"dask_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: dask.dataframe.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a ``dask.dataframe.DataFrame``.
+    * instances: instances correspond to different rows of ``obj``.
+    * instance index: the instance index of an instance is the row index at which
+      it is located in ``obj``. That is, the data at ``obj.loc[i]``
+      correspond to observations of the instance with index ``i``.
+    * variables: columns of ``obj`` correspond to different variables available
+      for each instance.
+    * variable names: column names ``obj.columns`` are the names of variables
+      available for each instance.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
 
     Parameters
     ----------
