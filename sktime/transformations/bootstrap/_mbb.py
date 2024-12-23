@@ -118,6 +118,9 @@ class STLBootstrapTransformer(BaseTransformer):
         This param goes into STL.fit() from statsmodels.
     random_state : int, np.random.RandomState or None, by default None
         Controls the randomness of the estimator
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     See Also
     --------
@@ -447,6 +450,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         The actual time series will be labelled as "actual"
     random_state : int, np.random.RandomState or None, by default None
         Controls the randomness of the estimator
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     See Also
     --------

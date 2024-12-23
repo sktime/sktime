@@ -24,6 +24,9 @@ class TSBootstrapAdapter(BaseTransformer):
         The splitter used for the bootstrap splitting.
     include_actual : bool, default=False
         Whether to include the actual data in the output.
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     Examples
     --------
