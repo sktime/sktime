@@ -517,8 +517,6 @@ Deep learning based forecasters
 
     PyKANForecaster
 
-
-
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -529,6 +527,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMForecaster
 
 .. currentmodule:: sktime.forecasting.chronos
 
