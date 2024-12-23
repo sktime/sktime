@@ -52,27 +52,52 @@ DEFAULT_DEPS_TO_SHOW = [
     "tslearn",
     "torch",
     "tensorflow",
-    "tensorflow_probability",
 ]
 
 
-def _get_deps_info(deps=None):
+def _get_deps_info(deps=None, source="distributions"):
     """Overview of the installed version of main dependencies.
 
     Parameters
     ----------
-    deps : optional, list of strings with import names
-        if None, behaves as deps = ["sktime"]
+    deps : optional, list of strings with package names
+        if None, behaves as deps = ["sktime"].
+
+    source : str, optional one of "distributions" (default) or "import"
+        source of version information
+
+        * "distributions" - uses importlib.distributions. In this case,
+          strings in deps are assumed to be PEP 440 package strings,
+          e.g., scikit-learn, not sklearn.
+        * "import" - uses the __version__ attribute of the module.
+          In this case, strings in deps are assumed to be import names,
+          e.g., sklearn, not scikit-learn.
 
     Returns
     -------
     deps_info: dict
         version information on libraries in `deps`
-        keys are import names, values are PEP 440 version strings
+        keys are package names, import names if source is "import",
+        and PEP 440 package strings if source is "distributions";
+        values are PEP 440 version strings
         of the import as present in the current python environment
     """
     if deps is None:
         deps = ["sktime"]
+
+    if source == "distributions":
+        from sktime.utils.dependencies._dependencies import _get_installed_packages
+
+        KEY_ALIAS = {"sklearn": "scikit-learn", "skbase": "scikit-base"}
+
+        pkgs = _get_installed_packages()
+
+        deps_info = {}
+        for modname in deps:
+            pkg_name = KEY_ALIAS.get(modname, modname)
+            deps_info[modname] = pkgs.get(pkg_name, None)
+
+        return deps_info
 
     def get_version(module):
         return getattr(module, "__version__", None)

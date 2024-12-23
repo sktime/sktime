@@ -73,6 +73,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         # required by the update_data utility
         # otherwise, we could pass through to the distance directly
+        "capability:out_of_sample": False,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]

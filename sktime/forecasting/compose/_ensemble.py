@@ -278,8 +278,13 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters : list of (str, estimator) tuples
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
+
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -320,14 +325,50 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_forecasters"
+
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "forecasters_"
+
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
+
+        fc = []
+        for forecaster in forecasters:
+            if len(forecaster) <= 2:
+                # Handle the (str, est) tuple
+                fc.append(forecaster)
+            elif len(forecaster) == 3:
+                # Handle the (str, est, num_replicates) tuple
+                name, estimator, num_replicates = forecaster
+                fc.extend([(name, estimator)] * num_replicates)
+            else:
+                msg = (
+                    "Error in EnsembleForecaster construction: "
+                    "forecasters argument must be as list of "
+                    "estimator, (str, estimator) or (str, estimator, count) tuples."
+                )
+                raise ValueError(msg)
+
+        self._forecasters = self._check_estimators(
+            fc, clone_ests=False, allow_empty=True
+        )
+        self.forecasters_ = self._check_estimators(
+            fc, clone_ests=True, allow_empty=True
+        )
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -397,13 +438,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # univariate case
         FORECASTER = NaiveForecaster()
-        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
         # test multivariate case, i.e., ensembling multiple variables at same time
         FORECASTER = DirectReductionForecaster.create_test_instance()
-        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        return params
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        return [params0, params1, params2]
 
 
 def _aggregate(y, aggfunc, weights):

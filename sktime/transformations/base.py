@@ -135,6 +135,8 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "capability:categorical_in_X": False,
+        # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -223,9 +225,9 @@ class BaseTransformer(BaseEstimator):
         other : object
             object to check
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
-        is_sktime_transformr = scitype(other, raise_on_unknown=False) == "transformer"
+        is_sktime_transformr = is_scitype(other, "transformer")
         return is_sklearn_transformer(other) or is_sktime_transformr
 
     def __mul__(self, other):
@@ -1083,8 +1085,12 @@ class BaseTransformer(BaseEstimator):
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
 
-        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
-            raise TypeError("Transformers do not support categorical features in X.")
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
+            raise TypeError(
+                f"Transformer {self} does not support categorical features in X."
+            )
 
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
@@ -1316,7 +1322,7 @@ class BaseTransformer(BaseEstimator):
                 Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
                     ALLOWED_OUT_MTYPES,
-                    msg_return_dict="list",
+                    msg_return_dict="dict",
                     return_metadata=Xt_metadata_required,
                 )
 

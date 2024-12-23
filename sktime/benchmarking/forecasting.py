@@ -96,17 +96,31 @@ def forecasting_validation(
         y = data
 
     results = {}
-    scores_df = evaluate(
-        forecaster=estimator,
-        y=y,
-        X=X,
-        cv=cv_splitter,
-        scoring=scorers,
-        backend=backend,
-        backend_params=backend_params,
-        global_mode=global_mode,
-        cv_ht=cv_ht,
-    )
+    if isinstance(y, tuple):
+        y, X = y
+        scores_df = evaluate(
+            forecaster=estimator,
+            y=y,
+            X=X,
+            cv=cv_splitter,
+            scoring=scorers,
+            backend=backend,
+            backend_params=backend_params,
+            global_mode=global_mode,
+            cv_ht=cv_ht,
+        )
+    else:
+        scores_df = evaluate(
+            forecaster=estimator,
+            y=y,
+            cv=cv_splitter,
+            scoring=scorers,
+            backend=backend,
+            backend_params=backend_params,
+            global_mode=global_mode,
+            cv_ht=cv_ht,
+        )
+
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():

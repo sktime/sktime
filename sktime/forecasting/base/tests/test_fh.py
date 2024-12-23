@@ -335,8 +335,8 @@ def test_shift_index(length1_index, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.TimedeltaIndex(range(3), unit="D", freq="D"),
-    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(3), unit="D"), freq="D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(0, 9, 3), unit="D"), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing
@@ -571,6 +571,18 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_absolute_with_multiple_freq(freq: str):
+    """Test to_absolute with multiple freq"""
+    fh = ForecastingHorizon([0, 1, 2, 3, 4], is_relative=True)
+    start = "2024-09-26 17:24"
+    cutoff = pd.PeriodIndex([start], freq=freq)
+    absolute = fh.to_absolute(cutoff)
+    date_range = pd.date_range(start=start, freq=freq, periods=5)
+    period_index = date_range.to_period(freq)
+    assert_array_equal(period_index.to_numpy(), absolute.to_numpy())
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
@@ -733,9 +745,11 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
+# todo 0.36.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_estimator_deps(AutoARIMA, severity="none"),
+    or not _check_estimator_deps(AutoARIMA, severity="none")
+    or _check_soft_dependencies("numpy>=2.0", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 def test_auto_arima():

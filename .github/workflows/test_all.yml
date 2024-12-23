@@ -30,6 +30,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
@@ -44,11 +45,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
 
   test_module:
     needs: code_quality
@@ -61,15 +57,16 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
           - windows-latest
         sktime-component:
           - alignment
-          - annotation
           - classification
           - clustering
+          - detection
           - forecasting
           - networks
           - param_est
@@ -86,11 +83,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
 
   test_other:
     needs: code_quality
@@ -103,6 +95,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
@@ -135,6 +128,7 @@ jobs:
           --ignore sktime/annotation
           --ignore sktime/classification
           --ignore sktime/clustering
+          --ignore sktime/detection
           --ignore sktime/forecasting
           --ignore sktime/networks
           --ignore sktime/param_est
@@ -142,8 +136,3 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign False
           --only_changed_modules False
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

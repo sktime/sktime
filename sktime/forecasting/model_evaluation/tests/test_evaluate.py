@@ -44,7 +44,9 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.performance_metrics.forecasting.probabilistic import (
     CRPS,
+    ConstraintViolation,
     EmpiricalCoverage,
+    IntervalWidth,
     LogLoss,
     PinballLoss,
 )
@@ -66,6 +68,11 @@ from sktime.utils.parallel import _get_parallel_test_fixtures
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
 METRICS_GLOBAL = [MeanSquaredPercentageError(), MedianSquaredPercentageError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
+INTERVAL_METRICS_WITH_PARAMS = [
+    EmpiricalCoverage(coverage=0.95),
+    ConstraintViolation(coverage=[0.7, 0.8]),
+    IntervalWidth(coverage=[0.7, 0.8]),
+]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
@@ -246,7 +253,8 @@ def test_evaluate_global_mode(scoring, strategy, backend):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([evaluate] + PROBA_METRICS),
+    not run_test_for_class([evaluate] + PROBA_METRICS)
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("return_data", [True, False])
@@ -432,7 +440,8 @@ def test_evaluate_bigger_X(cls):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([evaluate] + PROBA_METRICS),
+    not run_test_for_class([evaluate] + PROBA_METRICS)
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_columns", [1, 2])
@@ -456,6 +465,34 @@ def test_evaluate_probabilistic(n_columns, scoring):
         assert scoring_name in out.columns
     except NotImplementedError:
         pass
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate] + INTERVAL_METRICS_WITH_PARAMS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("scoring", INTERVAL_METRICS_WITH_PARAMS)
+def test_evaluate_probabilistic_with_params(n_columns, scoring):
+    """Check that evaluate works with interval, quantile, and distribution forecasts."""
+    y = _make_series(n_columns=n_columns)
+
+    forecaster = NaiveForecaster()
+    cv = SlidingWindowSplitter()
+    out = evaluate(
+        forecaster,
+        cv,
+        y,
+        X=None,
+        scoring=scoring,
+        error_score="raise",
+        return_data=True,
+    )
+    scoring_coverage = scoring._coverage
+    assert "y_pred_interval" in out.columns
+    df_intervals = pd.concat(out["y_pred_interval"].to_list())
+    columns = {col[1] for col in df_intervals.columns if len(col) == 3}
+    assert all(coverage in columns for coverage in scoring_coverage)
 
 
 @pytest.mark.skipif(

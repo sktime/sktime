@@ -1,16 +1,17 @@
-<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="175" align="right" /></a>
 
-# Welcome to sktime
+## Welcome to sktime
+
+<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="175" align="right" /></a>
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.31.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.35.0 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
-sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
+sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes forecasting, time series classification, clustering, anomaly/changepoint detection, and other tasks. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune, and validate time series models.
 
 [scikit-learn]: https://scikit-learn.org/stable/
 
-| Overview | |
+|  | **[Documentation](https://www.sktime.net/en/stable/users.html)** · **[Tutorials](https://www.sktime.net/en/stable/examples.html)** · **[Release Notes](https://www.sktime.net/en/stable/changelog.html)** |
 |---|---|
 | **Open&#160;Source** | [![BSD 3-clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/sktime/sktime/blob/main/LICENSE) |
 | **Tutorials** | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples) [![!youtube](https://img.shields.io/static/v1?logo=youtube&label=YouTube&message=tutorials&color=red)](https://www.youtube.com/playlist?list=PLKs3UgGjlWHqNzu0LEOeLKvnjvvest2d0) |
@@ -62,7 +63,7 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 [discord]: https://discord.com/invite/54ACzaFsn7
 
 ## :dizzy: Features
-Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__  such as pipelining, ensembling, tuning, and reduction, empowering users to apply an algorithm designed for one task to another.
+Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, empowering users to apply algorithms designed for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
@@ -77,11 +78,11 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Time Series Classification]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/classification.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/classification.py) |
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.net/en/latest/api_reference/regression.html) |
 | **[Transformations]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/transformations.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
+| **[Detection tasks]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/detection.py) |
 | **[Parameter fitting]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/param_est.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
 | **[Time Series Clustering]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/clustering.html) ·  [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/clustering.py) |
 | **[Time Series Distances/Kernels]** | maturing | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/dists_kernels.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Time Series Alignment]** | experimental | [API Reference](https://www.sktime.net/en/latest/api_reference/alignment.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/alignment.py) |
-| **[Annotation]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/annotation.py) |
 | **[Time Series Splitters]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/split.py) | |
 | **[Distributions and simulation]** | experimental |  |
 
@@ -89,7 +90,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series classification]: https://github.com/sktime/sktime/tree/main/sktime/classification
 [time series regression]: https://github.com/sktime/sktime/tree/main/sktime/regression
 [time series clustering]: https://github.com/sktime/sktime/tree/main/sktime/clustering
-[annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
+[detection tasks]: https://github.com/sktime/sktime/tree/main/sktime/detection
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
 [time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
@@ -138,7 +139,7 @@ or similar. Valid sets are:
 * `clustering`
 * `param_est`
 * `networks`
-* `annotation`
+* `detection`
 * `alignment`
 
 Cave: in general, not all soft dependencies for a learning task are installed,

@@ -1543,8 +1543,8 @@ def load_m5(
     - dept_id
     - date
 
-    Example
-    -------
+    Examples
+    --------
     >>> data = load_m5()
     >>> data.head()
     """
@@ -1680,6 +1680,7 @@ def load_m5(
 
         df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
         df4["date"] = pd.DatetimeIndex(df4["date"])
+        df4["date"] = df4["date"].dt.to_period("D")
         df4.drop(columns=["item_id"], inplace=True)
 
         return df4

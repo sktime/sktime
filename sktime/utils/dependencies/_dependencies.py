@@ -1,11 +1,8 @@
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
-__author__ = ["fkiraly", "mloning"]
-
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -15,10 +12,8 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
-# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
-    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
@@ -38,8 +33,6 @@ def _check_soft_dependencies(
         ``_check_soft_dependencies("package1", "package2")``
         ``_check_soft_dependencies(("package1", "package2"))``
         ``_check_soft_dependencies(["package1", "package2"])``
-
-    package_import_alias : ignored, present only for backwards compatibility
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
@@ -82,17 +75,6 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    # todo 0.33.0: remove this warning
-    if package_import_alias != "deprecated":
-        warnings.warn(
-            "In sktime _check_soft_dependencies, the package_import_alias argument "
-            "is deprecated and no longer has any effect. "
-            "The argument will be removed in version 0.33.0, so users of the "
-            "_check_soft_dependencies utility should not pass this argument anymore.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
@@ -147,23 +129,20 @@ def _check_soft_dependencies(
         if pkg_env_version is None:
             if obj is None and msg is None:
                 msg = (
-                    f"{package!r} not found. "
-                    f"{package!r} is a soft dependency and not included in the "
-                    f"base sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{class_name} requires package {package!r} to be present "
+                    f"in the python environment, but {package!r} was not found. "
                 )
             elif msg is None:  # obj is not None, msg is None
                 msg = (
                     f"{class_name} requires package {package!r} to be present "
                     f"in the python environment, but {package!r} was not found. "
-                    f"{package!r} is a soft dependency and not included in the base "
-                    f"sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{package!r} is a dependency of {class_name} and required "
+                    f"to construct it. "
                 )
+            msg = msg + (
+                f"To install the requirement {package!r}, please run: "
+                f"pip install {package}` "
+            )
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
 
@@ -237,10 +216,10 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     Parameters
     ----------
     msg: str, optional, default= default message (msg below)
-        error message to be returned when `ModuleNotFoundError` is raised.
+        error message to be returned when ``ModuleNotFoundError`` is raised.
     severity: str, either of "error", "warning" or "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFound` if mlflow-related packages are not found.
+        "error" - raises a ``ModuleNotFound`` if mlflow-related packages are not found.
         "warning" - raises a warning message if any mlflow-related package is not
             installed also returns False. In case all packages are present,
             returns True.
@@ -274,9 +253,19 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
+    from importlib.metadata import distributions, version
+
     dists = distributions()
-    packages = {dist.metadata["Name"]: dist.version for dist in dists}
-    return packages
+    package_names = {dist.metadata["Name"] for dist in dists}
+    package_versions = {pkg_name: version(pkg_name) for pkg_name in package_names}
+    # developer note:
+    # we cannot just use distributions naively,
+    # because the same top level package name may appear *twice*,
+    # e.g., in a situation where a virtual env overrides a base env,
+    # such as in deployment environments like databricks.
+    # the "version" contract ensures we always get the version that corresponds
+    # to the importable distribution, i.e., the top one in the sys.path.
+    return package_versions
 
 
 def _get_installed_packages():

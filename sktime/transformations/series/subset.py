@@ -164,6 +164,7 @@ class ColumnSelect(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):
