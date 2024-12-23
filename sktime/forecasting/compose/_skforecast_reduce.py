@@ -484,7 +484,7 @@ class SkforecastRecursive(BaseForecaster):
         - ``None``: no lags are included as predictors.
     window_features : object, list, default ``None``
         Instance or list of instances used to create window features. Window features
-        are created from the original time series and are included as predictors.
+        are created from the original time series and are included as predictors. This argument is meant to work with ``RollingFeatures`` class [2]_.
     transformer_y : object transformer (preprocessor), default ``None``
         An instance of a transformer (preprocessor) compatible with the ``scikit-learn``
         preprocessing API with methods: ``fit``, ``transform``, ``fit_transform`` and
@@ -511,7 +511,7 @@ class SkforecastRecursive(BaseForecaster):
     fit_kwargs : dict, default ``None``
         Additional arguments to be passed to the ``fit`` method of the regressor.
     binner_kwargs : dict, default ``None``
-        Additional arguments to pass to the ``QuantileBinner`` class [2]_ used to
+        Additional arguments to pass to the ``QuantileBinner`` class [3]_ used to
         discretize the residuals into k bins according to the predicted values
         associated with each residual. Available arguments are:
 
@@ -526,7 +526,8 @@ class SkforecastRecursive(BaseForecaster):
     References
     ----------
     .. [1] https://skforecast.org/latest/api/forecasterrecursive#forecasterrecursive
-    .. [2] https://skforecast.org/latest/api/preprocessing.html#skforecast.preprocessing.preprocessing.QuantileBinner
+    .. [2] https://skforecast.org/0.14.0/api/preprocessing#skforecast.preprocessing.preprocessing.RollingFeatures
+    .. [3] https://skforecast.org/latest/api/preprocessing.html#skforecast.preprocessing.preprocessing.QuantileBinner
 
     Examples
     --------
