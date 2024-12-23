@@ -15,3 +15,4 @@ inputs:
 		required: true
 	pr_number:
 		description: 'Pull request number'
+		required: true

@@ -12,3 +12,7 @@ runs:
 inputs:
 	github_token:
 		description: 'GitHub token'
+		required: true
+	workflow_run_id:
+		description: 'Workflow run ID'
+		required: true
