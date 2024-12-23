@@ -11,8 +11,10 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
-from sktime.transformations.bootstrap import TSBootstrapAdapter
-from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+from sktime.transformations.bootstrap import (
+    MovingBlockBootstrapTransformer,
+    TSBootstrapAdapter,
+)
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -141,7 +143,9 @@ class EnbPIForecaster(BaseForecaster):
                 + "Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
                 DeprecationWarning,
             )
-            self.bootstrap_transformer_ = TSBootstrapAdapter(bootstrap_transformer, return_indices=True)
+            self.bootstrap_transformer_ = TSBootstrapAdapter(
+                bootstrap_transformer, return_indices=True
+            )
         else:
             self.bootstrap_transformer_ = bootstrap_transformer
 
@@ -158,7 +162,10 @@ class EnbPIForecaster(BaseForecaster):
                 if bootstrap_transformer is not None
                 else TSBootstrapAdapter(MovingBlockBootstrap())
             )
-        if not self.bootstrap_transformer_.get_tags()["can_return_indices"] or not self.bootstrap_transformer_.return_indices:
+        if (
+            not self.bootstrap_transformer_.get_tags()["can_return_indices"]
+            or not self.bootstrap_transformer_.return_indices
+        ):
             raise ValueError(
                 "The bootstrap_transformer needs to be able to return indices"
             )
@@ -262,11 +269,15 @@ class EnbPIForecaster(BaseForecaster):
         """
         params = [
             {
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(return_indices=True),
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(
+                    return_indices=True
+                ),
             },
             {
                 "forecaster": NaiveForecaster(),
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(return_indices=True),
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(
+                    return_indices=True
+                ),
             },
         ]
 
