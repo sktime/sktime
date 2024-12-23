@@ -2156,7 +2156,7 @@ ESTIMATOR_TAG_REGISTER = [
         "deprecated tag for dependency import aliases",
     ),
     (
-        "returns_indices",
+        "can_return_indices",
         ["transformer"],
         "bool",
         "The bootstrapper can return indices of the bootstrapped samples",

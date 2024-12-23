@@ -12,6 +12,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
 from sktime.transformations.bootstrap import TSBootstrapAdapter
+from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -74,7 +75,7 @@ class EnbPIForecaster(BaseForecaster):
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
     ...    forecaster=NaiveForecaster(sp=12),
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
-    >>> forecaster.fit(y, fh=range(12)) # Range is broken
+    >>> forecaster = forecaster.fit(y, fh=range(1, 12)) # Range is broken
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
 
@@ -140,7 +141,7 @@ class EnbPIForecaster(BaseForecaster):
                 + "Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
                 DeprecationWarning,
             )
-            self.bootstrap_transformer_ = TSBootstrapAdapter(bootstrap_transformer)
+            self.bootstrap_transformer_ = TSBootstrapAdapter(bootstrap_transformer, return_indices=True)
         else:
             self.bootstrap_transformer_ = bootstrap_transformer
 
@@ -157,7 +158,7 @@ class EnbPIForecaster(BaseForecaster):
                 if bootstrap_transformer is not None
                 else TSBootstrapAdapter(MovingBlockBootstrap())
             )
-        if self.bootstrap_transformer_.get_tags("returns_indices") is False:
+        if not self.bootstrap_transformer_.get_tags()["can_return_indices"] or not self.bootstrap_transformer_.return_indices:
             raise ValueError(
                 "The bootstrap_transformer needs to be able to return indices"
             )
@@ -259,21 +260,14 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        deps = cls.get_class_tag("python_dependencies")
-
-        if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockBootstrap
-
-            params = [
-                {},
-                {
-                    "forecaster": NaiveForecaster(),
-                    "bootstrap_transformer": BlockBootstrap(block_length=10),
-                },
-            ]
-        else:
-            params = {}
+        params = [
+            {
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(return_indices=True),
+            },
+            {
+                "forecaster": NaiveForecaster(),
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(return_indices=True),
+            },
+        ]
 
         return params

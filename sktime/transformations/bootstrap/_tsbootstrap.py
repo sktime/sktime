@@ -57,7 +57,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
-        "returns_indices": False,
+        "can_return_indices": True,
     }
 
     def __init__(
@@ -69,8 +69,6 @@ class TSBootstrapAdapter(BaseTransformer):
         self.bootstrap = bootstrap
         self.include_actual = include_actual
         self.return_indices = return_indices
-        if return_indices:
-            self.set_tags(return_indices=True)
         super().__init__()
 
     def _transform(self, X, y=None):
