@@ -83,9 +83,7 @@ def is_soft_dep_missing_message(msg):
     missing_version_msg = "to be present in the python environment, with version"
     cond1 = missing_version_msg in msg
     # message if dependency is missing entirely
-    missing_dep_entirely_msg = (
-        "is a soft dependency and not included in the base sktime installation"
-    )
+    missing_dep_entirely_msg = "requires package"
     cond2 = missing_dep_entirely_msg in msg
     # special message for deep learning dependencies
     error_msg_dl = "required for deep learning"
