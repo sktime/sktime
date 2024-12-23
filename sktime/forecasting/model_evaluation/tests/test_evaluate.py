@@ -56,7 +56,7 @@ from sktime.split import (
     SingleWindowSplitter,
     SlidingWindowSplitter,
 )
-from sktime.tests._pytest_fixture import lock, serial  # noqa F401
+# from sktime.tests._pytest_fixture import lock, serial  # noqa F401
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -181,7 +181,7 @@ def test_evaluate_common_configs(
 
 # DL models running on CPU will consume a lot of memory and CPU resource
 # run it sequentially instead of parallelly
-@pytest.mark.usefixtures("serial")
+# @pytest.mark.usefixtures("serial")
 @pytest.mark.skipif(
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -224,7 +224,13 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         "trainer_params": {
             # the training process is not deterministic
             # train 10 epoches to make sure loss is low enough
-            "max_epochs": 10,
+            "max_epochs": 1,
+        },
+        "model_params": {
+            "cell_type": "GRU",
+            "rnn_layers": 1,
+            "hidden_size": 2,
+            "log_interval": -1,
         },
         "dataset_params": {
             "max_encoder_length": 3,

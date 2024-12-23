@@ -88,12 +88,7 @@ def forecasting_validation(
     -------
     Dictionary of benchmark results for that forecaster
     """
-    data = dataset_loader()
-    if isinstance(data, tuple):
-        X, y = data
-    else:
-        X = None
-        y = data
+    y = dataset_loader()
 
     results = {}
     if isinstance(y, tuple):

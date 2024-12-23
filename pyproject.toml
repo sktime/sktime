@@ -265,7 +265,6 @@ tests = [
   "pytest-randomly>=3.15,<3.17",
   "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.7",
-  "filelock",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
