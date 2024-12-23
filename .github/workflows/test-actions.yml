@@ -1,97 +1,97 @@
 name: Test Custom Actions
 
 on:
-	pull_request:
-		paths:
-			- '.github/actions/**'
-			- '.github/workflows/test-actions.yml'
+  pull_request:
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/test-actions.yml'
 
 jobs:
-	test-create-issue:
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v3
-			
-			- name: Set up Python
-				uses: actions/setup-python@v4
-				with:
-					python-version: '3.x'
-					
-			- name: Install dependencies
-				run: |
-					python -m pip install --upgrade pip
-					pip install PyGithub
-					
-			- name: Test Create Issue Action
-				uses: ./.github/actions/create-issue
-				with:
-					github_token: ${{ secrets.GITHUB_TOKEN }}
-					workflow_run_id: ${{ github.run_id }}
+  test-create-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-	test-comment-docs:
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v3
-			
-			- name: Create test doc file
-				run: |
-					mkdir -p docs
-					echo "# Test" > docs/test.md
-					git add docs/test.md
-					git config --global user.email "test@example.com"
-					git config --global user.name "Test User"
-					git commit -m "Add test doc"
-					
-			- name: Set up Python
-				uses: actions/setup-python@v4
-				with:
-					python-version: '3.x'
-					
-			- name: Install dependencies
-				run: |
-					python -m pip install --upgrade pip
-					pip install PyGithub
-					
-			- name: Test Comment Docs Action
-				uses: ./.github/actions/comment-docs
-				with:
-					github_token: ${{ secrets.GITHUB_TOKEN }}
-					pr_number: ${{ github.event.pull_request.number }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
-	test-notebook-action:
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v3
-			
-			- name: Create test notebook
-				run: |
-					echo '{
-					 "cells": [
-						{
-						 "cell_type": "code",
-						 "execution_count": null,
-						 "metadata": {},
-						 "outputs": [],
-						 "source": ["print(\"Hello World!\")"]
-						}
-					 ],
-					 "metadata": {},
-					 "nbformat": 4,
-					 "nbformat_minor": 4
-					}' > test.ipynb
-					
-			- name: Set up Python
-				uses: actions/setup-python@v4
-				with:
-					python-version: '3.x'
-					
-			- name: Install dependencies
-				run: |
-					python -m pip install --upgrade pip
-					pip install jupyter nbconvert nbformat PyGithub
-					
-			- name: Test Notebook Action
-				uses: ./.github/actions/auto-commit-notebooks
-				with:
-					github_token: ${{ secrets.GITHUB_TOKEN }}
-					pr_number: ${{ github.event.pull_request.number }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyGithub
+
+      - name: Test Create Issue Action
+        uses: ./.github/actions/create-issue
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_run_id: ${{ github.run_id }}
+
+  test-comment-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create test doc file
+        run: |
+          mkdir -p docs
+          echo "# Test" > docs/test.md
+          git add docs/test.md
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+          git commit -m "Add test doc"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyGithub
+
+      - name: Test Comment Docs Action
+        uses: ./.github/actions/comment-docs
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ github.event.pull_request.number }}
+
+  test-notebook-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create test notebook
+        run: |
+          echo '{
+            "cells": [
+              {
+                "cell_type": "code",
+                "execution_count": null,
+                "metadata": {},
+                "outputs": [],
+                "source": ["print(\\"Hello World!\\")"]
+              }
+            ],
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 4
+          }' > test.ipynb
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyter nbconvert nbformat PyGithub
+
+      - name: Test Notebook Action
+        uses: ./.github/actions/auto-commit-notebooks
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ github.event.pull_request.number }}
