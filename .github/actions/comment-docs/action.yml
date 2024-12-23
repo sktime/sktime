@@ -1,0 +1,17 @@
+name: 'Comment on Documentation Changes'
+description: 'Posts comments on PRs with documentation changes'
+runs:
+	using: 'composite'
+	steps:
+		- run: python ${{ github.action_path }}/main.py
+			shell: bash
+			env:
+				GITHUB_TOKEN: ${{ inputs.github_token }}
+				PR_NUMBER: ${{ inputs.pr_number }}
+
+inputs:
+	github_token:
+		description: 'GitHub token'
+		required: true
+	pr_number:
+		description: 'Pull request number'

@@ -1,0 +1,14 @@
+name: 'Create Issue on Failure'
+description: 'Creates issues for workflow failures'
+runs:
+	using: 'composite'
+	steps:
+		- run: python ${{ github.action_path }}/main.py
+			shell: bash
+			env:
+				GITHUB_TOKEN: ${{ inputs.github_token }}
+				WORKFLOW_RUN_ID: ${{ inputs.workflow_run_id }}
+
+inputs:
+	github_token:
+		description: 'GitHub token'
