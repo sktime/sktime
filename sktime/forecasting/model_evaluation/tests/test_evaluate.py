@@ -57,7 +57,6 @@ from sktime.split import (
     SlidingWindowSplitter,
 )
 
-# from sktime.tests._pytest_fixture import lock, serial  # noqa F401
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -180,9 +179,6 @@ def test_evaluate_common_configs(
     np.testing.assert_array_equal(actual, expected)
 
 
-# DL models running on CPU will consume a lot of memory and CPU resource
-# run it sequentially instead of parallelly
-# @pytest.mark.usefixtures("serial")
 @pytest.mark.skipif(
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
