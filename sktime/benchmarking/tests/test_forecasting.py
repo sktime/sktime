@@ -180,7 +180,7 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in gloabl mode."""
-    from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
 
     benchmark = ForecastingBenchmark()
 
@@ -188,14 +188,20 @@ def test_forecastingbenchmark_global_mode(
         "trainer_params": {
             # the training process is not deterministic
             # train 10 epoches to make sure loss is low enough
-            "max_epochs": 10,
+            "max_epochs": 1,
+        },
+        "model_params": {
+            "cell_type": "GRU",
+            "rnn_layers": 1,
+            "hidden_size": 2,
+            "log_interval": -1,
         },
         "dataset_params": {
             "max_encoder_length": 3,
         },
-        "random_log_path": True,  # fix multiprocess file access error in CI
+        "random_log_path": True,  # fix parallel file access error in CI
     }
-    benchmark.add_estimator(PytorchForecastingTFT(**params))
+    benchmark.add_estimator(PytorchForecastingDeepAR(**params))
 
     benchmark.add_task(
         data_loader_global,
