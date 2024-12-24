@@ -56,7 +56,6 @@ from sktime.split import (
     SingleWindowSplitter,
     SlidingWindowSplitter,
 )
-
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
