@@ -722,6 +722,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from tsfresh.utilities.distribution import MapDistributor
+
         params = {
             "default_fc_parameters": "efficient",
             "disable_progressbar": True,
@@ -733,4 +735,11 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
         }
-        return [params, params2]
+        params3 = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "distributor": MapDistributor(),
+
+        }
+        return [params, params2, params3]
