@@ -52,7 +52,7 @@ EXPECTED_RESULTS_GLOBAL_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
         + "[cv_splitter=InstanceSplitter]_[cv_ht=SingleWindowSplitter]",
-        "model_id": "PytorchForecastingTFT",
+        "model_id": "PytorchForecastingDeepAR",
         "MeanSquaredPercentageError_fold_0_test": 0.0,
         "MeanSquaredPercentageError_fold_1_test": 0.0,
         "MeanSquaredPercentageError_mean": 0.0,
@@ -64,7 +64,7 @@ EXPECTED_RESULTS_GLOBAL_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
         + "[cv_splitter=InstanceSplitter]_[cv_ht=SingleWindowSplitter]",
-        "model_id": "PytorchForecastingTFT",
+        "model_id": "PytorchForecastingDeepAR",
         "MeanAbsolutePercentageError_fold_0_test": 0.0,
         "MeanAbsolutePercentageError_fold_1_test": 0.0,
         "MeanAbsolutePercentageError_mean": 0.0,
