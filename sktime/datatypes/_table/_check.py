@@ -45,7 +45,33 @@ PRIMITIVE_TYPES = (float, int, str)
 
 
 class TablePdDataFrame(ScitypeTable):
-    """Data type: pandas.DataFrame based specification of data frame table.
+    """Data type: pandas.DataFrame based specification of tabular data.
+
+    Name: ``"pd_DataFrame_Table"``
+
+    Short description:
+
+    a pandas ``DataFrame`` representing tabular data,
+    with rows = instances, cols = features
+
+    Long description:
+
+    The ``"pd_DataFrame_Table"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: pandas.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` can be any valid pandas index.
+    * features: columns of ``obj`` correspond to different features
+    * feature names: column names ``obj.columns``
+    * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
+
+    Capabilities:
+
+    * can represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
@@ -139,7 +165,33 @@ def _check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 
 
 class TablePdSeries(ScitypeTable):
-    """Data type: pandas.Series based specification of data frame table.
+    """Data type: pandas.Series based specification of tabular data.
+
+    Name: ``"pd_Series_Table"``
+
+    Short description:
+
+    a pandas ``Series`` representing tabular data,
+    with rows = instances, single feature
+
+    Long description:
+
+    The ``"pd_Series_Table"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: pandas.Series`` follows the specification iff:
+
+    * structure convention: ``obj.index`` can be any valid pandas index.
+    * feature: the series ``obj`` represents a single feature
+    * feature name: the ``name`` attribute of the ``pd.Series`` object
+    * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
@@ -239,6 +291,33 @@ def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
 
 class TableNp1D(ScitypeTable):
     """Data type: 1D np.ndarray based specification of data frame table.
+
+    Name: ``"numpy1D"``
+
+    Short description:
+
+    a 1D numpy ``ndarray`` representing a univariate data table,
+    with elements as instances of single feature
+
+    Long description:
+
+    The ``"numpy1D"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: np.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` is a 1D numpy array.
+    * feature: the array ``obj`` represents a single feature
+    * instances: elements of ``obj`` correspond to different instances
+    * instance index: The instance index is implicit and by-convention.
+      The ``i``-th entry (for an integer ``i``) is interpreted as the ``i``-th instance.
+      That is, the index is always interpreted as zero-indexed integer.
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
