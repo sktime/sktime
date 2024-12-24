@@ -92,6 +92,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             "profiling_sorting": PROFILING_SORTING,
             "profiling_filename": PROFILING_FILENAME,
             "profile": PROFILING,
+            "distributor": None,
         }
 
         # Replace defaults with user defined parameters
@@ -619,6 +620,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor
         )
 
         self.selector_ = FeatureSelector(
@@ -667,6 +669,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -719,6 +722,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from tsfresh.utilities.distribution import MapDistributor
+
         params = {
             "default_fc_parameters": "efficient",
             "disable_progressbar": True,
@@ -730,4 +735,11 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
         }
-        return [params, params2]
+        params3 = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "distributor": MapDistributor(),
+
+        }
+        return [params, params2, params3]
