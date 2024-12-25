@@ -93,6 +93,7 @@ class ThresholdDetector(BaseDetector):
         """
         if isinstance(X, pd.DataFrame):
             X = X.iloc[:, 0]
+        X = X.reset_index(drop=True)
 
         if self.upper is not None:
             above_thresh = X > self.upper
