@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_scitype, convert
+from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -609,10 +609,29 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        X_metadata = check_is_scitype(
-            X, scitype=["Series", "Panel"], return_metadata=[]
+        ALLOWED_SCITYPES = ["Series", "Panel"]
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
         )
         self._X_metadata = X_metadata
+        if not X_valid:
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
+            )
+            allowed_msg = (
+                "Allowed scitypes for X in detection are "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
+                "for instance a pandas.DataFrame with sktime compatible time indices."
+                " See the detection tutorial examples/07_detection.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                check_is_error_msg(
+                    X_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
