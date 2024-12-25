@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import check_is_scitype, convert
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -608,11 +609,12 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        return X
-        # this causes errors, we need to investigate
-        # X_inner_mtype = self.get_tag("X_inner_mtype")
-        # X_inner = convert_to(X, X_inner_mtype)
-        # return X_inner
+        X_metadata = check_is_scitype(X, scitype=["Series", "Panel"], return_metadata=[])
+        self._X_metadata = X_metadata
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
+        return X_inner
 
     def _fit(self, X, y=None):
         """Fit to training data.
