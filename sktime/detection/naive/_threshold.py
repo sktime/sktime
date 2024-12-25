@@ -139,13 +139,13 @@ class ThresholdDetector(BaseDetector):
         """
         params0 = {}
         params1 = {"upper": 10e6}
-        params2 = {"upper": 42, "lower": -41}
-        params3 = {"upper": 42, "lower": None}
-        params4 = {"upper": None, "lower": -41}
+        params2 = {"upper": 0.42, "lower": -0.41}
+        params3 = {"upper": 0.42, "lower": None}
+        params4 = {"upper": None, "lower": -0.41}
         params5 = {"upper": None, "lower": None}
         params6 = {"mode": "points"}
-        params7 = {"mode": "points", "lower": None, "upper": 42}
-        params8 = {"upper": 42}
+        params7 = {"mode": "points", "lower": None, "upper": 0.42}
+        params8 = {"upper": 0.42}
 
         return [
             params0,
