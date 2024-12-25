@@ -91,7 +91,11 @@ def _convert_tsf_to_hierarchical(
     df = df.astype({value_column_name: "float"}, errors="ignore")
 
     if has_time_index:
-        df.index.levels[-1].freq = freq
+        try:
+            df.index.levels[-1].freq = freq
+        except ValueError:
+            # If the datimeindex is not consecutive setting frequency will fail..
+            pass
     return df
 
 
