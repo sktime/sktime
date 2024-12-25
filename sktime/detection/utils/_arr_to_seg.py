@@ -14,19 +14,19 @@ def arr_to_seg(arr):
 
     Parameters
     ----------
-    arr (array-like) 1D array-like of integers
+    arr : (array-like) 1D array-like of integers
         the array to convert to a segmentation DataFrame.
         In "dense" format as returned by ``transform`` methods.
 
     Returns
     -------
-    df: pd.DataFrame
+    df : pd.DataFrame
         DataFrame with columns 'ilocs' and 'segments',
         as returned by ``predict_segments`` methods.
 
     Examples
     --------
-    >>> from sktime.detection.utils import arr_to_seg
+    >>> from sktime.detection.utils._arr_to_seg import arr_to_seg
     >>> arr = [1, 1, 2, 2, 2, 3, 4, 4]
     >>> df = arr_to_seg(arr)
     """
