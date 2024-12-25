@@ -1,6 +1,7 @@
 """Benchmarking for forecasting estimators."""
 
 import functools
+import os
 from collections.abc import Callable
 from typing import Optional, Union
 
@@ -9,8 +10,6 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
-
-import os
 
 
 class HDDResults:
