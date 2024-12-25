@@ -21,22 +21,11 @@ from pathlib import Path
 import pandas as pd
 from skbase.lookup import all_objects
 
-from sktime.base import BaseEstimator
 from sktime.registry._base_classes import (
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    TRANSFORMER_MIXIN_LIST,
+    get_base_class_for_str,
+    get_obj_scitype_list,
 )
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
-
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
-VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
-
-VALID_ESTIMATOR_TYPES = (
-    BaseEstimator,
-    *VALID_ESTIMATOR_BASE_TYPES,
-    *VALID_TRANSFORMER_TYPES,
-)
 
 
 def all_estimators(
@@ -376,7 +365,17 @@ def all_tags(
 
 
 def _check_estimator_types(estimator_types):
-    """Return list of classes corresponding to type strings."""
+    """Return list of classes corresponding to type strings.
+
+    Parameters
+    ----------
+    estimator_types: str, or list of str
+
+    Returns
+    -------
+    estimator_types: list of classes
+        base classes corresponding to scitype strings in estimator_types
+    """
     estimator_types = deepcopy(estimator_types)
 
     if not isinstance(estimator_types, list):
@@ -384,9 +383,9 @@ def _check_estimator_types(estimator_types):
 
     def _get_err_msg(estimator_type):
         return (
-            f"Parameter `estimator_type` must be None, a string or a list of "
+            f"Parameter `estimator_type` must be a string or a list of "
             f"strings. Valid string values are: "
-            f"{tuple(BASE_CLASS_LOOKUP.keys())}, but found: "
+            f"{get_obj_scitype_list()}, but found: "
             f"{repr(estimator_type)}"
         )
 
@@ -396,10 +395,9 @@ def _check_estimator_types(estimator_types):
                 "Please specify `estimator_types` as a list of str or " "types."
             )
         if isinstance(estimator_type, str):
-            if estimator_type not in BASE_CLASS_LOOKUP.keys():
+            if estimator_type not in get_obj_scitype_list():
                 raise ValueError(_get_err_msg(estimator_type))
-            estimator_type = BASE_CLASS_LOOKUP[estimator_type]
-            estimator_types[i] = estimator_type
+            estimator_types[i] = get_base_class_for_str(estimator_type)
         elif isinstance(estimator_type, type):
             pass
         else:

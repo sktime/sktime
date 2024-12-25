@@ -1,4 +1,5 @@
 """Inception Time."""
+
 __author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
@@ -23,7 +24,10 @@ class InceptionTimeNetwork(BaseDeepNetwork):
                     ArXiv}, Year                     = {2019} }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["hfawaz", "JamesLarge", "Withington"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
@@ -129,6 +133,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
+
         Returns
         -------
         input_layer : a keras layer

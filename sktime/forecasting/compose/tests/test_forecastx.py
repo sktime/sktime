@@ -411,14 +411,16 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
 )
 @pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
 def test_forecaster_X_exogeneous(cols_to_forecast):
-    """Test that ForecastX forecaster_X uses exogenous data as told by parameter."""
+    """Test that ForecastX uses exogenous data as told by parameter."""
     from sktime.forecasting.compose import ForecastX
     from sktime.split import temporal_train_test_split
 
     y, X = load_longley()
 
     fh = [1, 2, 3, 4]
-    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=max(fh))
+    y_train, y_test, X_train, X_test = temporal_train_test_split(
+        y, X, test_size=max(fh)
+    )
 
     forecaster = ARIMA()
     pipeline1 = ForecastX(
@@ -441,3 +443,7 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
     pipeline2.fit(y_train, X=X_train, fh=fh)
     y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
     np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
+
+    # check that the update method doesn't break on
+    # forecaster_X_exogeneous = "complement"
+    pipeline1.update(y_test, X=X_test, update_params=True)

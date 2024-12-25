@@ -1,4 +1,5 @@
 """Tests for DBA."""
+
 import numpy as np
 import pytest
 

@@ -1,4 +1,5 @@
 """Early classification time series classifiers."""
+
 __all__ = [
     "BaseEarlyClassifier",
     "ProbabilityThresholdEarlyClassifier",

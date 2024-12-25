@@ -1,4 +1,5 @@
 """Tests for scipy interface."""
+
 import numpy as np
 import pytest
 

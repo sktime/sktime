@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
+
 import numpy as np
 import pandas as pd
 
@@ -123,7 +124,8 @@ class DynamicFactor(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["Ris-Bali", "lbventura"],
+        "authors": ["ChadFulton", "bashtage", "Ris-Bali", "lbventura"],
+        # ChadFulton and bashtage for statemodels DynamicFactor
         "maintainers": ["Ris-Bali", "lbventura"],
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
@@ -264,7 +266,7 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if type(coverage) is not list:
+        if not isinstance(coverage, list):
             coverage_list = [coverage]
         else:
             coverage_list = coverage

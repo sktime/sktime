@@ -1,4 +1,5 @@
 """Tests for classes in _classes module."""
+
 from inspect import getmembers, isclass
 
 import numpy as np

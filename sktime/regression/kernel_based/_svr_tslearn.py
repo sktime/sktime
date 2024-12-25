@@ -1,4 +1,5 @@
 """Time series SVR, from tslearn."""
+
 from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.regression.base import BaseRegressor
 

@@ -44,7 +44,7 @@ import sys
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.registry._base_classes import BASE_CLASS_REGISTER
+from sktime.registry._base_classes import get_obj_scitype_list
 
 
 class _BaseTag(BaseObject):
@@ -103,7 +103,7 @@ class object_type(_BaseTag):
 
 
 # dynamically add a pretty printd list of scitypes to the docstring
-for name, _, desc in BASE_CLASS_REGISTER:
+for name, desc in get_obj_scitype_list(return_descriptions=True):
     object_type.__doc__ += f'\n    - ``"{name}"``: {desc}'
 
 
@@ -207,8 +207,6 @@ class python_version(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -253,8 +251,6 @@ class python_dependencies(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -287,55 +283,6 @@ class python_dependencies(_BaseTag):
     }
 
 
-class python_dependencies_alias(_BaseTag):
-    """Alias for Python package dependency names for the object.
-
-    Part of packaging metadata for the object.
-
-    - String name: ``"python_dependencies_alias"``
-    - Private tag, developer and framework facing
-    - Values: dict of str, key = PEP 440 package name, value = import name
-    - Example: ``{"scikit-learn": "sklearn"}``
-    - Example 2: ``{"dtw-python": "dtw", "scikit-learn": "sklearn"}``
-    - Default: no aliases (``None``)
-
-    ``sktime`` manages objects and estimators like mini-packages,
-    with their own dependencies and compatibility requirements.
-    Dependencies are specified in the tags:
-
-    - ``"python_version"``: Python version specifier (PEP 440) for the object,
-    - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
-    - ``"env_marker"``: environment marker for the object (PEP 508)
-    - ``"requires_cython"``: whether the object requires a C compiler present
-
-    The ``python_dependencies_alias`` tag of an object is dict,
-    providing import name aliases for package names in the ``python_dependencies`` tag,
-    if the package name differs from the import name.
-
-    The tag is used in packaging metadata for the object,
-    and is used internally to check compatibility of the object with
-    the build environment, to raise informative error messages.
-
-    This tag is required if the package name of a dependency is different
-    from the import name of the package, e.g., ``"dtw-python"`` and ``"dtw"``.
-    If not set, the package name is assumed to be identical with the import name.
-
-    Developers should note that elements of this ``dict`` are not passed on
-    via field inheritance, unlike the tags themselves.
-    Hence, if multiple aliases are required, they need to be set in the same tag.
-    """
-
-    _tags = {
-        "tag_name": "python_dependencies_alias",
-        "parent_type": "object",
-        "tag_type": "dict",
-        "short_descr": "alias for package names in python_dependencies, key-value pairs are package name, import name",  # noqa: E501
-        "user_facing": False,
-    }
-
-
 class env_marker(_BaseTag):
     """Environment marker requirement for the object (PEP 508).
 
@@ -353,8 +300,6 @@ class env_marker(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -398,8 +343,6 @@ class requires_cython(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -479,7 +422,7 @@ class capability__feature_importance(_BaseTag):
 
     If the tag is ``True``, the estimator can produce feature importances.
 
-    Feature importances are queriable by the fitted parameter interface
+    Feature importances are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce feature importances.
@@ -544,7 +487,7 @@ class capability__train_estimate(_BaseTag):
     produce and store an estimate of their own statistical performance,
     e.g., via out-of-bag estimates, or cross-validation.
 
-    Training performance estimates are queriable by the fitted parameter interface
+    Training performance estimates are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce
@@ -616,7 +559,7 @@ class capability__exogeneous(_BaseTag):
     that can be used to improve forecasting accuracy.
 
     If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
-    the ``X`` parmameter in ``fit``, ``predict``, and other methods
+    the ``X`` parameter in ``fit``, ``predict``, and other methods
     can be used to pass exogeneous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
@@ -797,6 +740,31 @@ class requires_fh_in_fit(_BaseTag):
     }
 
 
+class capability__categorical_in_X(_BaseTag):
+    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+
+    ``False`` = cannot handle categorical natively in X,
+    ``True`` = can handle categorical natively in X
+
+    - String name: ``"capability:categorical_in_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_X",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Panel data related tags
 # -----------------------
 
@@ -927,8 +895,37 @@ class capability__multioutput(_BaseTag):
     }
 
 
+class capability__predict(_BaseTag):
+    """Capability: the clusterer can predict cluster assignments.
+
+    - String name: ``"capability:predict"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    This tag applies to clusterers only.
+
+    If the tag is ``True``, the clusterer implements a ``predict``
+    method, which can be used to obtain cluster assignments.
+
+    If the tag is ``False``, the clusterer will raise an exception on
+    ``predict`` call.
+    """
+
+    _tags = {
+        "tag_name": "capability:predict",
+        "parent_type": "clusterer",
+        "tag_type": "bool",
+        "short_descr": (
+            "can the clusterer predict cluster assignments for new data points?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__predict_proba(_BaseTag):
-    """Capability: the classifier can predict class probabilities.
+    """Capability: the estimator can make probabilistic predictions.
 
     - String name: ``"capability:predict_proba"``
     - Public capability tag
@@ -936,22 +933,57 @@ class capability__predict_proba(_BaseTag):
     - Example: ``True``
     - Default: ``False``
 
-    This tag applies to classifiers only.
+    This tag applies to classifiers and clusterers.
 
-    If the tag is ``True``, the classifier implements a non-default ``predict_proba``
-    method, which can be used to predict class probabilities.
+    If the tag is ``True``, the estimator implements a non-default ``predict_proba``
+    method, which can be used to predict class probabilities (classifier),
+    or probabilistic cluster assignments (clusterer)
 
-    If the tag is ``False``, the classifier's ``predict_proba`` defaults to
-    predicting zero/one class probabilities, equivalent to the ``predict`` output.
+    If the tag is ``False``, the estimator's ``predict_proba`` defaults to
+    predicting zero/one probabilities, equivalent to the ``predict`` output.
     """
 
     _tags = {
         "tag_name": "capability:predict_proba",
-        "parent_type": "classifier",
+        "parent_type": ["classifier", "clusterer"],
         "tag_type": "bool",
         "short_descr": (
-            "does the classifier implement a non-default predict_proba method? "
+            "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
+        ),
+        "user_facing": True,
+    }
+
+
+class capability__out_of_sample(_BaseTag):
+    """Capability: the estimator can make out-of-sample predictions.
+
+    - String name: ``"capability:out_of_sample"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    This tag applies to clusterers only.
+
+    If the tag is ``True``, the estimator can make cluster assignments
+    out-of-sample, i.e., the indices in ``predict`` need not be equal to those
+    seen in ``fit``.
+
+    If the tag is ``False``, the estimator will refit a clone
+    when ``predict`` is called, on the pooled data seen in ``fit`` and ``predict``,
+    if there is ad least one index value in ``predict`` that has not been seen in
+    ``fit``. For index-less data mtypes, identity of the data object is used to check
+    whether indices are equal.
+    """
+
+    _tags = {
+        "tag_name": "capability:out_of_sample",
+        "parent_type": "clusterer",
+        "tag_type": "bool",
+        "short_descr": (
+            "can the clusterer make out-of-sample predictions, "
+            "i.e., compute cluster assignments on new data?"
         ),
         "user_facing": True,
     }
@@ -1058,26 +1090,26 @@ class scitype__transform_input(_BaseTag):
         :header-rows: 2
 
         * -
-            - `transform`
-            -
+          - `transform`
+          -
         * - `X`
-            - `-output`
-            - type of return
+          - `-output`
+          - type of return
         * - `Series`
-            - `Primitives`
-            - `pd.DataFrame` (1-row)
+          - `Primitives`
+          - `pd.DataFrame` (1-row)
         * - `Panel`
-            - `Primitives`
-            - `pd.DataFrame`
+          - `Primitives`
+          - `pd.DataFrame`
         * - `Series`
-            - `Series`
-            - `Series`
+          - `Series`
+          - `Series`
         * - `Panel`
-            - `Series`
-            - `Panel`
+          - `Series`
+          - `Panel`
         * - `Series`
-            - `Panel`
-            - `Panel`
+          - `Panel`
+          - `Panel`
 
     The instance indices in the in return correspond to instances in the input ``X``.
     """
@@ -1499,6 +1531,140 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+# Detector tags
+# --------------
+
+
+class capability__update(_BaseTag):
+    """Capability: whether the estimator can be run in stream or on-line mode.
+
+    - String name: ``"capability:update"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the estimator can be run in stream or on-line mode,
+    with an ``update`` method. Depending on the estimator type, literature
+    may refer to this as on-line learning, incremental learning, or stream learning.
+
+    If the tag is ``True``, the ``update`` method is implemented and can be used
+    to update the estimator with new data, without re-fitting the entire model.
+
+    If the tag is ``False``, behaviour depends on the estimator type,
+    two common cases are:
+
+    * ``update`` will raise an exception. Compositors may be available
+      to add on-line learning capabilities, these are typically listed in the
+      exception message.
+    * ``update`` will not raise an exception but carry out a reasonable default,
+      such as a full re-fit, or discard the new data.
+
+    For the exact behaviour, users should consult the documentation of the
+    respective ``update`` method.
+    """
+
+    _tags = {
+        "tag_name": "capability:update",
+        "parent_type": ["transformer", "detector"],
+        "tag_type": "bool",
+        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class task(_BaseTag):
+    """Subtype tag for detectors: type of detection task.
+
+    - String name: ``"task"``
+    - Public property tag
+    - Values: string, one of ``"change_point_detection"``,
+      ``"anomaly_detection"``, ``"segmentation"``
+    - Example: ``"anomaly_detection"``
+    - Default: ``"None"``
+
+    The ``task`` tag of an object indicates the category of the detection task.
+    This ensures compatibility with task-specific operations and return types.
+
+    The possible values are:
+
+    * ``"segmentation"``: Divides the time series into discrete chunks based on
+      certain criteria. The same label can be applied to multiple disconnected regions
+      of the time series.
+    * ``"change_point_detection"``: Identifies points where the statistical
+      properties of the time series change significantly.
+    * ``"anomaly_detection"``: Detects points that deviate significantly from
+      the normal statistical properties of the time series.
+    """
+
+    _tags = {
+        "tag_name": "task",
+        "parent_type": "detector",
+        "tag_type": (
+            "str",
+            ["change_point_detection", "anomaly_detection", "segmentation"],
+        ),
+        "short_descr": "what is the category of the detection task?",
+        "user_facing": True,
+    }
+
+
+class learning_type(_BaseTag):
+    """Learning type of the detection task.
+
+    - String name: ``"learning_type"``
+    - Public property tag
+    - Values: string, one of ``"supervised"``, ``"unsupervised"``, ``"semi_supervised"``
+    - Example: ``"unsupervised"``
+    - Default: ``"unsupervised"``
+
+    The tag specifies the type of learning the estimator employs for the detection task.
+
+    The possible values are:
+
+    * ``"supervised"``: The detector learns from labelled data.
+    * ``"unsupervised"``: The detector learns from unlabelled data.
+    * If ``semi_supervised``, the detector learns from a combination of labelled and
+      unlabelled data.
+    """
+
+    _tags = {
+        "tag_name": "learning_type",
+        "parent_type": "detector",
+        "tag_type": ("str", ["supervised", "unsupervised"]),
+        "short_descr": "What is the learning type used by the detector?",
+        "user_facing": True,
+    }
+
+
+class distribution_type(_BaseTag):
+    """Distribution of the data.
+
+    - String name: ``"distribution_type"``
+    - Public property tag
+    - Values: string, specifying the type of distribution
+    - Example: ``"Poisson"``
+    - Default: ``"None"``
+
+    This tag specifies the type of observation probability distribution that the
+    estimator operates on.
+
+    Possible values include, but are not limited to:
+
+    * ``"Poisson"``: Assumes the data follows a Poisson distribution
+    * ``"Gaussian"``: Assumes the data follows a Gaussian (normal) distribution
+    * Other distributions may be specified depending on the algorithm's design.
+    """
+
+    _tags = {
+        "tag_name": "distribution_type",
+        "parent_type": "detector",
+        "tag_type": "str",
+        "short_descr": "what data distribution type is assumed by the detector",
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -1569,13 +1735,13 @@ class x_inner_mtype(_BaseTag):
         "tag_name": "X_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
         "user_facing": False,
     }
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the transformer can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
@@ -1640,12 +1806,56 @@ class y_inner_mtype(_BaseTag):
         "tag_name": "y_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
+        "user_facing": False,
+    }
+
+
+class visual_block_kind(_BaseTag):
+    """How to display html representation of a meta-estimator in a jupyter notebook.
+
+    - String name: ``"visual_block_kind"``
+    - Extension developer tag
+    - Values: string, one of ``"single"``, ``"serial"``, ``"parallel"``
+    - Example: ``"single"``
+    - Default: ``"single"``
+
+    This tag specifies how to display the html representation of a meta-estimator
+    in a jupyter notebook.
+
+    Meta-estimators are composites with a variable number of sub-estimators,
+    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
+    ``_HeterogenousMetaEstimator``.
+
+    The html display is triggered by calling the ``_repr_html_`` method on any
+    ``scikit-base`` estimator, which returns a html representation of the estimator,
+    used by default in jupyter notebooks, or also other html display environments.
+
+    Possible values are:
+
+    * ``"single"``: the meta-estimator is displayed as a single block in the notebook.
+    * ``"serial"``: the meta-estimator is displayed as a series of blocks, one for
+      each sub-estimator, in a serial layout, i.e., as a vertical stack.
+    * ``"parallel"``: the meta-estimator is displayed as a series of blocks, one for
+      each sub-estimator, in a parallel layout, i.e., as a horizontal stack.
+    """
+
+    _tags = {
+        "tag_name": "visual_block_kind",
+        "parent_type": "estimator",
+        "tag_type": ("str", ["single", "serial", "parallel"]),
+        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
     }
 
 
 ESTIMATOR_TAG_REGISTER = [
+    (
+        "sktime_version",
+        "object",
+        "str",
+        "sktime version from which this estimator class originates",
+    ),
     (
         "skip-inverse-transform",
         "transformer",
@@ -1761,6 +1971,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does metric require a predictive benchmark?",
     ),
     (
+        "requires_y_true",
+        "metric",
+        "bool",
+        "does metric require ground truth? If False, unsupervised metric",
+    ),
+    (
         "scitype:y_pred",
         "metric",
         "str",
@@ -1792,13 +2008,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "task",
-        "series-annotator",
+        "detector",
         "str",
         "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
-        "series-annotator",
+        "detector",
         "str",
         "type of learning, e.g., 'supervised', 'unsupervised'",
     ),
@@ -1932,6 +2148,12 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
+    ),
+    (
+        "python_dependencies_alias",
+        "object",
+        "dict",
+        "deprecated tag for dependency import aliases",
     ),
 ]
 

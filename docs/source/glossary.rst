@@ -26,8 +26,9 @@ sktime.
         ``Panel`` scitype. Data containers can be checked for compliance with
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
-        For more details on the general concept, see
-        `the datatypes and datasets user guide <https://www.sktime.net/en/stable/examples/AA_datatypes_and_datasets.html>`_.
+        For more details on the general concept, and precise specifications, see the
+        :ref:`data_format` and
+        `the datatypes and datasets user guide :doc:</examples/AA_datatypes_and_datasets>`.
 
     scitype
         Short for scientific type, denotes the abstract type of an ``sktime`` object,
@@ -48,6 +49,7 @@ sktime.
         the ``sktime.datatypes.check_is_scitype`` utility; for estimators, compliance
         is checked using ``sktime.utils.check_estimator``.
         For more details on data scitpyes, see :term:`mtype`.
+        For exact specifications of scitypes, see the :ref:`data_format`.
         For more details on estimator scitypes, see the user guides on individual
         learning tasks.
 

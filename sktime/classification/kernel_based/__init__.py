@@ -1,4 +1,5 @@
 """Kernel based time series classifiers."""
+
 __all__ = ["RocketClassifier", "Arsenal", "TimeSeriesSVC", "TimeSeriesSVCTslearn"]
 
 from sktime.classification.kernel_based._arsenal import Arsenal

@@ -19,9 +19,14 @@ for this tag.
 This API reference lists all tags available in ``sktime``, and key utilities
 for their usage.
 
+To search estimators by tags on the ``sktime`` webpage, use the
+:doc:`Estimator Search Page </estimator_overview>`
+
 
 Inspecting tags, retrieving by tags
 -----------------------------------
+
+Tags can be inspected at runtime using the following utilities:
 
 * to get the tags of an object, use the ``get_tags`` method.
   An object's tags can depend on its hyper-parameters.
@@ -44,6 +49,8 @@ Inspecting tags, retrieving by tags
     all_tags
     all_estimators
 
+
+.. _packaging_tags:
 
 General tags, packaging
 -----------------------
@@ -88,6 +95,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     capability__pred_int
     capability__pred_int__insample
     capability__missing_values
+    capability__categorical_in_X
     requires_fh_in_fit
     fit_is_empty
 
@@ -148,6 +156,28 @@ transform a single time series object (``"transformer"`` type).
     transform_returns_same_time_index
 
 
+.. _detector_tags:
+
+Tags for detectors
+------------------
+
+This section lists tags applying to time series detectors (``"detector"`` types).
+These tags are used to describe capabilities, properties, and behavior of
+detectors.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    task
+    learning_type
+    capability__update
+    capability__multivariate
+    capability__missing_values
+
 .. _dev_common_tags:
 
 Common developer tags
@@ -170,3 +200,4 @@ The tags below have limited use in retrieval or inspection of objects.
 
     x_inner_mtype
     y_inner_mtype
+    visual_block_kind

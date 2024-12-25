@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Feature transformer that returns features of time series including categories."""
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -15,27 +16,27 @@ class ADICVTransformer(BaseTransformer):
     ``"smooth"``, ``"erratic"``, ``"intermittent"``, or ``"lumpy"``.
 
     The labels are based on the Average Demand Interval (ADI) and the Coefficient of
-    Variation (CV2) of the time series, using simple thresholding.
-    Optionally, the transformer can return the ADI and CV2 values as well.
+    Variation squared (CV^2) of the time series, using simple thresholding.
+    Optionally, the transformer can return the ADI and CV^2 values as well.
 
     Let :math:`x_t` be the value of the time series at times :math:`t = 1, 2, \dots, T`,
     and let :math:`N` be the number of non-zero values in the time series, i.e.,
     :math:`N = \text{card}\{t: x_t \neq 0\}`.
 
-    The ADI and CV2 are calculated as follows:
+    The ADI and CV^2 are calculated as follows:
 
-    1. Average Demand Interval (ADI): The average time period between
-      time periods with non-zero demands, mathematically defined as:
+    1. Average Demand Interval (ADI): The average number of periods between
+    periods with non-zero demand, mathematically defined as:
 
-    .. math:: ADI = \frac{T}{N - 1}
+    .. math:: ADI = \frac{T}{N}
 
-    2. Variance (CV2): Variance calculated on non-zero values
+    2. Coefficient of Variation squared (CV^2): CV is calculated on non-zero values
     in the time series. Mathematical definition is:
 
-    .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2  # noqa: E501
+    .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2
 
     3. Class: Classification of time series on basis of ADI threshold
-    and CV2 threshold.
+    and CV^2 threshold.
 
     For thresholds ``ADI_threshold`` and ``CV2_threshold``, the classes are:
 
@@ -59,6 +60,15 @@ class ADICVTransformer(BaseTransformer):
     features : list[str] | None (default = ['adi', 'cv2', 'class'])
         Specifies all of the feature values to be calculated
 
+    adi_trim_handling: string (default = pool)
+        Specifies the method for reconciling leading/trailing zeros in the series.
+        Allowable values are ('pool', 'trim', and 'ignore'), corresponding to the
+        following treatment of leading/trailing zeros:
+        pool => L / N
+        trim => (Last N - First N) / N
+        ignore => L / (N - 1)
+            - where L is the set of All Observations, and N is the set of Non-Zero observations
+
     Examples
     --------
     >>> from sktime.transformations.series.adi_cv import ADICVTransformer
@@ -71,9 +81,15 @@ class ADICVTransformer(BaseTransformer):
     ----------
     [1]: John E. Boylan, Aris Syntetos: The Accuracy of Intermittent
     Demand Estimates. International Journal of Forecasting, 1 Apr. 2005
-    """
+    """  # noqa: E501
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["shlok191", "sbhobbes"],
+        "maintainers": ["shlok191"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -86,12 +102,16 @@ class ADICVTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
         "handles-missing-data": False,
-        "authors": ["shlok191"],
-        "maintainers": ["shlok191"],
     }
 
-    def __init__(self, features=None, adi_threshold=1.32, cv_threshold=0.49):
-        """Initialize the transformer and processes any provided parameters.
+    def __init__(
+        self,
+        features=None,
+        adi_threshold=1.32,
+        cv_threshold=0.49,
+        adi_trim_handling="pool",
+    ):
+        """Initialize the transformer and process any provided parameters.
 
         Parameters
         ----------
@@ -104,6 +124,10 @@ class ADICVTransformer(BaseTransformer):
         cv_threshold : float, optional
             Threshold for Variance. Defaults to 0.49.
 
+        adi_trim_handling : str, optional
+            Determines how leading and trailing zeros are handled for ADI.
+            Defaults to 'pool'
+
         Raises
         ------
             ValueError: If features is provided and does not
@@ -112,6 +136,7 @@ class ADICVTransformer(BaseTransformer):
         self.adi_threshold = adi_threshold
         self.cv_threshold = cv_threshold
         self.features = features
+        self.adi_trim_handling = adi_trim_handling
 
         self.features_internal = features
 
@@ -153,21 +178,39 @@ class ADICVTransformer(BaseTransformer):
             during initialization. Specifically, the columns include (by default):
 
                 1. Average Demand Interval (ADI)
-                2. Variance (CV2)
+                2. Coefficient of Variation squared (CV2)
                 3. categorical class
         """
-        X_non_zero = X.to_numpy().nonzero()
-        X_non_zero = X.iloc[X_non_zero]
+        X_non_zero_indices = X.to_numpy().nonzero()[0]
+        X_non_zero_values = X.iloc[X_non_zero_indices].values
 
-        # Calculating ADI value based on formula from paper
-        adi_value = len(X) / (len(X_non_zero) - 1)
+        # Calculating ADI value based on adi_trim_handling parameter
+        n_non_zero_observations = len(X_non_zero_indices)
+        n_observations = len(X)
 
-        # Calculating variance for all non-zero values
-        variance = X_non_zero.var().iloc[0]
-        cv2_value = variance / len(X_non_zero)
+        if self.adi_trim_handling == "trim":
+            first_non_zero = X_non_zero_indices[0]
+            last_non_zero = X_non_zero_indices[-1]
+
+            adi_numerator = last_non_zero - first_non_zero
+            adi_denominator = n_non_zero_observations - 1
+
+        elif self.adi_trim_handling == "pool":
+            adi_numerator = n_observations
+            adi_denominator = n_non_zero_observations
+
+        elif self.adi_trim_handling == "ignore":
+            adi_numerator = n_observations
+            adi_denominator = n_non_zero_observations - 1
+
+        adi_value = adi_numerator / adi_denominator
+
+        # Calculating coefficient of variation squared for all non-zero values
+        sigma = np.std(X_non_zero_values)
+        mu = np.mean(X_non_zero_values)
+        cv2_value = (sigma / mu) ** 2
 
         # Calculating the class type
-
         adi_low = adi_value <= self.adi_threshold
         cv2_low = cv2_value <= self.cv_threshold
         adi_high = not adi_low
@@ -175,13 +218,10 @@ class ADICVTransformer(BaseTransformer):
 
         if adi_low and cv2_low:
             class_type = "smooth"
-
         elif adi_low and cv2_high:
             class_type = "erratic"
-
         elif adi_high and cv2_low:
             class_type = "intermittent"
-
         elif adi_high and cv2_high:
             class_type = "lumpy"
 
@@ -232,6 +272,7 @@ class ADICVTransformer(BaseTransformer):
             "features": ["adi", "class"],
             "adi_threshold": 1.5,
             "cv_threshold": 0.2,
+            "adi_trim_handling": "trim",
         }
 
         return [params1, params2, params3]

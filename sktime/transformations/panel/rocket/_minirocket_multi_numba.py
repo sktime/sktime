@@ -19,7 +19,7 @@ if _check_soft_dependencies("numba", severity="none"):
 
 
 @njit(
-    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa
+    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa: E501
     fastmath=True,
     parallel=False,
     cache=True,
@@ -474,7 +474,7 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
 
 @njit(
-    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa
+    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa: E501
     fastmath=True,
     parallel=True,
     cache=True,
@@ -825,17 +825,17 @@ def _transform_multi(X, parameters):
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        )
                 else:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(
-                            C[padding:-padding],
-                            biases[feature_index_start + feature_count],
-                        ).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(
+                                C[padding:-padding],
+                                biases[feature_index_start + feature_count],
+                            ).mean()
+                        )
 
                 feature_index_start = feature_index_end
 

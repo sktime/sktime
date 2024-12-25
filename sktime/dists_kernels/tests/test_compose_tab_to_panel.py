@@ -1,4 +1,5 @@
 """Tests for tabular-to-panel distance aggregation/reduction."""
+
 import numpy as np
 import pytest
 

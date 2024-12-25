@@ -1,4 +1,5 @@
 """Time series kernel kmeans."""
+
 import numpy as np
 
 from sktime.base.adapters._tslearn import _TslearnAdapter
@@ -108,6 +109,9 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator

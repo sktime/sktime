@@ -24,6 +24,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
     "YfromX",
 ]
 
@@ -36,12 +37,12 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.regression.base import BaseRegressor
+from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
-from sktime.utils.sklearn import is_sklearn_regressor, prep_skl_df
+from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
 
@@ -212,6 +213,7 @@ class _Reducer(_BaseWindowForecaster):
         "handles-missing-data": True,
         "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -669,7 +671,7 @@ class _DirectReducer(_Reducer):
             return y_pred
 
         def _coerce_to_numpy(y_pred):
-            """Coerce predictions to numpy array, assumes pd.DataFram or numpy."""
+            """Coerce predictions to numpy array, assumes pd.DataFrame or numpy."""
             if isinstance(y_pred, pd.DataFrame):
                 return y_pred.values
             else:
@@ -1614,23 +1616,28 @@ def _check_scitype(scitype):
 
 
 def _infer_scitype(estimator):
-    # We can check if estimator is an instance of scikit-learn's RegressorMixin or
-    # of sktime's BaseRegressor, otherwise we raise an error. Note that some time-series
-    # regressor also inherit from scikit-learn classes, hence the order in which we
-    # check matters and we first need to check for BaseRegressor.
-    if isinstance(estimator, BaseRegressor):
-        return "time-series-regressor"
-    elif is_sklearn_regressor(estimator):
-        return "tabular-regressor"
+    """Infer scitype from estimator.
+
+    Returns
+    -------
+    scitype : str
+        The inferred scitype of the estimator.
+
+        * if sklearn estimator, returns tabular-regressor etc, one of the returns
+          of sklearn_scitype prefixed with "tabular-".
+        * if sktime/skpro or skbase estimator, returns the scitype of the estimator
+          as found in the object_type tag.
+        * if none of the above applies, returns "tabular-regressor" as fallback default.
+    """
+    if is_sklearn_estimator(estimator):
+        return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        warn(
-            "The `scitype` of the given `estimator` cannot be inferred. "
-            'Assuming "tabular-regressor" = scikit-learn regressor interface. '
-            "If this warning is followed by an unexpected exception, "
-            "please consider report as a bug on the sktime issue tracker.",
-            obj=estimator,
-        )
-        return "tabular-regressor"
+        if is_scitype(estimator, ["object", "estimator"]):
+            return "tabular-regressor"
+        if is_scitype(estimator, "regressor"):
+            return "time-series-regressor"
+        else:
+            return scitype(estimator, raise_on_unknown=False)
 
 
 def _check_strategy(strategy):
@@ -1658,7 +1665,21 @@ def _get_forecaster(scitype, strategy):
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
             "dirrec": DirRecTimeSeriesRegressionForecaster,
         },
+        "regressor_proba": {"direct": DirectTabularRegressionForecaster},
     }
+
+    if scitype not in registry:
+        raise ValueError(
+            "Error in make_reduction, no reduction strategies defined for "
+            f"specified or inferred scitype of estimator: {scitype}. "
+            f"Valid scitypes are: {list(registry.keys())}."
+        )
+    if strategy not in registry[scitype]:
+        raise ValueError(
+            f"Error in make_reduction, strategy {strategy} not defined for "
+            f"specified or inferred scitype {scitype}. "
+            f"Valid strategies are: {list(registry[scitype].keys())}."
+        )
     return registry[scitype][strategy]
 
 
@@ -1873,10 +1894,24 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    windows_identical : bool, optional, default=False
+        Specifies whether all direct models use the same number of observations
+        or a different number of observations.
+
+        * `True` : Uniform window of length (total observations - maximum
+          forecasting horizon). Note: Currently, there are no missings arising
+          from window length due to backwards imputation in
+          `ReductionTransformer`. Without imputation, the window size
+          corresponds to (total observations + 1 - window_length + maximum
+          forecasting horizon).
+        * `False` : Window size differs for each forecasting horizon. Window
+          length corresponds to (total observations + 1 - window_length +
+          forecasting horizon).
     """
 
     _tags = {
         "authors": "fkiraly",
+        "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -1891,6 +1926,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
+        windows_identical=False,
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1899,14 +1935,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.X_treatment = X_treatment
         self.impute_method = impute_method
         self.pooling = pooling
+        self.windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
-
-        warn(
-            "DirectReductionForecaster is experimental, and interfaces may change. "
-            "user feedback is appreciated in issue #3224 here: "
-            "https://github.com/sktime/sktime/issues/3224"
-        )
 
         if pooling == "local":
             mtypes = "pd.DataFrame"
@@ -1929,16 +1960,25 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
     def _fit(self, y, X, fh):
-        """Fit dispatcher based on X_treatment."""
-        methodname = f"_fit_{self.X_treatment}"
-        return getattr(self, methodname)(y=y, X=X, fh=fh)
+        """Fit dispatcher based on X_treatment and windows_identical."""
+        # shifted X (future X unknown) and identical windows reduce to
+        # multioutput regression, o/w fit multiple individual estimators
+        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+            return self._fit_multioutput(y=y, X=X, fh=fh)
+        else:
+            return self._fit_multiple(y=y, X=X, fh=fh)
 
     def _predict(self, X=None, fh=None):
-        """Predict dispatcher based on X_treatment."""
-        methodname = f"_predict_{self.X_treatment}"
-        return getattr(self, methodname)(X=X, fh=fh)
+        """Predict dispatcher based on X_treatment and windows_identical."""
+        if self.X_treatment == "shifted":
+            if self.windows_identical is True:
+                return self._predict_multioutput(X=X, fh=fh)
+            else:
+                return self._predict_multiple(X=self._X, fh=fh)
+        else:
+            return self._predict_multiple(X=X, fh=fh)
 
-    def _fit_shifted(self, y, X=None, fh=None):
+    def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
@@ -1988,7 +2028,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict_shifted(self, fh=None, X=None):
+    def _predict_multioutput(self, fh=None, X=None):
         """Predict core logic."""
         y_cols = self._y.columns
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2017,11 +2057,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    def _fit_concurrent(self, y, X=None, fh=None):
+    def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
+        X_treatment = self.X_treatment
+        windows_identical = self.windows_identical
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2050,11 +2092,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             lags = self._lags
             trafos = self.transformers
 
+            # determine whether to use concurrent X (lead them) or shifted (0)
+            X_lag = lag if X_treatment == "concurrent" else 0
+
             # lagger_y_to_X_ will lag y to obtain the sklearn X
             # also updates self.lagger_y_to_X_ by reference
             lagger_y_to_X[lag] = ReducerTransform(
                 lags=lags,
-                shifted_vars_lag=lag,
+                shifted_vars_lag=X_lag,
                 transformers=trafos,
                 impute_method=impute_method,
             )
@@ -2066,6 +2111,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             yt = yt.loc[notna_idx]
             Xtt = Xtt.loc[notna_idx]
+
+            if windows_identical:
+                # determine offset for uniform window length
+                # convert to abs values to account for in-sample prediction
+                offset = np.abs(fh_rel.to_numpy()).max() - abs(lag)
+                yt = yt[offset:]
+                Xtt = Xtt[offset:]
 
             Xtt = prep_skl_df(Xtt)
             yt = prep_skl_df(yt)
@@ -2082,7 +2134,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict_concurrent(self, X=None, fh=None):
+    def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag
 
@@ -2162,15 +2214,45 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 3,
             "X_treatment": "shifted",
             "pooling": "global",  # all internal mtypes are tested across scenarios
+            "windows_identical": True,
         }
         params2 = {
             "estimator": est,
             "window_length": 3,
             "X_treatment": "concurrent",
             "pooling": "global",
+            "windows_identical": True,
         }
-        params3 = {"estimator": est, "window_length": 0}
-        return [params1, params2, params3]
+        params3 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "shifted",
+            "pooling": "global",  # all internal mtypes are tested across scenarios
+            "windows_identical": False,
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "concurrent",
+            "pooling": "global",
+            "windows_identical": False,
+        }
+        params5 = {"estimator": est, "window_length": 0}
+
+        params = [params1, params2, params3, params4, params5]
+
+        # this fails because catboost is not sklearn compatible
+        # and fails set_params contracts already in sklearn;
+        # so it also fails them in sktime...
+        # left here for future reference, e.g., test for non-compliant estimators
+        #
+        # if _check_soft_dependencies("catboost", severity="none"):
+        #     from catboost import CatBoostRegressor
+        #
+        #     est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+        #     params6 = {"estimator": est, "window_length": 3}
+        #     params.append(params6)
+        return params
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
@@ -2506,8 +2588,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 3,
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
+        params2 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+        }
 
-        return params1
+        return [params1, params2]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
@@ -2553,8 +2640,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
@@ -2586,6 +2673,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, estimator, pooling="local"):

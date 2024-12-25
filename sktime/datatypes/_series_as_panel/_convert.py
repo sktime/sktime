@@ -25,7 +25,7 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
     """Convert series to a single-series panel.
 
     Adds a dummy dimension to the series.
-    For pd.Series or DataFrame, this results in a list of DataFram (dim added is list).
+    For pd.Series or DataFrame, this results in a list of DataFrame (dim added is list).
     For numpy array, this results in a third dimension being added.
 
     Assumes input is conformant with one of the three Series mtypes.

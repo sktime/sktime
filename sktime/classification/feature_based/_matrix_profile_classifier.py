@@ -118,9 +118,11 @@ class MatrixProfileClassifier(BaseClassifier):
         """
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
-            KNeighborsClassifier(n_neighbors=1)
-            if self.estimator is None
-            else self.estimator,
+            (
+                KNeighborsClassifier(n_neighbors=1)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 

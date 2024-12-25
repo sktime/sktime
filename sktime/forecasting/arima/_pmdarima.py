@@ -23,8 +23,8 @@ class AutoARIMA(_PmdArimaAdapter):
     forecast::auto.arima.
 
     Auto-ARIMA works by conducting differencing tests (i.e.,
-    Kwiatkowski–Phillips–Schmidt–Shin, Augmented Dickey-Fuller or
-    Phillips–Perron) to determine the order of differencing, d, and then
+    Kwiatkowski-Phillips-Schmidt-Shin, Augmented Dickey-Fuller or
+    Phillips-Perron) to determine the order of differencing, d, and then
     fitting models within ranges of defined start_p, max_p, start_q, max_q
     ranges. If the seasonal optional is enabled, auto-ARIMA also seeks to
     identify the optimal P and Q hyper-parameters after conducting the
@@ -34,7 +34,7 @@ class AutoARIMA(_PmdArimaAdapter):
     information_criterion, one of ('aic', 'aicc', 'bic', 'hqic', 'oob')
     (Akaike Information Criterion, Corrected Akaike Information Criterion,
     Bayesian Information Criterion, Hannan-Quinn Information Criterion, or
-    "out of bag"–for validation scoring–respectively) and returns the ARIMA
+    "out of bag"-for validation scoring-respectively) and returns the ARIMA
     which minimizes the value.
 
     Note that due to stationarity issues, auto-ARIMA might not find a suitable
@@ -52,8 +52,8 @@ class AutoARIMA(_PmdArimaAdapter):
     d : int, optional (default=None)
         The order of first-differencing. If None (by default), the value will
         automatically be selected based on the results of the test (i.e.,
-        either the Kwiatkowski–Phillips–Schmidt–Shin, Augmented Dickey-Fuller
-        or the Phillips–Perron test will be conducted to find the most probable
+        either the Kwiatkowski-Phillips-Schmidt-Shin, Augmented Dickey-Fuller
+        or the Phillips-Perron test will be conducted to find the most probable
         value). Must be a positive integer or None. Note that if d is None,
         the runtime could be significantly longer.
     start_q : int, optional (default=2)
@@ -271,7 +271,15 @@ class AutoARIMA(_PmdArimaAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning", "hyang1996", "fkiraly", "ilkersigirci"],
+        "authors": [
+            "tgsmith61591",  # for pmdarima
+            "charlesdrotar",  # for pmdarima
+            "aaronreidsmith",  # for pmdarima
+            "mloning",
+            "hyang1996",
+            "fkiraly",
+            "ilkersigirci",
+        ],
         "maintainers": ["hyang1996"],
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
@@ -676,7 +684,15 @@ class ARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
-        "authors": ["mloning", "hyang1996", "fkiraly", "ilkersigirci"],
+        "authors": [
+            "tgsmith61591",  # for pmdarima
+            "charlesdrotar",  # for pmdarima
+            "aaronreidsmith",  # for pmdarima
+            "mloning",
+            "hyang1996",
+            "fkiraly",
+            "ilkersigirci",
+        ],
         "maintainers": ["hyang1996"],
         "handles-missing-data": True,
     }

@@ -1,4 +1,5 @@
 """Test suite for lower bounding techniques."""
+
 import numpy as np
 import pandas as pd
 import pytest

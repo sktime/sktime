@@ -11,7 +11,6 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -24,11 +23,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
-if _check_soft_dependencies(
-    "scikit-learn>=1.3",
-    package_import_alias={"scikit-learn": "sklearn"},
-    severity="none",
-):
+if _check_soft_dependencies("scikit-learn>=1.3", severity="none"):
     from sklearn.utils.parallel import delayed
 else:
     from sklearn.utils.fixes import delayed
@@ -138,7 +133,7 @@ class BOSSEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:train_estimate": True,
@@ -551,7 +546,7 @@ class IndividualBOSS(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -711,6 +706,8 @@ def _dist_wrapper(dist_matrix, X, Y, s, XX_all=None, XY_all=None):
 
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
     """Find the euclidean distance between all pairs of bop-models."""
+    from joblib import Parallel, effective_n_jobs
+
     if use_boss_distance:
         if Y is None:
             Y = X

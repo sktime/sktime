@@ -5,7 +5,8 @@
 __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
-from typing import Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,9 +15,19 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class StatsModelsARIMA(_StatsModelsAdapter):
-    """ARIMA forecaster, from statsmodels package.
+    """(S)ARIMA(X) forecaster, from statsmodels, tsa.arima module.
 
     Direct interface for ``statsmodels.tsa.arima.model.ARIMA``.
+
+    Users should note that statsmodels contains two separate implementations of
+    (S)ARIMA(X), the ARIMA and the SARIMAX class, in different modules:
+    ``tsa.arima.model.ARIMA`` and ``tsa.statespace.SARIMAX``.
+
+    These are implementations of the same underlying model, (S)ARIMA(X),
+    but with different
+    fitting strategies, fitted parameters, and slightly differring behaviour.
+    Users should refer to the statsmodels documentation for further details:
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -149,12 +160,13 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["arnaujc91"],
+        "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
+        # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
@@ -164,8 +176,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
 
     def __init__(
         self,
-        order: Tuple[int, int, int] = (0, 0, 0),
-        seasonal_order: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        order: tuple[int, int, int] = (0, 0, 0),
+        seasonal_order: tuple[int, int, int, int] = (0, 0, 0, 0),
         trend: Optional[Union[str, Iterable]] = None,
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,

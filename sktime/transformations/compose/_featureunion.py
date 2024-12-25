@@ -1,4 +1,5 @@
 """Feature union."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -8,7 +9,6 @@ import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose._common import _coerce_to_sktime
 from sktime.utils.multiindex import flatten_multiindex
 
 
@@ -58,6 +58,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
         "capability:inverse_transform": False,
+        "visual_block_kind": "parallel",
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
     }
@@ -143,7 +144,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (last).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -169,7 +172,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (first).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,

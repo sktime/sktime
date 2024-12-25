@@ -41,7 +41,6 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here

@@ -1,4 +1,5 @@
 """Time series SVC, from tslearn."""
+
 from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.classification.base import BaseClassifier
 

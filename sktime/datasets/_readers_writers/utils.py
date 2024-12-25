@@ -299,6 +299,6 @@ def get_path(path: Union[str, pathlib.Path], suffix: str) -> str:
     if not p_.suffix:
         # Checks if a file with the same name exists
         if not os.path.exists(resolved_path):
-            # adds the specified extention to the path
+            # adds the specified extension to the path
             resolved_path += suffix
     return resolved_path

@@ -8,7 +8,7 @@ __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepRegressor(BaseRegressor, ABC):
+class BaseDeepRegressor(BaseRegressor):
     """Abstract base class for deep learning time series regression.
 
     The base classifier provides a deep learning default method for

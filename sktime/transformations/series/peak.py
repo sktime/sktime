@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
+
 __author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 
@@ -247,6 +248,7 @@ class PeakTimeFeature(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
+
         Parameters
         ----------
         X : pd.Series or pd.DataFrame

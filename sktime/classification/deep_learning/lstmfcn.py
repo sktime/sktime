@@ -1,4 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
@@ -14,10 +15,8 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 class LSTMFCNClassifier(BaseDeepClassifier):
     """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
-    Overview
-    --------
-     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
-     LSTM which the author indicates provides improved performance.
+    Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
+    LSTM which the author indicates provides improved performance.
 
     Parameters
     ----------
@@ -121,6 +120,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         n_classes: int
             The number of classes, which shall become the size of the output
              layer
+
         Returns
         -------
         output : a compiled Keras Model

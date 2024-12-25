@@ -28,6 +28,7 @@ from sktime.utils.validation.series import (
     is_in_valid_relative_index_types,
     is_integer_index,
 )
+from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
@@ -169,7 +170,9 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        return to_offset(obj)
+        with _suppress_pd22_warning:
+            offset = to_offset(obj)
+        return offset
     else:
         return None
 
@@ -397,7 +400,9 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            if freq_from_self != freq_from_obj:
+            with _suppress_pd22_warning:
+                freqs_unequal = freq_from_self != freq_from_obj
+            if freqs_unequal:
                 raise ValueError(
                     "Frequencies from two sources do not coincide: "
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
@@ -497,7 +502,7 @@ class ForecastingHorizon:
 
         Returns
         -------
-        fh : ForecastingHorizon
+        fh_abs : pandas.Index
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
@@ -801,29 +806,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.31.0:
-        # Check at every minor release whether lower pandas bound >=0.15.0
-        # if yes, can remove the workaround in the "else" condition and the check
-        #
-        # context:
-        # there is a bug in pandas
-        # that requires a workaround when computing index diff below
-        # bug report: https://github.com/pandas-dev/pandas/issues/45999
-        # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
-        #
-        # example with bug and workaround:
-        # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
-        # periods - periods[0]
-        # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
-        # [v - periods[0] for v in periods]
-        # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        #
-        # Below checks pandas version
-        # "if" branch has code that is expected to work
-        # "else" has the workaround for versions strictly lower than pandas 1.5.0
-        pandas_version_with_bugfix = _check_soft_dependencies(
-            "pandas>=1.5.0", severity="none"
-        )
+        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
         if pandas_version_with_bugfix:
             relative = absolute - cutoff
         else:
@@ -875,11 +858,17 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
-
         if isinstance(cutoff, pd.Index):
             cutoff = cutoff[[0] * len(relative)]
 
-        absolute = cutoff + relative
+        # pandas bugfix
+        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
+        if not pandas_version_with_bugfix and isinstance(cutoff, pd.PeriodIndex):
+            absolute = pd.PeriodIndex(cutoff.to_list() + relative, freq=fh._freq)
+        elif not pandas_version_with_bugfix and isinstance(cutoff, pd.DatetimeIndex):
+            absolute = pd.DatetimeIndex(cutoff.to_list() + relative, freq=fh._freq)
+        else:
+            absolute = cutoff + relative
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
@@ -918,7 +907,6 @@ def _check_cutoff(cutoff, index):
     """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
-
     if isinstance(index, pd.PeriodIndex):
         assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr
@@ -972,3 +960,28 @@ def _index_range(relative, cutoff):
         # coerce back to DatetimeIndex after operation
         absolute = absolute.to_timestamp(cutoff.freqstr)
     return absolute
+
+
+def _is_pandas_arithmetic_bug_fixed():
+    """Check if pandas supports correct arithmetic without a workaround."""
+    # TODO: 0.36.0:
+    # Check at every minor release whether lower pandas bound >=1.5.0
+    # if yes, can remove the workaround in the "else" condition and the check
+    #
+    # context:
+    # there is a bug in pandas
+    # that requires a workaround when computing index diff below
+    # bug report: https://github.com/pandas-dev/pandas/issues/45999
+    # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
+    #
+    # example with bug and workaround:
+    # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+    # periods - periods[0]
+    # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+    # [v - periods[0] for v in periods]
+    # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+    #
+    # Below checks pandas version
+    # "True" represents that is expected to work
+    # "False" has the workaround for versions strictly lower than pandas 1.5.0
+    return _check_soft_dependencies("pandas>=1.5.0", severity="none")

@@ -1,4 +1,5 @@
 """Tests the SkforecastAutoreg model."""
+
 __author__ = ["Abhay-Lejith"]
 
 import pandas as pd
@@ -15,7 +16,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_SkforecastAutoreg_predict_against_ForecasterAutoreg():
-    "Compares the predictions of the sktime adapter against skforecast's"
+    """Compares the predictions of the sktime adapter against skforecast's"""
     "ForecasterAutoreg."
     from skforecast.ForecasterAutoreg import ForecasterAutoreg
     from sklearn.linear_model import LinearRegression
@@ -39,7 +40,7 @@ def test_SkforecastAutoreg_predict_against_ForecasterAutoreg():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_SkforecastAutoreg_predict_with_exog_against_ForecasterAutoreg():
-    "Compares the predictions using exog of the sktime adapter against skforecast's"
+    """Compares the predictions using exog of the sktime adapter against skforecast's"""
     "ForecasterAutoreg."
     from skforecast.ForecasterAutoreg import ForecasterAutoreg
     from sklearn.linear_model import LinearRegression

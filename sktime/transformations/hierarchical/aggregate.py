@@ -201,9 +201,10 @@ class Aggregator(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"flatten_single_levels": True}
+        param1 = {"flatten_single_levels": True}
+        param2 = {"flatten_single_levels": False}
 
-        return params
+        return [param1, param2]
 
 
 def _check_index_no_total(X):

@@ -37,7 +37,7 @@ def _extend_docstring_3d(docstring):
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    """  # noqa
+    """
     replace_by = """x: np.ndarray (1d, 2d, or 3d array)
         First time series or panel of time series.
         Indices are (n_instances, n_variables, n_series).
@@ -46,20 +46,20 @@ def _extend_docstring_3d(docstring):
         Second time series or panel of time series.
         Indices are (n_instances, n_variables, n_series).
         If index is not present, n_variables=1 resp n_series=1 is assumed.
-    """  # noqa
+    """
     docstring = docstring.replace(to_replace, replace_by)
 
     to_replace = """Returns
     -------
     float
-    """  # noqa
+    """
     replace_by = """Returns
     -------
     float if x, y are both 1d or 2d
         distance between single series x and y
     2d np.ndarray if x and y are both 3d
         (i, j)-th entry is distance between i-th instance in x and j-th in y
-    """  # noqa
+    """
     docstring = docstring.replace(to_replace, replace_by)
 
     return docstring

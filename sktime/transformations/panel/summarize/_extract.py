@@ -1,11 +1,11 @@
 """Sequence feature extraction transformers."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
@@ -354,6 +354,8 @@ class FittedParamExtractor(BaseTransformer):
     """
 
     _tags = {
+        "authors": "mloning",
+        "python_dependencies": "joblib",
         "fit_is_empty": True,
         "univariate-only": True,
         "scitype:transform-input": "Series",
@@ -386,6 +388,8 @@ class FittedParamExtractor(BaseTransformer):
         Xt : pd.DataFrame
             Extracted parameters; columns are parameter values
         """
+        from joblib import Parallel, delayed
+
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 

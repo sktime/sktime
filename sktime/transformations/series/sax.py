@@ -1,4 +1,5 @@
 """Symbolic Aggregate Approximation Transformer."""
+
 __author__ = ["steenrotsman"]
 import numpy as np
 from scipy.stats import norm, zscore
@@ -36,11 +37,11 @@ class SAX(BaseTransformer):
     .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
         Dimensionality Reduction for Fast Similarity Search
         in Large Time Series Databases.
-        Knowledge and Information Systems 3, 263–286 (2001).
+        Knowledge and Information Systems 3, 263-286 (2001).
         https://doi.org/10.1007/PL00011669
     .. [2] Lin, J., Keogh, E., Wei, L., and Lonardi, S.
         Experiencing SAX: A Novel Symbolic Representation of Time Series.
-        Data Mining and Knowledge Discovery 15, 107–144 (2007).
+        Data Mining and Knowledge Discovery 15, 107-144 (2007).
         https://doi.org/10.1007/s10618-007-0064-z
 
     Examples

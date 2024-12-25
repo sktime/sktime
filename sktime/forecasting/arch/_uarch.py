@@ -154,7 +154,7 @@ class ARCH(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": "Vasudeva-bit",
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
         "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
         # estimator type

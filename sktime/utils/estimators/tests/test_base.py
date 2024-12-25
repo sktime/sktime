@@ -35,15 +35,12 @@ def test_mixin(base):
 
         def _fit(self):
             """Empty method, here for testing purposes."""
-            pass
 
         def _predict(self):
             """Empty method, here for testing purposes."""
-            pass
 
         def _score(self):
             """Empty method, here for testing purposes."""
-            pass
 
     dummy_instance = _DummyClass()
     assert hasattr(dummy_instance, "log")
@@ -86,12 +83,10 @@ def test_method_logger_exception():
     class _DummyClass:
         def __init__(self) -> None:
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method(self):
             """Empty method, here for testing purposes."""
-            pass
 
     with pytest.raises(TypeError) as excinfo:
         dummy_instance = _DummyClass()
@@ -113,17 +108,14 @@ def test_method_logger():
         @_method_logger
         def _method1(self, positional_param, optional_param="test_optional"):
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method2(self, positional_param, optional_param="test_optional_2"):
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method3(self):
             """Empty method, here for testing purposes."""
-            pass
 
     dummy_instance = _DummyClass()
     dummy_instance._method1("test_positional")

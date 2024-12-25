@@ -1,4 +1,5 @@
 """Deep learning based regressors."""
+
 __all__ = [
     "CNNRegressor",
     "CNTCRegressor",

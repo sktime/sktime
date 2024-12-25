@@ -1,4 +1,5 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
 
 import numpy as np

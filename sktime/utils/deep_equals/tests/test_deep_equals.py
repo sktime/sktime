@@ -1,4 +1,5 @@
 """Tests for deep_equals utility."""
+
 from copy import deepcopy
 
 import numpy as np

@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a merger for panel data."""
+
 import numpy as np
 
 __author__ = ["benHeid"]

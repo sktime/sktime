@@ -1,4 +1,5 @@
 """Tests for PCATransformer."""
+
 import numpy as np
 import pytest
 

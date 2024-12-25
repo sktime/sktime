@@ -32,7 +32,8 @@ class ForecastingError(Exception):
     Methods
     -------
     __init__(message)
-        Constructs the ForecastingError with the provided message."""
+    Constructs the ForecastingError with the provided message.
+    """
 
     def __init__(self, message):
         self.message = message

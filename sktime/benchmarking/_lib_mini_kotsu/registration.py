@@ -5,11 +5,13 @@ under a unique ID, which can be passed to kotsu's run interface.
 
 Based on: https://github.com/openai/gym/blob/master/gym/envs/registration.py
 """
+
 import importlib
 import logging
 import re
 import warnings
-from typing import Callable, Generic, Optional, TypeVar, Union
+from collections.abc import Callable
+from typing import Generic, Optional, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +125,7 @@ class _Registry(Generic[Entity]):
             raise KeyError(f"No registered entity with ID {id}")
 
     def all(self):
-        """Return all the entitys in the registry."""
+        """Return all the entities in the registry."""
         return self.entity_specs.values()
 
     def register(

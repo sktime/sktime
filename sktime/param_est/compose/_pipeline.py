@@ -2,6 +2,7 @@
 
 A class to create a pipeline of transformers and a parameter estimator.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.param_est.base import BaseParamFitter
@@ -136,6 +137,16 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.param_est)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.param_est_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.

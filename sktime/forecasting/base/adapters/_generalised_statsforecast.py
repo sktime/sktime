@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+
 from inspect import signature
-from typing import Dict
 from warnings import warn
 
 import pandas
@@ -237,12 +237,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             if isinstance(upper_interval_predictions, pandas.Series):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
-            interval_predictions[
-                (var_name, level, "lower")
-            ] = lower_interval_predictions[horizon_positions]
-            interval_predictions[
-                (var_name, level, "upper")
-            ] = upper_interval_predictions[horizon_positions]
+            interval_predictions[(var_name, level, "lower")] = (
+                lower_interval_predictions[horizon_positions]
+            )
+            interval_predictions[(var_name, level, "upper")] = (
+                upper_interval_predictions[horizon_positions]
+            )
 
         return interval_predictions
 
@@ -367,7 +367,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self) -> Dict[str, bool]:
+    def _check_supports_pred_int(self) -> dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 
@@ -586,14 +586,14 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.var import VAR
+        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.forecasting.theta import ThetaForecaster
-            from sktime.forecasting.var import VAR
-
+        stm_ests = [ThetaForecaster, VAR]
+        if _check_estimator_deps(stm_ests, severity="none"):
             params = [
                 {
                     "estimator": ThetaForecaster(),

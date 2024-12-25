@@ -11,6 +11,10 @@ All time series aligners in ``sktime`` can be listed using the
 using ``estimator_types="aligner"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "aligner" in the "Estimator type" dropdown).
+
 
 Naive aligners
 --------------

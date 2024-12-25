@@ -64,6 +64,7 @@ from sktime.datatypes import (
     mtype_to_scitype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import (
@@ -134,6 +135,8 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "capability:categorical_in_X": False,
+        # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -222,9 +225,9 @@ class BaseTransformer(BaseEstimator):
         other : object
             object to check
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
-        is_sktime_transformr = scitype(other, raise_on_unknown=False) == "transformer"
+        is_sktime_transformr = is_scitype(other, "transformer")
         return is_sklearn_transformer(other) or is_sktime_transformr
 
     def __mul__(self, other):
@@ -477,6 +480,7 @@ class BaseTransformer(BaseEstimator):
         # skip everything if fit_is_empty is True and we do not need to remember data
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
+            self._is_vectorized = "unknown"
             return self
 
         # if requires_X is set, X is required in fit and update
@@ -608,7 +612,14 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _transform directly
+        if not vectorization_needed:
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -767,7 +778,21 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _inverse_transform directly
+        if not vectorization_needed:
+            # capture edge condition where:
+            # transformer is univariate, transform produces multivariate
+            # in this case the check_X_y will convert to VectorizedDF,
+            # but inverse_transform expects a DataFrame
+            # example: time series decomposition algorithms
+            if isinstance(X_inner, VectorizedDF):
+                X_inner = X_inner.X_multiindex
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -895,7 +920,12 @@ class BaseTransformer(BaseEstimator):
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
-        if not getattr(self, "_is_vectorized", False):
+        # the condition is: _is_vectorized is boolean, False, or "unknown"
+        is_vectorized = getattr(self, "_is_vectorized", False)
+        is_not_vectorized = isinstance(is_vectorized, bool) and not is_vectorized
+        is_not_vectorized = is_not_vectorized or is_vectorized == "unknown"
+
+        if is_not_vectorized:
             return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
@@ -1030,7 +1060,7 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_metadata_required = ["is_univariate"]
+        X_metadata_required = ["is_univariate", "feature_kind"]
 
         X_valid, msg, X_metadata = check_is_mtype(
             X,
@@ -1053,6 +1083,13 @@ class BaseTransformer(BaseEstimator):
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
+            raise TypeError(
+                f"Transformer {self} does not support categorical features in X."
             )
 
         X_scitype = X_metadata["scitype"]
@@ -1091,7 +1128,10 @@ class BaseTransformer(BaseEstimator):
                 y_possible_scitypes = ["Panel", "Hierarchical"]
 
             y_valid, msg, y_metadata = check_is_scitype(
-                y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
+                y,
+                scitype=y_possible_scitypes,
+                return_metadata=["feature_kind"],
+                var_name="y",
             )
 
             # raise informative error message if y is is in wrong format
@@ -1104,6 +1144,11 @@ class BaseTransformer(BaseEstimator):
                 msg_y = msg_start + "y"
                 check_is_error_msg(
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Transformers do not support categorical features in y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1277,7 +1322,7 @@ class BaseTransformer(BaseEstimator):
                 Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
                     ALLOWED_OUT_MTYPES,
-                    msg_return_dict="list",
+                    msg_return_dict="dict",
                     return_metadata=Xt_metadata_required,
                 )
 

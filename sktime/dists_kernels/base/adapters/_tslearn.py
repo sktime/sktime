@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for tslearn distances and kernels."""
+
 import numpy as np
 
 __all__ = ["_TslearnPwTrafoAdapter"]

@@ -10,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -143,7 +142,7 @@ class AutoETS(_StatsModelsAdapter):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -180,7 +179,7 @@ class AutoETS(_StatsModelsAdapter):
         # --------------
         "authors": ["hyang1996"],
         "maintainers": ["hyang1996"],
-        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
@@ -268,6 +267,7 @@ class AutoETS(_StatsModelsAdapter):
                 )
 
     def _fit_forecaster(self, y, X=None):
+        from joblib import Parallel, delayed
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
         # Select model automatically

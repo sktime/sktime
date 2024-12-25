@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 """Tests for window length."""
+
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class

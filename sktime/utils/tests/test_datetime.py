@@ -94,7 +94,13 @@ def test_infer_freq() -> None:
     y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "D"
 
-    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        m_freq = "ME"
+    else:
+        m_freq = "M"
+
+    index = pd.date_range(start="2021-01-01", periods=1, freq=m_freq)
     y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) in ["M", "ME"]
 
@@ -102,7 +108,7 @@ def test_infer_freq() -> None:
     assert infer_freq(y) == "D"
 
     y = pd.DataFrame(
-        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
+        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq=m_freq)
     )
     assert infer_freq(y) in ["M", "ME"]
 

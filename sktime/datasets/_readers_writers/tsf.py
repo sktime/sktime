@@ -5,7 +5,6 @@ __author__ = ["rakshitha123"]
 __all__ = ["load_tsf_to_dataframe"]
 
 from datetime import datetime
-from typing import Dict
 
 import pandas as pd
 
@@ -16,7 +15,7 @@ from sktime.utils.strtobool import strtobool
 
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
-    metadata: Dict,
+    metadata: dict,
     freq: str = None,
     value_column_name: str = "series_value",
 ) -> pd.DataFrame:

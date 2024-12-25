@@ -52,9 +52,12 @@ class VmdTransformer(BaseTransformer):
     ----------
     K : int, optional (default='None')
         the number of Intrinsic Mode Functions to decompose original series to.
-        If None, will decompose the series iteratively until kMax is reached or the sum
+        If None, will decompose the series iteratively with increasing K,
+        until kMax is reached or the sum
         of the decomposed modes against the original series is less than
-        the ``energy_loss_coefficient`` parameter.
+        the ``energy_loss_coefficient`` parameter (whichever occurs earlier).
+        In this case, the lowest K to satisfy one of the condition
+        is used in ``transform``.
     kMax : int, optional (default=30)
         the limit on the number of Intrinsic Mode Functions to
         decompose the original series to
@@ -79,6 +82,13 @@ class VmdTransformer(BaseTransformer):
         2 = all omegas are initialized at random
     tol : int, optional (default=1e-7)
         convergence tolerance criterion
+    returned_decomp : bool, optional (default="u")
+        which decomposition object is returned by ``transform``
+
+        * ``"u"``: the decomposed modes
+        * ``"u_hat"``: the mode spectra (absolute values)
+        * ``"u_both"``: both the decomposed modes and the mode spectra,
+          these will be returned column concatenated, first the modes then the spectra
 
     Examples
     --------
@@ -135,6 +145,7 @@ class VmdTransformer(BaseTransformer):
         init=1,
         tol=1e-7,
         energy_loss_coefficient=0.01,
+        returned_decomp="u",
     ):
         super().__init__()
         self.K = K
@@ -145,6 +156,7 @@ class VmdTransformer(BaseTransformer):
         self.tol = tol
         self.kMax = kMax
         self.energy_loss_coefficient = energy_loss_coefficient
+        self.returned_decomp = returned_decomp
         self.fit_column_names = None
 
     def _inverse_transform(self, X, y=None):
@@ -154,26 +166,48 @@ class VmdTransformer(BaseTransformer):
 
     def _fit(self, X, y=None):
         if self.K is None:
-            self._K = self.__runVMDUntilCoefficientThreshold(X.to_numpy())
+            K = self.__runVMDUntilCoefficientThreshold(X.to_numpy())
         else:
-            self._K = self.K
+            K = self.K
         self.fit_column_names = X.columns
+        self.K_ = K
         return self
 
     def _transform(self, X, y=None):
+        return_dec = self.returned_decomp
         # Package truncates last if odd, so make even
         # through duplication then remove duplicate
         values = X.values
         if len(values) % 2 == 1:
             values = np.append(values, values[-1])
         u, u_hat, omega = VMD(
-            values, self.alpha, self.tau, self._K, self.DC, self.init, self.tol
+            values, self.alpha, self.tau, self.K_, self.DC, self.init, self.tol
         )
-        transposed = u.T
-        if len(transposed) != len(X.values):
-            transposed = transposed[:-1]
-        Y = pd.DataFrame(transposed)
-        return Y
+        if return_dec in ["u", "u_both"]:
+            transposed = u.T
+            if len(transposed) != len(X.values):
+                transposed = transposed[:-1]
+            u_return = pd.DataFrame(transposed)
+        if return_dec in ["u_hat", "u_both"]:
+            u_hat_return = pd.DataFrame(np.abs(u_hat))
+        if return_dec == "omega":
+            omega_return = pd.DataFrame(omega)
+
+        if return_dec == "u":
+            return u_return
+        elif return_dec == "u_hat":
+            return u_hat_return
+        elif return_dec == "omega":
+            return omega_return
+        elif return_dec == "u_both":
+            u_returns = pd.concat([u_return, u_hat_return], axis=1)
+            u_returns.columns = pd.RangeIndex(len(u_returns.columns))
+            return u_returns
+        else:
+            raise ValueError(
+                "Error in VmdTransformer: "
+                f"Unknown return_decomp parameter: {return_dec}"
+            )
 
     def __runVMDUntilCoefficientThreshold(self, data):
         K = 1
@@ -181,9 +215,7 @@ class VmdTransformer(BaseTransformer):
         if len(data) % 2 == 1:
             data = np.append(data, data[-1])
         while K < self.kMax:
-            u, u_hat, omega = VMD(
-                data, self.alpha, self.tau, K, self.DC, self.init, self.tol
-            )
+            u, _, _ = VMD(data, self.alpha, self.tau, K, self.DC, self.init, self.tol)
             reconstruct = sum(u)
             energy_loss_coef = np.linalg.norm(
                 (data - reconstruct), 2
@@ -194,3 +226,30 @@ class VmdTransformer(BaseTransformer):
             else:
                 break
         return K
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params0 = {"kMax": 4}
+        params1 = {"K": 3, "returned_decomp": "u_hat"}
+        params2 = {"kMax": 3, "energy_loss_coefficient": 0.1}
+        params3 = {"K": 3, "returned_decomp": "u_both", "alpha": 1000}
+
+        return [params0, params1, params2, params3]

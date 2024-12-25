@@ -1,4 +1,5 @@
 """Tests for probabilistic performance metrics."""
+
 import warnings
 
 import numpy as np
@@ -261,7 +262,7 @@ def test_evaluate_alpha_negative(metric, sample_data):
     with pytest.raises(ValueError):
         # 0.3 not in test quantile data so raise error.
         Loss = metric.create_test_instance().set_params(alpha=0.3)
-        res = Loss(y_true=y_true, y_pred=y_pred)  # noqa
+        res = Loss(y_true=y_true, y_pred=y_pred)  # noqa: F841
 
 
 @pytest.mark.skipif(

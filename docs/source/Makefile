@@ -20,7 +20,7 @@ clean:
 	@echo "Deleted directory $(BUILDDIR)."
 
 # $(O) is meant as a shortcut for custom options.
-# i.e to log stderr into a seprate file:
+# i.e to log stderr into a separate file:
 # make build O="--no-color 2> build_warnings.log"
 html:
 #	./symlink_examples.sh

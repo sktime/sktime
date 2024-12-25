@@ -26,8 +26,7 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from abc import ABC, abstractmethod
-from typing import Tuple
+from abc import abstractmethod
 
 import numpy as np
 
@@ -35,7 +34,7 @@ from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
 
 
-class BaseEarlyClassifier(BaseEstimator, ABC):
+class BaseEarlyClassifier(BaseEstimator):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -71,6 +70,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -132,7 +132,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         fit = BaseClassifier.fit
         return fit(self, X, y)
 
-    def predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -170,7 +170,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict(X)
 
-    def update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -215,7 +215,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         else:
             return self._update_predict(X)
 
-    def predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -255,7 +255,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict_proba(X)
 
-    def update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -302,7 +302,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         else:
             return self._update_predict_proba(X)
 
-    def score(self, X, y) -> Tuple[float, float, float]:
+    def score(self, X, y) -> tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
@@ -404,7 +404,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -436,7 +436,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Abstract method, must be implemented.
@@ -468,7 +468,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """
         ...
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         This method should update state_info with any values necessary to make future
@@ -511,7 +511,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return dists, decisions
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Uses information from previous decisions stored in state_info. This method
@@ -556,7 +556,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         return dists, decisions
 
     @abstractmethod
-    def _score(self, X, y) -> Tuple[float, float, float]:
+    def _score(self, X, y) -> tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
         Abstract method, must be implemented.

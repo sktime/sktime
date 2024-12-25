@@ -413,6 +413,7 @@ class ElasticEnsemble(BaseClassifier):
         ----------
         X : pd.DataFrame of shape [n, 1]
         return_preds_and_probas: boolean option to return predictions
+
         Returns
         -------
         array of shape [n, 1]

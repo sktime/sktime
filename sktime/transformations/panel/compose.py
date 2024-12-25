@@ -133,11 +133,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        sklearn_lneq_14 = _check_soft_dependencies(
-            "scikit-learn<1.4",
-            severity="none",
-            package_import_alias={"scikit-learn": "sklearn"},
-        )
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
         if not sklearn_lneq_14:
             raise ModuleNotFoundError(
@@ -199,8 +195,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame)."
                 )
 
     @classmethod
@@ -216,16 +212,32 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        TRANSFORMERS = [
-            ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+        TRANSFORMERS_1 = [
+            ("transformer1", ExponentTransformer(power=2)),
+            ("transformer2", ExponentTransformer(power=3)),
+        ]
+        TRANSFORMERS_2 = [
+            ("transformer1", ExponentTransformer(power=1)),
+            ("transformer2", Detrender()),
         ]
 
-        return {
-            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-        }
+        return [
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_1
+                ]
+            },
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_2
+                ],
+                "remainder": "passthrough",
+                "preserve_dataframe": False,
+            },
+        ]
 
     def fit(self, X, y=None):
         """Fit the transformer."""
@@ -295,6 +307,7 @@ class ColumnConcatenator(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def _transform(self, X, y=None):

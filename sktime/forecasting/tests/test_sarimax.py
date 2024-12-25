@@ -1,4 +1,5 @@
 """Tests the SARIMAX model."""
+
 __author__ = ["TNTran92", "yarnabrina"]
 
 import pytest
@@ -99,7 +100,6 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
 )
 def test_SARIMAX_for_exogeneous_features():
     """Checking when X is passed to predict but not fit"""
-
     from sktime.datasets import load_longley
     from sktime.split import temporal_train_test_split
 

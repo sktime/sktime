@@ -1,4 +1,5 @@
 """Module containing adapters other framework packages covering multiple tasks."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["_PytsAdapter", "_TslearnAdapter"]

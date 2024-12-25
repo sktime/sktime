@@ -5,7 +5,7 @@ __all__ = ["MiniRocketMultivariateVariable"]
 
 import multiprocessing
 import warnings
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -153,7 +153,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         super().__init__()
 
-    def _fit(self, X: List[pd.DataFrame], y=None):
+    def _fit(self, X: list[pd.DataFrame], y=None):
         """Fits dilations and biases to input time series.
 
         Parameters
@@ -275,7 +275,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
-    X: List[pd.DataFrame], pad: Union[int, float, None] = 0
+    X: list[pd.DataFrame], pad: Union[int, float, None] = 0
 ):
     """Convert a nested dataframe to a 2D array and a list of lengths.
 

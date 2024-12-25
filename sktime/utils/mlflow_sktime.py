@@ -241,12 +241,9 @@ def save_model(
     if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
         raise MlflowException(
             message=(
-                "Unrecognized serialization format: {serialization_format}. "
+                f"Unrecognized serialization format: {serialization_format}. "
                 "Please specify one of the following supported formats: "
-                "{supported_formats}.".format(
-                    serialization_format=serialization_format,
-                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
-                )
+                f"{SUPPORTED_SERIALIZATION_FORMATS}."
             ),
             error_code=INVALID_PARAMETER_VALUE,
         )
@@ -545,12 +542,9 @@ def _load_model(path, serialization_format):
     if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
         raise MlflowException(
             message=(
-                "Unrecognized serialization format: {serialization_format}. "
+                f"Unrecognized serialization format: {serialization_format}. "
                 "Please specify one of the following supported formats: "
-                "{supported_formats}.".format(
-                    serialization_format=serialization_format,
-                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
-                )
+                f"{SUPPORTED_SERIALIZATION_FORMATS}."
             ),
             error_code=INVALID_PARAMETER_VALUE,
         )
@@ -685,9 +679,9 @@ class _SktimeModelWrapper:
                 else:
                     coverage = 0.9
 
-                raw_predictions[
-                    SKTIME_PREDICT_INTERVAL
-                ] = self.sktime_model.predict_interval(X=X, coverage=coverage)
+                raw_predictions[SKTIME_PREDICT_INTERVAL] = (
+                    self.sktime_model.predict_interval(X=X, coverage=coverage)
+                )
 
             if SKTIME_PREDICT_PROBA in predict_methods:
                 if not isinstance(
@@ -744,9 +738,9 @@ class _SktimeModelWrapper:
                     )
                 else:
                     alpha = None
-                raw_predictions[
-                    SKTIME_PREDICT_QUANTILES
-                ] = self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+                raw_predictions[SKTIME_PREDICT_QUANTILES] = (
+                    self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+                )
 
             if SKTIME_PREDICT_VAR in predict_methods:
                 if predict_params:

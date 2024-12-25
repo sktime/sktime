@@ -1,4 +1,5 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
 
 import random
@@ -27,18 +28,10 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-sklearn_zero_x = _check_soft_dependencies(
-    "scikit-learn<1.4",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-)
+sklearn_zero_x = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
-if _check_soft_dependencies(
-    "scikit-learn<1.0",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+if _check_soft_dependencies("scikit-learn<1.0", severity="none"):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
 @pytest.fixture
@@ -300,9 +293,9 @@ def test_equality_transfo_nontranso(regressor):
         }
     }
 
-    random_int = random.randint(1, 1000)
+    random_int = random.randint(1, 1000)  # noqa: S311
     regressor.random_state = random_int
-    forecaster = make_reduction(regressor, window_length=int(6), strategy="recursive")
+    forecaster = make_reduction(regressor, window_length=6, strategy="recursive")
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     recursive_without = mean_absolute_percentage_error(y_test, y_pred, symmetric=False)
