@@ -609,7 +609,9 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        X_metadata = check_is_scitype(X, scitype=["Series", "Panel"], return_metadata=[])
+        X_metadata = check_is_scitype(
+            X, scitype=["Series", "Panel"], return_metadata=[]
+        )
         self._X_metadata = X_metadata
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
