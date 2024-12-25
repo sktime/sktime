@@ -36,6 +36,8 @@ class ShampooSales(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "shampoo_sales",
+        "n_splits": 0,
         "is_univariate": True,
         "is_one_series": True,
         "is_one_panel": True,
@@ -45,8 +47,6 @@ class ShampooSales(_ForecastingDatasetFromLoader):
         "has_exogenous": False,
         "n_instances": 36,
         "n_timepoints": 36,
-        "n_timepoints_train": 0,
-        "n_timepoints_test": 0,
         "frequency": "M",
         "n_dimensions": 1,
         "n_panels": 1,

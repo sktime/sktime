@@ -46,6 +46,8 @@ class ItalyPowerDemand(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "italy_power_demand",
+        "n_splits": 1,
         "is_univariate": True,
         "n_instances": 1096,
         "n_instances_train": 67,

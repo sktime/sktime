@@ -45,7 +45,8 @@ class M5Dataset(BaseForecastingDataset):
     """
 
     _tags = {
-        "object_type": "forecasting_dataset",
+        "name": "m5_forecasting_accuracy",
+        "n_splits": 1,
         # Estimator type
         "is_univariate": True,
         "is_one_series": False,
@@ -74,10 +75,14 @@ class M5Dataset(BaseForecastingDataset):
         self.extract_path = extract_path
         super().__init__()
 
-        if extract_path is None:
-            self._extract_path = Path(__file__).parent.parent / Path("data")
+        self._extract_path = self.cache_files_directory()
+
+    def cache_files_directory(self):
+        """Return the path to the directory where the data is stored."""
+        if self.extract_path is None:
+            return super().cache_files_directory()
         else:
-            self._extract_path = Path(extract_path)
+            return Path(self.extract_path)
 
     @property
     def path_to_data_dir(self):

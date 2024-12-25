@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datasets.base._base import InvalidSetError
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -53,7 +54,7 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         n_instances_train = estimator_instance.get_tag("n_instances_train")
 
         contextwrapper = (
-            nullcontext() if n_instances_train > 0 else pytest.raises(ValueError)
+            nullcontext() if n_instances_train > 0 else pytest.raises(InvalidSetError)
         )
         with contextwrapper:
             y_train = estimator_instance.load("y_train")
@@ -63,7 +64,7 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         n_instances_test = estimator_instance.get_tag("n_instances_test")
 
         contextwrapper = (
-            nullcontext() if n_instances_test > 0 else pytest.raises(ValueError)
+            nullcontext() if n_instances_test > 0 else pytest.raises(InvalidSetError)
         )
         with contextwrapper:
             y_test = estimator_instance.load("y_test")

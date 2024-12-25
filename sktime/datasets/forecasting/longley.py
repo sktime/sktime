@@ -54,6 +54,7 @@ class Longley(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "longley",
         "is_univariate": True,
         "is_one_series": True,
         "is_one_panel": True,
@@ -63,8 +64,6 @@ class Longley(_ForecastingDatasetFromLoader):
         "has_exogenous": True,
         "n_instances": 16 * 6,
         "n_timepoints": 16,
-        "n_timepoints_train": None,
-        "n_timepoints_test": None,
         "frequency": "Y",
         "n_dimensions": 6,
         "n_panels": 1,

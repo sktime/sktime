@@ -83,4 +83,7 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
     def test_tag_is_univariate(self, estimator_instance):
         is_univariate = estimator_instance.get_tag("is_univariate")
         y = estimator_instance.load("y")
-        assert y.shape[1] == 1 if is_univariate else y.shape[1] > 1
+
+        n_columns = 1 if isinstance(y, pd.Series) else y.shape[1]
+
+        assert n_columns == 1 if is_univariate else n_columns > 1

@@ -48,6 +48,8 @@ class ArrowHead(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "arrow_head",
+        "n_splits": 1,
         "is_univariate": True,
         "n_instances": 211,
         "n_instances_train": 36,

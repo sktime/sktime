@@ -29,6 +29,7 @@ class HierarchicalSalesToydata(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "hierarchical_sales_toydata",
         "is_univariate": True,
         "is_one_series": False,
         "is_one_panel": False,

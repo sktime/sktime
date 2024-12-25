@@ -40,6 +40,7 @@ class Airline(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "airline",
         "is_univariate": True,
         "is_one_series": True,
         "is_one_panel": True,

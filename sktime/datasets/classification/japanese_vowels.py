@@ -51,6 +51,8 @@ class JapaneseVowels(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "japanese_vowels",
+        "n_splits": 1,
         "is_univariate": False,
         "has_nans": False,
         "n_instances": 640,

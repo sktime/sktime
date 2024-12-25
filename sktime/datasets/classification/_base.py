@@ -47,32 +47,6 @@ class BaseClassificationDataset(BaseDataset):
         self.return_mtype = return_mtype
         super().__init__()
 
-    def load(self, *args):
-        """Load the dataset.
-
-        Parameters
-        ----------
-        *args: tuple of strings that specify what to load
-            available/valid strings are provided by the concrete classes
-            the expectation is that this docstring is replaced with the details
-
-        Returns
-        -------
-        dataset, if args is empty or length one
-            data container corresponding to string in args (see above)
-        tuple, of same length as args, if args is length 2 or longer
-            data containers corresponding to strings in args, in same order
-        """
-        # Validate args
-        if any([_x in args for _x in ["X_test", "y_test"]]):
-            if not self.get_tag("n_instances_test", 0):
-                raise ValueError("Test data split not available for this dataset. ")
-        if any([_x in args for _x in ["X_train", "y_train"]]):
-            if not self.get_tag("n_instances_train", 0):
-                raise ValueError("Train data split not available for this dataset. ")
-
-        return self._load(*args)
-
     def _load(self, *args):
         """Load the dataset.
 

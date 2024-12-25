@@ -16,7 +16,9 @@ __author__ = ["fkiraly", "felipeangelimvieira"]
 
 __all__ = ["BaseDataset", "_DatasetFromLoaderMixin"]
 
+import shutil
 from inspect import isfunction, signature
+from pathlib import Path
 
 from sktime.base import BaseObject
 from sktime.utils.dependencies import _check_estimator_deps
@@ -28,17 +30,92 @@ class BaseDataset(BaseObject):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "object_type": "dataset",  # type of object
+        "name": None,  # The dataset unique name
+        "python_dependencies": None,  # python dependencies required to load the dataset
+        "python_version": None,  # python version required to load the dataset
+        "n_splits": 0,  # Number of cross-validation splits, if any.
     }
 
     def __init__(self):
         super().__init__()
         _check_estimator_deps(self)
 
-    def load(self, *args): ...
+    def load(self, *args):
+        """Load the dataset.
 
-    def __call__(self, *args, **kwargs):
-        """Load the dataset, same as calling load."""
-        return self.load(*args, **kwargs)
+        Parameters
+        ----------
+        *args: tuple of strings that specify what to load
+            available/valid strings are provided by the concrete classes
+            the expectation is that this docstring is replaced with the details
+
+        Returns
+        -------
+        dataset, if args is empty or length one
+            data container corresponding to string in args (see above)
+        tuple, of same length as args, if args is length 2 or longer
+            data containers corresponding to strings in args, in same order
+        """
+        if len(args) == 0:
+            args = ("X", "y")
+        self._check_args(*args)
+
+        return self._load(*args)
+
+    def _check_args(self, *args):
+        for arg in args:
+            if arg not in self.available_sets:
+                raise InvalidSetError(arg, self.available_sets)
+
+    @property
+    def available_sets(self):
+        """
+        Return a list of available sets.
+
+        Returns
+        -------
+        list of str
+            List of available sets.
+        """
+        sets = ["X", "y"]
+        n_splits = self.get_tag("n_splits")
+        if n_splits == 1:
+            sets.extend(["X_train", "y_train", "X_test", "y_test"])
+        elif n_splits > 1:
+            sets.append("cv")
+        return sets
+
+    def cache_files_directory(self):
+        """
+        Get the directory where cache files are stored.
+
+        Returns
+        -------
+        Path
+            Directory where cache files are stored
+        """
+        dataset_name = self.get_tag("name")
+        return Path(__file__).parent.parent / Path("data") / dataset_name
+
+    def cleanup_cache_files(self):
+        """Cleanup cache files from the cache directory."""
+        cache_directory = self.cache_files_directory()
+        if cache_directory.exists():
+            shutil.rmtree(cache_directory)
+
+
+class InvalidSetError(Exception):
+    """Exception raised for invalid set names."""
+
+    def __init__(self, set_name, valid_set_names):
+        self.set_name = set_name
+        self.valid_set_names = valid_set_names
+
+    def __str__(self):
+        return (
+            f"Invalid set name: {self.set_name}. "
+            f"Valid set names are: {self.valid_set_names}."
+        )
 
 
 class _DatasetFromLoaderMixin:

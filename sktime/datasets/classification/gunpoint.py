@@ -50,6 +50,8 @@ class GunPoint(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "gun_point",
+        "n_splits": 1,
         "is_univariate": True,
         "n_instances": 200,
         "n_instances_train": 50,

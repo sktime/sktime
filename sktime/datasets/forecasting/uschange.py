@@ -50,6 +50,8 @@ class USChange(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "uschange",
+        "n_splits": 0,  # No splits available
         "is_univariate": False,
         "is_one_series": True,
         "is_one_panel": True,
@@ -59,8 +61,6 @@ class USChange(_ForecastingDatasetFromLoader):
         "has_exogenous": True,
         "n_instances": 187,
         "n_timepoints": 187,
-        "n_timepoints_train": 0,  # Can vary if a default split is defined
-        "n_timepoints_test": 0,
         "frequency": "Q",
         "n_dimensions": 5,  # 5 explanatory variables
         "n_panels": 1,

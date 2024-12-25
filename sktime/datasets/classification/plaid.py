@@ -30,6 +30,8 @@ class PLAID(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "plaid",
+        "n_splits": 1,
         "is_univariate": True,
         "n_instances": 1074,
         "n_instances_train": 537,

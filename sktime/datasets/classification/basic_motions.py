@@ -48,6 +48,8 @@ class BasicMotions(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "basic_motions",
+        "n_splits": 1,
         "is_univariate": False,
         "n_instances": 80,
         "n_instances_train": 40,

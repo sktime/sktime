@@ -42,6 +42,9 @@ class Macroeconomic(_ForecastingDatasetFromLoader):
     """
 
     _tags = {
+        "name": "macroeconomic",
+        "python_dependencies": ["statsmodels"],
+        "n_splits": 0,
         "is_univariate": False,
         "is_one_series": True,
         "is_one_panel": True,

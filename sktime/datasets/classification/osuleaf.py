@@ -47,6 +47,8 @@ class OSULeaf(_ClassificationDatasetFromLoader):
     """
 
     _tags = {
+        "name": "osuleaf",
+        "n_splits": 1,
         "is_univariate": True,
         "n_instances": 442,
         "n_instances_train": 200,

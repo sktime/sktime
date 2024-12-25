@@ -46,6 +46,8 @@ class Tecator(_RegressionDatasetFromLoader):
     """
 
     _tags = {
+        "name": "tecator",
+        "n_splits": 1,
         "is_univariate": True,
         "is_equal_length": True,
         "has_nans": False,

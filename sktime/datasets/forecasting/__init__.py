@@ -11,6 +11,7 @@ from .uschange import USChange
 
 __all__ = [
     "Airline",
+    "HierarchicalSalesToydata",
     "Longley",
     "Lynx",
     "Macroeconomic",
