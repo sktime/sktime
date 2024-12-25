@@ -91,7 +91,8 @@ class ThresholdDetector(BaseDetector):
               the values are integer indices of the changepoints/anomalies.
             * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
-        X = X.iloc[:, 0]
+        if isinstance(X, pd.DataFrame):
+            X = X.iloc[:, 0]
 
         if self.upper is not None:
             above_thresh = X > self.upper
