@@ -43,27 +43,41 @@ def _convert_tsf_to_hierarchical(
 
     if freq is None:
         freq_map = {
+            "4_seconds": "4S",
+            "minutely": "min",
+            "10_minutes": "10min",
+            "half_hourly": "30min",
+            "hourly": "H",
             "daily": "D",
             "weekly": "W",
             "monthly": "MS",
+            "quarterly": "QS",
             "yearly": "YS",
+            None: None,
         }
         freq = freq_map[metadata["frequency"]]
 
     # create the time index
     if "start_timestamp" in df.columns:
-        df["timestamp"] = df.apply(
-            lambda x: pd.date_range(
-                start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
-            ),
-            axis=1,
-        )
-        drop_columns = ["start_timestamp"]
+        try:
+            df["timestamp"] = df.apply(
+                lambda x: pd.date_range(
+                    start=x["start_timestamp"],
+                    periods=len(x[value_column_name]),
+                    freq=freq,
+                ),
+                axis=1,
+            )
+            drop_columns = ["start_timestamp"]
+            has_time_index = True
+        except pd._libs.tslibs.np_datetime.OutOfBoundsDatetime:
+            # Parts of the yearly time series from M4 are to long to be encoded
+            # with unit="ns" in pandas date_range. Other units cause problems when
+            # creating the final index.
+            # Thus, we ignore the datetime index if the time series is too long.
+            drop_columns, has_time_index = create_range_index(value_column_name, df)
     else:
-        df["timestamp"] = df.apply(
-            lambda x: pd.RangeIndex(start=0, stop=len(x[value_column_name])), axis=1
-        )
-        drop_columns = []
+        drop_columns, has_time_index = create_range_index(value_column_name, df)
 
     # pandas implementation of multiple column explode
     # can be removed and replaced by explode if we move to pandas version 1.3.0
@@ -76,7 +90,18 @@ def _convert_tsf_to_hierarchical(
     df = df.set_index(index_columns + ["timestamp"])
     df = df.astype({value_column_name: "float"}, errors="ignore")
 
+    if has_time_index:
+        df.index.levels[-1].freq = freq
     return df
+
+
+def create_range_index(value_column_name, df):
+    df["timestamp"] = df.apply(
+        lambda x: pd.RangeIndex(start=0, stop=len(x[value_column_name])), axis=1
+    )
+    drop_columns = []
+    has_time_index = False
+    return drop_columns, has_time_index
 
 
 # TODO: depreciate this and rename it load_from_tsf_to_dataframe for consistency

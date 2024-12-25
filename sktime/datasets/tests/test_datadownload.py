@@ -67,6 +67,23 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
+@pytest.mark.datadownload
+def test_load_forecastingdata_check_freq_for_hier_data():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, _ = load_forecastingdata(
+        name=file, return_type="pd_multiindex_hier"
+    )
+    assert loaded_datasets.index.levels[-1].freq == "YS-JAN"
+
+
+@pytest.mark.datadownload
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE)
+def test_load_forecastingdata_hier(name):
+    """Test loading downloaded dataset from forecasting.org."""
+    load_forecastingdata(name=name, return_type="pd_multiindex_hier")
+
+
 @pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
 @pytest.mark.datadownload
 @pytest.mark.parametrize("name", TSF_SUBSAMPLE)
