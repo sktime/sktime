@@ -108,6 +108,14 @@ class ThresholdDetector(BaseDetector):
         outside_thresh = above_thresh | below_thresh
 
         outside_tresh_ilocs = outside_thresh[outside_thresh].index.values
+
+        # deal with "no detections" case
+        if len(outside_tresh_ilocs) == 0:
+            if self.mode == "segments":
+                return self._empty_segments()
+            else:
+                return self._empty_sparse()
+
         segs = sparse_pts_to_seg(outside_tresh_ilocs)
 
         if self.mode == "points":
@@ -130,12 +138,23 @@ class ThresholdDetector(BaseDetector):
         params : dict or list of dict
         """
         params0 = {}
-        params1 = {"upper": 42}
+        params1 = {"upper": 10e6}
         params2 = {"upper": 42, "lower": -41}
         params3 = {"upper": 42, "lower": None}
         params4 = {"upper": None, "lower": -41}
         params5 = {"upper": None, "lower": None}
         params6 = {"mode": "points"}
         params7 = {"mode": "points", "lower": None, "upper": 42}
+        params8 = {"upper": 42}
 
-        return [params0, params1, params2, params3, params4, params5, params6, params7]
+        return [
+            params0,
+            params1,
+            params2,
+            params3,
+            params4,
+            params5,
+            params6,
+            params7,
+            params8,
+        ]
