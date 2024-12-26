@@ -180,94 +180,121 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
 
-    def _fit(self, y, fh, X=None):
-        """Fit forecaster to training data.
+def _fit(self, y, fh, X=None):
+    """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
+    private _fit containing the core logic, called from fit
 
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+    Writes to self:
+        Sets fitted model attributes ending in "_".
 
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+    Parameters
+    ----------
+    y : sktime time series object
+        guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+        Time series to which to fit the forecaster.
+        if self.get_tag("scitype:y")=="univariate":
+            guaranteed to have a single column/variable
+        if self.get_tag("scitype:y")=="multivariate":
+            guaranteed to have 2 or more columns
+        if self.get_tag("scitype:y")=="both": no restrictions apply
+    fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        The forecasting horizon with the steps ahead to to predict.
+        guaranteed to be passed in _predict
+    X :  sktime time series object, optional (default=None)
+        guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+        Exogeneous time series to fit to.
 
-        Returns
-        -------
-        self : reference to self
-        """
-        # Fit the rolling mean forecaster
-        rolling_mean = WindowSummarizer(
-            lag_feature={
-                self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
-            },
-            truncate="fill",
-        ).fit_transform(y)
+    Returns
+    -------
+    self : reference to self
 
+    # Ensure that window_size is smaller than the training data
+    forecaster = cINNForecaster(window_size=20)  # Example: window_size < len(y_train)
+    forecaster.fit(y_train)
+
+    Common Errors:
+    --------------
+    1. If `window_size` > len(y_train), an error will be raised.
+    2. If curve fitting fails, ensure your data and window_size are suitable.
+
+    """
+
+
+
+    # Fit the rolling mean forecaster
+    rolling_mean = WindowSummarizer(
+        lag_feature={
+            self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
+        },
+        truncate="fill",
+    ).fit_transform(y)
+
+    # Check if window_size is valid
+    if self.window_size > len(y):
+        raise ValueError(
+            f"Invalid window_size: {self.window_size}. It must be less than or equal to the size of the training data ({len(y)})."
+        )
+
+    # Curve fit with error handling
+    try:
         self.function = CurveFitForecaster(
             self._f_statistic,
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
         self.function.fit(rolling_mean.dropna())
-        self.fourier_features = FourierFeatures(
-            sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
+    except Exception as e:
+        raise RuntimeError(
+            f"Curve fitting failed. Ensure that the `window_size` and `training data` are suitable. "
+            f"Original error: {e}"
         )
-        self.fourier_features.fit(y)
 
-        split_index = int(len(y) * (1 - self.val_split))
+    self.fourier_features = FourierFeatures(
+        sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
+    )
+    self.fourier_features.fit(y)
 
-        dataset = self._prepare_data(
-            y[:split_index], X[:split_index] if X is not None else None
+    split_index = int(len(y) * (1 - self.val_split))
+
+    dataset = self._prepare_data(
+        y[:split_index], X[:split_index] if X is not None else None
+    )
+    data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+
+    val_data_loader_nll = None
+    if self.val_split > 0:
+        val_dataset_nll = self._prepare_data(
+            y[split_index:], X[split_index:] if X is not None else None
         )
-        data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        val_data_loader_nll = DataLoader(
+            val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
+        )
 
-        val_data_loader_nll = None
-        if self.val_split > 0:
-            val_dataset_nll = self._prepare_data(
-                y[split_index:], X[split_index:] if X is not None else None
-            )
-            val_data_loader_nll = DataLoader(
-                val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
-            )
+    self.network = self._build_network(None)
 
-        self.network = self._build_network(None)
+    self.optimizer = self._instantiate_optimizer()
+    early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
 
-        self.optimizer = self._instantiate_optimizer()
-        early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
+    # Fit the cINN
+    for epoch in range(self.num_epochs):
+        if not self._run_epoch(
+            epoch,
+            data_loader,
+            val_data_loader_nll,
+            early_stopper,
+        ):
+            break
+    if val_data_loader_nll is not None:
+        self.network = early_stopper._best_model
+    dataset = self._prepare_data(y, X if X is not None else None)
+    X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
-        # Fit the cINN
-        for epoch in range(self.num_epochs):
-            if not self._run_epoch(
-                epoch,
-                data_loader,
-                val_data_loader_nll,
-                early_stopper,
-            ):
-                break
-        if val_data_loader_nll is not None:
-            self.network = early_stopper._best_model
-        dataset = self._prepare_data(y, X if X is not None else None)
-        X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
-
-        res = self.network(y, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
-        self.z_ = res[0].detach().numpy()
-        self.z_mean_ = self.z_.mean(axis=0)
-        self.z_std_ = self.z_.std()
-
+    res = self.network(y, c=X.reshape((-1, self.sample_dim * self.n_cond_features)))
+    self.z_ = res[0].detach().numpy()
+    self.z_mean_ = self.z_.mean(axis=0)
+    self.z_std_ = self.z_.std()
+    
     def _build_network(self, fh):
         return CINNNetwork(
             horizon=self.sample_dim,
