@@ -30,60 +30,67 @@ def temporal_train_test_split(
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
     anchor: str = "start",
 ) -> SPLIT_TYPE:
-    """Split time series data containers into a single train/test split.
+    """Create a single temporal train-test split from time series data.
 
-    Creates a single train/test split of endogenous time series ``y``,
-    an optionally exogeneous time series ``X``.
+    The function splits time series data into one training and one test set.
 
-    Splits time series ``y`` into a single temporally ordered train and test split.
-    The split is based on ``test_size`` and ``train_size`` parameters,
-    which can signify fractions of total number of indices,
-    or an absolute number of integers to cut.
+    For a time series with time points (t₁, t₂, ..., tₙ), the function creates:
+    1. A training set containing indices in [t₁, t_k)
+    2. A test set containing indices in [t_k, tₙ)
 
-    If the data contains multiple time series (Panel or Hierarchical),
-    fractions and train-test sets will be computed per individual time series.
+    where t_k is determined by either:
+    * train_size/test_size parameters
+    * forecasting horizon fh
+    * anchor position ("start" or "end")
 
-    If ``X`` is provided, will also produce a single train/test split of ``X``,
-    at the same ``loc`` indices as ``y``. If non-``pandas`` based containers are used,
-    will use ``iloc`` index instead.
+    The split can be created in two ways:
+
+    1. Using train_size/test_size:
+       - If anchor="start": training set starts at t₁, test set follows
+       - If anchor="end": test set ends at tₙ, training set precedes
+       - Any remaining indices are excluded from both sets
+
+    2. Using forecasting horizon fh:
+       - For relative horizons: test set contains the last indices that match fh
+       - For absolute horizons: test set contains indices at fh's absolute positions
+
+    If data contains multiple series (Panel/Hierarchical), splits are computed 
+    per individual time series.
 
     Parameters
     ----------
     y : time series in sktime compatible data container format
-        endogenous time series
-    X : time series in sktime compatible data container format, optional, default=None
-        exogenous time series
+        Endogenous time series to split
+    X : time series in sktime compatible data container format, optional (default=None)
+        Optional exogenous time series to split at same indices as y
     test_size : float, int or None, optional (default=None)
-        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
-        of the dataset to include in the test split. Proportions are rounded to the
-        next higher integer count of samples (ceil).
-        If int, is interpreted as total number of test samples.
-        If None, the value is set to the complement of the train size.
-        If ``train_size`` is also None, it will be set to 0.25.
-    train_size : float, int, or None, (default=None)
-        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
-        of the dataset to include in the train split. Proportions are rounded to the
-        next lower integer count of samples (floor).
-        If int, is interpreted as total number of train samples.
-        If None, the value is set to the complement of the test size.
-    fh : ForecastingHorizon
-        A forecast horizon to use for splitting, alternative specification for test set.
-        If given, ``test_size`` and ``train_size`` cannot also be specified and must
-        be None. If ``fh`` is passed, the test set will be:
-        if ``fh.is_relative``: the last possible indices to match ``fh`` within ``y``
-        if ``not fh.is_relative``: the indices at the absolute index of ``fh``
-    anchor : str, "start" (default) or "end"
-        determines behaviour if train and test sizes do not sum up to all data
-        used only if ``fh=None`` and both ``test_size`` and ``train_size`` are not None
-        if "start", cuts train and test set from start of available series
-        if "end", cuts train and test set from end of available series
+        Size of the test set
+        - float: proportion of total samples (0.0 to 1.0), rounded up
+        - int: absolute number of test samples
+        - None: computed as complement of train_size
+                If train_size also None, defaults to 0.25
+    train_size : float, int, or None, optional (default=None)
+        Size of the training set
+        - float: proportion of total samples (0.0 to 1.0), rounded down
+        - int: absolute number of training samples  
+        - None: computed as complement of test_size
+    fh : ForecastingHorizon, optional (default=None)
+        Alternative way to specify test set using forecast horizon
+        - Cannot be combined with test_size or train_size
+        - Relative fh: test set contains last possible matching indices
+        - Absolute fh: test set contains indices at fh positions
+    anchor : str, {"start", "end"}, optional (default="start")
+        When train/test sizes don't use all data:
+        - "start": cut from beginning of series
+        - "end": cut from end of series
+        Only used if fh=None and both sizes specified
 
     Returns
     -------
     splitting : tuple, length = 2 * len(arrays)
-        Tuple containing train-test split of ``y``, and ``X`` if given.
-        if ``X is None``, returns ``(y_train, y_test)``.
-        Else, returns ``(y_train, y_test, X_train, X_test)``.
+        Train-test splits:
+        - Without X: (y_train, y_test)
+        - With X: (y_train, y_test, X_train, X_test)
 
     References
     ----------
@@ -149,33 +156,36 @@ def temporal_train_test_split(
 class TemporalTrainTestSplitter(BaseSplitter):
     r"""Temporal train-test splitter, based on sample sizes of train or test set.
 
-    Cuts test and train sets from the start or end of available data,
-    based on ``test_size`` and ``train_size`` parameters,
-    which can signify fractions of total number of indices,
-    or an absolute number of integers to cut.
+    Creates a single train-test split by partitioning time series data into
+    training and test sets based on sample size parameters.
 
-    If the data contains multiple time series (Panel or Hierarchical),
-    fractions and train-test sets will be computed per individual time series.
+    For a time series with time points (t₁, t₂, ..., tₙ), creates:
+    1. A training set with indices [t_start, t_start + train_size)
+    2. A test set with indices [t_test, t_test + test_size)
+
+    where t_start and t_test depend on the anchor parameter:
+    - If anchor="start": t_start = t₁, t_test = t₁ + train_size
+    - If anchor="end": t_test = tₙ - test_size, t_start = t_test - train_size
+
+    For panel/hierarchical data, split is computed per individual time series.
 
     Parameters
     ----------
     test_size : float, int or None, optional (default=None)
-        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
-        of the dataset to include in the test split. Proportions are rounded to the
-        next higher integer count of samples (ceil).
-        If int, is interpreted as total number of test samples.
-        If None, the value is set to the complement of the train size.
-        If ``train_size`` is also None, it will be set to 0.25.
-    train_size : float, int, or None, (default=None)
-        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
-        of the dataset to include in the train split. Proportions are rounded to the
-        next lower integer count of samples (floor).
-        If int, is interpreted as total number of train samples.
-        If None, the value is set to the complement of the test size.
-    anchor : str, "start" (default) or "end"
-        determines behaviour if train and test sizes do not sum up to all data
-        if "start", cuts train and test set from start of available series
-        if "end", cuts train and test set from end of available series
+        Size of the test set
+        - float: proportion of total samples (0.0 to 1.0), rounded up
+        - int: absolute number of test samples
+        - None: computed as complement of train_size
+                If train_size also None, defaults to 0.25
+    train_size : float, int, or None, optional (default=None)
+        Size of the training set
+        - float: proportion of total samples (0.0 to 1.0), rounded down 
+        - int: absolute number of training samples
+        - None: computed as complement of test_size
+    anchor : str, {"start", "end"}, optional (default="start")
+        Determines how to position train/test windows:
+        - "start": cut from beginning of series 
+        - "end": cut from end of series
 
     Examples
     --------
