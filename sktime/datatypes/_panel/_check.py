@@ -1302,24 +1302,13 @@ class PanelGluontsList(ScitypePanel):
 
         metadata = dict()
 
-        if not isinstance(obj, list):
-            msg = f"{var_name} must be a list, found {type(obj)}"
-            return _ret(False, msg, None, return_metadata)
-
-        # Check for 'dictionary' type and 'target' key
-        if not isinstance(obj[0], dict) or "target" not in obj[0]:
-            msg = (
-                f"{var_name} must be list of dict with 'target' key, got {type(obj[0])}"
-            )
-            return _ret(False, msg, None, return_metadata)
-
         if (
-            not isinstance(obj[0]["target"], (pd.DataFrame, pd.Series))
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"""Each 'target' must be a Pandas DataFrame or Series with more than
-                    one entry, found {type(obj[0]['target'])}
-                    """
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
