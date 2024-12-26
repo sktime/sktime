@@ -620,7 +620,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
-            distributor=self.distributor
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -740,6 +740,5 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
             "distributor": MapDistributor(),
-
         }
         return [params, params2, params3]
