@@ -8,8 +8,6 @@ def make_attention_lstm():
     """Return AttentionLSTM class used by the LSTM-FCN Network."""
     from tensorflow.keras import activations, constraints, initializers, regularizers
     from tensorflow.keras import backend as K
-
-    # from keras.legacy import interfaces
     from tensorflow.keras.layers import RNN, InputSpec, Layer
 
     def _time_distributed_dense(
@@ -168,7 +166,6 @@ def make_attention_lstm():
             kernel_regularizer=None,
             recurrent_regularizer=None,
             bias_regularizer=None,
-            activity_regularizer=None,
             attention_regularizer=None,
             kernel_constraint=None,
             recurrent_constraint=None,
@@ -197,7 +194,6 @@ def make_attention_lstm():
             self.kernel_regularizer = regularizers.get(kernel_regularizer)
             self.recurrent_regularizer = regularizers.get(recurrent_regularizer)
             self.bias_regularizer = regularizers.get(bias_regularizer)
-            self.activity_regularizer = regularizers.get(activity_regularizer)
             self.attention_regularizer = regularizers.get(attention_regularizer)
 
             self.kernel_constraint = constraints.get(kernel_constraint)
@@ -615,7 +611,6 @@ def make_attention_lstm():
             kernel_regularizer=None,
             recurrent_regularizer=None,
             bias_regularizer=None,
-            activity_regularizer=None,
             attention_regularizer=None,
             kernel_constraint=None,
             recurrent_constraint=None,
@@ -670,7 +665,6 @@ def make_attention_lstm():
                 kernel_regularizer=kernel_regularizer,
                 recurrent_regularizer=recurrent_regularizer,
                 bias_regularizer=bias_regularizer,
-                activity_regularizer=activity_regularizer,
                 attention_regularizer=attention_regularizer,
                 kernel_constraint=kernel_constraint,
                 recurrent_constraint=recurrent_constraint,
@@ -771,11 +765,6 @@ def make_attention_lstm():
             return self.cell.bias_regularizer
 
         @property
-        def activity_regularizer(self):
-            """Return property activity_regularizer."""
-            return self.cell.activity_regularizer
-
-        @property
         def attention_regularizer(self):
             """Return property attention_regularizer."""
             return self.cell.attention_regularizer
@@ -841,9 +830,6 @@ def make_attention_lstm():
                     self.recurrent_regularizer
                 ),
                 "bias_regularizer": regularizers.serialize(self.bias_regularizer),
-                "activity_regularizer": regularizers.serialize(
-                    self.activity_regularizer
-                ),
                 "attention_regularizer": regularizers.serialize(
                     self.attention_regularizer
                 ),
