@@ -391,6 +391,10 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         profiling package for more information).
     profiling_filename : basestring, default=None
         Where to save the profiling results.
+    distributor : distributor class, default=None
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
     test_for_binary_target_binary_feature : str or None, default=None
         Which test to be used for binary target, binary feature (currently unused).
     test_for_binary_target_real_feature : str or None, default=None
@@ -413,10 +417,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Defaults to ``'auto'``, meaning the intended task is inferred from ``y``.
         If ``y`` has a boolean, integer or object dtype, the task is assumed to be
         classification, else regression.
-    distributor : distributor class, default=None
-        Advanced parameter: class to use as a distributor.
-        See the tsfresh package utilities/distribution.py for more information.
-        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -475,6 +475,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         profiling=None,
         profiling_filename=None,
         profiling_sorting=None,
+        distributor=None,
         test_for_binary_target_binary_feature=None,
         test_for_binary_target_real_feature=None,
         test_for_real_target_binary_feature=None,
@@ -482,7 +483,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         fdr_level=None,
         hypotheses_independent=None,
         ml_task="auto",
-        distributor=None,
     ):
         super().__init__(
             default_fc_parameters=default_fc_parameters,
