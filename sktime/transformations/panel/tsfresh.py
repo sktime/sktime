@@ -6,6 +6,7 @@ __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import check_n_jobs
 
 
@@ -193,10 +194,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -391,11 +391,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         profiling package for more information).
     profiling_filename : basestring, default=None
         Where to save the profiling results.
-    distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
     test_for_binary_target_binary_feature : str or None, default=None
         Which test to be used for binary target, binary feature (currently unused).
     test_for_binary_target_real_feature : str or None, default=None
@@ -418,6 +413,10 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Defaults to ``'auto'``, meaning the intended task is inferred from ``y``.
         If ``y`` has a boolean, integer or object dtype, the task is assumed to be
         classification, else regression.
+    distributor : distributor class, default=None
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -476,7 +475,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         profiling=None,
         profiling_filename=None,
         profiling_sorting=None,
-        distributor=None,
         test_for_binary_target_binary_feature=None,
         test_for_binary_target_real_feature=None,
         test_for_real_target_binary_feature=None,
@@ -484,6 +482,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         fdr_level=None,
         hypotheses_independent=None,
         ml_task="auto",
+        distributor=None,
     ):
         super().__init__(
             default_fc_parameters=default_fc_parameters,
@@ -722,8 +721,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from tsfresh.utilities.distribution import MapDistributor
-
         params = {
             "default_fc_parameters": "efficient",
             "disable_progressbar": True,
@@ -735,10 +732,17 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
         }
-        params3 = {
-            "default_fc_parameters": "minimal",
-            "disable_progressbar": True,
-            "show_warnings": False,
-            "distributor": MapDistributor(),
-        }
-        return [params, params2, params3]
+        params = [params, params2]
+
+        if _check_soft_dependencies("tsfresh"):
+            from tsfresh.utilities.distribution import MapDistributor
+
+            params3 = {
+                "default_fc_parameters": "minimal",
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "distributor": MapDistributor(),
+            }
+            params.append(params3)
+
+        return params
