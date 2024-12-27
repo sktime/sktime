@@ -395,8 +395,10 @@ class BaggingForecaster(BaseForecaster):
         """
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.bootsstrap import BootstrapTransformer
-        from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+        from sktime.transformations.bootstrap import (
+            BootstrapTransformer,
+            MovingBlockBootstrapTransformer,
+        )
         from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
