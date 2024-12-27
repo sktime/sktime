@@ -134,6 +134,27 @@ FEATURE_NAMES = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was p
 
 
 def _verify_features(features, catch24: bool):
+    """
+    Verify and validate the requested feature indices for catch22 or catch24 features.
+
+    Parameters
+    ----------
+    features : str, int, list, or tuple
+        The features to verify. Options include:
+        - `"all"`: Select all features.
+        - A string: The name of a single feature (either full or short name).
+        - An integer: The index of a single feature (0-based).
+        - A list or tuple: A collection of feature names or indices (mixed types also).
+
+    catch24 : bool
+        If `True`, uses the catch24 feature set (24 features). If `False`, uses the
+        catch22 feature set (22 features).
+
+    Returns
+    -------
+    f_idx : list of int
+        A list of validated feature indices corresponding to the requested features.
+    """
     feature_names = ALL_FEATURE_NAMES if catch24 else CATCH22_FEATURE_NAMES
     short_feature_names = (
         ALL_SHORT_FEATURE_NAMES if catch24 else CATCH22_SHORT_FEATURE_NAMES
@@ -346,6 +367,25 @@ class Catch22(BaseTransformer):
     def _transform_single_feature(
         self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
     ):
+        """
+        Transform a single feature  into a Catch22 or Catch24 feature.
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            The input time series data.
+
+        feature : int or str
+            The feature to compute.
+
+        case_id : str, optional, default="deprecated"
+            Deprecated argument, maintained for compatibility.
+
+        Returns
+        -------
+        np.ndarray: A 1D NumPy array of shape `(n_instances,)` containing the
+        transformed feature values for each instance in the input data.
+        """
         if case_id != "deprecated":
             warn(
                 "In Catch22._transform_single_feature, the argument "
