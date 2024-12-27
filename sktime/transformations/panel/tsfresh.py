@@ -734,7 +734,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         }
         params = [params, params2]
 
-        if _check_soft_dependencies("tsfresh"):
+        if _check_soft_dependencies("tsfresh", severity="none"):
             from tsfresh.utilities.distribution import MapDistributor
 
             params3 = {
