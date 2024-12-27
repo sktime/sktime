@@ -1,15 +1,13 @@
+"""Object-Specific Convolutional Neural Network (OS-CNN) for classification"""
+
+__author__= ["Abhishek Tiwari","SABARNO-PRAMANICK"]
+__all__= ["OSCNNClassifier"]
+
 from sklearn.metrics import accuracy_score
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torch.utils.data import TensorDataset
 
 from sktime.networks._oscnn import OSCNNNetwork
-from sktime.classification._classifier import BaseDeepClassifier
-
+from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
 
 def get_Prime_number_in_a_range(start, end):
     Prime_list = []
@@ -52,6 +50,9 @@ def generate_layer_parameter_list(start,end,paramenter_number_of_layer_list, in_
     return layer_parameter_list
 
 def eval_model(model, dataloader):
+    import torch
+    from sklearn.metrics import accuracy_score
+
     predict_list = np.array([])
     label_list = np.array([])
     for sample in dataloader:
@@ -69,7 +70,7 @@ def eval_condition(iepoch,print_result_every_x_epoch):
     else:
         return False
 
-class OSCNNClassifier(BaseDeepClassifier, OSCNNNetwork):
+class OSCNNClassifier(BaseDeepClassifierPytorch, OSCNNNetwork):
 
     def __init__(self, 
                  model_name="oscnn",
@@ -98,9 +99,12 @@ class OSCNNClassifier(BaseDeepClassifier, OSCNNNetwork):
 
 
     def fit(self, X_train, y_train, X_val, y_val):
+        import torch
+        from torch.utils.data import DataLoader,TensorDataset
+        import torch.nn as nn
+        import torch.optim as optim
 
         print('code is running on ',self.device)
-
 
         # covert numpy to pytorch tensor and put into gpu
         X_train = torch.from_numpy(X_train)
@@ -108,12 +112,10 @@ class OSCNNClassifier(BaseDeepClassifier, OSCNNNetwork):
         X_train = X_train.to(self.device)
         y_train = torch.from_numpy(y_train).to(self.device)
 
-
         X_test = torch.from_numpy(X_val)
         X_test.requires_grad = False
         X_test = X_test.to(self.device)
         y_test = torch.from_numpy(y_val).to(self.device)
-
 
         # add channel dimension to time series data
         if len(X_train.shape) == 2:
@@ -129,7 +131,6 @@ class OSCNNClassifier(BaseDeepClassifier, OSCNNNetwork):
                                                              receptive_field_shape,
                                                              self.paramenter_number_of_layer_list,
                                                              in_channel = int(X_train.shape[1]))
-
 
         torch_OS_CNN = OSCNNNetwork(layer_parameter_list, n_class.item(), False).to(self.device)
 
@@ -178,6 +179,8 @@ class OSCNNClassifier(BaseDeepClassifier, OSCNNNetwork):
 
 
     def predict(self, X_test):
+        import torch
+        from torch.utils.data import DataLoader,TensorDataset
 
         X_test = torch.from_numpy(X_test)
         X_test.requires_grad = False
