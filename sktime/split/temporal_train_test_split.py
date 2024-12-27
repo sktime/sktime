@@ -34,11 +34,11 @@ def temporal_train_test_split(
 
     The function splits time series data into one training and one test set.
 
-    For a time series with time points (t₁, t₂, ..., tₙ), the function creates:
-    1. A training set containing indices in [t₁, t_k)
-    2. A test set containing indices in [t_k, tₙ)
+    For a time series with time points [t1, t2, ..., tn], the function creates:
+    1. A training set containing indices [t1, tk]
+    2. A test set containing indices [tk+1, tm]
 
-    where t_k is determined by either:
+    where tk is determined by either:
     * train_size/test_size parameters
     * forecasting horizon fh
     * anchor position ("start" or "end")
@@ -46,39 +46,71 @@ def temporal_train_test_split(
     The split can be created in two ways:
 
     1. Using train_size/test_size:
-       - If anchor="start": training set starts at t₁, test set follows
-       - If anchor="end": test set ends at tₙ, training set precedes
+       - If exactly one of train_size or test_size is specified, the other is
+         computed as the complement
+       - If both are specified, they must sum to less than or equal to the series length
+       - If anchor="start": training set starts at t1, test set follows
+         immediately after
+       - If anchor="end": test set ends at tn, training set immediately precedes
        - Any remaining indices are excluded from both sets
 
-    2. Using forecasting horizon fh:
-       - For relative horizons: test set contains the last indices that match fh
-       - For absolute horizons: test set contains indices at fh's absolute positions
+       Example:
+       >>> y = pd.Series(range(10))
+       >>> # Using only test_size
+       >>> y_train, y_test = temporal_train_test_split(y, test_size=3)
+       >>> # Using both train_size and test_size
+       >>> y_train, y_test = temporal_train_test_split(y, train_size=5, test_size=3)
 
-    If data contains multiple series (Panel/Hierarchical), splits are computed 
-    per individual time series.
+    2. Using forecasting horizon fh:
+       - Only positive relative horizons are supported for forecasting
+       - For relative horizons: test set contains the last possible indices that
+         match the horizon values
+       - For absolute horizons: test set contains the indices at specified positions
+
+       Example:
+       >>> from sktime.forecasting.base import ForecastingHorizon
+       >>> # Relative horizon - next 3 steps
+       >>> fh = ForecastingHorizon([1, 2, 3])
+       >>> y_train, y_test = temporal_train_test_split(y, fh=fh)
+       >>> # Absolute horizon - specific timestamps
+       >>> import pandas as pd
+       >>> y = pd.Series(range(10), index=pd.date_range('2020-01-01', periods=10))
+       >>> fh = ForecastingHorizon(
+       ...     pd.date_range('2020-01-08', periods=3),
+       ...     is_relative=False
+       ... )
+       >>> y_train, y_test = temporal_train_test_split(y, fh=fh)
+
+    For panel or hierarchical data, splits are computed on individual time series
+    when using train_size/test_size. When using fh, behavior depends on the specific
+    structure of the data and the forecasting horizon specification.
 
     Parameters
     ----------
     y : time series in sktime compatible data container format
         Endogenous time series to split
     X : time series in sktime compatible data container format, optional (default=None)
-        Optional exogenous time series to split at same indices as y
+        Optional exogenous time series to split at same indices as y.
+        If provided, will be split at the same indices as y.
+        For non-pandas containers, iloc indices will be used instead of loc.
     test_size : float, int or None, optional (default=None)
         Size of the test set
-        - float: proportion of total samples (0.0 to 1.0), rounded up
+        - float: proportion of total samples (0.0 < x < 1.0), rounded up
+          Values of 0.0 or 1.0 will raise ValueError
         - int: absolute number of test samples
         - None: computed as complement of train_size
                 If train_size also None, defaults to 0.25
     train_size : float, int, or None, optional (default=None)
         Size of the training set
-        - float: proportion of total samples (0.0 to 1.0), rounded down
-        - int: absolute number of training samples  
+        - float: proportion of total samples (0.0 < x < 1.0), rounded down
+          Values of 0.0 or 1.0 will raise ValueError
+        - int: absolute number of training samples
         - None: computed as complement of test_size
     fh : ForecastingHorizon, optional (default=None)
         Alternative way to specify test set using forecast horizon
         - Cannot be combined with test_size or train_size
-        - Relative fh: test set contains last possible matching indices
-        - Absolute fh: test set contains indices at fh positions
+        - Only positive values supported for relative horizons
+        - For absolute horizons, values must exist in the index
     anchor : str, {"start", "end"}, optional (default="start")
         When train/test sizes don't use all data:
         - "start": cut from beginning of series
@@ -91,6 +123,13 @@ def temporal_train_test_split(
         Train-test splits:
         - Without X: (y_train, y_test)
         - With X: (y_train, y_test, X_train, X_test)
+
+    Raises
+    ------
+    ValueError
+        If test_size or train_size is 0.0 or 1.0
+        If both fh and test_size/train_size are specified
+        If neither fh nor test_size/train_size is specified
 
     References
     ----------
@@ -159,13 +198,13 @@ class TemporalTrainTestSplitter(BaseSplitter):
     Creates a single train-test split by partitioning time series data into
     training and test sets based on sample size parameters.
 
-    For a time series with time points (t₁, t₂, ..., tₙ), creates:
-    1. A training set with indices [t_start, t_start + train_size)
-    2. A test set with indices [t_test, t_test + test_size)
+    For a time series with time points [t1, t2, ..., tn], creates:
+    1. A training set with indices [t_start, t_start + train_size]
+    2. A test set with indices [t_test, t_test + test_size]
 
     where t_start and t_test depend on the anchor parameter:
-    - If anchor="start": t_start = t₁, t_test = t₁ + train_size
-    - If anchor="end": t_test = tₙ - test_size, t_start = t_test - train_size
+    - If anchor="start": t_start = t1, t_test = t_start + train_size + 1
+    - If anchor="end": t_test = tn - test_size + 1, t_start = t_test - train_size - 1
 
     For panel/hierarchical data, split is computed per individual time series.
 
@@ -173,18 +212,20 @@ class TemporalTrainTestSplitter(BaseSplitter):
     ----------
     test_size : float, int or None, optional (default=None)
         Size of the test set
-        - float: proportion of total samples (0.0 to 1.0), rounded up
+        - float: proportion of total samples (0.0 < x < 1.0), rounded up
+          Values of 0.0 or 1.0 will raise ValueError
         - int: absolute number of test samples
         - None: computed as complement of train_size
                 If train_size also None, defaults to 0.25
     train_size : float, int, or None, optional (default=None)
         Size of the training set
-        - float: proportion of total samples (0.0 to 1.0), rounded down 
+        - float: proportion of total samples (0.0 < x < 1.0), rounded down
+          Values of 0.0 or 1.0 will raise ValueError
         - int: absolute number of training samples
         - None: computed as complement of test_size
     anchor : str, {"start", "end"}, optional (default="start")
         Determines how to position train/test windows:
-        - "start": cut from beginning of series 
+        - "start": cut from beginning of series
         - "end": cut from end of series
 
     Examples
