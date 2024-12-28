@@ -99,11 +99,38 @@ def run(
 
             model = model_spec.make()
             results, elapsed_secs = _run_validation_model(validation, model, run_params)
+            if artefacts_store_dir is not None:
+                results.store_artefacts(
+                    os.path.join(artefacts_store_dir, "y_pred"),
+                )
+
             results = _add_meta_data_to_results(
-                results, elapsed_secs, validation_spec, model_spec
+                results.results, elapsed_secs, validation_spec, model_spec
             )
             results_list.append(results)
+            write_results(results_path, results_df, results_list)
 
+    results_df = write_results(results_path, results_df, results_list)
+    return results_df
+
+
+def write_results(results_path, results_df, results_list):
+    """
+    Write all results to the results path as a csv.
+
+    To get all results, the existing results (results_df) are extended with the
+    new results (results_list). The results are sorted by validation_id and model_id
+    and written to the results_path.
+
+    Parameters
+    ----------
+    results_path: str
+        The path to write the results to.
+    results_df: pd.DataFrame
+        The dataframe of the existing results.
+    results_list: list of dict
+        The list of results that should be added to the results_df.
+    """
     additional_results_df = pd.DataFrame.from_records(results_list)
     results_df = pd.concat([results_df, additional_results_df], ignore_index=True)
     results_df = results_df.drop_duplicates(

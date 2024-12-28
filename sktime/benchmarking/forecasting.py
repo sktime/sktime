@@ -1,6 +1,7 @@
 """Benchmarking for forecasting estimators."""
 
 import functools
+import os
 from collections.abc import Callable
 from typing import Optional, Union
 
@@ -9,6 +10,43 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
+
+
+class HDDResults:
+    def __init__(self) -> None:
+        self.results = {}
+        self.y_pred = {}
+        self.y_test = {}
+
+    def store_artefacts(self, artefacts_store_dir):
+        self.store_data(
+            os.path.join(artefacts_store_dir, "y_pred"),
+            self.y_pred,
+        )
+        self.store_data(
+            os.path.join(artefacts_store_dir, "y_test"),
+            self.y_test,
+        )
+
+    def add_result(self, results, y_pred, y_test, key):
+        results[f"{key}_test"] = results
+        y_pred[key] = y_pred
+        y_test[key] = y_test
+
+    def store_data(artefact_store_dir, data):
+        """
+        Store a dict of dataframes to a directory.
+
+        Parameters
+        ----------
+        artefact_store_dir: str
+            The directory to store the dataframes in.
+        data: dict
+            A dictionary of dataframes to store.
+        """
+        os.makedirs(artefact_store_dir, exist_ok=True)
+        for name, df in data.items():
+            df.to_csv(os.path.join(artefact_store_dir, name + ".csv"))
 
 
 def forecasting_validation(
@@ -71,7 +109,7 @@ def forecasting_validation(
     Dictionary of benchmark results for that forecaster
     """
     y = dataset_loader()
-    results = {}
+    results = HDDResults()
     if isinstance(y, tuple):
         y, X = y
         scores_df = evaluate(
@@ -82,6 +120,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            return_data=True,
         )
     else:
         scores_df = evaluate(
@@ -91,12 +130,18 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            return_data=True,
         )
 
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
-            results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
+            results.add_result(
+                row[f"test_{scorer_name}"],
+                row["y_pred"],
+                row["y_test"],
+                f"{scorer_name}_fold_{ix}",
+            )
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
         results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
     return results
