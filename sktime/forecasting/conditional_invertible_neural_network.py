@@ -247,11 +247,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             self.function.fit(rolling_mean.dropna())
         except Exception as e:
             raise RuntimeError(
-                "Curve fitting failed. Ensure that the `window_size` and `training data` are suitable. "
-                "Please check the parameters and try again. "
+                "Curve fitting error Please check the parameters and try again. "
                 f"Original error: {e}"
-    )
-
+            )
 
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
