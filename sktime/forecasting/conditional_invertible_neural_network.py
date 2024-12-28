@@ -214,12 +214,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         2. If curve fitting fails, ensure your data and window_size are suitable.
 
         """
-        # Ensure that window_size is smaller than the training data
-        forecaster = CINNForecaster(
-            window_size=20
-        )  # Example: window_size < len(y_train)
-
-        forecaster.fit(y)
+        if self.window_size > len(y):
+            raise ValueError(
+                f"Invalid window_size: {self.window_size}. "
+                f"It must be less than or equal to the size of the training data "
+                f"({len(y)})."
+            )
 
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
@@ -228,14 +228,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             },
             truncate="fill",
         ).fit_transform(y)
-
-        # Check if window_size is valid
-        if self.window_size > len(y):
-            raise ValueError(
-                f"Invalid window_size: {self.window_size}. "
-                f"It must be less than or equal to the size of the training data "
-                f"({len(y)})."
-            )
 
         # Curve fit with error handling
         try:
