@@ -208,19 +208,18 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         Returns
         -------
         self : reference to self
-
-        # Ensure that window_size is smaller than the training data
-        forecaster = cINNForecaster(window_size=20)  # Example: window_size < len(y_train)
-        forecaster.fit(y_train)
-
         Common Errors:
         --------------
         1. If `window_size` > len(y_train), an error will be raised.
         2. If curve fitting fails, ensure your data and window_size are suitable.
 
         """
+        # Ensure that window_size is smaller than the training data
+        forecaster = CINNForecaster(
+            window_size=20
+        )  # Example: window_size < len(y_train)
 
-
+        forecaster.fit(y)
 
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
@@ -233,8 +232,10 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         # Check if window_size is valid
         if self.window_size > len(y):
             raise ValueError(
-                f"Invalid window_size: {self.window_size}. It must be less than or equal to the size of the training data ({len(y)})."
+                f"Invalid window_size: {self.window_size}. "
+                f"It must be less than or equal to the size of the training data ({len(y)})."
             )
+
 
         # Curve fit with error handling
         try:
@@ -246,7 +247,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             self.function.fit(rolling_mean.dropna())
         except Exception as e:
             raise RuntimeError(
-                f"Curve fitting failed. Ensure that the `window_size` and `training data` are suitable. "
+               "Curve fitting failed. Ensure that the `window_size` and `training data` are suitable."
                 f"Original error: {e}"
             )
 
@@ -294,7 +295,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.z_ = res[0].detach().numpy()
         self.z_mean_ = self.z_.mean(axis=0)
         self.z_std_ = self.z_.std()
-    
+
     def _build_network(self, fh):
         return CINNNetwork(
             horizon=self.sample_dim,
