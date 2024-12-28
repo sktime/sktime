@@ -2298,6 +2298,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    imputation_forecaster : BaseForecaster, optional (default=None)
+    Forecaster to be used for imputing missing values. If None, a default
+    imputation method (e.g., forward fill) will be used.    
     """
 
     _tags = {
@@ -2314,12 +2317,17 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window_length=10,
         impute_method="bfill",
         pooling="local",
+        base_forecaster=None,
+        imputation_forecaster=None
     ):
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+        self.base_forecaster=base_forecaster
+        self.imputation_forecaster=imputation_forecaster
+
         super().__init__()
 
         warn(
@@ -2368,6 +2376,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
+
+        if y.isnull().any():
+            if self.imputation_forecaster is not None:
+                self.imputation_forecaster.fit(y.dropna())
+                y=y.fillna(self.imputation_forecaster.predict(fh=len(y)))
+            else:
+                y=y.fillna(method='ffill')
+        self.base_forecaster.fit(y,X=X,fh=fh)
+        return self            
 
         impute_method = self.impute_method
 
