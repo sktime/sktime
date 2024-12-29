@@ -440,7 +440,7 @@ class transformer_pairwise(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "transformer-pairwise",
         "short_descr": "pairwise transformer for tabular data, distance or kernel",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
     }
 
     @classmethod
@@ -464,7 +464,7 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "transformer-pairwise-panel",
         "short_descr": "pairwise transformer for panel data, distance or kernel",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
     }
 
     @classmethod
@@ -498,6 +498,11 @@ class distribution(_BaseScitypeOfObject):
         return BaseDistribution
 
 
+# ----------------------------------
+# utility functions for base classes
+# ----------------------------------
+
+
 @lru_cache
 def _get_base_classes(mixin=False):
     """Get all object scitype classes in this module.
@@ -520,6 +525,82 @@ def _get_base_classes(mixin=False):
     clss = [cl for cl in clss if cl.get_class_tags().get("mixin", False) == mixin]
     clss = tuple(clss)
     return clss
+
+
+def _construct_child_tree(mode="class"):
+    """Construct inheritance tree for all scitypes.
+
+    Parameters
+    ----------
+    mode: str, optional (default="class")
+        mode of inheritance tree, either "class" or "str"
+
+        * "class" - return dict of classes
+        * "str" - return dict of strings
+
+    Returns
+    -------
+    dict: keys = classes/strings, value = tuple of child classes/strings
+        dict of child classes or scitype strings, according to parent_scitype tag
+    """
+    return _construct_child_tree_cached(mode=mode).copy()
+
+
+@lru_cache
+def _construct_child_tree_cached(mode="class"):
+    """Construct inheritance tree for all scitypes, cached version."""
+    clss = _get_base_classes()
+
+    def _entry_for(cl):
+        if mode == "class":
+            return cl
+        elif mode == "str":
+            return cl.get_class_tags()["scitype_name"]
+
+    child_tree = {_entry_for(cl): [] for cl in clss}
+    for cl in clss:
+        parent_scitype = cl.get_class_tags()["parent_scitype"]
+        if parent_scitype is not None:
+            if parent_scitype not in child_tree:
+                child_tree[parent_scitype] = []
+            child_tree[parent_scitype].append(_entry_for(cl))
+
+    return child_tree
+
+
+def _get_all_descendants(scitype):
+    """Get all descendants of a given scitype.
+
+    Parameters
+    ----------
+    scitype : str or class
+        scitype shorthand or base class
+
+    Returns
+    -------
+    descendants : list of str or class, same as scitype
+        list of scitype shorthands of all descendants
+    """
+    return _get_all_descendants_cached(scitype).copy()
+
+
+@lru_cache
+def _get_all_descendants_cached(scitype):
+    """Get all descendants of a given scitype, cached version."""
+    if isinstance(scitype, str):
+        mode = "str"
+    else:
+        mode = "class"
+
+    child_tree = _construct_child_tree(mode=mode)
+    children = child_tree[scitype]
+    if len(children) == 0:
+        return [scitype]
+
+    descendants = [x for child in children for x in _get_all_descendants(child)]
+    descendants += [scitype]
+    descendants = sorted(descendants)
+    return descendants.copy()
 
 
 @lru_cache
@@ -716,7 +797,7 @@ class transformer_series_to_primitives(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "series-to-primitives-trafo",
         "short_descr": "time series to primitives transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -733,7 +814,7 @@ class transformer_series_to_series(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "series-to-series-trafo",
         "short_descr": "time series to time series transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -750,7 +831,7 @@ class transformer_panel_to_tabular(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "panel-to-tabular-trafo",
         "short_descr": "panel to tabular transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
@@ -767,7 +848,7 @@ class transformer_panel_to_panel(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "panel-to-panel-trafo",
         "short_descr": "panel to panel transformer",
-        "parent_scitype": "transformer",
+        "parent_scitype": "estimator",
         "mixin": True,
     }
 
