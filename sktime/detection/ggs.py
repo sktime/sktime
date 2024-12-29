@@ -377,6 +377,15 @@ class GreedyGaussianSegmentation(BaseDetector):
     a heuristic that allows finding approximate solutions in linear time with
     respect to the data length and always yields a locally optimal choice.
 
+    Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
+    to the data by computing the approximate solution to the combinatorial
+    problem of finding the approximate covariance-regularized  maximum
+    log-likelihood for fixed number of change points and a reagularization
+    strength. It follows an interactive procedure
+    where a new breakpoint is added and then adjusting all breakpoints to
+    (approximately) maximize the objective. It is similar to the top-down
+    search used in other change point detection problems.
+
     Parameters
     ----------
     k_max: int, default=10
