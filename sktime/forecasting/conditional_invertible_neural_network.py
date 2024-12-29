@@ -217,7 +217,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         if self.window_size > len(y):
             raise ValueError(
                 f"Invalid window_size: {self.window_size}. "
-                f"It must be less than or equal to the size of the training data "
+                "It must be less than or equal to the size of the training data "
                 f"({len(y)})."
             )
 
@@ -239,10 +239,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             self.function.fit(rolling_mean.dropna())
         except Exception as e:
             raise RuntimeError(
-                "Curve fitting error Please check the parameters and try again. "
+                "Curve fitting error. Please check the parameters and try again.\n"
+                f"Window size: {self.window_size}\n"
+                f"f_statistic: {self._f_statistic}\n"
+                f"init_param_f_statistic: {self._init_param_f_statistic}\n"
                 f"Original error: {e}"
             )
-
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
