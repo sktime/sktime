@@ -370,6 +370,11 @@ class GGS:
 class GreedyGaussianSegmentation(BaseDetector):
     """Greedy Gaussian Segmentation Estimator.
 
+    Implementation based on [1]_.
+
+    - source code adapted based on: https://github.com/cvxgrp/GGS
+    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
     The method approximates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
@@ -388,16 +393,16 @@ class GreedyGaussianSegmentation(BaseDetector):
 
     Parameters
     ----------
-    k_max: int, default=10
+    k_max : int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
-    lamb: float, default=1.0
+    lamb : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
         (inverse) covariance regularization. A higher lambda favors simpler models.
-    max_shuffles: int, default=250
+    max_shuffles : int, default=250
         Maximum number of shuffles
-    verbose: bool, default=False
-        If  ``True``, verbose output is enabled.
-    random_state: int or np.random.RandomState, default=None
+    verbose : bool, default=False
+        If ``True``, verbose output is enabled.
+    random_state : int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
 
     Attributes
@@ -405,19 +410,12 @@ class GreedyGaussianSegmentation(BaseDetector):
     change_points_: array_like, default=[]
         Locations of change points as integer indexes.
 
-    Notes
-    -----
-    Based on the work from [1]_.
-    - source code adapted based on: https://github.com/cvxgrp/GGS
-    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
-
     References
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
        "Greedy Gaussian segmentation of multivariate time series.",
        Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
-
     """
 
     _tags = {
@@ -445,7 +443,6 @@ class GreedyGaussianSegmentation(BaseDetector):
         self.verbose = verbose
         self.random_state = random_state
 
-        _check_estimator_deps(self)
         super().__init__()
 
         self._adaptee = GGS(
@@ -458,16 +455,22 @@ class GreedyGaussianSegmentation(BaseDetector):
 
     @property
     def _intermediate_change_points(self) -> list[list[int]]:
-        """Intermediate values of change points for each value of k = 1...k_max."""
+        """Intermediate values of change points for each value of k = 1...k_max.
+
+        Default value is an empty list.
+        """
         return self._adaptee._intermediate_change_points
 
     @property
     def _intermediate_ll(self) -> list[float]:
-        """Intermediate values for log-likelihood for each value of k = 1...k_max."""
+        """Intermediate values for log-likelihood for each value of k = 1...k_max.
+
+        Default value is an empty list.
+        """
         return self._adaptee._intermediate_ll
 
-    def _fit(self, X, Y=None):
-        """Fit method for compatibility with sklearn-style estimator interface.
+    def _fit(self, X, y=None):
+        """Fit method for compatibility with sklearn-type estimator interface.
 
         Parameters
         ----------
@@ -525,7 +528,7 @@ class GreedyGaussianSegmentation(BaseDetector):
     def fit_predict(self, X) -> npt.ArrayLike:
         """Perform segmentation.
 
-        Parameterscls
+        Parameters
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
             1D array of time series values, or 2D array with index along the first
@@ -545,7 +548,8 @@ class GreedyGaussianSegmentation(BaseDetector):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return.
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
