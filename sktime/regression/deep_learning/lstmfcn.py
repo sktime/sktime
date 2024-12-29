@@ -174,7 +174,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         # ignore the number of instances, X.shape[0],
         # just want the shape of each instance
         self.input_shape = X.shape[1:]
-        
+
         self.model_ = self.build_model(self.input_shape)
 
         if self.verbose:
