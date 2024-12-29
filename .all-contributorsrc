@@ -2801,6 +2801,15 @@
       ]
     },
     {
+      "login": "Abelarm",
+      "name": "Luigi Giugliano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6976921?v=4",
+      "profile": "https://github.com/Abelarm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "morestart",
       "name": "ctl",
       "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
@@ -3294,6 +3303,33 @@
       "contributions": [
         "doc",
         "code"
+      ]
+    },
+    {
+      "login": "marcosfelt",
+      "name": "Kobi Felton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
+      "profile": "https://github.com/marcosfelt",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "b9junkers",
+      "name": "Shounak Shirodkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54496663?v=4",
+      "profile": "https://github.com/b9junkers",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "VjayRam",
+      "name": "Vijay Ram Enaganti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76694566?v=4",
+      "profile": "https://github.com/VjayRam",
+      "contributions": [
+        "doc"
       ]
     }
   ]
