@@ -11,6 +11,7 @@ import numpy as np
 from scipy.stats import norm
 
 from sktime.detection.base import BaseDetector
+from sktime.detection.utils._arr_to_seg import arr_to_seg
 
 __author__ = ["miraep8"]
 __all__ = ["HMM"]
@@ -386,6 +387,7 @@ class HMM(BaseDetector):
         annotated_x : array-like, shape = [num_observations]
             Array of predicted class labels, same size as input.
         """
+        X = X.values.flatten()
         self.num_states = len(self.emission_funcs)
         self.states = list(range(self.num_states))
         self.num_obs = len(X)
@@ -403,9 +405,11 @@ class HMM(BaseDetector):
 
         self.trans_prob = trans_prob
         self.trans_id = trans_id
-        return self._hmm_viterbi_label(
+        labels = self._hmm_viterbi_label(
             self.num_obs, self.states, self.trans_prob, self.trans_id
         )
+        y_seg = arr_to_seg(labels)
+        return y_seg
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

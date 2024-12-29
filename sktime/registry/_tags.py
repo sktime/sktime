@@ -1811,6 +1811,44 @@ class y_inner_mtype(_BaseTag):
     }
 
 
+class visual_block_kind(_BaseTag):
+    """How to display html representation of a meta-estimator in a jupyter notebook.
+
+    - String name: ``"visual_block_kind"``
+    - Extension developer tag
+    - Values: string, one of ``"single"``, ``"serial"``, ``"parallel"``
+    - Example: ``"single"``
+    - Default: ``"single"``
+
+    This tag specifies how to display the html representation of a meta-estimator
+    in a jupyter notebook.
+
+    Meta-estimators are composites with a variable number of sub-estimators,
+    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
+    ``_HeterogenousMetaEstimator``.
+
+    The html display is triggered by calling the ``_repr_html_`` method on any
+    ``scikit-base`` estimator, which returns a html representation of the estimator,
+    used by default in jupyter notebooks, or also other html display environments.
+
+    Possible values are:
+
+    * ``"single"``: the meta-estimator is displayed as a single block in the notebook.
+    * ``"serial"``: the meta-estimator is displayed as a series of blocks, one for
+      each sub-estimator, in a serial layout, i.e., as a vertical stack.
+    * ``"parallel"``: the meta-estimator is displayed as a series of blocks, one for
+      each sub-estimator, in a parallel layout, i.e., as a horizontal stack.
+    """
+
+    _tags = {
+        "tag_name": "visual_block_kind",
+        "parent_type": "estimator",
+        "tag_type": ("str", ["single", "serial", "parallel"]),
+        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "sktime_version",
@@ -1931,6 +1969,12 @@ ESTIMATOR_TAG_REGISTER = [
         "metric",
         "bool",
         "does metric require a predictive benchmark?",
+    ),
+    (
+        "requires_y_true",
+        "metric",
+        "bool",
+        "does metric require ground truth? If False, unsupervised metric",
     ),
     (
         "scitype:y_pred",
@@ -2110,12 +2154,6 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
-    ),
-    (
-        "visual_block_kind",
-        "estimator",
-        ("str", ["single", "serial", "parallel"]),
-        "how to display html represantation of a meta-estimator in jupyter notebook",
     ),
 ]
 

@@ -91,6 +91,13 @@ Naive Baselines
     DummyRegularAnomalies
     ZeroAnomalies
 
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
 
 Time Series Segment Anomaly Detection
 -------------------------------------
@@ -119,6 +126,13 @@ Naive Baselines
 
     ZeroSegments
 
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
 
 Time Series Segmentation
 ------------------------
