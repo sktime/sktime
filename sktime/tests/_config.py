@@ -278,7 +278,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "Arsenal",
         "BaggingForecaster",
         "BOSSEnsemble",
-        "BinarySegmentation",
         "CNTCClassifier",
         "CNTCNetwork",
         "CNTCRegressor",
