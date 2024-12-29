@@ -211,12 +211,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # check forecasters
         forecasters_ = self._check_forecasters(y, z)
         self.forecasters_ = self._ensure_clone(forecasters_)
-        self.fitted_list = []
+        self.fitted_list_ = []
 
         if y.index.nlevels == 1:
             frcstr = self.forecasters_[0][1]
             frcstr.fit(y, fh=fh, X=X)
-            self.fitted_list.append([frcstr, y.index])
+            self.fitted_list_.append([frcstr, y.index])
             return self
 
         if self.by == "level":
