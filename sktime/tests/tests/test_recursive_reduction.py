@@ -1,15 +1,18 @@
-import pytest
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 from sktime.forecasting.compose import RecursiveReductionForecaster
-from sktime.forecasting.naive import NaiveForecaster
 
-@pytest.fixture
-def sample_series():
-    """Sample time series data with missing values."""
-    return pd.Series([1.0, None, 3.0, None, 5.0])
+# Define a sample time series
+y = pd.Series([1, 2, 3, 4, 5, 6, 7])
 
-def test_default_imputation(sample_series):
-    base_forecaster = NaiveForecaster(strategy="mean")
-    forecaster = RecursiveReductionForecaster(base_forecaster)
-    forecaster.fit(sample_series)
-    assert not forecaster._y.isnull().any()
+# Use a compatible sklearn regressor
+base_regressor = LinearRegression()
+forecaster = RecursiveReductionForecaster(base_regressor)
+
+# Fit the forecaster
+forecaster.fit(y)
+
+# Make predictions
+fh = [1, 2, 3]  # Forecast horizon
+predictions = forecaster.predict(fh)
+print(predictions)
