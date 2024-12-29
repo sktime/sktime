@@ -699,7 +699,10 @@ def make_attention_lstm():
             self.cell._generate_dropout_mask(sequences, training=training)
             self.cell._generate_recurrent_dropout_mask(sequences, training=training)
             return super().call(
-                sequences=sequences, mask=mask, training=training, initial_state=initial_state
+                sequences=sequences,
+                mask=mask,
+                training=training,
+                initial_state=initial_state,
             )
 
         @property
