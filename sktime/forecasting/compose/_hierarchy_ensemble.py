@@ -169,9 +169,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         import warnings
 
         warnings.warn(
-            """The fitted_list property is deprecated
-            and will be removed in future versions.
-            Please use forecasters_ instead.
+            """The fitted_list property of HierarchyEnsembleForecaster is deprecated
+            and will be removed in sktime 0.37.0.
+            Please use the get_fitted_params method,
+            or the attribute forecasters_ instead.
+            Given a fitted instance f, a read call to f.fitted_list can be replaced
+            by f.get_fitted_params()['forecasters'] or f.forecasters_.
             """,
             DeprecationWarning,
         )
