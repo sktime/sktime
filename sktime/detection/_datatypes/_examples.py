@@ -22,7 +22,7 @@ def _get_example_segments_1():
     - labeled
     """
     segs = pd.IntervalIndex.from_tuples([(1, 2), (3, 6), (7, 10), (12, 14)], "left")
-    labels = pd.Series([0, 1, 1, 0], index=segs)
+    labels = pd.Series([0, 1, 1, 0])
     return pd.DataFrame({"ilocs": segs, "labels": labels})
 
 
