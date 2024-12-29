@@ -226,7 +226,8 @@ class ClaSPSegmentation(BaseDetector):
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "numba",
-    }  # for unit test cases
+        "X_inner_mtype": "pd.Series",
+    }
 
     def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
         self.period_length = int(period_length)
