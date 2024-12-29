@@ -257,10 +257,6 @@ EXCLUDED_TESTS = {
         "test_transform_output_type",
         "test_output_type",
     ],
-    "BinarySegmentation": [
-        "test_predict_segments",
-        "test_transform_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -282,7 +278,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "Arsenal",
         "BaggingForecaster",
         "BOSSEnsemble",
-        "BinarySegmentation",
         "CNTCClassifier",
         "CNTCNetwork",
         "CNTCRegressor",
