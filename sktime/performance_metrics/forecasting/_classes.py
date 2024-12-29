@@ -127,6 +127,7 @@ class BaseForecastingErrorMetric(BaseMetric):
     """
 
     _tags = {
+        "object_type": ["metric_forecasting", "metric"],
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
@@ -710,7 +711,7 @@ class BaseForecastingErrorMetric(BaseMetric):
                 return y.X_multiindex
 
             valid, msg, metadata = check_is_scitype(
-                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
+                y, scitype=SCITYPES, return_metadata=[], var_name=var_name
             )
             if not valid:
                 raise TypeError(msg)
