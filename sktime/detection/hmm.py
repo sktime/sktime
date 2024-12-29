@@ -387,6 +387,7 @@ class HMM(BaseDetector):
         annotated_x : array-like, shape = [num_observations]
             Array of predicted class labels, same size as input.
         """
+        X = X.values.flatten()
         self.num_states = len(self.emission_funcs)
         self.states = list(range(self.num_states))
         self.num_obs = len(X)
