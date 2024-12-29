@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class FCNClassifier(BaseDeepClassifier):
     """Fully Connected Neural Network (FCN), as described in [1]_.
 
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+
     Parameters
     ----------
     should inherited fields be listed here?
@@ -39,11 +42,6 @@ class FCNClassifier(BaseDeepClassifier):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-    Notes
-    -----
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
-
     References
     ----------
     .. [1] Zhao et. al, Convolutional neural networks for time series classification,
@@ -63,7 +61,8 @@ class FCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
     }

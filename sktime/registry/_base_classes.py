@@ -69,6 +69,11 @@ class _BaseScitypeOfObject(BaseObject):
         "mixin": False,  # whether this is a mixin, not full scitype
     }
 
+    @classmethod
+    def get_test_class(cls):
+        """Return test class for the scitype."""
+        return None
+
 
 class object(_BaseScitypeOfObject):
     """Universal type for all objects."""
@@ -83,6 +88,12 @@ class object(_BaseScitypeOfObject):
         from sktime.base import BaseObject
 
         return BaseObject
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.tests.test_all_estimators import TestAllObjects
+
+        return TestAllObjects
 
 
 class estimator(_BaseScitypeOfObject):
@@ -100,6 +111,12 @@ class estimator(_BaseScitypeOfObject):
 
         return BaseEstimator
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.tests.test_all_estimators import TestAllEstimators
+
+        return TestAllEstimators
+
 
 class aligner(_BaseScitypeOfObject):
     """Time series aligner or sequence aligner."""
@@ -116,6 +133,12 @@ class aligner(_BaseScitypeOfObject):
 
         return BaseAligner
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.alignment.tests.test_all_aligners import TestAllAligners
+
+        return TestAllAligners
+
 
 class classifier(_BaseScitypeOfObject):
     """Time series classifier."""
@@ -131,6 +154,12 @@ class classifier(_BaseScitypeOfObject):
         from sktime.classification.base import BaseClassifier
 
         return BaseClassifier
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+
+        return TestAllClassifiers
 
 
 class clusterer(_BaseScitypeOfObject):
@@ -164,6 +193,14 @@ class early_classifier(_BaseScitypeOfObject):
 
         return BaseEarlyClassifier
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
+            TestAllEarlyClassifiers,  # noqa E501
+        )  # noqa E501
+
+        return TestAllEarlyClassifiers
+
 
 class forecaster(_BaseScitypeOfObject):
     """Time series forecaster."""
@@ -179,6 +216,12 @@ class forecaster(_BaseScitypeOfObject):
         from sktime.forecasting.base import BaseForecaster
 
         return BaseForecaster
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+
+        return TestAllForecasters
 
 
 class global_forecaster(_BaseScitypeOfObject):
@@ -196,6 +239,14 @@ class global_forecaster(_BaseScitypeOfObject):
 
         return _BaseGlobalForecaster
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.forecasting.tests.test_all_forecasters import (
+            TestAllGlobalForecasters,
+        )
+
+        return TestAllGlobalForecasters
+
 
 class metric(_BaseScitypeOfObject):
     """Performance metric for time series."""
@@ -211,6 +262,30 @@ class metric(_BaseScitypeOfObject):
         from sktime.performance_metrics.base import BaseMetric
 
         return BaseMetric
+
+
+class metric_detection(_BaseScitypeOfObject):
+    """Performance metric for time series detection tasks."""
+
+    _tags = {
+        "scitype_name": "metric_detection",
+        "short_descr": "performance metric for detectors",
+        "parent_scitype": "metric",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.performance_metrics.detection._base import BaseDetectionMetric
+
+        return BaseDetectionMetric
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.performance_metrics.detection.tests.test_all_metrics_detection import (  # noqa E501
+            TestAllDetectionMetrics,  # noqa E501
+        )  # noqa E501
+
+        return TestAllDetectionMetrics
 
 
 class metric_forecasting(_BaseScitypeOfObject):
@@ -262,6 +337,12 @@ class param_est(_BaseScitypeOfObject):
 
         return BaseParamFitter
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
+
+        return TestAllParamFitters
+
 
 class regressor(_BaseScitypeOfObject):
     """Time series regressor."""
@@ -277,6 +358,12 @@ class regressor(_BaseScitypeOfObject):
         from sktime.regression.base import BaseRegressor
 
         return BaseRegressor
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.regression.tests.test_all_regressors import TestAllRegressors
+
+        return TestAllRegressors
 
 
 class detector(_BaseScitypeOfObject):
@@ -294,6 +381,12 @@ class detector(_BaseScitypeOfObject):
 
         return BaseDetector
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.detection.tests.test_all_detectors import TestAllDetectors
+
+        return TestAllDetectors
+
 
 class splitter(_BaseScitypeOfObject):
     """Time series splitter."""
@@ -309,6 +402,12 @@ class splitter(_BaseScitypeOfObject):
         from sktime.split.base import BaseSplitter
 
         return BaseSplitter
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.split.tests.test_all_splitters import TestAllSplitters
+
+        return TestAllSplitters
 
 
 class transformer(_BaseScitypeOfObject):
@@ -326,6 +425,14 @@ class transformer(_BaseScitypeOfObject):
 
         return BaseTransformer
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.transformations.tests.test_all_transformers import (
+            TestAllTransformers,
+        )
+
+        return TestAllTransformers
+
 
 class transformer_pairwise(_BaseScitypeOfObject):
     """Pairwise transformer for tabular data, distance or kernel."""
@@ -342,6 +449,14 @@ class transformer_pairwise(_BaseScitypeOfObject):
 
         return BasePairwiseTransformer
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.dists_kernels.tests.test_all_dist_kernels import (
+            TestAllPairwiseTransformers,
+        )
+
+        return TestAllPairwiseTransformers
+
 
 class transformer_pairwise_panel(_BaseScitypeOfObject):
     """Pairwise transformer for panel data, distance or kernel."""
@@ -357,6 +472,14 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
         from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
         return BasePairwiseTransformerPanel
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.dists_kernels.tests.test_all_dist_kernels import (
+            TestAllPanelTransformers,
+        )
+
+        return TestAllPanelTransformers
 
 
 class distribution(_BaseScitypeOfObject):
@@ -579,6 +702,12 @@ class series_annotator(_BaseScitypeOfObject):
         from sktime.detection.base import BaseDetector
 
         return BaseDetector
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.detection.tests.test_all_detectors import TestAllDetectors
+
+        return TestAllDetectors
 
 
 class transformer_series_to_primitives(_BaseScitypeOfObject):

@@ -81,6 +81,12 @@ class EAgglo(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        "maintainers": "KatieBuc",
+        # estimator type
+        # --------------
         "fit_is_empty": False,
     }
 
