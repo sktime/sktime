@@ -240,7 +240,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     x = X.loc[df.index]
                 frcstr.fit(df, fh=fh, X=x)
                 self.fitted_list_.append([frcstr, df.index.droplevel(-1).unique()])
-                frcstr_dict[key] = forecaster
 
         return self
 
