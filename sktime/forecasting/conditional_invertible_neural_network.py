@@ -230,12 +230,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         ).fit_transform(y)
 
         # Curve fit with error handling
+        self.function = CurveFitForecaster(
+            self._f_statistic,
+            {"p0": self._init_param_f_statistic},
+            normalise_index=True,
+        )
         try:
-            self.function = CurveFitForecaster(
-                self._f_statistic,
-                {"p0": self._init_param_f_statistic},
-                normalise_index=True,
-            )
             self.function.fit(rolling_mean.dropna())
         except Exception as e:
             raise RuntimeError(
@@ -245,6 +245,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 f"init_param_f_statistic: {self._init_param_f_statistic}\n"
                 f"Original error: {e}"
             )
+
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
