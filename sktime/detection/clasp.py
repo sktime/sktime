@@ -373,4 +373,6 @@ class ClaSPSegmentation(BaseDetector):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"period_length": 5, "n_cps": 1}
+        params0 = {"period_length": 5, "n_cps": 1}
+        params1 = {"period_length": 10, "n_cps": 2, "exclusion_radius": 0.05}
+        return [params0, params1]
