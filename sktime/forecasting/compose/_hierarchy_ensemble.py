@@ -95,7 +95,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "authors": ["VyomkeshVyas"],
+        "authors": ["VyomkeshVyas", "sanskarmodi8"],
         "maintainers": ["VyomkeshVyas"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
@@ -220,15 +220,14 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             hier_dict = self._get_hier_dict(z)
             for _, forecaster, level in self.forecasters_:
                 if level in hier_dict.keys():
+                    frcstr = forecaster
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
                     if X is not None:
                         x = X.loc[df.index]
-                    forecaster.fit(df, fh=fh, X=x)
-                    self.fitted_list_.append(
-                        [forecaster, df.index.droplevel(-1).unique()]
-                    )
+                    frcstr.fit(df, fh=fh, X=x)
+                    self.fitted_list_.append([frcstr, df.index.droplevel(-1).unique()])
                     self.forecasters_ = [
-                        (name, forecaster if f == forecaster else f, level)
+                        (name, frcstr if f == forecaster else f, level)
                         for name, f, level in self.forecasters_
                     ]
 
@@ -239,8 +238,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 df = z[z.index.droplevel(-1).isin(nodes)]
                 if X is not None:
                     x = X.loc[df.index]
-                forecaster.fit(df, fh=fh, X=x)
-                self.fitted_list_.append([forecaster, df.index.droplevel(-1).unique()])
+                frcstr.fit(df, fh=fh, X=x)
+                self.fitted_list_.append([frcstr, df.index.droplevel(-1).unique()])
                 frcstr_dict[key] = forecaster
 
         return self
