@@ -8,7 +8,7 @@ class ZeroSegments(BaseDetector):
 
     Naive method that can serve as benchmarking pipeline or API test.
 
-    Detects no asegments.
+    Detects no segments.
 
     Examples
     --------
