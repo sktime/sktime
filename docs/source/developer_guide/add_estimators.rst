@@ -39,7 +39,7 @@ directory of ``sktime``.
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
-it makeas sense to consider the "forecaster" template.
+it makes sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
 If not, another template might be more appropriate.
 
