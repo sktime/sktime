@@ -120,7 +120,6 @@ class TimeSeriesKvisibility(BaseClusterer):
 
     def _ts_to_graph(self, X):
         ts_attr = []
-
         X_ts = []
         print(X.shape)
 
