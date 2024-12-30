@@ -187,7 +187,7 @@ class ClustererFitPredictUnequalLengthOutOfSample(ClustererTestScenario):
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
-class ClassifierFitPredictMultivariate(ClustererTestScenario):
+class ClustererFitPredictMultivariate(ClustererTestScenario):
     """Fit/predict with multivariate panel X."""
 
     _tags = {
@@ -211,7 +211,7 @@ class ClassifierFitPredictMultivariate(ClustererTestScenario):
 scenarios_clustering = [
     ClustererFitPredict,
     ClustererFitPredictOutOfSample,
-    ClassifierFitPredictMultivariate,
+    ClustererFitPredictMultivariate,
     ClustererFitPredictUnequalLength,
     ClustererFitPredictUnequalLengthOutOfSample,
 ]
