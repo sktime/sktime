@@ -202,7 +202,9 @@ def _mkdir_if_not_exist(*path):
     return full_path
 
 
-def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
+def _load_dataset(
+    name, split, return_X_y, return_type=None, extract_path=None, y_dtype="str"
+):
     """Load time series classification datasets (helper function).
 
     Parameters
@@ -229,6 +231,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         path to extract downloaded zip to
         None defaults to sktime/datasets/data if the data exists there, otherwise
         defaults to sktime/datasets/local_data and downloads data there
+    y_dtype : str, optional(default: 'str')
+        dtype of the target variable
 
     Returns
     -------
@@ -246,7 +250,9 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         check_path = extract_path
 
     def _get_data_from(path):
-        return _load_provided_dataset(name, split, return_X_y, return_type, path)
+        return _load_provided_dataset(
+            name, split, return_X_y, return_type, path, y_dtype=y_dtype
+        )
 
     # if the dataset exists in check_path = sktime/datasets/data, retrieve it from there
     if name in _list_available_datasets(check_path):
@@ -283,6 +289,7 @@ def _load_provided_dataset(
     return_X_y=True,
     return_type=None,
     extract_path=None,
+    y_dtype="str",
 ):
     """Load baked in time series classification datasets (helper function).
 
@@ -310,6 +317,8 @@ def _load_provided_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path: default = join(MODULE, DIRNAME) = os.path.dirname(__file__) + "/data"
         path to extract downloaded zip to
+        y_dtype : str, optional (default: 'str')
+            dtype of the target variable
 
     Returns
     -------
@@ -328,16 +337,22 @@ def _load_provided_dataset(
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(extract_path, name, fname)
-        X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X, y = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(extract_path, name, fname)
-        X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X_train, y_train = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
 
         fname = name + "_TEST.ts"
         abspath = os.path.join(extract_path, name, fname)
-        X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X_test, y_test = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
 
         X = pd.concat([X_train, X_test])
         X = X.reset_index(drop=True)
