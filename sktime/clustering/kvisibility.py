@@ -3,8 +3,7 @@
 __author__ = ["seigpe"]
 
 import numpy as np
-from sklearn.cluster import Kmeans
-
+from sklearn.cluster import KMeans
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import update_data
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
@@ -89,19 +88,20 @@ class TimeSeriesKvisibility(BaseClusterer):
         algorithm="auto",
         leaf_size=30,
         n_jobs=None,
+        n_init=4
     ):
         self.distance = distance
         self.eps = eps
         self.min_samples = min_samples
         self.algorithm = algorithm
         self.leaf_size = leaf_size
-        self.n_jobs = n_jobs
+        self.n_jobs = n_jobs,
+        self.n_init = n_init
 
         super().__init__()
 
         if isinstance(distance, BasePairwiseTransformerPanel):
             tags_to_clone = [
-                "capability:multivariate",
                 "capability:unequal_length",
                 "capability:missing_values",
             ]
@@ -168,8 +168,6 @@ class TimeSeriesKvisibility(BaseClusterer):
         """
         self._X = X
 
-
-
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
         
         self.kmeans_ = None
@@ -178,14 +176,10 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         self.kmeans_ = KMeans(init="k-means++", n_clusters=self.n_clusters, n_init=4, **deleg_param_dict)
         self.kmeans_.fit(self.ts_features)
-        
-        self.dbscan_ = DBSCAN(metric="precomputed", **deleg_param_dict)
-        self.dbscan_.fit(X=distmat)
 
         for key in self.DELEGATED_FITTED_PARAMS:
             if hasattr(self.kmeans_, key):
                 setattr(self, key, getattr(self.kmeans_, key))
-
         return self
 
     def _fit_predict(self, X, y=None):
@@ -241,5 +235,34 @@ class TimeSeriesKvisibility(BaseClusterer):
             return self.labels_
         else:
             self.ts_features = self._ts_to_graph(X)
-            return self._kmeans.predict(self.ts_features)
-            )
+            return self.clone().fit_predict(self.ts_features)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.dists_kernels import AggrDist, DtwDist, EditDist
+
+        params1 = {"distance": DtwDist()}
+        params2 = {"distance": EditDist()}
+
+        # distance capable of unequal length
+        dist = AggrDist.create_test_instance()
+        params3 = {"distance": dist}
+
+        return [params1, params2, params3]
