@@ -5,9 +5,10 @@ __author__ = ["seigpe"]
 import numpy as np
 from sklearn.cluster import KMeans
 from sktime.clustering.base import BaseClusterer
-from sktime.datatypes import update_data
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
-from sktime.utils.warnings import warn
+from ts2vg import NaturalVG, HorizontalVG
+import networkx as nx
+import pandas as pd
 
 
 class TimeSeriesKvisibility(BaseClusterer):
@@ -169,7 +170,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         self._X = X
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
-        
+
         self.kmeans_ = None
 
         self.ts_features = self._ts_to_graph(X)
@@ -199,17 +200,15 @@ class TimeSeriesKvisibility(BaseClusterer):
         """
         self._X = X
 
-
-
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
-        
+
         self.kmeans_ = None
 
         self.ts_features = self._ts_to_graph(X)
 
         self.kmeans_ = KMeans(init="k-means++", n_clusters=self.n_clusters, n_init=4, **deleg_param_dict)
         self.kmeans_.fit(self.ts_features)
-        
+
         for key in self.DELEGATED_FITTED_PARAMS:
             if hasattr(self.kmeans_, key):
                 setattr(self, key, getattr(self.kmeans_, key))
