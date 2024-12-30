@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -608,11 +609,33 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        return X
-        # this causes errors, we need to investigate
-        # X_inner_mtype = self.get_tag("X_inner_mtype")
-        # X_inner = convert_to(X, X_inner_mtype)
-        # return X_inner
+        ALLOWED_SCITYPES = ["Series", "Panel"]
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
+        )
+        self._X_metadata = X_metadata
+        if not X_valid:
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
+            )
+            allowed_msg = (
+                "Allowed scitypes for X in detection are "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
+                "for instance a pandas.DataFrame with sktime compatible time indices."
+                " See the detection tutorial examples/07_detection.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                check_is_error_msg(
+                    X_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
+        return X_inner
 
     def _fit(self, X, y=None):
         """Fit to training data.
@@ -921,17 +944,15 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
-        if isinstance(y_sparse, pd.DataFrame):
-            y_sparse = y_sparse.iloc[:, 0]
-        if not isinstance(y_sparse, pd.Series):
-            y_sparse = pd.Series(y_sparse, dtype="int64")
-        if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
-            # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
-            return y_dense
-        else:
+        if not isinstance(y_sparse, pd.DataFrame):
+            y_sparse = pd.DataFrame(y_sparse, dtype="int64")
+        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype != "interval":
             # Anomaly/changepoint detection case
             y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
+            return y_dense
+        else:
+            # Segmentation case
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
 
     @staticmethod
@@ -952,7 +973,7 @@ class BaseDetector(BaseEstimator):
             y_sparse and 0 otherwise.
         """
         y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
-        y_dense[y_sparse.values] = 1
+        y_dense[y_sparse.values.flatten()] = 1
         return y_dense
 
     @staticmethod
@@ -974,24 +995,26 @@ class BaseDetector(BaseEstimator):
             according to ``y_sparse``. Indexes that do not fall within any index are
             labelled -1.
         """
-        if y_sparse.index.is_overlapping:
+        if len(y_sparse) == 0:
+            return pd.DataFrame(0, index=index, dtype="int64", columns=["labels"])
+
+        seg_index = y_sparse.set_index("ilocs").index
+        index_rg = pd.RangeIndex(len(index))
+
+        if seg_index.is_overlapping:
             raise NotImplementedError(
                 "Cannot convert overlapping segments to a dense format yet."
             )
 
-        interval_indexes = y_sparse.index.get_indexer(index)
+        interval_ixs = seg_index.get_indexer(index_rg)
 
-        # Negative indexes do not fall within any interval so they are ignored
-        interval_labels = y_sparse.iloc[
-            interval_indexes[interval_indexes >= 0]
-        ].to_numpy()
-
-        # -1 is used to represent points do not fall within a segment
-        labels_dense = interval_indexes.copy()
-        labels_dense[labels_dense >= 0] = interval_labels
-
-        y_dense = pd.Series(labels_dense, index=index)
-        return y_dense
+        if "labels" not in y_sparse.columns:
+            y_dense = pd.DataFrame({"labels": interval_ixs}, index=index_rg)
+            return y_dense
+        else:
+            y_dense = y_sparse.labels.loc[interval_ixs]
+            y_dense = y_dense.reset_index(drop=True)
+            return pd.DataFrame({"labels": y_dense}, index=index_rg)
 
     @staticmethod
     def dense_to_sparse(y_dense):
@@ -1049,7 +1072,7 @@ class BaseDetector(BaseEstimator):
         pd.Series
             An empty series with a RangeIndex.
         """
-        return pd.Series(index=pd.RangeIndex(0), dtype="int64")
+        return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
@@ -1060,7 +1083,13 @@ class BaseDetector(BaseEstimator):
         pd.Series
             An empty series with an IntervalIndex.
         """
-        return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
+        empty_segs = pd.DataFrame(
+            pd.IntervalIndex([]),
+            index=pd.RangeIndex(0),
+            dtype="int64",
+            columns=["ilocs"],
+        )
+        return empty_segs
 
     @staticmethod
     def change_points_to_segments(y_sparse, start=None, end=None):
@@ -1156,7 +1185,7 @@ class BaseDetector(BaseEstimator):
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
-        change_points = pd.Series(y_sparse.index.left)
+        change_points = y_sparse.set_index("ilocs").index.left
         return change_points
 
 

@@ -227,9 +227,8 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "authors": ["felipeangelimvieira", "shlok191"],
         "maintainers": ["felipeangelimvieira"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
-
-    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -320,6 +319,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
+
+    @property
+    def _steps(self):
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+
+    @property
+    def steps_(self):
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -570,8 +577,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             fallback forecaster with the category: "fallback_forecaster"
         """
         return list(self.forecasters.items()) + [
-            "fallback_forecaster",
-            self.fallback_forecaster,
+            ("fallback_forecaster", self.fallback_forecaster)
         ]
 
     @_forecasters.setter

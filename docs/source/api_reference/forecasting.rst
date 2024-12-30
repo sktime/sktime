@@ -134,6 +134,7 @@ Direct and recursive - 3rd party
     :template: class.rst
 
     SkforecastAutoreg
+    SkforecastRecursive
 
 .. currentmodule:: sktime.forecasting.darts
 
@@ -237,6 +238,7 @@ Trend forecasters
     STLForecaster
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
+    SplineTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 

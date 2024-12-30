@@ -182,16 +182,6 @@
       ]
     },
     {
-      "login": "jgyasu",
-      "name": "Jigyasu",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
-      "profile": "https://jgyasu.github.io",
-      "contributions": [
-        "code",
-        "doc"
-      ]
-    },
-    {
       "login": "jesellier",
       "name": "jesellier",
       "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
@@ -2802,6 +2792,15 @@
       ]
     },
     {
+      "login": "Abelarm",
+      "name": "Luigi Giugliano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6976921?v=4",
+      "profile": "https://github.com/Abelarm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "morestart",
       "name": "ctl",
       "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
@@ -3142,7 +3141,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/116151399?v=4",
       "profile": "https://github.com/phoeenniixx",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3260,6 +3260,34 @@
       ]
     },
     {
+      "login": "y-mx",
+      "name": "Yimeng Xie",
+      "avatar_url": "https://avatars.githubusercontent.com/y-mx",
+      "profile": "https://github.com/y-mx",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jgyasu",
+      "name": "Jigyasu",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "profile": "https://jgyasu.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Adarsh2345",
+      "name": "Adarsh J",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130629672?v=4",
+      "profile": "https://github.com/Adarsh2345",
+      "contributions": [
+         "doc"
+      ]
+    },
+    {
       "login": "skinan",
       "name": "Muhammad Sakib Khan Inan",
       "avatar_url": "https://avatars.githubusercontent.com/skinan",
@@ -3276,6 +3304,33 @@
       "contributions": [
         "doc",
         "code"
+      ]
+    },
+    {
+      "login": "marcosfelt",
+      "name": "Kobi Felton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
+      "profile": "https://github.com/marcosfelt",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "b9junkers",
+      "name": "Shounak Shirodkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54496663?v=4",
+      "profile": "https://github.com/b9junkers",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "VjayRam",
+      "name": "Vijay Ram Enaganti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76694566?v=4",
+      "profile": "https://github.com/VjayRam",
+      "contributions": [
+        "doc"
       ]
     }
   ]
