@@ -1,7 +1,6 @@
 """Test suite for clustering algorithms."""
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype
