@@ -3,7 +3,7 @@
 __author__ = ["seigpe"]
 
 import numpy as np
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import Kmeans
 
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import update_data
@@ -30,7 +30,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
-        important DBSCAN parameter to choose appropriately for your data set
+        important Kmeans parameter to choose appropriately for your data set
         and distance function.
     min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point
