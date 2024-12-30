@@ -128,6 +128,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
     _tags = {
         "object_type": ["metric_forecasting", "metric"],
+        "scitype:y_pred": "pred",  # point forecasts
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
@@ -901,7 +902,15 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
         func = self.func
 
-        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+        score = self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+
+        if _is_average(self.multioutput) and not isinstance(score, float):
+            if isinstance(self.multioutput, np.ndarray):
+                score = np.dot(score, self.multioutput)
+            elif self.multioutput == "uniform_average":
+                score = np.mean(score)
+
+        return score
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
