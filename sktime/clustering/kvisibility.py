@@ -9,6 +9,8 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from ts2vg import NaturalVG, HorizontalVG
 import networkx as nx
 import pandas as pd
+from sktime.utils.warnings import warn
+
 
 
 class TimeSeriesKvisibility(BaseClusterer):
