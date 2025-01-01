@@ -117,6 +117,7 @@ all_extras = [
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
   'ts2vg',
+  'networkx',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -160,6 +161,8 @@ all_extras_pandas2 = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
+  'ts2vg',
+  'networkx',
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
