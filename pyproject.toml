@@ -193,8 +193,8 @@ classification = [
 clustering = [
   'numba<0.61,>=0.53; python_version < "3.13"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
-  'ts2vg',
-  'networkx',
+  'ts2vg; python_version < "3.13"',
+  'networkx; python_version < "3.13"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
