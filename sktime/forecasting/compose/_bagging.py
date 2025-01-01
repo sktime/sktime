@@ -12,7 +12,6 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.proba.empirical import Empirical
 from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
@@ -333,6 +332,8 @@ class BaggingForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
+        from skpro.proba.empirical import Empirical
+
         # generate replicates of exogenous data for bootstrap
         X_inner = self._gen_X_bootstraps(X)
 

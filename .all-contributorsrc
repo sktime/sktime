@@ -2792,6 +2792,15 @@
       ]
     },
     {
+      "login": "Abelarm",
+      "name": "Luigi Giugliano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6976921?v=4",
+      "profile": "https://github.com/Abelarm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "morestart",
       "name": "ctl",
       "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
@@ -3081,7 +3090,7 @@
       ]
     },
     {
-      "login":"vedantag17",
+      "login": "vedantag17",
       "name": "Vedant Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
       "profile": "https://github.com/vedantag17",
@@ -3099,7 +3108,7 @@
       ]
     },
     {
-      "login":"markussagen",
+      "login": "markussagen",
       "name": "Markus Sagen",
       "avatar_url": "https://avatars.githubusercontent.com/u/20767068?v=4",
       "profile": "https://github.com/markussagen",
@@ -3132,7 +3141,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/116151399?v=4",
       "profile": "https://github.com/phoeenniixx",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3191,14 +3201,16 @@
       "contributions": [
         "doc"
       ]
-     },
-     {
+    },
+    {
       "login": "vagechirkov",
       "name": "Valerii Chirkov",
       "avatar_url": "https://avatars.githubusercontent.com/vagechirkov",
       "profile": "https://github.com/vagechirkov",
       "contributions": [
         "code",
+        "doc"
+      ]
     },
     {
       "login": "tajir0",
@@ -3220,6 +3232,15 @@
       ]
     },
     {
+      "login": "Sohaib-Ahmed21",
+      "name": "Sohaib Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
+      "profile": "https://github.com/Sohaib-Ahmed21",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "alyssadsouza",
       "name": "Alyssa D'Souza",
       "avatar_url": "https://avatars.githubusercontent.com/alyssadsouza",
@@ -3236,6 +3257,80 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "y-mx",
+      "name": "Yimeng Xie",
+      "avatar_url": "https://avatars.githubusercontent.com/y-mx",
+      "profile": "https://github.com/y-mx",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jgyasu",
+      "name": "Jigyasu",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "profile": "https://jgyasu.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Adarsh2345",
+      "name": "Adarsh J",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130629672?v=4",
+      "profile": "https://github.com/Adarsh2345",
+      "contributions": [
+         "doc"
+      ]
+    },
+    {
+      "login": "skinan",
+      "name": "Muhammad Sakib Khan Inan",
+      "avatar_url": "https://avatars.githubusercontent.com/skinan",
+      "profile": "https://github.com/skinan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "gavinkatz001",
+      "name": "Gavin Katz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124807974?v=4",
+      "profile": "https://github.com/gavinkatz001",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "marcosfelt",
+      "name": "Kobi Felton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
+      "profile": "https://github.com/marcosfelt",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "b9junkers",
+      "name": "Shounak Shirodkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54496663?v=4",
+      "profile": "https://github.com/b9junkers",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "VjayRam",
+      "name": "Vijay Ram Enaganti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76694566?v=4",
+      "profile": "https://github.com/VjayRam",
+      "contributions": [
+        "doc"
       ]
     }
   ]

@@ -43,20 +43,27 @@ class BinarySegmentation(BaseDetector):
     >>> model = BinarySegmentation(threshold=1)
     >>> X = pd.Series([1, 1, 1, 1, 5, 5, 5, 5])
     >>> model.fit_predict(X)
-    0    3
-    dtype: int64
+       ilocs
+    0      3
     >>> X = pd.Series([1.1, 1.3, -1.4, -1.4, 5.5, 5.6])
     >>> model.fit_predict(X)
-    0    1
-    1    3
-    dtype: int64
+       ilocs
+    0      1
+    1      3
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "fit_is_empty": True,
         "univariate-only": True,
         "task": "change_point_detection",
         "learning_type": "unsupervised",
+        "X_inner_mtype": "pd.Series",
     }
 
     def __init__(self, threshold, min_cp_distance=0, max_iter=10000):
@@ -175,7 +182,7 @@ class BinarySegmentation(BaseDetector):
             X, self.threshold, self.min_cp_distance, self.max_iter
         )
         change_points.sort()
-        return pd.Series(X.index[change_points])
+        return pd.Series(change_points, dtype="int64")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -196,4 +203,6 @@ class BinarySegmentation(BaseDetector):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"threshold": 1}
+        params0 = {"threshold": 1}
+        params1 = {"threshold": 0.1, "min_cp_distance": 1, "max_iter": 100}
+        return [params0, params1]

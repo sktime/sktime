@@ -1,4 +1,4 @@
-"""Using an annotation estimator as transformation."""
+"""Using an detection estimator as transformation."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.datatypes import MTYPE_LIST_SERIES
@@ -8,15 +8,15 @@ __author__ = ["fkiraly"]
 __all__ = ["AnnotatorAsTransformer", "DetectorAsTransformer"]
 
 
-MTYPE_LIST_FOR_ANNOTATORS = MTYPE_LIST_SERIES
+MTYPE_LIST_FOR_DETECTORS = MTYPE_LIST_SERIES
 # override until annotators only support pd.Series
-MTYPE_LIST_FOR_ANNOTATORS = ["pd.Series"]
+MTYPE_LIST_FOR_DETECTORS = ["pd.Series"]
 
 
 class DetectorAsTransformer(BaseTransformer):
     """Use an anomaly, changepoint detector, segmentation estimator as a transformer.
 
-    This adapter is used in coercions, when passing an annotator to a transformer slot.
+    This adapter is used in coercions, when passing an detector to a transformer slot.
 
     The transformation is series-to-primitives, transforming a time series
     into its cluster assignment.
@@ -26,18 +26,18 @@ class DetectorAsTransformer(BaseTransformer):
 
     Parameters
     ----------
-    estimator : sktime annotator, i.e., estimator inheriting from BaseDetector
+    estimator : sktime detector, i.e., estimator inheriting from BaseDetector
         this is a "blueprint" clusterer, state does not change when ``fit`` is called
 
     Attributes
     ----------
-    estimator_ : sktime annotator, clone of ``estimator``
+    estimator_ : sktime detector, clone of ``estimator``
         this clone is fitted in the pipeline when ``fit`` is called
 
     Examples
     --------
-    >>> from sktime.annotation.compose import DetectorAsTransformer
-    >>> from sktime.annotation.stray import STRAY
+    >>> from sktime.detection.compose import DetectorAsTransformer
+    >>> from sktime.detection.stray import STRAY
     >>> from sktime.utils._testing import _make_hierarchical
     >>> X = _make_hierarchical()
     >>> t = DetectorAsTransformer(STRAY())
@@ -58,8 +58,8 @@ class DetectorAsTransformer(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": MTYPE_LIST_FOR_ANNOTATORS,
-        "y_inner_mtype": MTYPE_LIST_FOR_ANNOTATORS,
+        "X_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
+        "y_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
         "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
@@ -99,7 +99,7 @@ class DetectorAsTransformer(BaseTransformer):
         -------
         self: reference to self
         """
-        self.estimator_.fit(X=X, Y=y)
+        self.estimator_.fit(X=X, y=y)
         return self
 
     def _transform(self, X, y=None):
@@ -144,7 +144,7 @@ class DetectorAsTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
-        from sktime.annotation.lof import SubLOF
+        from sktime.detection.lof import SubLOF
 
         params1 = {"estimator": SubLOF.create_test_instance()}
         params2 = {"estimator": SubLOF.create_test_instance()}

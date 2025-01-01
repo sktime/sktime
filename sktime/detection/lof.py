@@ -125,6 +125,12 @@ class SubLOF(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
         "univariate-only": False,

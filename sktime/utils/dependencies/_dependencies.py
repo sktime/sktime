@@ -1,7 +1,5 @@
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
-__author__ = ["fkiraly", "mloning"]
-
 import sys
 import warnings
 from functools import lru_cache
@@ -131,23 +129,20 @@ def _check_soft_dependencies(
         if pkg_env_version is None:
             if obj is None and msg is None:
                 msg = (
-                    f"{package!r} not found. "
-                    f"{package!r} is a soft dependency and not included in the "
-                    f"base sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{class_name} requires package {package!r} to be present "
+                    f"in the python environment, but {package!r} was not found. "
                 )
             elif msg is None:  # obj is not None, msg is None
                 msg = (
                     f"{class_name} requires package {package!r} to be present "
                     f"in the python environment, but {package!r} was not found. "
-                    f"{package!r} is a soft dependency and not included in the base "
-                    f"sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{package!r} is a dependency of {class_name} and required "
+                    f"to construct it. "
                 )
+            msg = msg + (
+                f"To install the requirement {package!r}, please run: "
+                f"pip install {package}` "
+            )
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
 
@@ -221,10 +216,10 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     Parameters
     ----------
     msg: str, optional, default= default message (msg below)
-        error message to be returned when `ModuleNotFoundError` is raised.
+        error message to be returned when ``ModuleNotFoundError`` is raised.
     severity: str, either of "error", "warning" or "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFound` if mlflow-related packages are not found.
+        "error" - raises a ``ModuleNotFound`` if mlflow-related packages are not found.
         "warning" - raises a warning message if any mlflow-related package is not
             installed also returns False. In case all packages are present,
             returns True.
@@ -314,7 +309,9 @@ def _get_pkg_version(package_name):
     return pkg_env_version
 
 
-def _check_python_version(obj, package=None, msg=None, severity="error"):
+def _check_python_version(
+    obj, package=None, msg=None, severity="error", prereleases=True
+):
     """Check if system python version is compatible with requirements of obj.
 
     Parameters
@@ -337,6 +334,13 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         * "none" - does not raise exception or warning
           function returns False if one of packages is not installed, otherwise True
 
+    prereleases: str, default = True
+        Whether prerelease versions are considered compatible.
+        If True, allows prerelease versions to be considered compatible.
+        If False, always considers prerelease versions as incompatible, i.e., always
+        raises error, warning, or returns False, if the system python version is a
+        prerelease.
+
     Returns
     -------
     compatible : bool, whether obj is compatible with system python version
@@ -354,7 +358,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         return True
 
     try:
-        est_specifier = SpecifierSet(est_specifier_tag)
+        est_specifier = SpecifierSet(est_specifier_tag, prereleases=prereleases)
     except InvalidSpecifier:
         msg_version = (
             f"wrong format for python_version tag, "
@@ -380,6 +384,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
             f"{class_name} requires python version to be {est_specifier},"
             f" but system python version is {sys.version}."
         )
+
+        if "rc" in sys_version:
+            msg += " This is due to the release candidate status of your system Python."
 
         if package is not None:
             msg += (
