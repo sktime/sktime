@@ -86,7 +86,6 @@ class TimeSeriesKvisibility(BaseClusterer):
     def __init__(
         self,
         distance,
-        eps=0.5,
         min_samples=5,
         algorithm="auto",
         leaf_size=30,
@@ -94,7 +93,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         n_init=4
     ):
         self.distance = distance
-        self.eps = eps
+        self.eps = 0.5
         self.min_samples = min_samples
         self.algorithm = algorithm
         self.leaf_size = leaf_size
