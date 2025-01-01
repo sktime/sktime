@@ -247,6 +247,8 @@ dev = [
   "pytest-timeout",
   "pytest-xdist",
   "wheel",
+  "ts2vg",
+  "networkx",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
