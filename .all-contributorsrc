@@ -182,15 +182,6 @@
       ]
     },
     {
-      "login": "jgyasu",
-      "name": "Jigyasu",
-      "avatar_url": "https://avatars.githubusercontent.com/u/94278611?s=400&u=19941ae4723ef841b3a3c7df996214efadc98c45&v=4",
-      "profile": "https://www.linkedin.com/in/jgyasu/",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "jesellier",
       "name": "jesellier",
       "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
@@ -2801,6 +2792,15 @@
       ]
     },
     {
+      "login": "Abelarm",
+      "name": "Luigi Giugliano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6976921?v=4",
+      "profile": "https://github.com/Abelarm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "morestart",
       "name": "ctl",
       "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
@@ -3269,6 +3269,16 @@
       ]
     },
     {
+      "login": "jgyasu",
+      "name": "Jigyasu",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "profile": "https://jgyasu.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "Adarsh2345",
       "name": "Adarsh J",
       "avatar_url": "https://avatars.githubusercontent.com/u/130629672?v=4",
@@ -3293,6 +3303,15 @@
       "profile": "https://github.com/gavinkatz001",
       "contributions": [
         "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "marcosfelt",
+      "name": "Kobi Felton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
+      "profile": "https://github.com/marcosfelt",
+      "contributions": [
         "code"
       ]
     },
