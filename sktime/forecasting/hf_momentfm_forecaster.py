@@ -142,7 +142,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     >>> forecaster = MomentFMForecaster(seq_len = 2)
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
-
     """
 
     _tags = {
