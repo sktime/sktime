@@ -189,7 +189,7 @@ classification = [
 clustering = [
   'numba<0.61,>=0.53; python_version < "3.13"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
-  'tsvg',
+  'ts2vg',
   'networkx',
 ]
 detection = [
