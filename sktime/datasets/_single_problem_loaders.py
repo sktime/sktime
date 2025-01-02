@@ -155,7 +155,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float")
             "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in the requested type.
+        Exception is raised if the data cannot be stored in the requested type.\
     y_dtype: float, optional(default='float')
         This dtype of the target variable.
 
@@ -201,7 +201,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float")
     )
 
 
-def load_plaid(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_plaid(split=None, return_X_y=True, return_type=None):
     """Load the PLAID time series classification problem and returns X and y.
 
     Example of a univariate problem with unequal length series.
@@ -225,8 +225,6 @@ def load_plaid(split=None, return_X_y=True, return_type=None, y_dtype="str"):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
 
     Returns
     -------
@@ -242,12 +240,10 @@ def load_plaid(split=None, return_X_y=True, return_type=None, y_dtype="str"):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_gunpoint(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_gunpoint(split=None, return_X_y=True, return_type=None):
     """Load the GunPoint time series classification problem and returns X and y.
 
     Parameters
@@ -269,8 +265,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None, y_dtype="str"):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
+
 
     Returns
     -------
@@ -314,12 +309,10 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None, y_dtype="str"):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_osuleaf(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_osuleaf(split=None, return_X_y=True, return_type=None):
     """Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
@@ -341,8 +334,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None, y_dtype="str"):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
+
 
     Returns
     -------
@@ -376,14 +368,10 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None, y_dtype="str"):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_italy_power_demand(
-    split=None, return_X_y=True, return_type=None, y_dtype="str"
-):
+def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     """Load ItalyPowerDemand time series classification problem.
 
     Parameters
@@ -405,8 +393,6 @@ def load_italy_power_demand(
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
 
     Returns
     -------
@@ -437,12 +423,10 @@ def load_italy_power_demand(
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_unit_test(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_unit_test(split=None, return_X_y=True, return_type=None):
     """Load UnitTest data.
 
     This is an equal length univariate time series classification problem. It is a
@@ -470,8 +454,6 @@ def load_unit_test(split=None, return_X_y=True, return_type=None, y_dtype="str")
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
 
     Returns
     -------
@@ -502,10 +484,10 @@ def load_unit_test(split=None, return_X_y=True, return_type=None, y_dtype="str")
     for the full dataset
     """
     name = "UnitTest"
-    return _load_provided_dataset(name, split, return_X_y, return_type, y_dtype=y_dtype)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_japanese_vowels(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     """Load the JapaneseVowels time series classification problem.
 
     Example of a multivariate problem with unequal length series.
@@ -529,8 +511,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None, y_dtype=
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
+
 
     Returns
     -------
@@ -571,12 +552,10 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None, y_dtype=
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_arrow_head(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_arrow_head(split=None, return_X_y=True, return_type=None):
     """Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
@@ -598,8 +577,7 @@ def load_arrow_head(split=None, return_X_y=True, return_type=None, y_dtype="str"
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
+
 
     Returns
     -------
@@ -639,15 +617,11 @@ def load_arrow_head(split=None, return_X_y=True, return_type=None, y_dtype="str"
     """
     name = "ArrowHead"
     return _load_provided_dataset(
-        name=name,
-        split=split,
-        return_X_y=return_X_y,
-        return_type=return_type,
-        y_dtype=y_dtype,
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )
 
 
-def load_acsf1(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_acsf1(split=None, return_X_y=True, return_type=None):
     """Load dataset on power consumption of typical appliances.
 
     Parameters
@@ -669,8 +643,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None, y_dtype="str"):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
+
 
     Returns
     -------
@@ -706,12 +679,10 @@ def load_acsf1(split=None, return_X_y=True, return_type=None, y_dtype="str"):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(
-        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
-    )
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_basic_motions(split=None, return_X_y=True, return_type=None, y_dtype="str"):
+def load_basic_motions(split=None, return_X_y=True, return_type=None):
     """Load the BasicMotions time series classification problem and returns X and y.
 
     This is an equal length multivariate time series classification problem. It loads a
@@ -737,8 +708,6 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None, y_dtype="s
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-    y_dtype: str, optional(default='str')
-        This dtype of the target variable.
 
     Returns
     -------
@@ -778,11 +747,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None, y_dtype="s
             f"numpy3d instead"
         )
     return _load_provided_dataset(
-        name=name,
-        split=split,
-        return_X_y=return_X_y,
-        return_type=return_type,
-        y_dtype=y_dtype,
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )
 
 
