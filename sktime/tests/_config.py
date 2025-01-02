@@ -260,11 +260,6 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "PyODDetector": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-    ],
 }
 
 # exclude tests but keyed by test name
@@ -347,7 +342,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "HierarchicalProphet",
-        "PyODDetector",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
