@@ -1,4 +1,4 @@
-"""Time series Kvisibility"""
+"""Time series Kvisibility."""
 
 __author__ = ["seigpe"]
 
