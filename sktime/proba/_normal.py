@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.special import erf, erfinv
 
-from sktime.proba.base import BaseDistribution
+from sktime.proba._base import BaseDistribution
 
 
 class Normal(BaseDistribution):
@@ -22,8 +22,8 @@ class Normal(BaseDistribution):
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.proba.normal import Normal
 
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
