@@ -180,8 +180,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        context_len,
-        horizon_len,
+        context_len=None,
+        horizon_len=None,
         freq=0,
         repo_id="google/timesfm-1.0-200m",
         input_patch_len=32,
@@ -198,6 +198,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.context_len = context_len
         self.horizon_len = horizon_len
         self._horizon_len = None
+        self._context_len = None
         self.freq = freq
         self.repo_id = repo_id
         self.input_patch_len = input_patch_len
@@ -247,6 +248,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             self._horizon_len = max(self.horizon_len, *fh._values.values)
         else:
             self._horizon_len = self.horizon_len
+
+        self._context_len = self.context_len or (
+            ((len(y) // self.input_patch_len) + 1) * self.input_patch_len
+        )
+
+        self.horizon_len_ = self._horizon_len
+        self.context_len_ = self._context_len
 
         self.tfm = _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
@@ -370,6 +378,12 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
+            {
+                "context_len": None,
+                "horizon_len": None,
+                "freq": 0,
+                "verbose": False,
+            },
             {
                 "context_len": 64,
                 "horizon_len": 32,
