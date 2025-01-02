@@ -317,8 +317,8 @@ def _load_provided_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path: default = join(MODULE, DIRNAME) = os.path.dirname(__file__) + "/data"
         path to extract downloaded zip to
-        y_dtype : str, optional (default: 'str')
-            dtype of the target variable
+    y_dtype : str, optional (default: 'str')
+        dtype of the target variable
 
     Returns
     -------
