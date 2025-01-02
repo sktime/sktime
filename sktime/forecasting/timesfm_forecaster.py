@@ -205,6 +205,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self._context_len = None
         self.horizon_len = horizon_len
         self._horizon_len = None
+        self._context_len = None
         self.freq = freq
         self.repo_id = repo_id
         self.input_patch_len = input_patch_len
