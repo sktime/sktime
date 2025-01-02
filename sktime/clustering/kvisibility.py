@@ -14,43 +14,42 @@ from sktime.utils.warnings import warn
 
 
 class TimeSeriesKvisibility(BaseClusterer):
-    """Kvisibility for time series distances.
+    """Kvisibility for time series clustering.
+    kvisibility is a time series clustering technique based on visibility graphs.
+    The algorithm is based on the transformation of the time series into graphs,
+    and with metrics of the created graphs create a clustering with Kmeans.
+    
+    Based on the following paper:
+    https://www.aimspress.com/article/doi/10.3934/math.20241687
 
     Interface to Kvisibility sktime time series distances.
 
     Parameters
     ----------
-    distance : str, or callable, default='euclidean'
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
-        its metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
-        case only "nonzero" elements may be considered neighbors for DBSCAN.
-    eps : float, default=0.5
-        The maximum distance between two samples for one to be considered
-        as in the neighborhood of the other. This is not a maximum bound
-        on the distances of points within a cluster. This is the most
-        important Kmeans parameter to choose appropriately for your data set
-        and distance function.
-    min_samples : int, default=5
-        The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
-        The algorithm to be used by the NearestNeighbors module
-        to compute pointwise distances and find nearest neighbors.
-        See NearestNeighbors module documentation for details.
-    leaf_size : int, default=30
-        Leaf size passed to BallTree or cKDTree. This can affect the speed
-        of the construction and query, as well as the memory required
-        to store the tree. The optimal value depends
-        on the nature of the problem.
-    n_jobs : int, default=None
-        The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    init : {'k-means++', 'random'}, callable or
+        array-like of shape (n_clusters, n_features), default='k-means++'
+        Method for initialization:
+        'k-means++' : selects initial cluster centroids using sampling based
+        on an empirical probability distribution of the points’ contribution
+        to the overall inertia. This technique speeds up convergence. The
+        algorithm implemented is “greedy k-means++”. It differs from the
+        vanilla k-means++ by making several trials at each sampling step
+        and choosing the best centroid among them.
+        'random': choose n_clusters observations (rows) at random from data
+        for the initial centroids.
+        If an array is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
+    n_init : 'auto' or int, default='auto'
+        Number of times the k-means algorithm is run with different centroid seeds.
+        The final results is the best output of n_init consecutive runs in terms
+        of inertia. Several runs are recommended for sparse high-dimensional problems.
+        When n_init='auto', the number of runs depends on the value of init: 10 if
+        using init='random' or init is a callable; 1 if using init='k-means++' or
+        init is an array-like.
+    n_clusters : int, default=5
+        The number of clusters to form as well as the number of centroids to generate.
 
     Attributes
     ----------
@@ -67,6 +66,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         # packaging info
         # --------------
         "authors": "seigpe",
+        "maintainers": ["seigpe", "acoxonante@gmail.com"],
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -80,24 +80,17 @@ class TimeSeriesKvisibility(BaseClusterer):
         "capability:predict_proba": False,
     }
 
-    DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
+    DELEGATED_PARAMS = ["init", "n_clusters", "n_init"]
     DELEGATED_FITTED_PARAMS = ["core_sample_indices_", "components_ ", "labels_"]
 
     def __init__(
         self,
-        distance,
-        min_samples=5,
-        algorithm="auto",
-        leaf_size=30,
-        n_jobs=None,
+        n_clusters=5,
+        init='k-means++',
         n_init=4
     ):
-        self.distance = distance
-        self.eps = 0.5
-        self.min_samples = min_samples
-        self.algorithm = algorithm
-        self.leaf_size = leaf_size
-        self.n_jobs = n_jobs,
+        self.n_clusters = n_clusters
+        self.init = init,
         self.n_init = n_init
 
         super().__init__()
@@ -176,8 +169,8 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         self.ts_features = self._ts_to_graph(X)
 
-        self.kmeans_ = KMeans(init="k-means++", n_clusters=self.n_clusters,
-                              n_init=4, **deleg_param_dict)
+        self.kmeans_ = KMeans(init=self.init, n_clusters=self.n_clusters,
+                              n_init=self.n_init, **deleg_param_dict)
         self.kmeans_.fit(self.ts_features)
 
         for key in self.DELEGATED_FITTED_PARAMS:
@@ -208,8 +201,8 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         self.ts_features = self._ts_to_graph(X)
 
-        self.kmeans_ = KMeans(init="k-means++", n_clusters=self.n_clusters,
-                              n_init=4, **deleg_param_dict)
+        self.kmeans_ = KMeans(init=self.init, n_clusters=self.n_clusters,
+                              n_init=self.n_init, **deleg_param_dict)
         self.kmeans_.fit(self.ts_features)
 
         for key in self.DELEGATED_FITTED_PARAMS:
@@ -258,13 +251,8 @@ class TimeSeriesKvisibility(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.dists_kernels import AggrDist, DtwDist, EditDist
 
-        params1 = {"distance": DtwDist()}
-        params2 = {"distance": EditDist()}
+        params1 = {"n_clusters": [2,4,6,8,10]}
+        params2 = {"n_init": [2,4,6,8,10]}
 
-        # distance capable of unequal length
-        dist = AggrDist.create_test_instance()
-        params3 = {"distance": dist}
-
-        return [params1, params2, params3]
+        return [params1, params2]
