@@ -63,7 +63,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         # packaging info
         # --------------
         "authors": "seigpe",
-        "maintainers": ["seigpe", "acoxonante@gmail.com"],
+        "maintainers": ["seigpe", "acoxonante"],
         # estimator type
         # --------------
         "capability:multivariate": False,
