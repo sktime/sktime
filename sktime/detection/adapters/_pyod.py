@@ -31,6 +31,14 @@ class PyODDetector(BaseDetector):
     >>> from pyod.models.ecod import ECOD
     >>> model = PyODDetector(ECOD())
     >>> model.fit_transform(X)
+           labels
+    0       0
+    1       1
+    2       0
+    3       0
+    4       0
+    5       0
+    6       0
     """
 
     _tags = {
@@ -51,7 +59,7 @@ class PyODDetector(BaseDetector):
 
         super().__init__()
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -135,10 +143,12 @@ class PyODDetector(BaseDetector):
         if _check_soft_dependencies("pyod", severity="none"):
             from pyod.models.knn import KNN
 
-            params = {"estimator": KNN()}
+            params0 = {"estimator": KNN()}
+            params1 = {"estimator": KNN(n_neighbors=3)}
         else:
-            params = {"estimator": "foo"}
-        return params
+            params0 = {"estimator": "foo"}
+            params1 = {"estimator": "bar"}
+        return [params0, params1]
 
 
 # todo 1.0.0 - remove alias, i.e., remove this line
