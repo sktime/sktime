@@ -208,7 +208,19 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         Returns
         -------
         self : reference to self
+        Common Errors:
+        --------------
+        1. If `window_size` > len(y_train), an error will be raised.
+        2. If curve fitting fails, ensure your data and window_size are suitable.
+
         """
+        if self.window_size > len(y):
+            raise ValueError(
+                f"Invalid window_size: {self.window_size}. "
+                "It must be less than or equal to the size of the training data "
+                f"({len(y)})."
+            )
+
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
             lag_feature={
@@ -217,12 +229,23 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             truncate="fill",
         ).fit_transform(y)
 
+        # Curve fit with error handling
         self.function = CurveFitForecaster(
             self._f_statistic,
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
-        self.function.fit(rolling_mean.dropna())
+        try:
+            self.function.fit(rolling_mean.dropna())
+        except Exception as e:
+            raise RuntimeError(
+                "Curve fitting error. Please check the parameters and try again.\n"
+                f"Window size: {self.window_size}\n"
+                f"f_statistic: {self._f_statistic}\n"
+                f"init_param_f_statistic: {self._init_param_f_statistic}\n"
+                f"Original error: {e}"
+            )
+
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
