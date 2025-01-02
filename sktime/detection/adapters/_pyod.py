@@ -34,6 +34,12 @@ class PyODDetector(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "satya-pattnaik", "fkiraly"],
+        "maintainers": "satya-pattnaik",
+        # estimator type
+        # --------------
         "python_dependencies": "pyod",
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
@@ -102,7 +108,7 @@ class PyODDetector(BaseDetector):
             Y_val_np = Y_np
 
         Y_loc = np.where(Y_np)
-        Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
+        Y = pd.Series(Y_val_np[Y_loc])
 
         return Y
 

@@ -25,6 +25,115 @@ Composition
     DetectorPipeline
     DetectorAsTransformer
 
+
+Change Point Detection
+----------------------
+
+.. currentmodule:: sktime.detection.skchange_cp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingWindow
+    PELT
+    SeededBinarySegmentation
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularChangePoints
+    ZeroChangePoints
+
+
+Time Series Point Anomaly Detection
+-----------------------------------
+
+Point anomaly detectors identify single anomalous indices.
+
+Window-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.lof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubLOF
+
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyODDetector
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularAnomalies
+    ZeroAnomalies
+
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
+
+Time Series Segment Anomaly Detection
+-------------------------------------
+
+Segment anomaly detectors identify anomalous segment.
+
+.. currentmodule:: sktime.detection.skchange_aseg
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatThresholdAnomaliser
+    CircularBinarySegmentation
+    CAPA
+    MVCAPA
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ZeroSegments
+
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
+
 Time Series Segmentation
 ------------------------
 
@@ -126,64 +235,3 @@ Naive Baselines
     :template: class.rst
 
     ZeroSegments
-
-Change Point Detection
-----------------------
-
-Naive Baselines
-^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.detection.dummy
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DummyRegularChangepoints
-    ZeroChangepoints
-
-
-Time Series Anomaly Detection
------------------------------
-
-Window-based Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.detection.lof
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SubLOF
-
-Reduction to Tabular Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.detection.adapters
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PyODDetector
-
-Naive Baselines
-^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.detection.dummy
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DummyRegularAnomalies
-    ZeroAnomalies
-
-
-Data Generation
----------------
-
-.. automodule:: sktime.detection.datagen
-    :no-members:
-    :no-inherited-members:
