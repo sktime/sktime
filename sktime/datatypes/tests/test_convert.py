@@ -124,9 +124,6 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
             as_scitype=scitype,
         )
 
-        print(f"Converted: \n{converted_fixture_i}")
-        print(f"Ground Truth: \n{to_fixture[0]}")
-
         equals, deep_equals_msg = deep_equals(
             converted_fixture_i,
             to_fixture[0],
