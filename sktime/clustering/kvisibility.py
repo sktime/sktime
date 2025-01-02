@@ -9,8 +9,6 @@ from sklearn.cluster import KMeans
 from ts2vg import HorizontalVG, NaturalVG
 
 from sktime.clustering.base import BaseClusterer
-from sktime.dists_kernels.base import BasePairwiseTransformerPanel
-from sktime.utils.warnings import warn
 
 
 class TimeSeriesKvisibility(BaseClusterer):
@@ -18,7 +16,6 @@ class TimeSeriesKvisibility(BaseClusterer):
     kvisibility is a time series clustering technique based on visibility graphs.
     The algorithm is based on the transformation of the time series into graphs,
     and with metrics of the created graphs create a clustering with Kmeans.
-    
     Based on the following paper:
     https://www.aimspress.com/article/doi/10.3934/math.20241687
 
@@ -94,22 +91,6 @@ class TimeSeriesKvisibility(BaseClusterer):
         self.n_init = n_init
 
         super().__init__()
-
-        if isinstance(distance, BasePairwiseTransformerPanel):
-            tags_to_clone = [
-                "capability:unequal_length",
-                "capability:missing_values",
-            ]
-            self.clone_tags(distance, tags_to_clone)
-
-        # numba distance in sktime (indexed by string)
-        # cannot support unequal length data, and require numpy3D input
-        if isinstance(distance, str):
-            tags_to_set = {
-                "X_inner_mtype": "numpy3D",
-                "capability:unequal_length": False,
-            }
-            self.set_tags(**tags_to_set)
 
         self.kmeans_ = None
 
@@ -248,11 +229,12 @@ class TimeSeriesKvisibility(BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid
+            test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
-        params1 = {"n_clusters": [2,4,6,8,10]}
-        params2 = {"n_init": [2,4,6,8,10]}
+        params1 = {"n_clusters": [2, 4, 6, 8, 10]}
+        params2 = {"n_init": [2, 4, 6, 8, 10]}
 
         return [params1, params2]
