@@ -82,7 +82,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         model with the argument `model_path` and ignore any passed `y`.
 
         Note that both "minimal" and "zero-shot" fit_strategy requires a mandatory
-        passed in `model_path`.
+        passed in `model_path`, and that the configuration "full" along with a passed
+        model_path will trigger an error.
+
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
     config : dict, optional, default = {}
