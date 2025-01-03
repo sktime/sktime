@@ -13,6 +13,7 @@ from sktime.clustering.base import BaseClusterer
 
 class TimeSeriesKvisibility(BaseClusterer):
     """Kvisibility for time series clustering.
+
     kvisibility is a time series clustering technique based on visibility graphs.
     The algorithm is based on the transformation of the time series into graphs,
     and with metrics of the created graphs create a clustering with Kmeans.
@@ -47,7 +48,6 @@ class TimeSeriesKvisibility(BaseClusterer):
         init is an array-like.
     n_clusters : int, default=5
         The number of clusters to form as well as the number of centroids to generate.
-
     Attributes
     ----------
     core_sample_indices_ : ndarray of shape (n_core_samples,)
