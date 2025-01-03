@@ -280,7 +280,7 @@ class STLForecaster(BaseForecaster):
         y_pred_trend = self.forecaster_trend_.predict(fh=fh, X=X)
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
