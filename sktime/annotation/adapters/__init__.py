@@ -4,4 +4,4 @@
 
 __all__ = ["PyODAnnotator"]
 
-from sktime.annotation.adapters._pyod import PyODAnnotator
+from sktime.detection.adapters._pyod import PyODAnnotator

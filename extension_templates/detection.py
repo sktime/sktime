@@ -59,10 +59,87 @@ class MyDetector(BaseDetector):
     and so on
     """
 
-    # Change the `task` and `learning_type` as needed
     _tags = {
+        # to list all valid tags with description, use sktime.registry.all_tags
+        #   all_tags(estimator_types="forecaster", as_dataframe=True)
+        #
+        # estimator tags
+        # --------------
+        #
+        # detection tasks fall into categories including anomaly or outlier detection,
+        # change point detection, and time series segmentation and segment detection
         "task": "segmentation",
+        # valid values: "change_point_detection", "anomaly_detection", "segmentation"
+        #
+        # learning_type = learning type of the detection task
         "learning_type": "unsupervised",
+        # valid values: "unsupervised", "supervised", "semi_supervised"
+        #
+        # capability:multivariate controls whether internal X can be multivariate
+        # if True (only univariate), always applies vectorization over variables
+        "capability:multivariate": False,
+        # valid values: True = inner _fit, _transform receive only univariate series
+        #   False = uni- and multivariate series are passed to inner methods
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": True,
+        # valid values: True = _fit is considered empty and skipped, False = No
+        # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
+        #
+        # capability:missing_data = can estimator handle missing data?
+        "capability:missing_data": False,
+        # valid values: boolean True (yes), False (no)
+        # if False, raises exception if y or X passed contain missing data (nans)
+        #
+        # X_inner_mtype control which format X appears in in the inner functions _fit,
+        # _predict, etc
+        "X_inner_mtype": "pd.DataFrame",
+        # valid values: str and list of str
+        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
+        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
+        #   in that case, all inputs are converted to that one type
+        # if list of str, must be a list of valid str specifiers
+        #   in that case, X/y are passed through without conversion if on the list
+        #   if not on the list, converted to the first entry of the same scitype
+        #
+        "distribution_type": "None",  # Tag to determine test in test_all_annotators
+        #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of the estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python version is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
+        # raises exception at construction if modules at strings cannot be imported
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -115,8 +192,29 @@ class MyDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             Training data to fit model to time series.
-        y : pd.Series, optional
-            Ground truth labels for training, if detector is supervised.
+
+        y : pd.DataFrame with RangeIndex
+            Known events for training, in ``X``, if detector is supervised.
+
+            Each row ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -144,13 +242,28 @@ class MyDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
+
+            Each row ``y`` is a detected or predicted event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges ot indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+              ``"ilocs"`` contains the iloc index at which the event takes place.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
         """
 
         # implement here

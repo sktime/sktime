@@ -7,7 +7,7 @@ import datetime
 import pandas as pd
 import pytest
 
-from sktime.annotation.lof import SubLOF
+from sktime.detection.lof import SubLOF
 from sktime.tests.test_switch import run_test_for_class
 
 
@@ -69,7 +69,7 @@ def test_cut_into_intervals(x, interval_size, expected_intervals):
     [
         (
             pd.DataFrame([0, 0, 100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 100, 0]),
-            pd.Series([2, 7, 13]),
+            pd.DataFrame({"ilocs": [2, 7, 13]}),
         ),
     ],
 )
@@ -77,4 +77,4 @@ def test_predict(X, y_expected):
     model = SubLOF(3, window_size=5, novelty=True)
     model.fit(X)
     y_actual = model.predict(X)
-    pd.testing.assert_series_equal(y_actual, y_expected)
+    pd.testing.assert_frame_equal(y_actual, y_expected)
