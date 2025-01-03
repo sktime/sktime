@@ -18,6 +18,7 @@ def forecasting_validation(
     estimator: BaseForecaster,
     backend=None,
     backend_params=None,
+    cv_global=None,
     **kwargs,
 ) -> dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -65,12 +66,29 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+    global_mode: bool, default=False
+        If `global_mode=True`, following changes are applied:
+        `cv_splitter` is used to split data in instance level.
+        `cv_splitter` must be an instance of `InstanceSplitter`.
+        `cv_ht` is used to split `y_test` from `cv_splitter`
+        to `y_hist` and `y_true` in time index level.
+        `cv_ht` must be an instance of `SingleWindowSplitter`.
+        With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
+        from each fold, following evaluation will be applied:
+        ```py
+        forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
+        y_pred = forecaster.predict((y=y_hist, X=X_test)
+        # calculate metrics with `y_true` and `y_pred`
+        ```
+    cv_ht : sktime InstanceSplitter descendant, optional
+        In global mode, `cv_ht` is used to split `y_test` to 'y_hist and 'y_true`
 
     Returns
     -------
     Dictionary of benchmark results for that forecaster
     """
     y = dataset_loader()
+
     results = {}
     if isinstance(y, tuple):
         y, X = y
@@ -82,6 +100,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            cv_global=cv_global,
         )
     else:
         scores_df = evaluate(
@@ -91,6 +110,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            cv_global=cv_global,
         )
 
     for scorer in scorers:
@@ -108,6 +128,7 @@ def _factory_forecasting_validation(
     scorers: list[BaseMetric],
     backend=None,
     backend_params=None,
+    cv_global=None,
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -117,6 +138,7 @@ def _factory_forecasting_validation(
         scorers,
         backend=backend,
         backend_params=backend_params,
+        cv_global=cv_global,
     )
 
 
@@ -183,6 +205,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
+        cv_global=None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -197,6 +220,22 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+        global_mode: bool, default=False
+            If `global_mode=True`, following changes are applied:
+            `cv_splitter` is used to split data in instance level.
+            `cv_splitter` must be an instance of `InstanceSplitter`.
+            `cv_ht` is used to split `y_test` from `cv_splitter`
+            to `y_hist` and `y_true` in time index level.
+            `cv_ht` must be an instance of `SingleWindowSplitter`.
+            With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
+            from each fold, following evaluation will be applied:
+            ```py
+            forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
+            y_pred = forecaster.predict((y=y_hist, X=X_test)
+            # calculate metrics with `y_true` and `y_pred`
+            ```
+        cv_ht : sktime InstanceSplitter descendant, optional
+            In global mode, `cv_ht` is used to split `y_test` to 'y_hist and 'y_true`
 
         Returns
         -------
@@ -206,11 +245,16 @@ class ForecastingBenchmark(BaseBenchmark):
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
+            "cv_global": cv_global,
         }
         if task_id is None:
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+            ) + (
+                f"_[cv_global={cv_global.__class__.__name__}]"
+                if cv_global is not None
+                else ""
             )
         self._add_task(
             functools.partial(
