@@ -5,6 +5,7 @@ import pytest
 from sktime.annotation.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
+    plot_time_series_with_subsequent_outliers,
 )
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -14,6 +15,7 @@ def time_series_data():
     ts_data = np.random.rand(100)
     ts = pd.DataFrame({"Data": ts_data})
     true_cps = [4, 8]
+    intervals = [(5, 10), (15, 20)]
     font_size = 12
     ts_name = "Test Time Series"
     profiles = np.array([np.random.rand(100) for _ in range(20)])
@@ -23,6 +25,7 @@ def time_series_data():
         "ts_name": ts_name,
         "ts": ts,
         "true_cps": true_cps,
+        "intervals": intervals,
         "font_size": font_size,
         "profiles": profiles,
         "found_cps": found_cps,
@@ -73,3 +76,20 @@ def test_plot_time_series_with_profiles(time_series_data):
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, np.ndarray)
     assert ax[0].get_title() == ts_name
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("seaborn", "matplotlib", severity="none"),
+    reason="Seaborn is required as a dependency for this plot.",
+)
+def test_plot_time_series_with_subsequent_outliers(time_series_data):
+    import matplotlib.pyplot as plt
+
+    # Access data from the fixture
+    ts = time_series_data["ts"]
+    intervals = time_series_data["intervals"]
+
+    fig, ax = plot_time_series_with_subsequent_outliers(ts, intervals=intervals)
+
+    assert isinstance(fig, plt.Figure)
+    assert isinstance(ax, plt.Axes)
