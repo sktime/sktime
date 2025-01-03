@@ -80,14 +80,9 @@ class TimeSeriesKvisibility(BaseClusterer):
     DELEGATED_PARAMS = ["init", "n_clusters", "n_init"]
     DELEGATED_FITTED_PARAMS = ["core_sample_indices_", "components_ ", "labels_"]
 
-    def __init__(
-        self,
-        n_clusters=5,
-        init='k-means++',
-        n_init=4
-    ):
+    def __init__(self, n_clusters=5, init="k-means++", n_init=4):
         self.n_clusters = n_clusters
-        self.init = init,
+        self.init = (init,)
         self.n_init = n_init
 
         super().__init__()
@@ -119,8 +114,7 @@ class TimeSeriesKvisibility(BaseClusterer):
 
             ts_attr.append([density_h, max_grade_h, density_n, max_grade_n])
         df = pd.DataFrame(
-            ts_attr, columns=["density_h", "max_degree_h",
-                              "density_n", "max_degree_n"]
+            ts_attr, columns=["density_h", "max_degree_h", "density_n", "max_degree_n"]
         )
 
         ts_features = np.array(
@@ -150,8 +144,12 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         self.ts_features = self._ts_to_graph(X)
 
-        self.kmeans_ = KMeans(init=self.init, n_clusters=self.n_clusters,
-                              n_init=self.n_init, **deleg_param_dict)
+        self.kmeans_ = KMeans(
+            init=self.init,
+            n_clusters=self.n_clusters,
+            n_init=self.n_init,
+            **deleg_param_dict,
+        )
         self.kmeans_.fit(self.ts_features)
 
         for key in self.DELEGATED_FITTED_PARAMS:
@@ -182,8 +180,12 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         self.ts_features = self._ts_to_graph(X)
 
-        self.kmeans_ = KMeans(init=self.init, n_clusters=self.n_clusters,
-                              n_init=self.n_init, **deleg_param_dict)
+        self.kmeans_ = KMeans(
+            init=self.init,
+            n_clusters=self.n_clusters,
+            n_init=self.n_init,
+            **deleg_param_dict,
+        )
         self.kmeans_.fit(self.ts_features)
 
         for key in self.DELEGATED_FITTED_PARAMS:
