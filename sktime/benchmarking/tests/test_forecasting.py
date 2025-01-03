@@ -51,7 +51,7 @@ EXPECTED_RESULTS_2 = pd.DataFrame(
 EXPECTED_RESULTS_GLOBAL_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
-        + "[cv_splitter=InstanceSplitter]_[cv_ht=SingleWindowSplitter]",
+        + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
         "model_id": "PytorchForecastingDeepAR",
         "MeanSquaredPercentageError_fold_0_test": 0.0,
         "MeanSquaredPercentageError_fold_1_test": 0.0,
@@ -63,7 +63,7 @@ EXPECTED_RESULTS_GLOBAL_1 = pd.DataFrame(
 EXPECTED_RESULTS_GLOBAL_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
-        + "[cv_splitter=InstanceSplitter]_[cv_ht=SingleWindowSplitter]",
+        + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
         "model_id": "PytorchForecastingDeepAR",
         "MeanAbsolutePercentageError_fold_0_test": 0.0,
         "MeanAbsolutePercentageError_fold_1_test": 0.0,
@@ -205,10 +205,9 @@ def test_forecastingbenchmark_global_mode(
 
     benchmark.add_task(
         data_loader_global,
-        InstanceSplitter(KFold(2)),
+        SingleWindowSplitter(fh=[1], window_length=5),
         scorers,
-        global_mode=True,
-        cv_ht=SingleWindowSplitter(fh=[1], window_length=5),
+        cv_global=InstanceSplitter(KFold(2)),
     )
 
     results_file = tmp_path / "results_global_mode.csv"
