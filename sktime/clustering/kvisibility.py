@@ -28,7 +28,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         array-like of shape (n_clusters, n_features), default='k-means++'
         Method for initialization:
         'k-means++' : selects initial cluster centroids using sampling based
-        on an empirical probability distribution of the points’ contribution
+        on an empirical probability distribution of the points' contribution
         to the overall inertia. This technique speeds up convergence. The
         algorithm implemented is “greedy k-means++”. It differs from the
         vanilla k-means++ by making several trials at each sampling step
