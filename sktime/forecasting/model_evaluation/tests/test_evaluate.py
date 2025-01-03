@@ -79,7 +79,12 @@ STRATEGY = ["refit", "update", "no-update_params"]
 
 
 def _check_evaluate_output(
-    out, cv, y, scoring, return_data, global_mode=False, cv_ht=None
+    out,
+    cv,
+    y,
+    scoring,
+    return_data,
+    cv_global=None,
 ):
     assert isinstance(out, pd.DataFrame)
     # Check column names.
@@ -88,21 +93,28 @@ def _check_evaluate_output(
     assert set(out.columns) == columns.keys(), "Columns are not identical"
 
     # Check number of rows against number of splits.
-    n_splits = cv.get_n_splits(y)
+    if cv_global is not None:
+        n_splits = cv_global.get_n_splits(y)
+    else:
+        n_splits = cv.get_n_splits(y)
     assert out.shape[0] == n_splits
 
     # Check if all timings are positive.
     assert np.all(out.filter(like="_time") >= 0)
 
     # Check cutoffs.
-    if not global_mode:
+    if cv_global is None:
         cutoff = cv.get_cutoffs(y)
         cutoff = y.iloc[cutoff].index.to_numpy()
         np.testing.assert_array_equal(out["cutoff"].to_numpy(), cutoff)
     else:
-        cutoff = cv_ht.get_cutoffs(y)
+        cutoff = cv.get_cutoffs(y)
         cutoff = y.iloc[cutoff, :].index.get_level_values(-1).to_numpy()
-        np.all(out["cutoff"].to_numpy() == cutoff)
+
+        np.testing.assert_array_equal(
+            out["cutoff"].map(lambda x: x.to_numpy()).to_numpy(),
+            cutoff.repeat(len(out["cutoff"])),
+        )
 
     # Check training window lengths.
     if isinstance(cv, SlidingWindowSplitter) and cv.initial_window is not None:
@@ -119,11 +131,11 @@ def _check_evaluate_output(
         np.testing.assert_array_equal(expected, actual)
         assert np.all(out.loc[0, "len_train_window"] == cv.window_length)
 
-    elif global_mode:
-        if isinstance(cv_ht.fh, ForecastingHorizon):
-            window_length = cv_ht.window_length + np.max(cv_ht.fh.to_relative(cutoff))
+    elif cv_global is not None:
+        if isinstance(cv.fh, ForecastingHorizon):
+            window_length = cv.window_length + np.max(cv.fh.to_relative(cutoff))
         else:
-            window_length = cv_ht.window_length + np.max(cv_ht.fh)
+            window_length = cv.window_length + np.max(cv.fh)
         assert np.all(out.loc[:, "len_train_window"] == window_length)
 
     else:
@@ -234,8 +246,8 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         "random_log_path": True,  # fix parallel file access error in CI
     }
     forecaster = PytorchForecastingDeepAR(**params)
-    cv = InstanceSplitter(KFold(2))
-    cv_ht = SingleWindowSplitter(fh=[1], window_length=4)
+    cv_global = InstanceSplitter(KFold(2))
+    cv = SingleWindowSplitter(fh=[1], window_length=4)
     out = evaluate(
         forecaster,
         cv,
@@ -244,11 +256,10 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         scoring=scoring,
         strategy=strategy,
         error_score="raise",
-        global_mode=True,
-        cv_ht=cv_ht,
+        cv_global=cv_global,
         **backend,
     )
-    _check_evaluate_output(out, cv, y, scoring, False, global_mode=True, cv_ht=cv_ht)
+    _check_evaluate_output(out, cv, y, scoring, False, cv_global=cv_global)
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
     assert np.all(np.abs(actual) < 1e-3)

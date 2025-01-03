@@ -18,8 +18,7 @@ def forecasting_validation(
     estimator: BaseForecaster,
     backend=None,
     backend_params=None,
-    global_mode=False,
-    cv_ht=None,
+    cv_global=None,
     **kwargs,
 ) -> dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -101,8 +100,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
-            global_mode=global_mode,
-            cv_ht=cv_ht,
+            cv_global=cv_global,
         )
     else:
         scores_df = evaluate(
@@ -112,8 +110,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
-            global_mode=global_mode,
-            cv_ht=cv_ht,
+            cv_global=cv_global,
         )
 
     for scorer in scorers:
@@ -131,8 +128,7 @@ def _factory_forecasting_validation(
     scorers: list[BaseMetric],
     backend=None,
     backend_params=None,
-    global_mode=False,
-    cv_ht=None,
+    cv_global=None,
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -142,8 +138,7 @@ def _factory_forecasting_validation(
         scorers,
         backend=backend,
         backend_params=backend_params,
-        global_mode=global_mode,
-        cv_ht=cv_ht,
+        cv_global=cv_global,
     )
 
 
@@ -210,8 +205,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
-        global_mode=False,
-        cv_ht=None,
+        cv_global=None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -251,14 +245,17 @@ class ForecastingBenchmark(BaseBenchmark):
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
-            "global_mode": global_mode,
-            "cv_ht": cv_ht,
+            "cv_global": cv_global,
         }
         if task_id is None:
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
-            ) + (f"_[cv_ht={cv_ht.__class__.__name__}]" if global_mode else "")
+            ) + (
+                f"_[cv_global={cv_global.__class__.__name__}]"
+                if cv_global is not None
+                else ""
+            )
         self._add_task(
             functools.partial(
                 _factory_forecasting_validation,

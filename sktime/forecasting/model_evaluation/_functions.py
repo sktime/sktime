@@ -350,8 +350,7 @@ def evaluate(
     backend: Optional[str] = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
-    global_mode=False,
-    cv_ht=None,
+    cv_global=None,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -551,8 +550,6 @@ def evaluate(
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
     """
-    if global_mode:
-        assert cv_ht is not None, "in global mode, cv_ht must be passed"
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
             raise RuntimeError(
@@ -563,7 +560,7 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = _check_scores(scoring)
-    if global_mode:
+    if cv_global is not None:
         ALLOWED_SCITYPES = ["Panel", "Hierarchical"]
     else:
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
@@ -588,14 +585,14 @@ def evaluate(
 
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
-        "fh": cv_ht.fh if global_mode else cv.fh,
+        "fh": cv.fh,
         "forecaster": forecaster,
         "scoring": scoring,
         "strategy": strategy,
         "return_data": return_data,
         "error_score": error_score,
         "cutoff_dtype": cutoff_dtype,
-        "global_mode": global_mode,
+        "global_mode": cv_global is not None,
     }
 
     def gen_y_X_train_test(y, X, cv, cv_X):
@@ -629,7 +626,7 @@ def evaluate(
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
                 yield y_train, y_test, X_train, X_test
 
-    def gen_y_X_train_test_global(y, X, cv, cv_X, cv_ht):
+    def gen_y_X_train_test_global(y, X, cv, cv_X, cv_global):
         """Generate joint splits of y, X as per cv, cv_X.
 
         If X is None, train/test splits of X are also None.
@@ -649,20 +646,20 @@ def evaluate(
         from sktime.split import InstanceSplitter, SingleWindowSplitter
 
         assert isinstance(
-            cv, InstanceSplitter
-        ), "cv must be an instance of sktime.split.InstanceSplitter"
+            cv_global, InstanceSplitter
+        ), "cv_global must be an instance of sktime.split.InstanceSplitter"
         if cv_X is not None:
             assert isinstance(
-                cv_X, InstanceSplitter
-            ), "cv_X must be an instance of sktime.split.InstanceSplitter"
+                cv_X, SingleWindowSplitter
+            ), "cv_X must be an instance of sktime.split.SingleWindowSplitter"
         assert isinstance(
-            cv_ht, SingleWindowSplitter
-        ), "cv_ht must be an instance of sktime.split.SingleWindowSplitter"
+            cv, SingleWindowSplitter
+        ), "cv must be an instance of sktime.split.SingleWindowSplitter"
 
-        geny = cv.split_series(y)
+        geny = cv_global.split_series(y)
         if X is None:
             for y_train, y_test in geny:
-                y_hist, y_true = next(cv_ht.split_series(y_test))
+                y_hist, y_true = next(cv.split_series(y_test))
                 yield y_train, y_hist, y_true, None, None
         else:
             if cv_X is None:
@@ -670,15 +667,15 @@ def evaluate(
 
                 cv_X = SameLocSplitter(cv, y)
 
-            genx = cv_X.split_series(X)
+            genx = SameLocSplitter(cv_global, y).split_series(X)
 
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
-                y_hist, y_true = next(cv_ht.split_series(y_test))
+                y_hist, y_true = next(cv.split_series(y_test))
                 yield y_train, y_hist, y_true, X_train, X_test
 
     # generator for y and X splits to iterate over below
-    if global_mode:
-        yx_splits = gen_y_X_train_test_global(y, X, cv, cv_X, cv_ht=cv_ht)
+    if cv_global is not None:
+        yx_splits = gen_y_X_train_test_global(y, X, cv, cv_X, cv_global=cv_global)
     else:
         yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 
