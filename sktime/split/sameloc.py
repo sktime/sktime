@@ -23,6 +23,33 @@ class SameLocSplitter(BaseSplitter):
     Splits ``y`` in ``split`` and ``split_loc`` such that ``loc`` indices of splits
     are identical to loc indices of ``cv`` applied to ``y_template``.
 
+    Let \( \mathcal{Y}_{\text{template}} \) represent the reference time series
+    with index \( \mathcal{I}_{\text{template}} \subseteq \mathbb{T} \), where
+    \( \mathbb{T} \) denotes the space of loc indices.
+    Similarly, let \( \mathcal{Y} \) represent the target time series with index
+    \( \mathcal{I} \subseteq \mathbb{T} \).
+
+    This splitter applies a given splitting scheme \( \mathcal{S} \) (defined by a
+    BaseSplitter instance, \( \text{cv} \)) to \( \mathcal{Y}_{\text{template}} \),
+    generating loc-based train-test splits:
+    \[
+    \mathcal{S}(\mathcal{I}_{\text{template}}) = \{ (\mathcal{I}_{\text{train}}^k,
+    \mathcal{I}_{\text{test}}^k) \}_{k=1}^K,  \]
+    where \( K \) is the total number of splits.
+
+    The SameLocSplitter then maps these loc-based indices
+    \( \mathcal{I}_{\text{train}}^k \) and \( \mathcal{I}_{\text{test}}^k \)
+    to their corresponding positional indices (\( \text{iloc} \)) in \( \mathcal{I} \).
+
+    The final train-test splits for \( \mathcal{Y} \) are therefore:
+    \[
+    \mathcal{S}(\mathcal{I}) = \{ (f(\mathcal{I}_{\text{train}}^k),
+    f(\mathcal{I}_{\text{test}}^k)) \}_{k=1}^K.
+    \]
+
+    This splitter is useful when you need to replicate train-test splits across multiple
+    time series with consistent loc-based indexing.
+
     Parameters
     ----------
     cv : BaseSplitter
