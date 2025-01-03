@@ -239,6 +239,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
+        if self.fit_strategy == "full" and self.model_path:
+            raise ValueError(
+                "fit_strategy = 'full' and model_path cannot be passed together"
+            )
+
     def _fit(self, y, fh, X=None):
         """Fits the model.
 
@@ -291,7 +296,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                         f"found {self.model.model.__class__.__name__}"
                     )
 
-        if self.fit_strategy == "full" or self.fit_strategy == "zero-shot":
+        if self.fit_strategy == "full" or self.fit_strategy == "minimal":
             # initialize dataset
             y_train, y_test = temporal_train_test_split(
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
@@ -301,7 +306,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 context_length=self.model.config.context_length,
                 prediction_length=self.model.config.prediction_length,
             )
-            if self.validation_split != 0.0:
+            if self.validation_split > 0.0:
                 eval_dataset = PyTorchDataset(
                     y_test,
                     context_length=self.model.config.context_length,
