@@ -1271,7 +1271,7 @@ class PanelGluontsList(ScitypePanel):
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "gluonts",
+        "python_dependencies": None,
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1308,7 +1308,7 @@ class PanelGluontsList(ScitypePanel):
             or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
