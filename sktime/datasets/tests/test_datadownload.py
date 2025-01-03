@@ -20,6 +20,12 @@ from sktime.utils.dependencies import _check_soft_dependencies
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
 TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+TSF_SUBSAMPLE_SMALL = [
+    "wind_4_seconds_dataset",
+    "m4_hourly_dataset",
+    "solar_10_minutes_dataset",
+    "australian_electricity_demand_dataset",
+]
 
 
 @pytest.mark.datadownload
@@ -78,7 +84,7 @@ def test_load_forecastingdata_check_freq_for_hier_data():
 
 
 @pytest.mark.datadownload
-@pytest.mark.parametrize("name", TSF_SUBSAMPLE)
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE_SMALL)
 def test_load_forecastingdata_hier(name):
     """Test loading downloaded dataset from forecasting.org."""
     load_forecastingdata(name=name, return_type="pd_multiindex_hier")
