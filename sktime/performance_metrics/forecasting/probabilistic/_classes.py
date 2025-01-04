@@ -36,6 +36,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """
 
     _tags = {
+        "object_type": ["metric_forecasting_proba", "metric"],
         "reserved_params": ["multioutput", "score_average"],
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
@@ -55,7 +56,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : return object of probabilistic predictition method scitype:y_pred
+        y_pred : return object of probabilistic prediction method scitype:y_pred
             must be at fh and for variables equal to those in y_true.
 
         Returns
@@ -82,7 +83,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : return object of probabilistic predictition method scitype:y_pred
+        y_pred : return object of probabilistic prediction method scitype:y_pred
             must be at fh and for variables equal to those in y_true
 
         multioutput : string "uniform_average" or "raw_values" determines how\
@@ -176,7 +177,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : return object of probabilistic predictition method scitype:y_pred
+        y_pred : return object of probabilistic prediction method scitype:y_pred
             must be at fh and for variables equal to those in y_true
 
         multioutput : string "uniform_average" or "raw_values" determines how\
@@ -855,7 +856,7 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : return object of probabilistic predictition method scitype:y_pred
+        y_pred : return object of probabilistic prediction method scitype:y_pred
             must be at fh and for variables equal to those in y_true
 
         multioutput : {'raw_values', 'uniform_average'} or array-like of shape \

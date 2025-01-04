@@ -57,6 +57,34 @@ FREQ_SET_CHECK = False
 class SeriesPdDataFrame(ScitypeSeries):
     """Data type: pandas.DataFrame based specification of single time series.
 
+    Name: ``"pd.DataFrame"``
+
+    Short description:
+
+    a uni- or multivariate ``pandas.DataFrame``,
+    with rows = time points, cols = variables
+
+    Long description:
+
+    The ``"pd.DataFrame"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: pandas.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be monotonic,
+      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+    * variables: columns of ``obj`` correspond to different variables
+    * variable names: column names ``obj.columns``
+    * time points: rows of ``obj`` correspond to different, distinct time points
+    * time index: ``obj.index`` is interpreted as the time index.
+
+    Capabilities:
+
+    * cannot represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -186,6 +214,36 @@ def _check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 class SeriesPdSeries(ScitypeSeries):
     """Data type: pandas.Series based specification of single time series.
 
+    Name: ``"pd.Series"``
+
+    Short description:
+
+    a (univariate) ``pandas.Series``,
+    with entries corresponding to different time points
+
+    Long description:
+
+    The ``"pd.Series"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: pandas.Series`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be monotonic,
+      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+    * variables: there is a single variable, corresponding to the values of ``obj``.
+      Only univariate series can be represented.
+    * variable names: by default, there is no column name.
+      If needed, a variable name can be provided as ``obj.name``.
+    * time points: entries of ``obj`` correspond to different, distinct time points
+    * time index: ``obj.index`` is interpreted as a time index.
+
+    Capabilities:
+
+    * cannot represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -299,6 +357,36 @@ class SeriesPdSeries(ScitypeSeries):
 
 class SeriesNp2D(ScitypeSeries):
     """Data type: 2D np.ndarray based specification of single time series.
+
+    Name: ``"np.ndarray"``
+
+    Short description:
+
+    a 2D ``numpy.ndarray``, with rows = time points, cols = variables
+
+    Long description:
+
+    The ``"np.ndarray"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: numpy.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` must be 2D, i.e., ``obj.shape`` must have length 2.
+      This is also true for univariate time series.
+    * variables: variables correspond to columns of ``obj``.
+    * variable names: the ``"np.ndarray"`` mtype cannot represent variable names.
+    * time points: the rows of ``obj`` correspond to different, distinct time points.
+    * time index: The time index is implicit and by-convention.
+      The ``i``-th row (for an integer ``i``) is interpreted as an observation
+      at the time point ``i``. That is, the index is always interpreted as zero-indexed
+      integer.
+
+    Capabilities:
+
+    * can represent multivariate series
+    * cannot represent unequally spaced series
+    * can represent missing values
 
     Parameters
     ----------
@@ -457,6 +545,62 @@ def _index_equally_spaced(index):
 
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
+
+    Name: ``xr.DataArray``
+
+    Short description:
+
+    An ``xarray.DataArray`` representing a single time series, where:
+
+    - Each row corresponds to a time point.
+    - Columns represent variables or features.
+    - Coordinates provide additional metadata for the time index and variables.
+
+    Long description:
+
+    The ``xr.DataArray`` :term:``mtype`` is a concrete specification
+    that implements the ``Series`` :term:``scitype``, i.e., the abstract
+    type for time series data.
+
+    An object ``obj: xarray.DataArray`` follows the specification iff:
+
+    * structure convention:
+
+      - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
+      - ``obj.coords`` must include:
+
+        - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
+          ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
+        - A variable-like index (``dim_1``) for feature/variable names (optional).
+
+    * time index:
+
+      - The ``dim_0`` coordinate is interpreted as the time index.
+
+    * time points:
+
+      - Each row of ``obj`` represents a single time point.
+      - Rows with the same ``dim_0`` value correspond to the same time point.
+
+    * variables:
+
+      - Columns represent different variables (or features).
+      - Column names are stored in ``dim_1`` if present.
+
+    * variable names:
+
+      - The variable names are the column names (``dim_1``), if present.
+
+    * metadata:
+
+      - Additional metadata (e.g., attributes) may be included in ``obj.attrs``.
+
+    Capabilities:
+
+    * can represent univariate or multivariate time series
+    * requires equally spaced time points (if time index is specified)
+    * supports missing values
+    * cannot represent series with differing sets of variables
 
     Parameters
     ----------
