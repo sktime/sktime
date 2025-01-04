@@ -4,7 +4,7 @@ from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sklearn.utils import check_random_state
 from copy import deepcopy
-
+#xthis
 class InceptionTimeClassifier(BaseDeepClassifier):
     def __init__(
         self,
@@ -123,46 +123,3 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             "batch_size": 4,
             "depth": 3,
         }
-"""
-InceptionTimeClassifier: A Deep Learning Classifier for Time Series Data
-
-This code defines the `InceptionTimeClassifier`, a deep learning-based classifier for time-series 
-data based on the InceptionTime architecture. Below are the steps to use and enhance this classifier:
-
-1. **Test the Classifier**:
-    - Load sample data using `sktime.datasets` or other sources.
-    - Train the classifier using `.fit()` and validate predictions using `_predict()`.
-
-    Example:
-    ```python
-    from sktime.datasets import load_basic_motions
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_basic_motions(split="train", return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    clf = InceptionTimeClassifier(n_epochs=50, batch_size=16, verbose=True)
-    clf.fit(X_train, y_train)
-
-    predictions = clf._predict(X_test)
-    print(predictions)
-    ```
-
-2. **Debug Errors**:
-    - Ensure compatibility between `sktime`, TensorFlow, and Keras versions.
-    - Verify `_check_dl_dependencies` is correctly implemented.
-
-3. **Add Unit Tests**:
-    - Write test cases to validate the classifier's behavior (e.g., output shapes, model compilation).
-    Example:
-    ```python
-    def test_inception_time_classifier():
-        from sktime.datasets import load_basic_motions
-        X, y = load_basic_motions(split="train", return_X_y=True)
-
-        clf = InceptionTimeClassifier(n_epochs=2, batch_size=8, verbose=False)
-        clf.fit(X, y)
-
-        preds = clf._predict(X)
-        assert preds.shape[0] == X.shape[0]
-    ```
