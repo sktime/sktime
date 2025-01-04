@@ -7,8 +7,8 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
-from sktime.transformations.series.basisfunction import RBFTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="warning"):
     import torch
@@ -26,43 +26,8 @@ else:
                 raise ImportError("torch is not available. Please install torch first.")
 
 
-class LazyLinear(nn.Module):
-    r"""A lazy linear layer initialized based on the input dims.
-
-    This layer is useful when the input size is dynamic or unknown at the
-    initialization stage, enabling flexible architecture design.
-
-    Parameters
-    ----------
-    out_features : int
-        Number of output features for the linear layer.
-    """
-
-    def __init__(self, out_features):
-        super().__init__()
-        self.out_features = out_features
-        self.linear = None
-
-    def forward(self, x):
-        """Initialize and apply the linear layer if not already initialized.
-
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input tensor to be passed through the linear layer.
-
-        Returns
-        -------
-        torch.Tensor
-            Output tensor after linear transformation.
-        """
-        if self.linear is None:
-            self.linear = nn.Linear(x.shape[-1], self.out_features).to(x.device)
-        return self.linear(x)
-
-
 class RBFLayer(nn.Module):
-    r"""RBF layer to transform input data into a new feature space.
+    """RBF layer to transform input data into a new feature space.
 
     This layer applies an RBF transformation to each input feature,
     expanding the feature space based on distances to predefined center points.
@@ -70,45 +35,44 @@ class RBFLayer(nn.Module):
     Parameters
     ----------
     in_features : int
-        Number of input features.
+        Number of input features
     out_features : int
-        Number of output features (or RBF centers).
-    centers : array-like, optional (default=None)
+        Number of output features (number of RBF centers)
+    centers : torch.Tensor, optional (default=None)
         The centers :math:`c_k` for the RBF transformation.
         If None, centers are evenly spaced.
     gamma : float, optional (default=1.0)
-        Parameter controlling the spread of the RBF.
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
+        Parameter controlling the spread of the RBFs
+    rbf_type :{"gaussian", "multiquadric", "inverse_multiquadric"}
                 optional (default="gaussian")
         The type of RBF kernel to apply.
     """
 
     def __init__(
-        self,
-        in_features,
-        out_features,
-        centers=None,
-        gamma=1.0,
-        rbf_type="gaussian",
+        self, in_features, out_features, centers=None, gamma=1.0, rbf_type="gaussian"
     ):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
+        self.gamma = gamma
+        self.rbf_type = rbf_type.lower()
 
         if centers is None:
             centers = torch.linspace(-1, 1, out_features).reshape(-1, 1)
-            centers = centers.repeat(1, in_features).numpy()
+            centers = centers.repeat(1, in_features)
+        else:
+            centers = torch.as_tensor(centers, dtype=torch.float32)
 
-        self.rbf_transformer = RBFTransformer(
-            centers=centers,
-            gamma=gamma,
-            rbf_type=rbf_type,
-            apply_to="values",
-            use_torch=True,
-        )
+        self.centers = nn.Parameter(centers, requires_grad=True)
+
+        valid_rbf_types = {"gaussian", "multiquadric", "inverse_multiquadric"}
+        if self.rbf_type not in valid_rbf_types:
+            raise ValueError(
+                f"rbf_type must be one of {valid_rbf_types}, got {self.rbf_type}"
+            )
 
     def forward(self, x):
-        """Apply the RBF transformation to the input data.
+        """Apply the RBF transformation to the input tensor.
 
         Parameters
         ----------
@@ -120,20 +84,23 @@ class RBFLayer(nn.Module):
         torch.Tensor
             Transformed tensor with RBF features.
         """
-        if len(x.shape) == 1:
+        if x.dim() == 1:
             x = x.unsqueeze(0)
 
-        x_np = x.detach().cpu().numpy()
-        self.rbf_transformer.fit(x_np)
+        diff = x.unsqueeze(1) - self.centers.unsqueeze(0)
 
-        x_rbf = self.rbf_transformer.transform(x_np)
+        distances_squared = torch.sum(diff**2, dim=-1)
 
-        x_rbf = torch.from_numpy(x_rbf).float().to(x.device)
-        return x_rbf
+        if self.rbf_type == "gaussian":
+            return torch.exp(-self.gamma * distances_squared)
+        elif self.rbf_type == "multiquadric":
+            return torch.sqrt(1 + self.gamma * distances_squared)
+        else:  # inverse_multiquadric
+            return 1 / torch.sqrt(1 + self.gamma * distances_squared)
 
 
 class RBFNetwork(nn.Module):
-    r"""Neural network with an RBF layer followed by fully connected layers.
+    """Neural network with an RBF layer followed by fully connected layers.
 
     This model is designed to use RBF-transformed features as input for a series
     of linear transformations, enabling effective learning from non-linear
@@ -142,20 +109,20 @@ class RBFNetwork(nn.Module):
     Parameters
     ----------
     input_size : int
-        Number of input features.
+        Number of input features
     hidden_size : int
         Number of units in the RBF layer.
     output_size : int
         Number of output features for the network.
-    centers : array-like, optional (default=None)
-        Center points for the RBF layer.
+    centers : torch.Tensor, optional (default=None)
+        Centers points for the RBF layer
     gamma : float, optional (default=1.0)
         Scaling factor controlling the spread of the RBF layer.
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
+    rbf_type :{"gaussian", "multiquadric", "inverse_multiquadric"}
                 optional (default="gaussian")
         Type of RBF kernel to apply.
     linear_layers : list of int, optional (default=[64, 32])
-        Sizes of linear layers following the RBF layer.
+        Sizes of linear layers following the RBF layer
     """
 
     def __init__(
@@ -179,30 +146,30 @@ class RBFNetwork(nn.Module):
         )
 
         layers = []
+        prev_size = hidden_size
 
-        for linear_size in linear_layers:
-            layers.extend([LazyLinear(linear_size), nn.ReLU(), nn.Dropout(0.1)])
+        for size in linear_layers:
+            layers.extend([nn.Linear(prev_size, size), nn.ReLU(), nn.Dropout(0.1)])
+            prev_size = size
 
-        layers.append(LazyLinear(output_size))
-
+        layers.append(nn.Linear(prev_size, output_size))
         self.sequential_layers = nn.Sequential(*layers)
 
     def forward(self, x):
-        """Pass input data through the RBF and sequential layers.
+        """Forward pass through the network.
 
         Parameters
         ----------
         x : torch.Tensor
-            Input data tensor.
+            Input tensor
 
         Returns
         -------
         torch.Tensor
-            Output tensor after passing through RBF and linear layers.
+            Output tensor
         """
         x = self.rbf_layer(x)
-        x = self.sequential_layers(x)
-        return x
+        return self.sequential_layers(x)
 
 
 class RBFForecaster(BaseDeepNetworkPyTorch):
@@ -259,8 +226,9 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     criterion : {"mse", "l1", "poisson", "bce", "crossentropy"}
                optional (default="mse")
         Loss function to use during training.
-    use_cuda : bool, optional (default=False)
-        Whether to use GPU for training if available.
+    device : str, optional (default="cpu")
+        Device to use for training and computation. Options are "cpu" or "cuda"
+        for GPU computation if available.
     """
 
     _tags = {
@@ -281,7 +249,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
     def __init__(
         self,
-        window_length,
+        window_length=10,
         hidden_size=32,
         batch_size=32,
         centers=None,
@@ -293,7 +261,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         epochs=100,
         stride=1,
         criterion="mse",
-        use_cuda=False,
+        device="cpu",
     ):
         super().__init__()
 
@@ -312,17 +280,34 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.stride = stride
         self.criterion = criterion
 
-        self.use_cuda = use_cuda
-
         if self._check_torch_availability():
-            import torch
+            pass
+        self.device = device
+        self._device = self._get_device(device)
 
-        self._cuda_available = torch.cuda.is_available()
-        self._use_cuda_actual = self.use_cuda and self._cuda_available
-        self.device = torch.device("cuda" if self._use_cuda_actual else "cpu")
-
-        self.model = None
+        self.network = None
         self.scaler = StandardScaler()
+
+    def _get_device(self, device):
+        """Convert device parameter to torch.device object.
+
+        Parameters
+        ----------
+        device : str or torch.device
+            Device specification
+
+        Returns
+        -------
+        torch.device
+            Initialized device object
+        """
+        if isinstance(device, str):
+            if device not in ["cpu", "cuda"]:
+                raise ValueError("device must be 'cpu' or 'cuda'")
+            if device == "cuda" and not torch.cuda.is_available():
+                warn("CUDA is not available, using CPU instead", UserWarning)
+                device = "cpu"
+        return torch.device(device)
 
     def _check_torch_availability(self):
         """Check if torch is available and raise appropriate error if not."""
@@ -338,7 +323,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         """Build the RBF network architecture."""
         output_size = 1
 
-        self.model = RBFNetwork(
+        self.network = RBFNetwork(
             input_size=input_size,
             hidden_size=self.hidden_size,
             output_size=output_size,
@@ -346,7 +331,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             gamma=self.gamma,
             rbf_type=self.rbf_type,
             linear_layers=self.linear_layers,
-        ).to(self.device)
+        ).to(self._device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit the RBF-based model to the provided time series data.
@@ -360,7 +345,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         fh : optional
             Forecasting horizon (not used).
         """
-        import torch
         from torch.utils.data import DataLoader, TensorDataset
 
         self._y = y.copy()
@@ -370,8 +354,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             y_scaled = self.scaler.fit_transform(y.values)
 
         X_train, y_train = self._create_windows(y_scaled)
-        X_tensor = torch.FloatTensor(X_train).to(self.device)
-        y_tensor = torch.FloatTensor(y_train).to(self.device)
+        X_tensor = torch.FloatTensor(X_train).to(self._device)
+        y_tensor = torch.FloatTensor(y_train).to(self._device)
 
         dataset = TensorDataset(X_tensor, y_tensor)
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
@@ -379,27 +363,16 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         input_size = self.window_length
         self.build_network(input_size)
 
-        criterion = self._instantiate_criterion()
-        optimizer = None
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
 
-        self.model.train()
+        self.network.train()
         for epoch in range(self.epochs):
-            total_loss = 0
-            for batch_X, batch_y in dataloader:
-                if optimizer is None:
-                    _ = self.model(batch_X)
-                    optimizer = self._instantiate_optimizer()
-
-                optimizer.zero_grad()
-                outputs = self.model(batch_X)
-                loss = criterion(outputs, batch_y)
-                loss.backward()
-                optimizer.step()
-                total_loss += loss.item()
+            self._run_epoch(epoch, dataloader)
 
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, X=None, fh=None):
         """Generate predictions for the specified forecasting horizon.
 
         Parameters
@@ -409,8 +382,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         X : optional
             Additional exogenous data (not used).
         """
-        import torch
-
         fh_abs = fh.to_absolute(self._y.index[-1]).to_numpy()
         n_steps = len(fh_abs)
         predictions = np.zeros(n_steps)
@@ -418,13 +389,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         last_window = self._y[-self.window_length :].copy()
         current_window = self.scaler.transform(last_window.values.reshape(-1, 1))
 
-        self.model.eval()
+        self.network.eval()
         with torch.no_grad():
             for i in range(n_steps):
                 X_predict = torch.FloatTensor(current_window.reshape(1, -1)).to(
-                    self.device
+                    self._device
                 )
-                pred_scaled = self.model(X_predict).cpu().numpy()
+                pred_scaled = self.network(X_predict).cpu().numpy()
                 pred = self.scaler.inverse_transform(pred_scaled.reshape(1, -1))
                 predictions[i] = pred.ravel()[0]
 
@@ -432,40 +403,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 current_window[-1] = pred_scaled.ravel()[0]
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
-
-    def plot_predictions(self, y_train, y_test, y_pred):
-        """Plot the training data, actual values, and predictions."""
-        import matplotlib.pyplot as plt
-
-        if hasattr(y_train.index, "dtype") and str(y_train.index.dtype).startswith(
-            "period"
-        ):
-            y_train.index = y_train.index.to_timestamp()
-        if hasattr(y_test.index, "dtype") and str(y_test.index.dtype).startswith(
-            "period"
-        ):
-            y_test.index = y_test.index.to_timestamp()
-        if hasattr(y_pred.index, "dtype") and str(y_pred.index.dtype).startswith(
-            "period"
-        ):
-            y_pred.index = y_pred.index.to_timestamp()
-
-        plt.figure(figsize=(12, 6))
-        plt.plot(y_train.index, y_train.values, label="Training Data", color="blue")
-        plt.plot(y_test.index, y_test.values, label="Actual Values", color="green")
-        plt.plot(
-            y_pred.index,
-            y_pred.values,
-            label="Predictions",
-            color="red",
-            linestyle="--",
-        )
-        plt.title("Time Series Forecast")
-        plt.xlabel("Time")
-        plt.ylabel("Value")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
 
     def _create_windows(self, y):
         """Generate sliding windows from the time series data.
@@ -517,7 +454,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         optimizers = {"adam": Adam, "sgd": SGD, "rmsprop": RMSprop}
         if self.optimizer.lower() not in optimizers:
             raise ValueError(f"Unsupported optimizer: {self.optimizer}")
-        return optimizers[self.optimizer.lower()](self.model.parameters(), lr=self.lr)
+        return optimizers[self.optimizer.lower()](self.network.parameters(), lr=self.lr)
 
     def _instantiate_criterion(self):
         import torch.nn as nn
@@ -554,7 +491,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "lr": 0.01,
                 "stride": 1,
                 "optimizer": "adam",
-                "use_cuda": False,
+                "device": "cpu",
             },
             {
                 "window_length": 12,
@@ -568,7 +505,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "stride": 2,
                 "optimizer": "adam",
                 "criterion": "mse",
-                "use_cuda": True,
+                "device": "cuda",
             },
         ]
 
