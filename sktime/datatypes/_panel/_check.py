@@ -970,6 +970,7 @@ def _check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
 class PanelDask(ScitypePanel):
     """Data type: dask data frame based specification of panel of time series.
+    
     Name: ``"dask_panel"``
 
     Short description:
