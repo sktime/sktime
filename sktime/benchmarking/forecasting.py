@@ -66,22 +66,18 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
-    global_mode: bool, default=False
-        If `global_mode=True`, following changes are applied:
-        `cv_splitter` is used to split data in instance level.
-        `cv_splitter` must be an instance of `InstanceSplitter`.
-        `cv_ht` is used to split `y_test` from `cv_splitter`
-        to `y_hist` and `y_true` in time index level.
-        `cv_ht` must be an instance of `SingleWindowSplitter`.
+    cv_global: sktime InstanceSplitter descendant, optional,
+        If `cv_global` is set, the global benchmarking is applied.
+        I.e., the `cv_global` splitter is used to split data in instance level.
+        `cv_splitter` then splits the instances temporally. 
         With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
         from each fold, following evaluation will be applied:
-        ```py
-        forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
-        y_pred = forecaster.predict((y=y_hist, X=X_test)
+        ```python
+        forecaster.fit(y=y_train, X=X_train, fh=cv.fh)
+        y_pred = forecaster.predict(y=y_hist, X=X_test)
         # calculate metrics with `y_true` and `y_pred`
         ```
-    cv_ht : sktime InstanceSplitter descendant, optional
-        In global mode, `cv_ht` is used to split `y_test` to 'y_hist and 'y_true`
+
 
     Returns
     -------
@@ -220,22 +216,17 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
-        global_mode: bool, default=False
-            If `global_mode=True`, following changes are applied:
-            `cv_splitter` is used to split data in instance level.
-            `cv_splitter` must be an instance of `InstanceSplitter`.
-            `cv_ht` is used to split `y_test` from `cv_splitter`
-            to `y_hist` and `y_true` in time index level.
-            `cv_ht` must be an instance of `SingleWindowSplitter`.
+        cv_global: sktime InstanceSplitter descendant, optional,
+            If `cv_global` is set, the global benchmarking is applied.
+            I.e., the `cv_global` splitter is used to split data in instance level.
+            `cv_splitter` then splits the instances temporally. 
             With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
             from each fold, following evaluation will be applied:
-            ```py
-            forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
-            y_pred = forecaster.predict((y=y_hist, X=X_test)
+            ```python
+            forecaster.fit(y=y_train, X=X_train, fh=cv.fh)
+            y_pred = forecaster.predict(y=y_hist, X=X_test)
             # calculate metrics with `y_true` and `y_pred`
             ```
-        cv_ht : sktime InstanceSplitter descendant, optional
-            In global mode, `cv_ht` is used to split `y_test` to 'y_hist and 'y_true`
 
         Returns
         -------
