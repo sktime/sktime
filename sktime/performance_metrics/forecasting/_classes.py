@@ -1499,7 +1499,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         return [params1, params2]
 
 
-class MeanAbsoluteError(BaseForecastingErrorMetric):
+class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
     r"""Mean absolute error (MAE).
 
     For a univariate, non-hierarchical sample
@@ -1577,6 +1577,8 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     0.85
     """
 
+    func = mean_absolute_error
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -1611,6 +1613,31 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the MeanAbsoluteError estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will
+            return the ``"default"`` set.
+
+        Returns
+        -------
+        params : list of dict, default = {}
+            Parameters to create testing instances of the MeanAbsoluteError class.
+            Each dictionary contains parameters to construct an "interesting"
+            test instance, i.e.,
+            ``MeanAbsoluteError(**params)`` or ``MeanAbsoluteError(**params[i])``
+            creates a valid test instance.
+            ``create_test_instance`` uses the first dictionary in ``params``.
+        """
+        params1 = {}
+        params2 = {"multioutput": "raw_values"}
+        return [params1, params2]
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
