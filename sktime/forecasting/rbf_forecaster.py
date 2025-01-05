@@ -27,7 +27,7 @@ else:
 
 
 class RBFLayer(nn.Module):
-    """RBF layer to transform input data into a new feature space.
+    r"""RBF layer to transform input data into a new feature space.
 
     This layer applies an RBF transformation to each input feature,
     expanding the feature space based on distances to predefined center points.
@@ -46,9 +46,9 @@ class RBFLayer(nn.Module):
     rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
         optional (default="gaussian")
         The type of RBF kernel to apply.
-        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
-        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
-        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+        - "gaussian": :math:`\\exp(-\\gamma (t - c)^2)`
+        - "multiquadric": :math:`\\sqrt{1 + \\gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\\sqrt{1 + \\gamma (t - c)^2}}`
 
     """
 
@@ -104,7 +104,7 @@ class RBFLayer(nn.Module):
 
 
 class RBFNetwork(nn.Module):
-    """Neural network with an RBF layer followed by fully connected layers.
+    r"""Neural network with an RBF layer followed by fully connected layers.
 
     This model is designed to use RBF-transformed features as input for a series
     of linear transformations, enabling effective learning from non-linear
@@ -125,9 +125,9 @@ class RBFNetwork(nn.Module):
     rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
         optional (default="gaussian")
         The type of RBF kernel to apply.
-        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
-        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
-        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+        - "gaussian": :math:`\\exp(-\\gamma (t - c)^2)`
+        - "multiquadric": :math:`\\sqrt{1 + \\gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\\sqrt{1 + \\gamma (t - c)^2}}`
 
     linear_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer
