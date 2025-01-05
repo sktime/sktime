@@ -1,3 +1,7 @@
+"""Object-Specific Convolutional Neural Network (OS-CNN) for classification"""
+
+__author__= ["Abhishek Tiwari","SABARNO-PRAMANICK"]
+__all__= ["OSCNNRegressor"]
 
 from sklearn.metrics import accuracy_score
 import numpy as np
