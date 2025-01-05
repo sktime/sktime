@@ -5,7 +5,7 @@ __all__= ["OSCNNRegressor"]
 
 from sklearn.metrics import accuracy_score
 import numpy as np
-from sktime.regression._regressor import BaseDeepRegressor
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.networks.oscnn import OSCNNNetwork
 
 
