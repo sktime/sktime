@@ -43,9 +43,13 @@ class RBFLayer(nn.Module):
         If None, centers are evenly spaced.
     gamma : float, optional (default=1.0)
         Parameter controlling the spread of the RBFs
-    rbf_type :{"gaussian", "multiquadric", "inverse_multiquadric"}
-                optional (default="gaussian")
+    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
+        optional (default="gaussian")
         The type of RBF kernel to apply.
+        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
+        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+
     """
 
     def __init__(
@@ -118,9 +122,13 @@ class RBFNetwork(nn.Module):
         Centers points for the RBF layer
     gamma : float, optional (default=1.0)
         Scaling factor controlling the spread of the RBF layer.
-    rbf_type :{"gaussian", "multiquadric", "inverse_multiquadric"}
-                optional (default="gaussian")
-        Type of RBF kernel to apply.
+    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
+        optional (default="gaussian")
+        The type of RBF kernel to apply.
+        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
+        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+
     linear_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer
     """
@@ -209,13 +217,15 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         Center points for RBF transformations.
     gamma : float, optional (default=1.0)
         Scaling factor controlling the spread of the RBF.
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"}
-                optional (default="gaussian")
-        Type of RBF kernel to use.
+    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
+        optional (default="gaussian")
+        The type of RBF kernel to apply.
+        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
+        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
     linear_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer.
-    optimizer : {"adam", "sgd", "rmsprop"}
-                optional (default="adam")
+    optimizer : {"adam", "sgd", "rmsprop"}, optional (default="adam")
         Type of optimizer to use.
     lr : float, optional (default=0.01)
         Learning rate for optimizer.
@@ -223,8 +233,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         Number of training epochs.
     stride : int, optional (default=1)
         Step size between windows.
-    criterion : {"mse", "l1", "poisson", "bce", "crossentropy"}
-               optional (default="mse")
+    criterion : {"mse", "l1", "poisson", "bce", "crossentropy"},
+        optional (default="mse")
         Loss function to use during training.
     device : str, optional (default="cpu")
         Device to use for training and computation. Options are "cpu" or "cuda"
@@ -472,12 +482,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
     @classmethod
     def get_test_params(cls):
-        """Return testing parameter settings for RBFForecaster.
+        """Return testing parameter settings for the estimator.
+
+        Provide example parameters for unit testing or experimentation.
 
         Returns
         -------
-        list
-            List of parameter dictionaries for testing.
+        params : dict or list of dict
         """
         params_list = [
             {
