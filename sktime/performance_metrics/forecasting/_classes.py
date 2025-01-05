@@ -2816,6 +2816,8 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
             if multioutput == "uniform_average":
                 return raw_values.median(axis=1)
 
+        return raw_values.dot(multioutput)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
