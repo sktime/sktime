@@ -4,4 +4,4 @@ __all__=[
     "OSCNNRegressor"
 ]
 
-from sktime.regression._oscnn import OSCNNRegressor
+from sktime.regression.oscnn import OSCNNRegressor
