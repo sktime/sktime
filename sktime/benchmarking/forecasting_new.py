@@ -20,30 +20,104 @@ from sktime.split.base import BaseSplitter
 
 @dataclass
 class TaskObject:
+    """
+    A forecasting task.
+
+    Parameters
+    ----------
+    id: str
+        The ID of the task.
+    dataset_loader: Callable
+        A function which returns a dataset, like from `sktime.datasets`.
+    cv_splitter: BaseSplitter object
+        Splitter used for generating validation folds.
+    scorers: list of BaseMetric objects
+        Each BaseMetric output will be included in the results.
+    """
+
     id: str
     dataset_loader: Callable
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
 
+
 @dataclass
 class ModelToTest:
+    """
+    A model to test.
+
+    Parameters
+    ----------
+    id: str
+        The ID of the model.
+    model: BaseEstimator
+        The model to test.
+    """
+
     id: str
     model: BaseEstimator
 
+
 @dataclass
 class ScoreResult:
+    """
+    The result of a single scorer.
+
+    Parameters
+    ----------
+    name: str
+        The name of the scorer.
+    score: float
+        The score.
+    """
+
     name: str
     score: float
 
+
 @dataclass
 class FoldResults:
+    """
+    Results for a single fold.
+
+    Parameters
+    ----------
+    fold: int
+        The fold number.
+    scores: list of ScoreResult
+        The scores for this fold for each scorer.
+    ground_truth: pd.Series, optional (default=None)
+        The ground truth series for this fold.
+    predictions: pd.Series, optional (default=None)
+        The predictions for this fold.
+    """
+
     fold: int
     scores: list[ScoreResult]
     ground_truth: Optional[pd.Series] = None
     predictions: Optional[pd.Series] = None
 
+
 @dataclass
 class ResultObject:
+    """
+    Model results for a single task.
+
+    Parameters
+    ----------
+    model_id : str
+        The ID of the model.
+    task_id : str
+        The ID of the task.
+    folds : list of FoldResults
+        The results for each fold.
+    means : list of ScoreResult
+        The mean scores across all folds for each scorer.
+    stds : list of ScoreResult
+        The standard deviation of scores across all folds for
+        each scorer.
+    """
+
     model_id: str
     task_id: str
     folds: list[FoldResults]
@@ -51,18 +125,20 @@ class ResultObject:
     stds: list[ScoreResult] = field(init=False)
 
     def __post_init__(self):
+        """Calculate mean and std for each score."""
         self.means = []
         self.stds = []
         scores = {}
         for fold in self.folds:
             for score in fold.scores:
-                if score.name not in scores: 
+                if score.name not in scores:
                     scores[score.name] = []
                 scores[score.name].append(score.score)
         for name, score in scores.items():
             self.means.append(ScoreResult(name, np.mean(score)))
             self.stds.append(ScoreResult(name, np.std(score)))
-            
+
+
 class SktimeRegistry:
     """Register an entity by ID.
 
@@ -236,6 +312,18 @@ class ForecastingBenchmark(BaseBenchmark):
         )
 
     def run(self, results_path: str, force_rerun: Union[str, list[str]] = "none"):
+        """
+        Run the benchmarking for all tasks and estimators.
+
+        Parameters
+        ----------
+        results_path : str
+            Path to save the results to.
+        force_rerun : Union[str, list[str]], optional (default="none")
+            If "all", rerun all tasks and estimators.
+            If a list of estimator ids, rerun only those estimators.
+            If "none", skip tasks and estimators that have already been run.
+        """
         try:
             results_df = pd.read_csv(results_path)
         except FileNotFoundError:
@@ -269,7 +357,6 @@ class ForecastingBenchmark(BaseBenchmark):
 
                 results_list.append(results)
 
-        
         additional_results_df = pd.DataFrame.from_records(
             map(lambda x: asdict(x), results_list)
         )
@@ -302,7 +389,7 @@ class ForecastingBenchmark(BaseBenchmark):
                 backend=self.backend,
                 backend_params=self.backend_params,
                 error_score="raise",
-                return_data = True
+                return_data=True,
             )
         else:
             scores_df = evaluate(
@@ -313,7 +400,7 @@ class ForecastingBenchmark(BaseBenchmark):
                 backend=self.backend,
                 backend_params=self.backend_params,
                 error_score="raise",
-                return_data = True
+                return_data=True,
             )
 
         folds = []
@@ -324,5 +411,5 @@ class ForecastingBenchmark(BaseBenchmark):
                 scores.append(ScoreResult("fit_time", row["fit_time"]))
                 scores.append(ScoreResult("pred_time", row["pred_time"]))
             folds.append(FoldResults(ix, scores, row["y_test"], row["y_pred"]))
-        
+
         return ResultObject(estimator.id, task.id, folds)
