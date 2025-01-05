@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
 from sktime.regression._regressor import BaseDeepRegressor
-from sktime.networks._oscnn import OSCNNNetwork
+from sktime.networks.oscnn import OSCNNNetwork
 
 
 def get_Prime_number_in_a_range(start, end):

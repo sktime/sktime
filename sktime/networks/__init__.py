@@ -4,4 +4,4 @@ __all__=[
     "OSCNNNetwork"
 ]
 
-from sktime.networks._oscnn import OSCNNNetwork
+from sktime.networks.oscnn import OSCNNNetwork

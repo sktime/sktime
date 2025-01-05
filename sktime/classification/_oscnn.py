@@ -6,7 +6,7 @@ __all__= ["OSCNNClassifier"]
 from sklearn.metrics import accuracy_score
 import numpy as np
 
-from sktime.networks._oscnn import OSCNNNetwork
+from sktime.networks.oscnn import OSCNNNetwork
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
 
 def get_Prime_number_in_a_range(start, end):
