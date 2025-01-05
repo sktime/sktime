@@ -6,4 +6,4 @@ __all__ = [
 ]
 
 from sktime.classification.base import BaseClassifier
-from sktime.classification._oscnn import OSCNNClassifier
+from sktime.classification.oscnn import OSCNNClassifier
