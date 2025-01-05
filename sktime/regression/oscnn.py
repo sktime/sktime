@@ -1,4 +1,4 @@
-"""Object-Specific Convolutional Neural Network (OS-CNN) for classification"""
+"""Object-Specific Convolutional Neural Network (OS-CNN) for Regression"""
 
 __author__= ["Abhishek Tiwari","SABARNO-PRAMANICK"]
 __all__= ["OSCNNRegressor"]
