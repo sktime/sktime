@@ -820,7 +820,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         # else, we expect multioutput to be array-like
         return df.dot(multioutput)
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -843,6 +843,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         params1 = {}
         params2 = {"evaluate_by_timepoints": True}
         return [params1, params2]
+
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
