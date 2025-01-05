@@ -1246,13 +1246,13 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
-        eval_by_timepoints=False,
+        evaluate_by_timepoints=False,
     ):
         self.sp = sp
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=eval_by_timepoints,
+            evaluate_by_timepoints=evaluate_by_timepoints,
         )
 
     @classmethod
@@ -1375,14 +1375,14 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         sp=1,
         square_root=False,
-        eval_by_timepoints=False,
+        evaluate_by_timepoints=False,
     ):
         self.sp = sp
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=eval_by_timepoints,
+            evaluate_by_timepoints=evaluate_by_timepoints,
         )
 
     @classmethod
@@ -1505,14 +1505,14 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         multilevel="uniform_average",
         sp=1,
         square_root=False,
-        eval_by_timepoints=False,
+        evaluate_by_timepoints=False,
     ):
         self.sp = sp
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=eval_by_timepoints,
+            evaluate_by_timepoints=evaluate_by_timepoints,
         )
 
     @classmethod
