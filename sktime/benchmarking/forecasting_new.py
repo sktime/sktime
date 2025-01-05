@@ -3,140 +3,22 @@
 import logging
 import warnings
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, field
 from typing import Optional, Union
 
-import numpy as np
-import pandas as pd
-
 from sktime.base import BaseEstimator
-from sktime.benchmarking._lib_mini_kotsu.run import _write
+from sktime.benchmarking.benchmarking_dataclasses import (
+    BenchmarkingResults,
+    FoldResults,
+    ModelToTest,
+    ResultObject,
+    ScoreResult,
+    TaskObject,
+)
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
-
-
-@dataclass
-class TaskObject:
-    """
-    A forecasting task.
-
-    Parameters
-    ----------
-    id: str
-        The ID of the task.
-    dataset_loader: Callable
-        A function which returns a dataset, like from `sktime.datasets`.
-    cv_splitter: BaseSplitter object
-        Splitter used for generating validation folds.
-    scorers: list of BaseMetric objects
-        Each BaseMetric output will be included in the results.
-    """
-
-    id: str
-    dataset_loader: Callable
-    cv_splitter: BaseSplitter
-    scorers: list[BaseMetric]
-
-
-@dataclass
-class ModelToTest:
-    """
-    A model to test.
-
-    Parameters
-    ----------
-    id: str
-        The ID of the model.
-    model: BaseEstimator
-        The model to test.
-    """
-
-    id: str
-    model: BaseEstimator
-
-
-@dataclass
-class ScoreResult:
-    """
-    The result of a single scorer.
-
-    Parameters
-    ----------
-    name: str
-        The name of the scorer.
-    score: float
-        The score.
-    """
-
-    name: str
-    score: float
-
-
-@dataclass
-class FoldResults:
-    """
-    Results for a single fold.
-
-    Parameters
-    ----------
-    fold: int
-        The fold number.
-    scores: list of ScoreResult
-        The scores for this fold for each scorer.
-    ground_truth: pd.Series, optional (default=None)
-        The ground truth series for this fold.
-    predictions: pd.Series, optional (default=None)
-        The predictions for this fold.
-    """
-
-    fold: int
-    scores: list[ScoreResult]
-    ground_truth: Optional[pd.Series] = None
-    predictions: Optional[pd.Series] = None
-
-
-@dataclass
-class ResultObject:
-    """
-    Model results for a single task.
-
-    Parameters
-    ----------
-    model_id : str
-        The ID of the model.
-    task_id : str
-        The ID of the task.
-    folds : list of FoldResults
-        The results for each fold.
-    means : list of ScoreResult
-        The mean scores across all folds for each scorer.
-    stds : list of ScoreResult
-        The standard deviation of scores across all folds for
-        each scorer.
-    """
-
-    model_id: str
-    task_id: str
-    folds: list[FoldResults]
-    means: list[ScoreResult] = field(init=False)
-    stds: list[ScoreResult] = field(init=False)
-
-    def __post_init__(self):
-        """Calculate mean and std for each score."""
-        self.means = []
-        self.stds = []
-        scores = {}
-        for fold in self.folds:
-            for score in fold.scores:
-                if score.name not in scores:
-                    scores[score.name] = []
-                scores[score.name].append(score.score)
-        for name, score in scores.items():
-            self.means.append(ScoreResult(name, np.mean(score)))
-            self.stds.append(ScoreResult(name, np.std(score)))
 
 
 class SktimeRegistry:
@@ -324,26 +206,11 @@ class ForecastingBenchmark(BaseBenchmark):
             If a list of estimator ids, rerun only those estimators.
             If "none", skip tasks and estimators that have already been run.
         """
-        try:
-            results_df = pd.read_csv(results_path)
-        except FileNotFoundError:
-            results_df = pd.DataFrame(
-                columns=["validation_id", "model_id", "runtime_secs"]
-            )
-            results_df["runtime_secs"] = results_df["runtime_secs"].astype(int)
-
-        results_df = results_df.set_index(["validation_id", "model_id"], drop=False)
-        results_list = []
+        results = BenchmarkingResults(path=results_path)
 
         for task in self.tasks.entities.values():
             for estimator in self.estimators.entities.values():
-                if (
-                    not force_rerun == "all"
-                    and not (
-                        isinstance(force_rerun, list) and estimator.id in force_rerun
-                    )
-                    and (task.id, estimator.id) in results_df.index
-                ):
+                if results.contains(task.id, estimator.id):
                     logging.info(
                         f"Skipping validation - model: "
                         f"{task.id} - {estimator.id}"
@@ -352,26 +219,10 @@ class ForecastingBenchmark(BaseBenchmark):
                     continue
 
                 logging.info(f"Running validation - model: {task.id} - {estimator.id}")
+                results.results.append(self._run_validation(task, estimator))
 
-                results = self._run_validation(task, estimator)
-
-                results_list.append(results)
-
-        additional_results_df = pd.DataFrame.from_records(
-            map(lambda x: asdict(x), results_list)
-        )
-        results_df = pd.concat([results_df, additional_results_df], ignore_index=True)
-        results_df = results_df.drop_duplicates(
-            subset=["validation_id", "model_id"], keep="last"
-        )
-        results_df = results_df.sort_values(by=["validation_id", "model_id"])
-        results_df = results_df.reset_index(drop=True)
-        _write(
-            results_df,
-            results_path,
-            to_front_cols=["validation_id", "model_id", "runtime_secs"],
-        )
-        return results_df
+        results.save()
+        return results
 
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
         dataset_loader = task.dataset_loader
@@ -410,6 +261,8 @@ class ForecastingBenchmark(BaseBenchmark):
                 scores.append(ScoreResult(scorer.name, row["test_" + scorer.name]))
                 scores.append(ScoreResult("fit_time", row["fit_time"]))
                 scores.append(ScoreResult("pred_time", row["pred_time"]))
-            folds.append(FoldResults(ix, scores, row["y_test"], row["y_pred"]))
+            folds.append(
+                FoldResults(ix, scores, row["y_test"], row["y_pred"], row["y_train"])
+            )
 
         return ResultObject(estimator.id, task.id, folds)
