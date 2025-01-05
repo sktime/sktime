@@ -1,12 +1,6 @@
+
 from sklearn.metrics import accuracy_score
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torch.utils.data import TensorDataset
-
 from sktime.regression._regressor import BaseDeepRegressor
 from sktime.networks.oscnn import OSCNNNetwork
 
@@ -52,6 +46,7 @@ def generate_layer_parameter_list(start,end,paramenter_number_of_layer_list, in_
     return layer_parameter_list
 
 def eval_model(model, dataloader):
+    import torch
     predict_list = np.array([])
     label_list = np.array([])
     for sample in dataloader:
@@ -98,6 +93,11 @@ class OSCNNRegressor(BaseDeepRegressor, OSCNNNetwork):
 
 
     def fit(self, X_train, y_train, X_val, y_val):
+
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+        from torch.utils.data import DataLoader, TensorDataset
 
         print('code is running on ',self.device)
 
