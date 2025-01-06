@@ -162,7 +162,7 @@ class WindowSegmenter(BaseDetector):
     >>> from sktime.detection.wclust import WindowSegmenter
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
-    >>> clusterer = KMeans()
+    >>> clusterer = TimeSeriesDBSCAN()
     >>> segmenter = ClusterSegmenter(clusterer, 3)
     >>> segmenter._fit(X)
     >>> segment_labels = segmenter._predict(X)
@@ -290,6 +290,6 @@ class WindowSegmenter(BaseDetector):
         -------
         params : dict or list of dict, default = {}
         """
-        params1 = {"clusterer": TimeSeriesDBSCAN(n_clusters=2), "window_size": 2}
+        params1 = {"clusterer": TimeSeriesDBSCAN(), "window_size": 2}
         params2 = {}
         return [params1, params2]
