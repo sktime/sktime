@@ -69,7 +69,7 @@ def forecasting_validation(
     cv_global: sktime InstanceSplitter descendant, optional,
         If `cv_global` is set, the global benchmarking is applied.
         I.e., the `cv_global` splitter is used to split data in instance level.
-        `cv_splitter` then splits the instances temporally. 
+        `cv_splitter` then splits the instances temporally.
         With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
         from each fold, following evaluation will be applied:
         ```python
@@ -219,7 +219,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_global: sktime InstanceSplitter descendant, optional,
             If `cv_global` is set, the global benchmarking is applied.
             I.e., the `cv_global` splitter is used to split data in instance level.
-            `cv_splitter` then splits the instances temporally. 
+            `cv_splitter` then splits the instances temporally.
             With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
             from each fold, following evaluation will be applied:
             ```python
