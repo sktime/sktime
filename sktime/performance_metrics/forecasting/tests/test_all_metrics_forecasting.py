@@ -186,3 +186,25 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
         # wt_metr = metric(sample_weight=wts)
         # res_wt = wt_metr(y_true, y_pred)
         # assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))
+
+    def test_evaluate_by_index(self, estimator_instance):
+        """Test that by_index parameter returns temporally calculated error metrics."""
+        metric_obj = estimator_instance
+        metric_obj.set_params(by_index=True)
+        metric = type(metric_obj)
+
+        y_true = np.array([3, -0.5, 2, 7, 2])
+        y_pred = np.array([2.5, 0.5, 2, 8, 2.25])
+
+        y_kwargs = {
+            "y_true": y_true,
+            "y_pred": y_pred,
+            "y_pred_benchmark": y_true,
+            "y_train": y_true,
+        }
+
+        # skip for private metrics such as dynamic error metrics
+        if metric.__name__.startswith("_"):
+            return None
+
+        assert len(metric_obj(**y_kwargs)) == len(y_true)

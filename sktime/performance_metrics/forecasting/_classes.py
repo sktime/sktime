@@ -125,7 +125,7 @@ class BaseForecastingErrorMetric(BaseMetric):
           ignoring level index.
         * If 'raw_values', does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
     """
@@ -146,11 +146,11 @@ class BaseForecastingErrorMetric(BaseMetric):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
-        self.evaluate_by_timepoints = evaluate_by_timepoints
+        self.by_index = by_index
 
         if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
@@ -236,7 +236,7 @@ class BaseForecastingErrorMetric(BaseMetric):
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """  # noqa: E501
-        if self.evaluate_by_timepoints:
+        if self.by_index:
             return self.evaluate_by_index(y_true, y_pred, **kwargs)
         return self.evaluate(y_true, y_pred, **kwargs)
 
@@ -821,29 +821,6 @@ class BaseForecastingErrorMetric(BaseMetric):
         # else, we expect multioutput to be array-like
         return df.dot(multioutput)
 
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``
-        """
-        params1 = {}
-        params2 = {"evaluate_by_timepoints": True}
-        return [params1, params2]
-
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
@@ -1091,7 +1068,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1217,7 +1194,7 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
           does not average errors across levels, hierarchy is retained.
 
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1269,13 +1246,13 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.sp = sp
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -1348,7 +1325,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1398,14 +1375,14 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         sp=1,
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.sp = sp
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -1478,7 +1455,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1528,14 +1505,14 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         multilevel="uniform_average",
         sp=1,
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.sp = sp
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -1608,7 +1585,7 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1728,7 +1705,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1872,7 +1849,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -1922,13 +1899,13 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
@@ -2089,7 +2066,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
     """
@@ -2099,7 +2076,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.square_root = square_root
         self.multioutput = multioutput
@@ -2107,7 +2084,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
@@ -2268,7 +2245,7 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -2322,13 +2299,13 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -2388,7 +2365,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -2478,7 +2455,7 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -2636,7 +2613,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -2690,13 +2667,13 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
@@ -2830,7 +2807,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -2884,13 +2861,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -2962,7 +2939,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3020,14 +2997,14 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -3103,7 +3080,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3161,14 +3138,14 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -3227,7 +3204,7 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3306,7 +3283,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3386,7 +3363,7 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3474,7 +3451,7 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3526,13 +3503,13 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -3622,7 +3599,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3685,7 +3662,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         right_error_function="absolute",
         left_error_penalty=1.0,
         right_error_penalty=1.0,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.asymmetric_threshold = asymmetric_threshold
         self.left_error_function = left_error_function
@@ -3696,7 +3673,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -3778,7 +3755,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3838,14 +3815,14 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         b=1.0,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.a = a
         self.b = b
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
@@ -3922,7 +3899,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-    evaluate_by_timepoints : bool, default=False
+    by_index : bool, default=False
         If True, evaluate the metric at each time point.
         If False, evaluate the metric globally, averaging over all time points.
 
@@ -3972,13 +3949,13 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         relative_loss_function=mean_absolute_error,
-        evaluate_by_timepoints=False,
+        by_index=False,
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
-            evaluate_by_timepoints=evaluate_by_timepoints,
+            by_index=by_index,
         )
 
     @classmethod
