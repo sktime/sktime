@@ -531,7 +531,7 @@ class classification_dataset(_BaseScitypeOfObject):
 
 
 class forecasting_dataset(_BaseScitypeOfObject):
-    """Classification Dataset class."""
+    """Forecasting Dataset class."""
 
     _tags = {
         "scitype_name": "forecasting_dataset",
@@ -544,6 +544,22 @@ class forecasting_dataset(_BaseScitypeOfObject):
         from sktime.datasets.forecasting._base import BaseForecastingDataset
 
         return BaseForecastingDataset
+
+
+class regression_dataset(_BaseScitypeOfObject):
+    """Regression Dataset class."""
+
+    _tags = {
+        "scitype_name": "regression_dataset",
+        "short_descr": "regression dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.regression._base import BaseRegressionDataset
+
+        return BaseRegressionDataset
 
 
 @lru_cache
