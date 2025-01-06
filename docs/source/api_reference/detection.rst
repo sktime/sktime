@@ -235,3 +235,11 @@ Naive Baselines
     :template: class.rst
 
     ZeroSegments
+
+.. currentmodule:: sktime.detection.wclust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSegmenter
