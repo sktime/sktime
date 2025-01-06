@@ -79,28 +79,55 @@ class RandIndex(BaseDetectionMetric):
         return rand_index
 
     def _extract_segments(self, y, var_name):
-        """Extract segments from the DataFrame.
+        """Extract segments from the DataFrame, interpreting each row as an event.
+
+        If the DataFrame has columns 'start' and 'end', those are used directly.
+        Otherwise, if the DataFrame has 'ilocs', each 'ilocs' is interpreted as [i, i+1).
 
         Parameters
         ----------
         y : pd.DataFrame
-            DataFrame containing segment information.
+            DataFrame containing either:
+              - 'start', 'end', and optional 'label', or
+              - 'ilocs' (integers) and optional 'label'.
+
         var_name : str
-            Variable name for error messages.
+            Variable name for error messages (not used here, but part of signature).
 
         Returns
         -------
         list of dict
-            Each dict represents a segment with 'start', 'end', and 'label'.
-        """
-        seg_ix = y.set_index("ilocs").index
-        seg_dict = {"start": seg_ix.left, "end": seg_ix.right}
-        if "label" in y.columns:
-            seg_dict["label"] = y["label"]
-        else:
-            seg_dict["label"] = range(len(y))
+            Each dict represents a segment with keys: 'start', 'end', 'label'.
+        """  # noqa: E501
+        segments = []
 
-        return seg_dict
+        # Case 1: user-provided 'start' and 'end'
+        if {"start", "end"}.issubset(y.columns):
+            for i, row in y.iterrows():
+                seg_start = row["start"]
+                seg_end = row["end"]
+                seg_label = row["label"] if "label" in y.columns else i
+                segments.append(
+                    {"start": seg_start, "end": seg_end, "label": seg_label}
+                )  # noqa: E501
+            return segments
+
+        # Case 2: user-provided 'ilocs', interpret each row as [i, i+1)
+        if "ilocs" in y.columns:
+            for i, row in y.iterrows():
+                iloc_val = row["ilocs"]
+                seg_start = iloc_val
+                seg_end = iloc_val + 1
+                seg_label = row["label"] if "label" in y.columns else i
+                segments.append(
+                    {"start": seg_start, "end": seg_end, "label": seg_label}
+                )  # noqa: E501
+            return segments
+
+        # If neither approach applies, raise an error
+        raise ValueError(
+            f"Expected columns 'start'/'end' or 'ilocs' in {var_name}, got {list(y.columns)}."  # noqa: E501
+        )
 
     def _assign_unique_ids(self, segments, prefix):
         """Assign unique cluster IDs to each segment.
