@@ -2314,14 +2314,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window_length=10,
         impute_method="bfill",
         pooling="local",
-        forecaster = None,
     ):
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
-        self.forecaster = forecaster
         super().__init__()
 
         warn(
@@ -2377,10 +2375,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
-        if self.forecaster is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method="forecaster", forecaster=self.forecaster)
-        elif impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        if isinstance(self.impute_method, Imputer):
+            lagger_y_to_X =lagger_y_to_X * impute_method
+        else:
+            if self.impute_method is not None:
+                lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
@@ -2488,10 +2487,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lags=1, index_out="extend")
 
-            if self.forecaster is not None:
-                lag_plus = lag_plus * Imputer(method="forecaster", forecaster=self.forecaster)
-            elif self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+            if isinstance(self.impute_method, Imputer):
+                lag_plus =lag_plus * self.impute_method
+            else:
+                if self.impute_method is not None:
+                    lag_plus = lag_plus * Imputer(method=self.impute_method)
 
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
@@ -2542,11 +2542,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.transform(y)
 
         lag_plus = Lag(lags=1, index_out="extend")
-        
-        if self.forecaster is not None:
-            lag_plus = lag_plus * Imputer(method="forecaster", forecaster=self.forecaster)
-        elif self.impute_method is not None:
-            lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+        if isinstance(self.impute_method, Imputer):
+            lag_plus =lag_plus * self.impute_method
+        else:
+            if self.impute_method is not None:
+                lag_plus = lag_plus * Imputer(method=self.impute_method)
 
         Xtt = lag_plus.fit_transform(Xt)
 
@@ -2592,8 +2593,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
+        from sktime.transformations.series.impute import Imputer
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
 
         est = LinearRegression()
+        forecaster_imputer = Imputer(method="forecaster", forecaster=DirectReductionForecaster(estimator=est))
+
         params1 = {
             "estimator": est,
             "window_length": 3,
@@ -2604,8 +2609,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 4,
             "pooling": "local",
         }
+        params3 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": forecaster_imputer  # tests imputation with forecaster method
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": forecaster_imputer
+        }
 
-        return [params1, params2]
+        return [params1, params2, params3, params4]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
