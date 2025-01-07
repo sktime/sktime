@@ -6,6 +6,7 @@ __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import check_n_jobs
 
 
@@ -92,6 +93,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             "profiling_sorting": PROFILING_SORTING,
             "profiling_filename": PROFILING_FILENAME,
             "profile": PROFILING,
+            "distributor": None,
         }
 
         # Replace defaults with user defined parameters
@@ -192,10 +194,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -391,10 +392,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
     test_for_binary_target_binary_feature : str or None, default=None
         Which test to be used for binary target, binary feature (currently unused).
     test_for_binary_target_real_feature : str or None, default=None
@@ -619,6 +619,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -667,6 +668,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -730,4 +732,17 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
         }
-        return [params, params2]
+        params = [params, params2]
+
+        if _check_soft_dependencies("tsfresh", severity="none"):
+            from tsfresh.utilities.distribution import MapDistributor
+
+            params3 = {
+                "default_fc_parameters": "minimal",
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "distributor": MapDistributor(),
+            }
+            params.append(params3)
+
+        return params
