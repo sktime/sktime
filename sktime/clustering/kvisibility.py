@@ -236,7 +236,6 @@ class TimeSeriesKvisibility(BaseClusterer):
             test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         params1 = {"n_clusters": [2, 4, 6, 8, 10]}
         params2 = {"n_init": [2, 4, 6, 8, 10]}
 
