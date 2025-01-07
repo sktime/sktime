@@ -12,6 +12,7 @@ from sklearn.base import clone
 
 from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.detection.base import BaseDetector
+from sktime.dists_kernels import AggrDist
 from sktime.utils.sklearn import is_sklearn_clusterer
 
 __author__ = ["Ankit-1204"]
@@ -290,6 +291,6 @@ class WindowSegmenter(BaseDetector):
         -------
         params : dict or list of dict, default = {}
         """
-        params1 = {"clusterer": TimeSeriesDBSCAN(), "window_size": 2}
+        params1 = {"clusterer": TimeSeriesDBSCAN(distance=AggrDist()), "window_size": 2}
         params2 = {}
         return [params1, params2]
