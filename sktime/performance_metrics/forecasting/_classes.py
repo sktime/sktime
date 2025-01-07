@@ -139,7 +139,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
-        "reserved_params": ["multioutput", "multilevel"],
+        "reserved_params": ["multioutput", "multilevel", "by_index"],
     }
 
     def __init__(
