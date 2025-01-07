@@ -190,7 +190,7 @@ class WindowSegmenter(BaseDetector):
         self.step_size = step_size
         self.return_segments = return_segments
         if self.clusterer is None:
-            self._clusterer = TimeSeriesDBSCAN()
+            self._clusterer = TimeSeriesDBSCAN(distance=DtwDist())
         else:
             self._clusterer = self.clusterer
         super().__init__()
