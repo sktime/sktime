@@ -2189,6 +2189,113 @@ class n_splits(_BaseTag):
     - Default: ``0``
     """
 
+    _tags = {
+        "tag_name": "n_splits",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of cross validation splits of the dataset",
+        "user_facing": True,
+    }
+
+
+class name(_BaseTag):
+    """
+    Property: name of the dataset.
+
+    - String name: ```name````
+    - Public property tag
+    - Values: string
+    - Example: ``"GunPoint"``
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "name",
+        "parent_type": "dataset",
+        "tag_type": "str",
+        "short_descr": "name of the dataset",
+        "user_facing": True,
+    }
+
+
+class n_timepoints(_BaseTag):
+    """
+    Property: number of timepoints in the dataset.
+
+    - String name: ```n_timepoints````
+    - Public property tag
+    - Values: positive integers
+    - Example: ``100``
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "n_timepoints",
+        "parent_type": "forecasting_dataset",
+        "tag_type": "int",
+        "short_descr": "number of timepoints in the dataset",
+        "user_facing": True,
+    }
+
+
+class n_timepoints_train(_BaseTag):
+    """
+    Property: number of timepoints in the training set of the dataset.
+
+    - String name: ```n_timepoints_train````
+    - Public property tag
+    - Values: positive integers
+    - Example: ``80``
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "n_timepoints_train",
+        "parent_type": "forecasting_dataset",
+        "tag_type": "int",
+        "short_descr": "number of timepoints in the training set of the dataset",
+        "user_facing": True,
+    }
+
+
+class n_timepoints_test(_BaseTag):
+    """
+    Property: number of timepoints in the test set of the dataset.
+
+    - String name: ```n_timepoints_test````
+    - Public property tag
+    - Values: positive integers
+    - Example: ``20``
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "n_timepoints_test",
+        "parent_type": "forecasting_dataset",
+        "tag_type": "int",
+        "short_descr": "number of timepoints in the test set of the dataset",
+        "user_facing": True,
+    }
+
+
+class n_dimensions(_BaseTag):
+    """Property: Number of dimensions in the dataset.
+
+    - String name: ``"n_dimensions"``
+    - Public property tag
+    - Values: integer
+    - Example: ``3``
+    - Default: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_dimensions",
+        "parent_type": "forecasting_dataset",
+        "tag_type": "int",
+        "short_descr": "Equivalent to number of columns in `y`",
+        "user_facing": True,
+    }
+
 
 class visual_block_kind(_BaseTag):
     """How to display html representation of a meta-estimator in a jupyter notebook.
