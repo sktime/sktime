@@ -90,7 +90,7 @@ class Solar(_ForecastingDatasetFromLoader):
         n_dimensions = 3 if return_full_df else 1
 
         self.set_tags(
-            {
+            **{
                 "n_timepoints": n_timepoints,
                 "n_instances": n_timepoints,
                 "n_dimensions": n_dimensions,

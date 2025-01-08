@@ -65,7 +65,7 @@ class Longley(_ForecastingDatasetFromLoader):
         "n_instances": 16 * 6,
         "n_timepoints": 16,
         "frequency": "Y",
-        "n_dimensions": 6,
+        "n_dimensions": 1,
         "n_panels": 1,
         "n_hierarchy_levels": 0,
     }
