@@ -11,6 +11,11 @@ import pytest
 
 from sktime.datasets.base._base import InvalidSetError
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+import types
+
+
+def is_generator(obj):
+    return isinstance(obj, types.GeneratorType)
 
 
 class DatasetFixtureGenerator(BaseFixtureGenerator):
@@ -35,22 +40,36 @@ class DatasetFixtureGenerator(BaseFixtureGenerator):
 
 
 class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
-    """Module level tests for all sktime regressors."""
+    """Module level tests for all sktime datasets."""
 
-    @pytest.mark.parametrize("args", [("X",), ("y",), ("X", "y")])
-    def test_load_output_type(self, estimator_instance, args):
-        output = estimator_instance.load(*args)
-        if len(args) == 1:
-            assert isinstance(output, (pd.DataFrame, pd.Series, np.ndarray, type(None)))
-        else:
-            assert isinstance(output, tuple)
+    def test_load_output_type(self, estimator_instance):
+        """Verify if the output of load is of the expected type."""
+
+        available_keys = estimator_instance.keys()
+        assert len(available_keys) > 0
+
+        outputs = estimator_instance.load(*available_keys)
+        for i, key in enumerate(available_keys):
+            output = outputs[i]
+            if key != "cv":
+                assert isinstance(
+                    output, (pd.DataFrame, pd.Series, np.ndarray, type(None))
+                )
+            else:
+                # Check if the output is a generator
+                assert is_generator(output)
 
     def test_tag_n_instances(self, estimator_instance):
+        """Check the number of instances."""
         n_instances = estimator_instance.get_tag("n_instances")
         y = estimator_instance.load("y")
         assert len(y) == n_instances
 
     def test_tag_n_instances_train(self, estimator_instance):
+        """Check the number of instances in the training set.
+
+        If the dataset has no training set, the tests for InvalidSetError
+        """
         n_instances_train = estimator_instance.get_tag("n_instances_train")
 
         contextwrapper = (
@@ -61,6 +80,11 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
             assert len(y_train) == n_instances_train
 
     def test_tag_n_instances_test(self, estimator_instance):
+        """Check the number of instances in the test set.
+
+
+        If the dataset has no training set, the tests for InvalidSetError
+        """
         n_instances_test = estimator_instance.get_tag("n_instances_test")
 
         contextwrapper = (
@@ -69,3 +93,14 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         with contextwrapper:
             y_test = estimator_instance.load("y_test")
             assert len(y_test) == n_instances_test
+
+    def test_tag_n_splits(self, estimator_instance):
+        """Check the number of splits."""
+        n_splits = estimator_instance.get_tag("n_splits")
+        if n_splits > 1:
+            cv = estimator_instance.load("cv")
+            # assert length of cv is equal to the number of splits
+            assert len(list(cv)) == n_splits
+        else:
+            with pytest.raises(InvalidSetError):
+                estimator_instance.load("cv")

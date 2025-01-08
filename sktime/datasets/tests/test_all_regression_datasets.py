@@ -19,17 +19,14 @@ class RegressionDatasetFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllRegressors
-    #   additional fixtures, parameters, etc should be added here
-    #   TestAllRegressors should contain the tests only
-
     estimator_type_filter = "regression_dataset"
 
 
 class TestAllRegressionDatasets(RegressionDatasetFixtureGenerator, QuickTester):
-    """Module level tests for all sktime regressors."""
+    """Module level tests for all sktime regression datasets"""
 
     def test_tag_is_univariate(self, estimator_instance):
+        """Check if the dataset is univariate."""
         is_univariate = estimator_instance.get_tag("is_univariate")
         X = estimator_instance.load("X")
         assert X.shape[1] == 1 if is_univariate else X.shape[1] > 1

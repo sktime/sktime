@@ -8,6 +8,8 @@ import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
+
+# Pairs of message and lambda function to check the tags
 _tag_constraints = [
     (
         "n_dimensions should be equal to one if 'is_univariate' is True",
@@ -53,9 +55,7 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         y = estimator_instance.load("y")
 
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            is_one_series = (
-                y.index.nlevels == 1 or y.index.get_level_values(-2).nunique() == 1
-            )
+            is_one_series = y.index.nlevels == 1 or y.index.droplevel(-1).nunique() == 1
         elif isinstance(y, np.ndarray):
             is_one_series = y.ndim == 1 or y.shape[1] == 1
         else:
@@ -66,7 +66,7 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         expected = estimator_instance.get_tag("n_panels")
         y = estimator_instance.load("y")
 
-        n_panels = y.index.get_level_values(-2).nunique() if y.index.nlevels > 1 else 1
+        n_panels = y.index.droplevel(-1).nunique() if y.index.nlevels > 1 else 1
         assert n_panels == expected
 
     def test_tag_n_hierarchy_levels(self, estimator_instance):
