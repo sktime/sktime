@@ -22,6 +22,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
@@ -63,12 +64,16 @@ from sktime.forecasting.compose._reduce import (
     DirRecTimeSeriesRegressionForecaster,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
+    RecursiveReductionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     YfromX,
     make_reduction,
 )
-from sktime.forecasting.compose._skforecast_reduce import SkforecastAutoreg
+from sktime.forecasting.compose._skforecast_reduce import (
+    SkforecastAutoreg,
+    SkforecastRecursive,
+)
 from sktime.forecasting.compose._stack import StackingForecaster
 from sktime.forecasting.compose._transform_select_forecaster import (
     TransformSelectForecaster,

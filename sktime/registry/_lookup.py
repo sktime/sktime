@@ -15,13 +15,19 @@ __author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
 
 
 from copy import deepcopy
+from inspect import isclass
 from operator import itemgetter
 from pathlib import Path
 
 import pandas as pd
 from skbase.lookup import all_objects
 
-from sktime.registry._base_classes import get_base_class_lookup, get_obj_scitype_list
+from sktime.base import BaseObject
+from sktime.registry._base_classes import (
+    _get_all_descendants,
+    get_base_class_for_str,
+    get_obj_scitype_list,
+)
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 
 
@@ -170,16 +176,36 @@ def all_estimators(
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
-    if estimator_types:
-        clsses = _check_estimator_types(estimator_types)
-        if not isinstance(estimator_types, list):
-            estimator_types = [estimator_types]
-        CLASS_LOOKUP = {x: y for x, y in zip(estimator_types, clsses)}
-    else:
-        CLASS_LOOKUP = None
+    def _coerce_to_str(obj):
+        if isinstance(obj, (list, tuple)):
+            return [_coerce_to_str(o) for o in obj]
+        if isclass(obj):
+            obj = obj.get_tag("object_type")
+        return obj
+
+    def _coerce_to_list_of_str(obj):
+        obj = _coerce_to_str(obj)
+        if isinstance(obj, str):
+            return [obj]
+        return obj
+
+    if estimator_types is not None:
+        estimator_types = _coerce_to_list_of_str(estimator_types)
+        estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
+        estimator_types = list(set(estimator_types))
+
+    if estimator_types is not None and filter_tags is not None:
+        if "object_type" in filter_tags:
+            obj_field = filter_tags["object_type"]
+            obj_field = _coerce_to_list_of_str(obj_field)
+            obj_field = obj_field + estimator_types
+            filter_tags = filter_tags.copy()
+            filter_tags["object_type"] = obj_field
+    elif estimator_types is not None:
+        filter_tags = {"object_type": estimator_types}
 
     result = all_objects(
-        object_types=estimator_types,
+        object_types=BaseObject,
         filter_tags=filter_tags,
         exclude_objects=exclude_estimators,
         return_names=return_names,
@@ -189,7 +215,6 @@ def all_estimators(
         package_name="sktime",
         path=ROOT,
         modules_to_ignore=MODULES_TO_IGNORE,
-        class_lookup=CLASS_LOOKUP,
     )
 
     return result
@@ -362,7 +387,17 @@ def all_tags(
 
 
 def _check_estimator_types(estimator_types):
-    """Return list of classes corresponding to type strings."""
+    """Return list of classes corresponding to type strings.
+
+    Parameters
+    ----------
+    estimator_types: str, or list of str
+
+    Returns
+    -------
+    estimator_types: list of classes
+        base classes corresponding to scitype strings in estimator_types
+    """
     estimator_types = deepcopy(estimator_types)
 
     if not isinstance(estimator_types, list):
@@ -370,13 +405,11 @@ def _check_estimator_types(estimator_types):
 
     def _get_err_msg(estimator_type):
         return (
-            f"Parameter `estimator_type` must be None, a string or a list of "
+            f"Parameter `estimator_type` must be a string or a list of "
             f"strings. Valid string values are: "
             f"{get_obj_scitype_list()}, but found: "
             f"{repr(estimator_type)}"
         )
-
-    BASE_CLASS_LOOKUP = get_base_class_lookup()
 
     for i, estimator_type in enumerate(estimator_types):
         if not isinstance(estimator_type, (type, str)):
@@ -386,8 +419,7 @@ def _check_estimator_types(estimator_types):
         if isinstance(estimator_type, str):
             if estimator_type not in get_obj_scitype_list():
                 raise ValueError(_get_err_msg(estimator_type))
-            estimator_type = BASE_CLASS_LOOKUP[estimator_type]
-            estimator_types[i] = estimator_type
+            estimator_types[i] = get_base_class_for_str(estimator_type)
         elif isinstance(estimator_type, type):
             pass
         else:

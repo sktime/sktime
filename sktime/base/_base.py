@@ -59,11 +59,12 @@ __all__ = ["BaseEstimator", "BaseObject"]
 import warnings
 from copy import deepcopy
 
+from skbase.base import BaseEstimator as _BaseEstimator
 from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
-from sklearn.base import BaseEstimator as _BaseEstimator
+from sklearn.base import BaseEstimator as _SklearnBaseEstimator
 
-from sktime.exceptions import NotFittedError
+from sktime import __version__ as SKTIME_VERSION
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
@@ -84,6 +85,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        "sktime_version": SKTIME_VERSION,  # current sktime version
     }
 
     _config = {
@@ -149,42 +151,14 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    # TODO 0.34.0: check whether python 3.8 has reached EoL.
-    # If so, remove warning altogether
     def __init__(self):
         super().__init__()
-
-        import sys
-
-        from packaging.specifiers import SpecifierSet
-
-        from sktime.utils.warnings import warn
-
-        py39_or_higher = SpecifierSet(">=3.9")
-        sys_version = sys.version.split(" ")[0]
-
-        # todo 0.34.0 - check whether python 3.8 eol is reached.
-        # If yes, remove this msg.
-        if sys_version not in py39_or_higher:
-            warn(
-                f"From sktime 0.30.0, sktime requires Python version >=3.9, "
-                f"but found {sys_version}. "
-                "The package can still be installed, until 3.8 end of life "
-                "is reached, "
-                "but some functionality may not work as test coverage is dropped."
-                "Kindly note for context: python 3.8 will reach end of life "
-                "in October 2024, and multiple sktime core dependencies, "
-                "including scikit-learn, have already dropped support for 3.8. ",
-                category=DeprecationWarning,
-                obj=self,
-                stacklevel=2,
-            )
 
         # handle numpy 2 incompatible soft dependencies
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.34.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.36.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
@@ -205,7 +179,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["prophet", "pmdarima"]
+        NOT_NP2_COMPATIBLE = ["pmdarima"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:
@@ -585,155 +559,17 @@ class TagAliaserMixin:
                 warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
-class BaseEstimator(BaseObject):
+class BaseEstimator(_BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
 
-    def __init__(self):
-        self._is_fitted = False
-        super().__init__()
-
-    @property
-    def is_fitted(self):
-        """Whether ``fit`` has been called."""
-        return self._is_fitted
-
-    def check_is_fitted(self):
-        """Check if the estimator has been fitted.
-
-        Raises
-        ------
-        NotFittedError
-            If the estimator has not been fitted yet.
-        """
-        if not self.is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
-
-    def get_fitted_params(self, deep=True):
-        """Get fitted parameters.
-
-        State required:
-            Requires state to be "fitted".
-
-        Parameters
-        ----------
-        deep : bool, default=True
-            Whether to return fitted parameters of components.
-
-            * If True, will return a dict of parameter name : value for this object,
-              including fitted parameters of fittable components
-              (= BaseEstimator-valued parameters).
-            * If False, will return a dict of parameter name : value for this object,
-              but not include fitted parameters of components.
-
-        Returns
-        -------
-        fitted_params : dict with str-valued keys
-            Dictionary of fitted parameters, paramname : paramvalue
-            keys-value pairs include:
-
-            * always: all fitted parameters of this object, as via ``get_param_names``
-              values are fitted parameter value for that key, of this object
-            * if ``deep=True``, also contains keys/value pairs of component parameters
-              parameters of components are indexed as ``[componentname]__[paramname]``
-              all parameters of ``componentname`` appear as ``paramname`` with its value
-            * if ``deep=True``, also contains arbitrary levels of component recursion,
-              e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
-        """
-        if not self.is_fitted:
-            raise NotFittedError(
-                f"estimator of type {type(self).__name__} has not been "
-                "fitted yet, please call fit on data before get_fitted_params"
-            )
-
-        # collect non-nested fitted params of self
-        fitted_params = self._get_fitted_params()
-
-        # the rest is only for nested parameters
-        # so, if deep=False, we simply return here
-        if not deep:
-            return fitted_params
-
-        def sh(x):
-            """Shorthand to remove all underscores at end of a string."""
-            if x.endswith("_"):
-                return sh(x[:-1])
-            else:
-                return x
-
-        # add all nested parameters from components that are sktime BaseObject
-        c_dict = self._components()
-        for c, comp in c_dict.items():
-            if isinstance(comp, BaseEstimator) and comp._is_fitted:
-                c_f_params = comp.get_fitted_params()
-                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                fitted_params.update(c_f_params)
-
-        # add all nested parameters from components that are sklearn estimators
-        # we do this recursively as we have to reach into nested sklearn estimators
-        n_new_params = 42
-        old_new_params = fitted_params
-        while n_new_params > 0:
-            new_params = dict()
-            for c, comp in old_new_params.items():
-                if isinstance(comp, _BaseEstimator):
-                    c_f_params = self._get_fitted_params_default(comp)
-                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                    new_params.update(c_f_params)
-            fitted_params.update(new_params)
-            old_new_params = new_params.copy()
-            n_new_params = len(new_params)
-
-        return fitted_params
-
-    def _get_fitted_params_default(self, obj=None):
-        """Obtain fitted params of object, per sklearn convention.
-
-        Extracts a dict with {paramstr : paramvalue} contents,
-        where paramstr are all string names of "fitted parameters".
-
-        A "fitted attribute" of obj is one that ends in "_" but does not start with "_".
-        "fitted parameters" are names of fitted attributes, minus the "_" at the end.
-
-        Parameters
-        ----------
-        obj : any object, optional, default=self
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        obj = obj if obj else self
-
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = {
-            attr[:-1]: getattr(obj, attr)
-            for attr in dir(obj)
-            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
-        }
-        return fitted_params
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        return self._get_fitted_params_default()
+    # tuple of non-BaseObject classes that count as nested objects
+    # get_fitted_params will retrieve parameters from these, too
+    # override in descendant class
+    # _SklearnBaseEstimator = sklearn.base.BaseEstimator
+    GET_FITTED_PARAMS_NESTING = (_SklearnBaseEstimator,)
 
 
 def _clone_estimator(base_estimator, random_state=None):
