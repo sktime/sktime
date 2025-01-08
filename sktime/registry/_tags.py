@@ -2178,6 +2178,19 @@ class n_hierarchy_levels(_BaseTag):
     }
 
 
+class n_splits(_BaseTag):
+    """
+    Property: number of CV splits of a dataset
+
+    - String name: ```n_splits````
+    - Public property tag
+    - Values: positive integers
+    - Example: ``1``
+    - Default: ``0``
+
+    """
+
+
 class visual_block_kind(_BaseTag):
     """How to display html representation of a meta-estimator in a jupyter notebook.
 
