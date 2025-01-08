@@ -642,4 +642,213 @@ def _is_int64_type(index: pd.Index) -> bool:
         return False
 
 
-__all__ = ["_DartsRegressionAdapter", "_DartsRegressionModelsAdapter"]
+class _DartsTiDEModelAdapter(BaseForecaster):
+    """Adapter class for the Darts TiDE Model.
+
+    Parameters
+    ----------
+    input_chunk_length : int
+        Length of input sequences
+    output_chunk_length : int
+        Number of time steps predicted at once
+    output_chunk_shift : int, optional
+        Number of steps to shift the start of the output chunk, by default 0
+    num_encoder_layers : int, optional
+        Number of layers in encoder, by default 1
+    num_decoder_layers : int, optional
+        Number of layers in decoder, by default 1
+    decoder_output_dim : int, optional
+        Dimension of decoder output, by default 16
+    hidden_size : int, optional
+        Hidden state size, by default 128
+    temporal_width_past : int, optional
+        Window size for past temporal convolution, by default 4
+    temporal_width_future : int, optional
+        Window size for future temporal convolution, by default 4
+    temporal_decoder_hidden : int, optional
+        Hidden size for temporal decoder, by default 32
+    use_layer_norm : bool, optional
+        Whether to use layer normalization, by default False
+    dropout : float, optional
+        Dropout rate, by default 0.1
+    use_static_covariates : bool, optional
+        Whether to use static covariates, by default True
+    past_covariates : Optional[List[str]], optional
+        Names of past covariates columns, by default None
+    """
+
+    _tags = {
+        "python_version": ">=3.9",
+        "python_dependencies": ["u8darts>=0.29"],
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": True,
+    }
+
+    def __init__(
+        self,
+        input_chunk_length: int,
+        output_chunk_length: int,
+        output_chunk_shift: int = 0,
+        num_encoder_layers: int = 1,
+        num_decoder_layers: int = 1,
+        decoder_output_dim: int = 16,
+        hidden_size: int = 128,
+        temporal_width_past: int = 4,
+        temporal_width_future: int = 4,
+        temporal_decoder_hidden: int = 32,
+        use_layer_norm: bool = False,
+        dropout: float = 0.1,
+        use_static_covariates: bool = True,
+        past_covariates: Optional[list[str]] = None,
+        future_covariates: Optional[list[str]] = None,
+    ):
+        super().__init__()
+        if input_chunk_length <= 0:
+            raise ValueError("input_chunk_length must be positive.")
+        self.input_chunk_length = input_chunk_length
+        if output_chunk_length <= 0:
+            raise ValueError("output_chunk_length must be positive.")
+        self.output_chunk_length = output_chunk_length
+        self.output_chunk_shift = output_chunk_shift
+        self.num_encoder_layers = num_encoder_layers
+        self.num_decoder_layers = num_decoder_layers
+        self.decoder_output_dim = decoder_output_dim
+        self.hidden_size = hidden_size
+        self.temporal_width_past = temporal_width_past
+        self.temporal_width_future = temporal_width_future
+        self.temporal_decoder_hidden = temporal_decoder_hidden
+        self.use_layer_norm = use_layer_norm
+        self.dropout = dropout
+        self.use_static_covariates = use_static_covariates
+        if past_covariates is not None and not isinstance(past_covariates, list):
+            raise ValueError("past_covariates must be a list or None.")
+        self.past_covariates = [] if past_covariates is None else past_covariates
+        if future_covariates is not None and not isinstance(future_covariates, list):
+            raise ValueError("future_covariates must be a list or None.")
+        self.future_covariates = [] if future_covariates is None else future_covariates
+        self._forecaster = None
+
+    def convert_dataframe_to_timeseries(self, data: pd.DataFrame):
+        """
+        Convert a pandas DataFrame to a Darts TimeSeries object.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data as a pandas DataFrame.
+
+        Returns
+        -------
+        TimeSeries
+            Converted Darts TimeSeries object.
+        """
+        from darts import TimeSeries
+
+        return TimeSeries.from_dataframe(data)
+
+    @property
+    @abc.abstractmethod
+    def _create_forecaster(self: "_DartsTiDEModelAdapter"):
+        """Create Darts TiDE model."""
+
+    def _fit(
+        self: "_DartsTiDEModelAdapter",
+        y: pd.DataFrame,
+        X: Optional[pd.DataFrame] = None,
+        fh: Optional[ForecastingHorizon] = None,
+    ):
+        """Fit the TiDE model to training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target time series data
+        X : Optional[pd.DataFrame], optional
+            Exogenous variables (past and/or future covariates)
+        fh : Optional[ForecastingHorizon], optional
+            Forecasting horizon, by default None
+
+        Returns
+        -------
+        self : _DartsTiDEModelAdapter
+            Fitted forecaster instance
+        """
+        y_darts = self.convert_dataframe_to_timeseries(y)
+
+        past_covariates = None
+        future_covariates = None
+
+        if X is not None and self.past_covariates:
+            past_covariates = self.convert_dataframe_to_timeseries(
+                X[self.past_covariates]
+            )
+            if len(X.columns) > len(self.past_covariates):
+                future_covariates = self.convert_dataframe_to_timeseries(
+                    X.drop(columns=self.past_covariates)
+                )
+
+        self._forecaster = self._create_forecaster()
+        self._forecaster._fit(
+            series=y_darts,
+            past_covariates=past_covariates,
+            future_covariates=future_covariates,
+        )
+
+        return self
+
+    def _predict(self, fh: ForecastingHorizon, X: Optional[pd.DataFrame] = None):
+        """
+        Generate predictions using the fitted TiDE model.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : Optional[pd.DataFrame], default=None
+            Exogenous variables (covariates) to be used for prediction. If provided,
+            it should contain both past and future covariates.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the predictions with the index aligned to forecasting
+            horizon.
+        """
+        past_covariates = None
+        future_covariates = None
+
+        if X is not None:
+            if past_covariates is not None:
+                past_covariates = self.convert_dataframe_to_timeseries(
+                    X[self.past_covariates]
+                )
+            if future_covariates is not None:
+                future_covariates = self.convert_dataframe_to_timeseries(
+                    X[self.future_covariates]
+                )
+            elif len(X.columns) > len(self.past_covariates):
+                future_covariates = self.convert_dataframe_to_timeseries(
+                    X.drop(columns=self.past_covariates)
+                )
+
+        n_periods = len(fh)
+
+        predictions = self._forecaster.predict(
+            n=n_periods,
+            past_covariates=past_covariates,
+            future_covariates=future_covariates,
+        )
+
+        predictions_df = predictions.pd_dataframe()
+        predictions_df.index = fh.to_absolute(self.cutoff).to_pandas()
+
+        return predictions_df
+
+
+__all__ = [
+    "_DartsRegressionAdapter",
+    "_DartsRegressionModelsAdapter",
+    "_DartsTiDEModelAdapter",
+]
