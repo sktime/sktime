@@ -2139,9 +2139,9 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
 
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
-    """Median squared error (MdSE) or root median squared error (RMdSE).
+    r"""Median squared error (MdSE) or root median squared error (RMdSE).
 
-    If ``square_root`` is False then calculates MdSE and if ``square_root`` is True
+    If `square_root is False then calculates MdSE and if square_root is True
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
@@ -2155,6 +2155,15 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
 
+    `evaluate_by_index returns, at a time index :math:t_i,
+    the median of squared errors across variables (or levels,
+    in hierarchical data),
+    :math:\text{median}((y_{i,j} - \\widehat{y}_{i,j})^2)
+    for all variables (or levels) :math:j at the given time index
+    :math:t_i, for all time indices :math:t_1, \\dots, t_n in
+    the input. If `square_root=True, it returns the square root
+    of the median squared error, corresponding to the median absolute error.
+
     Parameters
     ----------
     square_root : bool, default = False
@@ -2165,19 +2174,19 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         Defines how to aggregate metric for multivariate (multioutput) data.
 
         * If array-like, values used as weights to average the errors.
-        * If ``'raw_values'``,
+        * If `'raw_values',
           returns a full set of errors in case of multioutput input.
-        * If ``'uniform_average'``,
+        * If `'uniform_average',
           errors of all outputs are averaged with uniform weight.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
 
-        * If ``'uniform_average'`` (default),
+        * If `'uniform_average' (default),
           errors are mean-averaged across levels.
-        * If ``'uniform_average_time'``,
+        * If `'uniform_average_time',
           metric is applied to all data, ignoring level index.
-        * If ``'raw_values'``,
+        * If `'raw_values',
           does not average errors across levels, hierarchy is retained.
 
     See Also
@@ -2234,6 +2243,58 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        if self.square_root:
+            mse = np.median(raw_values, axis=0)
+            out = np.sqrt(mse)
+        else:
+            out = np.median(raw_values, axis=0)
+
+        pseudo_values = self._get_weighted_df(out, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+
+            if multioutput == "uniform_average":
+                if pseudo_values.ndim == 1:
+                    return pseudo_values.mean()
+                else:
+                    return pseudo_values.mean(axis=1)
+
+        return pseudo_values.dot(multioutput)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -2242,16 +2303,16 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
+            special parameters are defined for a value, will return `"default" set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            `MyClass(**params) or MyClass(**params[i]) creates a valid test
             instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+            `create_test_instance uses the first (or only) dictionary in params
         """
         params1 = {}
         params2 = {"square_root": True}
