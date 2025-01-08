@@ -477,6 +477,9 @@ class MAPAForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+        if not _check_soft_dependencies("statsmodels", severity="none"):
+            return [{}]
         params1 = {
             "aggregation_levels": [1, 2, 3],
             "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=6),
