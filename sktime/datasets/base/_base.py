@@ -62,13 +62,37 @@ class BaseDataset(BaseObject):
 
         return self._load(*args)
 
+    def _load_simple_train_test_cv_split(self):
+        """
+        Returns the cv split for datasets with a single split.
+
+        Returns
+        -------
+        generator
+            Generator that yields X_train, y_train, X_test, y_test
+
+        Raises
+        ------
+        ValueError
+            If the dataset has more than one split.
+        """
+
+        n_splits = self.get_tag("n_splits")
+
+        if n_splits == 1:
+            X_train, y_train = self.load("X_train", "y_train")
+            X_test, y_test = self.load("X_test", "y_test")
+            # Return X_train, y_train, X_test, y_test in a generator
+            yield X_train, y_train, X_test, y_test
+
+        raise ValueError("This method is only for datasets with a single split.")
+
     def _check_args(self, *args):
         for arg in args:
-            if arg not in self.available_sets:
-                raise InvalidSetError(arg, self.available_sets)
+            if arg not in self.keys():
+                raise InvalidSetError(arg, self.keys())
 
-    @property
-    def available_sets(self):
+    def keys(self):
         """
         Return a list of available sets.
 
@@ -102,6 +126,9 @@ class BaseDataset(BaseObject):
         cache_directory = self.cache_files_directory()
         if cache_directory.exists():
             shutil.rmtree(cache_directory)
+
+    def __getitem__(self, key):
+        return self.load(key)
 
 
 class InvalidSetError(Exception):
@@ -202,6 +229,9 @@ class _DatasetFromLoaderMixin:
             X, y = self._load_dataset(**self._encode_args("X_test"))
             cache["X_test"] = X
             cache["y_test"] = y
+        if "cv" in args:
+            cv = self._load_simple_train_test_cv_split()
+            cache["cv"] = cv
 
         res = [cache[key] for key in args]
 
