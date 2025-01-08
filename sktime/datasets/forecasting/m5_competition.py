@@ -146,6 +146,7 @@ class M5Dataset(BaseForecastingDataset):
                 "y_test": y_test,
                 "X_train": X_train,
                 "y_train": y_train,
+                # "cv": self._load_simple_train_test_cv_split(),
             },
         )
 
@@ -170,6 +171,8 @@ class M5Dataset(BaseForecastingDataset):
         for set_name in sets_to_return:
             output.append(cache[set_name])
 
+        if len(output) == 1:
+            return output[0]
         return tuple(output)
 
     def _process_raw_data(
