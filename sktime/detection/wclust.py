@@ -196,7 +196,7 @@ class WindowSegmenter(BaseDetector):
         super().__init__()
 
     def _fit(self, X, y=None):
-        """Fit to training data.
+        """Do nothing because their is no need to fit a model.
 
         core logic
 
@@ -209,32 +209,10 @@ class WindowSegmenter(BaseDetector):
 
         Returns
         -------
-        self : returns a reference to self
+        self : True
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
         """
-        if isinstance(X, pd.Series):
-            X = X.to_frame(X)
-        if self.overlap:
-            win_x = overlapping_window(self._window_size, self.step_size, X)
-            cloned_clusterer = clone(self._clusterer)
-            cloned_clusterer.fit(win_x)
-            self._clusterer_ = cloned_clusterer
-        else:
-            if is_sklearn_clusterer(self._clusterer):
-                win_x = window(self._window_size, X)
-                seg = flattenSegments(win_x)
-                cloned_clusterer = clone(self._clusterer)
-                cloned_clusterer.fit(seg)
-            else:
-                win_x = window_timeseries(self._window_size, X)
-                cloned_clusterer = clone(self._clusterer)
-                cloned_clusterer.fit(win_x)
-            self._clusterer_ = cloned_clusterer
-
-        return self
+        return True
 
     def _predict(self, X):
         """Create detections on test/deployment data.
@@ -253,6 +231,7 @@ class WindowSegmenter(BaseDetector):
         if isinstance(X, pd.Series):
             X = X.to_frame(X)
 
+        self._clusterer_ = clone(self._clusterer)
         self.n_features, self.n_timepoints = X.shape
         if self.overlap:
             win_x = overlapping_window(self._window_size, self.step_size, X)
@@ -267,9 +246,11 @@ class WindowSegmenter(BaseDetector):
             if is_sklearn_clusterer(self._clusterer_):
                 win_x = window(self._window_size, X)
                 sub = flattenSegments(win_x)
+                self._clusterer_.fit(sub)
                 labels = self._clusterer_.predict(sub)
             else:
                 win_x = window_timeseries(self._window_size, X)
+                self._clusterer_.fit(win_x)
                 labels = self._clusterer_.predict(win_x)
             flabel = finalLabels(labels, self._window_size, X)
             flabel = pd.Series(flabel.flatten(), index=X.index)
