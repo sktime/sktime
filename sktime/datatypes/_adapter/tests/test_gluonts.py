@@ -55,6 +55,26 @@ def test_pandas_to_ListDataset(pandas_df):
         np.testing.assert_allclose(group_data.values, generated_list[idx]["target"])
         idx += 1
 
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    gluon_dataset = []
+    for entry in generated_list:
+        gluon_dataset.append(
+            {
+                FieldName.START: entry["start"],
+                FieldName.TARGET: entry["target"],
+            }
+        )
+
+    # Attempt to create ListDataset object
+    list_dataset = ListDataset(gluon_dataset, freq="D", one_dim_target=False)
+
+    first_item = next(iter(list_dataset))
+    assert "start" in first_item
+    assert "target" in first_item
+    np.testing.assert_allclose(first_item["target"], generated_list[0]["target"])
+
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("gluonts", severity="none"),
