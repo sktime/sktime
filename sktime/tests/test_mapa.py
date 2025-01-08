@@ -183,7 +183,7 @@ def test_predict_with_seasonality(sample_data):
 
     Verifies the following:
     - Predictions capture seasonal patterns in the input data.
-    - Predictions have the correct shape and are finite.
+    - Predictions have the correct shape and are finite or not.
     """
     forecaster = MAPAForecaster(
         aggregation_levels=[1, 2, 3],

@@ -15,7 +15,8 @@ class MAPAForecaster(BaseForecaster):
 
     The MAPA method combines forecasts from different temporal aggregations of the time
     series to improve accuracy and robustness. It allows for multiple base
-    forecasting methods and supports various aggregation and combination strategies.
+    forecasting methods and also supports various aggregation and combination
+    strategies.
 
     Parameters
     ----------
