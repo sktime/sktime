@@ -480,7 +480,20 @@ class MAPAForecaster(BaseForecaster):
         from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("statsmodels", severity="none"):
-            return [{}]
+            from sktime.forecasting.naive import NaiveForecaster
+            return [{
+        "aggregation_levels": [1, 2, 3],
+        "base_forecaster": NaiveForecaster(strategy="mean"),
+        "imputation_method": "ffill",
+        "decompose_type": "multiplicative",
+        "forecast_combine": "mean",
+    },{
+        "aggregation_levels": [1, 4, 6],
+        "base_forecaster": NaiveForecaster(strategy="last"),
+        "imputation_method": "interpolate",
+        "decompose_type": "additive",
+        "forecast_combine": "median",
+    }]
         params1 = {
             "aggregation_levels": [1, 2, 3],
             "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=6),
