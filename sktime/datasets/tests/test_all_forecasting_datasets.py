@@ -8,7 +8,6 @@ import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
-
 # Pairs of message and lambda function to check the tags
 _tag_constraints = [
     (

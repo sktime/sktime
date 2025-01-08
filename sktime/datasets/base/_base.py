@@ -64,7 +64,7 @@ class BaseDataset(BaseObject):
 
     def _load_simple_train_test_cv_split(self):
         """
-        Returns the cv split for datasets with a single split.
+        Return the cv split for datasets with a single split.
 
         Returns
         -------
@@ -76,7 +76,6 @@ class BaseDataset(BaseObject):
         ValueError
             If the dataset has more than one split.
         """
-
         n_splits = self.get_tag("n_splits")
 
         if n_splits == 1:

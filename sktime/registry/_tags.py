@@ -2180,14 +2180,13 @@ class n_hierarchy_levels(_BaseTag):
 
 class n_splits(_BaseTag):
     """
-    Property: number of CV splits of a dataset
+    Property: number of CV splits of a dataset.
 
     - String name: ```n_splits````
     - Public property tag
     - Values: positive integers
     - Example: ``1``
     - Default: ``0``
-
     """
 
 

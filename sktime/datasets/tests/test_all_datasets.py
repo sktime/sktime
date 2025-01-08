@@ -3,6 +3,7 @@
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 
+import types
 from contextlib import nullcontext
 
 import numpy as np
@@ -11,7 +12,6 @@ import pytest
 
 from sktime.datasets.base._base import InvalidSetError
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-import types
 
 
 def is_generator(obj):
