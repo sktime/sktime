@@ -225,7 +225,7 @@ class WindowSegmenter(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series - detections for sequence X
+        Y : pd.DataFrame - detections for sequence X
             exact format depends on detection type
         """
         if isinstance(X, pd.Series):
@@ -256,6 +256,7 @@ class WindowSegmenter(BaseDetector):
             flabel = pd.Series(flabel.flatten(), index=X.index)
 
         current_label = flabel[0]
+
         start_idx = X.index[0]
         intervals = []
         labels_out = []
@@ -270,8 +271,9 @@ class WindowSegmenter(BaseDetector):
         if start_idx != X.index[-1]:
             intervals.append(pd.Interval(start_idx, X.index[-1], closed="left"))
             labels_out.append(current_label)
-
-        return pd.Series(labels_out, index=pd.IntervalIndex(intervals), name="ilocs")
+        return pd.DataFrame(
+            {"intervals": pd.IntervalIndex(intervals), "labels": labels_out}
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -291,35 +293,3 @@ class WindowSegmenter(BaseDetector):
         params1 = {"clusterer": TimeSeriesDBSCAN(distance=DtwDist()), "window_size": 2}
         params2 = {}
         return [params1, params2]
-
-
-# Parameters for the time series
-start_date = "2000-01-01"
-end_date = "2000-02-28"
-freq = "D"  # Daily frequency
-
-# Generate a date range
-dates = pd.date_range(start=start_date, end=end_date, freq=freq)
-
-# Create patterned data
-np.random.seed(45)  # For reproducibility
-
-# Pattern 1: Sinusoidal for a cluster
-pattern1 = 5 + 2 * np.sin(2 * np.pi * (np.arange(len(dates)) % 30) / 30)
-
-# Pattern 2: Linear trend
-pattern2 = np.linspace(3, 7, len(dates))
-
-# Pattern 3: Flat with random noise
-pattern3 = np.ones(len(dates)) * 4 + np.random.normal(0, 0.2, len(dates))
-
-# Combine patterns with transitions
-data = np.concatenate([pattern1[:30], pattern2[30:60], pattern3[60:]])
-time_series = pd.Series(data=data, index=dates, name="value")
-
-seg = WindowSegmenter(window_size=3)
-
-seg.fit(time_series)
-label = seg.predict(time_series)
-
-print(label.values)
