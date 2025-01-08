@@ -5,13 +5,52 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.series import check_series
+from sktime.utils.warnings import warn
 
 
 class MAPAForecaster(BaseForecaster):
-    """MAPA Forecaster class."""
+    """MAPAForecaster implements the Multiple Aggregation Prediction Algorithm (MAPA).
+
+    The MAPA method combines forecasts from different temporal aggregations of the time
+    series to improve accuracy and robustness. It allows for multiple base
+    forecasting methods and supports various aggregation and combination strategies.
+
+    Parameters
+    ----------
+    aggregation_levels : list of int, default=None
+        The levels at which the time series will be aggregated.
+        If None, the levels will default to [1, 2, 4, 6].
+
+    base_forecaster : sktime-compatible forecaster, default=None
+        The forecasting model to be used for each aggregation level.
+        If None, the default is ExponentialSmoothing(trend="add", seasonal="add", sp=6).
+
+    agg_method : str, default="mean"
+        Method used to aggregate the forecasts from different levels.
+        Options are "mean", "median", or "sum".
+
+    decompose_type : str, default="multiplicative"
+        The type of decomposition used in time series decomposition.
+        Options are "additive" or "multiplicative".
+
+    forecast_combine : str, default="mean"
+        Method used to combine the forecasts from different aggregation levels.
+        Options are "mean", "median", or "weighted_median".
+
+    imputation_method : str, default="ffill"
+        Method used for imputing missing values in the time series.
+        Options include "ffill" (forward fill) or "bfill" (backward fill).
+
+    sp : int, default=6
+        Seasonal periodicity of the time series.
+        This is used in decomposition and base forecaster setup.
+
+    weights : list of float, default=None
+        Optional weights to apply when combining forecasts.
+        Only used if `forecast_combine="weighted_median"`.
+    """
 
     _tags = {
         "scitype:y": "univariate",
@@ -19,7 +58,6 @@ class MAPAForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "python_dependencies": "statsmodels",
         "authors": ["trnnick", "phoeenniixx"],
     }
 
@@ -33,13 +71,14 @@ class MAPAForecaster(BaseForecaster):
         imputation_method="ffill",
         sp=6,
         weights=None,
-        parallel=False,
-        n_jobs=-1,
-        conf_interval=0.95,
     ):
         self.aggregation_levels = (
             aggregation_levels if aggregation_levels else [1, 2, 4]
         )
+        if not all(
+            isinstance(level, int) and level > 0 for level in aggregation_levels
+        ):
+            raise ValueError("All aggregation levels must be positive integers")
         self.base_forecaster = (
             base_forecaster
             if base_forecaster is not None
@@ -51,15 +90,11 @@ class MAPAForecaster(BaseForecaster):
         self.imputation_method = imputation_method
         self.sp = sp
         self.weights = weights
-        self.parallel = parallel
-        self.n_jobs = n_jobs
-        self.conf_interval = conf_interval
 
         self.forecasters = {}
-        self.trend = {}
-        self.seasonal = {}
-        self.residuals = {}
-        self.frequency = None
+        self._decomposition_info = {}
+        self._y_cols = None
+        self._y_name = None
         self._fh = None
         self._transformation_offset = None
 
@@ -77,14 +112,13 @@ class MAPAForecaster(BaseForecaster):
         return y
 
     def _ensure_positive_values(self, y):
-        # Ensure y is a pandas Series
-        if not isinstance(y, pd.Series):
-            y = pd.Series(y)
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(y)
 
         y = self._handle_missing_data(y)
 
-        if self.decompose_type == "multiplicative" and (y <= 0).any():
-            min_positive_value = y[y > 0].min()
+        if self.decompose_type == "multiplicative" and (y <= 0).any().any():
+            min_positive_value = y[y > 0].min().min()
 
             if pd.isna(min_positive_value) or min_positive_value <= 0:
                 raise ValueError(
@@ -96,160 +130,351 @@ class MAPAForecaster(BaseForecaster):
             y += offset
             self._transformation_offset = offset
 
-            print(
+            warn(
                 f"Applied an offset of {offset} to ensure strictly positive values\
-                 for multiplicative decomposition."
+                             for multiplicative decomposition."
             )
 
-        return y
-
-    def _ensure_datetime_index(self, y):
-        if not isinstance(y.index, pd.DatetimeIndex):
-            y.index = pd.to_datetime(y.index, errors="coerce")
-            if y.index.hasnans:
-                raise ValueError(
-                    "Could not convert index to pd.DatetimeIndex. \
-                    Please provide a datetime-compatible index."
-                )
-        if y.index.freq is None:
-            y = y.asfreq(pd.infer_freq(y.index))
         return y
 
     def _aggregate(self, y, level):
+        """Aggregate the time series to the specified temporal level.
+
+        Parameters
+        ----------
+        y : pandas.Series
+            The input time series to be aggregated.
+
+        level : int
+            The aggregation level (e.g., 2 for bi-weekly, 4 for monthly).
+
+        Returns
+        -------
+        pandas.Series
+            The aggregated time series.
+        """
         if level == 1:
-            return y
-        return y.resample(f"{level}D").agg(self.agg_method).asfreq(y.index.freq)
+            return y.copy()
 
-    def _decompose(self, y):
-        try:
-            _check_soft_dependencies("statsmodels", severity="warning")
-            from statsmodels.tsa.seasonal import seasonal_decompose
-        except ImportError:
-            return (
-                pd.Series(y),
-                pd.Series(np.zeros_like(y)),
-                pd.Series(np.zeros_like(y)),
-            )
+        n_periods = len(y)
+        groups = np.arange(n_periods) // level
 
-        # Ensure y is a pandas Series
-        y = self._ensure_positive_values(y)
-
-        # Handle missing data
-        if y.isna().any():
-            y = y.ffill().bfill()
-
-        if len(y) < 2 * self.sp:
-            return (
-                pd.Series(y),
-                pd.Series(np.zeros_like(y)),
-                pd.Series(np.zeros_like(y)),
-            )
-
-        # Perform seasonal decomposition
-        decomposition = seasonal_decompose(y, model=self.decompose_type, period=self.sp)
-        return decomposition.trend, decomposition.seasonal, decomposition.resid
-
-    def _combine_forecasts(self, forecasts):
-        if self.forecast_combine == "mean":
-            return np.mean(forecasts, axis=0)
-        elif self.forecast_combine == "median":
-            return np.median(forecasts, axis=0)
-        elif self.forecast_combine == "weighted":
-            weights = (
-                self.weights
-                if self.weights
-                else [1 / level for level in self.aggregation_levels]
-            )
-            return np.average(forecasts, axis=0, weights=weights)
+        remainder = n_periods % level
+        if remainder > 0:
+            groups = groups[:-remainder]
+            y_trimmed = y.iloc[:-remainder]
         else:
-            raise ValueError("Unsupported forecast combination method.")
+            y_trimmed = y
+
+        if self.agg_method == "mean":
+            aggregated = y_trimmed.groupby(groups).mean()
+        elif self.agg_method == "sum":
+            aggregated = y_trimmed.groupby(groups).sum()
+        else:
+            aggregated = y_trimmed.groupby(groups).agg(self.agg_method)
+
+        if isinstance(y.index, pd.PeriodIndex):
+            base_freq = y.index.freq.name
+            if base_freq == "M":
+                new_freq = f"{level}M"
+            else:
+                new_freq = f"{level}{base_freq}"
+            try:
+                new_index = pd.period_range(
+                    start=y.index[0], periods=len(aggregated), freq=new_freq
+                )
+            except ValueError:
+                new_index = pd.RangeIndex(start=0, stop=len(aggregated))
+        else:
+            new_index = pd.RangeIndex(start=0, stop=len(aggregated))
+
+        aggregated.index = new_index
+        return aggregated
+
+    def _decompose(self, y, level):
+        """Decompose the time series into trend, seasonal, and residual components.
+
+        Parameters
+        ----------
+        y : pandas.Series
+            The input time series to be decomposed.
+
+        Returns
+        -------
+        tuple
+            A tuple containing three pandas.Series:
+            - trend: The trend component of the series.
+            - seasonal: The seasonal component of the series.
+            - residual: The residual component of the series.
+        """
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(y)
+
+        seasonal_period = self.sp // level
+
+        seasonal_enabled = (
+            (self.sp % level == 0)
+            and (seasonal_period > 1)
+            and (len(y) >= 2 * seasonal_period)
+        )
+
+        if level >= self.sp:
+            seasonal_enabled = False
+            seasonal_period = 1
+
+        self._decomposition_info[level] = {
+            "seasonal_enabled": seasonal_enabled,
+            "seasonal_period": seasonal_period,
+            "n_observations": len(y),
+        }
+
+        return y, seasonal_enabled, seasonal_period
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data."""
+        """Fit forecaster following MAPA methodology."""
         y = check_series(y)
 
-        # Ensure y is 1-dimensional
-        if len(y.shape) > 1 and y.shape[1] == 1:
-            y = y.squeeze()  # Convert (n, 1) to (n,)
+        self._y_cols = (
+            y.columns
+            if isinstance(y, pd.DataFrame)
+            else pd.Index([y.name])
+            if y.name
+            else pd.Index(["c0"])
+        )
+        self._y_name = y.name if isinstance(y, pd.Series) else None
 
-        # Ensure positive values if using multiplicative decomposition
         y = self._ensure_positive_values(y)
-
-        # Handle missing data and set frequency
         y = self._handle_missing_data(y)
-        y = self._ensure_datetime_index(y)
-        self.frequency = y.index.freq
 
+        if isinstance(y, pd.Series):
+            y = pd.DataFrame(y)
+
+        valid_levels = []
         for level in self.aggregation_levels:
-            y_agg = self._aggregate(y, level)
-            trend, seasonal, residuals = self._decompose(y_agg)
+            try:
+                y_agg = self._aggregate(y, level)
+                y_agg.columns = self._y_cols
 
-            self.trend[level] = trend.ffill().bfill()
-            self.seasonal[level] = seasonal.ffill().bfill()
-            self.residuals[level] = residuals.ffill().bfill()
+                _, seasonal_enabled, seasonal_period = self._decompose(y_agg, level)
 
-            forecaster = type(self.base_forecaster)(**self.base_forecaster.get_params())
-            forecaster.fit(self.residuals[level])
-            self.forecasters[level] = forecaster
+                forecaster = type(self.base_forecaster)(
+                    **self.base_forecaster.get_params()
+                )
 
+                if not seasonal_enabled:
+                    forecaster_params = forecaster.get_params()
+                    if "seasonal" in forecaster_params:
+                        forecaster.set_params(seasonal=None)
+                else:
+                    forecaster_params = forecaster.get_params()
+                    if "seasonal" in forecaster_params:
+                        forecaster.set_params(seasonal="add", sp=seasonal_period)
+
+                forecaster.fit(y_agg)
+                self.forecasters[level] = forecaster
+                valid_levels.append(level)
+
+            except Exception as e:
+                warn(f"Failed to process level {level}: {str(e)}")
+                continue
+
+        if not valid_levels:
+            raise ValueError("Failed to fit any aggregation levels")
+
+        self.aggregation_levels = valid_levels
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon."""
+        """Generate forecasts following MAPA methodology."""
         fh = check_fh(fh)
         forecasts = []
 
         for level in self.aggregation_levels:
-            forecaster = self.forecasters[level]
-            residual_pred = forecaster.predict(fh)
+            try:
+                info = self._decomposition_info.get(level, {})
+                seasonal_enabled = info.get("seasonal_enabled", False)
+                seasonal_period = info.get("seasonal_period", 1)
 
-            trend = self.trend[level].reindex(residual_pred.index, method="ffill")
-            seasonal = self.seasonal[level].reindex(residual_pred.index, method="ffill")
+                if level not in self.forecasters:
+                    warn(f"No forecaster found for level {level}")
+                    continue
 
-            combined_pred = trend + seasonal + residual_pred
+                forecast = self.forecasters[level].predict(fh)
 
-            if self._transformation_offset:
-                combined_pred -= self._transformation_offset
+                if isinstance(forecast, pd.Series):
+                    forecast = pd.DataFrame(forecast)
 
-            forecasts.append(combined_pred)
+                forecast.columns = self._y_cols
 
+                if seasonal_enabled:
+                    if isinstance(forecast.index, pd.PeriodIndex):
+                        seasonal_idx = forecast.index.month % seasonal_period
+                    else:
+                        seasonal_idx = np.arange(len(forecast)) % seasonal_period
+
+                    seasonal_factors = self._get_seasonal_pattern(level)
+
+                    seasonal_adjustments = np.take(
+                        seasonal_factors, seasonal_idx, mode="wrap"
+                    )
+
+                    if self.decompose_type == "multiplicative":
+                        forecast = forecast.multiply(seasonal_adjustments, axis=0)
+                    else:  # additive
+                        forecast = forecast.add(seasonal_adjustments, axis=0)
+
+                forecast_values = forecast.values
+
+                if forecast_values.ndim == 1:
+                    forecast_values = forecast_values.reshape(-1, 1)
+
+                forecasts.append(forecast_values.ravel())
+
+            except Exception as e:
+                warn(f"Failed to generate forecast for level {level}: {str(e)}\n")
+                continue
+
+        if not forecasts:
+            raise ValueError(
+                "Failed to generate any forecasts. Check the following:\n"
+                f"1. Valid levels: {self.aggregation_levels}\n"
+                f"2. Decomposition info: {self._decomposition_info}\n"
+                f"3. Available forecasters: {list(self.forecasters.keys())}"
+            )
+
+        forecasts = np.vstack(forecasts)
         final_forecast = self._combine_forecasts(forecasts)
-        return pd.Series(final_forecast, index=fh.to_absolute(self.cutoff).to_pandas())
+
+        result = pd.DataFrame(
+            final_forecast.reshape(-1, len(self._y_cols)),
+            index=fh.to_absolute(self.cutoff).to_pandas(),
+            columns=self._y_cols,
+        )
+
+        if hasattr(self, "_transformation_offset") and self._transformation_offset:
+            if self.decompose_type == "multiplicative":
+                result = result * (1 - self._transformation_offset)
+            else:
+                result = result - self._transformation_offset
+
+        return result
+
+    def _get_seasonal_pattern(self, level):
+        """Extract seasonal pattern for a given aggregation level.
+
+        Parameters
+        ----------
+        level : int
+            Aggregation level
+
+        Returns
+        -------
+        np.ndarray
+            Seasonal pattern for the given level
+        """
+        info = self._decomposition_info.get(level, {})
+        seasonal_period = info.get("seasonal_period", 1)
+
+        if not info.get("seasonal_enabled", False):
+            return (
+                np.ones(seasonal_period)
+                if self.decompose_type == "multiplicative"
+                else np.zeros(seasonal_period)
+            )
+
+        forecaster = self.forecasters.get(level)
+        if forecaster is None:
+            return (
+                np.ones(seasonal_period)
+                if self.decompose_type == "multiplicative"
+                else np.zeros(seasonal_period)
+            )
+
+        if hasattr(forecaster, "seasonal_"):
+            pattern = forecaster.seasonal_
+            if len(pattern) < seasonal_period:
+                pattern = np.pad(
+                    pattern, (0, seasonal_period - len(pattern)), mode="wrap"
+                )
+            return pattern[:seasonal_period]
+
+        return (
+            np.ones(seasonal_period)
+            if self.decompose_type == "multiplicative"
+            else np.zeros(seasonal_period)
+        )
+
+    def _combine_forecasts(self, forecasts):
+        """Combine forecasts from multiple aggregation levels.
+
+        Parameters
+        ----------
+        forecasts : np.ndarray
+            Forecasts from different aggregation levels.
+
+        Returns
+        -------
+        np.ndarray
+            Combined forecast values.
+        """
+        if not isinstance(forecasts, np.ndarray):
+            forecasts = np.array(forecasts)
+
+        if self.weights is not None:
+            if len(self.weights) != forecasts.shape[0]:
+                raise ValueError(
+                    "Weights must have the same length "
+                    "as the number of aggregation levels."
+                )
+            weights = np.array(self.weights).reshape(-1, 1)
+        else:
+            weights = np.ones((forecasts.shape[0], 1))
+
+        weights = weights / weights.sum()
+
+        if self.forecast_combine == "mean":
+            return np.mean(forecasts, axis=0)
+        elif self.forecast_combine == "median":
+            return np.median(forecasts, axis=0)
+        elif self.forecast_combine == "weighted_mean":
+            return np.average(forecasts, axis=0, weights=weights.ravel())
+        else:
+            raise ValueError(
+                f"Unsupported forecast combination method: {self.forecast_combine}"
+            )
 
     def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data."""
+        """Update with new data following MAPA methodology."""
         y = check_series(y)
+
+        if isinstance(y, pd.Series):
+            y = pd.DataFrame(y)
+        if y.columns.empty:
+            y.columns = self._y_cols
+
+        y = self._ensure_positive_values(y)
         y = self._handle_missing_data(y)
-        y = self._ensure_datetime_index(y)
 
         for level in self.aggregation_levels:
-            y_agg = self._aggregate(y, level)
-            trend, seasonal, residuals = self._decompose(y_agg)
+            try:
+                y_agg = self._aggregate(y, level)
+                y_agg.columns = self._y_cols
 
-            self.trend[level] = pd.concat([self.trend[level], trend]).ffill().bfill()
-            self.seasonal[level] = (
-                pd.concat([self.seasonal[level], seasonal]).ffill().bfill()
-            )
-            self.residuals[level] = (
-                pd.concat([self.residuals[level], residuals]).ffill().bfill()
-            )
+                if update_params:
+                    if hasattr(self.forecasters[level], "update"):
+                        self.forecasters[level].update(y_agg, update_params=True)
+                    else:
+                        self.forecasters[level].fit(y_agg)
 
-            if update_params:
-                self.forecasters[level].update(residuals)
+            except Exception as e:
+                warn(f"Failed to update level {level}: {str(e)}")
+                continue
 
         return self
-
-    def _custom_exp_smoothing_update(self, forecaster, new_residuals):
-        forecaster._y = pd.concat([forecaster._y, new_residuals])
-        forecaster._is_fitted = False
-        forecaster.fit(forecaster._y)
-        return forecaster
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        if not _check_soft_dependencies("statsmodels", severity="none"):
-            return [{}]
         params1 = {
             "aggregation_levels": [1, 2, 3],
             "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=6),
