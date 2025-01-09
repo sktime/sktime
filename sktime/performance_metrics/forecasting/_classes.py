@@ -2274,14 +2274,21 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred) ** 2
-        mse = raw_values.median(axis=1)
 
         if self.square_root:
-            mse = np.sqrt(mse)
+            raw_values = np.sqrt(raw_values)
 
-        pseudo_values = self._get_weighted_df(mse, **kwargs)
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        return self._handle_multioutput(pseudo_values, multioutput)
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
