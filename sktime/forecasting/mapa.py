@@ -477,6 +477,7 @@ class MAPAForecaster(BaseForecaster):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
         params = [
             {
@@ -502,5 +503,19 @@ class MAPAForecaster(BaseForecaster):
                 "weights": [0.5, 0.3, 0.2],
             },
         ]
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+            params.append(
+                {
+                    "aggregation_levels": [1, 2, 4],
+                    "base_forecaster": ExponentialSmoothing(
+                        trend="add", seasonal="add", sp=6
+                    ),
+                    "imputation_method": "ffill",
+                    "decompose_type": "multiplicative",
+                    "forecast_combine": "mean",
+                }
+            )
 
         return params
