@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.mapa import MAPAForecaster
 
 
@@ -185,9 +184,11 @@ def test_predict_with_seasonality(sample_data):
     - Predictions capture seasonal patterns in the input data.
     - Predictions have the correct shape and are finite or not.
     """
+    from sktime.forecasting.naive import NaiveForecaster
+
     forecaster = MAPAForecaster(
         aggregation_levels=[1, 2, 3],
-        base_forecaster=ExponentialSmoothing(trend="add", seasonal="add", sp=12),
+        base_forecaster=NaiveForecaster(strategy="mean", sp=12),
         sp=12,
     )
 
