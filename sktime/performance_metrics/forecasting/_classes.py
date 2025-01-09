@@ -892,13 +892,14 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         lower_is_better=True,
+        by_index=False,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
         self.func = func
         self.name = name
         self.lower_is_better = lower_is_better
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(multioutput=multioutput, multilevel=multilevel, by_index=by_index)
 
         self.set_tags(**{"lower_is_better": lower_is_better})
 
@@ -1120,9 +1121,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
+        by_index=False,
     ):
         self.sp = sp
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(multioutput=multioutput, multilevel=multilevel, by_index=by_index)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2523,9 +2525,10 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(multioutput=multioutput, multilevel=multilevel, by_index=by_index)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
