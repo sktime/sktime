@@ -4,6 +4,8 @@ import functools
 from collections.abc import Callable
 from typing import Optional, Union
 
+import numpy as np
+
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -19,6 +21,8 @@ def forecasting_validation(
     backend=None,
     backend_params=None,
     cv_global=None,
+    strategy="refit",
+    error_score=np.nan,
     **kwargs,
 ) -> dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -77,7 +81,15 @@ def forecasting_validation(
         y_pred = forecaster.predict(y=y_hist, X=X_test)
         # calculate metrics with `y_true` and `y_pred`
         ```
-
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
 
     Returns
     -------
@@ -97,6 +109,8 @@ def forecasting_validation(
             backend=backend,
             backend_params=backend_params,
             cv_global=cv_global,
+            error_score=error_score,
+            strategy=strategy,
         )
     else:
         scores_df = evaluate(
@@ -107,6 +121,8 @@ def forecasting_validation(
             backend=backend,
             backend_params=backend_params,
             cv_global=cv_global,
+            error_score=error_score,
+            strategy=strategy,
         )
 
     for scorer in scorers:
@@ -125,6 +141,8 @@ def _factory_forecasting_validation(
     backend=None,
     backend_params=None,
     cv_global=None,
+    error_score=np.nan,
+    strategy="refit",
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -135,6 +153,8 @@ def _factory_forecasting_validation(
         backend=backend,
         backend_params=backend_params,
         cv_global=cv_global,
+        error_score=error_score,
+        strategy=strategy,
     )
 
 
@@ -202,6 +222,8 @@ class ForecastingBenchmark(BaseBenchmark):
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
         cv_global=None,
+        error_score=np.nan,
+        strategy="refit",
     ):
         """Register a forecasting task to the benchmark.
 
@@ -227,6 +249,16 @@ class ForecastingBenchmark(BaseBenchmark):
             y_pred = forecaster.predict(y=y_hist, X=X_test)
             # calculate metrics with `y_true` and `y_pred`
             ```
+        error_score : "raise" or numeric, default=np.nan
+            Value to assign to the score if an exception occurs in estimator fitting.
+            If set to "raise", the exception is raised. If a numeric value is given,
+            FitFailedWarning is raised.
+        strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+            defines the ingestion mode when the forecaster sees new data when window
+            expands "refit" = forecaster is refitted to each training window
+            "update" = forecaster is updated with training window data, in sequence
+            provided "no-update_params" = fit to first training window, re-used
+            without fit or update
 
         Returns
         -------
@@ -252,6 +284,8 @@ class ForecastingBenchmark(BaseBenchmark):
                 _factory_forecasting_validation,
                 backend=self.backend,
                 backend_params=self.backend_params,
+                error_score=error_score,
+                strategy=strategy,
             ),
             task_kwargs,
             task_id=task_id,
