@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
@@ -84,7 +84,7 @@ class MAPAForecaster(BaseForecaster):
         self.base_forecaster = (
             base_forecaster
             if base_forecaster is not None
-            else ExponentialSmoothing(trend="add", seasonal="add", sp=sp)
+            else NaiveForecaster(strategy="mean")
         )
         self.agg_method = agg_method
         self.decompose_type = decompose_type
@@ -477,39 +477,46 @@ class MAPAForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
         from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
-        if not _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.forecasting.naive import NaiveForecaster
+        params = [
+            {
+                "aggregation_levels": [1, 2, 3],
+                "base_forecaster": NaiveForecaster(strategy="mean"),
+                "imputation_method": "ffill",
+                "decompose_type": "multiplicative",
+                "forecast_combine": "mean",
+            },
+            {
+                "aggregation_levels": [1, 4, 6],
+                "base_forecaster": TrendForecaster(regressor=None),
+                "imputation_method": "interpolate",
+                "decompose_type": "additive",
+                "forecast_combine": "median",
+            },
+            {
+                "aggregation_levels": [1, 3, 6],
+                "base_forecaster": PolynomialTrendForecaster(degree=2),
+                "imputation_method": "ffill",
+                "decompose_type": "multiplicative",
+                "forecast_combine": "weighted_mean",
+                "weights": [0.5, 0.3, 0.2],
+            },
+        ]
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 
-            return [
+            params.append(
                 {
-                    "aggregation_levels": [1, 2, 3],
-                    "base_forecaster": NaiveForecaster(strategy="mean"),
+                    "aggregation_levels": [1, 2, 4],
+                    "base_forecaster": ExponentialSmoothing(
+                        trend="add", seasonal="add", sp=6
+                    ),
                     "imputation_method": "ffill",
                     "decompose_type": "multiplicative",
                     "forecast_combine": "mean",
-                },
-                {
-                    "aggregation_levels": [1, 4, 6],
-                    "base_forecaster": NaiveForecaster(strategy="last"),
-                    "imputation_method": "interpolate",
-                    "decompose_type": "additive",
-                    "forecast_combine": "median",
-                },
-            ]
-        params1 = {
-            "aggregation_levels": [1, 2, 3],
-            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=6),
-            "imputation_method": "ffill",
-            "decompose_type": "multiplicative",
-            "forecast_combine": "mean",
-        }
-        params2 = {
-            "aggregation_levels": [1, 4, 6],
-            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="mul", sp=6),
-            "imputation_method": "interpolate",
-            "decompose_type": "additive",
-            "forecast_combine": "median",
-        }
-        return [params1, params2]
+                }
+            )
+
+        return params
