@@ -273,7 +273,7 @@ class WindowSegmenter(BaseDetector):
             labels_out.append(current_label)
 
         result = pd.DataFrame(
-            {"cluster": labels_out}, index=pd.IntervalIndex(intervals)
+            {"cluster": labels_out, "ilocs": intervals}, index=pd.RangeIndex(1)
         )
         return result
 
