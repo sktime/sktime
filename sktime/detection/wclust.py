@@ -271,9 +271,11 @@ class WindowSegmenter(BaseDetector):
         if start_idx != X.index[-1]:
             intervals.append(pd.Interval(start_idx, X.index[-1], closed="left"))
             labels_out.append(current_label)
-        return pd.DataFrame(
-            {"intervals": pd.IntervalIndex(intervals), "labels": labels_out}
+
+        result = pd.DataFrame(
+            {"cluster": labels_out}, index=pd.IntervalIndex(intervals)
         )
+        return result
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
