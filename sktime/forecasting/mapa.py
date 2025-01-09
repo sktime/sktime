@@ -26,7 +26,7 @@ class MAPAForecaster(BaseForecaster):
 
     base_forecaster : sktime-compatible forecaster, default=None
         The forecasting model to be used for each aggregation level.
-        If None, the default is ExponentialSmoothing(trend="add", seasonal="add", sp=6).
+        If None, the default is NaiveForecaster(strategy="mean").
 
     agg_method : str, default="mean"
         Method used to aggregate the forecasts from different levels.
