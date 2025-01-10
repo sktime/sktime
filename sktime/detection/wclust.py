@@ -254,25 +254,24 @@ class WindowSegmenter(BaseDetector):
                 labels = self._clusterer_.predict(win_x)
             flabel = finalLabels(labels, self._window_size, X)
             flabel = pd.Series(flabel.flatten(), index=X.index)
-
         current_label = flabel[0]
 
-        start_idx = X.index[0]
+        start_idx = 0
         intervals = []
         labels_out = []
 
         for i, (idx, label) in enumerate(zip(X.index, flabel)):
             if label != current_label or i == len(flabel) - 1:
-                intervals.append(pd.Interval(start_idx, idx, closed="left"))
+                intervals.append(pd.Interval(start_idx, i, closed="left"))
                 labels_out.append(current_label)
-                start_idx = idx
+                start_idx = i
                 current_label = label
 
-        if start_idx != X.index[-1]:
-            intervals.append(pd.Interval(start_idx, X.index[-1], closed="left"))
+        if start_idx != len(X) - 1:
+            intervals.append(pd.Interval(start_idx, len(X) - 1, closed="left"))
             labels_out.append(current_label)
 
-        result = pd.DataFrame({"cluster": labels_out, "ilocs": intervals})
+        result = pd.DataFrame({"cluster": labels_out}, index=intervals)
         return result
 
     @classmethod
