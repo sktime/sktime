@@ -85,7 +85,7 @@ class Solar(_ForecastingDatasetFromLoader):
 
         start = pd.to_datetime(self.start)
         end = pd.to_datetime(self.end)
-        n_timepoints = (end - start).days * 24 + 1
+        n_timepoints = (end - start).days * 24 * 2 + 1
 
         n_dimensions = 3 if return_full_df else 1
 

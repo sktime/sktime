@@ -52,7 +52,7 @@ class Macroeconomic(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": False,
-        "n_instances": 203 * 14,
+        "n_instances": 203,
         "n_timepoints": 203,
         "n_timepoints_train": 0,
         "n_timepoints_test": 0,
