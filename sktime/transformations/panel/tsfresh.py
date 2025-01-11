@@ -6,7 +6,7 @@ __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import check_n_jobs
 
 
@@ -735,7 +735,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         }
         params = [params, params2]
 
-        if _check_soft_dependencies("tsfresh", severity="none"):
+        if _check_estimator_deps(cls, severity="none"):
             from tsfresh.utilities.distribution import MapDistributor
 
             params3 = {
