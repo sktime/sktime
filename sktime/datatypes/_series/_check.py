@@ -733,6 +733,28 @@ class SeriesXarray(ScitypeSeries):
 
 class SeriesDask(ScitypeSeries):
     """Data type: dask.DataFrame based specification of single time series.
+    Name: ``"dask_series"``
+
+    Short description:
+
+    a dask ``Series`` representing time series data
+
+    Long description:
+
+    The ``"SeriesDask"`` :term:`mtype` is a concrete representation for single-dimensional time series data that implements ``Series`` :term:`scitype`.
+
+    An object ``obj: np.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a dask backed series which supports distributed and parallel processing.
+    * shape: the rows should represent time points.
+    * index: the index must be compatible with dask series, numerical or datetime-like.
+    * content: the content should be numeric or compatible with sktime functionality.
+    * backend: the Dask backend should be installed.
+
+    Capabilities:
+
+    * Handles large-scale time series data efficiently
+    * Supports lazy and chunked computations
 
     Parameters
     ----------
