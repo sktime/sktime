@@ -485,6 +485,16 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
+        self.test_for_binary_target_binary_feature = (
+            test_for_binary_target_binary_feature
+        )
+        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
+        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
+        self.test_for_real_target_real_feature = test_for_real_target_real_feature
+        self.fdr_level = fdr_level
+        self.hypotheses_independent = hypotheses_independent
+        self.ml_task = ml_task
+
         super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
@@ -498,16 +508,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=profiling_sorting,
             distributor=distributor,
         )
-
-        self.test_for_binary_target_binary_feature = (
-            test_for_binary_target_binary_feature
-        )
-        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
-        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
-        self.test_for_real_target_real_feature = test_for_real_target_real_feature
-        self.fdr_level = fdr_level
-        self.hypotheses_independent = hypotheses_independent
-        self.ml_task = ml_task
 
         self.default_fs_parameters_ = self._get_selection_params()
 
