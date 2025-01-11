@@ -2,6 +2,7 @@
 
 import abc
 import copy
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
 from typing import Optional
@@ -88,7 +89,6 @@ class FoldResults:
         The predictions for this fold.
     """
 
-    fold: int
     scores: list[ScoreResult]
     ground_truth: Optional[pd.Series] = None
     predictions: Optional[pd.Series] = None
@@ -117,7 +117,7 @@ class ResultObject:
 
     model_id: str
     task_id: str
-    folds: list[FoldResults]
+    folds: dict[int, FoldResults]
     means: list[ScoreResult] = field(init=False)
     stds: list[ScoreResult] = field(init=False)
 
@@ -126,14 +126,15 @@ class ResultObject:
         self.means = []
         self.stds = []
         scores = {}
-        for fold in self.folds:
+        for fold_idx, fold in self.folds.items():
             for score in fold.scores:
                 if score.name not in scores:
                     scores[score.name] = []
                 scores[score.name].append(score.score)
         for name, score in scores.items():
-            self.means.append(ScoreResult(name, np.mean(score)))
-            self.stds.append(ScoreResult(name, np.std(score)))
+            # TODO mean wrongly calculated over all axis.
+            self.means.append(ScoreResult(name, np.mean(score, axis=0)))
+            self.stds.append(ScoreResult(name, np.std(score, axis=0)))
 
 
 @dataclass
@@ -177,7 +178,7 @@ class BenchmarkingResults:
         )
 
 
-def asdict(obj, *, dict_factory=dict):
+def asdict(obj, *, dict_factory=dict, pd_orient="list"):
     """Return the fields of a dataclass as a dict.
 
     # Copied from dataclasses.asdict
@@ -185,15 +186,15 @@ def asdict(obj, *, dict_factory=dict):
     """
     if not hasattr(type(obj), "__dataclass_fields__"):
         raise TypeError("asdict() should be called on dataclass instances")
-    return _asdict_inner(obj, dict_factory)
+    return _asdict_inner(obj, dict_factory, pd_orient)
 
 
-def _asdict_inner(obj, dict_factory):
+def _asdict_inner(obj, dict_factory, pd_orient):
     # Copied from dataclasses._asdict_inner and slightly modified
     if hasattr(type(obj), "__dataclass_fields__"):
         result = []
         for f in fields(obj):
-            value = _asdict_inner(getattr(obj, f.name), dict_factory)
+            value = _asdict_inner(getattr(obj, f.name), dict_factory, pd_orient)
             result.append((f.name, value))
         return dict_factory(result)
     elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
@@ -216,19 +217,27 @@ def _asdict_inner(obj, dict_factory):
         #   namedtuples, we could no longer call asdict() on a data
         #   structure where a namedtuple was used as a dict key.
 
-        return type(obj)(*[_asdict_inner(v, dict_factory) for v in obj])
+        return type(obj)(*[_asdict_inner(v, dict_factory, pd_orient) for v in obj])
     elif isinstance(obj, (list, tuple)):
         # Assume we can create an object of this type by passing in a
         # generator (which is not true for namedtuples, handled
         # above).
-        return type(obj)(_asdict_inner(v, dict_factory) for v in obj)
+        return type(obj)(_asdict_inner(v, dict_factory, pd_orient) for v in obj)
     elif isinstance(obj, dict):
         return type(obj)(
-            (_asdict_inner(k, dict_factory), _asdict_inner(v, dict_factory))
+            (
+                _asdict_inner(k, dict_factory, pd_orient),
+                _asdict_inner(v, dict_factory, pd_orient),
+            )
             for k, v in obj.items()
         )
     elif isinstance(obj, pd.Series):
-        return obj.to_json()
+        # With a frame, we have more control over the orientation.
+        return obj.to_frame().to_dict(orient=pd_orient)
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict(orient=pd_orient)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
     else:
         return copy.deepcopy(obj)
 
@@ -270,7 +279,7 @@ class BaseStorageHandler(abc.ABC):
         """
 
 
-class ParquetStorageHandler(BaseStorageHandler):
+class JSONStorageHandler(BaseStorageHandler):
     """Storage handler for JSON files."""
 
     def save(self, results: list[ResultObject]):
@@ -281,12 +290,78 @@ class ParquetStorageHandler(BaseStorageHandler):
         results : ResultObject
             The results to save.
         """
-        results_df = pd.DataFrame.from_records(map(lambda x: asdict(x), results))
-        # results_df = pd.concat([results_df, additional_results_df], ignore_index=True)
-        results_df = results_df.drop_duplicates(
-            subset=["task_id", "model_id"], keep="last"
+        with open(self.path, "w") as f:
+            json.dump(list(map(lambda x: asdict(x, pd_orient="list"), results)), f)
+
+    def load(self) -> list[ResultObject]:
+        """Load the results from a JSON file.
+
+        Returns
+        -------
+        ResultObject
+            The loaded results.
+
+        """
+        try:
+            results = []
+            with open(self.path) as f:
+                results_json = json.load(f)
+            for row in results_json:
+                folds = {}
+                for fold_id, fold in row["folds"].items():
+                    scores = []
+                    for score in fold["scores"]:
+                        if isinstance(score["score"], dict):
+                            score_val = pd.DataFrame(score["score"])
+                        else:
+                            score_val = score["score"]
+                        scores.append(ScoreResult(score["name"], score_val))
+                    if "ground_truth" in fold:
+                        ground_truth = pd.Series(fold["ground_truth"])
+                    else:
+                        ground_truth = None
+                    if "predictions" in fold:
+                        predictions = pd.Series(fold["predictions"])
+                    else:
+                        predictions = None
+                    if "train_data" in fold:
+                        train_data = pd.Series(fold["train_data"])
+                    folds[int(fold_id)] = FoldResults(
+                        scores, ground_truth, predictions, train_data
+                    )
+
+                results.append(
+                    ResultObject(
+                        model_id=row["model_id"],
+                        task_id=row["task_id"],
+                        folds=folds,
+                    )
+                )
+            return results
+        except FileNotFoundError:
+            return []
+
+
+class ParquetStorageHandler(BaseStorageHandler):
+    """Storage handler for JSON files."""
+
+    # TODO this probably needs to be fixed!
+
+    def save(self, results: list[ResultObject]):
+        """Save the results to a JSON file.
+
+        Parameters
+        ----------
+        results : ResultObject
+            The results to save.
+        """
+        results_df = pd.json_normalize(
+            list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
+
         results_df = results_df.sort_values(by=["task_id", "model_id"])
+
+        # TODO store fails in hierachical case with level report
         results_df = results_df.reset_index(drop=True)
         results_df.to_parquet(self.path, index=False)
 
@@ -303,7 +378,7 @@ class ParquetStorageHandler(BaseStorageHandler):
             results_df = pd.read_parquet(self.path)
             results = []
             for ix, row in results_df.iterrows():
-                folds = []
+                folds = {}
                 for fold in row["folds"]:
                     scores = []
                     for score in fold["scores"]:
@@ -318,10 +393,8 @@ class ParquetStorageHandler(BaseStorageHandler):
                         predictions = None
                     if "train_data" in fold:
                         train_data = pd.Series(fold["train_data"])
-                    folds.append(
-                        FoldResults(
-                            fold["fold"], scores, ground_truth, predictions, train_data
-                        )
+                    folds[fold["fold"]] = FoldResults(
+                        scores, ground_truth, predictions, train_data
                     )
 
                 results.append(
@@ -351,5 +424,7 @@ def get_storage_backend(path: str) -> BaseStorageHandler:
     """
     if path.endswith(".parquet"):
         return ParquetStorageHandler
+    elif path.endswith(".json"):
+        return JSONStorageHandler
     else:
         raise ValueError(f"Unsupported file format: {path}")

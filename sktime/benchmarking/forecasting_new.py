@@ -254,15 +254,15 @@ class ForecastingBenchmark(BaseBenchmark):
                 return_data=True,
             )
 
-        folds = []
+        folds = {}
         for ix, row in scores_df.iterrows():
             scores = []
             for scorer in scorers:
                 scores.append(ScoreResult(scorer.name, row["test_" + scorer.name]))
                 scores.append(ScoreResult("fit_time", row["fit_time"]))
                 scores.append(ScoreResult("pred_time", row["pred_time"]))
-            folds.append(
-                FoldResults(ix, scores, row["y_test"], row["y_pred"], row["y_train"])
+            folds[ix] = FoldResults(
+                scores, row["y_test"], row["y_pred"], row["y_train"]
             )
 
         return ResultObject(estimator.id, task.id, folds)
