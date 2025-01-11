@@ -25,6 +25,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": ["tsfresh", "scipy<1.15"],
+        # todo 0.36.0 - check and remove the scipy bound if bug is fixed, else bump
     }
 
     def __init__(
