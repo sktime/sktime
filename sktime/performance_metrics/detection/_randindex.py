@@ -8,6 +8,15 @@ class RandIndex(BaseDetectionMetric):
 
     Optionally computes the Rand Index in loc-based units (index labels of X)
     if X is provided and use_loc=True. Otherwise uses iloc-based intervals.
+
+    Parameters
+    ----------
+        use_loc : bool, optional (default=True)
+            If True, and X is provided, interpret 'start'/'end' in the DataFrame
+            as *labels in X.index* rather than 0-based positions.
+            They will be converted to integer positions internally before
+            computing the Rand Index. If False, or if X=None, the code
+            uses 'start'/'end' (or 'ilocs') as raw integers/positions as before.
     """
 
     _tags = {
@@ -19,17 +28,6 @@ class RandIndex(BaseDetectionMetric):
     }
 
     def __init__(self, use_loc=True):
-        """Initialize RandIndex.
-
-        Parameters
-        ----------
-        use_loc : bool, optional (default=True)
-            If True, and X is provided, interpret 'start'/'end' in the DataFrame
-            as *labels in X.index* rather than 0-based positions.
-            They will be converted to integer positions internally before
-            computing the Rand Index. If False, or if X=None, the code
-            uses 'start'/'end' (or 'ilocs') as raw integers/positions as before.
-        """
         self.use_loc = use_loc
         super().__init__()
 
@@ -230,3 +228,15 @@ class RandIndex(BaseDetectionMetric):
     def _pairs_count(self, n):
         """Number of unique pairs among n items."""  # noqa: D401
         return (n * (n - 1)) // 2 if n >= 2 else 0
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Creates two configurations:
+        1) default RandIndex (use_loc=True)
+        2) RandIndex(use_loc=False)
+        """
+        param1 = {}  # relies on default use_loc=True
+        param2 = {"use_loc": False}
+        return [param1, param2]
