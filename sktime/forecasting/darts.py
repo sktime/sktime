@@ -7,6 +7,7 @@ from sktime.forecasting.base.adapters._darts import (
     FUTURE_LAGS_TYPE,
     LAGS_TYPE,
     PAST_LAGS_TYPE,
+    _DartsMixedCovariatesTorchModelAdapter,
     _DartsRegressionAdapter,
     _DartsRegressionModelsAdapter,
 )
@@ -664,4 +665,183 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         return params
 
 
-__all__ = ["DartsRegressionModel", "DartsXGBModel", "DartsLinearRegressionModel"]
+class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
+    """TiDE (Time-series Dense Encoders) Forecaster.
+
+    This is based on the implementation of the TiDE Model in darts
+
+    Parameters
+    ----------
+    input_chunk_length : int
+        Number of time steps in the past to take as a model input (per chunk). Applies
+        to the target series, and past and/or future covariates.
+    output_chunk_length : int
+        Number of time steps predicted at once (per chunk) by the internal model. Also,
+        the number of future values from future covariates to use as a model input
+        (if the model supports future covariates). It is not the same as forecast
+        horizon n used in predict(), which is the desired number of prediction points
+        generated using either a one-shot- or autoregressive forecast. Setting
+        n <= output_chunk_length prevents auto-regression. This is useful when the
+        covariates do not extend far enough into the future, or to prohibit the model
+        from using future values of past and / or future covariates for prediction
+        (depending on the model covariate support).
+    output_chunk_shift : int, optional (default=0)
+        Optionally, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input and output. If the model supports future_covariates, the future values are
+        extracted from the shifted output chunk. Predictions will start
+        output_chunk_shift steps after the end of the target series. If
+        output_chunk_shift is set, the model cannot generate autoregressive predictions
+        (n > output_chunk_length).
+    num_encoder_layers : int, optional (default=1)
+        The number of residual blocks in the encoder.
+    num_decoder_layers : int, optional (default=1)
+        The number of residual blocks in the decoder.
+    decoder_output_dim : int, optional (default=16)
+        Dimension of decoder output.
+    hidden_size : int, optional (default=128)
+        The width of the layers in the residual blocks between the encoder and decoder.
+    temporal_width_past : int, optional (default=4)
+        The width of the output layer in the past covariate projection residual block.
+        If 0, will bypass feature projection and use the raw feature data.
+    temporal_width_future : int, optional (default=4)
+        The width of the output layer in the future covariate projection residual block.
+        If 0, will bypass feature projection and use the raw feature data.
+    temporal_decoder_hidden : int, optional (default=32)
+        The width of the layers in the temporal decoder.
+    use_layer_norm : bool, optional (default=False)
+        Whether to use layer normalization
+    dropout : float, optional (default=0.1)
+        Dropout probability to be used in fully connected layers.
+    use_static_covariates : bool, optional (default=True)
+        Whether to use static covariates
+    **kwargs
+        Optional arguments to initialize the pytorch_lightning.Module,
+        pytorch_lightning.Trainer.
+
+    References
+    ----------
+    .. [1] https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tide_model.html
+
+    Notes
+    -----
+    If unspecified, all columns will be assumed to be known during predictions duration.
+    """
+
+    _tags = {
+        "python_version": ">=3.9",
+        "python_dependencies": ["u8darts>=0.29"],
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": True,
+        "capability: insample": True,
+        "capability:pred_int": True,
+    }
+
+    def __init__(
+        self,
+        input_chunk_length: int,
+        output_chunk_length: int,
+        output_chunk_shift: int = 0,
+        num_encoder_layers: int = 1,
+        num_decoder_layers: int = 1,
+        decoder_output_dim: int = 16,
+        hidden_size: int = 128,
+        temporal_width_past: int = 4,
+        temporal_width_future: int = 4,
+        temporal_decoder_hidden: int = 32,
+        use_layer_norm: bool = False,
+        dropout: float = 0.1,
+        use_static_covariates: bool = True,
+        **kwargs,
+    ):
+        super().__init__(
+            input_chunk_length=input_chunk_length,
+            output_chunk_length=output_chunk_length,
+            output_chunk_shift=output_chunk_shift,
+            use_static_covariates=use_static_covariates,
+        )
+
+        self.input_chunk_length = input_chunk_length
+        self.output_chunk_length = output_chunk_length
+        self.output_chunk_shift = output_chunk_shift
+        self.num_encoder_layers = num_encoder_layers
+        self.num_decoder_layers = num_decoder_layers
+        self.decoder_output_dim = decoder_output_dim
+        self.hidden_size = hidden_size
+        self.temporal_width_past = temporal_width_past
+        self.temporal_width_future = temporal_width_future
+        self.temporal_decoder_hidden = temporal_decoder_hidden
+        self.use_layer_norm = use_layer_norm
+        self.dropout = dropout
+        self.use_static_covariates = use_static_covariates
+        self.kwargs = kwargs
+
+    def _create_forecaster(self="DartsTiDEModel"):
+        """Create and initialize a TiDE forecaster instance."""
+        from darts.models.forecasting.tide_model import TiDEModel
+
+        kwargs = self.kwargs or {}
+        return TiDEModel(
+            input_chunk_length=self.input_chunk_length,
+            output_chunk_length=self.output_chunk_length,
+            output_chunk_shift=self.output_chunk_shift,
+            num_encoder_layers=self.num_encoder_layers,
+            num_decoder_layers=self.num_decoder_layers,
+            decoder_output_dim=self.decoder_output_dim,
+            hidden_size=self.hidden_size,
+            temporal_width_past=self.temporal_width_past,
+            temporal_width_future=self.temporal_width_future,
+            temporal_decoder_hidden=self.temporal_decoder_hidden,
+            use_layer_norm=self.use_layer_norm,
+            dropout=self.dropout,
+            use_static_covariates=self.use_static_covariates,
+            **kwargs,
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameters settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, returns `"default"` set.
+
+        Returns
+        -------
+        params: dict or list of dict
+        """
+        params1 = {
+            "input_chunk_length": 12,
+            "output_chunk_length": 6,
+            "hidden_size": 32,
+            "temporal_decoder_hidden": 16,
+        }
+
+        params2 = {
+            "input_chunk_length": 24,
+            "output_chunk_length": 12,
+            "hidden_size": 64,
+            "num_encoder_layers": 2,
+            "num_decoder_layers": 2,
+            "temporal_width_past": 8,
+            "temporal_width_future": 8,
+            "use_layer_norm": True,
+            "dropout": 0.2,
+        }
+
+        if parameter_set == "default":
+            return params1
+        else:
+            return [params1, params2]
+
+
+__all__ = [
+    "DartsRegressionModel",
+    "DartsXGBModel",
+    "DartsLinearRegressionModel",
+    "DartsTiDEModel",
+]
