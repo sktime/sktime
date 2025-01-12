@@ -7,9 +7,9 @@ from sktime.forecasting.base.adapters._darts import (
     FUTURE_LAGS_TYPE,
     LAGS_TYPE,
     PAST_LAGS_TYPE,
+    _DartsMixedCovariatesTorchModelAdapter,
     _DartsRegressionAdapter,
     _DartsRegressionModelsAdapter,
-    _DartsTiDEModelAdapter,
 )
 from sktime.utils.warnings import warn
 
@@ -665,7 +665,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         return params
 
 
-class DartsTiDEModel(_DartsTiDEModelAdapter):
+class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
     """TiDE (Time-series Dense Encoders) Forecaster.
 
     Implementation of the TiDE model from darts for use in sktime.
