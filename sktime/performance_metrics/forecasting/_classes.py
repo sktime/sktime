@@ -2145,24 +2145,43 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
+    The Median Squared Error (MdSE) is calculated as:
+
+    .. math::
+        \\text{MdSE} = \text{median}\left((y_{i} - \\widehat{y}_{i})^2\right)_{i=1}^{n}
+
+    where:
+    - \\( y_i \\) are the true values,
+    - \\( \\hat{y}_i \\) are the predicted values,
+    - \\( n \\) is the number of observations.
+
+    If ``square_root`` is set to True,
+    the Root Median Squared Error Percentage (RMdSE) is computed:
+
+    .. math::
+        \\text{RMdSE} = \\sqrt{ \\text{MdSE} }
+
     Like MSE, MdSE is measured in squared units of the input data. RMdSE is
-    on the same scale as the input data like RMSE. Because MdSE and RMdSE
-    square the forecast error rather than taking the absolute value, they
-    penalize large errors more than MAE or MdAE.
+    on the same scale as the input data, like RMSE.
 
     Taking the median instead of the mean of the squared errors makes
     this metric more robust to error outliers relative to a meean based metric
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
 
-    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
-    the median of squared errors across variables (or levels,
-    in hierarchical data),
-    :math:`\text{median}((y_{i,j} - \\widehat{y}_{i,j})^2)`
-    for all variables (or levels) :math:`j` at the given time index
-    :math:`t_i`, for all time indices :math:`t_1, \\dots, t_n` in
-    the input. If ``square_root=True``, it returns the square root
-    of the median squared error, corresponding to the median absolute error.
+    Because the median commutes with monotonic transformations, MdSE and RMdSE
+    do not penalize large errors more than the MdAE.
+    square the forecast error rather than taking the absolute value, they
+    penalize large errors more than MAE or MdAE.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the squared error at that time index,
+        :math:`(y_i - \widehat{y}_i)^2`,
+    * if ``square_root`` is True, the absolute error at that time index,
+      the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
