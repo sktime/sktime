@@ -645,7 +645,39 @@ def _is_int64_type(index: pd.Index) -> bool:
 
 
 class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
-    """Base adapter for Darts Models using MixedCovariates."""
+    """Base adapter for Darts Models using MixedCovariates.
+
+    This class serves as a base adapter for implementing forecasting models that use
+    mixed covariates in the Darts framework. It provides core functionality for
+    handling time series data, converting between different formats, and managing
+    the training and prediction processes.
+
+    Parameters
+    ----------
+    input_chunk_length : int
+        Number of time steps in the past to take as a model input (per chunk). Applies
+        to the target series, and past and/or future covariates.
+    output_chunk_length : int
+        Number of time steps predicted at once (per chunk) by the internal model. Also,
+        the number of future values from future covariates to use as a model input
+        (if the model supports future covariates). It is not the same as forecast
+        horizon n used in predict(), which is the desired number of prediction points
+        generated using either a one-shot- or autoregressive forecast. Setting
+        n <= output_chunk_length prevents auto-regression. This is useful when the
+        covariates do not extend far enough into the future, or to prohibit the model
+        from using future values of past and / or future covariates for prediction
+        (depending on the covariate support).
+    output_chunk_shift : int, optional (default=0)
+        Optionally, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input and output. If the model supports future_covariates, the future values are
+        extracted from the shifted output chunk. Predictions will start
+        output_chunk_shift steps after the end of the target series. If
+        output_chunk_shift is set, the model cannot generate autoregressive predictions
+        (n > output_chunk_length).
+    use_static_covariates : bool, optional (default=True)
+        Whether to incorporate static covariates in the model training and prediction.
+    """
 
     _tags = {
         "python_version": ">=3.9",
@@ -663,13 +695,14 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         input_chunk_length: int,
         output_chunk_length: int,
         output_chunk_shift: int = 0,
-        use_static_covariates=True,
+        use_static_covariates: Optional[bool] = True,
     ):
         super().__init__()
 
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length
         self.output_chunk_shift = output_chunk_shift
+        self.use_static_covariates = use_static_covariates
         self._is_fitted = False
         self._forecaster = None
 
@@ -683,6 +716,9 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         max_samples_per_ts: Optional[int] = None,
     ):
         """Build training dataset for Darts model.
+
+        This can be used for creating a darts specific train_dataset to be passed into
+        fit_from_dataset()
 
         Parameters
         ----------
@@ -723,6 +759,36 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         stride: int = 0,
         bounds: Optional[np.ndarray] = None,
     ):
+        """Build an inference dataset for making predictions with the Darts model.
+
+        Creates a MixedCovariatesInferenceDataset that is passed into the darts specific
+        predict_from_dataset() function.
+
+        Parameters
+        ----------
+        target : Sequence[TimeSeries]
+            A sequence of target time series for which predictions will be made.
+        n : int
+            Number of future time steps to predict.
+        past_covariates : Optional[Sequence[TimeSeries]]
+            A sequence of past covariates time series. These are variables that are
+            only known for past time steps.
+        future_covariates : Optional[Sequence[TimeSeries]]
+            A sequence of future covariates time series. These are variables that
+            are known for future time steps (e.g., holidays, scheduled events).
+        stride : int, optional (default=0)
+            The stride between consecutive predictions. A stride of 0 means that
+            predictions will be made at every time step.
+        bounds : Optional[np.ndarray], optional (default=None)
+            Optional bounds for the predictions. If provided, should contain
+            the lower and upper bounds for each time step.
+
+        Returns
+        -------
+        MixedCovariatesInferenceDataset
+            A dataset object ready for making predictions, containing all processed
+            time series data structured for the inference phase.
+        """
         from darts.utils.data import MixedCovariatesInferenceDataset
 
         return MixedCovariatesInferenceDataset(
@@ -731,6 +797,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             future_covariates=future_covariates,
             n=n,
             stride=stride,
+            bounds=bounds,
             input_chunk_length=self.input_chunk_length,
             output_chunk_length=self.output_chunk_length,
             output_chunk_shift=self.output_chunk_shift,
@@ -741,7 +808,24 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         self: "_DartsMixedCovariatesTorchModelAdapter",
         data: Union[pd.Series, pd.DataFrame],
     ) -> TimeSeries:
-        """Convert a pandas Series or DataFrame into a Darts TimeSeries object."""
+        """Convert pandas data structures to Darts TimeSeries objects.
+
+        Parameters
+        ----------
+        data : Union[pd.Series, pd.DataFrame]
+            The time series data to convert. Can be either a pandas Series for
+            univariate data or DataFrame for multivariate data.
+
+        Returns
+        -------
+        TimeSeries
+            A Darts TimeSeries object containing the converted data.
+
+        Raises
+        ------
+        TypeError
+            If the input is neither a pandas Series nor DataFrame.
+        """
         from darts import TimeSeries
 
         if not isinstance(data, (pd.Series, pd.DataFrame)):
@@ -811,7 +895,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
     def _create_forecaster(self="_DartsMixedCovariatesTorchModelAdapter"):
         """Create Darts Model."""
 
-    def fit(
+    def _fit(
         self,
         y: pd.DataFrame,
         past_covariates: Optional[Union[pd.DataFrame, Sequence[pd.DataFrame]]] = None,
@@ -862,6 +946,25 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         past_covariates: Optional[Union[pd.DataFrame, Sequence[pd.DataFrame]]] = None,
         future_covariates: Optional[Union[pd.DataFrame, Sequence[pd.DataFrame]]] = None,
     ):
+        """Generate predictions for the given forecasting horizon.
+
+        Parameters
+        ----------
+        fh : Optional[ForecastingHorizon]
+            The forecasting horizon specifying the time steps to predict.
+        past_covariates : Optional[
+            Union[pd.DataFrame, Sequence[pd.DataFrame]]
+        ], optional (default=None)
+            Past covariates aligned with the prediction period.
+        future_covariates : Optional[
+            Union[pd.DataFrame, Sequence[pd.DataFrame]]], optional (default=None)
+            Future covariates aligned with the prediction period.
+
+        Returns
+        -------
+        pd.DataFrame
+            Predicted values for the specified forecasting horizon.
+        """
         self.check_is_fitted()
         past_covs = self.convert_covariates(past_covariates)
         future_covs = self.convert_covariates(future_covariates)

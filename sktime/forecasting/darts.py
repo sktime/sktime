@@ -668,40 +668,64 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
 class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
     """TiDE (Time-series Dense Encoders) Forecaster.
 
-    Implementation of the TiDE model from darts for use in sktime.
+    This is based on the implementation of the TiDE Model in darts
 
     Parameters
     ----------
     input_chunk_length : int
-        Length of the input sequences (i.e., number of past time steps)
+        Number of time steps in the past to take as a model input (per chunk). Applies
+        to the target series, and past and/or future covariates.
     output_chunk_length : int
-        Length of the output sequences (i.e., number of future time steps to predict)
+        Number of time steps predicted at once (per chunk) by the internal model. Also,
+        the number of future values from future covariates to use as a model input
+        (if the model supports future covariates). It is not the same as forecast
+        horizon n used in predict(), which is the desired number of prediction points
+        generated using either a one-shot- or autoregressive forecast. Setting
+        n <= output_chunk_length prevents auto-regression. This is useful when the
+        covariates do not extend far enough into the future, or to prohibit the model
+        from using future values of past and / or future covariates for prediction
+        (depending on the model covariate support).
     output_chunk_shift : int, optional (default=0)
-        Shift applied to the output chunk, by default 0
+        Optionally, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input and output. If the model supports future_covariates, the future values are
+        extracted from the shifted output chunk. Predictions will start
+        output_chunk_shift steps after the end of the target series. If
+        output_chunk_shift is set, the model cannot generate autoregressive predictions
+        (n > output_chunk_length).
     num_encoder_layers : int, optional (default=1)
-        Number of layers in the encoder
+        The number of residual blocks in the encoder.
     num_decoder_layers : int, optional (default=1)
-        Number of layers in the decoder
+        The number of residual blocks in the decoder.
     decoder_output_dim : int, optional (default=16)
-        Dimension of decoder output
+        Dimension of decoder output.
     hidden_size : int, optional (default=128)
-        Size of the hidden state
+        The width of the layers in the residual blocks between the encoder and decoder.
     temporal_width_past : int, optional (default=4)
-        Width of the temporal convolution for past values
+        The width of the output layer in the past covariate projection residual block.
+        If 0, will bypass feature projection and use the raw feature data.
     temporal_width_future : int, optional (default=4)
-        Width of the temporal convolution for future values
+        The width of the output layer in the future covariate projection residual block.
+        If 0, will bypass feature projection and use the raw feature data.
     temporal_decoder_hidden : int, optional (default=32)
-        Hidden size of temporal decoder
+        The width of the layers in the temporal decoder.
     use_layer_norm : bool, optional (default=False)
         Whether to use layer normalization
     dropout : float, optional (default=0.1)
-        Dropout rate
+        Dropout probability to be used in fully connected layers.
     use_static_covariates : bool, optional (default=True)
         Whether to use static covariates
-    past_covariates : Optional[List[str]], optional (default=None)
-        Names of past covariates columns
-    future_covariates : Optional[List[str]], optional (default=None)
-        Names of future covariates columns.
+    **kwargs
+        Optional arguments to initialize the pytorch_lightning.Module,
+        pytorch_lightning.Trainer.
+
+    References
+    ----------
+    .. [1] https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tide_model.html
+
+    Notes
+    -----
+    If unspecified, all columns will be assumed to be known during predictions duration.
     """
 
     _tags = {
@@ -732,7 +756,12 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         use_static_covariates: bool = True,
         **kwargs,
     ):
-        super().__init__()
+        super().__init__(
+            input_chunk_length=input_chunk_length,
+            output_chunk_length=output_chunk_length,
+            output_chunk_shift=output_chunk_shift,
+            use_static_covariates=use_static_covariates,
+        )
 
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length
