@@ -189,6 +189,8 @@ classification = [
 clustering = [
   'numba<0.61,>=0.53; python_version < "3.13"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+  'ts2vg; python_version < "3.13"',
+  'networkx; python_version < "3.13"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
@@ -241,6 +243,8 @@ dev = [
   "pytest-timeout",
   "pytest-xdist",
   "wheel",
+  "networkx",
+  "ts2vg",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
@@ -259,7 +263,10 @@ docs = [
   "sphinx-gallery<0.19.0",
   "sphinx-issues<6.0.0",
   "tabulate",
+  "networkx",
+  "ts2vg",
 ]
+
 tests = [
   "pytest>=7.4,<8.4",
   "pytest-randomly>=3.15,<3.17",
