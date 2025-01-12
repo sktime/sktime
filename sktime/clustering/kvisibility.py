@@ -6,7 +6,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from ts2vg import HorizontalVG, NaturalVG
 
 from sktime.clustering.base import BaseClusterer
 
@@ -91,6 +90,8 @@ class TimeSeriesKvisibility(BaseClusterer):
         self.kmeans_ = None
 
     def _ts_to_graph(self, X):
+        from ts2vg import HorizontalVG, NaturalVG
+
         ts_attr = []
         X_ts = []
         print(X.shape)
