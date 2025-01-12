@@ -3261,7 +3261,7 @@
     },
     {
       "login": "TanviPooranmal",
-      "name": "Tanvi Pooranmal Meena"
+      "name": "Tanvi Pooranmal Meena",
       "avatar_url": "https://avatars.githubusercontent.com/TanviPooranmal",
       "profile": "https://github.com/TanviPooranmal",
       "contributions": [
@@ -3340,6 +3340,15 @@
       "profile": "https://github.com/VjayRam",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "PranavBhatP",
+      "name": "Pranav Bhat",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63770398?s=96&v=4",
+      "profile": "https://github.com/PranavBhatP",
+      "contributions":[
+        "code","doc"
       ]
     }
   ]
