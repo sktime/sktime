@@ -866,13 +866,20 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         past_covs = self.convert_covariates(past_covariates)
         future_covs = self.convert_covariates(future_covariates)
 
-        # Predict using the forecaster
-        return self._forecaster.predict(
-            n=fh,
+        absolute_fh = fh.to_absolute(self.cutoff)
+        max_fh = fh.to_absolute(self.cutoff)[-1]
+
+        endogenous_predictions = self._forecaster.predict(
+            n=max_fh,
             past_covariates=past_covs,
             future_covariates=future_covs,
             num_samples=1,
         )
+
+        expected_index = fh.get_expected_pred_idx(self.cutoff)
+        abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
+
+        return endogenous_predictions.loc[abs_idx]
 
 
 __all__ = [
