@@ -6,7 +6,7 @@ __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import check_n_jobs
 
 
@@ -24,7 +24,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "tsfresh",
+        "python_dependencies": ["tsfresh", "scipy<1.15"],
+        # todo 0.36.0 - check and remove the scipy bound if bug is fixed, else bump todo
     }
 
     def __init__(
@@ -484,6 +485,16 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
+        self.test_for_binary_target_binary_feature = (
+            test_for_binary_target_binary_feature
+        )
+        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
+        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
+        self.test_for_real_target_real_feature = test_for_real_target_real_feature
+        self.fdr_level = fdr_level
+        self.hypotheses_independent = hypotheses_independent
+        self.ml_task = ml_task
+
         super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
@@ -497,16 +508,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=profiling_sorting,
             distributor=distributor,
         )
-
-        self.test_for_binary_target_binary_feature = (
-            test_for_binary_target_binary_feature
-        )
-        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
-        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
-        self.test_for_real_target_real_feature = test_for_real_target_real_feature
-        self.fdr_level = fdr_level
-        self.hypotheses_independent = hypotheses_independent
-        self.ml_task = ml_task
 
         self.default_fs_parameters_ = self._get_selection_params()
 
@@ -734,7 +735,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         }
         params = [params, params2]
 
-        if _check_soft_dependencies("tsfresh", severity="none"):
+        if _check_estimator_deps(cls, severity="none"):
             from tsfresh.utilities.distribution import MapDistributor
 
             params3 = {
