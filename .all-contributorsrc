@@ -3261,11 +3261,12 @@
     },
     {
       "login": "TanviPooranmal",
-      "name": "Tanvi Pooranmal Meena"
+      "name": "Tanvi Pooranmal Meena",
       "avatar_url": "https://avatars.githubusercontent.com/TanviPooranmal",
       "profile": "https://github.com/TanviPooranmal",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
