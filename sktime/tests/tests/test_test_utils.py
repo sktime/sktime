@@ -1,8 +1,31 @@
 """Tests for the test utilities."""
 
-from sktime.tests._config import EXCLUDE_ESTIMATORS
+from sktime.registry import all_estimators
+from sktime.tests._config import EXCLUDE_ESTIMATORS, EXCLUDED_TESTS_BY_TEST
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies import _check_estimator_deps
+
+
+def test_excluded_tests_by_test():
+    """Test that EXCLUDED_TESTS_BY_TEST contains estimators with <2 test params."""
+    all_ests = all_estimators()
+    filtered_estimators = [
+        x[0]
+        for x in all_ests
+        if (
+            (
+                len(x[1].get_test_params()) < 2
+                or isinstance(x[1].get_test_params(), dict)
+            )
+            and (
+                len(x[1].get_param_names())
+                - len(x[1].get_class_tags().get("reserved_params", []))
+                > 0
+            )
+        )
+    ]
+    for _, excluded_estimators in EXCLUDED_TESTS_BY_TEST.items():
+        assert excluded_estimators == filtered_estimators
 
 
 def test_exclude_estimators():
