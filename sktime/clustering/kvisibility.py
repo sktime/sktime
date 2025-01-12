@@ -81,7 +81,8 @@ class TimeSeriesKvisibility(BaseClusterer):
 
     def __init__(self, n_clusters=5, init="k-means++", n_init=4):
         self.n_clusters = n_clusters
-        self.init = (init,)
+        self.init = init
+        self._init = (init,)
         self.n_init = n_init
 
         super().__init__()
