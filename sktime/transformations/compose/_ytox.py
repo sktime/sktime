@@ -28,10 +28,11 @@ class YtoX(BaseTransformer):
         If True, subsets the output of ``transform`` to ``X.index``,
         i.e., outputs ``y.loc[X.index]``.
 
-    transformer : sktime transformer, or callable optional, default=None
+    transformer : sktime transformer optional, default=None
         If provided, will be applied to the endogenous data (``y``)
         before moving it to the exogenous data.
-        If general callable, must implement ``fit_transform``.
+        If a general callable, it can be a function or a class with methods.
+        If a class is used, it must implement the necessary methods to transform ``y``
 
     Examples
     --------
