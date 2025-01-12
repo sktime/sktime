@@ -213,18 +213,29 @@ class YtoX(BaseTransformer):
             return y
 
     @classmethod
+
     def get_test_params(cls):
         """Return testing parameter settings for the YtoX transformer.
+=======
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
 
         Parameters
         ----------
         parameter_set : str, default="default"
+
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
+=======
+        Name of the set of test parameters to return, for use in tests. If no
+        special parameters are defined for a value, will return ``"default"`` set.
+
 
         Returns
         -------
         params : list of dict
+
             Parameters to create testing instances of YtoX
             Each dict can be used to construct a test instance, i.e.,
             ``YtoX(**params[i])`` creates a valid test instance.
@@ -237,3 +248,9 @@ class YtoX(BaseTransformer):
             {"subset_index": False, "transformer": ExponentTransformer(power=2)},
             {},
         ]
+=======
+        Parameters to create testing instances of the class.
+        """
+        param1 = {"subset_index": False}
+        param2 = {"subset_index": True}
+        return [param1, param2]
