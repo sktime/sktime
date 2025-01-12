@@ -28,7 +28,7 @@ class YtoX(BaseTransformer):
         If True, subsets the output of ``transform`` to ``X.index``,
         i.e., outputs ``y.loc[X.index]``.
 
-    transformer : sktime transformer optional, default=None
+    transformer : sktime transformer, optional, default=None
         If provided, will be applied to the endogenous data (``y``)
         before moving it to the exogenous data.
         If a general callable, it can be a function or a class with methods.
@@ -213,45 +213,29 @@ class YtoX(BaseTransformer):
         else:
             return y
 
-    @classmethod
 
-    def get_test_params(cls):
-        """Return testing parameter settings for the YtoX transformer.
-=======
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
+@classmethod
+def get_test_params(cls, parameter_set="default"):
+    """Return testing parameter settings for the estimator.
 
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-=======
+    Parameters
+    ----------
+    parameter_set : str, default="default"
         Name of the set of test parameters to return, for use in tests. If no
         special parameters are defined for a value, will return ``"default"`` set.
 
+    Returns
+    -------
+    params : list of dict
+        Parameters to create testing instances of YtoX
+        Each dict can be used to construct a test instance, i.e.,
+        ``YtoX(**params[i])`` creates a valid test instance.
+        ``create_test_instance`` uses the first dictionary in ``params``
 
-        Returns
-        -------
-        params : list of dict
+    """
+    from sktime.transformations.series.exponent import ExponentTransformer
 
-            Parameters to create testing instances of YtoX
-            Each dict can be used to construct a test instance, i.e.,
-            ``YtoX(**params[i])`` creates a valid test instance.
-            ``create_test_instance`` uses the first dictionary in ``params``
-
-        """
-        from sktime.transformations.series.exponent import ExponentTransformer
-
-        return [
-            {"subset_index": False, "transformer": ExponentTransformer(power=2)},
-            {},
-        ]
-=======
-        Parameters to create testing instances of the class.
-        """
-        param1 = {"subset_index": False}
-        param2 = {"subset_index": True}
-        return [param1, param2]
+    return [
+        {"subset_index": False, "transformer": ExponentTransformer(power=2)},
+        {},
+    ]
