@@ -2,7 +2,6 @@
 
 __author__ = ["seigpe"]
 
-import networkx as nx
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -90,6 +89,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         self.kmeans_ = None
 
     def _ts_to_graph(self, X):
+        import networkx as nx
         from ts2vg import HorizontalVG, NaturalVG
 
         ts_attr = []
