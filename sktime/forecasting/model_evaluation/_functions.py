@@ -74,8 +74,11 @@ def _check_scores(metrics) -> dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True,
-    return_model: bool = False
+    metric_types: dict,
+    return_data: bool = True,
+    cutoff_dtype=None,
+    old_naming=True,
+    return_model: bool = False,
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
@@ -313,7 +316,11 @@ def _evaluate_window(x, meta):
     if old_naming:
         result = result.rename(columns=old_name_mapping)
     column_order = _get_column_order_and_datatype(
-        scoring, return_data, cutoff_dtype, old_naming=old_naming, return_model=return_model
+        scoring,
+        return_data,
+        cutoff_dtype,
+        old_naming=old_naming,
+        return_model=return_model,
     )
     result = result.reindex(columns=column_order.keys())
 
@@ -637,7 +644,9 @@ def evaluate(
     if backend in ["dask", "dask_lazy"] and not not_parallel:
         import dask.dataframe as dd
 
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype, return_model=return_model)
+        metadata = _get_column_order_and_datatype(
+            scoring, return_data, cutoff_dtype, return_model=return_model
+        )
 
         results = dd.from_delayed(results, meta=metadata)
         if backend == "dask":
