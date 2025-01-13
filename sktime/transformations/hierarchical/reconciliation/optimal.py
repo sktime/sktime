@@ -38,7 +38,6 @@ _COMMON_TAGS = {
 
 
 class FullHierarchyReconciler(BaseTransformer):
-
     _tags = _COMMON_TAGS
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
@@ -61,7 +60,6 @@ class FullHierarchyReconciler(BaseTransformer):
             )
 
     def _transform(self, X, y):
-
         X = self.aggregator_.transform(X)
         return X
 
@@ -76,8 +74,8 @@ class NonNegativeHierarchyReconciler(BaseTransformer):
         super().__init__()
 
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def create_summing_matrix_from_index(hier_index):
@@ -89,7 +87,6 @@ def create_summing_matrix_from_index(hier_index):
     The entry S[i, j] = 1 if row i (an aggregator node) is an ancestor
     of column j (a bottom node), else 0.
     """
-
     # Convert index to list of tuples for convenience
     all_nodes = list(hier_index)
 
