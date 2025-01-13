@@ -102,6 +102,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         PatchTST model. Missing parameters in the config will be automatically
         replaced by their default values. See the PatchTSTConfig config on
         huggingface for more details.
+        Note: if `prediction_length` is passed as in larger than the passed `fh`
+        in the `fit` function, the `prediction_length` will be used to train the
+        model. If `prediction_length` is passed as in smaller than the passed
+        `fh` in the `fit` function, the passed `fh` will be used to train the
+        model.
     training_args : dict, optional, default = None
         Training arguments to use for the model. If this is passed,
         the remaining applicable training arguments will be ignored
@@ -251,11 +256,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if self.fit_strategy == "full" and self.model_path:
-            raise ValueError(
-                "fit_strategy = 'full' and model_path cannot be passed together"
-            )
-
     def _fit(self, y, fh, X=None):
         """Fits the model.
 
@@ -275,39 +275,113 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.fh_ = int(max(fh.to_relative(self.cutoff)))
         self.y_columns = y.columns
         # if no model_path was given, initialize new full model from config
-        if not self.model_path and self.fit_strategy == "full":
-            self._config["num_input_channels"] = len(self.y_columns)
-            if "prediction_length" in self._config.keys():
-                if self._config["prediction_length"] > self.fh_:
-                    warnings.warn(
-                        "Found prediction length inside config larger"
-                        "than passed fh, will use larger of the two"
-                    )
-                elif self._config["prediction_length"] <= self.fh_:
-                    warnings.warn(
-                        "Found fh length inside config larger"
-                        "than passed prediction_length, will use larger of the two"
-                    )
+        if self.fit_strategy == "full":
+            if not self.model_path:
+                self._config["num_input_channels"] = len(self.y_columns)
+                if "prediction_length" in self._config.keys():
+                    if self._config["prediction_length"] > self.fh_:
+                        warnings.warn(
+                            "Found `prediction_length` inside config larger"
+                            " than passed fh, will use larger of the two to"
+                            " initalize the model"
+                        )
+                    elif self._config["prediction_length"] <= self.fh_:
+                        warnings.warn(
+                            "Found `fh` argument length larger"
+                            " than passed prediction_length inside config"
+                            " ,will use larger of the two to initialize the model"
+                        )
+                        self._config["prediction_length"] = int(self.fh_)
+                else:
+                    # if `prediction_length` isn't in the config, use the passed fh
                     self._config["prediction_length"] = int(self.fh_)
-            else:
-                self._config["prediction_length"] = int(self.fh_)
-            context_length = self._config["context_length"]
-            del self._config["context_length"]
-            config = PatchTSTConfig(
-                context_length=context_length,
-                **self._config,
-            )
-            self.model = PatchTSTForPrediction(config)
-        else:
-            # if only model_path was given, initialize with model_path
-            if self.fit_strategy == "minimal" or self.fit_strategy == "zero-shot":
+                # extract the context_length from the config
+                # and pass back into the model config arguments due to some bug
+                context_length = self._config["context_length"]
+                del self._config["context_length"]
+                config = PatchTSTConfig(
+                    context_length=context_length,
+                    **self._config,
+                )
+                self.model = PatchTSTForPrediction(config)
+            elif not self.config:
                 self.model = AutoModel.from_pretrained(self.model_path)
                 if not isinstance(self.model.model, PatchTSTModel):
                     raise ValueError(
                         "This estimator requires a `PatchTSTModel`, but "
                         f"found {self.model.model.__class__.__name__}"
                     )
+            else:
+                raise ValueError(
+                    "fit_strategy = 'full' requires either `model_path` or `config`"
+                    " but not both."
+                )
+        elif self.fit_strategy == "minimal":
+            if not self.model_path or not self.config:
+                raise ValueError(
+                    "fit_strategy = 'minimal' requires both model_path and config"
+                )
+            else:
+                self._config["num_input_channels"] = len(self.y_columns)
+                if "prediction_length" in self._config.keys():
+                    if self._config["prediction_length"] > self.fh_:
+                        warnings.warn(
+                            "Found `prediction_length` inside config larger"
+                            " than passed fh, will use larger of the two to"
+                            " initalize the model"
+                        )
+                    elif self._config["prediction_length"] <= self.fh_:
+                        warnings.warn(
+                            "Found `fh` argument length larger"
+                            " than passed prediction_length inside config"
+                            " ,will use larger of the two to initialize the model"
+                        )
+                        self._config["prediction_length"] = int(self.fh_)
+                else:
+                    # if `prediction_length` isn't in the config, use the passed fh
+                    self._config["prediction_length"] = int(self.fh_)
+                # extract the context_length from the config
+                # and pass back into the model config arguments due to some bug
+                context_length = self._config["context_length"]
+                del self._config["context_length"]
+                config = PatchTSTConfig(
+                    context_length=context_length,
+                    **self._config,
+                )
 
+                # Load model with the updated config
+                self.model, info = AutoModel.from_pretrained(
+                    self.model_path,
+                    config=config,
+                    output_loading_info=True,
+                    ignore_mismatched_sizes=True,
+                )
+
+                # Freeze all loaded parameters
+                for param in self.model.parameters():
+                    param.requires_grad = False
+
+                # Clamp all loaded parameters to avoid NaNs due to large values
+                for param in self.model.model.parameters():
+                    param.clamp_(-1000, 1000)
+
+                # Reininit the weights of all layers that have mismatched sizes
+                for key, _, _ in info["mismatched_keys"]:
+                    _model = self.model
+                    for attr_name in key.split(".")[:-1]:
+                        _model = getattr(_model, attr_name)
+                    _model.weight = torch.nn.Parameter(
+                        _model.weight.masked_fill(_model.weight.isnan(), 0.001),
+                        requires_grad=True,
+                    )
+        elif self.fit_strategy == "zero-shot":
+            self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
+            if not isinstance(self.model.model, PatchTSTModel):
+                raise ValueError(
+                    "This estimator requires a `PatchTSTModel`, but "
+                    f"found {self.model.model.__class__.__name__}"
+                )
+        # only train the model if the fit_strategy is full or minimal
         if self.fit_strategy == "full" or self.fit_strategy == "minimal":
             # initialize dataset
             y_train, y_test = temporal_train_test_split(
@@ -330,9 +404,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             # initialize training_args
             training_args = TrainingArguments(**self._training_args)
 
-            # Create the early stopping callback
-
-            # define trainer
             trainer = Trainer(
                 model=self.model,
                 args=training_args,
@@ -341,11 +412,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 callbacks=self.callbacks,
                 compute_metrics=self.compute_metrics,
             )
-            # pretrain
+
             trainer.train()
-            self._fitted_model = trainer.model
-        else:
-            self._fitted_model = self.model
 
         return self
 
