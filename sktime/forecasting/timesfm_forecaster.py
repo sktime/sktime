@@ -196,9 +196,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         ignore_deps=False,
     ):
         self.context_len = context_len
+        self._context_len = None
         self.horizon_len = horizon_len
         self._horizon_len = None
-        self._context_len = None
         self.freq = freq
         self.repo_id = repo_id
         self.input_patch_len = input_patch_len
@@ -249,12 +249,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         else:
             self._horizon_len = self.horizon_len
 
-        self._context_len = self.context_len or (
-            ((len(y) // self.input_patch_len) + 1) * self.input_patch_len
-        )
-
-        self.horizon_len_ = self._horizon_len
-        self.context_len_ = self._context_len
+        if self.context_len is not None:
+            self._context_len = self.context_len
+        else:
+            # Compute context_len as the smallest multiple of input_patch_len
+            # that is larger than the length of y. This ensures that the context
+            # is padded appropriately for model input requirements.
+            context_multiple = (len(y) // self.input_patch_len) + 1
+            self._context_len = context_multiple * self.input_patch_len
 
         self.tfm = _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
