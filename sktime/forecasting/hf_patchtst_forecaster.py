@@ -26,6 +26,7 @@ else:
 
 if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
+        AutoModel,
         PatchTSTConfig,
         PatchTSTForPrediction,
         PatchTSTModel,
@@ -41,19 +42,21 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         1) Loading an full PatchTST model and pretrain on some dataset.
         This can be done by passing in a PatchTST config dictionary or passing
         in available parameters in this estimator, or by loading the
-        HFPatchTSTForecaster without any passed arguments.
+        HFPatchTSTForecaster without any passed arguments. See the
+        `fit_strategy` docstring for more details.
 
-        2) Load a pre-trained model for fine-tuning. The parameter `model_path`
-        can be used to load a pre-trained model for fine-tuning. Using a
-        pretrained model will override any other model config parameters, and
-        you can use the `fit` function to then fine-tune your pretrained model.
-        See the `model_path` docstring for more details.
+        2) Load a pre-trained model for fine-tuning. Both the parameters `model_path`
+        and `config` can be used to load a pre-trained model for fine-tuning and
+        to re-initialize new weights in the pre-trained model using the config
+        parameters if necessary. Use a passed in `y` and `fh` in the `fit`
+        function to then fine-tune your pretrained model. See the
+        `fit_strategy` docstring for more details.
 
         3) Load a pre-trained model for zero-shot forecasting. The parameter
-        `model_path` can be used to load a pre-trained model for fine-tuning.
-        Using a pretrained model will override any other model config
-        parameters, and you can use the `predict` function to do zero-shot
-        forecasting. See the `model_path` docstring for more details.
+        `model_path` can be used to load a pre-trained model and can be
+        used immediately for forecasting via the `predict` function after
+        passing a `y` and `fh` into `fit`. See the `fit_strategy` docstring
+        for more details.
 
     Parameters
     ----------
@@ -70,21 +73,28 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
         String to set the fit_strategy of the model.
 
-        - If set to `full`, it will re-initialize an full model with
-        the specified config or estimator arguments.
+        - This strategy is used to create and train a new model from scratch
+        (pre-pretraining) or to update all of the weights in a pre-trained model
+        (also known as full fine-tuning). If `fit_strategy` is set to `full`,
+        requires either the `model_path` parameter or the `config`` parameter
+        to be passed in, but not both. If only `config` is passed, it will
+        initialize an new model with untrained weights with the specified config
+        arguments. If only `model_path` is passed, it will fine-tune ALL of the
+        pre-trained weights of the model.
 
-        - If set to "minimal" will use the `model_path`
-        argument and the passed in `y` in fit to fine-tune the model.
-        The trained weights on the pre-trained model will be further
-        fine-tuned using the passed dataset.
+        - If `fit_strategy` is set to "minimal" requires both the `model_path`
+        and `config` parameter. We will use the `model_path` and the specified
+        `config` to compare the weight shapes of the passed pre-trained model
+        to those in the config. If there are weight size mismatches, the model
+        will reinitialize new weights to match the weight shapes inside the `config`.
+        The `y` argument will then be fit to fine-tune the model. In the case where
+        there are no newly initialized weights (i.e the config weight shapes match
+        the pretrained model weight shapes), it will behave the same as the "full"
+        strategy where only the `model_path` is passed in.
 
-        - If set to "zero-shot", it will load the model in zero-shot forecasting
-        model with the argument `model_path` and ignore any passed `y`.
-
-        Note that both "minimal" and "zero-shot" fit_strategy requires a mandatory
-        passed in `model_path`, and that the configuration "full" along with a passed
-        model_path will trigger an error.
-
+        - If `fit_strategy` is set to "zero-shot", requires only the `model_path`
+        parameter. It will load the model via the `fit` function with the argument
+        `model_path` and ignore any passed `y`.
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
     config : dict, optional, default = {}
@@ -96,7 +106,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         Training arguments to use for the model. If this is passed,
         the remaining applicable training arguments will be ignored
     compute_metrics : list or function, default = None
-        List of metrics or function to use to use during training
+        List of metrics or function to use during training
     callbacks: list or function, default = None
         List of callbacks or callback function to use during training
 
@@ -107,7 +117,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    >>> #Example with an full model
+    >>> #Example with a full model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -133,7 +143,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
 
-    >>> #Example with a pre-trained model
+    >>> #Example with a pre-trained model to do zero-shot forecasting
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
@@ -289,9 +299,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             )
             self.model = PatchTSTForPrediction(config)
         else:
-            # model_path was given, initialize with model_path
+            # if only model_path was given, initialize with model_path
             if self.fit_strategy == "minimal" or self.fit_strategy == "zero-shot":
-                self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
+                self.model = AutoModel.from_pretrained(self.model_path)
                 if not isinstance(self.model.model, PatchTSTModel):
                     raise ValueError(
                         "This estimator requires a `PatchTSTModel`, but "
