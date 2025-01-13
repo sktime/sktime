@@ -126,6 +126,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         * If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1075,6 +1076,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1206,6 +1208,7 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1340,6 +1343,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1473,6 +1477,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1606,6 +1611,7 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1729,6 +1735,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -1876,6 +1883,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2096,6 +2104,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2278,6 +2287,7 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2401,6 +2411,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2494,6 +2505,7 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2658,6 +2670,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2855,6 +2868,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -2990,6 +3004,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3134,6 +3149,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3261,6 +3277,7 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3343,6 +3360,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3426,6 +3444,7 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3517,6 +3536,7 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3668,6 +3688,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3827,6 +3848,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
@@ -3974,6 +3996,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
 
         * If False, direct call to the metric object averages over time points,
           equivalent to a call of the``evaluate`` method.
