@@ -533,7 +533,7 @@ def evaluate(
     ...     scoring=loss,
     ...     return_model=True
     ... )
-    >>> fitted_forecaster = results.iloc[0]["fitted_forecaster"]  # get first fold's model
+    >>> fitted_forecaster = results.iloc[0]["fitted_forecaster"]
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
