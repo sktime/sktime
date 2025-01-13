@@ -134,6 +134,21 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         assert (res.index == y_true.index).all()
 
+        metric = metric.clone()
+
+        metric.set_params(by_index=True)
+
+        res_call = metric(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred,
+            y_train=y_true,
+        )
+        if isinstance(multioutput, str) and multioutput == "raw_values":
+            pd.testing.assert_frame_equal(res, res_call)
+        else:
+            pd.testing.assert_series_equal(res, res_call)
+
     def test_uniform_average_time(self, estimator_instance):
         """Tests that uniform_average_time indeed ignores index."""
         metric_obj = estimator_instance.set_params(multilevel="uniform_average_time")
