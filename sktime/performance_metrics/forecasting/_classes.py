@@ -126,8 +126,11 @@ class BaseForecastingErrorMetric(BaseMetric):
         * If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
     _tags = {
@@ -1072,8 +1075,11 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1199,10 +1205,12 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
-
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1332,8 +1340,11 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1462,8 +1473,11 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1592,8 +1606,11 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1712,8 +1729,11 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -1856,8 +1876,11 @@ class MeanSquaredError(BaseForecastingErrorMetric):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2073,8 +2096,11 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
     def __init__(
@@ -2252,8 +2278,11 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2372,8 +2401,11 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2462,8 +2494,11 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2623,8 +2658,11 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2817,8 +2855,11 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -2949,8 +2990,11 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3090,8 +3134,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3214,8 +3261,11 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3293,8 +3343,11 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3373,8 +3426,11 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3461,8 +3517,11 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3609,8 +3668,11 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3765,8 +3827,11 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
     --------
@@ -3909,8 +3974,11 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        If True, evaluate the metric at each time point.
-        If False, evaluate the metric globally, averaging over all time points.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     References
     ----------
