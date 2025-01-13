@@ -5,7 +5,7 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 
-__all__ = ["TopdownReconciler", "BottomUpReconciler", "MiddleOutReconciler"]
+__all__ = ["TopdownShareReconciler", "BottomUpReconciler", "MiddleOutReconciler"]
 
 
 def loc_series_idxs(y, idxs):
@@ -89,7 +89,7 @@ _COMMON_TAGS = {
 }
 
 
-class TopdownReconciler(BaseTransformer):
+class TopdownShareReconciler(BaseTransformer):
     """
     Topdown reconciliation.
 
@@ -231,6 +231,37 @@ class BottomUpReconciler(BaseTransformer):
         return X
 
 
+from sktime.transformations.base import BaseTransformer
+
+# other imports as needed
+
+
+def get_middle_level_aggregators(X, middle_level):
+    """
+    Identify aggregator nodes at the specified middle_level, i.e.
+    those for which the next level is '__total'.
+
+    Example:
+      If middle_level=1, then for a node= (region, store, cat, dept),
+      we check node[middle_level+1] == '__total'.
+      The node itself must not be __total at middle_level
+      (otherwise it's above or not a well-defined middle node).
+    """
+    idx = X.index.droplevel(-1).unique()
+    if middle_level + 1 >= idx.nlevels:
+        # If the user picks a middle_level at the last level, there's no "next" level
+        return []
+
+    # The aggregator condition:
+    #   * the next level's value is '__total'
+    #   * the middle level's value != '__total'
+    next_level_vals = idx.get_level_values(middle_level + 1)
+    this_level_vals = idx.get_level_values(middle_level)
+
+    is_agg = (next_level_vals == "__total") & (this_level_vals != "__total")
+    return idx[is_agg]
+
+
 class MiddleOutReconciler(BaseTransformer):
     """
     Reconciliation using a middle-out approach.
@@ -240,9 +271,9 @@ class MiddleOutReconciler(BaseTransformer):
     middle_level : int
         The level at which to split the hierarchy for reconciliation.
     middle_top_reconciler : BaseTransformer
-        The transformer to use for the top part of the hierarchy.
+        The transformer to use for the top part of the hierarchy (above the middle).
     middle_bottom_reconciler : BaseTransformer
-        The transformer to use for the bottom part of the hierarchy.
+        The transformer to use for each subtree below the middle-level totals.
     """
 
     def __init__(
@@ -254,20 +285,32 @@ class MiddleOutReconciler(BaseTransformer):
         self.middle_level = middle_level
         self.middle_top_reconciler = middle_top_reconciler
         self.middle_bottom_reconciler = middle_bottom_reconciler
-
         super().__init__()
 
     def _fit(self, X, y):
         self._no_hierarchy = X.index.nlevels == 1
-
         if self._no_hierarchy:
-            # TODO(fangelim): Should we raise a warning here?
             return self
 
-        X_middle_top, X_middle_bottom = split_middle_levels(X, self.middle_level)
+        # Identify sub-series for top approach, sub-series for each aggregator node
+        # We'll just store the aggregator nodes here for later usage.
+        self._middle_aggregators = get_middle_level_aggregators(X, self.middle_level)
 
-        self.middle_top_reconciler.fit(X=X_middle_top, y=y)
-        self.middle_bottom_reconciler.fit(X=X_middle_bottom, y=y)
+        # For the top portion, we want everything that is "middle or above"
+        # i.e. anything which has the next level as '__total'
+        # or is above that. We'll simply pass them all to middle_top_reconciler.
+        X_middle_top = X.loc[X.index.droplevel(-1).isin(self._middle_aggregators)]
+        # Fit top reconciler on that portion
+        self.middle_top_reconciler.fit(X_middle_top, y)
+
+        # For the bottom approach, we don't just do one chunk — we do it
+        # aggregator-by-aggregator in transform. But we can still .fit() them
+        # in a combined manner if the bottom approach has no aggregator-level states
+        # that conflict. If it does, you might prefer to do aggregator-by-aggregator.
+        # We'll do a single pass that includes all nodes "middle or below."
+        # A naive approach is to feed everything to the bottom reconciler.
+        # Or you can skip if your bottom reconcilers only need .fit() on bottom series.
+        self.middle_bottom_reconciler.fit(X, y)
 
         return self
 
@@ -275,30 +318,130 @@ class MiddleOutReconciler(BaseTransformer):
         if self._no_hierarchy:
             return X
 
-        X_middle_top, X_middle_bottom = split_middle_levels(X, self.middle_level)
+        # 1) Reconcile the middle-level aggregator nodes with the top approach
+        X_middle_top = X.loc[X.index.droplevel(-1).isin(self._middle_aggregators)]
+        X_middle_top_reconciled = self.middle_top_reconciler.transform(X_middle_top)
 
-        X_middle_top = self.middle_top_reconciler.transform(X_middle_top)
-        X_middle_bottom = self.middle_bottom_reconciler.transform(X_middle_bottom)
+        # 2) For each middle-level aggregator node, get the subtree below it
+        #    and apply the bottom approach
+        bottom_subtrees = []
+        for agg_node in self._middle_aggregators:
+            X_subtree = filter_descendants(X, agg_node)
+            if len(X_subtree) == 0:
+                continue
+            X_subtree_rec = self.middle_bottom_reconciler.transform(X_subtree)
+            bottom_subtrees.append(X_subtree_rec)
 
-        _X = pd.concat([X_middle_top, X_middle_bottom], axis=0).sort_index()
+        if bottom_subtrees:
+            X_middle_bottom = pd.concat(bottom_subtrees, axis=0)
+        else:
+            X_middle_bottom = (
+                pd.DataFrame([], columns=X.columns)
+                if isinstance(X, pd.DataFrame)
+                else pd.Series([], name=X.name, dtype=X.dtype)
+            )
 
-        # Remove middle level duplicates
+        # 3) Also, there may be nodes *above* the middle aggregator or
+        #    not belonging to any aggregator. We typically include them in top part.
+        #    So let's gather everything else that wasn't in aggregator subtrees
+        #    or aggregator nodes themselves. One naive approach:
+        #    We'll treat them with middle_top approach or just pass them unchanged.
+        #    For a minimal fix, let's pass them to the top approach as well.
+        #    We'll identify these 'remaining' nodes:
+        used_idx = (
+            X_middle_top_reconciled.index.droplevel(-1)
+            .unique()
+            .union(X_middle_bottom.index.droplevel(-1).unique())
+        )
+        # Everything not used yet:
+        remaining_mask = ~X.index.droplevel(-1).isin(used_idx)
+        X_remaining = X.loc[remaining_mask]
+
+        # Reconcile or pass them as well
+        X_remaining_rec = self.middle_top_reconciler.transform(X_remaining)
+
+        # 4) Combine
+        _X = pd.concat(
+            [X_middle_top_reconciled, X_middle_bottom, X_remaining_rec], axis=0
+        ).sort_index()
+
+        # Remove duplicates if they exist
         _X = _X[~_X.index.duplicated(keep="first")]
+
         return _X
 
     def _inverse_transform(self, X, y=None):
         if self._no_hierarchy:
             return X
 
-        X_middle_top, X_middle_bottom = split_middle_levels(X, self.middle_level)
+        # The inverse transform logic is analogous:
+        # 1) Middle-level aggregator nodes => top approach inverse
+        X_middle_top = X.loc[X.index.droplevel(-1).isin(self._middle_aggregators)]
+        X_middle_top_inv = self.middle_top_reconciler.inverse_transform(X_middle_top)
 
-        X_middle_top = self.middle_top_reconciler.inverse_transform(X_middle_top)
-        X_middle_bottom = self.middle_bottom_reconciler.inverse_transform(
-            X_middle_bottom
+        # 2) For each aggregator node, get the subtree and do bottom approach inverse
+        bottom_subtrees = []
+        for agg_node in self._middle_aggregators:
+            X_subtree = filter_descendants(X, agg_node)
+            if len(X_subtree) == 0:
+                continue
+            X_subtree_inv = self.middle_bottom_reconciler.inverse_transform(X_subtree)
+            bottom_subtrees.append(X_subtree_inv)
+
+        if bottom_subtrees:
+            X_middle_bottom_inv = pd.concat(bottom_subtrees, axis=0)
+        else:
+            X_middle_bottom_inv = (
+                pd.DataFrame([], columns=X.columns)
+                if isinstance(X, pd.DataFrame)
+                else pd.Series([], name=X.name, dtype=X.dtype)
+            )
+
+        # 3) Handle anything not covered
+        used_idx = (
+            X_middle_top_inv.index.droplevel(-1)
+            .unique()
+            .union(X_middle_bottom_inv.index.droplevel(-1).unique())
         )
+        remaining_mask = ~X.index.droplevel(-1).isin(used_idx)
+        X_remaining = X.loc[remaining_mask]
 
-        _X = pd.concat([X_middle_top, X_middle_bottom], axis=0).sort_index()
+        # Possibly pass that to top approach inverse or keep as-is:
+        X_remaining_inv = self.middle_top_reconciler.inverse_transform(X_remaining)
 
-        # Remove middle level duplicates
+        # 4) Combine
+        _X = pd.concat(
+            [X_middle_top_inv, X_middle_bottom_inv, X_remaining_inv], axis=0
+        ).sort_index()
+
         _X = _X[~_X.index.duplicated(keep="first")]
         return _X
+
+
+def is_ancestor(agg_node, node):
+    """Returns True if agg_node is an ancestor of node."""
+    return all(a == b or a == "__total" for a, b in zip(agg_node, node))
+
+
+def filter_descendants(X, aggregator_node):
+    """
+    Returns a sub-DataFrame/Series of X containing only rows whose
+    droplevel(-1) is a descendant of 'aggregator_node' at the given 'middle_level'.
+
+    aggregator_node is a tuple like ('CA', 'CA_1', '__total', '__total')
+    or ('regionA', 'storeA', '__total', '__total'), etc.
+    """
+    # We'll operate on the "higher-level" portion of the index
+    # (i.e., the index after dropping the time or final level).
+    idx_upper = X.index.droplevel(-1)  # e.g. (region, store, cat, dept)
+    nodes = idx_upper.unique()
+
+    # We only want to keep those which are descendants of aggregator_node,
+    # i.e., aggregator_node is an ancestor of that node.
+    # Because aggregator_node is "at" middle_level,
+    # but it may also have __total at deeper levels.
+    descendant_mask = [is_ancestor(aggregator_node, n) for n in nodes]
+    descendant_nodes = nodes[descendant_mask]
+
+    # Now filter X by these nodes
+    return X.loc[idx_upper.isin(descendant_nodes)]
