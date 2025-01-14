@@ -9,10 +9,6 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
 
 
-@pytest.mark.skipif(
-    not run_test_for_class(MAPAForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
 @pytest.fixture
 def sample_data():
     """Create sample time series data for testing.
@@ -28,6 +24,10 @@ def sample_data():
     return pd.DataFrame(data, index=dates, columns=["value"])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "sp,level,expected_seasonal",
     [
@@ -97,6 +97,10 @@ def test_decompose(sample_data, sp, level, expected_seasonal):
             assert abs(seasonal_sum) < np.std(agg_data["value"]) * seasonal_period
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "combine_method,weights,expected",
     [
@@ -120,6 +124,10 @@ def test_combine_forecasts(combine_method, weights, expected):
     np.testing.assert_array_almost_equal(combined, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_combine_forecasts_invalid():
     """Test the `_combine_forecasts` method with invalid combination methods.
     Verifies the following:
@@ -134,6 +142,10 @@ def test_combine_forecasts_invalid():
         forecaster._combine_forecasts(forecasts)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "level,agg_method,expected",
     [
@@ -156,6 +168,10 @@ def test_aggregate(level, agg_method, expected):
     pd.testing.assert_frame_equal(result, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecaster_params",
     [
