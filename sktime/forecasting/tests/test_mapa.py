@@ -10,7 +10,7 @@ from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(ExponentialSmoothing),
+    not run_test_for_class(MAPAForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.fixture
