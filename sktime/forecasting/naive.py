@@ -163,6 +163,9 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         n_timepoints = y.shape[0]
 
+        if not hasattr(self, "_y") or self._y is None:
+            self._y = y
+
         if self.strategy in ("last", "mean"):
             # check window length is greater than sp for seasonal mean or seasonal last
             if self.window_length is not None and sp != 1:

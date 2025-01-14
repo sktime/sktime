@@ -152,6 +152,10 @@ class VAR(_StatsModelsAdapter):
             verbose=self.verbose,
             ic=self.ic,
         )
+
+        if not hasattr(self, "_y") or self._y is None:
+            self._y = y
+
         return self
 
     def _predict(self, fh, X):
