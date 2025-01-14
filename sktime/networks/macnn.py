@@ -58,7 +58,23 @@ class MACNNNetwork(BaseDeepNetwork):
         self.random_state = random_state
 
     def _macnn_block(self, x, kernels, reduce):
-        """Implement a single MACNN Block."""
+        """Implement a single MACNN Block.
+        Parameters
+        ----------
+        x : An instance of keras.layers.Layer
+            The previous layer, in case of the first
+            block it represents the input layer.
+        kernels: int
+            The base output dimension for dense layers, it corresponds
+            to elements `filter_sizes` attributes.
+        reduce: int
+            The factor by which, the first dense layer's output dimension
+            should be divided by, it corresponds to the `reduction` attribute.
+        Returns
+        -------
+        block_output: An instance of keras.layers.Layer
+            Represents the last layer of a MACNN Block, to be used by the next block.
+        """
         from tensorflow import keras
 
         conv_layers = []
