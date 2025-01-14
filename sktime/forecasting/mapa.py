@@ -18,6 +18,8 @@ class MAPAForecaster(BaseForecaster):
     forecasting methods and also supports various aggregation and combination
     strategies.
 
+    based on R package: https://github.com/trnnick/mapa
+
     Parameters
     ----------
     aggregation_levels : list of int, default=None
