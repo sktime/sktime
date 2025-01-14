@@ -6,8 +6,13 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.fixture
 def sample_data():
     """Create sample time series data for testing.
