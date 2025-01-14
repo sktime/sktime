@@ -687,3 +687,97 @@ def test_sample_weight_generator_is_passed_to_func(metric_class, random_state):
     assert not np.isclose(function_loss, function_loss_with_weights), " ".join(
         ["Loss function with sample weight generator should return different value"]
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+@pytest.mark.parametrize(
+    "metric_class",
+    [
+        MeanSquaredError,
+        MeanAbsoluteError,
+        MeanAbsolutePercentageError,
+    ],
+)
+def test_sample_weight_generator_is_available_on_class(metric_class, random_state):
+    """Tests that loss function with univariate input should return scalar number."""
+
+    class TestWeightGenerator(BaseSampleWeightGenerator):
+        def __call__(self, y_true, y_pred=None, **kwargs):
+            return np.arange(1, len(y_true) + 1)
+
+    metric = metric_class()
+    metric_with_weights = metric_class(sample_weight_generator=TestWeightGenerator())
+
+    assert metric.sample_weight_generator is None, " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )
+    assert metric_with_weights.sample_weight_generator is not None, " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )
+    assert (
+        metric_with_weights.sample_weight_generator == TestWeightGenerator()
+    ), " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+@pytest.mark.parametrize(
+    "metric_class",
+    [
+        MeanSquaredError,
+        MeanAbsoluteError,
+        MeanAbsolutePercentageError,
+    ],
+)
+def test_sample_weight_generator_is_same_on_func_and_class(metric_class, random_state):
+    """Tests that loss function with univariate input should return scalar number."""
+
+    y = _make_series(n_timepoints=75, random_state=random_state)
+    y_train, y_true = y.iloc[:50], y.iloc[50:]
+    y_pred = y.shift(1).iloc[50:]
+    y_pred_benchmark = y.rolling(2).mean().iloc[50:]
+
+    class TestWeightGenerator(BaseSampleWeightGenerator):
+        def __call__(self, y_true, y_pred=None, **kwargs):
+            return np.arange(1, len(y_true) + 1)
+
+    weight_generator = TestWeightGenerator()
+
+    metric = metric_class()
+    metric_with_weights = metric_class(sample_weight_generator=weight_generator)
+
+    loss = metric(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+    )
+    loss_from_sample_weight_class = metric_with_weights(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+    )
+    loss_from_sample_weight = metric(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+        sample_weight=weight_generator,
+    )
+
+    assert not np.isclose(loss, loss_from_sample_weight_class), " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )
+    assert np.isclose(loss_from_sample_weight_class, loss_from_sample_weight), " ".join(
+        ["Loss function with the same sample weight generator should return same value"]
+    )
