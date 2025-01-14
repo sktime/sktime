@@ -26,7 +26,6 @@ else:
 
 if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
-        AutoModel,
         PatchTSTConfig,
         PatchTSTForPrediction,
         PatchTSTModel,
@@ -122,7 +121,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    >>> #Example with a full model
+    >>> #Example with a new model initialized from config
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -147,6 +146,69 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
+    >>> #Example full fine-tuning with a pre-trained model
+    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> import pandas as pd
+    >>> dataset_path = pd.read_csv(
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
+    ...     ).drop(columns = ["date"]
+    ... )
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> scaler = StandardScaler()
+    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
+    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
+    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
+    >>> df.columns = dataset_path.columns
+    >>> forecaster = HFPatchTSTForecaster(
+    ...     model_path="namctin/patchtst_etth1_forecast",
+    ...     fit_strategy = "full",
+    ...     training_args = {
+    ...         "output_dir":"/PatchTST/",
+    ...         "overwrite_output_dir":True,
+    ...         "learning_rate":1e-4,
+    ...         "num_train_epochs":1,
+    ...         "per_device_train_batch_size":16,
+    ...     }
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = list(range(1,4))) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
+
+    >>> #Example of minimal fine-tuning with a pre-trained model
+    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> import pandas as pd
+    >>> dataset_path = pd.read_csv(
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
+    ...     ).drop(columns = ["date"]
+    ... )
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> scaler = StandardScaler()
+    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
+    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
+    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
+    >>> df.columns = dataset_path.columns
+    >>> forecaster = HFPatchTSTForecaster(
+    ...     model_path="namctin/patchtst_etth1_forecast",
+    ...     config = {
+    ...         "patch_length": 8,
+    ...         "context_length": 512,
+    ...         "patch_stride": 8,
+    ...         "d_model": 128,
+    ...         "num_attention_heads": 2,
+    ...         "ffn_dim": 512,
+    ...         "head_dropout": 0.3,
+    ...         "prediction_length": 64
+    ...     },
+    ...     fit_strategy = "minimal",
+    ...     training_args = {
+    ...         "output_dir":"/PatchTST/",
+    ...         "overwrite_output_dir":True,
+    ...         "learning_rate":1e-4,
+    ...         "num_train_epochs":1,
+    ...         "per_device_train_batch_size":16,
+    ...     }
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = list(range(1,63))) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example with a pre-trained model to do zero-shot forecasting
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
@@ -173,34 +235,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...     }
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
-
-
-    >>> #Example fine-tuning with a pre-trained model
-    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
-    >>> import pandas as pd
-    >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
-    ...     ).drop(columns = ["date"]
-    ... )
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
-    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
-    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns
-    >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast",
-    ...     fit_strategy = "minimal",
-    ...     training_args = {
-    ...         "output_dir":"/PatchTST/",
-    ...         "overwrite_output_dir":True,
-    ...         "learning_rate":1e-4,
-    ...         "num_train_epochs":1,
-    ...         "per_device_train_batch_size":16,
-    ...     }
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = list(range(1,97))) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
@@ -305,12 +339,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 )
                 self.model = PatchTSTForPrediction(config)
             elif not self.config:
-                self.model = AutoModel.from_pretrained(self.model_path)
-                if not isinstance(self.model.model, PatchTSTModel):
-                    raise ValueError(
-                        "This estimator requires a `PatchTSTModel`, but "
-                        f"found {self.model.model.__class__.__name__}"
-                    )
+                self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
             else:
                 raise ValueError(
                     "fit_strategy = 'full' requires either `model_path` or `config`"
@@ -350,7 +379,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 )
 
                 # Load model with the updated config
-                self.model, info = AutoModel.from_pretrained(
+                self.model, info = PatchTSTForPrediction.from_pretrained(
                     self.model_path,
                     config=config,
                     output_loading_info=True,
@@ -370,10 +399,15 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                     _model = self.model
                     for attr_name in key.split(".")[:-1]:
                         _model = getattr(_model, attr_name)
-                    _model.weight = torch.nn.Parameter(
-                        _model.weight.masked_fill(_model.weight.isnan(), 0.001),
-                        requires_grad=True,
-                    )
+                    if hasattr(_model, "weight"):
+                        _model.weight = torch.nn.Parameter(
+                            _model.weight.masked_fill(_model.weight.isnan(), 0.001),
+                            requires_grad=True,
+                        )
+                    elif hasattr(_model, "position_enc"):
+                        torch.nn.init.normal_(_model.position_enc, mean=0.0, std=0.1)
+                        _model.position_enc.requires_grad = True
+
         elif self.fit_strategy == "zero-shot":
             self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
             if not isinstance(self.model.model, PatchTSTModel):
