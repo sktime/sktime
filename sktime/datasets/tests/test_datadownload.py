@@ -20,6 +20,12 @@ from sktime.utils.dependencies import _check_soft_dependencies
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
 TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+TSF_SUBSAMPLE_SMALL = [
+    "wind_4_seconds_dataset",
+    "m4_hourly_dataset",
+    "solar_10_minutes_dataset",
+    "australian_electricity_demand_dataset",
+]
 
 
 @pytest.mark.datadownload
@@ -65,6 +71,23 @@ def test_load_forecastingdata():
     assert metadata["forecast_horizon"] == 4
     assert metadata["contain_missing_values"] is False
     assert metadata["contain_equal_length"] is False
+
+
+@pytest.mark.datadownload
+def test_load_forecastingdata_check_freq_for_hier_data():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, _ = load_forecastingdata(
+        name=file, return_type="pd_multiindex_hier"
+    )
+    assert loaded_datasets.index.levels[-1].freq == "YS-JAN"
+
+
+@pytest.mark.datadownload
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE_SMALL)
+def test_load_forecastingdata_hier(name):
+    """Test loading downloaded dataset from forecasting.org."""
+    load_forecastingdata(name=name, return_type="pd_multiindex_hier")
 
 
 @pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
