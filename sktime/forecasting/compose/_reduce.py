@@ -2575,11 +2575,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lag_plus = Lag(lags=1, index_out="extend")
 
-        if isinstance(self.impute_method, Imputer):
-            lag_plus = lag_plus * self.impute_method
-        else:
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+        if self._impute_method is not None:
+            lag_plus = lag_plus * self._impute_method.clone()
 
         Xtt = lag_plus.fit_transform(Xt)
 
