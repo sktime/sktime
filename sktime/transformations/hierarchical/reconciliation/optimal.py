@@ -1,12 +1,21 @@
+"""Full-hierarchy reconciliation."""
+
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.hierarchical.reconciliation._utils import (
+    _is_hierarchical_dataframe,
+)
 
-# TODO(felipeangelimvieira): Add summing matrix from series function
-# TODO(felipeangelimvieira): Compute non-constrained reconciliation
 # TODO(felipeangelimvieira): Compute non-negative reconciliation
-# TODO(felipeangelimvieira): Immutable series reconciliation: should this be a separate class?
+# TODO(felipeangelimvieira): Immutable series reconciliation: should this be
+# a separate class?
+
+__all__ = [
+    "FullHierarchyReconciler",
+]
+
 
 _COMMON_TAGS = {
     # packaging info
@@ -17,7 +26,6 @@ _COMMON_TAGS = {
     # --------------
     "scitype:transform-input": "Series",
     "scitype:transform-output": "Series",
-    "scitype:transform-labels": "None",
     # todo instance wise?
     "scitype:instancewise": True,  # is this an instance-wise transform?
     "X_inner_mtype": [
@@ -27,30 +35,57 @@ _COMMON_TAGS = {
         "pd_multiindex_hier",
     ],
     "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-    "capability:inverse_transform": False,  # does transformer have inverse
-    "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-    "univariate-only": False,  # can the transformer handle multivariate X?
+    "capability:inverse_transform": True,  # does transformer have inverse
+    "capability:inverse_transform:exact": False,
+    "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+    "univariate-only": True,  # can the transformer handle multivariate X?
     "handles-missing-data": False,  # can estimator handle missing data?
     "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
     "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
     "transform-returns-same-time-index": False,
+    "hierarchical": True,
+    "hierarchical:reconciliation": True,
 }
 
 
 class FullHierarchyReconciler(BaseTransformer):
+    """
+    Reconciliation for hierarchical time series.
+
+    Uses all the forecasts to obtain a reconciled forecast.
+    Uses the constraint matrix approach, which is more efficient than
+    the projection one.
+
+    If the dataframe is not hierarchical, this works as identity.
+
+    Parameters
+    ----------
+    error_covariance_matrix : pd.DataFrame, default=None
+        Error covariance matrix. If None, it is assumed to be the identity matrix.
+
+    """
+
     _tags = _COMMON_TAGS
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
         self.error_covariance_matrix = error_covariance_matrix
         super().__init__()
 
-    def _fit(self, X, y):
-        self.aggregator_ = Aggregator()
-        self.aggregator_.fit(X)
-        self.unique_series_ = X.index.droplevel(-1).unique()
-        self.S_ = create_summing_matrix_from_index(self.unique_series_)
+        self._is_not_hierarchical = False
 
-        self._sigma = self.error_covariance_matrix.copy()
+    def _fit(self, X, y):
+        self._is_not_hierarchical = not _is_hierarchical_dataframe(X)
+
+        if self._is_not_hierarchical:
+            return self
+
+        self.aggregator_ = Aggregator(flatten_single_levels=True)
+        X = self.aggregator_.fit_transform(X)
+        self.unique_series_ = _get_unique_series_from_df(X)
+        self.S_ = create_summing_matrix_from_index(self.unique_series_)
+        self.A_, self.I_ = split_summing_matrix(self.S_)
+
+        self._sigma = self.error_covariance_matrix
         if self.error_covariance_matrix is None:
             self._sigma = np.eye(len(self.unique_series_))
             self._sigma = pd.DataFrame(
@@ -58,20 +93,77 @@ class FullHierarchyReconciler(BaseTransformer):
                 index=self.S_.index,
                 columns=self.S_.index,
             )
+        self._sigma = self._sigma.sort_index(axis=0).sort_index(axis=1)
+
+        self._permutation_matrix = get_permutation_matrix(self.S_)
 
     def _transform(self, X, y):
+        if self._is_not_hierarchical:
+            return X
         X = self.aggregator_.transform(X)
         return X
 
-    def _inverse_transform(self, X, y=None): ...
+    @property
+    def _n_bottom(self):
+        return self.S_.shape[1]
+
+    @property
+    def _n_not_bottom(self):
+        return self._n_series - self._n_bottom
+
+    @property
+    def _n_series(self):
+        return self.S_.shape[0]
+
+    def _inverse_transform(self, X, y=None):
+        if self._is_not_hierarchical:
+            return X
+
+        X = X.sort_index()
+
+        X_arr = dataframe_to_ndarray(X)
+        P = self._permutation_matrix
+        Pt = P.T
+        P = np.repeat(P[np.newaxis, :, :], X_arr.shape[0], axis=0)
+        Pt = np.repeat(Pt[np.newaxis, :, :], X_arr.shape[0], axis=0)
+        X_arr = P @ X_arr
+
+        S = self.S_.values
+        S = P[0] @ S
+        # A is the matrix that maps the bottom nodes to the non-bottom nodes
+        A = S[: self._n_not_bottom, :]
+        # I_na is the vector that maps the non-bottom nodes to themselves
+        I_na = np.eye(self._n_not_bottom)
+        E = P[0] @ self._sigma.values @ Pt[0]
+
+        # Concat C =  [A, I_na]
+        C = np.concatenate([I_na, -A], axis=1)
+
+        # Inverse term
+        inv = np.linalg.inv(C @ E @ C.T)
+        M = np.eye(self._n_series) - E @ C.T @ inv @ C
+
+        # Expand level 0 with X_arr.shape[0] (timepoints)
+        M = np.repeat(M[np.newaxis, :, :], X_arr.shape[0], axis=0)
+
+        # Reconciled forecasts
+        Y = Pt @ M @ X_arr
+        Y = np.moveaxis(Y, 0, 1).reshape((-1, 1))
+        df = pd.DataFrame(
+            Y,
+            index=X.index,
+            columns=X.columns,
+        )
+
+        return df
 
 
-class NonNegativeHierarchyReconciler(BaseTransformer):
-    _tags = _COMMON_TAGS
+# class NonNegativeHierarchyReconciler(BaseTransformer):
+#     _tags = _COMMON_TAGS
 
-    def __init__(self, error_covariance_matrix: pd.DataFrame = None):
-        self.error_covariance_matrix = error_covariance_matrix
-        super().__init__()
+#     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
+#         self.error_covariance_matrix = error_covariance_matrix
+#         super().__init__()
 
 
 import numpy as np
@@ -80,12 +172,26 @@ import pandas as pd
 
 def create_summing_matrix_from_index(hier_index):
     """
+    Get the summing matrix from a hierarchical index.
+
     Given a MultiIndex 'hier_index' of a hierarchical time series
     (following an sktime-like convention), return a summation matrix S
     as a DataFrame. Each row corresponds to a node in the hierarchy,
     and each column corresponds to a bottom (leaf) node.
     The entry S[i, j] = 1 if row i (an aggregator node) is an ancestor
     of column j (a bottom node), else 0.
+
+    Parameters
+    ----------
+    hier_index : pd.MultiIndex
+        A hierarchical index.
+
+    Returns
+    -------
+    S_df : pd.DataFrame
+        A DataFrame with the same row index and MultiIndex columns as
+        'hier_index'.
+        Each entry S_df[i, j] = 1 if row i is an ancestor of column j
     """
     # Convert index to list of tuples for convenience
     all_nodes = list(hier_index)
@@ -102,6 +208,10 @@ def create_summing_matrix_from_index(hier_index):
     # Ancestor means that for each level `a_level` in agg and `b_level` in bot:
     #    a_level == '__total' OR a_level == b_level
     def is_ancestor(agg, bot):
+        if isinstance(agg, str):
+            agg = (agg,)
+        if isinstance(bot, str):
+            bot = (bot,)
         return all(a == b or a == "__total" for a, b in zip(agg, bot))
 
     # Populate the summation matrix
@@ -111,10 +221,63 @@ def create_summing_matrix_from_index(hier_index):
                 S[i, j] = 1
 
     # Create a DataFrame with the same row index and MultiIndex columns
-    S_df = pd.DataFrame(
-        S,
-        index=pd.MultiIndex.from_tuples(all_nodes, names=hier_index.names),
-        columns=pd.MultiIndex.from_tuples(bottom_nodes, names=hier_index.names),
+    S_df = (
+        pd.DataFrame(
+            S,
+            index=pd.MultiIndex.from_tuples(all_nodes, names=hier_index.names),
+            columns=pd.MultiIndex.from_tuples(bottom_nodes, names=hier_index.names),
+        )
+        .sort_index(axis=0)
+        .sort_index(axis=1)
     )
 
     return S_df
+
+
+def dataframe_to_ndarray(df: pd.DataFrame) -> np.ndarray:
+    """
+    Convert a hierarchical DataFrame to a hierarchical ndarray.
+
+    The final array have shape (num_timepoints, num_series, 1).
+
+    """
+    df = df.sort_index()
+
+    arr = df.values.reshape(-1, 1)
+
+    num_timepoints = df.index.get_level_values(-1).nunique()
+
+    arr = arr.reshape(-1, num_timepoints, 1)
+    arr = np.moveaxis(arr, 0, 1)
+    return arr
+
+
+def split_summing_matrix(S):
+    bottom_nodes = S.columns
+    not_bottom_nodes = S.index.difference(bottom_nodes)
+
+    I = S.loc[bottom_nodes, bottom_nodes]
+    A = S.loc[not_bottom_nodes, bottom_nodes]
+
+    return A, I
+
+
+def get_bottom_and_aggregated_idxs(S):
+    bottom_levels = S.index.isin(S.columns)
+    agg_levels = ~bottom_levels
+
+    # Turn into permutation matrix of shape (n_levels, n_series)
+    bottom_idxs = np.eye(len(S))[bottom_levels]
+    agg_idxs = np.eye(len(S))[agg_levels]
+    return bottom_idxs, agg_idxs
+
+
+def get_permutation_matrix(S):
+    bottom_idxs, agg_idxs = get_bottom_and_aggregated_idxs(S)
+    return np.concatenate([agg_idxs, bottom_idxs], axis=0)
+
+
+def _get_unique_series_from_df(X):
+    if X.index.nlevels == 1:
+        return pd.MultiIndex.from_tuples([("__total",)])
+    return pd.MultiIndex.from_frame(X.index.droplevel(-1).unique().to_frame())
