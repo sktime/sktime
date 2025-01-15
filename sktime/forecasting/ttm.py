@@ -31,12 +31,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
     the notion of the first-ever "tiny" pre-trained models for Time-Series Forecasting.
 
-    **Zero-shot and Fine-tuning**:
+    **Fit Strategies: Full, Minimal, and Zero-shot**
 
-    This model is designed as a versatile foundation model, capable of both
-    zero-shot forecasting and fine-tuning on custom datasets.
-    The choice between zero-shot and fine-tuning is managed internally and
-    is determined by the final configuration used to initialize the model.
+    This model supports three fit strategies: *zero-shot* for direct predictions without
+    training, *minimal* fine-tuning for lightweight adaptation to new data, and *full*
+    fine-tuning for comprehensive model training. The selected strategy is determined
+    by the model's fit_strategy parameter
 
     **Initialization Process**:
 
@@ -75,9 +75,13 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
       aligned with the *model architechture*, fine-tuing part is bypassed and
       the model preforms zero-short forecasting.
 
-    - **Fine-tuning**: When not all the *pre-trained weights* are correctly aligned
-      with the *model architechture*, rather some weights are re-initialized,
+    - **Minimal Fine-tuning**: When not all the *pre-trained weights* are correctly
+      aligned with the *model architechture*, rather some weights are re-initialized,
       these re-initialized weights are fine-tuned on the provided data.
+
+    - **Full Fine-tuning**:  The model is *fully fine-tuned* on new data, updating *all
+      parameters*. This approach offers maximum adaptation to the dataset but requires
+      more computational resources.
 
     Parameters
     ----------
@@ -125,6 +129,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
+    fit_strategy : str, default="minimal"
+        Strategy to use for fitting (fine-tuning) the model. This can be one of
+        the following:
+        - "zero-shot": Uses pre-trained model as it is.
+        - "minimal": Fine-tunes only a small subset of the model parameters,
+          allowing for quick adaptation with limited computational resources.
+        - "full": Fine-tunes all model parameters, which may result in better
+          performance but requires more computational power and time.
 
     use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
@@ -151,7 +163,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> forecaster = TinyTimeMixerForecaster(fit_strategy="zero-shot") # doctest: +SKIP
     >>> # performs zero-shot forecasting, as default config (unchanged) is used
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -179,7 +191,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # model is fine-tuned, as a config different from default is provided.
+    >>> # model is fine-tuned with the minimal strategy due to a non-default config.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -221,6 +233,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         compute_metrics=None,
         callbacks=None,
         broadcasting=False,
+        fit_strategy="minimal",
         use_source_package=False,
     ):
         super().__init__()
@@ -235,6 +248,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.fit_strategy = fit_strategy
 
         if self.broadcasting:
             self.set_tags(
@@ -351,19 +365,32 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             ignore_mismatched_sizes=True,
         )
 
-        if len(info["mismatched_keys"]) == 0:
-            return  # No need to fit
+        if self.fit_strategy == "zero-shot":
+            if len(info["mismatched_keys"]) > 0:
+                raise ValueError(
+                    "Fit strategy is 'zero-shot', but the model weights in the"
+                    "configuration are mismatched compared to the pretrained model."
+                    "Please ensure they match."
+                )
+            return
+        elif self.fit_strategy == "minimal":
+            if len(info["mismatched_keys"]) == 0:
+                return  # No need to fit
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight.requires_grad = True
+            # Reininit the weights of all layers that have mismatched sizes
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+        elif self.fit_strategy == "full":
+            for param in self.model.parameters():
+                param.requires_grad = True
+        else:
+            raise ValueError("Unknown fit strategy")
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
