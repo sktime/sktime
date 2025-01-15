@@ -2616,7 +2616,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
-            "impute_method": forecaster_imputer,  # tests imputation with forecaster method
+            "impute_method": forecaster_imputer,  # test imputation with forecaster
         }
         params4 = {
             "estimator": est,
