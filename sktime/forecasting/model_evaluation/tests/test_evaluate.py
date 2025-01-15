@@ -23,6 +23,7 @@ from sktime.datasets import load_airline, load_longley
 # from sktime.exceptions import FitFailedWarning
 # commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -66,11 +67,13 @@ INTERVAL_METRICS_WITH_PARAMS = [
 BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
-def _check_evaluate_output(out, cv, y, scoring, return_data):
+def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
     assert isinstance(out, pd.DataFrame)
     # Check column names.
     scoring = _check_scores(scoring)
-    columns = _get_column_order_and_datatype(scoring, return_data)
+    columns = _get_column_order_and_datatype(
+        metric_types=scoring, return_data=return_data, return_model=return_model
+    )
     assert set(out.columns) == columns.keys(), "Columns are not identical"
 
     # Check number of rows against number of splits.
@@ -102,6 +105,14 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
 
     else:
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
+
+    # Check fitted models
+    if return_model:
+        assert "fitted_forecaster" in out.columns
+        assert all(
+            isinstance(f, (BaseForecaster, type(None)))
+            for f in out["fitted_forecaster"].values
+        )
 
 
 @pytest.mark.skipif(
@@ -137,7 +148,9 @@ def test_evaluate_common_configs(
         scoring=scoring,
         **backend,
     )
-    _check_evaluate_output(out, cv, y, scoring, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
 
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
@@ -158,8 +171,9 @@ def test_evaluate_common_configs(
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("return_data", [True, False])
+@pytest.mark.parametrize("return_model", [True, False])
 @pytest.mark.parametrize("scores", [METRICS, PROBA_METRICS, METRICS + PROBA_METRICS])
-def test_scoring_list(return_data, scores):
+def test_scoring_list(return_data, return_model, scores):
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = SlidingWindowSplitter(fh=[1, 2, 3], initial_window=15, step_length=5)
@@ -170,8 +184,16 @@ def test_scoring_list(return_data, scores):
         cv=cv,
         scoring=scores,
         return_data=return_data,
+        return_model=return_model,
     )
-    _check_evaluate_output(out, cv, y, scores, return_data)
+    _check_evaluate_output(
+        out=out,
+        cv=cv,
+        y=y,
+        scoring=scores,
+        return_data=return_data,
+        return_model=return_model,
+    )
 
 
 @pytest.mark.skipif(
@@ -189,7 +211,9 @@ def test_evaluate_initial_window():
     out = evaluate(
         forecaster=forecaster, y=y, cv=cv, strategy="update", scoring=scoring
     )
-    _check_evaluate_output(out, cv, y, scoring, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
     assert out.loc[0, "len_train_window"] == initial_window
 
     # check scoring
@@ -229,10 +253,13 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
+@pytest.mark.parametrize("return_model", [True, False])
 @pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], METRICS])
-def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
+def test_evaluate_error_score(
+    error_score, return_data, return_model, strategy, backend, scores
+):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
@@ -248,6 +275,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
         "cv": cv,
         "scoring": scores,
         "return_data": return_data,
+        "return_model": return_model,
         "error_score": error_score,
         "strategy": strategy,
     }
