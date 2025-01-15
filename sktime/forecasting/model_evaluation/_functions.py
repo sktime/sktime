@@ -317,9 +317,9 @@ def _evaluate_window(x, meta):
     if old_naming:
         result = result.rename(columns=old_name_mapping)
     column_order = _get_column_order_and_datatype(
-        scoring,
-        return_data,
-        cutoff_dtype,
+        metric_types=scoring,
+        return_data=return_data,
+        cutoff_dtype=cutoff_dtype,
         old_naming=old_naming,
         return_model=return_model,
     )

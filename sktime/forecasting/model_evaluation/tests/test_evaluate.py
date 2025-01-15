@@ -71,7 +71,9 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
     assert isinstance(out, pd.DataFrame)
     # Check column names.
     scoring = _check_scores(scoring)
-    columns = _get_column_order_and_datatype(scoring, return_data, return_model)
+    columns = _get_column_order_and_datatype(
+        metric_types=scoring, return_data=return_data, return_model=return_model
+    )
     assert set(out.columns) == columns.keys(), "Columns are not identical"
 
     # Check number of rows against number of splits.
@@ -146,7 +148,9 @@ def test_evaluate_common_configs(
         scoring=scoring,
         **backend,
     )
-    _check_evaluate_output(out, cv, y, scoring, False, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
 
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
@@ -182,7 +186,14 @@ def test_scoring_list(return_data, return_model, scores):
         return_data=return_data,
         return_model=return_model,
     )
-    _check_evaluate_output(out, cv, y, scores, return_data, return_model)
+    _check_evaluate_output(
+        out=out,
+        cv=cv,
+        y=y,
+        scoring=scores,
+        return_data=return_data,
+        return_model=return_model,
+    )
 
 
 @pytest.mark.skipif(
@@ -200,7 +211,9 @@ def test_evaluate_initial_window():
     out = evaluate(
         forecaster=forecaster, y=y, cv=cv, strategy="update", scoring=scoring
     )
-    _check_evaluate_output(out, cv, y, scoring, False, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
     assert out.loc[0, "len_train_window"] == initial_window
 
     # check scoring
