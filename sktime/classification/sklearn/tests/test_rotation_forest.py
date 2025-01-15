@@ -9,6 +9,10 @@ from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RotationForest),
+    reason="run test if softdeps are present and incrementally (if requested)",
+)
 @parametrize_with_checks([RotationForest()])
 def test_sklearn_compatible_estimator(estimator, check):
     """Run sklearn estimator compatibility checks."""
