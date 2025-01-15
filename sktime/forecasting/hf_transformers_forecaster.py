@@ -252,6 +252,7 @@ class HFTransformersForecaster(BaseForecaster):
                 X=X[split:] if X is not None else None,
                 fh=config.prediction_length,
             )
+
         else:
             train_dataset = PyTorchDataset(
                 y,
@@ -260,7 +261,7 @@ class HFTransformersForecaster(BaseForecaster):
                 fh=config.prediction_length,
             )
 
-            eval_dataset = None
+            eval_dataset = None  # No validation dataset
 
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
