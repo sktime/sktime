@@ -268,7 +268,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
         return {
-            "context_len": self.context_len,
+            "context_len": self._context_len,
             "horizon_len": self._horizon_len,
             "input_patch_len": self.input_patch_len,
             "output_patch_len": self.output_patch_len,
