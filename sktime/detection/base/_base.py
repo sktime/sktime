@@ -572,18 +572,14 @@ class BaseDetector(BaseEstimator):
 
         * IntervalIndex containing segments -> DataFrame with "ilocs" column
         """
-        if len(y) == 0:
-            return BaseDetector._empty_sparse()
-        if isinstance(y, np.ndarray):
-            intervals = pd.IntervalIndex.from_tuples(
-                [(row[0], row[1]) for row in y], closed="left"
-            )
-            y = pd.DataFrame(intervals, columns=columns)
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            y = pd.DataFrame(y, columns=columns, dtype="int64")
         if isinstance(y.index, pd.IntervalIndex):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
-                y_index = pd.DataFrame(y.index, columns=columns)
+                y_index = y.index
+                y_index = pd.DataFrame(y_index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
@@ -847,7 +843,8 @@ class BaseDetector(BaseEstimator):
         if task in ["anomaly_detection", "change_point_detection"]:
             y_pred = self._predict_points(X)
         elif task == "segmentation":
-            y_pred = pd.DataFrame(self.predict_segments(X))
+            y_pred_seg = pd.DataFrame(self.predict_segments(X))
+            y_pred = self.segments_to_change_points(y_pred_seg)
 
         y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
         return y_pred
@@ -1068,23 +1065,23 @@ class BaseDetector(BaseEstimator):
 
     @staticmethod
     def _empty_sparse():
-        """Return an empty sparse dataframe in indicator format.
+        """Return an empty sparse series in indicator format.
 
         Returns
         -------
-        pd.DataFrame
-            An empty dataframe with a RangeIndex.
+        pd.Series
+            An empty series with a RangeIndex.
         """
         return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
-        """Return an empty sparse dataframe in segmentation format.
+        """Return an empty sparse series in segmentation format.
 
         Returns
         -------
-        pd.DataFrame
-            An empty dataframe with an IntervalIndex.
+        pd.Series
+            An empty series with an IntervalIndex.
         """
         empty_segs = pd.DataFrame(
             pd.IntervalIndex([]),
@@ -1154,6 +1151,42 @@ class BaseDetector(BaseEstimator):
         segments.loc[in_range] = range(0, number_of_segments)
 
         return segments
+
+    @staticmethod
+    def segments_to_change_points(y_sparse):
+        """Convert segments to change points.
+
+        Parameters
+        ----------
+        y_sparse : pd.DataFrame
+            A series of segments. The index must be the interval data type and the
+            values should be the integer labels of the segments.
+
+        Returns
+        -------
+        pd.Series
+            A series containing the indexes of the start of each segment.
+            Index is RangeIndex, and values are iloc references to the start of each
+            segment.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sktime.detection.base import BaseDetector
+        >>> segments = pd.Series(
+        ...     [3, -1, 2],
+        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
+        ... )
+        >>> BaseDetector.segments_to_change_points(segments)
+        0    2
+        1    5
+        2    7
+        dtype: int64
+        """
+        if len(y_sparse) == 0:
+            return BaseDetector._empty_sparse()
+        change_points = y_sparse.set_index("ilocs").index.left
+        return change_points
 
 
 class BaseSeriesAnnotator(BaseDetector):
