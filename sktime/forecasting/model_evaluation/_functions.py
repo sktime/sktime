@@ -7,6 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
+from copy import deepcopy
 from typing import Optional, Union
 
 import numpy as np
@@ -310,7 +311,7 @@ def _evaluate_window(x, meta):
         temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
     if return_model:
-        temp_result["fitted_forecaster"] = [forecaster]
+        temp_result["fitted_forecaster"] = [deepcopy(forecaster)]
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
     if old_naming:
