@@ -293,14 +293,25 @@ class HFTransformersForecaster(BaseForecaster):
         else:
             raise ValueError("Unknown fit strategy")
 
-        trainer = Trainer(
+        # Get the Trainer
+        if eval_dataset is not None:  # If a test dataset is provided
+            trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
             callbacks=self._callbacks,
-        )
+            )
+        else:  # If no test dataset (validation_split is None)
+            trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=train_dataset,
+            compute_metrics=self._compute_metrics,
+            callbacks=self._callbacks,
+            )
+
         trainer.train()
 
     def _predict(self, fh, X=None):
