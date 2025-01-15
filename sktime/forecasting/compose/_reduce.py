@@ -2322,12 +2322,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
-        warn(
-            "RecursiveReductionForecaster is experimental, and interfaces may change. "
-            "user feedback is appreciated in issue #3224 here: "
-            "https://github.com/alan-turing-institute/sktime/issues/3224"
-        )
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2374,8 +2368,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        imputer = Imputer(method=impute_method)
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+            lagger_y_to_X = lagger_y_to_X * imputer
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
@@ -2475,19 +2470,45 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_plus_preds = self._y
         y_pred_list = []
 
-        for _ in y_lags_no_gaps:
+        Xt = lagger_y_to_X.transform(y_plus_preds)
+
+        lag_plus = Lag(lags=1, index_out="extend")
+        if self.impute_method is not None:
+            imputer = Imputer(method=self.impute_method)
+            lag_plus = lag_plus * imputer
+
+        Xtt = lag_plus.fit_transform(Xt)
+
+        lagger = Lag(lags=self._lags, index_out="extend")
+        if hasattr(self.fh, "freq") and self.fh.freq is not None:
+            lagger.set_params(freq=self.fh.freq)
+
+        # print(y_abs_no_gaps)
+
+        for predict_idx in y_abs_no_gaps:
+
+            import time
+
+            a = time.time()
+
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
 
-            Xt = lagger_y_to_X.transform(y_plus_preds)
+            # da = time.time()
+            # print(da-a)
 
-            lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+            # Xt = lagger_y_to_X.transform(y_plus_preds)
 
-            Xtt = lag_plus.fit_transform(Xt)
-            y_plus_one = lag_plus.fit_transform(y_plus_preds)
-            predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
+            # d = time.time()
+            # print(d-a)
+
+            # lag_plus = Lag(lags=1, index_out="extend")
+            # if self.impute_method is not None:
+            #     imputer = Imputer(method=self.impute_method)
+            #     lag_plus = lag_plus * imputer
+
+            # Xtt = lag_plus.fit_transform(Xt)
+
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
@@ -2508,9 +2529,41 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # 2D numpy array with col index = (var) and 1 row
             y_pred_list.append(y_pred_i)
 
+            c = time.time()
+            print(c-a)
+
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
+            d = time.time()
+            print(d-a)
+
+            # ff = time.time()
+
+            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+                y_pred_new = y_pred_new.asfreq(self.fh.freq)
+
+            # Xt_new = lagger_y_to_X.transform(y_pred_new)
+
+            # most time is spent here:
+            Xt_new = lagger.fit_transform(y_pred_new)
+
+            # lagger.set_config(**{"input_conversion": "off", "output_conversion": "off"})
+            # print(Xt_new)
+            Xtt_new = lag_plus.fit_transform(Xt_new)
+
+
+
+            f = time.time()
+            print(f-a)
+
+            Xtt_new.columns = Xtt.columns
+
+            Xtt = Xtt.combine_first(Xtt_new)
+
+            g = time.time()
+            print(g-a)
 
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
@@ -2533,7 +2586,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xt = lagger_y_to_X.transform(y)
 
-        lag_plus = Lag(lags=1, index_out="extend")
+        cfg_fast = {"input_conversion": "off", "output_conversion": "off"}
+        lag_plus = Lag(lags=1, index_out="extend").set_config(**cfg_fast)
         if self.impute_method is not None:
             lag_plus = lag_plus * Imputer(method=self.impute_method)
 
