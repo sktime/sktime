@@ -2622,8 +2622,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
-        from sktime.transformations.series.impute import Imputer
+
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.transformations.series.impute import Imputer
 
         est = LinearRegression()
         forecaster_imputer = Imputer(
