@@ -35,8 +35,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    context_len : int
+    context_len : int, optional (default=None)
         The length of the input context sequence.
+        If set to None, the context length is automatically computed as the smallest
+        multiple of ``input_patch_len`` that is larger than the length
+        of the input time series `y`.
         It should be a multiple of ``input_patch_len`` (32).
         The maximum context length currently supported is 512, but this can be
         increased in future releases.
@@ -44,8 +47,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         and padding or truncation will
         be handled by the model's inference code if necessary.
 
-    horizon_len : int
-        The length of the forecast horizon. This can be set to any value, although it
+    horizon_len : int, optional (default=None)
+        The length of the forecast horizon.
+        If set to None, the forecast horizon is dynamically determined based on the
+        provided forecasting horizon `fh`, if available.
+        This can be set to any value, although it
         is generally recommended to keep it less than or equal to ``context_len`` for
         optimal performance. The model will still function
         if ``horizon_len`` exceeds ``context_len``.
@@ -243,9 +249,16 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         super().__init__()
 
     def _fit(self, y, X, fh):
-        if fh is not None:
+        if fh is None and self.horizon_len is None:
+            raise ValueError(
+                "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
+            )
+        elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
             self._horizon_len = max(self.horizon_len, *fh._values.values)
+        elif fh is not None:
+            fh = fh.to_relative(self.cutoff)
+            self._horizon_len = max(*fh._values.values)
         else:
             self._horizon_len = self.horizon_len
 
@@ -253,8 +266,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             self._context_len = self.context_len
         else:
             # Compute context_len as the smallest multiple of input_patch_len
-            # that is larger than the length of y. This ensures that the context
-            # is padded appropriately for model input requirements.
+            # that is larger than the length of y.
             context_multiple = (len(y) // self.input_patch_len) + 1
             self._context_len = context_multiple * self.input_patch_len
 
@@ -296,10 +308,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self.horizon_len:
+        if max(fh._values.values) > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
-                f" specified horizon_len of {self.horizon_len}. Change the horizon_len"
+                f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
