@@ -2376,7 +2376,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
         if isinstance(self.impute_method, Imputer):
-            lagger_y_to_X =lagger_y_to_X * impute_method
+            lagger_y_to_X = lagger_y_to_X * impute_method
         else:
             if self.impute_method is not None:
                 lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
@@ -2488,7 +2488,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             lag_plus = Lag(lags=1, index_out="extend")
 
             if isinstance(self.impute_method, Imputer):
-                lag_plus =lag_plus * self.impute_method
+                lag_plus = lag_plus * self.impute_method
             else:
                 if self.impute_method is not None:
                     lag_plus = lag_plus * Imputer(method=self.impute_method)
@@ -2544,7 +2544,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lag_plus = Lag(lags=1, index_out="extend")
 
         if isinstance(self.impute_method, Imputer):
-            lag_plus =lag_plus * self.impute_method
+            lag_plus = lag_plus * self.impute_method
         else:
             if self.impute_method is not None:
                 lag_plus = lag_plus * Imputer(method=self.impute_method)
@@ -2597,7 +2597,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
 
         est = LinearRegression()
-        forecaster_imputer = Imputer(method="forecaster", forecaster=DirectReductionForecaster(estimator=est))
+        forecaster_imputer = Imputer(
+            method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
+        )
 
         params1 = {
             "estimator": est,
@@ -2613,13 +2615,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
-            "impute_method": forecaster_imputer  # tests imputation with forecaster method
+            "impute_method": forecaster_imputer,  # tests imputation with forecaster method
         }
         params4 = {
             "estimator": est,
             "window_length": 4,
             "pooling": "global",
-            "impute_method": forecaster_imputer
+            "impute_method": forecaster_imputer,
         }
 
         return [params1, params2, params3, params4]
