@@ -6,17 +6,9 @@ from sktime.performance_metrics.detection._base import BaseDetectionMetric
 class RandIndex(BaseDetectionMetric):
     """Rand Index metric for comparing event detection results.
 
-    Optionally computes the Rand Index in loc-based units (index labels of X)
-    if X is provided and use_loc=True. Otherwise uses iloc-based intervals.
-
-    Parameters
-    ----------
-        use_loc : bool, optional (default=True)
-            If True, and X is provided, interpret 'start'/'end' in the DataFrame
-            as *labels in X.index* rather than 0-based positions.
-            They will be converted to integer positions internally before
-            computing the Rand Index. If False, or if X=None, the code
-            uses 'start'/'end' (or 'ilocs') as raw integers/positions as before.
+    By default, if X is provided, this metric computes distances/lengths in loc-based
+    units by looking up the corresponding labels in X.index. Otherwise, or if X is None,
+    it uses the original iloc-based calculations.
     """
 
     _tags = {
@@ -28,6 +20,14 @@ class RandIndex(BaseDetectionMetric):
     }
 
     def __init__(self, use_loc=True):
+        """
+        Parameters
+        ----------
+        use_loc : bool, optional (default=True)
+            If True (and X is provided), segment lengths/overlaps are computed as the
+            difference of X.index[end_iloc] - X.index[start_iloc]. If False, or X=None,
+            uses iloc-based distances (end_iloc - start_iloc) as before.
+        """  # noqa: D205
         self.use_loc = use_loc
         super().__init__()
 
@@ -43,117 +43,137 @@ class RandIndex(BaseDetectionMetric):
             Predicted segments with 'start', 'end', or an 'ilocs' column (interval or int),
             plus an optional 'label' column.
         X : pd.DataFrame, optional (default=None)
-            If provided and use_loc=True, 'start'/'end' are interpreted as labels in X.index.
+            If provided (and use_loc=True), loc-based distances are used.
 
         Returns
         -------
         float
             Rand Index score between 0.0 and 1.0.
         """  # noqa: E501
-        # 1) Extract segments as a list of {"start", "end", "label"}
+        # 1) Validate and extract segments (still iloc-based).
         y_true_segments = self._extract_segments(y_true, "y_true")
         y_pred_segments = self._extract_segments(y_pred, "y_pred")
 
-        # 2) If user wants loc-based and X is given, convert from label -> integer positions  # noqa: E501
-        if self.use_loc and X is not None:
-            # Build a dictionary to map label -> integer position
-            # e.g., if X.index = [10, 11, 15, 42, 50], then index_map[10] = 0, index_map[11] = 1, etc.  # noqa: E501
-            index_map = {label: i for i, label in enumerate(X.index)}
-            # Convert each segment's start/end to integer positions
-            y_true_segments = self._loc_to_iloc_segments(y_true_segments, index_map)
-            y_pred_segments = self._loc_to_iloc_segments(y_pred_segments, index_map)
-
-        # 3) Assign unique cluster IDs to each segment
+        # 2) Assign unique cluster IDs to each segment.
         y_true_segments = self._assign_unique_ids(y_true_segments, prefix="true")
         y_pred_segments = self._assign_unique_ids(y_pred_segments, prefix="pred")
 
-        # 4) Determine total length N
-        if X is not None:
-            # Use the length of X (or its index) for alignment
-            total_length = len(X)
+        # 3) Determine the "total length" in whichever units (iloc vs loc).
+        if X is not None and self.use_loc:
+            # loc-based total length => from X.index[0] to X.index[-1]
+            if len(X) > 1:
+                # difference in loc labels
+                total_length = float(X.index[-1] - X.index[0])
+            else:
+                total_length = len(X)  # degenerate case, 0 or 1 row
         else:
-            # Use maximum 'end' value from y_true and y_pred
+            # fallback to iloc-based => use max 'end' across y_true/y_pred
             max_end_true = max((seg["end"] for seg in y_true_segments), default=0)
             max_end_pred = max((seg["end"] for seg in y_pred_segments), default=0)
             total_length = max(max_end_true, max_end_pred)
 
-        # 5) Edge case: if <2 points in total, Rand Index is trivially 1
+        # 4) If there's <2 points in total, the Rand Index is trivially 1.
         if total_length < 2:
             return 1.0
 
-        # 6) same-cluster pairs in ground truth and predicted
+        # 5) same-cluster pairs in y_true, y_pred
         same_cluster_true = sum(
-            self._pairs_count(seg["end"] - seg["start"]) for seg in y_true_segments
+            self._pairs_count(self._compute_length(seg["start"], seg["end"], X))
+            for seg in y_true_segments
         )
         same_cluster_pred = sum(
-            self._pairs_count(seg["end"] - seg["start"]) for seg in y_pred_segments
+            self._pairs_count(self._compute_length(seg["start"], seg["end"], X))
+            for seg in y_pred_segments
         )
 
-        # 7) same-cluster pairs in both
+        # 6) same-cluster pairs that both segmentations agree on
         same_cluster_both = self._compute_same_cluster_both(
-            y_true_segments, y_pred_segments
-        )  # noqa: E501
+            y_true_segments, y_pred_segments, X
+        )
 
-        # 8) total pairs in [0..N)
+        # 7) total pairs
         total_pairs = self._pairs_count(total_length)
 
-        # Rand Index = (a + d) / total_pairs
-        # where a = same_cluster_both
-        #       d = total_pairs - same_cluster_true - same_cluster_pred + a
+        # 8) Rand Index
+        #    a = same_cluster_both
+        #    d = total_pairs - same_cluster_true - same_cluster_pred + a
+        #    => RI = (a + d) / total_pairs
         agreements = same_cluster_both + (
             total_pairs - same_cluster_true - same_cluster_pred + same_cluster_both
         )
         rand_index = agreements / total_pairs
         return rand_index
 
-    def _loc_to_iloc_segments(self, segments, index_map):
-        """Convert 'start'/'end' labels to integer positions using index_map.
+    def _compute_length(self, start_iloc, end_iloc, X):
+        """Compute the length of a segment, in loc-based or iloc-based units."""
+        if end_iloc <= start_iloc:
+            return 0
 
-        Parameters
-        ----------
-        segments : list of dict
-            Each dict has 'start', 'end', 'label'.
-            'start'/'end' are assumed to be labels in X.index that exist in index_map.
-        index_map : dict
-            Maps label -> integer position in X.
+        length_iloc = end_iloc - start_iloc
 
-        Returns
-        -------
-        list of dict
-            The same segments, but with 'start'/'end' replaced by integer positions.
-        """
-        new_segments = []
-        for seg in segments:
-            # If the user actually stored integers but we do have index_map, we should check  # noqa: E501
-            # whether seg["start"] in index_map. If it’s not, just keep as is or raise error.  # noqa: E501, RUF003
-            start_val = seg["start"]
-            end_val = seg["end"]
-            try:
-                start_iloc = index_map[start_val]
-                end_iloc = index_map[end_val]
-            except KeyError:
-                # if the user passed loc-based start/end that doesn't exist in index_map
-                raise ValueError(
-                    f"Segment {seg} references label(s) not found in X.index: "
-                    f"{start_val} or {end_val}"
-                )
-            # We assume inclusive-exclusive or exclusive-exclusive?
-            # The original code was exclusive at 'end', so be consistent
-            new_segments.append(
-                {"start": start_iloc, "end": end_iloc, "label": seg["label"]}
-            )
-        return new_segments
+        if X is not None and self.use_loc:
+            # Safeguard: clamp if out-of-range
+            start_iloc = max(0, min(start_iloc, len(X) - 1))
+            end_iloc = max(0, min(end_iloc, len(X) - 1))
+            # difference of actual labels in X.index
+            return float(X.index[end_iloc] - X.index[start_iloc])
+        else:
+            return float(length_iloc)
 
+    def _compute_same_cluster_both(self, y_true_segments, y_pred_segments, X=None):
+        """Compute # of same-cluster pairs (a) in the overlap of segments with the same label."""  # noqa: E501
+        a = 0
+        y_true_sorted = sorted(y_true_segments, key=lambda x: x["start"])
+        y_pred_sorted = sorted(y_pred_segments, key=lambda x: x["start"])
+
+        i, j = 0, 0
+        while i < len(y_true_sorted) and j < len(y_pred_sorted):
+            t_seg = y_true_sorted[i]
+            p_seg = y_pred_sorted[j]
+
+            # Overlap in iloc
+            overlap_start = max(t_seg["start"], p_seg["start"])
+            overlap_end = min(t_seg["end"], p_seg["end"])
+
+            # If there's overlap, measure it in loc or iloc
+            if overlap_start < overlap_end:
+                overlap_length = self._compute_length(overlap_start, overlap_end, X)
+                if t_seg["label"] == p_seg["label"]:
+                    a += self._pairs_count(overlap_length)
+
+            # Advance whichever segment finishes first
+            if t_seg["end"] <= p_seg["end"]:
+                i += 1
+            else:
+                j += 1
+
+        return a
+
+    def _pairs_count(self, length):
+        """Number of unique pairs among 'length' items.
+
+        Interprets 'length' as a (possibly) continuous measure:
+        - If integer >= 2: standard formula (n*(n-1))//2
+        - If float >= 2: we apply the same formula but on floor/round.
+          (In a more advanced version, you might want a continuous analog!)
+        """  # noqa: D401
+        if length < 2:
+            return 0
+        n = int(round(length))
+        return (n * (n - 1)) // 2 if n >= 2 else 0
+
+    # ------------------------------------------------------------------
+    # Below here, we have the existing code for extracting segments etc.
     def _extract_segments(self, y, var_name):
         """Extract segments from the DataFrame.
 
-        1) Columns "start" and "end" => direct use
-        2) A single integer column "ilocs" => interpret each row as [i, i+1)
-        3) A single interval column "ilocs" => extract left/right from each Interval
+        1) 'start'/'end' => direct use
+        2) A single int column 'ilocs' => interpret each row as [i, i+1)
+        3) A single interval column 'ilocs' => read left/right from each Interval
         """
         segments = []
 
-        # Case 1: user-provided 'start' and 'end'
+        # Case 1
         if {"start", "end"}.issubset(y.columns):
             for i, row in y.iterrows():
                 seg_start = row["start"]
@@ -161,33 +181,31 @@ class RandIndex(BaseDetectionMetric):
                 seg_label = row["label"] if "label" in y.columns else i
                 segments.append(
                     {"start": seg_start, "end": seg_end, "label": seg_label}
-                )  # noqa: E501
+                )
             return segments
 
-        # Case 2 or 3: user-provided 'ilocs'
+        # Case 2/3: user-provided 'ilocs'
         if "ilocs" in y.columns:
             col_dtype = y["ilocs"].dtype
             if pd.api.types.is_interval_dtype(col_dtype):
-                # Each row is a pandas.Interval => [left, right)
+                # e.g., Interval(3, 5)
                 for i, row in y.iterrows():
                     interval = row["ilocs"]
                     seg_start, seg_end = interval.left, interval.right
                     seg_label = row["label"] if "label" in y.columns else i
                     segments.append(
                         {"start": seg_start, "end": seg_end, "label": seg_label}
-                    )  # noqa: E501
+                    )
             else:
-                # Assume each 'ilocs' is an integer => [i, i+1)
+                # integer => [iloc_val, iloc_val+1)
                 for i, row in y.iterrows():
                     iloc_val = row["ilocs"]
-                    seg_start, seg_end = iloc_val, iloc_val + 1
                     seg_label = row["label"] if "label" in y.columns else i
                     segments.append(
-                        {"start": seg_start, "end": seg_end, "label": seg_label}
-                    )  # noqa: E501
+                        {"start": iloc_val, "end": iloc_val + 1, "label": seg_label}
+                    )
             return segments
 
-        # If neither approach applies, raise an error
         raise ValueError(
             f"Expected columns ['start','end'] or 'ilocs' in {var_name}, "
             f"but found columns {list(y.columns)}."
@@ -198,36 +216,6 @@ class RandIndex(BaseDetectionMetric):
         for idx, seg in enumerate(segments):
             seg["cluster_id"] = f"{prefix}_{seg['label']}_{idx}"
         return segments
-
-    def _compute_same_cluster_both(self, y_true_segments, y_pred_segments):
-        """Compute # of pairs a where both segmentations agree on same label (overlaps)."""  # noqa: E501
-        a = 0
-        y_true_sorted = sorted(y_true_segments, key=lambda x: x["start"])
-        y_pred_sorted = sorted(y_pred_segments, key=lambda x: x["start"])
-
-        i, j = 0, 0
-        while i < len(y_true_sorted) and j < len(y_pred_sorted):
-            t_seg = y_true_sorted[i]
-            p_seg = y_pred_sorted[j]
-
-            overlap_start = max(t_seg["start"], p_seg["start"])
-            overlap_end = min(t_seg["end"], p_seg["end"])
-
-            if overlap_start < overlap_end:
-                overlap_length = overlap_end - overlap_start
-                if t_seg["label"] == p_seg["label"]:
-                    a += self._pairs_count(overlap_length)
-
-            if t_seg["end"] <= p_seg["end"]:
-                i += 1
-            else:
-                j += 1
-
-        return a
-
-    def _pairs_count(self, n):
-        """Number of unique pairs among n items."""  # noqa: D401
-        return (n * (n - 1)) // 2 if n >= 2 else 0
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
