@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
@@ -18,6 +18,8 @@ class MAPAForecaster(BaseForecaster):
     forecasting methods and also supports various aggregation and combination
     strategies.
 
+    based on R package: https://github.com/trnnick/mapa
+
     Parameters
     ----------
     aggregation_levels : list of int, default=None
@@ -26,7 +28,8 @@ class MAPAForecaster(BaseForecaster):
 
     base_forecaster : sktime-compatible forecaster, default=None
         The forecasting model to be used for each aggregation level.
-        If None, the default is NaiveForecaster(strategy="mean").
+        If None, the default is NaiveForecaster(strategy="mean") if statsmodel is not
+        present else ExponentialSmoothing(trend="add", seasonal="add", sp=sp).
 
     agg_method : str, default="mean"
         Method used to aggregate the forecasts from different levels.
@@ -60,6 +63,7 @@ class MAPAForecaster(BaseForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "authors": ["trnnick", "phoeenniixx"],
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -73,19 +77,16 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
-        super().__init__()
-        self.aggregation_levels = (
-            aggregation_levels if aggregation_levels else [1, 2, 4]
-        )
         if not all(
             isinstance(level, int) and level > 0 for level in aggregation_levels
         ):
             raise ValueError("All aggregation levels must be positive integers")
-        self.base_forecaster = (
-            base_forecaster
-            if base_forecaster is not None
-            else NaiveForecaster(strategy="mean")
+        self.aggregation_levels = aggregation_levels
+        self._aggregation_levels = (
+            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
         )
+
+        self.base_forecaster = self._initialize_base_forecaster(base_forecaster)
         self.agg_method = agg_method
         self.decompose_type = decompose_type
         self.forecast_combine = forecast_combine
@@ -99,6 +100,37 @@ class MAPAForecaster(BaseForecaster):
         self._y_name = None
         self._fh = None
         self._transformation_offset = None
+
+        super().__init__()
+
+    def _initialize_base_forecaster(self, base_forecaster):
+        """Initialize the base forecaster with appropriate fallbacks."""
+        if base_forecaster is not None:
+            return base_forecaster
+
+        try:
+            if _check_soft_dependencies("statsmodels", severity="none"):
+                from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+                return ExponentialSmoothing(
+                    trend="add",
+                    seasonal="add",
+                    sp=self.sp,
+                    initialization_method="estimated",
+                )
+        except Exception as e:
+            warn(
+                f"Failed to initialize ExponentialSmoothing: {str(e)}. "
+                "Falling back to NaiveForecaster."
+            )
+
+        from sktime.forecasting.naive import NaiveForecaster
+
+        warn(
+            "Using NaiveForecaster as base_forecaster. Install statsmodels for "
+            "ExponentialSmoothing capability."
+        )
+        return NaiveForecaster(strategy="mean")
 
     def _handle_missing_data(self, y):
         if self.imputation_method == "ffill":
@@ -194,18 +226,22 @@ class MAPAForecaster(BaseForecaster):
     def _decompose(self, y, level):
         """Decompose the time series into trend, seasonal, and residual components.
 
+        It uses STLTransformer.
+
         Parameters
         ----------
-        y : pandas.Series
+        y : pandas.DataFrame
             The input time series to be decomposed.
+        level : int
+            The aggregation level being processed.
 
         Returns
         -------
         tuple
-            A tuple containing three pandas.Series:
-            - trend: The trend component of the series.
-            - seasonal: The seasonal component of the series.
-            - residual: The residual component of the series.
+            (decomposed_data, seasonal_enabled, seasonal_period)
+            - decomposed_data: DataFrame containing trend, seasonal, residual components
+            - seasonal_enabled: bool indicating if seasonal decomposition was performed
+            - seasonal_period: int representing the seasonal period used
         """
         if not isinstance(y, pd.DataFrame):
             y = pd.DataFrame(y)
@@ -221,29 +257,6 @@ class MAPAForecaster(BaseForecaster):
         if level >= self.sp:
             seasonal_enabled = False
             seasonal_period = 1
-        if seasonal_enabled:
-            trend = y.rolling(window=seasonal_period, center=True).mean()
-
-            if self.decompose_type == "multiplicative":
-                detrended = y / trend
-                seasonal = detrended.groupby(y.index % seasonal_period).mean()
-                residual = y / (trend * seasonal)
-            else:
-                detrended = y - trend
-                seasonal = detrended.groupby(y.index % seasonal_period).mean()
-                residual = y - (trend + seasonal)
-        else:
-            trend = y
-        seasonal = pd.DataFrame(
-            1 if self.decompose_type == "multiplicative" else 0,
-            index=y.index,
-            columns=y.columns,
-        )
-        residual = pd.DataFrame(
-            1 if self.decompose_type == "multiplicative" else 0,
-            index=y.index,
-            columns=y.columns,
-        )
 
         self._decomposition_info[level] = {
             "seasonal_enabled": seasonal_enabled,
@@ -251,7 +264,72 @@ class MAPAForecaster(BaseForecaster):
             "n_observations": len(y),
         }
 
-        return trend, seasonal, residual
+        decomposed = pd.DataFrame(index=y.index)
+
+        for col in y.columns:
+            series = y[col].copy()
+
+            if not seasonal_enabled:
+                trend = series.rolling(
+                    window=min(len(series), seasonal_period * 2 + 1),
+                    center=True,
+                    min_periods=1,
+                ).mean()
+
+                trend = trend.ffill().bfill()
+
+                if self.decompose_type == "multiplicative":
+                    seasonal = pd.Series(1, index=series.index)
+                    residual = series / trend
+                else:  # additive
+                    seasonal = pd.Series(0, index=series.index)
+                    residual = series - trend
+
+            else:
+                if _check_soft_dependencies("statsmodels", severity="none"):
+                    from sktime.transformations.series.detrend import STLTransformer
+                stl = STLTransformer(
+                    sp=seasonal_period,
+                    seasonal=7,
+                    trend=None,
+                    low_pass=None,
+                    seasonal_deg=1,
+                    trend_deg=1,
+                    low_pass_deg=1,
+                    robust=False,
+                    seasonal_jump=1,
+                    trend_jump=1,
+                    low_pass_jump=1,
+                )
+
+                stl.fit(series)
+
+                trend = stl.trend_
+                seasonal = stl.seasonal_
+                residual = stl.resid_
+
+                trend = trend.ffill().bfill()
+                seasonal = seasonal.ffill().bfill()
+                residual = residual.ffill().bfill()
+
+                seasonal_pattern = pd.Series(
+                    seasonal.values[:seasonal_period], index=range(seasonal_period)
+                )
+                if self.decompose_type == "multiplicative":
+                    seasonal = np.exp(seasonal)
+                    trend = np.exp(trend)
+                    residual = series / (trend * seasonal)
+                    seasonal_pattern = np.exp(seasonal_pattern)
+
+                self._decomposition_info[level][f"{col}_seasonal_pattern"] = (
+                    seasonal_pattern
+                )
+
+            decomposed[f"{col}_trend"] = trend
+            decomposed[f"{col}_seasonal"] = seasonal
+            decomposed[f"{col}_residual"] = residual
+
+        return decomposed, seasonal_enabled, seasonal_period
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster following MAPA methodology."""
@@ -273,12 +351,14 @@ class MAPAForecaster(BaseForecaster):
             y = pd.DataFrame(y)
 
         valid_levels = []
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 y_agg = self._aggregate(y, level)
                 y_agg.columns = self._y_cols
 
-                _, seasonal_enabled, seasonal_period = self._decompose(y_agg, level)
+                decomposed, seasonal_enabled, seasonal_period = self._decompose(
+                    y_agg, level
+                )
 
                 forecaster = type(self.base_forecaster)(
                     **self.base_forecaster.get_params()
@@ -293,7 +373,13 @@ class MAPAForecaster(BaseForecaster):
                     if "seasonal" in forecaster_params:
                         forecaster.set_params(seasonal="add", sp=seasonal_period)
 
-                forecaster.fit(y_agg)
+                trend_cols = [
+                    col for col in decomposed.columns if col.endswith("_trend")
+                ]
+                trend_data = decomposed[trend_cols].copy()
+                trend_data.columns = self._y_cols
+
+                forecaster.fit(trend_data)
                 self.forecasters[level] = forecaster
                 valid_levels.append(level)
 
@@ -304,7 +390,7 @@ class MAPAForecaster(BaseForecaster):
         if not valid_levels:
             raise ValueError("Failed to fit any aggregation levels")
 
-        self.aggregation_levels = valid_levels
+        self._aggregation_levels = valid_levels
         return self
 
     def _predict(self, fh, X=None):
@@ -312,7 +398,7 @@ class MAPAForecaster(BaseForecaster):
         fh = check_fh(fh)
         forecasts = []
 
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 info = self._decomposition_info.get(level, {})
                 seasonal_enabled = info.get("seasonal_enabled", False)
@@ -360,7 +446,7 @@ class MAPAForecaster(BaseForecaster):
         if not forecasts:
             raise ValueError(
                 "Failed to generate any forecasts. Check the following:\n"
-                f"1. Valid levels: {self.aggregation_levels}\n"
+                f"1. Valid levels: {self._aggregation_levels}\n"
                 f"2. Decomposition info: {self._decomposition_info}\n"
                 f"3. Available forecasters: {list(self.forecasters.keys())}"
             )
@@ -478,7 +564,7 @@ class MAPAForecaster(BaseForecaster):
         y = self._ensure_positive_values(y)
         y = self._handle_missing_data(y)
 
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 y_agg = self._aggregate(y, level)
                 y_agg.columns = self._y_cols
@@ -498,7 +584,8 @@ class MAPAForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
 
         params = [
             {
@@ -509,13 +596,6 @@ class MAPAForecaster(BaseForecaster):
                 "forecast_combine": "mean",
             },
             {
-                "aggregation_levels": [1, 4, 6],
-                "base_forecaster": TrendForecaster(regressor=None),
-                "imputation_method": "interpolate",
-                "decompose_type": "additive",
-                "forecast_combine": "median",
-            },
-            {
                 "aggregation_levels": [1, 3, 6],
                 "base_forecaster": PolynomialTrendForecaster(degree=2),
                 "imputation_method": "ffill",
@@ -524,5 +604,19 @@ class MAPAForecaster(BaseForecaster):
                 "weights": [0.5, 0.3, 0.2],
             },
         ]
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+            params.append(
+                {
+                    "aggregation_levels": [1, 4, 6],
+                    "base_forecaster": ExponentialSmoothing(
+                        trend="add", seasonal="mul", sp=6
+                    ),
+                    "imputation_method": "interpolate",
+                    "decompose_type": "additive",
+                    "forecast_combine": "median",
+                }
+            )
 
         return params

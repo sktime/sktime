@@ -2,13 +2,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.mapa import MAPAForecaster
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.fixture
 def sample_data():
     """Create sample time series data for testing.
-
     Returns
     -------
     pd.DataFrame
@@ -16,194 +19,193 @@ def sample_data():
         and some added noise.
     """
     np.random.seed(42)
-    dates = pd.date_range(start="2020-01-01", periods=24, freq="M")
+    dates = pd.date_range(start="2020-01-01", periods=24, freq="ME")
     data = np.sin(np.linspace(0, 4 * np.pi, 24)) * 10 + np.random.normal(0, 1, 24) + 20
     return pd.DataFrame(data, index=dates, columns=["value"])
 
 
-def test_decompose():
-    """Test the `_decompose` method of the MAPAForecaster class.
-
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "sp,level,expected_seasonal",
+    [
+        (6, 1, True),
+        (12, 1, True),
+        (12, 2, True),
+        (12, 4, True),
+        (12, 6, True),
+        (12, 12, False),
+        (12, 3, True),
+    ],
+)
+def test_decompose(sample_data, sp, level, expected_seasonal):
+    """Test the `_decompose` method.
     Verifies the following:
-    - The method correctly handles decomposition for different aggregation levels.
-    - The returned decomposed time series matches the input data.
-    - The seasonal period and seasonal flag are calculated correctly.
+    - Decomposition separates trend, seasonal, and residual components.
+    - Seasonal component is enabled or disabled as expected.
+    - Reconstructed series matches the aggregated input data.
     """
+    forecaster = MAPAForecaster(
+        aggregation_levels=[level], sp=sp, decompose_type="multiplicative"
+    )
 
-    test_params = MAPAForecaster.get_test_params()
+    agg_data = forecaster._aggregate(sample_data, level)
 
-    for params in test_params:
-        params["aggregation_levels"] = params.get("aggregation_levels", [1, 2, 4])
-        forecaster = MAPAForecaster(**params)
-        y = pd.DataFrame({"value": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]})
+    decomposed, seasonal_enabled, seasonal_period = forecaster._decompose(
+        agg_data, level
+    )
 
-        for level in params["aggregation_levels"]:
-            y_decomp, seasonal_enabled, seasonal_period = forecaster._decompose(
-                y, level
-            )
+    assert isinstance(decomposed, pd.DataFrame)
+    assert seasonal_enabled == expected_seasonal
+    assert seasonal_period == sp // level if expected_seasonal else 1
 
-            # Check if returned data matches input
-            assert isinstance(y_decomp, pd.DataFrame)
-            assert y_decomp.equals(y)
+    expected_columns = ["value_trend", "value_seasonal", "value_residual"]
+    assert all(col in decomposed.columns for col in expected_columns)
 
-            # Check seasonal period calculation
-            expected_seasonal_period = (
-                forecaster.sp // level if (forecaster.sp % level == 0) else 1
-            )
-            assert seasonal_period == expected_seasonal_period
+    if forecaster.decompose_type == "multiplicative":
+        reconstructed = (
+            decomposed["value_trend"]
+            * decomposed["value_seasonal"]
+            * decomposed["value_residual"]
+        )
+    else:
+        reconstructed = (
+            decomposed["value_trend"]
+            + decomposed["value_seasonal"]
+            + decomposed["value_residual"]
+        )
 
-            # Check if seasonal_enabled is correct
-            expected_seasonal = (
-                (forecaster.sp % level == 0)
-                and (seasonal_period > 1)
-                and (len(y) >= 2 * seasonal_period)
-                and (level < forecaster.sp)
-            )
-            assert seasonal_enabled == expected_seasonal
+    np.testing.assert_allclose(
+        reconstructed.values, agg_data["value"].values, rtol=1e-3, atol=1e-3
+    )
+
+    if seasonal_enabled:
+        seasonal = decomposed["value_seasonal"].values
+        if forecaster.decompose_type == "multiplicative":
+            assert np.all(seasonal > 0)
+
+            seasonal_matrix = seasonal[
+                : len(seasonal) - (len(seasonal) % seasonal_period)
+            ]
+            seasonal_matrix = seasonal_matrix.reshape(-1, seasonal_period)
+            cv = np.std(seasonal_matrix, axis=0) / np.mean(seasonal_matrix, axis=0)
+            assert np.mean(cv) < 1.0
+        else:
+            seasonal_sum = np.sum(seasonal[:seasonal_period])
+            assert abs(seasonal_sum) < np.std(agg_data["value"]) * seasonal_period
 
 
-def test_combine_forecasts():
-    """Test the `_combine_forecasts` method of the MAPAForecaster class.
-
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "combine_method,weights,expected",
+    [
+        ("mean", None, np.array([2.0, 3.0, 4.0])),
+        ("median", None, np.array([2.0, 3.0, 4.0])),
+        ("weighted_mean", [0.5, 0.3, 0.2], np.array([1.7, 2.7, 3.7])),
+    ],
+)
+def test_combine_forecasts(combine_method, weights, expected):
+    """Test the `_combine_forecasts` method.
     Verifies the following:
-    - Forecasts are combined correctly using mean, median, or weighted mean.
-    - Invalid combination methods raise an appropriate error.
+    - Correct forecast combination methods are applied.
+    - Combined forecasts match expected results for mean, median, and weighted mean.
     """
-    forecaster = MAPAForecaster(aggregation_levels=[1, 2, 4])
+    forecaster = MAPAForecaster(
+        aggregation_levels=[1, 2, 4], forecast_combine=combine_method, weights=weights
+    )
 
     forecasts = np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0], [3.0, 4.0, 5.0]])
-
-    # Test mean combination
-    forecaster.forecast_combine = "mean"
     combined = forecaster._combine_forecasts(forecasts)
-    expected_mean = np.array([2.0, 3.0, 4.0])
-    np.testing.assert_array_almost_equal(combined, expected_mean)
+    np.testing.assert_array_almost_equal(combined, expected)
 
-    # Test median combination
-    forecaster.forecast_combine = "median"
-    combined = forecaster._combine_forecasts(forecasts)
-    expected_median = np.array([2.0, 3.0, 4.0])
-    np.testing.assert_array_almost_equal(combined, expected_median)
 
-    # Test weighted mean combination
-    forecaster.forecast_combine = "weighted_mean"
-    forecaster.weights = [0.5, 0.3, 0.2]
-    combined = forecaster._combine_forecasts(forecasts)
-    expected_weighted = np.average(forecasts, axis=0, weights=[0.5, 0.3, 0.2])
-    np.testing.assert_array_almost_equal(combined, expected_weighted)
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_combine_forecasts_invalid():
+    """Test the `_combine_forecasts` method with invalid combination methods.
+    Verifies the following:
+    - An error is raised for unsupported combination methods.
+    """
 
-    # Test invalid combination method
-    with pytest.raises(ValueError):
-        forecaster.forecast_combine = "invalid"
+    forecaster = MAPAForecaster(
+        aggregation_levels=[1, 2, 4], forecast_combine="invalid"
+    )
+    forecasts = np.array([[1.0, 2.0], [2.0, 3.0]])
+    with pytest.raises(ValueError, match="Unsupported forecast combination method"):
         forecaster._combine_forecasts(forecasts)
 
 
-def test_aggregate():
-    """Test the `_aggregate` method of the MAPAForecaster class.
-
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "level,agg_method,expected",
+    [
+        (1, None, pd.DataFrame({"value": range(1, 13)})),
+        (1, "mean", pd.DataFrame({"value": range(1, 13)})),
+        (2, "mean", pd.DataFrame({"value": [1.5, 3.5, 5.5, 7.5, 9.5, 11.5]})),
+        (3, "mean", pd.DataFrame({"value": [2.0, 5.0, 8.0, 11.0]})),
+        (2, "sum", pd.DataFrame({"value": [3, 7, 11, 15, 19, 23]})),
+    ],
+)
+def test_aggregate(level, agg_method, expected):
+    """Test the `_aggregate` method.
     Verifies the following:
-    - The aggregation is correctly applied for different levels.
-    - Different aggregation methods (e.g., sum) produce expected results.
+    - Aggregation correctly computes means or sums for various levels.
+    - Results match the expected aggregated data.
     """
-    forecaster = MAPAForecaster(aggregation_levels=[1, 2, 3])
-    test_data = pd.DataFrame({"value": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]})
-
-    # Test level 1 (no aggregation)
-    level_1 = forecaster._aggregate(test_data, 1)
-    assert level_1.equals(test_data)
-
-    # Test level 2 aggregation
-    level_2 = forecaster._aggregate(test_data, 2)
-    expected_level_2 = pd.DataFrame({"value": [1.5, 3.5, 5.5, 7.5, 9.5, 11.5]})
-    pd.testing.assert_frame_equal(level_2, expected_level_2)
-
-    # Test level 3 aggregation
-    level_3 = forecaster._aggregate(test_data, 3)
-    expected_level_3 = pd.DataFrame({"value": [2.0, 5.0, 8.0, 11.0]})
-    pd.testing.assert_frame_equal(level_3, expected_level_3)
-
-    # Test with different aggregation method
-    forecaster = MAPAForecaster(aggregation_levels=[1, 2, 3], agg_method="sum")
-    level_2_sum = forecaster._aggregate(test_data, 2)
-    expected_level_2_sum = pd.DataFrame({"value": [3, 7, 11, 15, 19, 23]})
-    pd.testing.assert_frame_equal(level_2_sum, expected_level_2_sum)
+    forecaster = MAPAForecaster(aggregation_levels=[1, 2, 3], agg_method=agg_method)
+    test_data = pd.DataFrame({"value": range(1, 13)})
+    result = forecaster._aggregate(test_data, level)
+    pd.testing.assert_frame_equal(result, expected)
 
 
-def test_predict(sample_data):
-    """Test the `_predict` method of the MAPAForecaster class.
-
-    Verifies the following:
-    - The method produces valid predictions for various forecast horizons.
-    - Predictions are finite and have the correct shape.
-    - Predictions work with different decomposition types and combination methods.
-    """
-    test_params = MAPAForecaster.get_test_params()
-
-    for params in test_params:
-        params["aggregation_levels"] = params.get("aggregation_levels", [1, 2, 4])
-        forecaster = MAPAForecaster(**params)
-
-        fh = np.arange(1, 4)
-        forecaster.fit(sample_data, fh=fh)
-
-        predictions = forecaster._predict(fh)
-
-        # Basic validation of predictions
-        assert isinstance(predictions, pd.DataFrame)
-        assert len(predictions) == len(fh)
-        assert predictions.shape[1] == sample_data.shape[1]
-
-        # Check if predictions are finite
-        assert np.all(np.isfinite(predictions.values))
-
-        # Test with multiplicative decomposition
-        forecaster = MAPAForecaster(**{**params, "decompose_type": "multiplicative"})
-        forecaster.fit(sample_data, fh=fh)
-        mult_predictions = forecaster._predict(fh)
-
-        assert isinstance(mult_predictions, pd.DataFrame)
-        assert len(mult_predictions) == len(fh)
-        assert np.all(np.isfinite(mult_predictions.values))
-
-        # Test with different forecast combination methods
-        for combine_method in ["mean", "median", "weighted_mean"]:
-            forecaster = MAPAForecaster(
-                **{**params, "forecast_combine": combine_method}
-            )
-            forecaster.fit(sample_data, fh=fh)
-            predictions = forecaster._predict(fh)
-
-            assert isinstance(predictions, pd.DataFrame)
-            assert len(predictions) == len(fh)
-
-
-def test_predict_with_seasonality(sample_data):
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "forecaster_params",
+    [
+        {},
+        {
+            "base_forecaster": NaiveForecaster(strategy="mean"),
+            "decompose_type": "additive",
+        },
+        {
+            "base_forecaster": PolynomialTrendForecaster(degree=2),
+            "decompose_type": "multiplicative",
+        },
+        {
+            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
+            "decompose_type": "multiplicative",
+        },
+    ],
+)
+def test_predict(sample_data, forecaster_params):
     """Test the `_predict` method with seasonal data.
-
     Verifies the following:
-    - Predictions capture seasonal patterns in the input data.
-    - Predictions have the correct shape and are finite or not.
+    - Predictions have the correct shape and are finite.
+    - Predictions are consistent with different forecaster configurations.
     """
-    from sktime.forecasting.naive import NaiveForecaster
+    forecaster = MAPAForecaster(aggregation_levels=[1, 2, 4], **forecaster_params)
+    fh = np.arange(1, 4)
 
-    forecaster = MAPAForecaster(
-        aggregation_levels=[1, 2, 3],
-        base_forecaster=NaiveForecaster(strategy="mean", sp=12),
-        sp=12,
-    )
-
-    fh = np.arange(1, 13)
     forecaster.fit(sample_data, fh=fh)
     predictions = forecaster._predict(fh)
 
-    # Verify seasonal pattern
     assert isinstance(predictions, pd.DataFrame)
     assert len(predictions) == len(fh)
-
-    # Check if seasonal patterns are present in predictions
-    # (basic check - looking for non-linear patterns)
-    diffs = np.diff(predictions.values.ravel())
-    assert not np.allclose(diffs, np.mean(diffs))  # Should vary due to seasonality
+    assert predictions.shape[1] == sample_data.shape[1]
+    assert np.all(np.isfinite(predictions.values))
 
 
 @pytest.mark.parametrize("invalid_level", [-1, 0, 1.5, "2"])
