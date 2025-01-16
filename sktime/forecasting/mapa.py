@@ -287,46 +287,47 @@ class MAPAForecaster(BaseForecaster):
             else:
                 if _check_soft_dependencies("statsmodels", severity="none"):
                     from sktime.transformations.series.detrend import STLTransformer
-                stl = STLTransformer(
-                    sp=seasonal_period,
-                    seasonal=7,
-                    trend=None,
-                    low_pass=None,
-                    seasonal_deg=1,
-                    trend_deg=1,
-                    low_pass_deg=1,
-                    robust=False,
-                    seasonal_jump=1,
-                    trend_jump=1,
-                    low_pass_jump=1,
-                )
 
-                stl.fit(series)
+                    stl = STLTransformer(
+                        sp=seasonal_period,
+                        seasonal=7,
+                        trend=None,
+                        low_pass=None,
+                        seasonal_deg=1,
+                        trend_deg=1,
+                        low_pass_deg=1,
+                        robust=False,
+                        seasonal_jump=1,
+                        trend_jump=1,
+                        low_pass_jump=1,
+                    )
 
-                trend = stl.trend_
-                seasonal = stl.seasonal_
-                residual = stl.resid_
+                    stl.fit(series)
 
-                trend = trend.ffill().bfill()
-                seasonal = seasonal.ffill().bfill()
-                residual = residual.ffill().bfill()
+                    trend = stl.trend_
+                    seasonal = stl.seasonal_
+                    residual = stl.resid_
 
-                seasonal_pattern = pd.Series(
-                    seasonal.values[:seasonal_period], index=range(seasonal_period)
-                )
-                if self.decompose_type == "multiplicative":
-                    seasonal = np.exp(seasonal)
-                    trend = np.exp(trend)
-                    residual = series / (trend * seasonal)
-                    seasonal_pattern = np.exp(seasonal_pattern)
+                    trend = trend.ffill().bfill()
+                    seasonal = seasonal.ffill().bfill()
+                    residual = residual.ffill().bfill()
 
-                self._decomposition_info[level][f"{col}_seasonal_pattern"] = (
-                    seasonal_pattern
-                )
+                    seasonal_pattern = pd.Series(
+                        seasonal.values[:seasonal_period], index=range(seasonal_period)
+                    )
+                    if self.decompose_type == "multiplicative":
+                        seasonal = np.exp(seasonal)
+                        trend = np.exp(trend)
+                        residual = series / (trend * seasonal)
+                        seasonal_pattern = np.exp(seasonal_pattern)
 
-            decomposed[f"{col}_trend"] = trend
-            decomposed[f"{col}_seasonal"] = seasonal
-            decomposed[f"{col}_residual"] = residual
+                    self._decomposition_info[level][f"{col}_seasonal_pattern"] = (
+                        seasonal_pattern
+                    )
+
+                decomposed[f"{col}_trend"] = trend
+                decomposed[f"{col}_seasonal"] = seasonal
+                decomposed[f"{col}_residual"] = residual
 
         return decomposed, seasonal_enabled, seasonal_period
 
