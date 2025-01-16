@@ -59,7 +59,6 @@ class MACNNNetwork(BaseDeepNetwork):
 
     def _macnn_block(self, x, kernels, reduce):
         """Implement a single MACNN Block.
-
         Parameters
         ----------
         x : An instance of keras.layers.Layer
@@ -71,38 +70,37 @@ class MACNNNetwork(BaseDeepNetwork):
         reduce: int
             The factor by which, the first dense layer's output dimension
             should be divided by, it corresponds to the `reduction` attribute.
-
         Returns
         -------
         block_output: An instance of keras.layers.Layer
             Represents the last layer of a MACNN Block, to be used by the next block.
         """
-        from tensorflow import keras, reduce_mean, reshape
+        from tensorflow import keras
 
         conv_layers = []
         for i in range(len(self.kernel_size)):
             conv_layers.append(
-                keras.layers.Conv1D(kernels, self.kernel_size[i], padding=self.padding)(
-                    x
-                )
+                keras.layers.Conv1D(kernels, self.kernel_size[i], padding=self.padding)(x)
             )
-
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
         x1 = keras.layers.Activation("relu")(x1)
 
-        x2 = reduce_mean(x1, 1)
+        # Use Lambda for reduce_mean to handle KerasTensors
+        x2 = keras.layers.Lambda(lambda x: keras.backend.mean(x, axis=1))(x1)  # (batch_size, features)
         x2 = keras.layers.Dense(
             int(kernels * 3 / reduce), use_bias=False, activation="relu"
         )(x2)
         x2 = keras.layers.Dense(int(kernels * 3), use_bias=False, activation="relu")(x2)
-        x2 = reshape(x2, [-1, 1, kernels * 3])
 
-        return x1 * x2
+        # No Reshape to 3D here, keep x2 as 2D
+        x2 = keras.layers.RepeatVector(x1.shape[1])(x2)  # (batch_size, timesteps, features)
+
+        return keras.layers.Multiply()([x1, x2])
+    
 
     def _stack(self, x, repeats, kernels, reduce):
         """Build MACNN Blocks and stack them.
-
         Parameters
         ----------
         x : Instance of keras.layers.Layer
@@ -114,7 +112,6 @@ class MACNNNetwork(BaseDeepNetwork):
         kernels : int
             The base output dimension for dense layers, it corresponds
             to elements `filter_sizes` attributes.
-
         Returns
         -------
         x : Instance of keras.layers.Layer
@@ -123,15 +120,13 @@ class MACNNNetwork(BaseDeepNetwork):
         for _ in range(repeats):
             x = self._macnn_block(x, kernels, reduce)
         return x
-
+    
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
-
         Parameters
         ----------
         input_shape : tuple
             The shape of the data(without batch) fed into the input layer
-
         Returns
         -------
         input_layer : An instance of keras.layers.Input
@@ -139,22 +134,16 @@ class MACNNNetwork(BaseDeepNetwork):
         output_layer: An instance of keras.layers.Layer
             The output layer of this Network.
         """
-        from tensorflow import keras, reduce_mean
+        from tensorflow import keras
 
         input_layer = keras.layers.Input(shape=input_shape)
 
         x = self._stack(input_layer, self.repeats, self.filter_sizes[0], self.reduction)
-        x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
-        )(x)
-
+        x = keras.layers.MaxPooling1D(self.pool_size, self.strides, padding=self.padding)(x)
         x = self._stack(x, self.repeats, self.filter_sizes[1], self.reduction)
-        x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
-        )(x)
-
+        x = keras.layers.MaxPooling1D(self.pool_size, self.strides, padding=self.padding)(x)
         x = self._stack(x, self.repeats, self.filter_sizes[2], self.reduction)
-
-        output_layer = reduce_mean(x, 1)
+        
+        output_layer = keras.layers.GlobalAveragePooling1D()(x)  # Global pooling to reduce to 2D
 
         return input_layer, output_layer
