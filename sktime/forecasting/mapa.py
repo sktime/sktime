@@ -73,6 +73,7 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
+        super().__init__()
         self.aggregation_levels = (
             aggregation_levels if aggregation_levels else [1, 2, 4]
         )
@@ -98,8 +99,6 @@ class MAPAForecaster(BaseForecaster):
         self._y_name = None
         self._fh = None
         self._transformation_offset = None
-
-        super().__init__()
 
     def _handle_missing_data(self, y):
         if self.imputation_method == "ffill":
@@ -222,6 +221,29 @@ class MAPAForecaster(BaseForecaster):
         if level >= self.sp:
             seasonal_enabled = False
             seasonal_period = 1
+        if seasonal_enabled:
+            trend = y.rolling(window=seasonal_period, center=True).mean()
+
+            if self.decompose_type == "multiplicative":
+                detrended = y / trend
+                seasonal = detrended.groupby(y.index % seasonal_period).mean()
+                residual = y / (trend * seasonal)
+            else:
+                detrended = y - trend
+                seasonal = detrended.groupby(y.index % seasonal_period).mean()
+                residual = y - (trend + seasonal)
+        else:
+            trend = y
+        seasonal = pd.DataFrame(
+            1 if self.decompose_type == "multiplicative" else 0,
+            index=y.index,
+            columns=y.columns,
+        )
+        residual = pd.DataFrame(
+            1 if self.decompose_type == "multiplicative" else 0,
+            index=y.index,
+            columns=y.columns,
+        )
 
         self._decomposition_info[level] = {
             "seasonal_enabled": seasonal_enabled,
@@ -229,7 +251,7 @@ class MAPAForecaster(BaseForecaster):
             "n_observations": len(y),
         }
 
-        return y, seasonal_enabled, seasonal_period
+        return trend, seasonal, residual
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster following MAPA methodology."""
