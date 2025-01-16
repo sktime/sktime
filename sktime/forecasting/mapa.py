@@ -77,6 +77,7 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
+        super().__init__()
         if not all(
             isinstance(level, int) and level > 0 for level in aggregation_levels
         ):
@@ -100,8 +101,6 @@ class MAPAForecaster(BaseForecaster):
         self._y_name = None
         self._fh = None
         self._transformation_offset = None
-
-        super().__init__()
 
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
