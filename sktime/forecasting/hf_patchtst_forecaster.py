@@ -37,25 +37,22 @@ if _check_soft_dependencies("transformers", severity="none"):
 class HFPatchTSTForecaster(_BaseGlobalForecaster):
     """Interface for the PatchTST forecaster.
 
-    This model has 3 available modes:
-        1) Loading an full PatchTST model and pretrain on some dataset.
-        This can be done by passing in a PatchTST config dictionary or passing
-        in available parameters in this estimator, or by loading the
-        HFPatchTSTForecaster without any passed arguments. See the
-        `fit_strategy` docstring for more details.
+    This forecaster interfaces the Huggingface library's PatchTST model for
+    time series forecasting. The model was originally designed by Yuqi Nie,
+    Nam H. Nguyen, Phanwadee Sinthong and Jayant Kalagnanam.
+    It utilizes a transformer model architecture and splits the
+    time series data into patches that are then processed by the model.
+    Visit [1] for more information on the model architecture and its authors.
+    For tips on how to construct your own PatchTST config, see [2].
 
-        2) Load a pre-trained model for fine-tuning. Both the parameters `model_path`
-        and `config` can be used to load a pre-trained model for fine-tuning and
-        to re-initialize new weights in the pre-trained model using the config
-        parameters if necessary. Use a passed in `y` and `fh` in the `fit`
-        function to then fine-tune your pretrained model. See the
-        `fit_strategy` docstring for more details.
+    The PatchTST forecaster can be used in three ways:
 
-        3) Load a pre-trained model for zero-shot forecasting. The parameter
-        `model_path` can be used to load a pre-trained model and can be
-        used immediately for forecasting via the `predict` function after
-        passing a `y` and `fh` into `fit`. See the `fit_strategy` docstring
-        for more details.
+    1) Full training via a new model initialized from a config or a loaded model
+    with pre-trained weights
+    2) Minimal fine-tuning with a pre-trained model and an altered config
+    3) Zero-shot forecasting with a pre-trained model
+
+    For more details, please visit the `fit_strategy` parameter
 
     Parameters
     ----------
@@ -116,8 +113,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
     References
     ----------
-    Paper: https://arxiv.org/abs/2211.14730
-    HuggingFace Page: https://huggingface.co/docs/transformers/en/model_doc/patchtst
+    [1] A Time Series is Worth 64 Words: Long-term Forecasting with Transformers
+        Yuqi Nie, Nam H. Nguyen, Phanwadee Sinthong, Jayant Kalagnanam
+        Paper: https://arxiv.org/abs/2211.14730
+    [2] HuggingFace PatchTST Page:
+        https://huggingface.co/docs/transformers/en/model_doc/patchtst
 
     Examples
     --------
