@@ -365,7 +365,13 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
 
         train = PyTorchDataset(
             y=y_train,
@@ -373,7 +379,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             prediction_length=config.prediction_length,
         )
         test = PyTorchDataset(
-            y=y_test,
+            y=y_eval,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
@@ -382,14 +388,18 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         training_args = TrainingArguments(**self._training_args)
 
         # Get the Trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train,
-            eval_dataset=test,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
-        )
+        trainer_args = {
+            "model": self.model,
+            "args": training_args,
+            "train_dataset": train,
+            "compute_metrics": self.compute_metrics,
+            "callbacks": self.callbacks,
+        }
+
+        if test is not None:  # Only include eval_dataset if test is provided
+            trainer_args["eval_dataset"] = test
+
+        trainer = Trainer(**trainer_args)
 
         # Train the model
         trainer.train()

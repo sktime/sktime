@@ -252,7 +252,6 @@ class HFTransformersForecaster(BaseForecaster):
                 X=X[split:] if X is not None else None,
                 fh=config.prediction_length,
             )
-
         else:
             train_dataset = PyTorchDataset(
                 y,
@@ -261,7 +260,7 @@ class HFTransformersForecaster(BaseForecaster):
                 fh=config.prediction_length,
             )
 
-            eval_dataset = None  # No validation dataset
+            eval_dataset = None
 
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
@@ -293,25 +292,14 @@ class HFTransformersForecaster(BaseForecaster):
         else:
             raise ValueError("Unknown fit strategy")
 
-        # Get the Trainer
-        if eval_dataset is not None:  # If a test dataset is provided
-            trainer = Trainer(
+        trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
             callbacks=self._callbacks,
-            )
-        else:  # If no test dataset (validation_split is None)
-            trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            compute_metrics=self._compute_metrics,
-            callbacks=self._callbacks,
-            )
-
+        )
         trainer.train()
 
     def _predict(self, fh, X=None):
