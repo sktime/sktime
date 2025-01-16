@@ -126,42 +126,49 @@ def _sliding_window_transform(
     ts_index = get_time_index(y)
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
+    fh = _check_fh(fh)
+    fh_max = fh[-1]
+
+    if window_length + fh_max >= n_timepoints:
+        raise ValueError(
+            "The `window_length` and `fh` are incompatible with the length of `y`"
+        )
 
     if pooling == "global":
         n_cut = -window_length
-
-        if len(transformers) == 1:
-            tf_fit = transformers[0].fit(y)
+        tf_fit = None
+        if transformers is not None:
+            if len(transformers) == 1:
+                tf_fit = transformers[0].fit(y)
+            else:
+                feat = [
+                    ("trafo_" + str(index), i) for index, i in enumerate(transformers)
+                ]
+                tf_fit = FeatureUnion(feat).fit(y)
+            X_from_y = tf_fit.transform(y)
+            X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
         else:
-            feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
-            tf_fit = FeatureUnion(feat).fit(y)
-        X_from_y = tf_fit.transform(y)
+            X_from_y_cut = None
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
         yt = _cut_df(y, n_obs=n_cut)
 
         if X is not None:
             X_cut = _cut_df(X, n_obs=n_cut)
-            Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
+            Xt = (
+                pd.concat([X_from_y_cut, X_cut], axis=1)
+                if X_from_y_cut is not None
+                else X_cut
+            )
         else:
             Xt = X_from_y_cut
     else:
         z = _concat_y_X(y, X)
         n_timepoints, n_variables = z.shape
 
-        fh = _check_fh(fh)
-        fh_max = fh[-1]
-
-        if window_length + fh_max >= n_timepoints:
-            raise ValueError(
-                "The `window_length` and `fh` are incompatible with the length of `y`"
-            )
-
-        # Get the effective window length accounting for the forecasting horizon.
         effective_window_length = window_length + fh_max
         Zt = np.zeros(
             (
-                n_timepoints + effective_window_length,
+                n_timepoints - effective_window_length,
                 n_variables,
                 effective_window_length + 1,
             )
@@ -170,14 +177,14 @@ def _sliding_window_transform(
         # Transform data.
         for k in range(effective_window_length + 1):
             i = effective_window_length - k
-            j = n_timepoints + effective_window_length - k
-            Zt[i:j, :, k] = z
+            j = n_timepoints - k
+            Zt[:, :, k] = z[i:j]
 
         # Truncate data, selecting only full windows, discarding incomplete ones.
-        if windows_identical is True:
-            Zt = Zt[effective_window_length:-effective_window_length]
+        if windows_identical:
+            Zt = Zt[:-fh_max]
         else:
-            Zt = Zt[effective_window_length:-window_length]
+            Zt = Zt[:-window_length]
         # Return transformed feature and target variables separately. This
         # excludes contemporaneous values of the exogenous variables. Including them
         # would lead to unequal-length data, with more time points for
