@@ -4,14 +4,26 @@ from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
 
 class RandIndex(BaseDetectionMetric):
-    """
-    Rand Index metric for comparing event detection results.
+    r"""Segmentation Rand Index metric.
 
-    **Mathematical Definition**
+    The Segmentation Rand Index (SRI) for is the integrated version of the Rand Index
+    for clustering (RI). It measures the similarity between two segmentations of the
+    same time series, where each segmentation is a sequence of non-overlapping segments.
+
+    The segmentation Rand Index (SRI) is obtained from the clustering Rand Index (RI),
+    in qualitative terms, by:
+
+    - Interpreting segments as clusters along an index or time axis.
+
+    - Counting pairwise “agreements” (same vs different) along that axis.
+
+    A mathematical definition follows.
+
+    For clarity, we define the clustering Rand Index (RI) first:
 
     The Rand Index (RI) between two clusterings of n elements is defined as:
 
-        RI = (a + b) / (a + b + c + d),
+    .. math:: RI = (a + b) / (a + b + c + d),
 
     where:
 
@@ -23,20 +35,31 @@ class RandIndex(BaseDetectionMetric):
 
     - d = #pairs in different clusters in the first segmentation but same in the second
 
-    This class adapts the Rand Index to a segmentation context by:
+    The segmentation Rand Index (SRI) is defined as follows:
 
-    - Interpreting segments as clusters along an index or time axis.
+    For a time series starting at time index :math:`S \in \mathbb{R}`
+    and ending at time index :math:`T \in \mathbb{R}`, let
 
-    - Counting pairwise “agreements” (same vs different) along that axis.
+    :math:`a: [S, T] \rightarrow \mathbb{N}` be the first segmentation,
+    and :math:`b: [S, T] \rightarrow \mathbb{N}` be the second segmentation.
 
-    - Allowing either iloc-based or loc-based distances, controlled by `use_loc`.
+    Let :math:`\mathbb{I}(s_1, s_2, t_1, t_2)` be the indicator function that is 1
+    iff at least one of the following holds:
 
-    By default, if X is provided, this metric computes distances in loc-based units
-    by looking up the corresponding labels in X.index. Otherwise, it uses the original
-    iloc-based calculations.
+    - :math:`s_1 = s_2` and :math:`t_1 = t_2`
+    - :math:`s_1 \neq s_2` and :math:`t_1 \neq t_2`
+
+    Then the SRI is defined as:
+
+    .. math:: SRI = \frac{1}{T-S} \int_S^T \int_S^T \mathbb{I}(a(s), a(t), b(s), b(t)) ds dt
+
+    By default, if ``X`` is provided, this metric computes distances in loc-based units
+    by looking up the corresponding labels in ``X.index``.
+    Otherwise, or if ``use_loc=False``, it uses iloc-based indexing.
 
     If an existing "label" column is present in y_true/y_pred, those labels are used
-    directly for matching; otherwise, we create a fallback label for each row.
+    directly for matching; otherwise, segments are considered to be numbered
+    consecutively, starting from 0.
     """  # noqa: E501
 
     _tags = {
