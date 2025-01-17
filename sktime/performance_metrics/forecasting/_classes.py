@@ -2171,8 +2171,6 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
     Because the median commutes with monotonic transformations, MdSE and RMdSE
     do not penalize large errors more than the MdAE.
-    square the forecast error rather than taking the absolute value, they
-    penalize large errors more than MAE or MdAE.
 
     ``evaluate_by_index`` returns, at a time index :math:`t_i`:
 
