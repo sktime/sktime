@@ -10,6 +10,15 @@ from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("statsmodels", severity="none"):
     from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+else:
+
+    class ExponentialSmoothing:
+        def __init__(self, *args, **kwargs):
+            """Dummy class when statsmodels is not present."""
+            raise ImportError(
+                "Failed to initialize ExponentialSmoothing: {str(e)}. "
+                "Install statsmodels for ExponentialSmoothing capability."
+            )
 
 
 @pytest.fixture
