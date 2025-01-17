@@ -95,6 +95,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
           by transformers. In this case, ensure that the directory contains all
           necessary files (e.g., configuration, tokenizer, and model weights).
 
+        - If this parameter is *None*, fit_strategy should be *full* to allow
+          full fine tuning of the model loaded from pretrained/provided config,
+          else ValueError is raised.
+
     revision: str, default="main"
         Revision of the model to use:
 
@@ -129,14 +133,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
-    fit_strategy : str, default="minimal"
-        Strategy to use for fitting (fine-tuning) the model. This can be one of
-        the following:
-        - "zero-shot": Uses pre-trained model as it is.
-        - "minimal": Fine-tunes only a small subset of the model parameters,
-          allowing for quick adaptation with limited computational resources.
-        - "full": Fine-tunes all model parameters, which may result in better
-          performance but requires more computational power and time.
 
     use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
@@ -147,6 +143,18 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         version of package maintained in sktime because of model's unavailability
         on pypi.
         To install the source package, follow the instructions here [4]_.
+
+    fit_strategy : str, default="minimal"
+        Strategy to use for fitting (fine-tuning) the model. This can be one of
+        the following:
+        - "zero-shot": Uses pre-trained model as it is. If model path is *None*
+          with this strategy, ValueError is raised.
+        - "minimal": Fine-tunes only a small subset of the model parameters,
+          allowing for quick adaptation with limited computational resources.
+          If model path is *None* with this strategy, ValueError is raised.
+        - "full": Fine-tunes all model parameters, which may result in better
+          performance but requires more computational power and time. Allows
+          model path to be *None*.
 
     References
     ----------
@@ -233,8 +241,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         compute_metrics=None,
         callbacks=None,
         broadcasting=False,
-        fit_strategy="minimal",
         use_source_package=False,
+        fit_strategy="minimal",
     ):
         super().__init__()
         self.model_path = model_path
@@ -302,11 +310,27 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerForPrediction,
             )
 
-        # Get the Configuration
-        config = TinyTimeMixerConfig.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-        )
+        # Initialize to self.config, then adjust accordingly
+        config = self.config
+        if self.model_path is None:
+            if self.fit_strategy != "full":
+                raise ValueError(
+                    "Invalid configuration: 'model_path' is set to None."
+                    "This requires 'fit_strategy' to be 'full'."
+                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
+                )
+            if config is None:
+                # Load tinytimemixer config
+                config = TinyTimeMixerConfig()
+                config.check_and_init_preprocessing()
+            else:
+                config = TinyTimeMixerConfig(**config)
+        else:
+            # Get the pretrained model Configuration
+            config = TinyTimeMixerConfig.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+            )
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -322,7 +346,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         patch_length = _config.get("patch_length")
         patch_stride = _config.get("patch_stride")
         patch_size = context_length / num_patches
-        if patch_size != patch_length or patch_stride != patch_stride:
+        if patch_size != patch_length or patch_size != patch_stride:
             # update the config here
             patch_size = max(1, int(patch_size))
             _config["patch_length"] = patch_size
@@ -354,16 +378,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         config = config.from_dict(_config)
 
-        # Get the Model
-        # self.model, info = PatchTSTForPrediction.from_pretrained(
-        # "ibm-granite/granite-timeseries-patchtst",
-        self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        if self.model_path is not None:
+            # Get the Model
+            # self.model, info = PatchTSTForPrediction.from_pretrained(
+            # "ibm-granite/granite-timeseries-patchtst",
+            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+            )
+        else:
+            # Initialize model with default config
+            self.model = TinyTimeMixerForPrediction(config=config)
 
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
@@ -393,6 +421,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             raise ValueError("Unknown fit strategy")
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+
+        # Validation check for proper error message during training
+        val_length = len(y_test)
+        if (val_length) < (config.context_length + config.prediction_length):
+            raise ValueError(
+                f"Insufficient data for evaluation with the current configuration:\n"
+                f" - Dataset length (after validation split): {val_length}\n"
+                f" - Configured context length: {config.context_length}\n"
+                f" - Configured prediction size: {config.prediction_length}\n\n"
+                f"Suggested Actions:\n"
+                f" 1. Reduce 'context_length' or 'prediction_size' in config.\n"
+                f" 2. Decrease 'validation_split' (current: {self.validation_split}).\n"
+                f" 3. Adjust the model's fit strategy for smaller datasets.\n"
+            )
 
         train = PyTorchDataset(
             y=y_train,
@@ -548,6 +590,13 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
+                "model_path": None,
+                "fit_strategy": "full",
+                "config": {
+                    "context_length": 8,
+                    "prediction_length": 2,
+                    "num_patches": 4,
+                },
                 "training_args": {
                     "max_steps": 5,
                     "output_dir": "test_output",
