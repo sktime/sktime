@@ -4,12 +4,32 @@ from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
 
 class RandIndex(BaseDetectionMetric):
-    """Rand Index metric for comparing event detection results.
-
-    By default, if X is provided, this metric computes distances/lengths in loc-based
-    units by looking up the corresponding labels in X.index. Otherwise, or if X is None,
-    it uses the original iloc-based calculations.
     """
+    Rand Index metric for comparing event detection results.
+
+    **Mathematical Definition**
+    The Rand Index (RI) between two clusterings of n elements is defined as:
+
+        RI = (a + b) / (a + b + c + d),
+
+    where:
+        - a = #pairs in the same cluster in both segmentations
+        - b = #pairs in different clusters in both segmentations
+        - c = #pairs in the same cluster in the first segmentation but different in the second
+        - d = #pairs in different clusters in the first segmentation but same in the second
+
+    This class adapts the Rand Index to a segmentation context by:
+    - Interpreting segments as clusters along an index or time axis.
+    - Counting pairwise “agreements” (same vs different) along that axis.
+    - Allowing either iloc-based or loc-based distances, controlled by `use_loc`.
+
+    By default, if X is provided, this metric computes distances in loc-based units
+    by looking up the corresponding labels in X.index. Otherwise, it uses the original
+    iloc-based calculations.
+
+    If an existing "label" column is present in y_true/y_pred, those labels are used
+    directly for matching; otherwise, we create a fallback label for each row.
+    """  # noqa: E501
 
     _tags = {
         "object_type": ["metric_detection", "metric"],
@@ -54,20 +74,19 @@ class RandIndex(BaseDetectionMetric):
         y_true_segments = self._extract_segments(y_true, "y_true")
         y_pred_segments = self._extract_segments(y_pred, "y_pred")
 
-        # 2) Assign unique cluster IDs to each segment.
+        # 2) Assign unique cluster IDs to each segment (does not overwrite 'label').
         y_true_segments = self._assign_unique_ids(y_true_segments, prefix="true")
         y_pred_segments = self._assign_unique_ids(y_pred_segments, prefix="pred")
 
-        # 3) Determine the "total length" in whichever units (iloc vs loc).
+        # 3) Determine total_length in loc or iloc units
         if X is not None and self.use_loc:
-            # loc-based total length => from X.index[0] to X.index[-1]
+            # Loc-based => difference of X.index[-1] - X.index[0], if more than one row
             if len(X) > 1:
-                # difference in loc labels
                 total_length = float(X.index[-1] - X.index[0])
             else:
-                total_length = len(X)  # degenerate case, 0 or 1 row
+                total_length = len(X)
         else:
-            # fallback to iloc-based => use max 'end' across y_true/y_pred
+            # Iloc-based => max 'end' among true/pred
             max_end_true = max((seg["end"] for seg in y_true_segments), default=0)
             max_end_pred = max((seg["end"] for seg in y_pred_segments), default=0)
             total_length = max(max_end_true, max_end_pred)
@@ -76,7 +95,7 @@ class RandIndex(BaseDetectionMetric):
         if total_length < 2:
             return 1.0
 
-        # 5) same-cluster pairs in y_true, y_pred
+        # 5) Compute same-cluster pairs in y_true, y_pred
         same_cluster_true = sum(
             self._pairs_count(self._compute_length(seg["start"], seg["end"], X))
             for seg in y_true_segments
@@ -94,10 +113,9 @@ class RandIndex(BaseDetectionMetric):
         # 7) total pairs
         total_pairs = self._pairs_count(total_length)
 
-        # 8) Rand Index
+        # 8) Rand Index = (a + d) / total_pairs, with
         #    a = same_cluster_both
         #    d = total_pairs - same_cluster_true - same_cluster_pred + a
-        #    => RI = (a + d) / total_pairs
         agreements = same_cluster_both + (
             total_pairs - same_cluster_true - same_cluster_pred + same_cluster_both
         )
@@ -105,17 +123,14 @@ class RandIndex(BaseDetectionMetric):
         return rand_index
 
     def _compute_length(self, start_iloc, end_iloc, X):
-        """Compute the length of a segment, in loc-based or iloc-based units."""
+        """Compute the length of a segment in either loc-based or iloc-based units."""
         if end_iloc <= start_iloc:
             return 0
-
         length_iloc = end_iloc - start_iloc
-
         if X is not None and self.use_loc:
-            # Safeguard: clamp if out-of-range
+            # clamp to avoid out-of-bounds
             start_iloc = max(0, min(start_iloc, len(X) - 1))
             end_iloc = max(0, min(end_iloc, len(X) - 1))
-            # difference of actual labels in X.index
             return float(X.index[end_iloc] - X.index[start_iloc])
         else:
             return float(length_iloc)
@@ -131,17 +146,15 @@ class RandIndex(BaseDetectionMetric):
             t_seg = y_true_sorted[i]
             p_seg = y_pred_sorted[j]
 
-            # Overlap in iloc
             overlap_start = max(t_seg["start"], p_seg["start"])
             overlap_end = min(t_seg["end"], p_seg["end"])
 
-            # If there's overlap, measure it in loc or iloc
             if overlap_start < overlap_end:
                 overlap_length = self._compute_length(overlap_start, overlap_end, X)
+                # Compare existing 'label' columns
                 if t_seg["label"] == p_seg["label"]:
                     a += self._pairs_count(overlap_length)
 
-            # Advance whichever segment finishes first
             if t_seg["end"] <= p_seg["end"]:
                 i += 1
             else:
@@ -152,24 +165,24 @@ class RandIndex(BaseDetectionMetric):
     def _pairs_count(self, length):
         """Number of unique pairs among 'length' items.
 
-        Interprets 'length' as a (possibly) continuous measure:
-        - If integer >= 2: standard formula (n*(n-1))//2
-        - If float >= 2: we apply the same formula but on floor/round.
-          (In a more advanced version, you might want a continuous analog!)
+        For discrete or continuous:
+        - If length < 2, returns 0.
+        - Otherwise, we round length to integer n and compute (n*(n-1))//2
         """  # noqa: D401
         if length < 2:
             return 0
         n = int(round(length))
         return (n * (n - 1)) // 2 if n >= 2 else 0
 
-    # ------------------------------------------------------------------
-    # Below here, we have the existing code for extracting segments etc.
     def _extract_segments(self, y, var_name):
         """Extract segments from the DataFrame.
 
         1) 'start'/'end' => direct use
         2) A single int column 'ilocs' => interpret each row as [i, i+1)
         3) A single interval column 'ilocs' => read left/right from each Interval
+
+        If a 'label' column is present, that is used directly for identifying clusters.
+        Otherwise, the row index i is used as a fallback label.
         """
         segments = []
 
@@ -188,7 +201,6 @@ class RandIndex(BaseDetectionMetric):
         if "ilocs" in y.columns:
             col_dtype = y["ilocs"].dtype
             if pd.api.types.is_interval_dtype(col_dtype):
-                # e.g., Interval(3, 5)
                 for i, row in y.iterrows():
                     interval = row["ilocs"]
                     seg_start, seg_end = interval.left, interval.right
@@ -212,19 +224,36 @@ class RandIndex(BaseDetectionMetric):
         )
 
     def _assign_unique_ids(self, segments, prefix):
-        """Assign unique cluster IDs to each segment."""
+        """
+        Assign a unique 'cluster_id' to each segment (for internal reference),
+        but do not overwrite the existing 'label' if it is present.
+
+        Parameters
+        ----------
+        segments : list of dict
+            Each dict has 'start', 'end', and 'label'.
+        prefix : str
+            E.g. "true" or "pred", to differentiate ground truth vs predicted.
+
+        Returns
+        -------
+        segments : list of dict
+            Same as input, but each dict gains a 'cluster_id' key.
+        """  # noqa: D205
         for idx, seg in enumerate(segments):
+            # We do NOT overwrite seg['label'] -- we only create a separate ID if needed
             seg["cluster_id"] = f"{prefix}_{seg['label']}_{idx}"
         return segments
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
+        """
+        Return testing parameter settings for the estimator.
 
         Creates two configurations:
         1) default RandIndex (use_loc=True)
         2) RandIndex(use_loc=False)
         """
-        param1 = {}  # relies on default use_loc=True
+        param1 = {}  # default => use_loc=True
         param2 = {"use_loc": False}
         return [param1, param2]
