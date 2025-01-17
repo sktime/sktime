@@ -1122,7 +1122,7 @@ def median_squared_error(
     penalize large errors more than MAE or MdAE.
 
     Taking the median instead of the mean of the squared errors makes
-    this metric more robust to error outliers relative to a meean based metric
+    this metric more robust to error outliers relative to a mean based metric
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
 
