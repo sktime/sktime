@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -178,11 +177,19 @@ base_forecaster_params = [
         "base_forecaster": PolynomialTrendForecaster(degree=2),
         "decompose_type": "multiplicative",
     },
-    {
-        "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
-        "decompose_type": "multiplicative",
-    },
 ]
+
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("statsmodels", severity="none"):
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+    base_forecaster_params.append(
+        {
+            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
+            "decompose_type": "multiplicative",
+        }
+    )
 
 
 @pytest.mark.skipif(
