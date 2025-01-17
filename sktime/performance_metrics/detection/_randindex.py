@@ -6,7 +6,8 @@ from sktime.performance_metrics.detection._base import BaseDetectionMetric
 class RandIndex(BaseDetectionMetric):
     r"""Segmentation Rand Index metric.
 
-    The Segmentation Rand Index (SRI) for is the integrated version of the Rand Index
+    The Segmentation Rand Index (SRI) for comparing two segmentations
+    is the integrated version of the Rand Index
     for clustering (RI). It measures the similarity between two segmentations of the
     same time series, where each segmentation is a sequence of non-overlapping segments.
 
