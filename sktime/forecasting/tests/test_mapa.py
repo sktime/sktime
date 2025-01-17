@@ -2,11 +2,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("statsmodels", severity="none"):
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 
 
 @pytest.fixture
@@ -19,7 +22,7 @@ def sample_data():
         and some added noise.
     """
     np.random.seed(42)
-    dates = pd.date_range(start="2020-01-01", periods=24, freq="ME")
+    dates = pd.date_range(start="2020-01-01", periods=24, freq="M")
     data = np.sin(np.linspace(0, 4 * np.pi, 24)) * 10 + np.random.normal(0, 1, 24) + 20
     return pd.DataFrame(data, index=dates, columns=["value"])
 
