@@ -11,6 +11,8 @@ class RandIndex(BaseDetectionMetric):
     for clustering (RI). It measures the similarity between two segmentations of the
     same time series, where each segmentation is a sequence of non-overlapping segments.
 
+    It takes values between 0 and 1, where 1 indicates identical segmentations.
+
     The segmentation Rand Index (SRI) is obtained from the clustering Rand Index (RI),
     in qualitative terms, by:
 
