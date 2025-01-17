@@ -7,6 +7,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("statsmodels", severity="none"):
     from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -15,7 +16,7 @@ else:
     class ExponentialSmoothing:
         def __init__(self, *args, **kwargs):
             """Dummy class when statsmodels is not present."""
-            raise ImportError(
+            warn(
                 "Failed to initialize ExponentialSmoothing: {str(e)}. "
                 "Install statsmodels for ExponentialSmoothing capability."
             )
