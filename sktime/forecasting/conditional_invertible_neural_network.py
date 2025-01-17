@@ -229,16 +229,27 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
+        
         try:
-            self.function.fit(rolling_mean.dropna())
-        except Exception as e:
+          # Attempt to fit the function with rolling mean data.
+          # This step can fail if the optimization process does not converge, 
+          # often leading to a "RuntimeError: Optimal parameters not found".
+         self.function.fit(rolling_mean.dropna())
+        except RuntimeError as e:
+          # We specifically check for "Optimal parameters not found" in the error message.
+          # This error occurs when the curve fitting process exceeds the maximum function evaluations (maxfev).
+         if "Optimal parameters not found" in str(e):
+          # Raising a more detailed RuntimeError with additional information.
             raise RuntimeError(
-                "Curve fitting error. Please check the parameters and try again.\n"
-                f"Window size: {self.window_size}\n"
-                f"f_statistic: {self._f_statistic}\n"
-                f"init_param_f_statistic: {self._init_param_f_statistic}\n"
-                f"Original error: {e}"
-            )
+            f"Optimal parameters not found: Number of calls to function has reached maxfev = 1400.\n"
+            f"Window size: {self.window_size}\n"
+            f"f_statistic: {self._f_statistic}\n"
+            f"init_param_f_statistic: {self._init_param_f_statistic}\n"
+            f"Original error: {e}"
+        )
+        else:
+        # If a different RuntimeError occurs, re-raise the original exception without modification.
+            raise
 
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
