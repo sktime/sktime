@@ -8,19 +8,27 @@ class RandIndex(BaseDetectionMetric):
     Rand Index metric for comparing event detection results.
 
     **Mathematical Definition**
+
     The Rand Index (RI) between two clusterings of n elements is defined as:
 
         RI = (a + b) / (a + b + c + d),
 
     where:
-        - a = #pairs in the same cluster in both segmentations
-        - b = #pairs in different clusters in both segmentations
-        - c = #pairs in the same cluster in the first segmentation but different in the second
-        - d = #pairs in different clusters in the first segmentation but same in the second
+
+    - a = #pairs in the same cluster in both segmentations
+
+    - b = #pairs in different clusters in both segmentations
+
+    - c = #pairs in the same cluster in the first segmentation but different in the second
+
+    - d = #pairs in different clusters in the first segmentation but same in the second
 
     This class adapts the Rand Index to a segmentation context by:
+
     - Interpreting segments as clusters along an index or time axis.
+
     - Counting pairwise “agreements” (same vs different) along that axis.
+
     - Allowing either iloc-based or loc-based distances, controlled by `use_loc`.
 
     By default, if X is provided, this metric computes distances in loc-based units
@@ -44,24 +52,29 @@ class RandIndex(BaseDetectionMetric):
         Parameters
         ----------
         use_loc : bool, optional (default=True)
-            If True (and X is provided), segment lengths/overlaps are computed as the
-            difference of X.index[end_iloc] - X.index[start_iloc]. If False, or X=None,
-            uses iloc-based distances (end_iloc - start_iloc) as before.
-        """  # noqa: D205
+
+            - If True (and X is provided), segment lengths/overlaps are computed as the
+              difference of X.index[end_iloc] - X.index[start_iloc].
+
+            - If False, or X=None, uses iloc-based distances (end_iloc - start_iloc) as before.
+        """  # noqa: D205, E501
         self.use_loc = use_loc
         super().__init__()
 
     def _evaluate(self, y_true, y_pred, X=None):
-        """Calculate Rand Index between true and predicted segments.
+        """
+        Calculate Rand Index between true and predicted segments.
 
         Parameters
         ----------
         y_true : pd.DataFrame
             Ground truth segments with 'start', 'end', or an 'ilocs' column (interval or int),
             plus an optional 'label' column.
+
         y_pred : pd.DataFrame
             Predicted segments with 'start', 'end', or an 'ilocs' column (interval or int),
             plus an optional 'label' column.
+
         X : pd.DataFrame, optional (default=None)
             If provided (and use_loc=True), loc-based distances are used.
 
@@ -163,10 +176,13 @@ class RandIndex(BaseDetectionMetric):
         return a
 
     def _pairs_count(self, length):
-        """Number of unique pairs among 'length' items.
+        """
+        Number of unique pairs among 'length' items.
 
         For discrete or continuous:
+
         - If length < 2, returns 0.
+
         - Otherwise, we round length to integer n and compute (n*(n-1))//2
         """  # noqa: D401
         if length < 2:
@@ -175,10 +191,13 @@ class RandIndex(BaseDetectionMetric):
         return (n * (n - 1)) // 2 if n >= 2 else 0
 
     def _extract_segments(self, y, var_name):
-        """Extract segments from the DataFrame.
+        """
+        Extract segments from the DataFrame.
 
         1) 'start'/'end' => direct use
+
         2) A single int column 'ilocs' => interpret each row as [i, i+1)
+
         3) A single interval column 'ilocs' => read left/right from each Interval
 
         If a 'label' column is present, that is used directly for identifying clusters.
@@ -232,6 +251,7 @@ class RandIndex(BaseDetectionMetric):
         ----------
         segments : list of dict
             Each dict has 'start', 'end', and 'label'.
+
         prefix : str
             E.g. "true" or "pred", to differentiate ground truth vs predicted.
 
@@ -251,7 +271,9 @@ class RandIndex(BaseDetectionMetric):
         Return testing parameter settings for the estimator.
 
         Creates two configurations:
+
         1) default RandIndex (use_loc=True)
+
         2) RandIndex(use_loc=False)
         """
         param1 = {}  # default => use_loc=True
