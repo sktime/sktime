@@ -77,23 +77,18 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
-        super().__init__()
-        if not all(
-            isinstance(level, int) and level > 0 for level in aggregation_levels
-        ):
-            raise ValueError("All aggregation levels must be positive integers")
         self.aggregation_levels = aggregation_levels
-        self._aggregation_levels = (
-            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
-        )
-
-        self.base_forecaster = self._initialize_base_forecaster(base_forecaster)
         self.agg_method = agg_method
         self.decompose_type = decompose_type
         self.forecast_combine = forecast_combine
         self.imputation_method = imputation_method
         self.sp = sp
         self.weights = weights
+        self.base_forecaster = base_forecaster
+
+        self._aggregation_levels = (
+            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
+        )
 
         self.forecasters = {}
         self._decomposition_info = {}
@@ -101,6 +96,15 @@ class MAPAForecaster(BaseForecaster):
         self._y_name = None
         self._fh = None
         self._transformation_offset = None
+
+        super().__init__()
+
+        self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
+
+        if not all(
+            isinstance(level, int) and level > 0 for level in aggregation_levels
+        ):
+            raise ValueError("All aggregation levels must be positive integers")
 
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
@@ -359,8 +363,8 @@ class MAPAForecaster(BaseForecaster):
                     y_agg, level
                 )
 
-                forecaster = type(self.base_forecaster)(
-                    **self.base_forecaster.get_params()
+                forecaster = type(self._base_forecaster)(
+                    **self._base_forecaster.get_params()
                 )
 
                 if not seasonal_enabled:
