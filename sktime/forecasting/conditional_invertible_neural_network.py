@@ -238,7 +238,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         except RuntimeError as e:
           # We specifically check for "Optimal parameters not found" in the error message.
           # This error occurs when the curve fitting process exceeds the maximum function evaluations (maxfev).
-         if "Optimal parameters not found" in str(e):
+         if str(e).startswith("Optimal parameters not found"):
           # Raising a more detailed RuntimeError with additional information.
             raise RuntimeError(
             f"Optimal parameters not found: Number of calls to function has reached maxfev = 1400.\n"
