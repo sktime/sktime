@@ -7,19 +7,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
-if _check_soft_dependencies("statsmodels", severity="none"):
-    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-else:
-
-    class ExponentialSmoothing:
-        def __init__(self, *args, **kwargs):
-            """Dummy class when statsmodels is not present."""
-            warn(
-                "Failed to initialize ExponentialSmoothing: {str(e)}. "
-                "Install statsmodels for ExponentialSmoothing capability."
-            )
 
 
 @pytest.fixture
@@ -181,13 +169,8 @@ def test_aggregate(level, agg_method, expected):
     pd.testing.assert_frame_equal(result, expected)
 
 
-@pytest.mark.skipif(
-    not run_test_for_class(MAPAForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.parametrize(
-    "forecaster_params",
-    [
+
+base_forecaster_params=[
         {},
         {
             "base_forecaster": NaiveForecaster(strategy="mean"),
@@ -197,12 +180,21 @@ def test_aggregate(level, agg_method, expected):
             "base_forecaster": PolynomialTrendForecaster(degree=2),
             "decompose_type": "multiplicative",
         },
-        {
-            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
-            "decompose_type": "multiplicative",
-        },
-    ],
+    ]
+if _check_soft_dependencies("statsmodels", severity="none"):
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+    # Add ExponentialSmoothing parameters only if statsmodels is available
+    base_forecaster_params.append({
+        "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
+        "decompose_type": "multiplicative",
+    })
+
+@pytest.mark.skipif(
+    not run_test_for_class(MAPAForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("forecaster_params", base_forecaster_params)
 def test_predict(sample_data, forecaster_params):
     """Test the `_predict` method with seasonal data.
     Verifies the following:
