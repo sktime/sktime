@@ -45,7 +45,7 @@ class RandIndex(BaseDetectionMetric):
     and :math:`b: [S, T] \rightarrow \mathbb{N}` be the second segmentation.
 
     Let :math:`\mathbb{I}(s_1, s_2, t_1, t_2)` be the indicator function that is 1
-    iff at least one of the following holds:
+    iff at least one of the following holds, and 0 otherwise:
 
     - :math:`s_1 = s_2` and :math:`t_1 = t_2`
     - :math:`s_1 \neq s_2` and :math:`t_1 \neq t_2`
