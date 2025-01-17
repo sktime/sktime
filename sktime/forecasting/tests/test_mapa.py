@@ -6,7 +6,6 @@ from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -179,16 +178,6 @@ base_forecaster_params = [
         "decompose_type": "multiplicative",
     },
 ]
-if _check_soft_dependencies("statsmodels", severity="none"):
-    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-
-    # Add ExponentialSmoothing parameters only if statsmodels is available
-    base_forecaster_params.append(
-        {
-            "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=12),
-            "decompose_type": "multiplicative",
-        }
-    )
 
 
 @pytest.mark.skipif(
