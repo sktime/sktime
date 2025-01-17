@@ -58,6 +58,9 @@ class ReconcilerForecaster(BaseForecaster):
         * If True, prediction data frames include total values at ``__total`` levels
         * If False, prediction data frames are returned without ``__total`` levels
 
+    alpha: float
+        Optional regularization parameter to avoid singular covariance matrix
+
     See Also
     --------
     Aggregator
@@ -121,10 +124,11 @@ class ReconcilerForecaster(BaseForecaster):
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
     RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink", return_totals=True):
+    def __init__(self, forecaster, method="mint_shrink", return_totals=True, alpha=0):
         self.forecaster = forecaster
         self.method = method
         self.return_totals = return_totals
+        self.alpha = alpha
 
         super().__init__()
 
@@ -402,6 +406,12 @@ class ReconcilerForecaster(BaseForecaster):
             np.dot(
                 inv(
                     np.dot(np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix))
+                    + self.alpha
+                    * np.eye(
+                        np.dot(
+                            np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix)
+                        ).shape[0]
+                    )
                 ),
                 np.dot(np.transpose(self.s_matrix), cov_mat),
             )
