@@ -37,7 +37,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._common import _ret
+from sktime.datatypes._base._common import _ret
 
 check_dict = dict()
 

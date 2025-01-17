@@ -239,7 +239,15 @@ def test_all_estimators_tag_filter(pred_int):
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
     base_class = _check_estimator_types(estimator_scitype)[0]
-    inferred_scitype = scitype(base_class)
+    all_scitypes = scitype(base_class, force_single_scitype=False, coerce_to_list=True)
+    inferred_scitype = all_scitypes[0]
+
+    # stepout for detector due to rename in scitype
+    # todo 0.37.0 - replace "detector" with "series-annotator"
+    # todo 1.0.0 - remove this stepout entirely
+    if estimator_scitype == "detector":
+        assert "detector" in all_scitypes
+        return None
 
     assert (
         inferred_scitype == estimator_scitype
