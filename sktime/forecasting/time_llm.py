@@ -13,9 +13,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation.forecasting import check_X
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
 
 class TimeLLMForecaster(BaseForecaster):
     """
@@ -117,10 +114,7 @@ class TimeLLMForecaster(BaseForecaster):
         self.n_heads = n_heads
         self.dropout = dropout
 
-        if device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = torch.device(device)
+        self.device = device
 
         super().__init__()
 
@@ -143,26 +137,11 @@ class TimeLLMForecaster(BaseForecaster):
         )
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        """Fit forecaster to training data."""
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+        from sktime.libs.time_llm.TimeLLM import Model
 
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
         X = check_X(X)
 
         if isinstance(X, pd.DataFrame):
@@ -170,35 +149,22 @@ class TimeLLMForecaster(BaseForecaster):
         else:
             self.n_variables_ = 1
 
-        from sktime.libs.time_llm.TimeLLM import Model
+        if self.device is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = torch.device(self.device)
 
-        config = self._create_model_config(self.n_variables_)
+        config = self._model_config(self.n_variables_)
         self.model_ = Model(config).to(self.device)
 
         self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """Forecast time series at future horizon."""
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
 
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Point predictions
-        """
         if not self._is_fitted:
             raise RuntimeError("Forecaster is not fitted yet.")
 
@@ -235,18 +201,7 @@ class TimeLLMForecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-        """
+        """Return testing parameter settings for the estimator."""
         params_list = [
             {
                 "task_name": "long_term_forecast",
