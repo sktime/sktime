@@ -2691,6 +2691,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute percentage error at that time index,
+    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
+    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    the symmetric version, if ``symmetric`` is True, for all time indices
+    :math:`t_1, \dots, t_n` in the input.
+
     Parameters
     ----------
     symmetric : bool, default = False
