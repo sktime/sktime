@@ -232,7 +232,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         try:
             # Attempt to fit the function with rolling mean data.
-            # This step can fail if the optimization process does not converge,
+            # This step can fail if the optimization process does not converge, 
             # often leading to a "RuntimeError: Optimal parameters not found".
             self.function.fit(rolling_mean.dropna())
         except RuntimeError as e:
@@ -247,9 +247,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                     f"init_param_f_statistic: {self._init_param_f_statistic}\n"
                     f"Original error: {e}"
                 )
-
+            
             # If a different RuntimeError occurs, re-raise the original exception without modification.
-            raise
+            raise 
 
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
