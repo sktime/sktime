@@ -729,8 +729,10 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
     """
 
     _tags = {
+        "authors": ["PranavBhatP"],
+        "maintainers": ["PranavBhatP"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts>=0.29"],
+        "python_dependencies": ["u8darts>=0.29", "darts>=0.29"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -756,16 +758,10 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         use_static_covariates: bool = True,
         **kwargs,
     ):
-        super().__init__(
-            input_chunk_length=input_chunk_length,
-            output_chunk_length=output_chunk_length,
-            output_chunk_shift=output_chunk_shift,
-            use_static_covariates=use_static_covariates,
-        )
-
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length
         self.output_chunk_shift = output_chunk_shift
+        self.use_static_covariates = use_static_covariates
         self.num_encoder_layers = num_encoder_layers
         self.num_decoder_layers = num_decoder_layers
         self.decoder_output_dim = decoder_output_dim
@@ -775,12 +771,18 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         self.temporal_decoder_hidden = temporal_decoder_hidden
         self.use_layer_norm = use_layer_norm
         self.dropout = dropout
-        self.use_static_covariates = use_static_covariates
         self.kwargs = kwargs
+
+        super().__init__(
+            input_chunk_length=input_chunk_length,
+            output_chunk_length=output_chunk_length,
+            output_chunk_shift=output_chunk_shift,
+            use_static_covariates=use_static_covariates,
+        )
 
     def _create_forecaster(self="DartsTiDEModel"):
         """Create and initialize a TiDE forecaster instance."""
-        from darts.models.forecasting.tide_model import TiDEModel
+        from darts.models import TiDEModel
 
         kwargs = self.kwargs or {}
         return TiDEModel(
@@ -814,29 +816,26 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         -------
         params: dict or list of dict
         """
-        params1 = {
-            "input_chunk_length": 12,
-            "output_chunk_length": 6,
-            "hidden_size": 32,
-            "temporal_decoder_hidden": 16,
-        }
+        del parameter_set
 
-        params2 = {
-            "input_chunk_length": 24,
-            "output_chunk_length": 12,
-            "hidden_size": 64,
-            "num_encoder_layers": 2,
-            "num_decoder_layers": 2,
-            "temporal_width_past": 8,
-            "temporal_width_future": 8,
-            "use_layer_norm": True,
-            "dropout": 0.2,
-        }
-
-        if parameter_set == "default":
-            return params1
-        else:
-            return [params1, params2]
+        params = [
+            {
+                "input_chunk_length": 12,
+                "output_chunk_length": 6,
+            },
+            {
+                "input_chunk_length": 24,
+                "output_chunk_length": 12,
+                "hidden_size": 64,
+                "num_encoder_layers": 2,
+                "num_decoder_layers": 2,
+                "temporal_width_past": 8,
+                "temporal_width_future": 8,
+                "use_layer_norm": True,
+                "dropout": 0.2,
+            },
+        ]
+        return params
 
 
 __all__ = [

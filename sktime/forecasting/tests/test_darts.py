@@ -13,12 +13,13 @@ from sktime.datasets import load_longley
 from sktime.forecasting.darts import (
     DartsLinearRegressionModel,
     DartsRegressionModel,
+    DartsTiDEModel,
     DartsXGBModel,
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
-__author__ = ["fnhirwa"]
+__author__ = ["fnhirwa", "PranavBhatP"]
 
 
 y, X = load_longley()
@@ -40,6 +41,7 @@ import_mappings = {
     DartsXGBModel: "XGBModel",
     DartsLinearRegressionModel: "LinearRegressionModel",
     DartsRegressionModel: "RegressionModel",
+    DartsTiDEModel: "TiDEModel",
 }
 
 
@@ -175,3 +177,82 @@ def test_darts_regression_with_weather_dataset(model):
     assert isinstance(pred_sktime, pd.Series)
 
     np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+
+
+@pytest.mark.parametrize("model", [DartsTiDEModel])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsTiDEModel),
+    reason="run test only if softdeps are present and incrementally (if required)",
+)
+def test_darts_tide_model_univariate(model):
+    """Test functionality for univariate forecasting"""
+
+    sktime_model = model(
+        input_chunk_length=6,
+        output_chunk_length=6,
+    )
+
+    sktime_model.fit(y_train, fh=[1, 2, 3, 4])
+    y_pred = sktime_model.predict()
+
+    pd.testing.assert_index_equal(y_pred.index, y_test.index, check_name=False)
+
+
+@pytest.mark.parametrize("model", [DartsTiDEModel])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsTiDEModel),
+    reason="run test only if softdeps are present and incrementally (if required)",
+)
+def test_darts_tide_model_with_weather_dataset(model):
+    from darts.datasets import WeatherDataset
+    from darts.models import TiDEModel
+
+    darts_model = TiDEModel(input_chunk_length=6, output_chunk_length=6)
+
+    weather_data = WeatherDataset()
+    series = weather_data.load()
+    target = series["p (mbar)"][:100]
+    target_df = target.pd_series()
+
+    darts_model.fit(target)
+    darts_pred = darts_model.predict(6).pd_series()
+    assert isinstance(target_df, pd.Series)
+    sktime_model = DartsTiDEModel(input_chunk_length=6, output_chunk_length=6)
+
+    sktime_model.fit(target_df)
+    fh = list(range(1, 7))
+    pred_sktime = sktime_model.predict(fh=fh)
+    assert isinstance(pred_sktime, pd.Series)
+
+    np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+
+
+@pytest.mark.parametrize("model", [DartsTiDEModel])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsTiDEModel),
+    reason="run test only if softdeps are present and incrementally (if required)",
+)
+def test_darts_tide_model_multivariate(model):
+    """Test functionality for multivariate forecasting"""
+
+    sktime_model = model(input_chunk_length=6, output_chunk_length=6)
+    past_covariates = ["GNPDEFL", "GNP"]
+    future_covariates = ["UNEMP", "POP"]
+
+    sktime_model.fit(
+        y_train,
+        fh=[1, 2, 3, 4],
+        X=X_train,
+        past_covariates=past_covariates,
+        future_covariates=future_covariates,
+    )
+    fh = np.arange(1, 7)
+    pred = sktime_model.predict(
+        fh=fh,
+        X=X_test,
+        past_covariates=past_covariates,
+        future_covariates=future_covariates,
+    )
+
+    # check the index of the prediction
+    pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
