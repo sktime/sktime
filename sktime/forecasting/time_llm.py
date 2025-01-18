@@ -61,6 +61,21 @@ class TimeLLMForecaster(BaseForecaster):
     Time-LLM: Time Series Forecasting by Reprogramming Large Language Models.
     https://arxiv.org/abs/2310.01728.
 
+    Examples
+    --------
+    >>> from sktime.forecasting.time_llm import TimeLLMForecaster
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> forecaster = TimeLLMForecaster(
+    ...     task_name="long_term_forecast",
+    ...     llm_model="GPT2"
+    ...)
+    >>> forecaster.fit(y_train)
+    >>> y_pred = forecaster.predict(fh)
     """
 
     _tags = {
