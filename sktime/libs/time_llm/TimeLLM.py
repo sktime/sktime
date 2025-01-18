@@ -5,8 +5,6 @@ from math import sqrt
 import torch
 import torch.nn as nn
 import transformers
-from layers.Embed import PatchEmbedding
-from layers.StandardNorm import Normalize
 from transformers import (
     BertConfig,
     BertModel,
@@ -18,6 +16,9 @@ from transformers import (
     LlamaModel,
     LlamaTokenizer,
 )
+
+from sktime.libs.time_llm.layers.Embed import PatchEmbedding
+from sktime.libs.time_llm.layers.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
