@@ -18,42 +18,112 @@ class MAPAForecaster(BaseForecaster):
     forecasting methods and also supports various aggregation and combination
     strategies.
 
-    based on R package: https://github.com/trnnick/mapa
+    Implementation Details:
+    ----------------------
+    The algorithm works in the following steps:
+
+    1. Data Preparation:
+        - Handles missing values using the specified imputation method
+        - For multiplicative decomposition, ensures all values are positive by
+          adding an offset if necessary
+
+    2. For each aggregation level:
+        a) Aggregates the time series using the specified method (mean/sum)
+        b) Determines if seasonal decomposition should be enabled:
+
+           - Calculates seasonal_period as sp // level
+           - seasonal_enabled is True if all these conditions are met:
+
+             * The original seasonal period (sp) is divisible by the level
+             * The calculated seasonal_period is > 1
+             * The time series length is >= 2 * seasonal_period
+
+           - seasonal_enabled is False if level >= sp
+        c) Decomposes the series using STL decomposition:
+
+           - Extracts trend using rolling averages if seasonal_enabled=False
+           - Uses STLTransformer if seasonal_enabled=True
+           - Stores seasonal patterns for later use
+
+        d) Fits the base forecaster on the trend component
+
+    3. For prediction:
+        a) Generates forecasts using each level's base forecaster
+        b) If seasonal_enabled for that level:
+           - Retrieves stored seasonal pattern
+           - Applies seasonal adjustments to forecasts
+        c) Combines forecasts from all levels using specified method:
+           - Simple mean
+           - Median
+           - Weighted mean (if weights provided)
+        d) Reverses any transformations applied during data preparation
+
+    Based on R package: https://github.com/trnnick/mapa
 
     Parameters
     ----------
     aggregation_levels : list of int, default=None
         The levels at which the time series will be aggregated.
-        If None, the levels will default to [1, 2, 4, 6].
+        If None, the levels will default to [1, 2, 4].
+
+        For example, with daily data:
+
+        - Level 1: Original daily data
+        - Level 2: Aggregate every 2 days
+        - Level 4: Aggregate every 4 days
+
+        Lower levels capture short-term patterns while higher levels capture trends.
 
     base_forecaster : sktime-compatible forecaster, default=None
         The forecasting model to be used for each aggregation level.
-        If None, the default is NaiveForecaster(strategy="mean") if statsmodel is not
-        present else ExponentialSmoothing(trend="add", seasonal="add", sp=sp).
+
+        If None, defaults to:
+
+        - ExponentialSmoothing(trend="add", seasonal="add", sp=sp) if statsmodel present
+        - NaiveForecaster(strategy="mean") if statsmodel not present
 
     agg_method : str, default="mean"
-        Method used to aggregate the forecasts from different levels.
-        Options are "mean", "median", or "sum".
+        Method used to aggregate the time series at different temporal levels.
+
+        Options are:
+
+        - "mean": Takes average of the periods (e.g., average of each 2-day period)
+        - "sum": Sums the values (useful for additive measures like sales)
 
     decompose_type : str, default="multiplicative"
         The type of decomposition used in time series decomposition.
-        Options are "additive" or "multiplicative".
+
+        Options are:
+
+        - "additive": Components are added (trend + seasonal + residual)
+        - "multiplicative": Components are multiplied (trend * seasonal * residual)
 
     forecast_combine : str, default="mean"
         Method used to combine the forecasts from different aggregation levels.
-        Options are "mean", "median", or "weighted_median".
+
+        Options are:
+
+        - "mean": Simple average of all forecasts
+        - "median": Takes the median forecast
+        - "weighted_mean": Uses supplied weights for weighted average
 
     imputation_method : str, default="ffill"
         Method used for imputing missing values in the time series.
-        Options include "ffill" (forward fill) or "bfill" (backward fill).
+
+        Options include:
+
+        - "ffill": Forward fill (propagate last valid observation forward)
+        - "bfill": Backward fill (use next valid observation)
+        - "interpolate": Linear interpolation between valid observations
 
     sp : int, default=6
         Seasonal periodicity of the time series.
-        This is used in decomposition and base forecaster setup.
 
     weights : list of float, default=None
         Optional weights to apply when combining forecasts.
-        Only used if `forecast_combine="weighted_median"`.
+        Only used if forecast_combine="weighted_mean".
+        Must have same length as aggregation_levels.
+        Weights are normalized to sum to 1.
     """
 
     _tags = {
@@ -240,8 +310,8 @@ class MAPAForecaster(BaseForecaster):
 
         Returns
         -------
-        tuple
-            (decomposed_data, seasonal_enabled, seasonal_period)
+        tuple(decomposed_data, seasonal_enabled, seasonal_period)
+
             - decomposed_data: DataFrame containing trend, seasonal, residual components
             - seasonal_enabled: bool indicating if seasonal decomposition was performed
             - seasonal_period: int representing the seasonal period used
