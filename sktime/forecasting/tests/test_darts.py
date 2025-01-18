@@ -241,12 +241,11 @@ def test_darts_tide_model_multivariate(model):
 
     sktime_model.fit(
         y_train,
-        fh=[1, 2, 3, 4],
         X=X_train,
         past_covariates=past_covariates,
         future_covariates=future_covariates,
     )
-    fh = np.arange(1, 7)
+    fh = list(range(1, 7))
     pred = sktime_model.predict(
         fh=fh,
         X=X_test,
