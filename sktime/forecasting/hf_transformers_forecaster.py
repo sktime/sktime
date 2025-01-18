@@ -36,9 +36,9 @@ class HFTransformersForecaster(BaseForecaster):
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
-        - "minimal": Fine-tunes only the model parameter that are newly
-          initialised due to mismatches, allowing for quick adaptation with limited
-          computational resources.
+
+        - "minimal": Fine-tunes only a small subset of the model parameters,
+          allowing for quick adaptation with limited computational resources.
         - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
@@ -46,6 +46,7 @@ class HFTransformersForecaster(BaseForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
