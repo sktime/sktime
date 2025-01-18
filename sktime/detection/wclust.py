@@ -19,7 +19,7 @@ __author__ = ["Ankit-1204"]
 __all__ = ["WindowSegmenter"]
 
 
-def overlapping_window(window_size, step_size, X):
+def _overlapping_window(window_size, step_size, X):
     X_size = len(X)
     n_features = X.shape[1]
 
@@ -39,7 +39,7 @@ def overlapping_window(window_size, step_size, X):
     return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
 
 
-def window_timeseries(window_size, X):
+def _window_timeseries(window_size, X):
     """Create a list of segments of chosen Window Size for sktime clusterers.
 
     Parameters
@@ -67,7 +67,7 @@ def window_timeseries(window_size, X):
     return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
 
 
-def window(window_size, X):
+def _window(window_size, X):
     """Create a list of segments of chosen Window Size with proper padding.
 
     Parameters
@@ -88,7 +88,7 @@ def window(window_size, X):
     return sub_seg
 
 
-def flattenSegments(sub_seg):
+def _flattenSegments(sub_seg):
     """Ensure that the function supports multivariate series by Flattening each segment.
 
     Parameters
@@ -103,7 +103,7 @@ def flattenSegments(sub_seg):
     return np.array(flat)
 
 
-def finalLabels(labels, window_size, X):
+def _finalLabels(labels, window_size, X):
     """Convert segment labels to individual time point labels.
 
     Parameters
@@ -121,7 +121,7 @@ def finalLabels(labels, window_size, X):
     return np.array(flabel)
 
 
-def overlap_final_label(labels, window_size, step_size, X):
+def _overlap_final_label(labels, window_size, step_size, X):
     time_point_labels = [[] for _ in range(len(X))]
 
     for i in range(len(labels)):
@@ -134,7 +134,7 @@ def overlap_final_label(labels, window_size, step_size, X):
     return time_point_labels
 
 
-def aggregate_labels(flabel):
+def _aggregate_labels(flabel):
     aggr_labels = []
     for labels in flabel:
         most_freq = Counter(labels).most_common(1)[0][0]
@@ -234,25 +234,25 @@ class WindowSegmenter(BaseDetector):
         self._clusterer_ = clone(self._clusterer)
         self.n_features, self.n_timepoints = X.shape
         if self.overlap:
-            win_x = overlapping_window(self._window_size, self.step_size, X)
+            win_x = _overlapping_window(self._window_size, self.step_size, X)
             labels = self._clusterer_.predict(win_x)
-            flabel = overlap_final_label(labels, self._window_size, self.step_size, X)
+            flabel = _overlap_final_label(labels, self._window_size, self.step_size, X)
             if self.return_segments:
                 flabel = pd.Series(flabel, index=X.index)
             else:
-                aggr_labels = aggregate_labels(flabel)
+                aggr_labels = _aggregate_labels(flabel)
                 return pd.Series(aggr_labels, index=X.index)
         else:
             if is_sklearn_clusterer(self._clusterer_):
-                win_x = window(self._window_size, X)
-                sub = flattenSegments(win_x)
+                win_x = _window(self._window_size, X)
+                sub = _flattenSegments(win_x)
                 self._clusterer_.fit(sub)
                 labels = self._clusterer_.predict(sub)
             else:
-                win_x = window_timeseries(self._window_size, X)
+                win_x = _window_timeseries(self._window_size, X)
                 self._clusterer_.fit(win_x)
                 labels = self._clusterer_.predict(win_x)
-            flabel = finalLabels(labels, self._window_size, X)
+            flabel = _finalLabels(labels, self._window_size, X)
             flabel = pd.Series(flabel.flatten(), index=X.index)
         current_label = flabel[0]
 
