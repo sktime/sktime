@@ -13,6 +13,9 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation.forecasting import check_X
 
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+
 
 class TimeLLMForecaster(BaseForecaster):
     """
@@ -138,8 +141,6 @@ class TimeLLMForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
         from sktime.libs.time_llm.TimeLLM import Model
 
         X = check_X(X)
@@ -162,9 +163,6 @@ class TimeLLMForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon."""
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
-
         if not self._is_fitted:
             raise RuntimeError("Forecaster is not fitted yet.")
 
