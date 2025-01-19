@@ -94,7 +94,6 @@ class TimeSeriesKvisibility(BaseClusterer):
 
         ts_attr = []
         X_ts = []
-        print(X.shape)
 
         for i in range(len(X)):
             X_ts.append(X[i].reshape(1, X[1].shape[0])[0])
@@ -237,7 +236,9 @@ class TimeSeriesKvisibility(BaseClusterer):
             test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"n_clusters": [2, 4, 6, 8, 10]}
-        params2 = {"n_init": [2, 4, 6, 8, 10]}
+        params0 = {}
+        params1 = {"n_clusters": 5}
+        params2 = {"n_init": 4}
+        params3 = {"n_clusters": 4, "n_init": 6}
 
-        return [params1, params2]
+        return [params0, params1, params2, params3]
