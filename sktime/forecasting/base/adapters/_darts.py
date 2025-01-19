@@ -890,6 +890,49 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
     def _create_forecaster(self="_DartsMixedCovariatesTorchModelAdapter"):
         """Create Darts Model."""
 
+    def fit(
+        self,
+        y: pd.DataFrame,
+        X: Optional[pd.DataFrame] = None,
+        fh: Optional[ForecastingHorizon] = None,
+        past_covariates: Optional[list[str]] = None,
+        future_covariates: Optional[list[str]] = None,
+    ):
+        """
+        Fit forecaster to training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables
+        fh : ForecastingHorizon, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
+        past_covariates : list[str], optional (default=None)
+            Names of columns in X to be used as past covariates.
+        future_covariates : list[str], optional (default=None)
+            Names of columns in X to be used as future covariates.
+
+        Returns
+        -------
+        self : _DartsMixedCovariatesTorchModelAdapter
+            Fitted forecaster.
+        """
+        # First call the parent's fit method to handle base functionality
+        super().fit(y=y, X=X, fh=fh)
+
+        # Then call our custom _fit with the additional parameters
+        self._fit(
+            y=self._y,
+            X=self._X,
+            fh=self._fh,
+            past_covariates=past_covariates,
+            future_covariates=future_covariates,
+        )
+
+        return self
+
     def _fit(
         self,
         y: pd.DataFrame,
@@ -899,7 +942,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         future_covariates: Optional[list[str]] = None,
     ):
         """
-        Fit the forecaster to the training data.
+        Internally fit the forecaster to training data.
 
         Parameters
         ----------
@@ -956,6 +999,40 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         self._is_fitted = True
         return self
 
+    def predict(
+        self,
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pd.DataFrame] = None,
+        past_covariates: Optional[list[str]] = None,
+        future_covariates: Optional[list[str]] = None,
+    ):
+        """Generate predictions for the given forecasting horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon specifying the time steps to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables containing past and/or future covariates
+        past_covariate : List[str], optional (default=None)
+            Names of columns in X to be used as past covariates.
+        future_covariate : List[str], optional (default=None)
+            Names of columns in X to be used as future covariates.
+
+        Returns
+        -------
+        pd.DataFrame
+            Predicted values for the specified forecasting horizon.
+        """
+        super().predict(fh=fh, X=X)
+
+        return self._predict(
+            fh=self._fh,
+            X=self._X,
+            past_covariates=past_covariates,
+            future_covariates=future_covariates,
+        )
+
     def _predict(
         self: "_DartsMixedCovariatesTorchModelAdapter",
         fh: Optional[ForecastingHorizon],
@@ -963,7 +1040,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         past_covariates: Optional[list[str]] = None,
         future_covariates: Optional[list[str]] = None,
     ):
-        """Generate predictions for the given forecasting horizon.
+        """Internally generates predictions for the given forecasting horizon.
 
         Parameters
         ----------
@@ -1016,7 +1093,18 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         expected_index = fh.get_expected_pred_idx(self.cutoff)
         abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
         endogenous_predictions = endogenous_predictions.pd_dataframe()
-        return endogenous_predictions.loc[abs_idx]
+
+        if endogenous_predictions.shape[1] == 1:
+            endogenous_predictions = endogenous_predictions.iloc[:, 0]
+
+        if isinstance(expected_index, pd.PeriodIndex):
+            endogenous_predictions.index = pd.PeriodIndex(
+                endogenous_predictions.index, freq=expected_index.freq
+            )
+
+        predictions = endogenous_predictions.reindex(abs_idx)
+
+        return predictions
 
 
 __all__ = [

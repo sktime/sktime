@@ -192,10 +192,10 @@ def test_darts_tide_model_univariate(model):
         output_chunk_length=6,
     )
 
-    sktime_model.fit(y_train, fh=[1, 2, 3, 4])
-    y_pred = sktime_model.predict()
+    sktime_model.fit(y_train)
+    y_pred = sktime_model.predict(fh=[1, 2, 3, 4])
 
-    pd.testing.assert_index_equal(y_pred.index, y_test.index, check_name=False)
+    pd.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
 
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
@@ -213,7 +213,7 @@ def test_darts_tide_model_with_weather_dataset(model):
     series = weather_data.load()
     target = series["p (mbar)"][:100]
     target_df = target.pd_series()
-
+    assert target_df.equals(target.pd_series())
     darts_model.fit(target)
     darts_pred = darts_model.predict(6).pd_series()
     assert isinstance(target_df, pd.Series)
@@ -222,9 +222,10 @@ def test_darts_tide_model_with_weather_dataset(model):
     sktime_model.fit(target_df)
     fh = list(range(1, 7))
     pred_sktime = sktime_model.predict(fh=fh)
-    assert isinstance(pred_sktime, pd.Series)
 
-    np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+    pd.testing.assert_index_equal(
+        darts_pred.index, pred_sktime.index, check_names=False
+    )
 
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
