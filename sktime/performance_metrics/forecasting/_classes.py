@@ -2139,21 +2139,47 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
 
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
-    """Median squared error (MdSE) or root median squared error (RMdSE).
+    r"""Median squared error (MdSE) or root median squared error (RMdSE).
 
     If ``square_root`` is False then calculates MdSE and if ``square_root`` is True
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
+    The Median Squared Error (MdSE) is calculated as:
+
+    .. math::
+        \\text{MdSE} = \text{median}\left((y_{i} - \\widehat{y}_{i})^2\right)_{i=1}^{n}
+
+    where:
+    - \\( y_i \\) are the true values,
+    - \\( \\hat{y}_i \\) are the predicted values,
+    - \\( n \\) is the number of observations.
+
+    If ``square_root`` is set to True,
+    the Root Median Squared Error Percentage (RMdSE) is computed:
+
+    .. math::
+        \\text{RMdSE} = \\sqrt{ \\text{MdSE} }
+
     Like MSE, MdSE is measured in squared units of the input data. RMdSE is
-    on the same scale as the input data like RMSE. Because MdSE and RMdSE
-    square the forecast error rather than taking the absolute value, they
-    penalize large errors more than MAE or MdAE.
+    on the same scale as the input data, like RMSE.
 
     Taking the median instead of the mean of the squared errors makes
     this metric more robust to error outliers relative to a meean based metric
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
+
+    Because the median commutes with monotonic transformations, MdSE and RMdSE
+    do not penalize large errors more than the MdAE.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the squared error at that time index,
+        :math:`(y_i - \widehat{y}_i)^2`,
+    * if ``square_root`` is True, the absolute error at that time index,
+      the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
@@ -2233,6 +2259,53 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        if self.square_root:
+            raw_values = np.sqrt(raw_values)
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
