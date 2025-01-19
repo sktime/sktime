@@ -526,7 +526,17 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-    To get the fitted models for each fold, set return_model=True:
+    An example of an interval metric is the ``PinballLoss``.
+    It can be used with all probabilistic forecasters.
+
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> loss = PinballLoss()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> results = evaluate(forecaster=NaiveVariance(forecaster),
+    ... y=y, cv=cv, scoring=loss)
+
+    To return fitted models for each fold, set ``return_model=True``:
 
     >>> results = evaluate(
     ...     forecaster=forecaster,
