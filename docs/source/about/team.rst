@@ -25,7 +25,7 @@ Community Council
      - :user:`onyekaugochukwu`
 
 For further information on past and future council elections,
-refer to the `elections repository <www.github.com/sktime/elections>`_.
+refer to the `elections repository <https://www.github.com/sktime/elections>`_.
 
 Community Council Observers
 ---------------------------
