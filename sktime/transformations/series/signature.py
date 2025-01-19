@@ -1,10 +1,12 @@
 """Signature moment transformer."""
 
+from itertools import product
+
 import numpy as np
 import pandas as pd
-from itertools import product
-from joblib import Parallel,delayed
+
 from sktime.transformations.base import BaseTransformer
+
 
 class SignatureMoments(BaseTransformer):
     """Signature Moments Transformer for multivariate time series.
@@ -62,8 +64,8 @@ class SignatureMoments(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["AdiTyaPal0710","VectorNd", "fkiraly"],
-        "maintainers": ["VectorNd","AdiTyaPal0710"],
+        "authors": ["AdiTyaPal0710", "VectorNd", "fkiraly"],
+        "maintainers": ["VectorNd", "AdiTyaPal0710"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
@@ -72,7 +74,7 @@ class SignatureMoments(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, degree=2, use_index=False,use_smaller_equal=False):
+    def __init__(self, degree=2, use_index=False, use_smaller_equal=False):
         if degree < 1:
             raise ValueError("`degree` must be an integer >= 1.")
         self.degree = degree
