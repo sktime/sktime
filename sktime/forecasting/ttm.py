@@ -365,18 +365,27 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
 
         train = PyTorchDataset(
             y=y_train,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
-        test = PyTorchDataset(
-            y=y_test,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
+
+        eval = None
+        if self.validation_split is not None:
+            eval = PyTorchDataset(
+                y=y_eval,
+                context_length=config.context_length,
+                prediction_length=config.prediction_length,
+            )
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
@@ -386,7 +395,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             model=self.model,
             args=training_args,
             train_dataset=train,
-            eval_dataset=test,
+            eval_dataset=eval,
             compute_metrics=self.compute_metrics,
             callbacks=self.callbacks,
         )
