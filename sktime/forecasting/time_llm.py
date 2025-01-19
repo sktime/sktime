@@ -71,9 +71,10 @@ class TimeLLMForecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> forecaster = TimeLLMForecaster(
-    ...     task_name="long_term_forecast",
-    ...     llm_model="GPT2"
-    ...)
+    ...     pred_len=36,
+    ...     seq_len=96,
+    ...     llm_model='GPT2'
+    ... )
     >>> forecaster.fit(y_train)
     >>> y_pred = forecaster.predict(fh)
     """
@@ -83,11 +84,11 @@ class TimeLLMForecaster(BaseForecaster):
         "authors": ["KimMeen", "jgyasu"],
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM
         "maintainers": ["jgyasu"],
-        "python_dependencies": ["torch==2.2.2", "transformers==4.31.0"],
+        "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(
