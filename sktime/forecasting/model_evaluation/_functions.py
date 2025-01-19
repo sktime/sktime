@@ -340,11 +340,11 @@ def evaluate(
     strategy: str = "refit",
     scoring: Optional[Union[callable, list[callable]]] = None,
     return_data: bool = False,
-    return_model: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
+    return_model: bool = False,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
