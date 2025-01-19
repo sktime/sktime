@@ -11,6 +11,7 @@ from sktime.tests.test_switch import run_test_for_class
 @pytest.fixture
 def sample_data():
     """Create sample time series data for testing.
+
     Returns
     -------
     pd.DataFrame
@@ -41,7 +42,9 @@ def sample_data():
 )
 def test_decompose(sample_data, sp, level, expected_seasonal):
     """Test the `_decompose` method.
+
     Verifies the following:
+
     - Decomposition separates trend, seasonal, and residual components.
     - Seasonal component is enabled or disabled as expected.
     - Reconstructed series matches the aggregated input data.
@@ -110,7 +113,9 @@ def test_decompose(sample_data, sp, level, expected_seasonal):
 )
 def test_combine_forecasts(combine_method, weights, expected):
     """Test the `_combine_forecasts` method.
+
     Verifies the following:
+
     - Correct forecast combination methods are applied.
     - Combined forecasts match expected results for mean, median, and weighted mean.
     """
@@ -130,6 +135,7 @@ def test_combine_forecasts(combine_method, weights, expected):
 def test_combine_forecasts_invalid():
     """Test the `_combine_forecasts` method with invalid combination methods.
     Verifies the following:
+
     - An error is raised for unsupported combination methods.
     """
 
@@ -157,7 +163,9 @@ def test_combine_forecasts_invalid():
 )
 def test_aggregate(level, agg_method, expected):
     """Test the `_aggregate` method.
+
     Verifies the following:
+
     - Aggregation correctly computes means or sums for various levels.
     - Results match the expected aggregated data.
     """
@@ -199,7 +207,9 @@ if _check_soft_dependencies("statsmodels", severity="none"):
 @pytest.mark.parametrize("forecaster_params", base_forecaster_params)
 def test_predict(sample_data, forecaster_params):
     """Test the `_predict` method with seasonal data.
+
     Verifies the following:
+
     - Predictions have the correct shape and are finite.
     - Predictions are consistent with different forecaster configurations.
     """

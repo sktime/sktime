@@ -23,13 +23,15 @@ class MAPAForecaster(BaseForecaster):
     The algorithm works in the following steps:
 
     1. Data Preparation:
+
         - Handles missing values using the specified imputation method
         - For multiplicative decomposition, ensures all values are positive by
           adding an offset if necessary
 
     2. For each aggregation level:
-        a) Aggregates the time series using the specified method (mean/sum)
-        b) Determines if seasonal decomposition should be enabled:
+
+        - Aggregates the time series using the specified method (mean/sum)
+        - Determines if seasonal decomposition should be enabled:
 
            - Calculates seasonal_period as sp // level
            - seasonal_enabled is True if all these conditions are met:
@@ -39,24 +41,29 @@ class MAPAForecaster(BaseForecaster):
              * The time series length is >= 2 * seasonal_period
 
            - seasonal_enabled is False if level >= sp
-        c) Decomposes the series using STL decomposition:
+        - Decomposes the series using STL decomposition:
 
            - Extracts trend using rolling averages if seasonal_enabled=False
            - Uses STLTransformer if seasonal_enabled=True
            - Stores seasonal patterns for later use
 
-        d) Fits the base forecaster on the trend component
+        - Fits the base forecaster on the trend component
 
     3. For prediction:
-        a) Generates forecasts using each level's base forecaster
-        b) If seasonal_enabled for that level:
+
+        - Generates forecasts using each level's base forecaster
+        - If seasonal_enabled for that level:
+
            - Retrieves stored seasonal pattern
            - Applies seasonal adjustments to forecasts
-        c) Combines forecasts from all levels using specified method:
+
+        - Combines forecasts from all levels using specified method:
+
            - Simple mean
            - Median
            - Weighted mean (if weights provided)
-        d) Reverses any transformations applied during data preparation
+
+        - Reverses any transformations applied during data preparation
 
     Based on R package: https://github.com/trnnick/mapa
 
@@ -405,7 +412,25 @@ class MAPAForecaster(BaseForecaster):
         return decomposed, seasonal_enabled, seasonal_period
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster following MAPA methodology."""
+        """Fit forecaster following the MAPA methodology.
+
+        It performs aggregation, decomposition, and fitting base forecasters at
+        multiple levels.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            Target time series to fit the forecaster.
+        X : pd.DataFrame or None, optional (default=None)
+            Exogenous variables for the forecasting model.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon for predictions
+
+        Returns
+        -------
+        self : MAPAForecaster
+            The fitted forecaster instance.
+        """
         y = check_series(y)
 
         self._y_cols = (
@@ -467,7 +492,20 @@ class MAPAForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh, X=None):
-        """Generate forecasts following MAPA methodology."""
+        """Generate forecasts based on the fitted MAPA forecaster.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon defining the steps ahead to predict.
+        X : pd.DataFrame or None, optional (default=None)
+            Exogenous variables for prediction.
+
+        Returns
+        -------
+        pd.DataFrame
+            Forecasted values for the specified forecasting horizon.
+        """
         fh = check_fh(fh)
         forecasts = []
 
@@ -656,7 +694,18 @@ class MAPAForecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
 
