@@ -478,16 +478,17 @@ def evaluate(
         - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
-        - y_train: (pd.Series) only present if see ``return_data=True``
+
+        - y_train: (pd.Series) only present if ``return_data=True``,
         train fold of the i-th split in ``cv``, used to fit/update the forecaster.
 
-        - y_pred: (pd.Series) present if see ``return_data=True``
+        - y_pred: (pd.Series) present if ``return_data=True``,
         forecasts from fitted forecaster for the i-th test fold indices of ``cv``.
 
-        - y_test: (pd.Series) present if see ``return_data=True``
+        - y_test: (pd.Series) present if ``return_data=True``,
         testing fold of the i-th split in ``cv``, used to compute the metric.
 
-        - fitted_forecaster: (BaseForecaster) present if see ``return_model=True``
+        - fitted_forecaster: (BaseForecaster) present if ``return_model=True``,
         fitted forecaster for the i-th split in ``cv``.
 
     Examples
