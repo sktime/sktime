@@ -165,13 +165,7 @@ EXCLUDED_TESTS = {
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
-    "MACNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "FCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "MACNNRegressor": [
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
@@ -323,7 +317,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFLinearForecaster",
         "LTSFNLinearForecaster",
         "LogTransformer",
-        "MACNNNetwork",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
