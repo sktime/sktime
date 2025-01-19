@@ -262,7 +262,6 @@ docs = [
   "sphinx-issues<6.0.0",
   "tabulate",
 ]
-
 tests = [
   "pytest>=7.4,<8.4",
   "pytest-randomly>=3.15,<3.17",
