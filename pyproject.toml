@@ -243,8 +243,6 @@ dev = [
   "pytest-timeout",
   "pytest-xdist",
   "wheel",
-  "networkx",
-  "ts2vg",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
@@ -263,8 +261,6 @@ docs = [
   "sphinx-gallery<0.19.0",
   "sphinx-issues<6.0.0",
   "tabulate",
-  "networkx",
-  "ts2vg",
 ]
 
 tests = [
