@@ -57,6 +57,16 @@ Creating a fork and cloning the repository - initial one time setup
        > upstream  https://github.com/sktime/sktime.git (fetch)
        > upstream  https://github.com/sktime/sktime.git (push)
 
+.. note::
+
+    Step 1 needs to be done once per GitHub account, and need to be repeated
+    only if you are using a second GitHub, account or if you are intentionally
+    resetting your fork.
+
+    Steps 2-4 need to be done once per local machine, and need to be repeated
+    only if you are working on a new machine, or a reset of your local setup,
+    e.g., after an operating system reinstall.
+
 
 Developing a feature - repeat for every new feature
 ---------------------------------------------------
