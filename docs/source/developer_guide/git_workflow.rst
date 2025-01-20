@@ -18,9 +18,6 @@ start contributing to ``sktime``.
 This is done every time you want to contribute a new feature.
 
 
-
-
-
 Creating a fork and cloning the repository - initial one time setup
 -------------------------------------------------------------------
 
