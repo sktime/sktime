@@ -13,9 +13,12 @@ The workflow consists of two main parts:
 * **Creating a fork and cloning the repository**: This section will help you set up your own forked copy of the ``sktime``
 repository on GitHub and a local copy of the forked repository on your machine. This needs to be done only once, when you
 start contributing to ``sktime``.
-* **Developing a feature**: This is the process of developing a new feature, e.g.,
-  a bugfix or new estimator.
-  This is done every time you want to contribute a new feature.
+
+* **Developing a feature**: This is the process of developing a new feature, e.g., a bugfix or new estimator.
+This is done every time you want to contribute a new feature.
+
+
+
 
 
 Creating a fork and cloning the repository - initial one time setup
@@ -139,6 +142,15 @@ Developing a feature - repeat for every new feature
     This will first update ``main`` branch of your fork with the latest changes from the
     ``main`` branch of the sktime repo, and then update your feature branch with those
     changes. If there are any merge conflicts, you will need to resolve them manually.
+
+.. note::
+
+    We strongly, emphatically, recommend to never use ``rebase`` for updating your
+    feature branch when contributing to ``sktime``.
+    ``rebase`` can lead to states that are very hard to recover from,
+    because it rewrites history. **Always use ``merge`` to update your feature branch.**
+    We squash all pull requests to a single commit on ``main``,
+    so the history of your feature branch is not important.
 
 
 Managing Branches - Advanced Guide
