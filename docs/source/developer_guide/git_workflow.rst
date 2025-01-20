@@ -60,7 +60,7 @@ Creating a fork and cloning the repository - initial one time setup
 .. note::
 
     Step 1 needs to be done once per GitHub account, and need to be repeated
-    only if you are using a second GitHub, account or if you are intentionally
+    only if you are using a second GitHub account, or if you are intentionally
     resetting your fork.
 
     Steps 2-4 need to be done once per local machine, and need to be repeated
