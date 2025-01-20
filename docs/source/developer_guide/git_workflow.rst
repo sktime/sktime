@@ -64,7 +64,7 @@ Creating a fork and cloning the repository - initial one time setup
     resetting your fork.
 
     Steps 2-4 need to be done once per local machine, and need to be repeated
-    only if you are working on a new machine, or a reset of your local setup,
+    only if you are working on a new machine, or after a reset of your local setup,
     e.g., after an operating system reinstall.
 
 
