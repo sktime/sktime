@@ -24,7 +24,7 @@ This is done every time you want to contribute a new feature.
     For example, you can use:
 
     * `GitHub Desktop <https://desktop.github.com/>`_ to clone the repository and manage remotes. This is the official GitHub GUI client and also integrates with your browser.
-    * `Visual Studio Code <https://code.visualstudio.com/>`_ with the Git extension to manage branches and commits.
+    * `Visual Studio Code <https://code.visualstudio.com/>`_, with suitable git extensions, to manage branches and commits.
     * `pycharm <https://www.jetbrains.com/pycharm/>`_ (native installation) to manage branches and commits.
 
     These solutions will carry out the same steps under the hood, but with a graphical interface.
