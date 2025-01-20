@@ -12,6 +12,7 @@ __author__ = ["mloning", "fkiraly"]
 import pkgutil
 import re
 from importlib import import_module
+from unittest.mock import patch
 
 import pytest
 
@@ -83,9 +84,7 @@ def is_soft_dep_missing_message(msg):
     missing_version_msg = "to be present in the python environment, with version"
     cond1 = missing_version_msg in msg
     # message if dependency is missing entirely
-    missing_dep_entirely_msg = (
-        "is a soft dependency and not included in the base sktime installation"
-    )
+    missing_dep_entirely_msg = "requires package"
     cond2 = missing_dep_entirely_msg in msg
     # special message for deep learning dependencies
     error_msg_dl = "required for deep learning"
@@ -325,3 +324,53 @@ def test_est_fit_without_modulenotfound(estimator):
             f'to the "python_dependencies" tag, and python version bounds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
+
+
+@patch("sktime.utils.dependencies._dependencies.sys")
+@pytest.mark.parametrize(
+    "mock_release_version, prereleases, expect_exception",
+    [
+        (True, True, False),
+        (True, False, True),
+        (False, False, False),
+        (False, True, False),
+    ],
+)
+def test_check_python_version(
+    mock_sys, mock_release_version, prereleases, expect_exception
+):
+    from sktime.base import BaseObject
+
+    if mock_release_version:
+        mock_sys.version = "3.8.1rc"
+    else:
+        mock_sys.version = "3.8.1"
+
+    class DummyObjectClass(BaseObject):
+        _tags = {
+            "python_version": ">=3.7.1",  # PEP 440 version specifier, e.g., ">=3.7"
+            "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+            "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        }
+        """Define dummy class to test set_tags."""
+
+    dummy_object_instance = DummyObjectClass()
+
+    try:
+        _check_python_version(dummy_object_instance, prereleases=prereleases)
+    except ModuleNotFoundError as exception:
+        expected_msg = (
+            f"{type(dummy_object_instance).__name__} requires python version "
+            f"to be {dummy_object_instance.get_tags()['python_version']}, "
+            f"but system python version is {mock_sys.version}. "
+            "This is due to the release candidate status of your system Python."
+        )
+
+        if not expect_exception or exception.msg != expected_msg:
+            # Throw Error since exception is not expected or has not the correct message
+            raise AssertionError(
+                "ModuleNotFoundError should be NOT raised by:",
+                f"\n\t - mock_release_version: {mock_release_version},",
+                f"\n\t - prereleases: {prereleases},",
+                f"\nERROR MESSAGE: {exception.msg}",
+            ) from exception
