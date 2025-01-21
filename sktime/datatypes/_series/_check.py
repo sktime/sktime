@@ -734,6 +734,34 @@ class SeriesXarray(ScitypeSeries):
 class SeriesDask(ScitypeSeries):
     """Data type: dask.DataFrame based specification of single time series.
 
+    Name: ``"dask_series"``
+
+    Short description:
+
+    A uni- or multivariate time series represented as a ``dask.DataFrame``,
+    with rows corresponding to time points and columns to variables.
+
+    Long description:
+
+    The ``"dask_series"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: dask.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be monotonic,
+      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+    * variables: columns of ``obj`` correspond to different variables.
+    * variable names: column names ``obj.columns``.
+    * time points: rows of ``obj`` correspond to different, distinct time points.
+    * time index: ``obj.index`` is interpreted as the time index.
+
+    Capabilities:
+
+    * can represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
