@@ -43,12 +43,12 @@ class RBFLayer(nn.Module):
         If None, centers are evenly spaced.
     gamma : float, optional (default=1.0)
         Parameter controlling the spread of the RBFs
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
-        optional (default="gaussian")
+    rbf_type : str, optional (default="gaussian")
         The type of RBF kernel to apply.
-        - "gaussian": :math:`\\exp(-\\gamma (t - c)^2)`
-        - "multiquadric": :math:`\\sqrt{1 + \\gamma (t - c)^2}`
-        - "inverse_multiquadric": :math:`\frac{1}{\\sqrt{1 + \\gamma (t - c)^2}}`
+
+        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
+        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`1 / \sqrt{1 + \gamma (t - c)^2}`
 
     """
 
@@ -122,15 +122,25 @@ class RBFNetwork(nn.Module):
         Centers points for the RBF layer
     gamma : float, optional (default=1.0)
         Scaling factor controlling the spread of the RBF layer.
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
-        optional (default="gaussian")
+    rbf_type : str, optional (default="gaussian")
         The type of RBF kernel to apply.
-        - "gaussian": :math:`\\exp(-\\gamma (t - c)^2)`
-        - "multiquadric": :math:`\\sqrt{1 + \\gamma (t - c)^2}`
-        - "inverse_multiquadric": :math:`\frac{1}{\\sqrt{1 + \\gamma (t - c)^2}}`
 
-    linear_layers : list of int, optional (default=[64, 32])
+        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
+        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`1 / \sqrt{1 + \gamma (t - c)^2}`
+    hidden_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer
+    mode : {"ar", "direct"}, optional (default="ar")
+        Mode of operation for the network:
+
+        - "ar": Outputs a single value for autoregressive forecasting.
+        - "direct": Outputs multiple values for direct forecasting.
+    activation : str, optional (default="relu")
+        Activation function to apply after each linear layer. Supported values are:
+        "relu", "leaky_relu", "elu", "selu", "tanh", "sigmoid", "gelu".
+    dropout_rate : float, optional (default=0.1)
+        Dropout rate applied after each hidden layer. A value of 0 disables dropout.
+
     """
 
     def __init__(
@@ -141,9 +151,13 @@ class RBFNetwork(nn.Module):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        linear_layers=[64, 32],
+        hidden_layers=[64, 32],
+        mode="ar",
+        activation="relu",
+        dropout_rate=0.1,
     ):
         super().__init__()
+        self.mode = mode
 
         self.rbf_layer = RBFLayer(
             in_features=input_size,
@@ -153,15 +167,59 @@ class RBFNetwork(nn.Module):
             rbf_type=rbf_type,
         )
 
+        activation_fn = self._get_activation_fn(activation)
+
         layers = []
         prev_size = hidden_size
 
-        for size in linear_layers:
-            layers.extend([nn.Linear(prev_size, size), nn.ReLU(), nn.Dropout(0.1)])
+        for size in hidden_layers:
+            layer_group = [nn.Linear(prev_size, size), activation_fn]
+
+            if dropout_rate > 0:
+                layer_group.append(nn.Dropout(dropout_rate))
+
+            layers.extend(layer_group)
             prev_size = size
 
-        layers.append(nn.Linear(prev_size, output_size))
+        if mode == "direct":
+            layers.append(nn.Linear(prev_size, output_size))
+        else:  # "ar" mode
+            layers.append(nn.Linear(prev_size, 1))
+
         self.sequential_layers = nn.Sequential(*layers)
+
+    def _get_activation_fn(self, activation_name):
+        """Get activation function by name.
+
+        Parameters
+        ----------
+        activation_name : str
+            Name of the activation function.
+
+        Returns
+        -------
+        nn.Module
+            PyTorch activation function module.
+
+        """
+        activation_fns = {
+            "relu": nn.ReLU(),
+            "leaky_relu": nn.LeakyReLU(),
+            "elu": nn.ELU(),
+            "selu": nn.SELU(),
+            "tanh": nn.Tanh(),
+            "sigmoid": nn.Sigmoid(),
+            "gelu": nn.GELU(),
+        }
+        activation_name = activation_name.lower()
+
+        if activation_name not in activation_fns:
+            raise ValueError(
+                f"Unsupported activation function: {activation_name}. "
+                f"Supported functions are: {list(activation_fns.keys())}"
+            )
+
+        return activation_fns[activation_name]
 
     def forward(self, x):
         """Forward pass through the network.
@@ -187,28 +245,30 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     higher-dimensional space, which is then used by neural network layers for
     forecasting.
 
-    The model structure is as follows:
+     Model Architecture:
+    -------------------
 
     1. Input layer:
-       - Takes in the input time series data of shape (batch_size, window_length)
+
+       - Takes in the input time series data
+
     2. RBF Layer:
+
        - Applies Radial Basis Function (RBF) transformation to the input features
        - Uses centers and gamma parameter to control the spread of the RBFs
        - Expands the input feature space into a higher-dimensional representation
-       - Output shape: (batch_size, hidden_size)
+
     3. Sequential layers:
-       - One or more fully connected linear layers
-       - Each linear layer uses the LazyLinear module, which initializes the weights
-         based on the input size
-       - ReLU activation is applied after each linear layer
-       - Dropout with a rate of 0.1 is applied after each linear layer
+
+       - One or more fully connected linear layer specified in `hidden_layers`.
+       - Non-linear activation (e.g., ReLU, GELU) applied after each layer.
+       - Dropout with specified rate applied after each layer.
        - The final linear layer produces the output prediction
-       - Output shape: (batch_size, 1)
 
     Parameters
     ----------
-    window_length : int
-        Length of the input sequence for each window.
+    window_length : int, optional (default=10)
+        Length of the input sequence for each sliding window.
     hidden_size : int, optional (default=32)
         Number of units in the RBF layer.
     batch_size : int, optional (default=32)
@@ -217,13 +277,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         Center points for RBF transformations.
     gamma : float, optional (default=1.0)
         Scaling factor controlling the spread of the RBF.
-    rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
-        optional (default="gaussian")
+    rbf_type : str, optional (default="gaussian")
         The type of RBF kernel to apply.
+
         - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
         - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
         - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
-    linear_layers : list of int, optional (default=[64, 32])
+    hidden_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer.
     optimizer : {"adam", "sgd", "rmsprop"}, optional (default="adam")
         Type of optimizer to use.
@@ -233,12 +293,21 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         Number of training epochs.
     stride : int, optional (default=1)
         Step size between windows.
-    criterion : {"mse", "l1", "poisson", "bce", "crossentropy"},
-        optional (default="mse")
+    criterion : str, optional (default="mse")
         Loss function to use during training.
     device : str, optional (default="cpu")
         Device to use for training and computation. Options are "cpu" or "cuda"
         for GPU computation if available.
+    mode : {"ar", "direct"}, optional (default="ar")
+        Forecasting mode:
+
+        - "ar": Autoregressive mode for one-step-ahead predictions.
+        - "direct": Direct mode for multi-step-ahead predictions.
+    activation : str, optional (default="relu")
+        Activation function to apply after each linear layer. Supported values are:
+        "relu", "leaky_relu", "elu", "selu", "tanh", "sigmoid", "gelu".
+    dropout_rate : float, optional (default=0.1)
+        Dropout rate applied after each hidden layer. A value of 0 disables dropout.
     """
 
     _tags = {
@@ -265,17 +334,18 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        linear_layers=[64, 32],
+        hidden_layers=[64, 32],
         optimizer="adam",
         lr=0.01,
         epochs=100,
         stride=1,
         criterion="mse",
         device="cpu",
+        mode="ar",
+        activation="relu",
+        dropout_rate=0.1,
     ):
         super().__init__()
-
-        self._check_torch_availability()
 
         self.window_length = window_length
         self.hidden_size = hidden_size
@@ -283,18 +353,22 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.centers = centers
         self.gamma = gamma
         self.rbf_type = rbf_type
-        self.linear_layers = linear_layers
+        self.hidden_layers = hidden_layers
         self.optimizer = optimizer
         self.lr = lr
         self.epochs = epochs
         self.stride = stride
         self.criterion = criterion
+        self.activation = activation
+        self.dropout_rate = dropout_rate
+        self.mode = mode
+        self._fh_length = None
 
-        if self._check_torch_availability():
-            pass
+        if self.mode not in ["ar", "direct"]:
+            raise ValueError("mode must be either 'ar' or 'direct'")
+
         self.device = device
         self._device = self._get_device(device)
-
         self.network = None
         self.scaler = StandardScaler()
 
@@ -312,26 +386,19 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             Initialized device object
         """
         if isinstance(device, str):
-            if device not in ["cpu", "cuda"]:
-                raise ValueError("device must be 'cpu' or 'cuda'")
+            if device not in ["cpu", "cuda", "mps"]:
+                raise ValueError("device must be 'cpu', 'cuda', or 'mps'")
             if device == "cuda" and not torch.cuda.is_available():
                 warn("CUDA is not available, using CPU instead", UserWarning)
                 device = "cpu"
+            if device == "mps" and not torch.backends.mps.is_available():
+                warn("MPS is not available, using CPU instead", UserWarning)
+                device = "cpu"
         return torch.device(device)
 
-    def _check_torch_availability(self):
-        """Check if torch is available and raise appropriate error if not."""
-        if not _check_soft_dependencies("torch", severity="none"):
-            raise ModuleNotFoundError(
-                "torch is a required optional dependency for RBFForecaster. "
-                "Please install torch to use this forecaster. "
-                "Instructions can be found at https://pytorch.org/get-started/locally/"
-            )
-        return True
-
-    def build_network(self, input_size):
+    def _build_network(self, input_size):
         """Build the RBF network architecture."""
-        output_size = 1
+        output_size = self._fh_length if self.mode == "direct" else 1
 
         self.network = RBFNetwork(
             input_size=input_size,
@@ -340,10 +407,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            linear_layers=self.linear_layers,
+            hidden_layers=self.hidden_layers,
+            mode=self.mode,
+            activation=self.activation,
+            dropout_rate=self.dropout_rate,
         ).to(self._device)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, fh, X=None):
         """Fit the RBF-based model to the provided time series data.
 
         Parameters
@@ -363,6 +433,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         else:
             y_scaled = self.scaler.fit_transform(y.values)
 
+        if self.mode == "direct":
+            self._fh_length = len(fh) if fh is not None else 1
+        else:
+            self._fh_length = 1
+
         X_train, y_train = self._create_windows(y_scaled)
         X_tensor = torch.FloatTensor(X_train).to(self._device)
         y_tensor = torch.FloatTensor(y_train).to(self._device)
@@ -371,7 +446,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
         input_size = self.window_length
-        self.build_network(input_size)
+        self._build_network(input_size)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -401,62 +476,93 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         self.network.eval()
         with torch.no_grad():
-            for i in range(n_steps):
+            if self.mode == "direct":
+                # Direct prediction: predict all steps at once
                 X_predict = torch.FloatTensor(current_window.reshape(1, -1)).to(
                     self._device
                 )
                 pred_scaled = self.network(X_predict).cpu().numpy()
-                pred = self.scaler.inverse_transform(pred_scaled.reshape(1, -1))
-                predictions[i] = pred.ravel()[0]
+                predictions = self.scaler.inverse_transform(
+                    pred_scaled.reshape(-1, 1)
+                ).ravel()
+            else:
+                # AR mode: iterate step by step
+                for i in range(n_steps):
+                    X_predict = torch.FloatTensor(current_window.reshape(1, -1)).to(
+                        self._device
+                    )
+                    pred_scaled = self.network(X_predict).cpu().numpy()
+                    pred = self.scaler.inverse_transform(pred_scaled.reshape(1, -1))
+                    predictions[i] = pred.ravel()[0]
 
-                current_window = np.roll(current_window, -1, axis=0)
-                current_window[-1] = pred_scaled.ravel()[0]
+                    current_window = np.roll(current_window, -1, axis=0)
+                    current_window[-1] = pred_scaled.ravel()[0]
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
 
     def _create_windows(self, y):
         """Generate sliding windows from the time series data.
 
+        This function generates sliding windows of input features and corresponding
+        targets for time series data. It supports two modes:
+
+          - "direct": Outputs windows with multiple target values for
+                direct multi-step prediction.
+          - "AR" (Auto-Regressive): Outputs windows with a single target
+                value for one-step prediction.
+
         Parameters
         ----------
-        y : np.array
-            Scaled time series data.
+        y : np.ndarray
+            The input time series array.
 
         Returns
         -------
-        X : np.array
-            Input windows for model training.
-        y_out : np.array
-            Target values for model training.
+        tuple of np.ndarray
+
+            - windows_list: An array containing input windows.
+            - targets_list: An array containing the corresponding target values.
         """
         if y.ndim == 1:
             y = y.reshape(-1, 1)
 
         n_samples = len(y)
+        windows_list = []
+        targets_list = []
 
-        n_windows = max(0, (n_samples - self.window_length)) // self.stride + 1
+        if self.mode == "direct":
+            # For direct mode, create windows with multiple target values
+            for i in range(
+                0, n_samples - self.window_length - self._fh_length + 1, self.stride
+            ):
+                window = y[i : (i + self.window_length)]
+                target = y[
+                    (i + self.window_length) : (
+                        i + self.window_length + self._fh_length
+                    )
+                ]
 
-        if n_windows < 1:
+                if len(target) == self._fh_length:
+                    windows_list.append(window.flatten())
+                    targets_list.append(target.flatten())
+        else:
+            # For AR mode, create windows with single target value
+            for i in range(0, n_samples - self.window_length, self.stride):
+                window = y[i : (i + self.window_length)]
+                target = y[i + self.window_length]
+
+                windows_list.append(window.flatten())
+                targets_list.append(target)
+
+        if not windows_list:
             raise ValueError(
                 f"Not enough samples to create windows. Need at least "
-                f"{self.window_length} samples, but got {n_samples}"
+                f"{self.window_length + (self._fh_length if self.mode == 'direct'
+                                         else 1)} "
+                f"samples, but got {n_samples}"
             )
 
-        X = np.zeros((n_windows, self.window_length))
-        y_out = np.zeros((n_windows, 1))
-
-        for i in range(n_windows):
-            start_idx = i * self.stride
-            end_idx = start_idx + self.window_length
-
-            if end_idx >= n_samples:
-                break
-
-            X[i] = y[start_idx:end_idx].flatten()
-
-            y_out[i] = y[end_idx]
-
-        return X[:i], y_out[:i]
+        return np.array(windows_list), np.array(targets_list)
 
     def _instantiate_optimizer(self):
         from torch.optim import SGD, Adam, RMSprop
@@ -497,12 +603,15 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "batch_size": 16,
                 "gamma": 1.0,
                 "rbf_type": "gaussian",
-                "linear_layers": [16],
+                "hidden_layers": [16],
                 "epochs": 3,
                 "lr": 0.01,
                 "stride": 1,
                 "optimizer": "adam",
                 "device": "cpu",
+                "mode": "ar",
+                "activation": "relu",
+                "dropout_rate": 0.1,
             },
             {
                 "window_length": 12,
@@ -510,13 +619,16 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "batch_size": 32,
                 "gamma": 0.5,
                 "rbf_type": "gaussian",
-                "linear_layers": [64, 32],
+                "hidden_layers": [64, 32],
                 "epochs": 10,
                 "lr": 0.005,
                 "stride": 2,
                 "optimizer": "adam",
                 "criterion": "mse",
                 "device": "cuda",
+                "mode": "direct",
+                "activation": "gelu",
+                "dropout_rate": 0.2,
             },
         ]
 
