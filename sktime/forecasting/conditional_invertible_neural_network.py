@@ -235,24 +235,13 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             # This step can fail if the optimization process does not converge,
             # often leading to a "RuntimeError: Optimal parameters not found".
             self.function.fit(rolling_mean.dropna())
-        except RuntimeError as e:
-            # Check for "Optimal parameters not found" in the error message.
-            if "Optimal parameters not found" in str(e):
-                # Raise a detailed RuntimeError , preserving traceback.
-                raise RuntimeError(
-                    "Curve fitting error. Please check the parameters and try again.\n"
-                    f"Window size: {self.window_size}\n"
-                    f"f_statistic: {self._f_statistic}\n"
-                    f"init_param_f_statistic: {self._init_param_f_statistic}"
-                ) from e  # Preserve original traceback
-
-            # If a different RuntimeError occurs, re-raise with traceback
-            raise
         except Exception as e:
-            # Catch all other errors and preserve traceback
+            # Raise a detailed RuntimeError, preserving traceback.
             raise RuntimeError(
-                "Unexpected error during data fitting. "
-                "Please check input data and parameters."
+                "Curve fitting error. Please check the parameters and try again.\n"
+                f"Window size: {self.window_size}\n"
+                f"f_statistic: {self._f_statistic}\n"
+                f"init_param_f_statistic: {self._init_param_f_statistic}"
             ) from e  # Preserve original traceback
 
         self.fourier_features = FourierFeatures(
