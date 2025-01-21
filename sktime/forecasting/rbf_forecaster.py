@@ -553,12 +553,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
                 windows_list.append(window.flatten())
                 targets_list.append(target)
-
+        fhlen = self._fh_length if self.mode == "direct" else 1
         if not windows_list:
             raise ValueError(
                 f"Not enough samples to create windows. Need at least "
-                f"{self.window_length + (self._fh_length if self.mode == 'direct'
-                                         else 1)} "
+                f"{self.window_length + fhlen} "
                 f"samples, but got {n_samples}"
             )
 
