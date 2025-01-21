@@ -2298,6 +2298,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    X_treatment : str, optional, one of "concurrent" (default) or "shifted"
+        determines the timestamps of X from which y(t+h) is predicted, for horizon h
+        "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
+        "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
     """
 
     _tags = {
@@ -2314,12 +2320,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window_length=10,
         impute_method="bfill",
         pooling="local",
+        X_treatment="concurrent",
     ):
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+        self.X_treatment = X_treatment
         super().__init__()
 
         warn(
@@ -2370,22 +2378,29 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         from sktime.transformations.series.lag import Lag
 
         impute_method = self.impute_method
+        X_treatment = self.X_treatment
 
-        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        # lagger_y_to_X_ will lag y and later concat X to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+
+        if isinstance(self.impute_method, Imputer):
+            lagger_y_to_X = lagger_y_to_X * impute_method
+        else:
+            if self.impute_method is not None:
+                lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lags=1, index_out="extend")
+        # column names will be kept for consistency
+        lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
 
+        # yt is the target forecast value
         yt = y.loc[notna_idx]
         Xtt = Xtt.loc[notna_idx]
 
@@ -2396,7 +2411,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             self.estimator_ = y.mean()
         else:
             if X is not None:
-                Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
+                # if X_treatment is shifted, lag X by 1 to obtain X(t+1) i.e. X_inner
+                X_inner = lag_plus.fit_transform(X) if X_treatment == "shifted" else X
+                Xtt = pd.concat([X_inner.loc[notna_idx], Xtt], axis=1)
 
             Xtt = prep_skl_df(Xtt)
             yt = prep_skl_df(yt)
@@ -2481,15 +2498,23 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
-            lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+            # column names will be kept for consistency
+            lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+
+            if isinstance(self.impute_method, Imputer):
+                lag_plus = lag_plus * self.impute_method
+            else:
+                if self.impute_method is not None:
+                    lag_plus = lag_plus * Imputer(method=self.impute_method)
 
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
             predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
+                # apply lag of 1 on X_pool to include predict_idx in X_pool
+                # otherwise it gives error
+                X_pool = lag_plus.fit_transform(X_pool)
                 Xtt_predrow = pd.concat(
                     [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
                 )
@@ -2533,9 +2558,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xt = lagger_y_to_X.transform(y)
 
-        lag_plus = Lag(lags=1, index_out="extend")
-        if self.impute_method is not None:
-            lag_plus = lag_plus * Imputer(method=self.impute_method)
+        # column names will be kept for consistency
+        lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+
+        if isinstance(self.impute_method, Imputer):
+            lag_plus = lag_plus * self.impute_method
+        else:
+            if self.impute_method is not None:
+                lag_plus = lag_plus * Imputer(method=self.impute_method)
 
         Xtt = lag_plus.fit_transform(Xt)
 
@@ -2546,7 +2576,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             )
 
         Xtt_predrows = prep_skl_df(Xtt_predrows)
-
         estimator = self.estimator_
 
         # if = no training indices in _fit, fill in y training mean
@@ -2582,7 +2611,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.transformations.series.impute import Imputer
+
         est = LinearRegression()
+        forecaster_imputer = Imputer(
+            method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
+        )
+
         params1 = {
             "estimator": est,
             "window_length": 3,
@@ -2592,9 +2628,23 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
+            "X_treatment": "shifted",
+        }
+        params3 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": forecaster_imputer,  # test imputation with forecaster
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": forecaster_imputer,
+            "X_treatment": "shifted",
         }
 
-        return [params1, params2]
+        return [params1, params2, params3, params4]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
