@@ -732,7 +732,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         "authors": ["PranavBhatP"],
         "maintainers": ["PranavBhatP"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts>=0.29", "darts>=0.29"],
+        "python_dependencies": ["darts>=0.29"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,

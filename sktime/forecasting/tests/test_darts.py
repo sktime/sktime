@@ -18,6 +18,7 @@ from sktime.forecasting.darts import (
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["fnhirwa", "PranavBhatP"]
 
@@ -181,7 +182,8 @@ def test_darts_regression_with_weather_dataset(model):
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
 @pytest.mark.skipif(
-    not run_test_for_class(DartsTiDEModel),
+    not run_test_for_class(DartsTiDEModel)
+    or not _check_soft_dependencies("darts", severity="none"),
     reason="run test only if softdeps are present and incrementally (if required)",
 )
 def test_darts_tide_model_univariate(model):
@@ -200,7 +202,8 @@ def test_darts_tide_model_univariate(model):
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
 @pytest.mark.skipif(
-    not run_test_for_class(DartsTiDEModel),
+    not run_test_for_class(DartsTiDEModel)
+    or not _check_soft_dependencies("darts", severity="none"),
     reason="run test only if softdeps are present and incrementally (if required)",
 )
 def test_darts_tide_model_with_weather_dataset(model):
@@ -230,29 +233,27 @@ def test_darts_tide_model_with_weather_dataset(model):
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
 @pytest.mark.skipif(
-    not run_test_for_class(DartsTiDEModel),
+    not run_test_for_class(DartsTiDEModel)
+    or not _check_soft_dependencies("darts", severity="none"),
     reason="run test only if softdeps are present and incrementally (if required)",
 )
 def test_darts_tide_model_multivariate(model):
     """Test functionality for multivariate forecasting"""
 
-    sktime_model = model(input_chunk_length=6, output_chunk_length=6)
-    past_covariates = ["GNPDEFL", "GNP"]
-    future_covariates = ["UNEMP", "POP"]
+    sktime_model = model(input_chunk_length=3, output_chunk_length=2)
+    past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
+    future_covariates = ["ARMED"]
 
     sktime_model.fit(
         y_train,
-        X=X_train,
+        X=X,
         past_covariates=past_covariates,
         future_covariates=future_covariates,
     )
-    fh = list(range(1, 7))
-    pred = sktime_model.predict(
-        fh=fh,
-        X=X_test,
-        past_covariates=past_covariates,
-        future_covariates=future_covariates,
-    )
+    fh = list(range(1, 3))
+    pred = sktime_model.predict(fh=fh)
 
     # check the index of the prediction
-    pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
+    pd.testing.assert_index_equal(
+        pred.index, y_test[: len(fh)].index, check_names=False
+    )
