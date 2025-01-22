@@ -624,7 +624,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "stride": 2,
                 "optimizer": "adam",
                 "criterion": "mse",
-                "device": "cuda",
+                "device": "cpu",
                 "mode": "direct",
                 "activation": "gelu",
                 "dropout_rate": 0.2,
