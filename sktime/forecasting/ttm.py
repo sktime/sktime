@@ -31,41 +31,101 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
     the notion of the first-ever "tiny" pre-trained models for Time-Series Forecasting.
 
+    **Zero-shot and Fine-tuning**:
+
+    This model is designed as a versatile foundation model, capable of both
+    zero-shot forecasting and fine-tuning on custom datasets.
+    The choice between zero-shot and fine-tuning is managed internally and
+    is determined by the final configuration used to initialize the model.
+
+    **Initialization Process**:
+
+    1. **Model Path**: The ``model_path`` parameter points to a local folder or
+       huggingface repo that contains both *configuration files*
+       and *pretrained weights*.
+
+    2. **Default Configuration**: The model loads its default configuration from the
+       *configuration files*.
+
+    3. **Custom Configuration**: Users can provide a custom configuration via the
+       ``config`` parameter during model initialization.
+
+    4. **Configuration Override**: If custom configuration is provided,
+       it overrides the default configuration.
+
+    5. **Forecasting Horizon**: If the forecasting horizon (``fh``) specified during
+       ``fit`` exceeds the default ``config.prediction_length``,
+       the configuration is updated to reflect ``max(fh)``.
+
+    6. **Model Architecture**: The final configuration is used to construct the
+       *model architecture*.
+
+    7. **Pretrained Weights**: *pretrained weights* are loded from the ``model_path``,
+       these weights are then aligned and loaded into the *model architechture*.
+
+    8. **Weight Alignment**: However sometimes, *pretrained weights* do not align with
+       the *model architechture*, because the config was changed which created a
+       *model architechture* of different size than the default one.
+       This causes some of the weights in *model architechture* to be reinitialized
+       randomly instead of using the pre-trained weights.
+
+    **Forecasting Modes**:
+
+    - **Zero-shot Forecasting**: When all the *pre-trained weights* are correctly
+      aligned with the *model architechture*, fine-tuing part is bypassed and
+      the model preforms zero-short forecasting.
+
+    - **Fine-tuning**: When not all the *pre-trained weights* are correctly aligned
+      with the *model architechture*, rather some weights are re-initialized,
+      these re-initialized weights are fine-tuned on the provided data.
+
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
         Path to the Huggingface model to use for forecasting.
         This can be either:
+
         - The name of a Huggingface repository (e.g., "ibm/TTM")
+
         - A local path to a folder containing model files in a format supported
           by transformers. In this case, ensure that the directory contains all
           necessary files (e.g., configuration, tokenizer, and model weights).
+
     revision: str, default="main"
         Revision of the model to use:
+
         - "main": For loading model with context_length of 512
           and prediction_length of 96.
+
         - "1024_96_v1": For loading model with context_length of 1024
           and prediction_length of 96.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
+
     config : dict, default={}
         Configuration to use for the model. See the ``transformers``
         documentation for details.
+
     training_args : dict, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
         for details.
         Note that the ``output_dir`` argument is required.
+
     compute_metrics : list, default=None
         List of metrics to compute during training. See ``transformers.Trainer``
         for details.
+
     callbacks : list, default=[]
         List of callbacks to use during training. See ``transformers.Trainer``
+
     broadcasting : bool, default=False
         if True, multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
+
     use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
         package ``tsfm_public.models.tinytimemixer``. This is useful if you
@@ -80,9 +140,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ----------
     .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
     .. [2] Ekambaram, V., Jati, A., Dayama, P., Mukherjee, S.,
-    Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
-    Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
-    Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
+           Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
+           Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
+           Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
     .. [3] https://github.com/ibm-granite/granite-tsfm/blob/main/notebooks/tutorial/ttm_tutorial.ipynb
     .. [4] https://github.com/ibm-granite/granite-tsfm/tree/ttm
 
@@ -92,6 +152,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> # performs zero-shot forecasting, as default config (unchanged) is used
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
@@ -118,7 +179,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # model is fine-tuned, as a config different from default is provided.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -304,18 +365,27 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
 
         train = PyTorchDataset(
             y=y_train,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
-        test = PyTorchDataset(
-            y=y_test,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
+
+        eval = None
+        if self.validation_split is not None:
+            eval = PyTorchDataset(
+                y=y_eval,
+                context_length=config.context_length,
+                prediction_length=config.prediction_length,
+            )
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
@@ -325,7 +395,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             model=self.model,
             args=training_args,
             train_dataset=train,
-            eval_dataset=test,
+            eval_dataset=eval,
             compute_metrics=self.compute_metrics,
             callbacks=self.callbacks,
         )
