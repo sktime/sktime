@@ -53,7 +53,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> x = data["c0", "c1"]
+    >>> x = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
