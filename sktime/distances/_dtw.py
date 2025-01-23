@@ -124,9 +124,7 @@ class _DtwDistance(NumbaDistance):
         )
         # Check LB_Keogh if enabled
         if lb_radius is not None:
-            lb_distance = _lb_keogh_distance(
-                x, y, _lb_keogh_envelope(y, x, lb_radius)
-            )
+            lb_distance = _lb_keogh_distance(x, y, _lb_keogh_envelope(y, x, lb_radius))
             if lb_distance > best_known_distance:
                 # Return a dummy callable if LB_Keogh distance exceeds the threshold
                 return lambda _x, _y: ([], np.inf, None)
@@ -138,8 +136,9 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix,
-                     best_known_distance=best_known_distance)
+                cost_matrix = _cost_matrix(
+                    _x, _y, _bounding_matrix, best_known_distance=best_known_distance
+                )
                 if np.isinf(cost_matrix).all():
                     return np.empty((0, 2), dtype=np.int64), np.inf, cost_matrix
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
@@ -152,8 +151,9 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix,
-                    best_known_distance=best_known_distance)
+                cost_matrix = _cost_matrix(
+                    _x, _y, _bounding_matrix, best_known_distance=best_known_distance
+                )
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
@@ -233,7 +233,8 @@ class _DtwDistance(NumbaDistance):
             _y: np.ndarray,
         ) -> float:
             cost_matrix = _cost_matrix(
-+                    _x, _y, _bounding_matrix, best_known_distance=best_known_distance)
+                +_x, _y, _bounding_matrix, best_known_distance=best_known_distance
+            )
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance

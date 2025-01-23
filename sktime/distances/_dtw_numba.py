@@ -69,6 +69,7 @@ def _cost_matrix(
 
     return cost_matrix[1:, 1:]
 
+
 @njit(cache=True)
 def _lb_keogh_envelope(x: np.ndarray, y: np.ndarray, radius: float) -> np.ndarray:
     """Compute the bounding envelope for LB_Keogh lower bound calculation.
