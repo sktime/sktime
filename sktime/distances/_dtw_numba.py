@@ -38,7 +38,7 @@ def _cost_matrix(
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
     best_known_distance : float, optional
-        Threshold for early abandoning; computation stops if exceeded.    
+        Threshold for early abandoning; computation stops if exceeded.
 
     Returns
     -------
@@ -65,7 +65,7 @@ def _cost_matrix(
                 min_row_cost = min(min_row_cost, cost_matrix[i + 1, j + 1])
     # Early abandoning: stop computation if the cumulative cost is too high
     if min_row_cost > best_known_distance:
-        return np.full_like(cost_matrix, np.inf)                
+        return np.full_like(cost_matrix, np.inf)
 
     return cost_matrix[1:, 1:]
 

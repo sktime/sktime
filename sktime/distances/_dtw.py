@@ -4,10 +4,14 @@ from typing import Any
 
 import numpy as np
 
+from sktime.distances._dtw_numba import (
+    _cost_matrix,
+    _lb_keogh_distance,
+    _lb_keogh_envelope,
+)
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistanceAlignmentPathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._dtw_numba import _cost_matrix, _lb_keogh_envelope, _lb_keogh_distance
 
 
 class _DtwDistance(NumbaDistance):
@@ -113,8 +117,6 @@ class _DtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._dtw_numba import _cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
@@ -136,7 +138,8 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, best_known_distance=best_known_distance)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix,
+                     best_known_distance=best_known_distance)
                 if np.isinf(cost_matrix).all():
                     return np.empty((0, 2), dtype=np.int64), np.inf, cost_matrix
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
@@ -149,7 +152,8 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix,best_known_distance=best_known_distance)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix,
+                    best_known_distance=best_known_distance)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
@@ -211,8 +215,6 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.distances._dtw_numba import _cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(

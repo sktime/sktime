@@ -94,7 +94,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     early_abandoning : bool, optional
             Enable early abandoning to terminate early when cost exceeds threshold.
         best_known_distance : float, optional
-            Best-known distance to use as the early abandoning threshold.        
+            Best-known distance to use as the early abandoning threshold.
     g: float, optional, default = 0. Used only if ``weighted=True``.
         Constant that controls the curvature (slope) of the function;
         that is, ``g`` controls the level of penalisation for the points
