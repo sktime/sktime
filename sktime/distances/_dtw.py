@@ -233,8 +233,6 @@ class _DtwDistance(NumbaDistance):
             _y: np.ndarray,
         ) -> float:
             cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, best_known_distance=best_known_distance)
-            if np.isinf(cost_matrix).all():
-                return np.inf
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance

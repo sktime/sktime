@@ -91,6 +91,10 @@ class DtwDist(BasePairwiseTransformerPanel):
         The matrix should be structured so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
         be infinity.
+    early_abandoning : bool, optional
+            Enable early abandoning to terminate early when cost exceeds threshold.
+        best_known_distance : float, optional
+            Best-known distance to use as the early abandoning threshold.        
     g: float, optional, default = 0. Used only if ``weighted=True``.
         Constant that controls the curvature (slope) of the function;
         that is, ``g`` controls the level of penalisation for the points
@@ -141,6 +145,8 @@ class DtwDist(BasePairwiseTransformerPanel):
         window: Union[int, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
+        early_abandoning: bool =False,
+        best_known_distance: float = np.inf,
         g: float = 0.0,
     ):
         self.weighted = weighted
@@ -148,6 +154,8 @@ class DtwDist(BasePairwiseTransformerPanel):
         self.window = window
         self.itakura_max_slope = itakura_max_slope
         self.bounding_matrix = bounding_matrix
+        self.early_abandoning = early_abandoning
+        self.best_known_distance = best_known_distance
         self.g = g
 
         if not weighted and not derivative:
@@ -199,7 +207,8 @@ class DtwDist(BasePairwiseTransformerPanel):
         """
         metric_key = self.metric_key
         kwargs = self.kwargs
-
+        if self.early_abandoning:
+            kwargs["best_known_distance"] = self.best_known_distance
         distmat = pairwise_distance(X, X2, metric=metric_key, **kwargs)
 
         return distmat
@@ -228,5 +237,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         params1 = {"weighted": True}
         params2 = {"derivative": True, "window": 0.2}
         params3 = {"weighted": True, "derivative": True, "g": 0.05}
+        params4 = {"early_abandoning": False}
+        params5 = {"early_abandoning": True, "best_known_distance": 10.0}
 
-        return [params0, params1, params2, params3]
+        return [params0, params1, params2, params3 , params4, params5]
