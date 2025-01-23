@@ -135,9 +135,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         )
         # this is used to inherit from the parent class
         super().__init__(
-            forecasters=forecasters,
-            backend=backend,
-            backend_params=backend_params
+            forecasters=forecasters, backend=backend, backend_params=backend_params
         )
         self.method = method
         self.regressor = regressor
