@@ -7,107 +7,92 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.registry import is_scitype
+from sktime.utils.parallel import parallelize
 
 
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
+    # *steps*attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_forecasters"
+    _steps_attr = "forecasters"
 
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # the fitted estimators should be in a different attribute, *steps*fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None, fc_alt=None):
-        if forecasters is not None:
-            self.forecasters = forecasters
-        self.n_jobs = n_jobs
+    def __init__(self, forecasters, backend="loky", backend_params=None):
+        self.forecasters = forecasters
+        self.forecasters_ = None
+        self.n_jobs = None
+        self.backend = backend
+        self.backend_params = backend_params
         super().__init__()
 
-        if fc_alt is not None:
-            fc = fc_alt
-        else:
-            fc = forecasters
+    def _check_forecasters(self):
+        if (
+            self.forecasters is None
+            or len(self.forecasters) == 0
+            or not isinstance(self.forecasters, list)
+        ):
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator) tuples."
+            )
 
-        if fc is not None:
-            self._initialize_forecaster_tuples(fc)
+        names, forecasters = zip(*self.forecasters)
+        # defined by MetaEstimatorMixin
+        self._check_names(names)
 
-    def _initialize_forecaster_tuples(self, forecasters):
-        """Initialize estimator tuple attributes, default.
+        has_estimator = any(est not in (None, "drop") for est in forecasters)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
 
-        Initializes:
+        for forecaster in forecasters:
+            if forecaster not in (None, "drop") and not isinstance(
+                forecaster, BaseForecaster
+            ):
+                raise ValueError(
+                    f"The estimator {forecaster.__class__.__name__} should be a "
+                    f"Forecaster."
+                )
 
-        - self.forecasters_ from self.forecasters, this is coerced to a list of tuples
-        - self._forecasters from self.forecasters, same as above but also cloned
-
-        Parameters
-        ----------
-        forecasters : list of estimators, or list of (name, estimator) pairs
-        """
-        self._forecasters = self._check_forecasters_init(forecasters)
-        self.forecasters_ = self._check_estimators(
-            forecasters, clone_ests=True, allow_empty=True
-        )
-
-    def _check_forecasters_init(self, estimators):
-        """Check Steps.
-
-        Parameters
-        ----------
-        estimators : list of estimators, or list of (name, estimator) pairs
-        allow_postproc : bool, optional, default=False
-            whether transformers after the forecaster are allowed
-
-        Returns
-        -------
-        step : list of (name, estimator) pairs, estimators are cloned (not references)
-            if estimators was a list of (str, estimator) tuples, then just cloned
-            if was a list of estimators, then str are generated via _get_estimator_names
-
-        Raises
-        ------
-        TypeError if names in ``estimators`` are not unique
-        TypeError if estimators in ``estimators`` are not all forecaster or transformer
-        TypeError if there is not exactly one forecaster in ``estimators``
-        TypeError if not allow_postproc and forecaster is not last estimator
-        """
-        self_name = type(self).__name__
-        if not isinstance(estimators, (list, tuple)):
-            estimators = [estimators]
-
-        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=False)
-
-        estimators = [x[1] for x in estimator_tuples]
-
-        # validate names
-        if not all([is_scitype(x, "forecaster") for x in estimators]):
-            raise TypeError(f"estimators passed to {self_name} must be forecasters")
-
-        return estimator_tuples
+        return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel."""
-        from joblib import Parallel, delayed
+        """Fit all forecasters using parallel processing."""
 
-        def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster."""
-            return forecaster.fit(y, X, fh)
+        def _fit_single_forecaster(forecaster, meta):
+            """Fit single forecaster with meta containing y, X, fh."""
+            return forecaster.clone().fit(y, X, fh)
 
-        self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
-            for forecaster in forecasters
+        self.forecasters_ = parallelize(
+            fun=_fit_single_forecaster,
+            iter=forecasters,
+            backend=self.backend,
+            backend_params=self.backend_params,
         )
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
+
+        def _predict_single_forecaster(forecaster, meta):
+            """Predict with single forecaster."""
+            return forecaster.predict(fh=fh, X=X)
+
+        return parallelize(
+            fun=_predict_single_forecaster,
+            iter=self.forecasters_,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.

@@ -9,6 +9,8 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -47,10 +49,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
-
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
-
         - feature-importance:
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
@@ -58,7 +58,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
-
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -71,10 +70,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        It is deprecated and will be removed in a future version. Use `backend` instead.
 
     Attributes
     ----------
@@ -121,16 +123,27 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         test_size=None,
         random_state=None,
         n_jobs=None,
+        backend="loky",
+        backend_params=None,
     ):
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "locky"  # use default backend if not set
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
+        super().__init__(
+            forecasters=forecasters,
+            backend=backend,
+            backend_params=backend_params,
+        )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
-
-        super().__init__(
-            forecasters=forecasters,
-            n_jobs=n_jobs,
-        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -148,7 +161,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        forecasters = [x[1] for x in self.forecasters_]
+        _, forecasters = self._check_forecasters()
 
         # get training data for meta-model
         if X is not None:
@@ -171,7 +184,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
-            # with y_test as endog/target
             self.regressor_.fit(X=X_meta, y=y_test)
 
             # check if regressor is a sklearn.Pipeline
@@ -283,15 +295,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
-
         * (str, estimator) tuples: the string is a name for the estimator.
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
-
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+        the backend will be set to "loky".
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        It is deprecated and will be removed in a future version. Use `backend` instead.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
@@ -331,32 +345,43 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    # this must be an iterable of (name: str, estimator, ...)
+    # tuples for the default
+
     _steps_attr = "_forecasters"
 
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    # this must be an iterable of (name: str, estimator, ...)
+    # tuples for the default
+
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
+    def __init__(
+        self,
+        forecasters,
+        n_jobs=None,
+        backend="loky",
+        backend_params=None,
+        aggfunc="mean",
+        weights=None,
+    ):
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "loky"
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
         self.aggfunc = aggfunc
         self.weights = weights
+        super().__init__(
+            forecasters=forecasters, backend=backend, backend_params=backend_params
+        )
 
-        fc = self._parse_fc_multiplicities(forecasters)
-
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs, fc_alt=fc)
-
-        # the ensemble requires fh in fit
-        # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
-
-    def _parse_fc_multiplicities(self, forecasters):
-        """Parse forecasters with multiplicities.
-
-        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
-        """
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -373,7 +398,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                     "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
                 raise ValueError(msg)
-        return fc
+
+        self._forecasters = self._check_estimators(
+            fc, clone_ests=False, allow_empty=True
+        )
+        self.forecasters_ = self._check_estimators(
+            fc, clone_ests=True, allow_empty=True
+        )
+
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -453,6 +488,23 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         params2 = {"forecasters": [("f", FORECASTER, 2)]}
 
         return [params0, params1, params2]
+
+
+# Helper functions remain unchanged
+def _get_weights(regressor):
+    if hasattr(regressor, "feature_importances_"):
+        weights = regressor.feature_importances_
+    elif hasattr(regressor, "coef_"):
+        weights = regressor.coef_
+    else:
+        raise NotImplementedError(
+            """The given regressor is not supported. It must have
+            either an attribute feature_importances_ or coef_ after fitting."""
+        )
+    # avoid ZeroDivisionError if all weights are 0
+    if weights.sum() == 0:
+        weights += 1
+    return list(weights)
 
 
 def _aggregate(y, aggfunc, weights):
