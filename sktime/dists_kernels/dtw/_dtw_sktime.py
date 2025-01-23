@@ -145,7 +145,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         window: Union[int, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
-        early_abandoning: bool =False,
+        early_abandoning: bool = False,
         best_known_distance: float = np.inf,
         g: float = 0.0,
     ):
@@ -240,4 +240,4 @@ class DtwDist(BasePairwiseTransformerPanel):
         params4 = {"early_abandoning": False}
         params5 = {"early_abandoning": True, "best_known_distance": 10.0}
 
-        return [params0, params1, params2, params3 , params4, params5]
+        return [params0, params1, params2, params3, params4, params5]
