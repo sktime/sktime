@@ -737,7 +737,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
-        "capability: insample": True,
+        "capability:insample": True,
         "capability:pred_int": True,
     }
 
@@ -780,7 +780,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
             use_static_covariates=use_static_covariates,
         )
 
-    def _create_forecaster(self="DartsTiDEModel"):
+    def _create_forecaster(self: "DartsTiDEModel"):
         """Create and initialize a TiDE forecaster instance."""
         from darts.models import TiDEModel
 
