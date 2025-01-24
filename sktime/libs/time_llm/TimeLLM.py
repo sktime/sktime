@@ -7,6 +7,18 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
+else:
+
+    class torch:
+        """Dummy class if torch is unavailable."""
+
+        bfloat16 = None
+
+    class nn:
+        """Dummy class if nn is unavailable."""
+
+        bfloat16 = None
+
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
@@ -111,7 +123,7 @@ class Model(nn.Module):
                 self.llm_model = GPT2Model.from_pretrained(
                     "openai-community/gpt2",
                     trust_remote_code=True,
-                    local_files_only=True,
+                    local_files_only=False,
                     config=self.gpt2_config,
                 )
             except OSError:  # downloads model from HF is not already done
@@ -127,7 +139,7 @@ class Model(nn.Module):
                 self.tokenizer = GPT2Tokenizer.from_pretrained(
                     "openai-community/gpt2",
                     trust_remote_code=True,
-                    local_files_only=True,
+                    local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Atempting to download them..")

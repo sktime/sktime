@@ -15,6 +15,12 @@ from sktime.utils.validation.forecasting import check_X
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+else:
+
+    class torch:
+        """Dummy class if torch is unavailable."""
+
+        bfloat16 = None
 
 
 class TimeLLMForecaster(BaseForecaster):
@@ -87,7 +93,7 @@ class TimeLLMForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
     }
 
