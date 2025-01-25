@@ -261,7 +261,10 @@ class BaseKalmanFilter:
            https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
     """
 
-    _tags = {"authors": ["NoaWegerhoff", "lielleravid"], "maintainers": ["NoaWegerhoff"]}
+    _tags = {
+        "authors": ["NoaWegerhoff", "lielleravid"],
+        "maintainers": ["NoaWegerhoff"],
+    }
 
     def __init__(
         self,
@@ -536,7 +539,13 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["duckworthd", "NoaWegerhoff", "lielleravid", "mbalatsko", "gliptak"],
+        "authors": [
+            "duckworthd",
+            "NoaWegerhoff",
+            "lielleravid",
+            "mbalatsko",
+            "gliptak",
+        ],
         # duckworthd for the original pykalman package (abandoned later)
         # mbalatsko, gliptak for fixes and updates
         # NoaWegerhoff, lielleravid for the sktime adapter
