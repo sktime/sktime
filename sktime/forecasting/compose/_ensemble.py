@@ -168,7 +168,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 return self._fit_forecaster(forecaster, y, X, fh)
 
             parallelize(
-                func=_fit_single_forecaster,
+                fun=_fit_single_forecaster,
                 iter=forecasters,
                 backend=self.backend,
                 backend_params=self.backend_params,
@@ -254,7 +254,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
             y_pred_df = pd.concat(
                 parallelize(
-                    func=_predict_single_forecaster,
+                    fun=_predict_single_forecaster,
                     iter=self.forecasters_,
                     backend=self.backend,
                     backend_params=self.backend_params,
