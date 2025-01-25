@@ -81,7 +81,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             )
 
         self.forecasters_ = parallelize(
-            iterable=[forecaster.clone() for forecaster in forecasters],
+            iter=[forecaster.clone() for forecaster in forecasters],
             func=_fit_forecaster,
             backend=self.backend,
             backend_params=self.backend_params,
