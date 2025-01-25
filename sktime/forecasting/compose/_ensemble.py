@@ -170,6 +170,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             parallelize(
                 fun=_fit_single_forecaster,
                 iter=forecasters,
+                meta=None,
                 backend=self.backend,
                 backend_params=self.backend_params,
             )(y, X, fh)
@@ -256,6 +257,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 parallelize(
                     fun=_predict_single_forecaster,
                     iter=self.forecasters_,
+                    meta=None,
                     backend=self.backend,
                     backend_params=self.backend_params,
                 )(fh=fh, X=X),
