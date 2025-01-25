@@ -33,6 +33,9 @@ class HFTransformersForecaster(BaseForecaster):
     model_path : str
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
+    model : transformers.PreTrainedModel, optional
+        An instantiated Hugging Face model object. If provided, this will override
+        `model_path` and use the passed model.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
@@ -144,7 +147,8 @@ class HFTransformersForecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path: str,
+        model_path: str = None,
+        model=None,
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
@@ -156,6 +160,7 @@ class HFTransformersForecaster(BaseForecaster):
     ):
         super().__init__()
         self.model_path = model_path
+        self.model = model
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
@@ -173,8 +178,15 @@ class HFTransformersForecaster(BaseForecaster):
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, Trainer, TrainingArguments
 
-        # Load model and extract config
-        config = AutoConfig.from_pretrained(self.model_path)
+        # Validate model input
+        if self.model is None and self.model_path is None:
+            raise ValueError("Either `model` or `model_path` must be provided.")
+
+        if self.model is None:
+            config = self.model.config
+        else:
+            # Load model and extract config
+            config = AutoConfig.from_pretrained(self.model_path)
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -195,48 +207,52 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
         config = config.from_dict(_config)
-        import transformers
 
-        prediction_model_class = None
-        if hasattr(config, "architectures") and config.architectures is not None:
-            prediction_model_class = config.architectures[0]
-        elif hasattr(config, "model_type"):
-            prediction_model_class = (
-                "".join(x.capitalize() for x in config.model_type.lower().split("_"))
-                + "ForPrediction"
+        if self.model is None:
+            import transformers
+
+            prediction_model_class = None
+            if hasattr(config, "architectures") and config.architectures is not None:
+                prediction_model_class = config.architectures[0]
+            elif hasattr(config, "model_type"):
+                prediction_model_class = (
+                    "".join(
+                        x.capitalize() for x in config.model_type.lower().split("_")
+                    )
+                    + "ForPrediction"
+                )
+            else:
+                raise ValueError(
+                    "The model type is not inferable from the config."
+                    "Thus, the model cannot be loaded."
+                )
+            # Load model with the updated config
+            self.model, info = getattr(
+                transformers, prediction_model_class
+            ).from_pretrained(
+                self.model_path,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
             )
-        else:
-            raise ValueError(
-                "The model type is not inferable from the config."
-                "Thus, the model cannot be loaded."
-            )
-        # Load model with the updated config
-        self.model, info = getattr(
-            transformers, prediction_model_class
-        ).from_pretrained(
-            self.model_path,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # Clamp all loaded parameters to avoid NaNs due to large values
-        for param in self.model.model.parameters():
-            param.clamp_(-1000, 1000)
+            # Clamp all loaded parameters to avoid NaNs due to large values
+            for param in self.model.model.parameters():
+                param.clamp_(-1000, 1000)
 
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight = torch.nn.Parameter(
-                _model.weight.masked_fill(_model.weight.isnan(), 0.001),
-                requires_grad=True,
-            )
+            # Reinitialize the weights of all layers that have mismatched sizes
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight = torch.nn.Parameter(
+                    _model.weight.masked_fill(_model.weight.isnan(), 0.001),
+                    requires_grad=True,
+                )
 
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
