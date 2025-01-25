@@ -715,7 +715,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         Dropout probability to be used in fully connected layers.
     use_static_covariates : bool, optional (default=True)
         Whether to use static covariates
-    **kwargs
+    kwargs: dict, optional (default=True`)
         Optional arguments to initialize the pytorch_lightning.Module,
         pytorch_lightning.Trainer.
 
@@ -756,7 +756,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
-        **kwargs,
+        kwargs: Optional[dict] = None,
     ):
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length

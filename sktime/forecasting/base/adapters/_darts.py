@@ -675,7 +675,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         output_chunk_shift steps after the end of the target series. If
         output_chunk_shift is set, the model cannot generate autoregressive predictions
         (n > output_chunk_length).
-    use_static_covariates : bool, optional (default=True)
+    use_static_covariates : bool (default=True)
         Whether to incorporate static covariates in the model training and prediction.
     """
 
@@ -697,7 +697,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         input_chunk_length: int,
         output_chunk_length: int,
         output_chunk_shift: int = 0,
-        use_static_covariates: Optional[bool] = True,
+        use_static_covariates: bool = True,
     ):
         super().__init__()
 
@@ -713,6 +713,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         target: Optional[Union[pd.Series, pd.DataFrame]],
         past_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
         future_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
+        sample_weight: Optional[Union[pd.Series, pd.DataFrame, str]] = None,
         max_samples_per_ts: Optional[int] = None,
     ):
         """Build training dataset for Darts model.
@@ -724,10 +725,20 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         ----------
         target: Union[pd.Series, pd.DataFrame]
             Target time series data
-        past_covariates: [Union[pd.Series, pd.DataFrame], optional (default=None)
-            Past covariates values
-        future_covariates: Union[pd.Series, pd.DataFrame], optional (default=None)
-            Future covariates values
+        past_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of past covariates time series. These are variables that are
+            only known for past time steps.
+        future_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of future covariates time series. These are variables that
+            are known for future time steps (e.g., holidays, scheduled events).
+        sample_weight: Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            Optional sample weights to adjust the importance of individual samples in
+            the dataset. Weights can be provided as a `pd.Series` or `pd.DataFrame`,
+            matching the target series' structure. Alternatively, a string value can
+            specify the weighting schemes:
+            - `"linear"`: Weights decrease linearly for older observations.
+            - `"exponential"`: Weights decrase exponentially for older observations.
+            If no weights are specified, all samples are treated equally.
         max_samples_per_ts: Optional[int], optional (default=None)
             Maximum number of samples per time series.
 
@@ -744,6 +755,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             past_covariates = self.convert_to_timeseries(past_covariates)
         if future_covariates is not None:
             future_covariates = self.convert_to_timeseries(future_covariates)
+        if sample_weight is not None and not isinstance(sample_weight, str):
+            sample_weight = self.convert_to_timeseries(sample_weight)
 
         return MixedCovariatesSequentialDataset(
             target_series=[target_ts],
@@ -756,7 +769,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             output_chunk_shift=self.output_chunk_shift,
             max_samples_per_ts=max_samples_per_ts,
             use_static_covariates=self.use_static_covariates,
-            sample_weight=None,
+            sample_weight=sample_weight,
         )
 
     def _build_inference_dataset(
@@ -931,9 +944,13 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to predict.
         past_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as past covariates.
+            Names of columns in X to be used as past covariates. Past covariates
+            are a sequence of past covariates time series. These are variables that are
+            only known for past time steps.
         future_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as future covariates.
+            Names of columns in X to be used as future covariates, which are a
+            sequence of future covariates time series. These are variables that
+            are known for future time steps (e.g., holidays, scheduled events).
 
         Returns
         -------

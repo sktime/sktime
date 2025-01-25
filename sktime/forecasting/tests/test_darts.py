@@ -35,6 +35,9 @@ model_kwargs = {
     DartsLinearRegressionModel: {
         "fit_intercept": True,
     },
+    DartsTiDEModel: {
+        "n_epochs": 10,
+    },
 }
 
 # for mapping import of darts regression models
@@ -189,7 +192,8 @@ def test_darts_regression_with_weather_dataset(model):
 def test_darts_tide_model_univariate(model):
     """Test functionality for univariate forecasting"""
 
-    sktime_model = model(input_chunk_length=6, output_chunk_length=6, n_epochs=10)
+    kwargs = model_kwargs.get(model, {})
+    sktime_model = model(input_chunk_length=6, output_chunk_length=6, kwargs=kwargs)
 
     sktime_model.fit(y_train)
     y_pred = sktime_model.predict(fh=[1, 2, 3, 4])
@@ -207,8 +211,9 @@ def test_darts_tide_model_with_weather_dataset(model):
     from darts.datasets import WeatherDataset
     from darts.models import TiDEModel
 
+    kwargs = model_kwargs.get(model, {})
     darts_model = TiDEModel(
-        input_chunk_length=6, output_chunk_length=6, hidden_size=16, n_epochs=10
+        input_chunk_length=6, output_chunk_length=6, hidden_size=16, **kwargs
     )
 
     weather_data = WeatherDataset()
@@ -220,7 +225,7 @@ def test_darts_tide_model_with_weather_dataset(model):
     darts_pred = darts_model.predict(6).pd_series()
     assert isinstance(target_df, pd.Series)
     sktime_model = model(
-        input_chunk_length=6, output_chunk_length=6, hidden_size=16, n_epochs=10
+        input_chunk_length=6, output_chunk_length=6, hidden_size=16, kwargs=kwargs
     )
 
     sktime_model.fit(target_df)
@@ -241,7 +246,8 @@ def test_darts_tide_model_with_weather_dataset(model):
 def test_darts_tide_model_multivariate(model):
     """Test functionality for multivariate forecasting"""
 
-    sktime_model = model(input_chunk_length=3, output_chunk_length=2, n_epochs=10)
+    kwargs = model_kwargs.get(model, {})
+    sktime_model = model(input_chunk_length=3, output_chunk_length=2, kwargs=kwargs)
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
     future_covariates = ["ARMED"]
 
