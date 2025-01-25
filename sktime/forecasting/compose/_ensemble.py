@@ -15,11 +15,11 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
-from utils.parallel import Parallel, delayed
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.parallel import parallelize
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -163,14 +163,16 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         _, forecasters = self._check_forecasters()
 
         if self.backend == "utils":
-            # parallelize the fitting of the forecasters
-            n_jobs = self.backend_params.get(
-                "n_jobs", -1
-            )  # default to -1 (use all processors)
-            Parallel(n_jobs=n_jobs)(
-                delayed(self._fit_forecaster)(forecaster, y, X, fh)
-                for forecaster in forecasters
-            )
+            # Use sktime.utils.parallel
+            def _fit_single_forecaster(forecaster, y, X, fh):
+                return self._fit_forecaster(forecaster, y, X, fh)
+
+            parallelize(
+                func=_fit_single_forecaster,
+                iterable=forecasters,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )(y, X, fh)
 
         else:
             # if backend in not utils, fall back to the default implementation
@@ -246,16 +248,20 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         # return the predictions of the ensemble models
         if self.backend == "utils":
-            n_jobs = self.backend_params.get(
-                "n_jobs", -1
-            )  # default to -1 (use all processors)
+            # Use sktime.utils.parallel
+            def _predict_single_forecaster(forecaster, fh, X):
+                return self._predict_forecaster(forecaster, fh, X)
+
             y_pred_df = pd.concat(
-                Parallel(n_jobs=n_jobs)(
-                    delayed(self._predict_forecaster)(forecaster, fh, X)
-                    for forecaster in self.forecasters_
-                ),
+                parallelize(
+                    func=_predict_single_forecaster,
+                    iterable=self.forecasters_,
+                    backend=self.backend,
+                    backend_params=self.backend_params,
+                )(fh=fh, X=X),
                 axis=1,
             )
+
         else:
             # if backend is not equal to utils, fallback to sequential prediction
             y_pred_df = pd.concat(
