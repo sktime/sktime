@@ -24,12 +24,10 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None
-        self.backend = backend
-        self.backend_params = backend_params if backend_params is not None else {}
-        self.n_jobs = n_jobs  # Retained for backward compatibility
+        self.n_jobs = n_jobs
         super().__init__()
 
     def _check_forecasters(self):
@@ -65,28 +63,16 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
-        from sktime.utils.parallel import parallelize
+        from joblib import Parallel, delayed
 
         def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
-        if self.n_jobs is not None:
-            import warnings
-
-            warnings.warn(
-                "`n_jobs` is deprecated and will be removed in a future release. "
-                "Please use `backend` and `backend_params` instead.",
-                FutureWarning,
-            )
-
-        self.forecasters_ = parallelize(
-            fun=_fit_forecaster,
-            iter=[forecaster.clone() for forecaster in forecasters],
-            meta=None,
-            backend=self.backend,
-            backend_params=self.backend_params,
-        )(y, X, fh)
+        self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
+            for forecaster in forecasters
+        )
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
