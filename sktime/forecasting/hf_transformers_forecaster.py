@@ -35,7 +35,9 @@ class HFTransformersForecaster(BaseForecaster):
         Informer, Autoformer, and TimeSeriesTransformer are supported.
     model : transformers.PreTrainedModel, optional
         An instantiated Hugging Face model object. If provided, this will override
-        `model_path` and use the passed model.
+        the `model_path` and `config` parameters, and the passed model will be used
+        directly for forecasting. In this case, the `model_path` and `config` should
+        be set to None, as they are not needed.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
@@ -185,8 +187,12 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Extract config and info for the provided model
         if self.model is not None:
-            config = self.model.config
-            # Use the pre-initialized info attribute
+            if self.model_path is not None or self.config is not None:
+                raise ValueError(
+                    "If `model` is given, both `model_path` and `config` must be None."
+                )
+            else:
+                self.info = getattr(self.model, "info", {"mismatched_keys": []})
         else:
             # Load model and extract config
             config = AutoConfig.from_pretrained(self.model_path)
@@ -283,13 +289,19 @@ class HFTransformersForecaster(BaseForecaster):
                 "peft",
                 severity="error",
                 msg=(
-                    "PEFT package is required but not installed. Install it using "
-                    "`pip install peft`."
+                    "PEFT package is required but not installed. Install using:\n"
+                    "`pip install peft`\n\n"
+                    "Additionally, if you want to all optional dependencies for sktime,"
+                    "run:\n"
+                    "`pip install sktime[all_extras]`.\n\n"
+                    "For more details on PEFT, visit the official documentation at:\n"
+                    "https://huggingface.co/docs/peft."
                 ),
             ):
                 from peft import get_peft_model
 
-                self.model = get_peft_model(self.model, self.peft_config)
+                peft_config = deepcopy(self.peft_config)
+                self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
