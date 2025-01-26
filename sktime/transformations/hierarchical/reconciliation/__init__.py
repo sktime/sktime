@@ -3,7 +3,7 @@
 from .bottom_up import BottomUpReconciler
 from .forecast_proportions import ForecastProportions
 from .middle_out import MiddleOutReconciler
-from .optimal import FullHierarchyReconciler
+from .optimal import FullHierarchyReconciler, NonNegativeFullHierarchyReconciler
 from .topdown_share import TopdownShareReconciler
 
 __all__ = [
@@ -11,5 +11,6 @@ __all__ = [
     "TopdownShareReconciler",
     "BottomUpReconciler",
     "FullHierarchyReconciler",
+    "NonNegativeFullHierarchyReconciler",
     "ForecastProportions",
 ]

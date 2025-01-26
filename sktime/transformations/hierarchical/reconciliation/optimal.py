@@ -9,12 +9,12 @@ from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_hierarchical_dataframe,
 )
 
-# TODO(felipeangelimvieira): Compute non-negative reconciliation
 # TODO(felipeangelimvieira): Immutable series reconciliation: should this be
 # a separate class?
 
 __all__ = [
     "FullHierarchyReconciler",
+    "NonNegativeFullHierarchyReconciler",
 ]
 
 
@@ -62,6 +62,18 @@ class FullHierarchyReconciler(BaseTransformer):
     ----------
     error_covariance_matrix : pd.DataFrame, default=None
         Error covariance matrix. If None, it is assumed to be the identity matrix.
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ...     FullHierarchyReconciler)
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = _make_hierarchical()
+    >>> reconciler = NonNegativeFullHierarchyReconciler()
+    >>> pipe = reconciler * ExponentialSmoothing()
+    >>> pipe.fit(y)
+    >>> y_pred = pipe.predict()
 
     """
 
@@ -119,6 +131,20 @@ class FullHierarchyReconciler(BaseTransformer):
         if self._is_not_hierarchical:
             return X
 
+        X_arr, M, _, _, _, Pt = self._get_arrays(X)
+
+        # Reconciled forecasts
+        Y = Pt @ M @ X_arr
+        Y = np.moveaxis(Y, 0, 1).reshape((-1, 1))
+        df = pd.DataFrame(
+            Y,
+            index=X.index,
+            columns=X.columns,
+        )
+
+        return df
+
+    def _get_arrays(self, X):
         X = X.sort_index()
 
         # Convert to ndarray (T, N_SERIES, 1)
@@ -163,25 +189,92 @@ class FullHierarchyReconciler(BaseTransformer):
 
         # Expand level 0 with X_arr.shape[0] (timepoints)
         M = np.repeat(M[np.newaxis, :, :], X_arr.shape[0], axis=0)
+        return X_arr, M, S, E, P, Pt
+
+
+class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
+    """
+    Apply non-negative reconciliation to hierarchical time series.
+
+    Uses all the forecasts to obtain a reconciled forecast, avoiding
+    negative values.
+
+    The optimization problem tries to find the bottom forecasts $b$ which are
+    non-negative and minimize the distance between the base forecasts and the
+    reconciled forecasts, given the invertion of error covariance matrix $E$ as
+    a weighting matrix.
+
+    Parameters
+    ----------
+    error_covariance_matrix : pd.DataFrame, default=None
+        Error covariance matrix. If None, it is assumed to be
+        the identity matrix
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ...     NonNegativeFullHierarchyReconciler)
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = _make_hierarchical()
+    >>> reconciler = NonNegativeFullHierarchyReconciler()
+    >>> pipe = reconciler * ExponentialSmoothing()
+    >>> pipe.fit(y)
+    >>> y_pred = pipe.predict()
+
+
+    """
+
+    _tags = {
+        "python_dependencies": ["cvxpy"],
+        **_COMMON_TAGS,
+    }
+
+    def _inverse_transform(self, X, y):
+        if self._is_not_hierarchical:
+            return X
+
+        import cvxpy as cp
+
+        X_arr, M, S, E, P, Pt = self._get_arrays(X)
+
+        X_opt = np.zeros_like(X_arr)
+
+        # We want to find bottom forecasts b so that
+        # we minimize
+        # ||X - S[0]b||_E-1^2
+
+        Einv = np.linalg.inv(E)
+        for t in range(X_arr.shape[0]):
+            x_t = cp.Variable((self._n_bottom, 1), nonneg=True)
+
+            # Base forecast for time t
+            x_base_t = X_arr[t]
+
+            # Define the objective
+            # If Q is the weighting matrix, use quad_form(x_t - x_base_t, Q).
+            objective = cp.Minimize(cp.quad_form(x_base_t - S @ x_t, Einv))
+
+            # Example constraints: x_t >= 0
+            # Add your hierarchical constraints if necessary
+            constraints = [x_t >= 0]
+
+            # Form and solve the problem
+            prob = cp.Problem(objective, constraints)
+            prob.solve(solver=cp.OSQP, verbose=False)
+
+            # Store the optimized result
+            X_opt[t] = S @ x_t.value
 
         # Reconciled forecasts
-        Y = Pt @ M @ X_arr
+        Y = Pt @ X_opt
         Y = np.moveaxis(Y, 0, 1).reshape((-1, 1))
         df = pd.DataFrame(
             Y,
             index=X.index,
             columns=X.columns,
         )
-
         return df
-
-
-# class NonNegativeHierarchyReconciler(BaseTransformer):
-#    _tags = _COMMON_TAGS
-#
-#    def __init__(self, error_covariance_matrix: pd.DataFrame = None):
-#        self.error_covariance_matrix = error_covariance_matrix
-#        super().__init__()
 
 
 def _create_summing_matrix_from_index(hier_index):

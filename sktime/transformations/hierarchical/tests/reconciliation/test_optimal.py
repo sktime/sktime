@@ -3,8 +3,10 @@ import pandas as pd
 import pytest
 
 from sktime.transformations.hierarchical.reconciliation.optimal import (
+    NonNegativeFullHierarchyReconciler,
     _create_summing_matrix_from_index,
 )
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 
 @pytest.fixture
@@ -86,3 +88,22 @@ def test_create_summing_matrix_from_index(small_hier_index):
 
     # If all assertions pass, the test passes
     print("All tests passed for create_summing_matrix_from_index!")
+
+
+@pytest.mark.parametrize("hierarchical_levels", [(2, 4), (3, 3), (2, 2, 2)])
+def test_nonnegative_reconciliation(hierarchical_levels):
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchical_levels, max_timepoints=12, min_timepoints=12
+    )
+
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    y = Aggregator().fit_transform(y)
+    y *= 0
+    # Add noise
+    y += np.random.normal(0, 1, y.shape)
+
+    reconciler = NonNegativeFullHierarchyReconciler()
+    reconciler.fit(y)
+    yreconc = reconciler.inverse_transform(y)
+    assert np.all(yreconc >= 0), "Negative values in reconciled series!"
