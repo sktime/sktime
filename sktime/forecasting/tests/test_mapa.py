@@ -2,11 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.forecasting.base._fh import ForecastingHorizon
+
 
 @pytest.fixture
 def sample_data():
