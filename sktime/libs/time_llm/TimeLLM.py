@@ -4,8 +4,9 @@ from math import sqrt
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.torch import torch
-from sktime.utils.torch.torch import nn
+from sktime.utils.torch.torch import torch
+
+nn = torch.nn
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers

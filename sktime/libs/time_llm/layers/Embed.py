@@ -2,8 +2,10 @@
 
 import math
 
-from sktime.utils.torch import torch
-from sktime.utils.torch.torch import Tensor, nn
+from sktime.utils.torch.torch import torch
+
+nn = torch.nn
+Tensor = torch.Tensor
 
 
 class PositionalEmbedding(nn.Module):

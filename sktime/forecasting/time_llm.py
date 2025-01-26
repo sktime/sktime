@@ -10,7 +10,7 @@ from typing import Optional
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.torch import torch
+from sktime.utils.torch.torch import torch
 from sktime.utils.validation.forecasting import check_X
 
 
