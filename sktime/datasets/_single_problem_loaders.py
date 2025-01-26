@@ -87,24 +87,31 @@ def load_UCR_UEA_dataset(
     split : None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By default it
         loads both into a single dataset, otherwise it looks only for files of the
-        format <name>_TRAIN.ts or <name>_TEST.ts.
+        format ``<name>_TRAIN.ts`` or ``<name>_TEST.ts``.
+
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+
     return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
         Memory data format specification to return X in, None = "nested_univ" type.
         str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        * for list of mtypes, see ``datatypes.MTYPE_REGISTER``
+        * for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
         commonly used specifications:
-            "nested_univ: nested pd.DataFrame, pd.Series in cells
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+
+        * "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+        * "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+        * "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        * "nested_univ: nested pd.DataFrame, pd.Series in cells
+
         Exception is raised if the data cannot be stored in the requested type.
+
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
         looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
-        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
+        e.g. ``C:/Temp`` or relative, e.g. ``Temp`` or ``./Temp``.
 
     Returns
     -------
