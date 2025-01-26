@@ -3,47 +3,8 @@ import pandas as pd
 import pytest
 
 from sktime.transformations.hierarchical.reconciliation.optimal import (
-    create_summing_matrix_from_index,
+    _create_summing_matrix_from_index,
 )
-
-
-###############################
-# The function under test (for reference here).
-# Remove or comment this out if you already import it from your_module.
-###############################
-def create_summing_matrix_from_index(hier_index):
-    """
-    Given a MultiIndex 'hier_index' of a hierarchical time series
-    (following an sktime-like convention), return a summation matrix S
-    as a DataFrame. Each row corresponds to a node in the hierarchy,
-    and each column corresponds to a bottom (leaf) node.
-    The entry S[i, j] = 1 if row i (an aggregator node) is an ancestor
-    of column j (a bottom node), else 0.
-    """
-    import numpy as np
-
-    all_nodes = list(hier_index)
-    # Bottom nodes: those with no '__total'
-    bottom_nodes = [node for node in all_nodes if "__total" not in node]
-
-    N = len(all_nodes)
-    M = len(bottom_nodes)
-    S = np.zeros((N, M), dtype=int)
-
-    def is_ancestor(agg, bot):
-        return all(a == b or a == "__total" for a, b in zip(agg, bot))
-
-    for i, agg_node in enumerate(all_nodes):
-        for j, bottom_node in enumerate(bottom_nodes):
-            if is_ancestor(agg_node, bottom_node):
-                S[i, j] = 1
-
-    S_df = pd.DataFrame(
-        S,
-        index=pd.MultiIndex.from_tuples(all_nodes, names=hier_index.names),
-        columns=pd.MultiIndex.from_tuples(bottom_nodes, names=hier_index.names),
-    )
-    return S_df
 
 
 @pytest.fixture
@@ -71,7 +32,7 @@ def small_hier_index():
 
 def test_create_summing_matrix_from_index(small_hier_index):
     # Given our small index, let's compute the summation matrix
-    S_df = create_summing_matrix_from_index(small_hier_index)
+    S_df = _create_summing_matrix_from_index(small_hier_index)
 
     # --- 1) Basic checks ---
     # We expect:
@@ -79,12 +40,15 @@ def test_create_summing_matrix_from_index(small_hier_index):
     #   M = bottom nodes (no '__total') = 4
     assert S_df.shape == (9, 4), "Summation matrix shape should be (9 x 4)."
 
-    # --- 2) Check that each aggregator row sums to the number of bottom nodes it covers ---
+    # --- 2) Check that each aggregator row sums to the number of bottom nodes
+    # it covers ---
     # Let's pick a known aggregator: ('regionA', 'storeA', 'catA', '__total')
-    # This should be an ancestor of the bottom nodes that start with ('regionA', 'storeA', 'catA', ...)
+    # This should be an ancestor of the bottom nodes that start with
+    # ('regionA', 'storeA', 'catA', ...)
     row_agg = ("regionA", "storeA", "catA", "__total")
     # The corresponding bottom nodes are:
-    # ('regionA', 'storeA', 'catA', 'deptA') and ('regionA', 'storeA', 'catA', 'deptB')
+    # ('regionA', 'storeA', 'catA', 'deptA') and ('regionA', 'storeA', 'catA',
+    #  'deptB')
     # so we expect 2 ones in that row
     expected_sum = 2
     actual_sum = S_df.loc[row_agg].sum()
@@ -98,19 +62,22 @@ def test_create_summing_matrix_from_index(small_hier_index):
     # Should be ancestor of all 4 bottom-level nodes
     global_sum_expected = 4
     global_sum_actual = S_df.loc[global_agg].sum()
-    assert (
-        global_sum_actual == global_sum_expected
-    ), f"Global aggregator row should sum to {global_sum_expected}, got {global_sum_actual}"
+    assert global_sum_actual == global_sum_expected, (
+        f"Global aggregator row should sum to {global_sum_expected}"
+        f"got {global_sum_actual}"
+    )
 
-    # --- 4) Check that bottom-level rows (leaf series) have a 1 only in their own column ---
-    # For example, ('regionA', 'storeA', 'catA', 'deptA') should have a 1 in column
-    # ('regionA', 'storeA', 'catA', 'deptA') and 0 elsewhere.
+    # --- 4) Check that bottom-level rows (leaf series) have a 1 only in
+    # their own column ---
+    # For example, ('regionA', 'storeA', 'catA', 'deptA') should have a 1 in
+    # column ('regionA', 'storeA', 'catA', 'deptA') and 0 elsewhere.
     leaf_node = ("regionA", "storeA", "catA", "deptA")
     row_values = S_df.loc[leaf_node].values
     # Expect exactly one "1" in the matching column, and zeros elsewhere
-    assert (
-        np.count_nonzero(row_values) == 1
-    ), f"Leaf node {leaf_node} should have exactly 1 in its row, got {np.count_nonzero(row_values)}"
+    assert np.count_nonzero(row_values) == 1, (
+        f"Leaf node {leaf_node} should have exactly 1 in its row,"
+        f" got {np.count_nonzero(row_values)}"
+    )
     # Check that the position of the 1 is exactly the matching column
     leaf_node_col_index = S_df.columns.tolist().index(leaf_node)
     assert (

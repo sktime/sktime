@@ -1531,28 +1531,7 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
-class hierarchical(_BaseTag):
-    """Property: transformer returns hierarchical series.
-
-    - String name: ``"hierarchical"``
-    - Public property tag
-    - Values: boolean, ``True`` / ``False``
-    - Example: ``True``
-    - Default: ``False``
-
-    This tag applies to transformations that are exclusive to hierarchical series.
-    """
-
-    _tags = {
-        "tag_name": "hierarchical",
-        "parent_type": "transformer",
-        "tag_type": "bool",
-        "short_descr": "does the transformer return hierarchical series?",
-        "user_facing": True,
-    }
-
-
-class hierarchical__reconciliation(_BaseTag):
+class capability__hierarchical_reconciliation(_BaseTag):
     """Property: transformer reconciles hierarchical series.
 
     - String name: ``"hierarchical:reconciliation"``
@@ -1565,7 +1544,7 @@ class hierarchical__reconciliation(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "hierarchical:reconciliation",
+        "tag_name": "capability:hierarchical_reconciliation",
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "does the transformer reconcile hierarchical series?",

@@ -1,5 +1,6 @@
 """Full-hierarchy reconciliation."""
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -43,8 +44,7 @@ _COMMON_TAGS = {
     "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
     "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
     "transform-returns-same-time-index": False,
-    "hierarchical": True,
-    "hierarchical:reconciliation": True,
+    "capability:hierarchical_reconciliation": True,
 }
 
 
@@ -82,8 +82,8 @@ class FullHierarchyReconciler(BaseTransformer):
         self.aggregator_ = Aggregator(flatten_single_levels=True)
         X = self.aggregator_.fit_transform(X)
         self.unique_series_ = _get_unique_series_from_df(X)
-        self.S_ = create_summing_matrix_from_index(self.unique_series_)
-        self.A_, self.I_ = split_summing_matrix(self.S_)
+        self.S_ = _create_summing_matrix_from_index(self.unique_series_)
+        self.A_, self.I_ = _split_summing_matrix(self.S_)
 
         self._sigma = self.error_covariance_matrix
         if self.error_covariance_matrix is None:
@@ -95,7 +95,7 @@ class FullHierarchyReconciler(BaseTransformer):
             )
         self._sigma = self._sigma.sort_index(axis=0).sort_index(axis=1)
 
-        self._permutation_matrix = get_permutation_matrix(self.S_)
+        self._permutation_matrix = _get_permutation_matrix(self.S_)
 
     def _transform(self, X, y):
         if self._is_not_hierarchical:
@@ -121,19 +121,36 @@ class FullHierarchyReconciler(BaseTransformer):
 
         X = X.sort_index()
 
-        X_arr = dataframe_to_ndarray(X)
+        # Convert to ndarray (T, N_SERIES, 1)
+        X_arr = _dataframe_to_ndarray(X)
+        # Permutation matrix to reorder the series
+
+        # The inverse of the permutation matrix is the transpose
+        # of itself, since it is orthogonal
+        # Shape is (n_series, n_series)
         P = self._permutation_matrix
         Pt = P.T
+        # Now, the shape will be (1, N_SERIES, N_SERIES)
         P = np.repeat(P[np.newaxis, :, :], X_arr.shape[0], axis=0)
         Pt = np.repeat(Pt[np.newaxis, :, :], X_arr.shape[0], axis=0)
+        # We reorder the series
         X_arr = P @ X_arr
 
+        # Summing matrix, with the correct order after permutation.
+        # We use P[0] instead of P since we have just added a new axis
         S = self.S_.values
         S = P[0] @ S
         # A is the matrix that maps the bottom nodes to the non-bottom nodes
+        # Because of the ordering after permutation, we can just take the first
+        # n_not_bottom columns
         A = S[: self._n_not_bottom, :]
         # I_na is the vector that maps the non-bottom nodes to themselves
         I_na = np.eye(self._n_not_bottom)
+        # E is the error covariance matrix
+        # We have to reorder it as well
+        # We use Pt[0] to map to the order of the covariance matrix
+        # Then P[0] to map to the order of the series. This is like
+        # reordering both columns and rows of the covariance matrix
         E = P[0] @ self._sigma.values @ Pt[0]
 
         # Concat C =  [A, I_na]
@@ -141,6 +158,7 @@ class FullHierarchyReconciler(BaseTransformer):
 
         # Inverse term
         inv = np.linalg.inv(C @ E @ C.T)
+        # The matrix that reconciles the base forecasts
         M = np.eye(self._n_series) - E @ C.T @ inv @ C
 
         # Expand level 0 with X_arr.shape[0] (timepoints)
@@ -159,18 +177,14 @@ class FullHierarchyReconciler(BaseTransformer):
 
 
 # class NonNegativeHierarchyReconciler(BaseTransformer):
-#     _tags = _COMMON_TAGS
-
-#     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
-#         self.error_covariance_matrix = error_covariance_matrix
-#         super().__init__()
-
-
-import numpy as np
-import pandas as pd
+#    _tags = _COMMON_TAGS
+#
+#    def __init__(self, error_covariance_matrix: pd.DataFrame = None):
+#        self.error_covariance_matrix = error_covariance_matrix
+#        super().__init__()
 
 
-def create_summing_matrix_from_index(hier_index):
+def _create_summing_matrix_from_index(hier_index):
     """
     Get the summing matrix from a hierarchical index.
 
@@ -234,7 +248,7 @@ def create_summing_matrix_from_index(hier_index):
     return S_df
 
 
-def dataframe_to_ndarray(df: pd.DataFrame) -> np.ndarray:
+def _dataframe_to_ndarray(df: pd.DataFrame) -> np.ndarray:
     """
     Convert a hierarchical DataFrame to a hierarchical ndarray.
 
@@ -252,7 +266,7 @@ def dataframe_to_ndarray(df: pd.DataFrame) -> np.ndarray:
     return arr
 
 
-def split_summing_matrix(S):
+def _split_summing_matrix(S):
     bottom_nodes = S.columns
     not_bottom_nodes = S.index.difference(bottom_nodes)
 
@@ -262,7 +276,7 @@ def split_summing_matrix(S):
     return A, I
 
 
-def get_bottom_and_aggregated_idxs(S):
+def _get_bottom_and_aggregated_idxs(S):
     bottom_levels = S.index.isin(S.columns)
     agg_levels = ~bottom_levels
 
@@ -272,8 +286,8 @@ def get_bottom_and_aggregated_idxs(S):
     return bottom_idxs, agg_idxs
 
 
-def get_permutation_matrix(S):
-    bottom_idxs, agg_idxs = get_bottom_and_aggregated_idxs(S)
+def _get_permutation_matrix(S):
+    bottom_idxs, agg_idxs = _get_bottom_and_aggregated_idxs(S)
     return np.concatenate([agg_idxs, bottom_idxs], axis=0)
 
 

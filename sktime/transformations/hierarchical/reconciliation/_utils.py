@@ -1,5 +1,20 @@
 import pandas as pd
 
+__all__ = [
+    "loc_series_idxs",
+    "get_bottom_level_idxs",
+    "get_bottom_series",
+    "get_total_level_idxs",
+    "get_total_series",
+    "get_middle_level_series",
+    "split_middle_levels",
+    "is_ancestor",
+    "filter_descendants",
+    "get_middle_level_aggregators",
+    "_promote_hierarchical_indexes",
+    "_promote_hierarchical_indexes_and_keep_timeindex",
+]
+
 
 def loc_series_idxs(y, idxs):
     return y.loc[y.index.droplevel(-1).isin(idxs)]
@@ -107,15 +122,84 @@ def get_middle_level_aggregators(X, middle_level):
       (otherwise it's above or not a well-defined middle node).
     """
     idx = X.index.droplevel(-1).unique()
-    if middle_level + 1 >= idx.nlevels:
+
+    # +1 since zero-indexed
+    if middle_level + 1 > idx.nlevels:
         # If the user picks a middle_level at the last level, there's no "next" level
         return []
 
     # The aggregator condition:
     #   * the next level's value is '__total'
     #   * the middle level's value != '__total'
-    next_level_vals = idx.get_level_values(middle_level + 1)
     this_level_vals = idx.get_level_values(middle_level)
 
-    is_agg = (next_level_vals == "__total") & (this_level_vals != "__total")
+    is_agg = this_level_vals != "__total"
+    # If not last level
+    if middle_level + 1 != idx.nlevels:
+        next_level_vals = idx.get_level_values(middle_level + 1)
+        is_agg = (next_level_vals == "__total") & (this_level_vals != "__total")
     return idx[is_agg]
+
+
+def _promote_hierarchical_indexes(idx_tuple: tuple):
+    """
+    Walk the index one level up, promoting to the upper level in the hier.
+
+    As an example, if a tuple is ("region", "store", "product"),
+    the function will return ("region", "store", "__total").
+
+    If the tuple is ("region", "store", "__total"),
+    the function will return ("region", "__total", "__total").
+
+    If the tuple is ("__total", "__total", "__total"),
+    the function will return ("__total", "__total", "__total").
+
+    Parameters
+    ----------
+    idx_tuple : tuple
+        The index tuple to promote.
+
+    Returns
+    -------
+    promoted_idx : tuple
+        The promoted index tuple.
+    """
+    idx_as_list = list(idx_tuple)
+    # Find first idx where "__total"
+    total_idx = idx_tuple.index("__total") if "__total" in idx_tuple else None
+
+    if total_idx is None:
+        idx_as_list[-1] = "__total"
+        return tuple(idx_as_list)
+
+    if total_idx == 0:
+        return idx_tuple
+
+    idx_as_list[total_idx - 1] = "__total"
+    return tuple(idx_as_list)
+
+
+def _promote_hierarchical_indexes_and_keep_timeindex(idx_tuple: tuple):
+    return (*_promote_hierarchical_indexes(idx_tuple[:-1]), idx_tuple[-1])
+
+
+def _recursively_propagate_topdown(X):
+    # Initialize the transformed data
+    _X = X.copy()
+
+    # Recursively apply the ratios from top levels to bottom levels
+    for level in range(0, X.index.nlevels - 1):
+        # Filter series at the current level
+        # Get the ratio for the level above
+        parent_ratio = _X.loc[
+            X.index.map(_promote_hierarchical_indexes_and_keep_timeindex)
+        ]
+        parent_ratio.index = _X.index
+
+        # Apply the ratio to the current level
+        idx_current_level = get_middle_level_aggregators(_X, middle_level=level)
+
+        idx_current_level = loc_series_idxs(_X, idx_current_level).index
+        _X.loc[idx_current_level] *= parent_ratio.loc[idx_current_level].values
+
+    return _X

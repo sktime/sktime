@@ -251,12 +251,13 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_hierarchical_transformations(self, estimator_instance, no_levels):
         """Test that hierarchical transformers can handle hierarchical data."""
         # skip this test if the estimator is not hierarchical
+        import numpy as np
         from pandas.testing import assert_frame_equal
 
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 
         if not estimator_instance.get_tag(
-            "hierarchical:reconciliation", False, raise_error=False
+            "capability:hierarchical_reconciliation", False, raise_error=False
         ):
             return None
 
@@ -275,6 +276,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
         prds = forecaster.fit(X).predict(fh)
 
+        prds += np.random.normal(0, 0.1, prds.shape)
         # reconcile forecasts
         reconciler = estimator_instance
         prds_recon = reconciler.fit_transform(prds)
