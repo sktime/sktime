@@ -8,19 +8,10 @@ from types import SimpleNamespace
 from typing import Optional
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.torch import torch
 from sktime.utils.validation.forecasting import check_X
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
 
 
 class TimeLLMForecaster(BaseForecaster):

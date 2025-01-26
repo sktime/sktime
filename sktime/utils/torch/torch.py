@@ -28,3 +28,12 @@ else:
                         "Please install torch to use this functionality. "
                         "ou can install it with `pip install torch`."
                     )
+
+        class Tensor:
+            """Dummy torch.Tensor class if unavailable."""
+
+            def __init__(self, *args, **kwargs):
+                raise ImportError(
+                    "Please install torch to use this functionality. "
+                    "You can install it with `pip install torch`."
+                )
