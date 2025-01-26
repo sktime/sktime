@@ -5,8 +5,6 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
 
@@ -431,8 +429,6 @@ class MAPAForecaster(BaseForecaster):
         self : MAPAForecaster
             The fitted forecaster instance.
         """
-        y = check_series(y)
-
         self._y_cols = (
             y.columns
             if isinstance(y, pd.DataFrame)
@@ -506,7 +502,6 @@ class MAPAForecaster(BaseForecaster):
         pd.DataFrame
             Forecasted values for the specified forecasting horizon.
         """
-        fh = check_fh(fh)
         forecasts = []
 
         for level in self._aggregation_levels:
@@ -665,8 +660,6 @@ class MAPAForecaster(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         """Update with new data following MAPA methodology."""
-        y = check_series(y)
-
         if isinstance(y, pd.Series):
             y = pd.DataFrame(y)
         if y.columns.empty:
