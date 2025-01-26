@@ -463,26 +463,26 @@ class HFTransformersForecaster(BaseForecaster):
                 }
             )
 
-        # Case for user-provided Hugging Face Transformers model directly
-        test_params.append(
-            {
-                "model": AutoModelForCausalLM.from_pretrained(
-                    "huggingface/autoformer-tourism-monthly"
-                ),
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                },
-                "deterministic": True,
-            }
-        )
+            # Case for user-provided Hugging Face Transformers model directly
+            test_params.append(
+                {
+                    "model": AutoModelForCausalLM.from_pretrained(
+                        "huggingface/autoformer-tourism-monthly"
+                    ),
+                    "fit_strategy": "minimal",
+                    "training_args": {
+                        "num_train_epochs": 1,
+                        "output_dir": "test_output",
+                        "per_device_train_batch_size": 32,
+                    },
+                    "config": {
+                        "lags_sequence": [1, 2, 3],
+                        "context_length": 2,
+                        "prediction_length": 4,
+                    },
+                    "deterministic": True,
+                }
+            )
 
         return test_params
 
