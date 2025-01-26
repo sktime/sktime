@@ -10,15 +10,16 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.clustering.k_means import TimeSeriesKMeansTslearn
+from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.detection.base import BaseDetector
+from sktime.dists_kernels import DtwDist
 from sktime.utils.sklearn import is_sklearn_clusterer
 
 __author__ = ["Ankit-1204"]
 __all__ = ["WindowSegmenter"]
 
 
-def overlapping_window(window_size, step_size, X):
+def _overlapping_window(window_size, step_size, X):
     X_size = len(X)
     n_features = X.shape[1]
 
@@ -38,7 +39,7 @@ def overlapping_window(window_size, step_size, X):
     return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
 
 
-def window_timeseries(window_size, X):
+def _window_timeseries(window_size, X):
     """Create a list of segments of chosen Window Size for sktime clusterers.
 
     Parameters
@@ -66,7 +67,7 @@ def window_timeseries(window_size, X):
     return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
 
 
-def window(window_size, X):
+def _window(window_size, X):
     """Create a list of segments of chosen Window Size with proper padding.
 
     Parameters
@@ -87,7 +88,7 @@ def window(window_size, X):
     return sub_seg
 
 
-def flattenSegments(sub_seg):
+def _flattenSegments(sub_seg):
     """Ensure that the function supports multivariate series by Flattening each segment.
 
     Parameters
@@ -102,7 +103,7 @@ def flattenSegments(sub_seg):
     return np.array(flat)
 
 
-def finalLabels(labels, window_size, X):
+def _finalLabels(labels, window_size, X):
     """Convert segment labels to individual time point labels.
 
     Parameters
@@ -120,7 +121,7 @@ def finalLabels(labels, window_size, X):
     return np.array(flabel)
 
 
-def overlap_final_label(labels, window_size, step_size, X):
+def _overlap_final_label(labels, window_size, step_size, X):
     time_point_labels = [[] for _ in range(len(X))]
 
     for i in range(len(labels)):
@@ -133,7 +134,7 @@ def overlap_final_label(labels, window_size, step_size, X):
     return time_point_labels
 
 
-def aggregate_labels(flabel):
+def _aggregate_labels(flabel):
     aggr_labels = []
     for labels in flabel:
         most_freq = Counter(labels).most_common(1)[0][0]
@@ -162,7 +163,7 @@ class WindowSegmenter(BaseDetector):
     >>> from sktime.detection.wclust import WindowSegmenter
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
-    >>> clusterer = KMeans()
+    >>> clusterer = TimeSeriesDBSCAN()
     >>> segmenter = ClusterSegmenter(clusterer, 3)
     >>> segmenter._fit(X)
     >>> segment_labels = segmenter._predict(X)
@@ -189,13 +190,13 @@ class WindowSegmenter(BaseDetector):
         self.step_size = step_size
         self.return_segments = return_segments
         if self.clusterer is None:
-            self._clusterer = TimeSeriesKMeansTslearn()
+            self._clusterer = TimeSeriesDBSCAN(distance=DtwDist())
         else:
             self._clusterer = self.clusterer
         super().__init__()
 
     def _fit(self, X, y=None):
-        """Fit to training data.
+        """Do nothing because their is no need to fit a model.
 
         core logic
 
@@ -208,32 +209,10 @@ class WindowSegmenter(BaseDetector):
 
         Returns
         -------
-        self : returns a reference to self
+        self : True
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
         """
-        if isinstance(X, pd.Series):
-            X = X.to_frame(X)
-        if self.overlap:
-            win_x = overlapping_window(self._window_size, self.step_size, X)
-            cloned_clusterer = clone(self._clusterer)
-            cloned_clusterer.fit(win_x)
-            self._clusterer_ = cloned_clusterer
-        else:
-            if is_sklearn_clusterer(self._clusterer):
-                win_x = window(self._window_size, X)
-                seg = flattenSegments(win_x)
-                cloned_clusterer = clone(self._clusterer)
-                cloned_clusterer.fit(seg)
-            else:
-                win_x = window_timeseries(self._window_size, X)
-                cloned_clusterer = clone(self._clusterer)
-                cloned_clusterer.fit(win_x)
-            self._clusterer_ = cloned_clusterer
-
-        return self
+        return True
 
     def _predict(self, X):
         """Create detections on test/deployment data.
@@ -246,34 +225,54 @@ class WindowSegmenter(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series - detections for sequence X
+        Y : pd.DataFrame - detections for sequence X
             exact format depends on detection type
         """
         if isinstance(X, pd.Series):
             X = X.to_frame(X)
 
+        self._clusterer_ = clone(self._clusterer)
         self.n_features, self.n_timepoints = X.shape
         if self.overlap:
-            win_x = overlapping_window(self._window_size, self.step_size, X)
+            win_x = _overlapping_window(self._window_size, self.step_size, X)
             labels = self._clusterer_.predict(win_x)
-            flabel = overlap_final_label(labels, self._window_size, self.step_size, X)
+            flabel = _overlap_final_label(labels, self._window_size, self.step_size, X)
             if self.return_segments:
                 flabel = pd.Series(flabel, index=X.index)
             else:
-                aggr_labels = aggregate_labels(flabel)
+                aggr_labels = _aggregate_labels(flabel)
                 return pd.Series(aggr_labels, index=X.index)
         else:
             if is_sklearn_clusterer(self._clusterer_):
-                win_x = window(self._window_size, X)
-                sub = flattenSegments(win_x)
+                win_x = _window(self._window_size, X)
+                sub = _flattenSegments(win_x)
+                self._clusterer_.fit(sub)
                 labels = self._clusterer_.predict(sub)
             else:
-                win_x = window_timeseries(self._window_size, X)
+                win_x = _window_timeseries(self._window_size, X)
+                self._clusterer_.fit(win_x)
                 labels = self._clusterer_.predict(win_x)
-            flabel = finalLabels(labels, self._window_size, X)
+            flabel = _finalLabels(labels, self._window_size, X)
             flabel = pd.Series(flabel.flatten(), index=X.index)
+        current_label = flabel[0]
 
-        return flabel
+        start_idx = 0
+        intervals = []
+        labels_out = []
+
+        for i, (idx, label) in enumerate(zip(X.index, flabel)):
+            if label != current_label or i == len(flabel) - 1:
+                intervals.append(pd.Interval(start_idx, i, closed="left"))
+                labels_out.append(current_label)
+                start_idx = i
+                current_label = label
+
+        if start_idx != len(X) - 1:
+            intervals.append(pd.Interval(start_idx, len(X) - 1, closed="left"))
+            labels_out.append(current_label)
+
+        result = pd.DataFrame({"cluster": labels_out}, index=intervals)
+        return result
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -290,6 +289,6 @@ class WindowSegmenter(BaseDetector):
         -------
         params : dict or list of dict, default = {}
         """
-        params1 = {"clusterer": TimeSeriesKMeansTslearn(n_clusters=2), "window_size": 2}
+        params1 = {"clusterer": TimeSeriesDBSCAN(distance=DtwDist()), "window_size": 2}
         params2 = {}
         return [params1, params2]
