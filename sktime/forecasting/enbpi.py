@@ -134,15 +134,7 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        from tsbootstrap import BaseTimeSeriesBootstrap, MovingBlockBootstrap
-
-        if isinstance(bootstrap_transformer, BaseTimeSeriesBootstrap):
-            warn(
-                "Passing directly bootstrapper from tsbootstrap is deprecated."
-                + "And will change in version 0.37.0"
-                + "Please wrap bootstrapper from tsbootstrap using tsbootstrapAdapter.",
-                DeprecationWarning,
-            )
+        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
             self.bootstrap_transformer_ = TSBootstrapAdapter(
                 bootstrap_transformer, return_indices=True
             )
@@ -154,8 +146,9 @@ class EnbPIForecaster(BaseForecaster):
                 "The default value for the bootstrap_transformer will change to the"
                 + "sktime MovingBlockBootstrap in version 0.37.0."
                 + "If you want to use the current behavior"
-                + "Please bass  TSBootstrapAdapter(MovingBlockBootstrap())"
+                + "Please pass TSBootstrapAdapter(MovingBlockBootstrap())"
             )
+            from tsbootstrap import MovingBlockBootstrap
 
             self.bootstrap_transformer_ = (
                 clone(bootstrap_transformer)
