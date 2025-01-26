@@ -6,7 +6,7 @@ from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-
+from sktime.forecasting.base._fh import ForecastingHorizon
 
 @pytest.fixture
 def sample_data():
@@ -214,7 +214,7 @@ def test_predict(sample_data, forecaster_params):
     - Predictions are consistent with different forecaster configurations.
     """
     forecaster = MAPAForecaster(aggregation_levels=[1, 2, 4], **forecaster_params)
-    fh = np.arange(1, 4)
+    fh = ForecastingHorizon(np.arange(1, 4))
 
     forecaster.fit(sample_data, fh=fh)
     predictions = forecaster._predict(fh)
