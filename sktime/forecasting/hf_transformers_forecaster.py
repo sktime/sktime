@@ -423,7 +423,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         if _check_soft_dependencies("peft", severity="none"):
             from peft import LoraConfig
-            from transformers import AutoModelForCausalLM
+            from transformers import AutoformerForPrediction
 
             # Case for user-provided model_path
             test_params.append(
@@ -466,7 +466,7 @@ class HFTransformersForecaster(BaseForecaster):
             # Case for user-provided Hugging Face Transformers model directly
             test_params.append(
                 {
-                    "model": AutoModelForCausalLM.from_pretrained(
+                    "model": AutoformerForPrediction.from_pretrained(
                         "huggingface/autoformer-tourism-monthly"
                     ),
                     "fit_strategy": "minimal",
