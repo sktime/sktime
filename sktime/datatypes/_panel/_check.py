@@ -1045,6 +1045,37 @@ class PanelDask(ScitypePanel):
 class PanelPolarsEager(ScitypePanel):
     """Data type: polars.DataFrame based specification of panel of time series.
 
+    Name: ``"polars_panel"``
+
+    Short description:
+    A ``polars.DataFrame`` with a specific structure for panel data, where each row
+    represents a time point and columns represent variables.
+
+    Long description:
+    The ``"polars_panel"`` :term:`mtype` is a concrete specification of the
+    ``Panel`` :term:`scitype`, which represents a collection of time series data for
+    multiple instances.
+    An object ``obj: polars.DataFrame`` follows the specification iff:
+    * structure convention: ``obj`` must be a Polars DataFrame with a specific
+    structure.
+    * instance level: rows with the same instance identifier correspond to the same
+    instance; different instance identifiers correspond to different instances.
+    * time index: one of the columns in ``obj`` must be a time index, which can be of
+    type ``Int64``, ``Range``, ``Datetime``, or ``Period``, and must be monotonic.
+    * time points: rows of ``obj`` with the same time index correspond to the same time
+    point; rows of ``obj`` with different time indices correspond to different time
+    points.
+    * variables: columns of ``obj`` (excluding the time index and instance identifier)
+    correspond to variables.
+    * variable names: column names are taken from ``obj.columns``.
+
+    Capabilities:
+    * can represent multivariate panel data.
+    * can represent unequally spaced time series.
+    * can represent missing values.
+    * cannot represent panel data with different sets of variables for different
+    instances.
+
     Parameters
     ----------
     is_univariate: bool
