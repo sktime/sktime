@@ -161,6 +161,7 @@ class HFTransformersForecaster(BaseForecaster):
         super().__init__()
         self.model_path = model_path
         self.model = model
+        self.info = {"mismatched_keys": []}
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
@@ -182,70 +183,55 @@ class HFTransformersForecaster(BaseForecaster):
         if self.model is None and self.model_path is None:
             raise ValueError("Either `model` or `model_path` must be provided.")
 
-        if self.model is None:
+        # Extract config and info for the provided model
+        if self.model is not None:
             config = self.model.config
+            # Use the pre-initialized info attribute
         else:
             # Load model and extract config
             config = AutoConfig.from_pretrained(self.model_path)
 
-        # Update config with user provided config
-        _config = config.to_dict()
-        _config.update(self._config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
-        _config["num_static_real_features"] = 0
-        _config["num_dynamic_real_features"] = 0
-        _config["num_static_categorical_features"] = 0
-        _config["num_time_features"] = 0 if X is None else X.shape[-1]
+            # Update config with user-provided config
+            _config = config.to_dict()
+            _config.update(self._config)
+            _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
+            _config["num_static_real_features"] = 0
+            _config["num_static_categorical_features"] = 0
+            _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
-        if hasattr(config, "feature_size"):
-            del _config["feature_size"]
+            if fh is not None:
+                _config["prediction_length"] = max(
+                    *(fh.to_relative(self._cutoff)._values + 1),
+                    _config.get("prediction_length", 0),
+                )
 
-        if fh is not None:
-            _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
-                _config["prediction_length"],
-            )
+            config = config.from_dict(_config)
 
-        config = config.from_dict(_config)
-
-        if self.model is None:
+            # Load model and info
             import transformers
 
             prediction_model_class = None
-            if hasattr(config, "architectures") and config.architectures is not None:
+            if hasattr(config, "architectures") and config.architectures:
                 prediction_model_class = config.architectures[0]
             elif hasattr(config, "model_type"):
                 prediction_model_class = (
-                    "".join(
-                        x.capitalize() for x in config.model_type.lower().split("_")
-                    )
+                    "".join(x.capitalize() for x in config.model_type.split("_"))
                     + "ForPrediction"
                 )
             else:
-                raise ValueError(
-                    "The model type is not inferable from the config."
-                    "Thus, the model cannot be loaded."
-                )
-            # Load model with the updated config
-            self.model, info = getattr(
-                transformers, prediction_model_class
-            ).from_pretrained(
+                raise ValueError("The model type cannot be inferred from the config.")
+
+            self.model, self.info = getattr(transformers, prediction_model_class).from_pretrained(
                 self.model_path,
                 config=config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
             )
 
-            # Freeze all loaded parameters
+            # Freeze loaded parameters and reinitialize mismatched layers
             for param in self.model.parameters():
                 param.requires_grad = False
-
-            # Clamp all loaded parameters to avoid NaNs due to large values
-            for param in self.model.model.parameters():
-                param.clamp_(-1000, 1000)
-
-            # Reinitialize the weights of all layers that have mismatched sizes
-            for key, _, _ in info["mismatched_keys"]:
+            for key, _, _ in self.info["mismatched_keys"]:
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
@@ -254,16 +240,15 @@ class HFTransformersForecaster(BaseForecaster):
                     requires_grad=True,
                 )
 
+        # Dataset preparation
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
-
             train_dataset = PyTorchDataset(
                 y[:split],
                 config.context_length + max(config.lags_sequence),
                 X=X[:split] if X is not None else None,
                 fh=config.prediction_length,
             )
-
             eval_dataset = PyTorchDataset(
                 y[split:],
                 config.context_length + max(config.lags_sequence),
@@ -277,16 +262,17 @@ class HFTransformersForecaster(BaseForecaster):
                 X=X if X is not None else None,
                 fh=config.prediction_length,
             )
-
             eval_dataset = None
 
+        # Prepare training arguments
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
         training_args = TrainingArguments(**training_args)
 
+        # Handle fine-tuning strategy
         if self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0:
-                return  # No need to fit
+            if len(self.info["mismatched_keys"]) == 0:
+                return  # No mismatched parameters, no fine-tuning needed
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
@@ -295,21 +281,16 @@ class HFTransformersForecaster(BaseForecaster):
                 "peft",
                 severity="error",
                 msg=(
-                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
-                    "'peft' is a soft dependency and not included "
-                    "in the base sktime installation. "
-                    "To use this functionality, please install 'peft' by running: "
-                    "`pip install peft` or `pip install sktime[dl]`. "
-                    "To install all soft dependencies, "
-                    "run: `pip install sktime[all_extras]`"
+                    "PEFT package is required but not installed. Install it using "
+                    "`pip install peft`."
                 ),
             ):
                 from peft import get_peft_model
-            peft_config = deepcopy(self.peft_config)
-            self.model = get_peft_model(self.model, peft_config)
+                self.model = get_peft_model(self.model, self.peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
+        # Train the model
         trainer = Trainer(
             model=self.model,
             args=training_args,
@@ -319,6 +300,7 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
+
 
     def _predict(self, fh, X=None):
         import transformers
@@ -438,7 +420,19 @@ class HFTransformersForecaster(BaseForecaster):
         ]
 
         if _check_soft_dependencies("peft", severity="none"):
+            from transformers import AutoModelForCausalLM
             from peft import LoraConfig
+
+            # Case for user-provided model_path
+            test_params.append({
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+            })
 
             test_params.append(
                 {
@@ -464,6 +458,23 @@ class HFTransformersForecaster(BaseForecaster):
                     "deterministic": True,
                 }
             )
+
+        # Case for user-provided Hugging Face Transformers model directly
+        test_params.append({
+            "model": AutoModelForCausalLM.from_pretrained("huggingface/autoformer-tourism-monthly"),
+            "fit_strategy": "minimal",
+            "training_args": {
+                "num_train_epochs": 1,
+                "output_dir": "test_output",
+                "per_device_train_batch_size": 32,
+            },
+            "config": {
+                "lags_sequence": [1, 2, 3],
+                "context_length": 2,
+                "prediction_length": 4,
+            },
+            "deterministic": True,
+        })
 
         return test_params
 
