@@ -20,11 +20,17 @@ else:
         class nn:
             """Dummy nn class if torch.nn is unavailable."""
 
+            def __init__(self):
+                raise ImportError(
+                    "Please install torch to use this functionality. "
+                    "You can install it with `pip install torch`."
+                )
+
             class Module:
                 """Dummy nn.Module class if unavailable."""
 
                 def __init__(self, *args, **kwargs):
                     raise ImportError(
-                        "The nn.Module functionality requires torch. "
+                        "Please install torch to use this functionality. "
                         "Please install torch with `pip install torch`."
                     )
