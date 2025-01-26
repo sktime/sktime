@@ -221,7 +221,9 @@ class HFTransformersForecaster(BaseForecaster):
             else:
                 raise ValueError("The model type cannot be inferred from the config.")
 
-            self.model, self.info = getattr(transformers, prediction_model_class).from_pretrained(
+            self.model, self.info = getattr(
+                transformers, prediction_model_class
+            ).from_pretrained(
                 self.model_path,
                 config=config,
                 output_loading_info=True,
@@ -286,6 +288,7 @@ class HFTransformersForecaster(BaseForecaster):
                 ),
             ):
                 from peft import get_peft_model
+
                 self.model = get_peft_model(self.model, self.peft_config)
         else:
             raise ValueError("Unknown fit strategy")
@@ -300,7 +303,6 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
-
 
     def _predict(self, fh, X=None):
         import transformers
@@ -420,19 +422,21 @@ class HFTransformersForecaster(BaseForecaster):
         ]
 
         if _check_soft_dependencies("peft", severity="none"):
-            from transformers import AutoModelForCausalLM
             from peft import LoraConfig
+            from transformers import AutoModelForCausalLM
 
             # Case for user-provided model_path
-            test_params.append({
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-            })
+            test_params.append(
+                {
+                    "model_path": "huggingface/autoformer-tourism-monthly",
+                    "fit_strategy": "minimal",
+                    "training_args": {
+                        "num_train_epochs": 1,
+                        "output_dir": "test_output",
+                        "per_device_train_batch_size": 32,
+                    },
+                }
+            )
 
             test_params.append(
                 {
@@ -460,21 +464,25 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
         # Case for user-provided Hugging Face Transformers model directly
-        test_params.append({
-            "model": AutoModelForCausalLM.from_pretrained("huggingface/autoformer-tourism-monthly"),
-            "fit_strategy": "minimal",
-            "training_args": {
-                "num_train_epochs": 1,
-                "output_dir": "test_output",
-                "per_device_train_batch_size": 32,
-            },
-            "config": {
-                "lags_sequence": [1, 2, 3],
-                "context_length": 2,
-                "prediction_length": 4,
-            },
-            "deterministic": True,
-        })
+        test_params.append(
+            {
+                "model": AutoModelForCausalLM.from_pretrained(
+                    "huggingface/autoformer-tourism-monthly"
+                ),
+                "fit_strategy": "minimal",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+                "config": {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                },
+                "deterministic": True,
+            }
+        )
 
         return test_params
 
