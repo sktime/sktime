@@ -47,6 +47,7 @@ jobs:
         operating-system:
           - macos-13
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
