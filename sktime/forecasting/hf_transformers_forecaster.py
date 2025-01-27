@@ -163,7 +163,6 @@ class HFTransformersForecaster(BaseForecaster):
         super().__init__()
         self.model_path = model_path
         self.model = model
-        self.info = {"mismatched_keys": []}
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
@@ -279,8 +278,8 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Handle fine-tuning strategy
         if self.fit_strategy == "minimal":
-            if len(self.info["mismatched_keys"]) == 0:
-                return  # No mismatched parameters, no fine-tuning needed
+            if self.model is None and len(self.info["mismatched_keys"]) == 0:
+                return
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
