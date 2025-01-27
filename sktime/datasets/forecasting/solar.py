@@ -97,3 +97,23 @@ class Solar(_ForecastingDatasetFromLoader):
                 "is_univariate": n_dimensions == 1,
             }
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameters."""
+        return [
+            {
+                "start": "2021-05-01",
+                "end": "2021-05-02",
+                "normalise": True,
+                "return_full_df": False,
+                "api_version": "v4",
+            },
+            {
+                "start": "2021-06-01",
+                "end": "2021-06-02",
+                "normalise": True,
+                "return_full_df": True,
+                "api_version": "v4",
+            },
+        ]
