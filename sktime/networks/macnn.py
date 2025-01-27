@@ -145,26 +145,31 @@ class MACNNNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(shape=input_shape)
 
         x = self._stack(
-            x=input_layer, repeats=self.repeats, 
-            kernels=self.filter_sizes[0], reduce=self.reduction
+            x=input_layer, 
+            repeats=self.repeats, 
+            kernels=self.filter_sizes[0], 
+            reduce=self.reduction
         )
         x = keras.layers.MaxPooling1D(
             pool_size=self.pool_size, strides=self.strides, padding=self.padding
         )(x)
 
         x = self._stack(
-            x=x, repeats=self.repeats, 
-            kernels=self.filter_sizes[1], reduce=self.reduction
+            x=x, 
+            repeats=self.repeats, 
+            kernels=self.filter_sizes[1], 
+            reduce=self.reduction
         )
         x = keras.layers.MaxPooling1D(
             pool_size=self.pool_size, strides=self.strides, padding=self.padding
         )(x)
 
         x = self._stack(
-            x=x, repeats=self.repeats, 
-            kernels=self.filter_sizes[2], reduce=self.reduction
+            x=x, 
+            repeats=self.repeats, 
+            kernels=self.filter_sizes[2], 
+            reduce=self.reduction
         )
 
         output_layer = keras.layers.GlobalAveragePooling1D()(x)
-
         return input_layer, output_layer
