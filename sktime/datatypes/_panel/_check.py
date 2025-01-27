@@ -1060,8 +1060,11 @@ class PanelPolarsEager(ScitypePanel):
     structure.
     * instance level: rows with the same instance identifier correspond to the same
     instance; different instance identifiers correspond to different instances.
-    * time index: one of the columns in ``obj`` must be a time index, which can be of
-    type ``Int64``, ``Range``, ``Datetime``, or ``Period``, and must be monotonic.
+    * instance identifier: one of the columns in ``obj`` must be an instance identifier,
+      typically named ``__index__instances``.
+    * time index: one of the columns in ``obj`` must be a time index, typically named
+    ``__index__timepoints``, which can be of type ``Int64``, ``Range``, ``Datetime``, or
+    ``Period``, and must be monotonic.
     * time points: rows of ``obj`` with the same time index correspond to the same time
     point; rows of ``obj`` with different time indices correspond to different time
     points.
