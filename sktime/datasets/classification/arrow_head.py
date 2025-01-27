@@ -13,14 +13,16 @@ class ArrowHead(_ClassificationDatasetFromLoader):
     ----------
     return_mtype: valid Panel mtype str or None, optional (default="pd-multiindex")
         Memory data format specification to return X in, None = "nested_univ" type.
-        str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        The str can be any supported sktime Panel mtype,
+        for a list of mtypes and their specifications, see :ref:`mtypes_panel`.
+
         commonly used specifications:
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "nested_univ": nested pd.DataFrame, pd.Series in cells
+
+        * "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        * "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+        * "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+        * "nested_univ": nested pd.DataFrame, pd.Series in cells
+
         Exception is raised if the data cannot be stored in the requested type.
 
     Examples
