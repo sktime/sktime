@@ -5,11 +5,58 @@ Datasets
 
 The ``datasets`` module contains:
 
+* dataset objects, which are in-memory representations of time series datasets
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
 * toy data generators for didactic and illustrative purposes
 * utilities to write to, and load from, time series specific file formats
+
+Forecasting datasets
+--------------------
+.. currentmodule:: sktime.datasets.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Airline
+    HierarchicalSalesToyData
+    Longley
+    Lynx
+    M5Dataset
+    Macroeconomic
+    ShampooSales
+    Solar
+    USChange
+
+Classification datasets
+-----------------------
+
+.. currentmodule:: sktime.datasets.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArrowHead
+    BasicMotions
+    GunPoint
+    ItalyPowerDemand
+    JapaneseVowels
+    OSULeaf
+    PLAID
+
+Regression datasets
+-------------------
+
+.. currentmodule:: sktime.datasets.regression
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Tecator
 
 Loaders from dataset repositories
 ---------------------------------
