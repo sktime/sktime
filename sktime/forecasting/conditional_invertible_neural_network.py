@@ -205,6 +205,28 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
+        Raises
+        ------
+        ValueError
+            If `self.window_size` is larger than the length of `y`.
+        RuntimeError
+            If curve fitting fails due to non-convergence.
+
+        Additional Processing
+        ---------------------
+        - Validates that `self.window_size` does not exceed the length of `y`.
+        - Fits `self.function` using rolling mean data,
+          raising an error if optimization fails.
+
+        Example
+        -------
+        ```python
+        try:
+            forecaster.fit(y)
+        except (ValueError, RuntimeError) as e:
+            print(f"Error: {e}")
+        ```
+
         Returns
         -------
         self : reference to self
