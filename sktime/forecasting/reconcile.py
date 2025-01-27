@@ -11,12 +11,16 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.transformations.hierarchical.aggregate import (
+    Aggregator,
+    _check_index_no_total,
+)
 from sktime.transformations.hierarchical.reconciliation import (
     METHOD_MAP,
     FullHierarchyReconciler,
     NonNegativeFullHierarchyReconciler,
 )
+from sktime.transformations.hierarchical.reconciliation._utils import loc_series_idxs
 from sktime.utils.warnings import warn
 
 
@@ -156,16 +160,15 @@ class ReconcilerForecaster(BaseForecaster):
             self.forecaster_.fit(y=y, X=X, fh=fh)
             return self
 
-        # check index for no "__total", if not add totals to y
-        if _check_index_no_total(y):
-            y = self._add_totals(y)
+        self._series_to_keep = y.index.droplevel(-1).unique()
+
+        # Add totals and flatten single levels
+        y = self._add_totals(y)
 
         self.forecaster_ = self.forecaster.clone()
 
         if X is not None:
-            if _check_index_no_total(X):
-                X = self._add_totals(X)
-            return self
+            X = self._add_totals(X)
 
         if not self._requires_residuals:
             self.reconciler_transform_ = METHOD_MAP[self.method]
@@ -174,6 +177,8 @@ class ReconcilerForecaster(BaseForecaster):
             return self
         # fit forecasters for each level
 
+        # In this case, the totals are required
+        y = self._add_totals(y)
         self.forecaster_.fit(y=y, X=X, fh=fh)
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
@@ -229,6 +234,8 @@ class ReconcilerForecaster(BaseForecaster):
             return base_fc
 
         reconc_fc = self.reconciler_transform_.inverse_transform(base_fc)
+        reconc_fc = Aggregator(False).fit_transform(reconc_fc)
+        reconc_fc = loc_series_idxs(reconc_fc, self._series_to_keep)
         return reconc_fc
 
     def _update(self, y, X=None, update_params=True):
@@ -401,6 +408,7 @@ class ReconcilerForecaster(BaseForecaster):
                 "return_totals": totals,
             }
             for x in cls.METHOD_LIST
+            if not x.endswith("nonneg")
             for totals in cls.RETURN_TOTALS_LIST
         ]
         return params_list

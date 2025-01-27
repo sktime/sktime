@@ -33,6 +33,8 @@ def get_bottom_series(y):
 
 def get_total_level_idxs(y):
     nlevels = y.index.droplevel(-1).nlevels
+    if nlevels == 1:
+        return pd.Index(["__total"])
     return pd.Index([tuple(["__total"] * nlevels)])
 
 

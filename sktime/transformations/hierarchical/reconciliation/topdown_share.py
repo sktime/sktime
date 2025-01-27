@@ -117,10 +117,7 @@ class TopdownShareReconciler(BaseTransformer):
         X_total_expanded.index = X_bottom.index
 
         forecasts_from_shares = X_bottom * X_total_expanded
-        _X = pd.concat(
-            [loc_series_idxs(X, self._original_series), forecasts_from_shares], axis=0
-        )
 
-        _X = self._aggregator.transform(_X)
+        _X = self._aggregator.transform(forecasts_from_shares)
         _X = loc_series_idxs(_X, self._original_series).sort_index()
         return _X

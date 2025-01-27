@@ -77,7 +77,7 @@ class _DropRedundantHierarchicalLevels(BaseTransformer):
         if self._no_hierarchy:
             return X
 
-        return X.droplevel(self.levels_to_drop_)
+        return X.droplevel(self.levels_to_drop_).sort_index()
 
     def _inverse_transform(self, X, y=None):
         if self._no_hierarchy:
@@ -101,4 +101,4 @@ class _DropRedundantHierarchicalLevels(BaseTransformer):
         )
         _X = _X.reorder_levels(correct_index_order)
         _X.index.names = self._idx_names
-        return _X
+        return _X.sort_index()

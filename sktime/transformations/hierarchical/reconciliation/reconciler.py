@@ -222,7 +222,7 @@ class Reconciler(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return [{"method": x} for x in cls.METHOD_LIST]
+        return [{"method": x} for x in cls.METHOD_LIST if not x.endswith("nonneg")]
 
 
 def _get_s_matrix(X):

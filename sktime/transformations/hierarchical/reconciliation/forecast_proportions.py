@@ -112,7 +112,7 @@ class ForecastProportions(BaseTransformer):
         X_parents = X.copy()
         # Set total to 0 because of the operations below
         # which would account for it twice
-        X_parents.loc[X_parents.index.isin(self._total_series)] = 0
+        X_parents.loc[X_parents.index.droplevel(-1).isin(self._total_series)] = 0
         X_parents.index = idx_map_parents
 
         # The parent sum according to direct children
