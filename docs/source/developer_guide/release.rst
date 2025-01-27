@@ -43,7 +43,8 @@ The release process is as follows, on high-level:
 1. ensure deprecation actions are carried out.
   Deprecation actions for a version should be marked by "version number" annotated comments in the code.
   E.g., for the release 0.12.0, search for the string 0.12.0 in the code and carry out described deprecation actions.
-  Collect list of deprecation actions in an issue, as they will have to go in the release notes.
+  It is recommended to collect the list of deprecation actions in or multiple separate PR,
+  as they will have to go in the release notes.
   Deprecation actions should be merged only by release managers.
 
 2. create a "release" pull request (ideally from a branch following the naming pattern ``release/v0.x.y``). This should make changes to the version numbers and have complete release notes.
