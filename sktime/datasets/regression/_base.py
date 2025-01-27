@@ -30,7 +30,7 @@ class BaseRegressionDataset(BaseDataset):
     """
 
     _tags = {
-        "object_type": "regression_dataset",
+        "object_type": ["dataset", "dataset_regression"],
         # Estimator type
         "is_univariate": True,
         "n_instances": 215,

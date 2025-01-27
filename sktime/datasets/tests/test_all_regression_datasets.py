@@ -19,7 +19,7 @@ class RegressionDatasetFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    estimator_type_filter = "regression_dataset"
+    estimator_type_filter = "dataset_regression"
 
 
 class TestAllRegressionDatasets(RegressionDatasetFixtureGenerator, QuickTester):

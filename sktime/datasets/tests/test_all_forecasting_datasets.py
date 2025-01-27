@@ -43,7 +43,7 @@ class ForecastingDatasetFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   TestAllRegressors should contain the tests only
 
-    estimator_type_filter = "forecasting_dataset"
+    estimator_type_filter = "dataset_forecasting"
 
 
 class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester):

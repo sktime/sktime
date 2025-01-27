@@ -2095,7 +2095,7 @@ class n_classes(_BaseTag):
 
     _tags = {
         "tag_name": "n_classes",
-        "parent_type": "classification_dataset",
+        "parent_type": "dataset_classification",
         "tag_type": "int",
         "short_descr": "number of classes in the dataset",
         "user_facing": True,
@@ -2148,7 +2148,7 @@ class has_exogenous(_BaseTag):
 
     _tags = {
         "tag_name": "has_exogenous",
-        "parent_type": "forecasting_dataset",
+        "parent_type": "dataset_forecasting",
         "tag_type": "bool",
         "short_descr": "does the dataset contain exogenous variables?",
         "user_facing": True,
@@ -2231,7 +2231,7 @@ class n_timepoints(_BaseTag):
 
     _tags = {
         "tag_name": "n_timepoints",
-        "parent_type": "forecasting_dataset",
+        "parent_type": "dataset_forecasting",
         "tag_type": "int",
         "short_descr": "number of timepoints in the dataset",
         "user_facing": True,
@@ -2251,7 +2251,7 @@ class n_timepoints_train(_BaseTag):
 
     _tags = {
         "tag_name": "n_timepoints_train",
-        "parent_type": "forecasting_dataset",
+        "parent_type": "dataset_forecasting",
         "tag_type": "int",
         "short_descr": "number of timepoints in the training set of the dataset",
         "user_facing": True,
@@ -2271,7 +2271,7 @@ class n_timepoints_test(_BaseTag):
 
     _tags = {
         "tag_name": "n_timepoints_test",
-        "parent_type": "forecasting_dataset",
+        "parent_type": "dataset_forecasting",
         "tag_type": "int",
         "short_descr": "number of timepoints in the test set of the dataset",
         "user_facing": True,
@@ -2290,7 +2290,7 @@ class n_dimensions(_BaseTag):
 
     _tags = {
         "tag_name": "n_dimensions",
-        "parent_type": "forecasting_dataset",
+        "parent_type": "dataset_forecasting",
         "tag_type": "int",
         "short_descr": "Equivalent to number of columns in `y`",
         "user_facing": True,

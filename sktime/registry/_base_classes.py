@@ -546,11 +546,11 @@ class dataset(_BaseScitypeOfObject):
         return BaseDataset
 
 
-class classification_dataset(_BaseScitypeOfObject):
+class dataset_classification(_BaseScitypeOfObject):
     """Classification Dataset."""
 
     _tags = {
-        "scitype_name": "classification_dataset",
+        "scitype_name": "dataset_classification",
         "short_descr": "classification dataset object",
         "parent_scitype": "dataset",
     }
@@ -562,11 +562,11 @@ class classification_dataset(_BaseScitypeOfObject):
         return BaseClassificationDataset
 
 
-class forecasting_dataset(_BaseScitypeOfObject):
+class dataset_forecasting(_BaseScitypeOfObject):
     """Forecasting Dataset class."""
 
     _tags = {
-        "scitype_name": "forecasting_dataset",
+        "scitype_name": "dataset_forecasting",
         "short_descr": "forecasting dataset object",
         "parent_scitype": "dataset",
     }
@@ -578,11 +578,11 @@ class forecasting_dataset(_BaseScitypeOfObject):
         return BaseForecastingDataset
 
 
-class regression_dataset(_BaseScitypeOfObject):
+class dataset_regression(_BaseScitypeOfObject):
     """Regression Dataset class."""
 
     _tags = {
-        "scitype_name": "regression_dataset",
+        "scitype_name": "dataset_regression",
         "short_descr": "regression dataset object",
         "parent_scitype": "dataset",
     }
