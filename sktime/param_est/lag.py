@@ -54,7 +54,7 @@ class ARLagOrderSelector(BaseParamFitter):
 
     Attributes
     ----------
-    selected_model_ : int or tuple
+    selected_model_ : tuple
         Selected lag order(s) that minimize the information criterion
     ic_value_ : float
         Value of the information criterion for the selected model
@@ -64,13 +64,13 @@ class ARLagOrderSelector(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.lag import ARLagOrderSelector
     >>> y = load_airline()
-    >>> selector = ARLagOrderSelector(maxlag=12, ic="bic")  # doctest: +SKIP
-    >>> selector.fit(y)  # doctest: +SKIP
+    >>> selector = ARLagOrderSelector(maxlag=12, ic="bic")
+    >>> selector.fit(y)
     ARLagOrderSelector(...)
-    >>> selector.selected_model_  # doctest: +SKIP
-    3
-    >>> selector.ic_value_  # doctest: +SKIP
-    1234.56
+    >>> selector.selected_model_
+    (3,)
+    >>> selector.ic_value_
+    1369.6963340649502
 
     See Also
     --------
