@@ -41,6 +41,7 @@ class BaseClassificationDataset(BaseDataset):
         "n_instances_train": None,
         "n_instances_test": None,
         "n_classes": 2,
+        "reserved_params": ["return_mtype"],
     }
 
     def __init__(self, return_mtype="pd-multiindex"):
