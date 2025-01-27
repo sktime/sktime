@@ -98,13 +98,9 @@ class FullHierarchyReconciler(BaseTransformer):
         self.A_, self.I_ = _split_summing_matrix(self.S_)
 
         self._sigma = self.error_covariance_matrix
-        if self.error_covariance_matrix is None:
-            self._sigma = np.eye(len(self.unique_series_))
-            self._sigma = pd.DataFrame(
-                self._sigma,
-                index=self.S_.index,
-                columns=self.S_.index,
-            )
+        if not isinstance(self._sigma, pd.DataFrame):
+            self._sigma = self._get_error_covariance_matrix(self._sigma)
+
         self._sigma = self._sigma.sort_index(axis=0).sort_index(axis=1)
 
         self._permutation_matrix = _get_permutation_matrix(self.S_)
@@ -143,6 +139,25 @@ class FullHierarchyReconciler(BaseTransformer):
         )
 
         return df
+
+    def _get_error_covariance_matrix(self, error_covariance_matrix):
+        if error_covariance_matrix == "ols" or error_covariance_matrix is None:
+            values = np.eye(len(self.unique_series_))
+
+        elif error_covariance_matrix == "wls_str":
+            diag = self.S_.sum(axis=1).values.flatten()
+            values = np.diag(diag)
+        else:
+            raise ValueError(
+                f"Error covariance matrix {error_covariance_matrix} not"
+                "recognized. Available options are 'ols', 'wls_str'"
+            )
+
+        return pd.DataFrame(
+            values,
+            index=self.S_.index,
+            columns=self.S_.index,
+        )
 
     def _get_arrays(self, X):
         X = X.sort_index()

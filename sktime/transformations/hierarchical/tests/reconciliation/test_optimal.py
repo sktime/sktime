@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.hierarchical.reconciliation.optimal import (
+from sktime.transformations.hierarchical.reconciliation.full_hierarchy import (
     NonNegativeFullHierarchyReconciler,
     _create_summing_matrix_from_index,
 )

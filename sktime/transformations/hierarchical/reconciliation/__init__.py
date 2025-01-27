@@ -2,8 +2,8 @@
 
 from .bottom_up import BottomUpReconciler
 from .forecast_proportions import ForecastProportions
+from .full_hierarchy import FullHierarchyReconciler, NonNegativeFullHierarchyReconciler
 from .middle_out import MiddleOutReconciler
-from .optimal import FullHierarchyReconciler, NonNegativeFullHierarchyReconciler
 from .topdown_share import TopdownShareReconciler
 
 __all__ = [
@@ -14,3 +14,14 @@ __all__ = [
     "NonNegativeFullHierarchyReconciler",
     "ForecastProportions",
 ]
+
+
+METHOD_MAP = {
+    "bu": BottomUpReconciler(),
+    "ols": FullHierarchyReconciler(),
+    "ols:nonneg": NonNegativeFullHierarchyReconciler(),
+    "wls_str": FullHierarchyReconciler("wls_str"),
+    "wls_str:nonneg": NonNegativeFullHierarchyReconciler("wls_str"),
+    "td_fcst": ForecastProportions(),
+    "td_share": TopdownShareReconciler(),
+}

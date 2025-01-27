@@ -254,8 +254,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         import numpy as np
         from pandas.testing import assert_frame_equal
 
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-
         if not estimator_instance.get_tag(
             "capability:hierarchical_reconciliation", False, raise_error=False
         ):
@@ -271,12 +269,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         # add aggregate levels
         X = agg.fit_transform(X)
 
-        # forecast all levels
-        fh = [1, 2]
-        forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
-        prds = forecaster.fit(X).predict(fh)
+        prds = X + np.random.normal(0, 10, X.shape[0])
 
-        prds += np.random.normal(0, 0.1, prds.shape)
         # reconcile forecasts
         reconciler = estimator_instance
         prds_recon = reconciler.fit_transform(prds)

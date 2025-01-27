@@ -845,3 +845,14 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     :template: class.rst
 
     Reconciler
+
+.. currentmodule:: sktime.transformations.hierarchical.reconciliation
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MiddleOutReconciler
+    TopdownShareReconciler
+    BottomUpReconciler
+    FullHierarchyReconciler
+    NonNegativeFullHierarchyReconciler
+    ForecastProportions
