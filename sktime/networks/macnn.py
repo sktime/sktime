@@ -80,31 +80,27 @@ class MACNNNetwork(BaseDeepNetwork):
         from tensorflow import keras
 
         conv_layers = []
-        for i in range(len(self.kernel_size)):
-            conv_layers.append(
-                keras.layers.Conv1D(kernels, self.kernel_size[i], padding=self.padding)(x)
-            )
+        for kernel_size in self.kernel_size:
+            conv_layer = keras.layers.Conv1D(
+                filters=kernels, kernel_size=kernel_size, padding=self.padding
+            )(x)
+            conv_layers.append(conv_layer)
             
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
         x1 = keras.layers.Activation("relu")(x1)
 
-        
-        x2 = keras.layers.Lambda(lambda x: keras.backend.mean(x, axis=1))(x1) 
-        
+        x2 = keras.layers.Lambda(lambda y: keras.backend.mean(y, axis=1))(x1)
         x2 = keras.layers.Dense(
-            int(kernels * 3 / reduce), use_bias=False, activation="relu"
-            )(x2)
-
+            units=int(kernels * 3 / reduce), use_bias=False, activation="relu"
+        )(x2)
         x2 = keras.layers.Dense(
-            int(kernels * 3), use_bias=False, activation="relu"
-            )(x2)
-
-        x2 = keras.layers.RepeatVector(x1.shape[1])(x2) 
+            units=int(kernels * 3), use_bias=False, activation="relu"
+        )(x2)
+        x2 = keras.layers.RepeatVector(x1.shape[1])(x2)
 
         return keras.layers.Multiply()([x1, x2])
     
-
     def _stack(self, x, repeats, kernels, reduce):
         """Build MACNN Blocks and stack them.
 
@@ -148,18 +144,27 @@ class MACNNNetwork(BaseDeepNetwork):
 
         input_layer = keras.layers.Input(shape=input_shape)
 
-        x = self._stack(input_layer, self.repeats, self.filter_sizes[0], self.reduction)
+        x = self._stack(
+            x=input_layer, repeats=self.repeats, 
+            kernels=self.filter_sizes[0], reduce=self.reduction
+        )
         x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
-            )(x)
-        
-        x = self._stack(x, self.repeats, self.filter_sizes[1], self.reduction)
+            pool_size=self.pool_size, strides=self.strides, padding=self.padding
+        )(x)
+
+        x = self._stack(
+            x=x, repeats=self.repeats, 
+            kernels=self.filter_sizes[1], reduce=self.reduction
+        )
         x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
-            )(x)
-        
-        x = self._stack(x, self.repeats, self.filter_sizes[2], self.reduction)
-        
-        output_layer = keras.layers.GlobalAveragePooling1D()(x) 
+            pool_size=self.pool_size, strides=self.strides, padding=self.padding
+        )(x)
+
+        x = self._stack(
+            x=x, repeats=self.repeats, 
+            kernels=self.filter_sizes[2], reduce=self.reduction
+        )
+
+        output_layer = keras.layers.GlobalAveragePooling1D()(x)
 
         return input_layer, output_layer
