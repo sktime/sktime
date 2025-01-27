@@ -578,8 +578,7 @@ class BaseDetector(BaseEstimator):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
-                y_index = y.index
-                y_index = pd.DataFrame(y_index, columns=columns)
+                y_index = pd.DataFrame(y.index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
@@ -844,7 +843,7 @@ class BaseDetector(BaseEstimator):
             y_pred = self._predict_points(X)
         elif task == "segmentation":
             y_pred_seg = pd.DataFrame(self.predict_segments(X))
-            y_pred = self.segments_to_change_points(y_pred_seg)
+            y_pred = self._segments_to_change_points(y_pred_seg)
 
         y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
         return y_pred
@@ -1069,19 +1068,19 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            An empty series with a RangeIndex.
+        pd.DataFrame
+            A empty DataFrame with a RangeIndex.
         """
         return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
-        """Return an empty sparse series in segmentation format.
+        """Return an empty sparse DataFrame in segmentation format.
 
         Returns
         -------
-        pd.Series
-            An empty series with an IntervalIndex.
+        pd.DataFrame
+            A empty DataFrame with an IntervalIndex.
         """
         empty_segs = pd.DataFrame(
             pd.IntervalIndex([]),
@@ -1153,7 +1152,7 @@ class BaseDetector(BaseEstimator):
         return segments
 
     @staticmethod
-    def segments_to_change_points(y_sparse):
+    def _segments_to_change_points(y_sparse):
         """Convert segments to change points.
 
         Parameters
@@ -1164,8 +1163,8 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            A series containing the indexes of the start of each segment.
+        pd.DataFrame
+            A DataFrame containing the indexes of the start of each segment.
             Index is RangeIndex, and values are iloc references to the start of each
             segment.
 
@@ -1177,7 +1176,7 @@ class BaseDetector(BaseEstimator):
         ...     [3, -1, 2],
         ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
         ... )
-        >>> BaseDetector.segments_to_change_points(segments)
+        >>> BaseDetector._segments_to_change_points(segments)
         0    2
         1    5
         2    7
@@ -1185,7 +1184,10 @@ class BaseDetector(BaseEstimator):
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
-        change_points = y_sparse.set_index("ilocs").index.left
+        if isinstance(y_sparse, np.ndarray):
+            change_points = pd.DataFrame(y_sparse[:, 0], columns=["ilocs"])
+        else:
+            change_points = pd.DataFrame(y_sparse.index.left, columns=["ilocs"])
         return change_points
 
 
