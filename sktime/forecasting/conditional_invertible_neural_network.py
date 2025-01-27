@@ -112,6 +112,14 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     >>> model.fit(y) # doctest: +SKIP
     CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
+
+    ```python
+    try:
+        forecaster.fit(y)
+    except (ValueError, RuntimeError) as e:
+        print(f"Error: {e}")
+    ```
+
     """
 
     _tags = {
@@ -218,14 +226,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         - Fits `self.function` using rolling mean data,
           raising an error if optimization fails.
 
-        Example
-        -------
-        ```python
-        try:
-            forecaster.fit(y)
-        except (ValueError, RuntimeError) as e:
-            print(f"Error: {e}")
-        ```
 
         Returns
         -------
