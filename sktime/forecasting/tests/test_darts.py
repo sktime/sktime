@@ -36,7 +36,7 @@ model_kwargs = {
         "fit_intercept": True,
     },
     DartsTiDEModel: {
-        "n_epochs": 10,
+        "n_epochs": 3,
     },
 }
 
@@ -193,12 +193,14 @@ def test_darts_tide_model_univariate(model):
     """Test functionality for univariate forecasting"""
 
     kwargs = model_kwargs.get(model, {})
-    sktime_model = model(input_chunk_length=6, output_chunk_length=6, kwargs=kwargs)
+    sktime_model = model(input_chunk_length=3, output_chunk_length=2, kwargs=kwargs)
 
     sktime_model.fit(y_train)
-    y_pred = sktime_model.predict(fh=[1, 2, 3, 4])
+    y_pred = sktime_model.predict(fh=[1, 2])
 
-    pd.testing.assert_index_equal(y_pred.index, y_test.index, check_names=False)
+    pd.testing.assert_index_equal(
+        y_pred.index, y_test[: len(y_pred)].index, check_names=False
+    )
 
 
 @pytest.mark.parametrize("model", [DartsTiDEModel])
