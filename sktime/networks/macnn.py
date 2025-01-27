@@ -172,5 +172,6 @@ class MACNNNetwork(BaseDeepNetwork):
         )
 
         output_layer = keras.layers.GlobalAveragePooling1D()(x)
-        
+
         return input_layer, output_layer
+    
