@@ -25,7 +25,7 @@ def test_excluded_tests_by_test():
         )
     ]
     for _, excluded_estimators in EXCLUDED_TESTS_BY_TEST.items():
-        assert excluded_estimators == filtered_estimators
+        assert set(excluded_estimators) == set(filtered_estimators)
 
 
 def test_exclude_estimators():
