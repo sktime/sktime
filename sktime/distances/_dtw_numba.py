@@ -63,9 +63,11 @@ def _cost_matrix(
                     cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
                 )
                 min_row_cost = min(min_row_cost, cost_matrix[i + 1, j + 1])
-    # Early abandoning: stop computation if the cumulative cost is too high
-    if min_row_cost > best_known_distance:
-        return np.full_like(cost_matrix, np.inf)
+                # Early abandoning check after each cell update
+                if min_row_cost > best_known_distance:
+                    return np.full_like(cost_matrix, np.inf)
+
+
 
     return cost_matrix[1:, 1:]
 

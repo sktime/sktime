@@ -140,9 +140,9 @@ class _DtwDistance(NumbaDistance):
                     _x, _y, _bounding_matrix, best_known_distance=best_known_distance
                 )
                 if np.isinf(cost_matrix).all():
-                    return np.empty((0, 2), dtype=np.int64), np.inf, cost_matrix
+                    return list(np.empty((0, 2), dtype=np.int64)), float(np.inf), cost_matrix
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return np.array(path, dtype=np.int64), cost_matrix[-1, -1], cost_matrix
+                return list(np.array(path, dtype=np.int64)), float(cost_matrix[-1, -1]),cost_matrix
 
         else:
 
@@ -155,7 +155,7 @@ class _DtwDistance(NumbaDistance):
                     _x, _y, _bounding_matrix, best_known_distance=best_known_distance
                 )
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return path, cost_matrix[-1, -1]
+                return list(path), float(cost_matrix[-1, -1])
 
         return numba_dtw_distance_alignment_path
 
