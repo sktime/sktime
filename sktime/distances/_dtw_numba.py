@@ -67,8 +67,6 @@ def _cost_matrix(
                 if min_row_cost > best_known_distance:
                     return np.full_like(cost_matrix, np.inf)
 
-
-
     return cost_matrix[1:, 1:]
 
 

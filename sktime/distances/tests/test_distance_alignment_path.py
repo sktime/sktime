@@ -67,8 +67,8 @@ def _validate_distance_alignment_path_result(
         f" the metric parameter should return a tuple. The return type provided is of "
         f"type {type(metric_str_result)}"
     )
-    assert metric_str_result_cm[0] == metric_str_result[0]
-    assert metric_str_result_cm[1] == metric_str_result[1]
+    assert (np.array(metric_str_result_cm[0]) == np.array(metric_str_result[0])).all()
+    assert (np.array(metric_str_result_cm[1]) == np.array(metric_str_result[1])).all()
 
 
 @pytest.mark.skipif(
