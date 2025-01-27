@@ -37,5 +37,5 @@ def test_against_statsmodels():
     )
     selector.fit(y)
 
-    assert sm_result.ar_lags == list(selector.selected_model_)
+    assert sm_result.ar_lags == selector.selected_model_
     assert_allclose(min(sm_result.bic.values()), selector.ic_value_, rtol=1e-5)

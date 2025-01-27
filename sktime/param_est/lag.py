@@ -11,7 +11,6 @@ sequential and global search strategies.
 __author__ = ["satvshr"]
 __all__ = ["ARLagOrderSelector"]
 
-from sktime.forecasting.auto_reg import AutoREG
 from sktime.param_est.base import BaseParamFitter
 
 
@@ -133,81 +132,21 @@ class ARLagOrderSelector(BaseParamFitter):
         -------
         self : reference to self
         """
-        from types import SimpleNamespace
+        from statsmodels.tsa.ar_model import ar_select_order
 
-        import numpy as np
-        from statsmodels.tsa.ar_model import OLS
-
-        self.model = AutoREG(
-            lags=self.maxlag,
+        self.results = ar_select_order(
+            X,
+            maxlag=self.maxlag,
+            ic=self.ic,
             trend=self.trend,
             seasonal=self.seasonal,
             hold_back=self.hold_back,
             period=self.period,
             missing=self.missing,
         )
-        self.model.fit(X)
-        self.nexog = self.exog.shape[1] if self.exog is not None else 0
-        self.y, self.X = self.model._forecaster._y, self.model._forecaster._x
-        self.base_col = self.X.shape[1] - self.nexog - self.maxlag
-        self.sel = np.ones(self.X.shape[1], dtype=bool)
-        self.ics: list[tuple[int | tuple[int, ...], tuple[float, float, float]]] = []
-
-        def _compute_ics(res: SimpleNamespace):
-            nobs = res.nobs
-            df_model = res.df_model
-            sigma2 = 1.0 / nobs * np.sum(res.resid**2)
-            llf = -nobs * (np.log(2 * np.pi * sigma2) + 1) / 2
-            k = df_model + 1
-            aic = -2 * llf + 2 * k
-            bic = -2 * llf + np.log(nobs) * k
-            hqic = -2 * llf + 2 * k * np.log(np.log(nobs))
-
-            return aic, bic, hqic
-
-        def _ic_no_data():
-            mod = SimpleNamespace(
-                nobs=self.y.shape[0], endog=self.y, exog=np.empty((self.y.shape[0], 0))
-            )
-            llf = OLS.loglike(mod, np.empty(0))
-
-            res = SimpleNamespace(
-                resid=self.y, nobs=self.y.shape[0], df_model=0, k_constant=0, llf=llf
-            )
-            return _compute_ics(res)
-
-        if not self.glob:
-            self.sel[self.base_col : self.base_col + self.maxlag] = False
-            for i in range(self.maxlag + 1):
-                self.sel[self.base_col : self.base_col + i] = True
-                if not np.any(self.sel):
-                    self.ics.append((0, _ic_no_data()))
-                    continue
-                res = OLS(self.y, self.X[:, self.sel]).fit()
-                lags = tuple(j for j in range(1, i + 1))
-                lags = 0 if not lags else lags
-                self.ics.append((lags, _compute_ics(res)))
-        else:
-            bits = np.arange(2**self.maxlag, dtype=np.int32)[:, None]
-            bits = bits.view(np.uint8)
-            bits = np.unpackbits(bits).reshape(-1, 32)
-            for i in range(4):
-                bits[:, 8 * i : 8 * (i + 1)] = bits[:, 8 * i : 8 * (i + 1)][:, ::-1]
-            masks = bits[:, : self.maxlag]
-            for mask in masks:
-                self.sel[self.base_col : self.base_col + self.maxlag] = mask
-                if not np.any(self.sel):
-                    self.ics.append((0, _ic_no_data()))
-                    continue
-                res = OLS(self.y, self.X[:, self.sel]).fit()
-                lags = tuple(np.where(mask)[0] + 1)
-                lags = 0 if not lags else lags
-                self.ics.append((lags, _compute_ics(res)))
-
+        self.selected_model_ = self.results.ar_lags
         key_loc = {"aic": 0, "bic": 1, "hqic": 2}[self.ic]
-        self.ics = sorted(self.ics, key=lambda x: x[1][key_loc])
-        self.selected_model_ = self.ics[0][0]
-        self.ic_value_ = self.ics[0][1][key_loc]
+        self.ic_value_ = self.results._ics[0][1][key_loc]
 
         return self
 
