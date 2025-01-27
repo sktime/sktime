@@ -151,8 +151,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    _MIN_TEST_PARAMS_COVERAGE = 2
-
     def __init__(self):
         super().__init__()
 

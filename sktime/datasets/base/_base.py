@@ -36,8 +36,6 @@ class BaseDataset(BaseObject):
         "n_splits": 0,  # Number of cross-validation splits, if any.
     }
 
-    _MIN_TEST_PARAMS_COVERAGE = 1
-
     def __init__(self):
         super().__init__()
         _check_estimator_deps(self)

@@ -785,8 +785,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         * get_test_params returns at least two test parameter sets
         """
-
-        min_coverage = estimator_class._MIN_TEST_PARAMS_COVERAGE
         param_list = estimator_class.get_test_params()
 
         if isinstance(param_list, dict):
@@ -826,10 +824,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(unreserved_param_names) > 0:
             msg = (
                 f"{estimator_class.__name__}.get_test_params should return "
-                f"at least {min_coverage} test parameter sets, but only"
-                f"{len(param_list)} found."
+                f"at least two test parameter sets, but only {len(param_list)} found."
             )
-            assert len(param_list) >= min_coverage, msg
+            assert len(param_list) > 1, msg
 
         # this test is too harsh for the current estimator base
         # params_tested = set()
