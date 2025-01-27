@@ -75,3 +75,15 @@ class Longley(_ForecastingDatasetFromLoader):
     def __init__(self, y_name: str = "TOTEMP"):
         self.y_name = y_name
         super().__init__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameter settings for the dataset."""
+        return [
+            {"y_name": "TOTEMP"},
+            {"y_name": "GNPDEFL"},
+            {"y_name": "GNP"},
+            {"y_name": "UNEMP"},
+            {"y_name": "ARMED"},
+            {"y_name": "POP"},
+        ]
