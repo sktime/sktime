@@ -2297,6 +2297,20 @@ class n_dimensions(_BaseTag):
     }
 
 
+class task_type(_BaseTag):
+    """Dataset property: the task type of the dataset.
+
+    - String name: ```task_type````
+    - Public property tag
+    - Values: string, one of ``"classifier"``, ``"regressor"``, ``"forecaster"``
+    - Example: ``"classifier"``
+    - Default: ``None``
+
+    This tag specifies the task type of the dataset, that can be used to
+    query applicable estimators.
+    """
+
+
 class visual_block_kind(_BaseTag):
     """How to display html representation of a meta-estimator in a jupyter notebook.
 

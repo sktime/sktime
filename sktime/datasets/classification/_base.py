@@ -35,6 +35,7 @@ class BaseClassificationDataset(BaseDataset):
 
     _tags = {
         "object_type": ["dataset", "dataset_classification"],
+        "task_type": ["classifier"],
         # Estimator type
         "is_univariate": True,
         "n_instances": None,
