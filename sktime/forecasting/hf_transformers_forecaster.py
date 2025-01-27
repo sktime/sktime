@@ -150,7 +150,6 @@ class HFTransformersForecaster(BaseForecaster):
     def __init__(
         self,
         model_path: str = None,
-        model=None,
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
@@ -159,10 +158,10 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        model=None,  # new parameter for directly providing the model
     ):
         super().__init__()
         self.model_path = model_path
-        self.model = model
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
@@ -176,6 +175,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.model = model
 
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, Trainer, TrainingArguments
