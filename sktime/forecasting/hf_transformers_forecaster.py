@@ -388,108 +388,58 @@ class HFTransformersForecaster(BaseForecaster):
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+        params : list of dict
+            Parameters to create testing instances of the class.
+            Each dict contains parameters to construct an "interesting" test instance,
+            i.e., `MyClass(**params)` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        base_training_args = {
+            "num_train_epochs": 1,
+            "output_dir": "test_output",
+            "per_device_train_batch_size": 32,
+        }
+
+        base_config = {
+            "lags_sequence": [1, 2, 3],
+            "context_length": 2,
+            "prediction_length": 4,
+        }
+
+        from transformers import AutoformerForPrediction
+
         test_params = [
-            {
-                "model_path": "huggingface/informer-tourism-monthly",
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                },
-                "deterministic": True,
-            },
+            # Updated test case for Autoformer, including a pre-loaded model
             {
                 "model_path": "huggingface/autoformer-tourism-monthly",
+                "model": AutoformerForPrediction.from_pretrained(
+                    "huggingface/autoformer-tourism-monthly"
+                ),
                 "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
+                "training_args": base_training_args,
+                "config": {**base_config, "label_length": 2},
                 "deterministic": True,
             },
         ]
 
+        # Add PEFT-specific test case if PEFT is available
         if _check_soft_dependencies("peft", severity="none"):
             from peft import LoraConfig
-            from transformers import AutoformerForPrediction
 
-            # Case for user-provided model_path
-            test_params.append(
-                {
-                    "model_path": "huggingface/autoformer-tourism-monthly",
-                    "fit_strategy": "minimal",
-                    "training_args": {
-                        "num_train_epochs": 1,
-                        "output_dir": "test_output",
-                        "per_device_train_batch_size": 32,
-                    },
-                }
-            )
-
-            test_params.append(
-                {
-                    "model_path": "huggingface/autoformer-tourism-monthly",
-                    "fit_strategy": "peft",
-                    "training_args": {
-                        "num_train_epochs": 1,
-                        "output_dir": "test_output",
-                        "per_device_train_batch_size": 32,
-                    },
-                    "config": {
-                        "lags_sequence": [1, 2, 3],
-                        "context_length": 2,
-                        "prediction_length": 4,
-                        "label_length": 2,
-                    },
-                    "peft_config": LoraConfig(
-                        r=2,
-                        lora_alpha=8,
-                        target_modules=["q_proj"],
-                        lora_dropout=0.01,
-                    ),
-                    "deterministic": True,
-                }
-            )
-
-            # Case for user-provided Hugging Face Transformers model directly
-            test_params.append(
-                {
-                    "model": AutoformerForPrediction.from_pretrained(
-                        "huggingface/autoformer-tourism-monthly"
-                    ),
-                    "fit_strategy": "minimal",
-                    "training_args": {
-                        "num_train_epochs": 1,
-                        "output_dir": "test_output",
-                        "per_device_train_batch_size": 32,
-                    },
-                    "config": {
-                        "lags_sequence": [1, 2, 3],
-                        "context_length": 2,
-                        "prediction_length": 4,
-                    },
-                    "deterministic": True,
-                }
-            )
+            peft_test_case = {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "peft",
+                "training_args": base_training_args,
+                "config": {**base_config, "label_length": 2},
+                "peft_config": LoraConfig(
+                    r=2,
+                    lora_alpha=8,
+                    target_modules=["q_proj"],
+                    lora_dropout=0.01,
+                ),
+                "deterministic": True,
+            }
+            test_params.append(peft_test_case)
 
         return test_params
 
