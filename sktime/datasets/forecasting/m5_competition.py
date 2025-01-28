@@ -43,12 +43,6 @@ class M5Dataset(BaseForecastingDataset):
     Frequency:          Daily
     Number of features: 8
     Hierarchy levels:   5
-
-    Examples
-    --------
-    >>> data = load_m5()
-    >>> data.head()
-
     """
 
     _tags = {
