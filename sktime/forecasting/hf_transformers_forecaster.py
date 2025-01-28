@@ -414,6 +414,8 @@ class HFTransformersForecaster(BaseForecaster):
             "prediction_length": 4,
         }
 
+        test_params = []
+
         if _check_soft_dependencies(
             "transformers", severity="none"
         ) and _check_soft_dependencies("torch", severity="none"):
