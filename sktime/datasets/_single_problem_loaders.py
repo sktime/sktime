@@ -1530,7 +1530,7 @@ def load_m5(
             calander : pd.DataFrame
 
     Dataset Description
-    --------------------
+    -------------------
     - **Number of Rows**: Approximately 58 million rows (for the full dataset).
     - **Number of Columns**: Varies based on `include_events` parameter.
       - Without events: 9 columns.

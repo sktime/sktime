@@ -2310,6 +2310,14 @@ class task_type(_BaseTag):
     query applicable estimators.
     """
 
+    _tags = {
+        "tag_name": "task_type",
+        "parent_type": "dataset",
+        "tag_type": "str",
+        "short_descr": "task type of the dataset",
+        "user_facing": True,
+    }
+
 
 class visual_block_kind(_BaseTag):
     """How to display html representation of a meta-estimator in a jupyter notebook.
