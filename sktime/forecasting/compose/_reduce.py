@@ -2415,7 +2415,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * impute_method
+            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
