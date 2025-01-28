@@ -1,8 +1,25 @@
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
 
-class F1ScoreBreakpoints(BaseDetectionMetric):
-    """F1-score for breakpoint detection, using a margin-based match criterion."""
+class F1ScoreMargin(BaseDetectionMetric):
+    """F1-score for event detection, using a margin-based match criterion.
+
+    This score computes an iloc-based F1-score with margin of errog
+
+    A true event is considered a match if there is a predicted
+    event within a margin of error, as specified by the ``margin`` parameter.
+
+    The margin is applied in ``iloc`` units, i.e., the absolute difference between
+    the true and predicted iloc must be less or equal than the margin to be considered
+    a match.
+
+    The default value of 0 results in only exact matches being counted.
+
+    Parameters
+    ----------
+    margin : int, optional (default=0)
+        Margin of error to consider a detected event as matched.
+    """
 
     _tags = {
         "object_type": ["metric_detection", "metric"],
@@ -12,13 +29,7 @@ class F1ScoreBreakpoints(BaseDetectionMetric):
         "lower_is_better": False,  # higher F1 is better
     }
 
-    def __init__(self, margin=1.0):
-        """
-        Parameters
-        ----------
-        margin : float, optional (default=1.0)
-            Margin of error to consider a breakpoint matched, i.e. |pred - true| < margin.
-        """  # noqa: D205, E501
+    def __init__(self, margin=0):
         self.margin = margin
         super().__init__()
 
@@ -56,15 +67,17 @@ class F1ScoreBreakpoints(BaseDetectionMetric):
         matched_count = 0
         pred_index = 0
 
+        margin = self.margin
+
         for true_bkpt in gt:
             # Advance pred_index while predicted < (true - margin)
-            while pred_index < len(pred) and pred[pred_index] < true_bkpt - self.margin:
+            while pred_index < len(pred) and pred[pred_index] <= true_bkpt - margin:
                 pred_index += 1
 
             # If current predicted is within margin, count it as matched
             if (
                 pred_index < len(pred)
-                and abs(pred[pred_index] - true_bkpt) < self.margin
+                and abs(pred[pred_index] - true_bkpt) <= margin
             ):
                 matched_count += 1
                 # optional: pred_index += 1 to avoid double-matching the same prediction
