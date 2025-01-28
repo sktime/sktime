@@ -58,8 +58,11 @@ Regression datasets
 
     Tecator
 
+Loaders
+-------
+
 Loaders from dataset repositories
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These loaders access dataset repositories on the internet and fetch one or multiple
 datasets from there, individual datasets specifiable as strings.
@@ -83,7 +86,7 @@ These loaders can be used to access reference datasets for benchmarking.
 
 
 Individual datasets
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 These loaders fetch a commonly used individual dataset,
 usually for illustration purposes.
@@ -134,7 +137,7 @@ Panels of time series
 
 
 Toy data generators
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Hierarchical time series data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
