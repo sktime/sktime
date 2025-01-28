@@ -15,6 +15,14 @@ else:
         """Dummy class if torch is unavailable."""
 
 
+if _check_soft_dependencies("transformers", severity="none"):
+    pass
+else:
+
+    class DummyTransformers:
+        """Dummy class if transformers is unavailable."""
+
+
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -406,21 +414,24 @@ class HFTransformersForecaster(BaseForecaster):
             "prediction_length": 4,
         }
 
-        from transformers import AutoformerForPrediction
+        if _check_soft_dependencies(
+            "transformers", severity="none"
+        ) and _check_soft_dependencies("torch", severity="none"):
+            from transformers import AutoformerForPrediction
 
-        test_params = [
-            # Updated test case for Autoformer, including a pre-loaded model
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "model": AutoformerForPrediction.from_pretrained(
-                    "huggingface/autoformer-tourism-monthly"
-                ),
-                "fit_strategy": "minimal",
-                "training_args": base_training_args,
-                "config": {**base_config, "label_length": 2},
-                "deterministic": True,
-            },
-        ]
+            test_params = [
+                # Updated test case for Autoformer, including a pre-loaded model
+                {
+                    "model_path": "huggingface/autoformer-tourism-monthly",
+                    "model": AutoformerForPrediction.from_pretrained(
+                        "huggingface/autoformer-tourism-monthly"
+                    ),
+                    "fit_strategy": "minimal",
+                    "training_args": base_training_args,
+                    "config": {**base_config, "label_length": 2},
+                    "deterministic": True,
+                },
+            ]
 
         # Add PEFT-specific test case if PEFT is available
         if _check_soft_dependencies("peft", severity="none"):
