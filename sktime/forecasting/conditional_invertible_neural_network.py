@@ -114,21 +114,17 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
 
     Handling invalid `window_size`:
-
-        >>> try:
-        ...     model = CINNForecaster(window_size=5000)  # Assuming len(y) < 5000
-        ...     model.fit(y)
-        ... except ValueError as e:
-        ...     print(f"Error: {e}")
-
-        Handling curve fitting errors:
-
-        >>> try:
-        ...     model = CINNForecaster(window_size=100)
-        ...     model.fit(y)
-        ... except RuntimeError as e:
-        ...     print(f"Curve fitting error: {e}")
-
+            >>> try:
+            ...     model = CINNForecaster(window_size=5000)  # Assuming len(y) < 5000
+            ...     model.fit(y)
+            ... except ValueError as e:
+            ...     print(f"Error: {e}")
+            Handling curve fitting errors:
+            >>> try:
+            ...     model = CINNForecaster(window_size=100)
+            ...     model.fit(y)
+            ... except RuntimeError as e:
+            ...     print(f"Curve fitting error: {e}")
     """
 
     _tags = {
@@ -234,7 +230,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         - Validates that `self.window_size` does not exceed the length of `y`.
         - Fits `self.function` using rolling mean data,
           raising an error if optimization fails.
-
 
         Returns
         -------
