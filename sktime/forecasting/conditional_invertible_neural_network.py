@@ -108,7 +108,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = CINNForecaster() # doctest: +SKIP
+    >>> model = CINNForecaster(window_size=100) # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
     CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
