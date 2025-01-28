@@ -33,15 +33,9 @@ class HFTransformersForecaster(BaseForecaster):
     model_path : str
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
-    model : transformers.PreTrainedModel, optional
-        An instantiated Hugging Face model object. If provided, this will override
-        the `model_path` and `config` parameters, and the passed model will be used
-        directly for forecasting. In this case, the `model_path` and `config` should
-        be set to None, as they are not needed.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
-
         - "minimal": Fine-tunes only a small subset of the model parameters,
           allowing for quick adaptation with limited computational resources.
         - "full": Fine-tunes all model parameters, which may result in better
@@ -51,7 +45,6 @@ class HFTransformersForecaster(BaseForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
-
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -73,6 +66,11 @@ class HFTransformersForecaster(BaseForecaster):
         When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the `peft` documentation for details.
+    model : transformers.PreTrainedModel, optional
+        An instantiated Hugging Face model object. If provided, this will override
+        the `model_path` and `config` parameters, and the passed model will be used
+        directly for forecasting. In this case, the `model_path` and `config` should
+        be set to None, as they are not needed.
 
     Examples
     --------
