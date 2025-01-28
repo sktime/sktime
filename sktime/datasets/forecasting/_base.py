@@ -64,7 +64,7 @@ class BaseForecastingDataset(BaseDataset):
     """
 
     _tags = {
-        "object_type": ["dataset", "dataset_forecasting"],
+        "object_type": ["dataset_forecasting", "dataset"],
         "task_type": ["forecaster"],
         # Estimator type
         "is_univariate": True,
