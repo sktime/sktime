@@ -122,7 +122,7 @@ Direct and recursive - ``sktime`` native 2nd generation
     :template: class.rst
 
     DirectReductionForecaster
-
+    RecursiveReductionForecaster
 
 Direct and recursive - 3rd party
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,6 +211,18 @@ Wrappers that add prediction intervals to any forecaster.
     EnbPIForecaster
 
 
+Calibration and bias adjustment
+-------------------------------
+
+.. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BoxCoxBiasAdjustedForecaster
+
+
 Trend forecasters
 -----------------
 
@@ -225,6 +237,7 @@ Trend forecasters
     STLForecaster
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
+    SplineTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -336,6 +349,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     VARMAX
+
+.. currentmodule:: sktime.forecasting.vecm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VECM
 
 Auto-ARIMA models
 ~~~~~~~~~~~~~~~~~
@@ -451,6 +472,14 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
     LTSFTransformerForecaster
+
+.. currentmodule:: sktime.forecasting.scinet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SCINetForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 

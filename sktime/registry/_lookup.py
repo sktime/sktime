@@ -21,7 +21,10 @@ from pathlib import Path
 import pandas as pd
 from skbase.lookup import all_objects
 
-from sktime.registry._base_classes import get_base_class_lookup, get_obj_scitype_list
+from sktime.registry._base_classes import (
+    get_base_class_for_str,
+    get_obj_scitype_list,
+)
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 
 
@@ -362,7 +365,17 @@ def all_tags(
 
 
 def _check_estimator_types(estimator_types):
-    """Return list of classes corresponding to type strings."""
+    """Return list of classes corresponding to type strings.
+
+    Parameters
+    ----------
+    estimator_types: str, or list of str
+
+    Returns
+    -------
+    estimator_types: list of classes
+        base classes corresponding to scitype strings in estimator_types
+    """
     estimator_types = deepcopy(estimator_types)
 
     if not isinstance(estimator_types, list):
@@ -370,13 +383,11 @@ def _check_estimator_types(estimator_types):
 
     def _get_err_msg(estimator_type):
         return (
-            f"Parameter `estimator_type` must be None, a string or a list of "
+            f"Parameter `estimator_type` must be a string or a list of "
             f"strings. Valid string values are: "
             f"{get_obj_scitype_list()}, but found: "
             f"{repr(estimator_type)}"
         )
-
-    BASE_CLASS_LOOKUP = get_base_class_lookup()
 
     for i, estimator_type in enumerate(estimator_types):
         if not isinstance(estimator_type, (type, str)):
@@ -386,8 +397,7 @@ def _check_estimator_types(estimator_types):
         if isinstance(estimator_type, str):
             if estimator_type not in get_obj_scitype_list():
                 raise ValueError(_get_err_msg(estimator_type))
-            estimator_type = BASE_CLASS_LOOKUP[estimator_type]
-            estimator_types[i] = estimator_type
+            estimator_types[i] = get_base_class_for_str(estimator_type)
         elif isinstance(estimator_type, type):
             pass
         else:
