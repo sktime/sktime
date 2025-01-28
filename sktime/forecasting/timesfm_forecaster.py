@@ -47,7 +47,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         and padding or truncation will
         be handled by the model's inference code if necessary.
 
-    horizon_len : int, optional (default=None)
+    horizon_len : int, optional (default=128)
         The length of the forecast horizon.
         If set to None, the forecast horizon is dynamically determined based on the
         provided forecasting horizon `fh`, if available.
@@ -187,7 +187,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     def __init__(
         self,
         context_len=None,
-        horizon_len=None,
+        horizon_len=128,
         freq=0,
         repo_id="google/timesfm-1.0-200m",
         input_patch_len=32,
@@ -395,7 +395,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         test_params = [
             {
                 "context_len": None,
-                "horizon_len": None,
+                "horizon_len": 128,
                 "freq": 0,
                 "verbose": False,
             },
