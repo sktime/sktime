@@ -113,12 +113,21 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
 
-    ```python
-    try:
-        forecaster.fit(y)
-    except (ValueError, RuntimeError) as e:
-        print(f"Error: {e}")
-    ```
+    Handling invalid `window_size`:
+
+        >>> try:
+        ...     model = CINNForecaster(window_size=5000)  # Assuming len(y) < 5000
+        ...     model.fit(y)
+        ... except ValueError as e:
+        ...     print(f"Error: {e}")
+
+        Handling curve fitting errors:
+
+        >>> try:
+        ...     model = CINNForecaster(window_size=100)
+        ...     model.fit(y)
+        ... except RuntimeError as e:
+        ...     print(f"Curve fitting error: {e}")
 
     """
 
