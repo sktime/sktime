@@ -16,17 +16,11 @@ class USChange(_ForecastingDatasetFromLoader):
     y_name : str, optional (default="Consumption")
         Name of the target variable (y).
 
-    Returns
-    -------
-    y : pd.Series
-        Selected target column, default is "Consumption".
-    X : pd.DataFrame
-        Explanatory variables.
 
     Examples
     --------
     >>> from sktime.datasets.forecasting import USChange
-    >>> y, X = USChange().load()
+    >>> y, X = USChange().load("y", "X")
 
     Notes
     -----

@@ -9,15 +9,10 @@ __all__ = ["Lynx"]
 class Lynx(_ForecastingDatasetFromLoader):
     """Load the Lynx dataset for univariate time series forecasting.
 
-    Returns
-    -------
-    y : pd.Series
-        Lynx sales dataset
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import Lynx
-    >>> y = Lynx().load()
+    >>> y = Lynx().load("y")
 
     Notes
     -----

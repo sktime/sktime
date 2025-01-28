@@ -21,11 +21,11 @@ class HierarchicalSalesToydata(_ForecastingDatasetFromLoader):
         - Product group 2A: Fridges
         - Product group 2B: Freezers
 
-    Returns
-    -------
-    hierarchy : pd.DataFrame in pd_multiindex_hier mtype format
-        Product hierarchy with row MultiIndex "Product line", "Product group", "Date".
-        Column "Sales" contains total sales for each product group in monthly period.
+    Examples
+    --------
+    >>> from sktime.datasets.forecasting import HierarchicalSalesToydata
+    >>> dataset = HierarchicalSalesToydata()
+    >>> y = dataset.load("y")
     """
 
     _tags = {

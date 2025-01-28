@@ -19,8 +19,9 @@ class Tecator(_RegressionDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets import load_tecator
-    >>> X, y = load_tecator()
+    >>> from sktime.datasets.regression import Tecator
+    >>> dataset = Tecator()
+    >>> X, y = dataset.load("X", "y")
 
     Notes
     -----

@@ -11,8 +11,8 @@ class GunPoint(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.gunpoint import GunPoint
-    >>> X, y = GunPoint().load()
+    >>> from sktime.datasets.classification import GunPoint
+    >>> X, y = GunPoint().load("X", "y")
 
     Notes
     -----

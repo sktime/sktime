@@ -9,15 +9,10 @@ __all__ = ["Macroeconomic"]
 class Macroeconomic(_ForecastingDatasetFromLoader):
     """Load the US Macroeconomic dataset for multivariate time series forecasting.
 
-    Returns
-    -------
-    y : pd.DataFrame
-        Time series data
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import Macroeconomic
-    >>> y = Macroeconomic().load()
+    >>> y = Macroeconomic().load("y")
 
     Notes
     -----

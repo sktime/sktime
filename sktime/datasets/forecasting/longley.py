@@ -14,13 +14,6 @@ class Longley(_ForecastingDatasetFromLoader):
     y_name: str, optional (default="TOTEMP")
         Name of target variable (y)
 
-    Returns
-    -------
-    y: pd.Series
-        The target series to be predicted.
-    X: pd.DataFrame
-        The exogenous time series data for the problem.
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import Longley

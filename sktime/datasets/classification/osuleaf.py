@@ -11,8 +11,8 @@ class OSULeaf(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.osuleaf import OSULeaf
-    >>> X, y = OSULeaf().load()
+    >>> from sktime.datasets.classification import OSULeaf
+    >>> X, y = OSULeaf().load("X", "y")
 
     Notes
     -----

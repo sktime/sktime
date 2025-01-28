@@ -12,7 +12,7 @@ class PLAID(_ClassificationDatasetFromLoader):
     Examples
     --------
     >>> from sktime.datasets.classification.plaid import PLAID
-    >>> X, y = PLAID().load()
+    >>> X, y = PLAID().load("X", "y")
     """
 
     _tags = {

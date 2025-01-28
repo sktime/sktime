@@ -28,15 +28,10 @@ class Solar(_ForecastingDatasetFromLoader):
     api_version : string or None, default="v4"
         API version to call. If None, a stored sample of the data is loaded.
 
-    Returns
-    -------
-    y : pd.Series
-        The solar generation time series as requested by the parameters.
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import Solar
-    >>> y = Solar().load()
+    >>> y = Solar().load("y")
 
     Notes
     -----

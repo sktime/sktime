@@ -11,8 +11,8 @@ class ItalyPowerDemand(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.italy_power_demand import ItalyPowerDemand
-    >>> X, y = ItalyPowerDemand().load()
+    >>> from sktime.datasets.classification import ItalyPowerDemand
+    >>> X, y = ItalyPowerDemand().load("X", "y")
 
     Notes
     -----

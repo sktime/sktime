@@ -11,8 +11,8 @@ class JapaneseVowels(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.japanese_vowels import JapaneseVowels
-    >>> X, y = JapaneseVowels().load()
+    >>> from sktime.datasets.classification import JapaneseVowels
+    >>> X, y = JapaneseVowels().load("X", "y")
 
     Notes
     -----

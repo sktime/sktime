@@ -16,6 +16,13 @@ class M5Dataset(BaseForecastingDataset):
     format (pd_multiindex_hier). For additional information on the dataset,
     including its structure and contents, refer to `Notes` section.
 
+
+    Examples
+    --------
+    >>> from sktime.datasets.forecasting import M5Dataset
+    >>> dataset = M5Dataset()
+    >>> y, X = dataset.load("y", "X")
+
     Notes
     -----
     The dataset consists of three main files:

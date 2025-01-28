@@ -11,8 +11,8 @@ class BasicMotions(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.basic_motions import BasicMotions
-    >>> X, y = BasicMotions().load()
+    >>> from sktime.datasets.classification import BasicMotions
+    >>> X, y = BasicMotions().load("X", "y")
 
     Notes
     -----

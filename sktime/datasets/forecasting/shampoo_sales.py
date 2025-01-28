@@ -9,15 +9,10 @@ __all__ = ["ShampooSales"]
 class ShampooSales(_ForecastingDatasetFromLoader):
     """Load the Shampoo Sales dataset for univariate time series forecasting.
 
-    Returns
-    -------
-    y : pd.Series
-        Shampoo sales dataset
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import ShampooSales
-    >>> y = ShampooSales().load()
+    >>> y = ShampooSales().load("y")
 
     Notes
     -----

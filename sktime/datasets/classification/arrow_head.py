@@ -11,8 +11,8 @@ class ArrowHead(_ClassificationDatasetFromLoader):
 
     Examples
     --------
-    >>> from sktime.datasets.classification.arrow_head import ArrowHead
-    >>> X, y = ArrowHead().load()
+    >>> from sktime.datasets.classification import ArrowHead
+    >>> X, y = ArrowHead().load("X", "y")
 
     Notes
     -----

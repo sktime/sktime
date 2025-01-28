@@ -9,15 +9,11 @@ __all__ = ["Airline"]
 class Airline(_ForecastingDatasetFromLoader):
     """Load the airline univariate time series dataset [1].
 
-    Returns
-    -------
-    y : pd.Series
-        Time series
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import Airline
-    >>> y = load_airline()
+    >>> dataset = Airline()
+    >>> y = dataset.load("y")
 
     Notes
     -----
