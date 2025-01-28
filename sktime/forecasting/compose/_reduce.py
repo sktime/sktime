@@ -2408,7 +2408,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.lag import Lag
 
-        impute_method = self.impute_method
+        impute_method = self._impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
