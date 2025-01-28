@@ -402,16 +402,11 @@ class ReconcilerForecaster(BaseForecaster):
                 cov_mat.loc[cov_mat.index != i, cov_mat.columns == i] = 0
 
         # now get the g matrix based on the covariance
-        print(np.dot(np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix)).shape)
-        print(np.transpose(self.s_matrix).shape, np.dot(cov_mat, self.s_matrix).shape)
-        print(self.s_matrix.shape, cov_mat.shape)
-        print("^^^#########^^^")
         g_mint = pd.DataFrame(
             np.dot(
                 inv(
                     np.dot(np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix))
                     + self.alpha * np.eye(self.s_matrix.shape[1])
-                    
                 ),
                 np.dot(np.transpose(self.s_matrix), cov_mat),
             )
