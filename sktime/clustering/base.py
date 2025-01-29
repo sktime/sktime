@@ -44,7 +44,12 @@ class BaseClusterer(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
-        self.n_clusters = n_clusters
+
+        # defensive programming in case subclass does set n_clusters
+        # but does not pass it to super().__init__
+        if not hasattr(self, "n_clusters"):
+            self.n_clusters = n_clusters
+
         super().__init__()
         _check_estimator_deps(self)
 
