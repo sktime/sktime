@@ -37,8 +37,12 @@ jobs:
       - name: dependencies installation step
         run: python3 -m pip install .[tests]
         shell: bash
-      - name: unit test step
-        run: python3 -m pytest -m "not datadownload" sktime/datasets
+      # - name: unit test step
+      #   run: python3 -m pytest -m "not datadownload" sktime/datasets
+      #   shell: bash
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
         shell: bash
 
   test_external_data:
@@ -73,6 +77,10 @@ jobs:
       - name: dependencies installation step
         run: python3 -m pip install .[tests,datasets]
         shell: bash
-      - name: unit test step
-        run: python3 -m pytest -m "datadownload" sktime/datasets
+      # - name: unit test step
+      #   run: python3 -m pytest -m "datadownload" sktime/datasets
+      #   shell: bash
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
         shell: bash

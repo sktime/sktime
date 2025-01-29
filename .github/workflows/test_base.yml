@@ -2,26 +2,26 @@ name: base
 on:
   workflow_call:
 jobs:
-  detect:
-    name: detect
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      base: ${{ steps.filter.outputs.base }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            base:
-              - pyproject.toml
-              - sktime/base/**
+  # detect:
+  #   name: detect
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: read
+  #   outputs:
+  #     base: ${{ steps.filter.outputs.base }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dorny/paths-filter@v3
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           base:
+  #             - pyproject.toml
+  #             - sktime/base/**
   test:
-    needs: detect
+    # needs: detect
     name:
-    if: ${{ needs.detect.outputs.base == 'true' }}
+    # if: ${{ needs.detect.outputs.base == 'true' }}
     strategy:
       fail-fast: false
       matrix:

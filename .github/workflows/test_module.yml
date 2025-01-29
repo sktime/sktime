@@ -2,57 +2,57 @@ name: test module
 on:
   workflow_call:
 jobs:
-  detect:
-    name: detect
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      module_changes: ${{ steps.filter.outputs.changes }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            alignment:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/alignment/**
-            classification:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/classification/**
-            clustering:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/clustering/**
-            detection:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/detection/**
-            forecasting:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/forecasting/**
-            networks:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/networks/**
-            param_est:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/param_est/**
-            regression:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/regression/**
-            transformations:
-              - pyproject.toml
-              - sktime/base/**
-              - sktime/transformations/**
+  # detect:
+  #   name: detect
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: read
+  #   outputs:
+  #     module_changes: ${{ steps.filter.outputs.changes }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dorny/paths-filter@v3
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           alignment:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/alignment/**
+  #           classification:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/classification/**
+  #           clustering:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/clustering/**
+  #           detection:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/detection/**
+  #           forecasting:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/forecasting/**
+  #           networks:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/networks/**
+  #           param_est:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/param_est/**
+  #           regression:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/regression/**
+  #           transformations:
+  #             - pyproject.toml
+  #             - sktime/base/**
+  #             - sktime/transformations/**
   test:
-    needs: detect
+    # needs: detect
     name:
     strategy:
       fail-fast: false
@@ -67,7 +67,17 @@ jobs:
           - macos-13
           - ubuntu-latest
           - windows-latest
-        sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
+        # sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
+        sktime-component:
+          - alignment
+          - classification
+          - clustering
+          - detection
+          - forecasting
+          - networks
+          - param_est
+          - regression
+          - transformations
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch

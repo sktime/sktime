@@ -29,27 +29,31 @@ runs:
       with:
         python-version: ${{ inputs.python-version-identifier }}
 
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
-      shell: bash
+    # - name: Display Python version
+    #   run: python -c "import sys; print(sys.version)"
+    #   shell: bash
 
     - name: Install sktime and dependencies
       run: python3 -m pip install .[tests]
       shell: bash
 
-    - name: Show dependencies
-      run: python -m pip list
-      shell: bash
+    # - name: Show dependencies
+    #   run: python -m pip list
+    #   shell: bash
 
-    - name: Show available branches
-      run: git branch -a
-      shell: bash
+    # - name: Show available branches
+    #   run: git branch -a
+    #   shell: bash
 
-    - name: unit test step
-      run: >-
-        python3
-        -m pytest
-        sktime/base
-        --matrixdesign ${{ inputs.sub-sample-estimators }}
-        --only_changed_modules ${{ inputs.test-affected-estimators }}
+    # - name: unit test step
+    #   run: >-
+    #     python3
+    #     -m pytest
+    #     sktime/base
+    #     --matrixdesign ${{ inputs.sub-sample-estimators }}
+    #     --only_changed_modules ${{ inputs.test-affected-estimators }}
+    #   shell: bash
+
+    - name: anirban debug 7622
+      run: python .github/scripts/anirban_debug_7622.py
       shell: bash

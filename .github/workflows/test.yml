@@ -13,82 +13,82 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  code-quality:
-    name: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: repository checkout step
-        uses: actions/checkout@v4
-      - name: python environment step
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: install pre-commit
-        run: python3 -m pip install pre-commit
-      - id: changed-files
-        name: identify modified files
-        uses: tj-actions/changed-files@v45
-      - name: run pre-commit hooks on modified files
-        run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
-      - name: check missing __init__ files
-        run: build_tools/fail_on_missing_init_files.sh
-        shell: bash
+  # code-quality:
+  #   name: code-quality
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: repository checkout step
+  #       uses: actions/checkout@v4
+  #     - name: python environment step
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.11"
+  #     - name: install pre-commit
+  #       run: python3 -m pip install pre-commit
+  #     - id: changed-files
+  #       name: identify modified files
+  #       uses: tj-actions/changed-files@v45
+  #     - name: run pre-commit hooks on modified files
+  #       run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
+  #     - name: check missing __init__ files
+  #       run: build_tools/fail_on_missing_init_files.sh
+  #       shell: bash
 
-  run-notebook-examples:
-    needs: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow,dl]
-      - name: Run example notebooks
-        run: build_tools/run_examples.sh
-        shell: bash
+  # run-notebook-examples:
+  #   needs: code-quality
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.9
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         python -m pip install .[all_extras,binder,dev,mlflow,dl]
+  #     - name: Run example notebooks
+  #       run: build_tools/run_examples.sh
+  #       shell: bash
 
-  run-blogpost-examples:
-    needs: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow]
-      - name: Run example notebooks
-        run: build_tools/run_blogposts.sh
-        shell: bash
+  # run-blogpost-examples:
+  #   needs: code-quality
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.9
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         python -m pip install .[all_extras,binder,dev,mlflow]
+  #     - name: Run example notebooks
+  #       run: build_tools/run_blogposts.sh
+  #       shell: bash
 
-  detect-package-change:
-    needs: code-quality
-    name: detect package changes
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      sktime: ${{ steps.filter.outputs.sktime }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            sktime:
-              - sktime/**
-              - pyproject.toml
+  # detect-package-change:
+  #   needs: code-quality
+  #   name: detect package changes
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: read
+  #   outputs:
+  #     sktime: ${{ steps.filter.outputs.sktime }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dorny/paths-filter@v3
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           sktime:
+  #             - sktime/**
+  #             - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-package-change
-    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
+    # needs: detect-package-change
+    # if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,20 +96,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
           python -m pip install .
 
-      - name: Run pytest-free tests
-        run: |
-          python sktime/_nopytest_tests.py
+      # - name: Run pytest-free tests
+      #   run: |
+      #     python sktime/_nopytest_tests.py
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
 
   test-nosoftdeps:
-    needs: detect-package-change
-    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
+    # needs: detect-package-change
+    # if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -117,18 +121,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[dev]
 
-      - name: Show dependencies
-        run: python -m pip list
+      # - name: Show dependencies
+      #   run: python -m pip list
 
-      - name: Run tests
-        run: make test_softdeps
+      # - name: Run tests
+      #   run: make test_softdeps
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
 
   test-nosoftdeps-full:
     needs: test-nosoftdeps
@@ -145,8 +153,8 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
@@ -155,8 +163,12 @@ jobs:
       - name: Show dependencies
         run: python -m pip list
 
-      - name: Run tests
-        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
+      # - name: Run tests
+      #   run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
 
   test-mlflow:
     needs: test-nosoftdeps
@@ -174,11 +186,15 @@ jobs:
         run: |
           python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
 
-      - name: Show dependencies
-        run: python -m pip list
+      # - name: Show dependencies
+      #   run: python -m pip list
 
-      - name: Run tests
-        run: make test_mlflow
+      # - name: Run tests
+      #   run: make test_mlflow
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
 
   test-cython-estimators:
     needs: test-nosoftdeps
@@ -194,43 +210,47 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
-      - name: Install OSX packages
-        shell: bash
-        run: ./.github/scripts/install_osx_dependencies.sh
+      # - name: Install OSX packages
+      #   shell: bash
+      #   run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[dev,cython_extras] --no-cache-dir
 
-      - name: Show dependencies
-        run: python -m pip list
+      # - name: Show dependencies
+      #   run: python -m pip list
 
-      - name: Run tests
-        run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
+      # - name: Run tests
+      #   run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
-  detect:
-    needs: test-nosoftdeps
-    name: detect changes
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      datasets: ${{ steps.filter.outputs.datasets }}
-      pyproject: ${{ steps.filter.outputs.pyproject }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            datasets:
-              - sktime/base/**
-              - sktime/datasets/**
-            pyproject:
-              - pyproject.toml
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
+
+  # detect:
+  #   needs: test-nosoftdeps
+  #   name: detect changes
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: read
+  #   outputs:
+  #     datasets: ${{ steps.filter.outputs.datasets }}
+  #     pyproject: ${{ steps.filter.outputs.pyproject }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dorny/paths-filter@v3
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           datasets:
+  #             - sktime/base/**
+  #             - sktime/datasets/**
+  #           pyproject:
+  #             - pyproject.toml
 
   test-base:
     needs: test-nosoftdeps
@@ -251,9 +271,9 @@ jobs:
     secrets: inherit
 
   test-datasets:
-    needs: detect
+    # needs: detect
     name: datasets
-    if: ${{ needs.detect.outputs.datasets == 'true' }}
+    # if: ${{ needs.detect.outputs.datasets == 'true' }}
     uses: ./.github/workflows/test_datasets.yml
     secrets: inherit
 
@@ -277,24 +297,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
-      - name: Install OSX packages
-        run: ./.github/scripts/install_osx_dependencies.sh
+      # - name: Install OSX packages
+      #   run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         shell: bash
         run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
 
-      - name: Show dependencies
-        run: python -m pip list
+      # - name: Show dependencies
+      #   run: python -m pip list
 
-      - name: Show available branches
-        run: git branch -a
+      # - name: Show available branches
+      #   run: git branch -a
 
-      - name: Run tests
-        run: make test_without_datasets
+      # - name: Run tests
+      #   run: make test_without_datasets
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
 
   test-unix-pandas1:
     needs: test-nosoftdeps
@@ -315,18 +339,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
 
-      - name: Show dependencies
-        run: python -m pip list
+      # - name: Show dependencies
+      #   run: python -m pip list
 
-      - name: Show available branches
-        run: git branch -a
+      # - name: Show available branches
+      #   run: git branch -a
 
-      - name: Run tests
-        run: make test_without_datasets
+      # - name: Run tests
+      #   run: make test_without_datasets
+
+      - name: anirban debug 7622
+        run: python .github/scripts/anirban_debug_7622.py
+        shell: bash
