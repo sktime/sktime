@@ -64,6 +64,17 @@ Density-based
 
     TimeSeriesDBSCAN
 
+Graph- or network-based
+-----------------------
+
+.. currentmodule:: sktime.clustering.kvisibility
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesKvisibility
+
 Spatio-temporal clustering
 --------------------------
 
