@@ -33,8 +33,14 @@ jobs:
           - "3.13"
         operating-system:
           - macos-13
+          - macos-latest
           - ubuntu-latest
           - windows-latest
+        exclude:
+          - operating-system: macos-latest
+            python-version: "3.9"
+          - operating-system: macos-latest
+            python-version: "3.10"
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
