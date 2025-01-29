@@ -2639,6 +2639,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
+            "impute_method": None,  # None is the default
         }
         params3 = {
             "estimator": est,
@@ -2656,13 +2657,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
-            "impute_method": None,  # test without imputer
+            "impute_method": "pad",
         }
         params6 = {
             "estimator": est,
             "window_length": 4,
             "pooling": "global",
-            "impute_method": None,
+            "impute_method": "pad",
         }
 
         return [params1, params2, params3, params4, params5, params6]
