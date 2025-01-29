@@ -15,10 +15,8 @@ class TimeSeriesKvisibility(BaseClusterer):
     kvisibility is a time series clustering technique based on visibility graphs.
     The algorithm is based on the transformation of the time series into graphs,
     and with metrics of the created graphs create a clustering with Kmeans.
-    Based on the following paper:
-    https://www.aimspress.com/article/doi/10.3934/math.20241687
 
-    Interface to Kvisibility sktime time series distances.
+    Based on the paper [1]_.
 
     Parameters
     ----------
@@ -56,6 +54,10 @@ class TimeSeriesKvisibility(BaseClusterer):
     labels_ : ndarray of shape (n_samples)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
+
+    References
+    ----------
+    .. [1]  https://www.aimspress.com/article/doi/10.3934/math.20241687
     """
 
     _tags = {
