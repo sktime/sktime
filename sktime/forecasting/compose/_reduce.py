@@ -2652,8 +2652,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "pooling": "global",
             "impute_method": forecaster_imputer,
         }
+        params5 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": None,  # test without imputer
+        }
+        params6 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": None,
+        }
 
-        return [params1, params2, params3, params4]
+        return [params1, params2, params3, params4, params5, params6]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
