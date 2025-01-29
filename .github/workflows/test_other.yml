@@ -43,6 +43,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
@@ -76,6 +77,7 @@ jobs:
           --ignore sktime/annotation
           --ignore sktime/classification
           --ignore sktime/clustering
+          --ignore sktime/detection
           --ignore sktime/forecasting
           --ignore sktime/networks
           --ignore sktime/param_est
@@ -83,8 +85,3 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign True
           --only_changed_modules True
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,incomplete

@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.34.0: check if this is still necessary
+        # todo 0.36.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(

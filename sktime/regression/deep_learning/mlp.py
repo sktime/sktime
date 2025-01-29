@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class MLPRegressor(BaseDeepRegressor):
     """Multi Layer Perceptron Network (MLP), as described in [1]_.
 
+    Adapted from the implementation by hfawaz in
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+
     Parameters
     ----------
     should inherited fields be listed here?
@@ -38,11 +41,6 @@ class MLPRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-    Notes
-    -----
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
-
     References
     ----------
     .. [1] Wang et. al, Time series classification from
@@ -64,7 +62,7 @@ class MLPRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
     }
