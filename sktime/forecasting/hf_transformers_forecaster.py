@@ -425,9 +425,7 @@ class HFTransformersForecaster(BaseForecaster):
             }
         ]
 
-        if _check_soft_dependencies(
-            "transformers", severity="none"
-        ) and _check_soft_dependencies("torch", severity="none"):
+        if _check_soft_dependencies("transformers", severity="none"):
             from transformers import AutoformerForPrediction
 
             test_params = [
