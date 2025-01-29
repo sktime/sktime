@@ -307,7 +307,6 @@ class TimerForecaster(_BaseGlobalForecaster):
         config = config.from_dict(_config)
 
         prediction_length = config.output_token_lens[0]
-        print(prediction_length)
         context_length = config.input_token_len
 
         # Load model with the updated config

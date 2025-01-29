@@ -421,6 +421,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vincent-nich12"><img src="https://avatars3.githubusercontent.com/u/36476633?v=4?s=100" width="100px;" alt="vincent-nich12"/><br /><sub><b>vincent-nich12</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vincent-nich12" title="Code">💻</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt="vollmersj"/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
+      <td align="center" valign="top" width="11.11%"><a href="https://github.com/Sohaib-Ahmed21"><img src="https://avatars.githubusercontent.com/u/113179991?s=400&u=75e9d1e36851a0546a450c42df7a074bb498d8b2&v=4" width="100px;" alt="Sohaib-Ahmed21"/><br /><sub><b>Sohaib-Ahmed21</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits/main/?author=Sohaib-Ahmed21" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
