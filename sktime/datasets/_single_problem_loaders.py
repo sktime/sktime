@@ -40,6 +40,7 @@ __all__ = [
     "load_unit_test_tsf",
     "load_covid_3month",
     "load_tecator",
+    "load_stallion",
 ]
 
 import os
@@ -55,6 +56,7 @@ from sktime.datasets._data_io import (
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
+    _mkdir_if_not_exist,
     _reduce_memory_usage,
 )
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
@@ -1748,3 +1750,117 @@ def load_m5(
             inplace=True,
         )
         return sales_train_validation, sell_prices, calendar
+
+
+def load_stallion(special_dates=True, verbose=False, download=False):
+    """Load the Stallion Volume Forecasting for forecasting with exogenous variables.
+
+    It's a simplified version of the original [Stallion kaggle competition](https://www.kaggle.com/datasets/utathya/future-volume-prediction).
+    You don't need a kaggle token to load it.
+
+
+    Parameters
+    ----------
+    special_dates : bool, default=True
+        include special datas columns
+    verbose : bool, default=False
+        print downloading status to console
+    download: bool, default=False
+        download data from pytorch-forecastint repository
+        url: https://github.com/jdb78/pytorch-forecasting/raw/master/examples/data/stallion.parquet
+
+    Returns
+    -------
+    y: pd.DataFrame
+        The target series to be predicted.
+    X: pd.DataFrame
+        The exogenous time series data for the problem.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import train_test_split
+
+    >>> from sktime.datasets import load_stallion
+
+    >>> y, X = load_stallion()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.1, train_size=0.9, shuffle=False
+        )
+    """
+    name = "Stallion"
+    if download:
+        data_dir = os.path.join(MODULE, "local_data", name)
+        path = os.path.join(data_dir, name + ".csv")
+        if not os.path.exists(path):
+            from urllib.request import urlretrieve
+
+            _mkdir_if_not_exist(data_dir)
+
+            parquet_file = os.path.join(data_dir, name + ".parquet")
+            u = "https://github.com/jdb78/pytorch-forecasting/raw/master/examples/data/stallion.parquet"
+            repeats = 5
+            for repeat in range(repeats):
+                try:
+                    urlretrieve(
+                        url=u,
+                        filename=parquet_file,
+                    )
+                    break
+                except Exception as e:
+                    if verbose:
+                        print(  # noqa: T201
+                            f"Downloading dataset {name} from {u} to {parquet_file}"
+                            f"(attempt {repeat+1} of {repeats} total failed). "
+                        )
+                    if repeat + 1 == repeats:
+                        raise e
+
+            data = pd.read_parquet(parquet_file)
+            data["month"] = data.date.dt.month
+            data["agency_num"] = data["agency"].apply(lambda x: int(x[-2:]))
+            data["sku_num"] = data["sku"].apply(lambda x: int(x[-2:]))
+            data = data.drop(
+                columns=[
+                    "industry_volume",
+                    "soda_volume",
+                    "avg_max_temp",
+                    "timeseries",
+                    "price_actual",
+                    "discount",
+                ],
+            )
+            data = data.set_index(["agency", "sku", "date"]).sort_index()
+            data.to_csv(path)
+
+        data = pd.read_csv(path)
+        special_dates_columns = [
+            "easter_day",
+            "good_friday",
+            "new_year",
+            "christmas",
+            "labor_day",
+            "independence_day",
+            "revolution_day_memorial",
+            "regional_games",
+            "fifa_u_17_world_cup",
+            "football_gold_cup",
+            "beer_capital",
+            "music_fest",
+        ]
+        if not special_dates:
+            data = data.drop(columns=special_dates_columns)
+    else:
+        data_dir = os.path.join(MODULE, DIRNAME, name)
+        path = os.path.join(data_dir, name + ".csv.zip")
+        path_extra = os.path.join(data_dir, name + "_extra.csv.zip")
+        data = pd.read_csv(path)
+        if special_dates:
+            data_extra = pd.read_csv(path_extra).set_index(["agency", "sku", "date"])
+            data = data.join(data_extra, on=["agency", "sku", "date"])
+
+    data["date"] = pd.to_datetime(data["date"])
+    data = data.set_index(["agency", "sku", "date"])
+    y = data["volume"].to_frame()
+    x = data.drop(columns="volume")
+
+    return y, x
