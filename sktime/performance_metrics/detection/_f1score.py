@@ -75,10 +75,7 @@ class F1ScoreMargin(BaseDetectionMetric):
                 pred_index += 1
 
             # If current predicted is within margin, count it as matched
-            if (
-                pred_index < len(pred)
-                and abs(pred[pred_index] - true_bkpt) <= margin
-            ):
+            if pred_index < len(pred) and abs(pred[pred_index] - true_bkpt) <= margin:
                 matched_count += 1
                 # optional: pred_index += 1 to avoid double-matching the same prediction
 
