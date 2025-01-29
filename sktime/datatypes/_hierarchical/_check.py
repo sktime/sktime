@@ -183,6 +183,42 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
 class HierarchicalDask(ScitypeHierarchical):
     """Data type: dask frame based specification of hierarchical series.
 
+    Name: ``"dask_hierarchical"``
+
+    Short description:
+    A ``dask.DataFrame`` with hierarchical indices, where the last index level represents
+    time and earlier levels represent the hierarchy.cols = variables.
+
+    Long description:
+    The ``"dask_hierarchical"`` :term:`mtype` is a concrete specification of the 
+    ``Hierarchical`` :term:`scitype`, which represents a hierarchically indexed 
+    collection of time series.
+
+    An object ``obj: dask.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be a multi-level index of type 
+      ``(Index, ..., Index, t)``, where ``t`` is one of ``Int64Index``, 
+      ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``, and monotonic.
+      The last index is interpreted as time-like.
+    * hierarchy level: rows with the same non-time-like index values correspond 
+      to the same hierarchy unit; different non-time-like index combinations 
+      correspond to different hierarchy units.
+    * hierarchy: the non-time-like indices in ``obj.index`` identify the 
+      hierarchy structure.
+    * time index: the last element of tuples in ``obj.index`` is interpreted
+      as a time index.
+    * time points: rows of ``obj`` with the same ``"timepoints"`` index correspond
+      to the same time point; rows of ``obj`` with different ``"timepoints"`` index
+    * variables: columns of ``obj`` correspond to variables.
+    * variable names: column names are taken from ``obj.columns``.
+
+    Capabilities:
+    * can represent multivariate hierarchical series.
+    * can represent unequally spaced hierarchical series.
+    * can represent unequally supported hierarchical series.
+    * cannot represent hierarchical series with different sets of variables.
+    * can represent missing values.
+
     Parameters
     ----------
     is_univariate: bool
