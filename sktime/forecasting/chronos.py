@@ -1,6 +1,6 @@
 """Implements Chronos forecaster."""
 
-__author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040"]
+__author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "PranavBhatP"]
 # abdulfatir and lostella for amazon-science/chronos-forecasting
 
 __all__ = ["ChronosForecaster"]
@@ -30,9 +30,9 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 class ChronosForecaster(_BaseGlobalForecaster):
     """
-    Interface to the Chronos Zero-Shot Forecaster by Amazon Research.
+    Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
-    Chronos is a pretrained time-series foundation model
+    Chronos and Chronos-Bolt are pretrained time-series foundation models
     developed by Amazon for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
@@ -44,8 +44,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
     config : dict, optional, default={}
         A dictionary specifying the configuration settings for the model.
         The available configuration options include hyperparameters that control
-        the prediction behavior, sampling, and hardware preferences. The dictionary
-        can include the following keys:
+        the prediction behavior, sampling, and hardware preferences. In case of the
+        ``Chronos`` model, the dictionary can include the following keys:
 
         - "num_samples" : int, optional
             The number of samples to generate during prediction. Median of these samples
@@ -58,6 +58,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         - "top_p" : float, optional
             Cumulative probability threshold for nucleus sampling.
             Controls the diversity of the predictions.
+
+        The below configuration options are available in both model options:
         - "limit_prediction_length" : bool, default=False
             If True, limits the length of the predictions to the model's context length.
         - "torch_dtype" : torch.dtype, default=torch.bfloat16
@@ -86,6 +88,14 @@ class ChronosForecaster(_BaseGlobalForecaster):
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
         the default dependencies required for Chronos.
+
+    Attributes
+    ----------
+    model_pipeline: ChronosPipeline or ChronosBoltPipeline
+        The underlying model pipeline user for forecasting
+    is_bolt: bool
+        Indicates whether the model is a Chronos-Bolt model, to ensure
+        effective differentiation purely from model-path.
 
     References
     ----------
@@ -141,11 +151,17 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:global_forecasting": True,
     }
 
-    _default_config = {
+    _default_chronos_config = {
         "num_samples": None,  # int, use value from pretrained model if None
         "temperature": None,  # float, use value from pretrained model if None
         "top_k": None,  # int, use value from pretrained model if None
         "top_p": None,  # float, use value from pretrained model if None
+        "limit_prediction_length": False,  # bool
+        "torch_dtype": torch.bfloat16,  # torch.dtype
+        "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
+    }
+
+    _default_chronos_bolt_config = {
         "limit_prediction_length": False,  # bool
         "torch_dtype": torch.bfloat16,  # torch.dtype
         "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
@@ -159,20 +175,22 @@ class ChronosForecaster(_BaseGlobalForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
+        self.model_path = model_path
+        self.use_source_package = use_source_package
+        self.ignore_deps = ignore_deps
+
         # set random seed
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
 
+        # initialize model type as None, will be set correctly after loading config.
+        self.is_bolt = None
+
         # set config
         self.config = config
-        _config = self._default_config.copy()
-        _config.update(config if config is not None else {})
-        self._config = _config
+        self._config = None
 
-        self.model_path = model_path
         self.context = None
-        self.use_source_package = use_source_package
-        self.ignore_deps = ignore_deps
 
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
@@ -182,6 +200,34 @@ class ChronosForecaster(_BaseGlobalForecaster):
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
 
         super().__init__()
+
+        self._initialize_model_type()
+
+    def _initialize_model_type(self):
+        """Intialise model type and configuration based on model's architecture."""
+        from transformers import AutoConfig
+
+        try:
+            config = AutoConfig.from_pretrained(self.model_path)
+
+            self.is_bolt = "ChronosBoltModelForForecasting" in (
+                config.architectures or []
+            )
+
+            self._default_config = (
+                self._default_chronos_bolt_config.copy()
+                if self.is_bolt
+                else self._default_chronos_config.copy()
+            )
+
+            self._config = self._default_config.copy()
+            if self._config is not None:
+                self._config.update(self.config)
+        except Exception as e:
+            raise ValueError(
+                f"Failed to load model configuration from {self.model_path}. "
+                f"Error: {str(e)}"
+            ) from e
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -201,11 +247,18 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        self.model_pipeline = _CachedChronos(
-            key=self._get_unique_chronos_key(),
-            chronos_kwargs=self._get_chronos_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+        if self.is_bolt:
+            self.model_pipeline = _CachedChronosBolt(
+                key=self._get_unique_chronos_key(),
+                chronos_bolt_kwargs=self._get_chronos_kwargs(),
+                use_source_package=self.use_source_package,
+            ).load_from_checkpoint()
+        else:
+            self.model_pipeline = _CachedChronos(
+                key=self._get_unique_chronos_key(),
+                chronos_kwargs=self._get_chronos_kwargs(),
+                use_source_package=self.use_source_package,
+            ).load_from_checkpoint()
 
     def _get_chronos_kwargs(self):
         """Get the kwargs for Chronos model."""
@@ -266,17 +319,25 @@ class ChronosForecaster(_BaseGlobalForecaster):
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
             _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
-            prediction_results = self.model_pipeline.predict(
-                torch.Tensor(_y_i),
-                prediction_length,
-                num_samples=self._config["num_samples"],
-                temperature=self._config["temperature"],
-                top_k=self._config["top_k"],
-                top_p=self._config["top_p"],
-                limit_prediction_length=False,
-            )
 
-            values = np.median(prediction_results[0].numpy(), axis=0)
+            if self.is_bolt:
+                prediction_results = self.model_pipeline.predict(
+                    torch.Tensor(_y_i),
+                    prediction_length,
+                    limit_prediction_length=False,
+                )
+                values = np.median(prediction_results.numpy(), axis=1)
+            else:
+                prediction_results = self.model_pipeline.predict(
+                    torch.Tensor(_y_i),
+                    prediction_length,
+                    num_samples=self._config["num_samples"],
+                    temperature=self._config["temperature"],
+                    top_k=self._config["top_k"],
+                    top_p=self._config["top_p"],
+                    limit_prediction_length=False,
+                )
+                values = np.median(prediction_results[0].numpy(), axis=0)
             results.append(values)
 
         pred = np.stack(results, axis=1)
@@ -343,6 +404,20 @@ class ChronosForecaster(_BaseGlobalForecaster):
                 "seed": 42,
             }
         )
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-bolt-tiny",
+            }
+        )
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-bolt-tiny",
+                "config": {
+                    "limit_prediction_length": True,
+                },
+                "seed": 42,
+            }
+        )
 
         return test_params
 
@@ -390,6 +465,36 @@ class _CachedChronos:
 
         self.model_pipeline = ChronosPipeline.from_pretrained(
             **self.chronos_kwargs,
+        )
+
+        return self.model_pipeline
+
+
+@_multiton
+class _CachedChronosBolt:
+    """Cached Chronos-Bolt model, to ensure only one instance exists in memory.
+
+    Chronos-Bolt is a zero-shot model and immutable, hence there will not be any
+    side effects of sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, chronos_bolt_kwargs, use_source_package):
+        self.key = key
+        self.chronos_bolt_kwargs = chronos_bolt_kwargs
+        self.use_source_package = use_source_package
+        self.model_pipeline = None
+
+    def load_from_checkpoint(self):
+        if self.model_pipeline is not None:
+            return self.model_pipeline
+
+        if self.use_source_package:
+            from chronos import ChronosBoltPipeline
+        else:
+            from sktime.libs.chronos import ChronosBoltPipeline
+
+        self.model_pipeline = ChronosBoltPipeline.from_pretrained(
+            **self.chronos_bolt_kwargs,
         )
 
         return self.model_pipeline
