@@ -303,8 +303,8 @@ class HFTransformersForecaster(BaseForecaster):
             ):
                 from peft import get_peft_model
 
-                peft_config = deepcopy(self.peft_config)
-                self.model = get_peft_model(self.model, peft_config)
+          peft_config = deepcopy(self.peft_config)
+          self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
