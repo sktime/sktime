@@ -128,14 +128,37 @@ def test_change_points_to_segments(change_points, expected_segments, start, end)
     "segments, expected_change_points",
     [
         (
-            pd.Series(
-                [1, -1, 2],
-                index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left"),
+            pd.DataFrame(
+                {
+                    "ilocs": pd.IntervalIndex.from_tuples(
+                        [
+                            (0, 3),
+                            (3, 4),
+                            (4, 5),
+                            (5, 6),
+                            (6, 7),
+                            (7, 8),
+                            (8, 10),
+                            (10, 11),
+                            (11, 12),
+                            (12, 20),
+                        ]
+                    ),
+                    "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0],
+                }
             ),
-            pd.Series([2, 5, 7]),
+            pd.Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12]),
         )
     ],
 )
+def test_segments_to_change_points(segments, expected_change_points):
+    """Test converting change points to segments."""
+    actual_change_points = BaseDetector.segments_to_change_points(segments)
+    testing.assert_series_equal(
+        actual_change_points, expected_change_points, check_dtype=False
+    )
+
+
 @pytest.mark.xfail(reason="Changed interface, need to update test")
 @pytest.mark.skipif(
     not run_test_for_class(BaseDetector),

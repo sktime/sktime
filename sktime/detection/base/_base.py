@@ -843,7 +843,7 @@ class BaseDetector(BaseEstimator):
             y_pred = self._predict_points(X)
         elif task == "segmentation":
             y_pred_seg = pd.DataFrame(self.predict_segments(X))
-            y_pred = self._segments_to_change_points(y_pred_seg)
+            y_pred = self.segments_to_change_points(y_pred_seg)
 
         y_pred = self._coerce_to_df(y_pred, columns=["ilocs"])
         return y_pred
@@ -1152,7 +1152,7 @@ class BaseDetector(BaseEstimator):
         return segments
 
     @staticmethod
-    def _segments_to_change_points(y_sparse):
+    def segments_to_change_points(y_sparse):
         """Convert segments to change points.
 
         Parameters
@@ -1163,31 +1163,24 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame containing the indexes of the start of each segment.
-            Index is RangeIndex, and values are iloc references to the start of each
-            segment.
+        pd.Index
+            An Index array containing the indexes of the start of each segment.
 
         Examples
         --------
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
-        >>> segments = pd.Series(
-        ...     [3, -1, 2],
-        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
-        ... )
-        >>> BaseDetector._segments_to_change_points(segments)
-        0    2
-        1    5
-        2    7
-        dtype: int64
+        >>> segments =  pd.DataFrame({
+                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+            })
+        >>> BaseDetector.segments_to_change_points(segments)
+        Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
-        if isinstance(y_sparse, np.ndarray):
-            change_points = pd.DataFrame(y_sparse[:, 0], columns=["ilocs"])
-        else:
-            change_points = pd.DataFrame(y_sparse.index.left, columns=["ilocs"])
+        change_points = y_sparse.set_index("ilocs").index.left
         return change_points
 
 
