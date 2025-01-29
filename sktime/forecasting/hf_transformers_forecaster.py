@@ -15,14 +15,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    pass
-else:
-
-    class DummyTransformers:
-        """Dummy class if transformers is unavailable."""
-
-
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -38,18 +30,21 @@ class HFTransformersForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str
+    model_path : str, optional
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
+        If None, a default model will be used or initialized from scratch.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
+
         - "minimal": Fine-tunes only a small subset of the model parameters,
           allowing for quick adaptation with limited computational resources.
         - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
           the model with fewer trainable parameters, saving computational resources.
+
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
@@ -296,15 +291,15 @@ class HFTransformersForecaster(BaseForecaster):
                     "`pip install peft`\n\n"
                     "Additionally, if you want to all optional dependencies for sktime,"
                     "run:\n"
-                    "`pip install sktime[all_extras]`.\n\n"
+                    "`pip install sktime[dl]`.\n\n"
                     "For more details on PEFT, visit the official documentation at:\n"
                     "https://huggingface.co/docs/peft."
                 ),
             ):
                 from peft import get_peft_model
 
-          peft_config = deepcopy(self.peft_config)
-          self.model = get_peft_model(self.model, peft_config)
+            peft_config = deepcopy(self.peft_config)
+            self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
@@ -428,19 +423,17 @@ class HFTransformersForecaster(BaseForecaster):
         if _check_soft_dependencies("transformers", severity="none"):
             from transformers import AutoformerForPrediction
 
-            test_params = [
+            test_params.append(
                 # Updated test case for Autoformer, including a pre-loaded model
                 {
-                    "model_path": "huggingface/autoformer-tourism-monthly",
                     "model": AutoformerForPrediction.from_pretrained(
                         "huggingface/autoformer-tourism-monthly"
                     ),
                     "fit_strategy": "minimal",
                     "training_args": base_training_args,
-                    "config": {**base_config, "label_length": 2},
                     "deterministic": True,
                 },
-            ]
+            )
 
         # Add PEFT-specific test case if PEFT is available
         if _check_soft_dependencies("peft", severity="none"):
