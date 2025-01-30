@@ -8,8 +8,11 @@ tested with various configurations for correct output.
 
 __author__ = ["ksharma6"]
 
+__all__ = []
+
 import numpy as np
 import pandas as pd
+from sklearn import metrics
 
 from sktime.classification.model_evaluation._functions import (
     _check_scores,
@@ -17,7 +20,9 @@ from sktime.classification.model_evaluation._functions import (
 )
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
-# METRICS = [accuracy_score()]
+METRICS = [
+    metrics.accuracy_score(),
+]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
@@ -33,6 +38,9 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
     # Check number of rows against number of splits.
     n_splits = cv.get_n_splits(y)
     assert out.shape[0] == n_splits
+
+    # Check if all timings are positive.
+    assert np.all(out.filter(like="_time") >= 0)
 
     # Check cutoffs.
     np.testing.assert_array_equal(
