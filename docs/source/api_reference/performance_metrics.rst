@@ -114,8 +114,48 @@ Distribution forecasts
     SquaredDistrLoss
 
 
-Time series segmentation
-------------------------
+Detection tasks
+---------------
+
+Detection metrics can be applied to compare ground truth events with detected events,
+and ground truth segments with detected segments.
+
+Detection metrics are typically designed for either:
+
+* point events, i.e., annotated time stamps, or
+* segments, i.e., annotated time intervals.
+
+The metrics in ``sktime`` can be used for both types of detection tasks:
+
+* segmentation metrics interpret point events as segment boundaries, separating consecutive segments
+* point event metrics are applied to segments by considering their boundaries as point events
+
+
+Event detection - anomalies, outliers
+-------------------------------------
+
+.. currentmodule:: sktime.performance_metrics.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    DirectedChamfer
+    DirectedHausdorff
+    DetectionCount
+    F1ScoreMargin
+
+Segment detection
+-----------------
+
+.. currentmodule:: sktime.performance_metrics.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    RandIndex
+
 
 .. currentmodule:: sktime.performance_metrics.annotation
 
