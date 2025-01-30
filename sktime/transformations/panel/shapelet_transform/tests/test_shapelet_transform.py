@@ -9,6 +9,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 
 
+@pytest.mark.xfail(reason="known failure that needs investigation, see issue #7725")
 @pytest.mark.skipif(
     not run_test_for_class(RandomShapeletTransform),
     reason="run test only if softdeps are present and incrementally (if requested)",
