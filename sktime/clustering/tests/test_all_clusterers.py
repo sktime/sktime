@@ -41,7 +41,7 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:multivariate"):
             return None
 
-        error_msg = "multivariate series"
+        error_msg = "multivariate"
 
         scenario = ClustererFitPredictMultivariate()
 
