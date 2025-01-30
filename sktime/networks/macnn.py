@@ -131,7 +131,7 @@ class MACNNNetwork(BaseDeepNetwork):
         Parameters
         ----------
         input_shape : tuple
-            The shape of the data(without batch) fed into the input layer
+            The shape of the data (without batch) fed into the input layer
 
         Returns
         -------
