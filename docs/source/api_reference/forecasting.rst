@@ -134,6 +134,7 @@ Direct and recursive - 3rd party
     :template: class.rst
 
     SkforecastAutoreg
+    SkforecastRecursive
 
 .. currentmodule:: sktime.forecasting.darts
 
@@ -237,6 +238,7 @@ Trend forecasters
     STLForecaster
     CurveFitForecaster
     ProphetPiecewiseLinearTrendForecaster
+    SplineTrendForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -516,7 +518,13 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.rbf_forecaster
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFForecaster
 
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

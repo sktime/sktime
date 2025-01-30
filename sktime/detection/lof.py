@@ -125,6 +125,12 @@ class SubLOF(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
         "univariate-only": False,
@@ -158,7 +164,7 @@ class SubLOF(BaseDetector):
         self.models = None
         super().__init__()
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit the LOF model to ``X``.
 
         Parameters

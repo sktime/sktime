@@ -150,6 +150,16 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     def _transformers(self, value):
         self.transformers_._steps = value
 
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
+
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
 
@@ -432,6 +442,16 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
