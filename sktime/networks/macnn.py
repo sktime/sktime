@@ -84,7 +84,8 @@ class MACNNNetwork(BaseDeepNetwork):
             conv_layer = keras.layers.Conv1D(
                 filters=kernels, kernel_size=kernel_size, padding=self.padding
             )(x)
-            conv_layers.append(conv_layer)        
+
+            conv_layers.append(conv_layer)
 
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
