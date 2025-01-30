@@ -10,27 +10,22 @@ A list of all contributors can be found `here <contributors.md>`_.
 Community Council
 -----------------
 
-transitional working group (in delegation),
-subject to `widening of governance model <https://github.com/sktime/community-org/issues/46>`_.
-
 .. list-table::
    :header-rows: 1
 
    * - Name
      - GitHub ID
-   * - Jonathan Bechtel
-     - :user:`jonathanbechtel`
+   * - Felix Hirwa Nshuti
+     - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
-   * - Sagar Mishra
-     - :user:`achieveordie`
-   * - Ugochukwu Onyeka
-     - :user:`onyekaugochukwu`
-   * - Kiril Ralinovski
-     - :user:`kirilral`
    * - Marc Rovira
      - :user:`marrov`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
 
+For further information on past and future council elections,
+refer to the `elections repository <https://www.github.com/sktime/elections>`_.
 
 Community Council Observers
 ---------------------------
@@ -44,6 +39,8 @@ Community Council Observers
      - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
 
 Code of Conduct Committee
 -------------------------
@@ -76,6 +73,8 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
@@ -94,8 +93,8 @@ Core Developers
      - :user:`miraep8`
    * - Pranav Prajapati
      - :user:`pranavvp16`
-   * - Sagar Mishra
-     - :user:`achieveordie`
+   * - Sai Revanth Gowravajhala
+     - :user:`SaiRevanth25`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
@@ -131,8 +130,6 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Łukasz Mentel
@@ -149,6 +146,10 @@ Former Core Developers
      - :user:`prockenschaub`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
    * - Stanislav Khrapov

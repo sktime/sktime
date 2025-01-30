@@ -24,7 +24,10 @@ class InceptionTimeNetwork(BaseDeepNetwork):
                     ArXiv}, Year                     = {2019} }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["hfawaz", "JamesLarge", "Withington"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

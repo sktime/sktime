@@ -15,10 +15,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-    from transformers import AutoConfig, Trainer, TrainingArguments
-
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -40,6 +36,7 @@ class HFTransformersForecaster(BaseForecaster):
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
+
         - "minimal": Fine-tunes only a small subset of the model parameters,
           allowing for quick adaptation with limited computational resources.
         - "full": Fine-tunes all model parameters, which may result in better
@@ -49,6 +46,7 @@ class HFTransformersForecaster(BaseForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -173,6 +171,8 @@ class HFTransformersForecaster(BaseForecaster):
         self.peft_config = peft_config
 
     def _fit(self, y, X, fh):
+        from transformers import AutoConfig, Trainer, TrainingArguments
+
         # Load model and extract config
         config = AutoConfig.from_pretrained(self.model_path)
 
@@ -305,6 +305,8 @@ class HFTransformersForecaster(BaseForecaster):
         trainer.train()
 
     def _predict(self, fh, X=None):
+        import transformers
+
         if self.deterministic:
             transformers.set_seed(42)
 

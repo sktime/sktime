@@ -68,6 +68,7 @@ Changepoint, Anomaly or Outlier Detection
 .. nbgallery::
     :glob:
 
+    examples/07_detection_anomaly_changepoints.ipynb
     examples/annotation/*
 
 Time series Distances, Kernels, Alignment

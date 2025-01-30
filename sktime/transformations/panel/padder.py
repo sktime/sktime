@@ -23,8 +23,8 @@ class PaddingTransformer(BaseTransformer):
     pad_length : int, optional (default=None) length to pad the series too.
         if None, will find the longest sequence and use instead.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pandas as pd
     >>> from sktime.transformations.panel.padder import PaddingTransformer
     >>>

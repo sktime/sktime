@@ -17,14 +17,18 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 
 
 def _coerce_series_annotator_to_transformer(obj):
-    from sktime.annotation.compose._as_transform import AnnotatorAsTransformer
+    from sktime.detection.compose._as_transform import DetectorAsTransformer
 
-    return AnnotatorAsTransformer(obj)
+    return DetectorAsTransformer(obj)
 
 
+# todo 1.0.0 - remove series-annotator
 _coerce_register[("series-annotator", "transformer")] = (
     _coerce_series_annotator_to_transformer
 )
+
+
+_coerce_register[("detector", "transformer")] = _coerce_series_annotator_to_transformer
 
 
 def _coerce_clusterer_to_transformer(obj):
