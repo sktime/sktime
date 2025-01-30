@@ -1,7 +1,7 @@
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
 
-class F1ScoreMargin(BaseDetectionMetric):
+class WindowedF1Score(BaseDetectionMetric):
     """F1-score for event detection, using a margin-based match criterion.
 
     This score computes an iloc-based F1-score with margin of errog
