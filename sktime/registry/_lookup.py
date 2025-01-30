@@ -123,10 +123,14 @@ def all_estimators(
     Returns
     -------
     all_estimators will return one of the following:
-        1. list of estimators, if return_names=False, and return_tags is None
-        2. list of tuples (optional estimator name, class, ~optional estimator
-          tags), if return_names=True or return_tags is not None.
-        3. pandas.DataFrame if as_dataframe = True
+
+        1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
+
+        2. list of tuples (optional estimator name, class, ~ptional estimator
+        tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
+
+        3. ``pandas.DataFrame`` if ``as_dataframe = True``
+
         if list of estimators:
             entries are estimators matching the query,
             in alphabetical order of estimator name
@@ -139,8 +143,7 @@ def all_estimators(
             ``estimator`` is the actual estimator
             ``tags`` are the estimator's values for each tag in return_tags
             and is an optional return.
-        if dataframe:
-            all_estimators will return a pandas.DataFrame.
+        if ``DataFrame``:
             column names represent the attributes contained in each column.
             "estimators" will be the name of the column of estimators, "names"
             will be the name of the column of estimator class names and the string(s)
@@ -196,15 +199,22 @@ def all_estimators(
         estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
         estimator_types = list(set(estimator_types))
 
-    if estimator_types is not None and filter_tags is not None:
+    if estimator_types is not None:
+        if filter_tags is None:
+            filter_tags = {}
+        elif isinstance(filter_tags, str):
+            filter_tags = {filter_tags: True}
+        else:
+            filter_tags = filter_tags.copy()
+
         if "object_type" in filter_tags:
             obj_field = filter_tags["object_type"]
             obj_field = _coerce_to_list_of_str(obj_field)
             obj_field = obj_field + estimator_types
-            filter_tags = filter_tags.copy()
-            filter_tags["object_type"] = obj_field
-    elif estimator_types is not None:
-        filter_tags = {"object_type": estimator_types}
+        else:
+            obj_field = estimator_types
+
+        filter_tags["object_type"] = obj_field
 
     result = all_objects(
         object_types=BaseObject,
