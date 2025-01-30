@@ -157,6 +157,11 @@ Segment detection
     RandIndex
 
 
+Legacy detection metrics
+------------------------
+
+These metrics do not follow the standard API and will be deprecated in the future.
+
 .. currentmodule:: sktime.performance_metrics.annotation
 
 .. autosummary::
