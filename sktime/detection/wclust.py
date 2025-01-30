@@ -149,14 +149,22 @@ class WindowSegmenter(BaseDetector):
     After that we run a clustering algorithm of our choosing to segment the
     time series.
 
-    todo: write docstring, describing your custom forecaster
+    Labels from overlapping segments are aggregated to get the final labels,
+    via a majority vote.
 
     Parameters
     ----------
-    clusterer : sklearn.cluster
+    clusterer : sktime clusterer, BaseClusterer instance
         The instance of clustering algorithm used for segmentation.
     window_size : Integer
-        The size of Sliding Window
+        The size of the Sliding Window
+    overlap : Boolean, default=False
+        If True, overlapping windows are used.
+    step_size : Integer, default=1
+        The step size for the sliding window.
+    return_segments : Boolean, default=True
+        If True, returns the segments with the labels.
+        If False, returns the labels for each time point.
 
     Examples
     --------
