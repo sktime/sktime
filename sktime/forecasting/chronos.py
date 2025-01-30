@@ -5,6 +5,7 @@ __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "Pranav
 
 __all__ = ["ChronosForecaster"]
 
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import numpy as np
@@ -26,6 +27,147 @@ else:
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
+
+
+class ChronosModelStrategy(ABC):
+    """Abstract base class defining the interface for Chronos model strategies."""
+
+    @abstractmethod
+    def initialize_config(self) -> dict:
+        """Initialise the default configuration of the model."""
+        pass
+
+    @abstractmethod
+    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
+        """Create the appropriate pipeline for the model.
+
+        This method handles the creation of a cached pipeline instance for th specific
+        model type (Chronos or Chronos-bolt).
+
+        Parameters
+        ----------
+        key: str
+            Unique identifier for the model instance.
+        kwargs: dict
+            Configuration parameters for the model pipeline. Should include:
+
+            - pretrained_model_name_or_path : str
+                Path to the pretrained model
+            - torch_dtype : torch.dtype
+                Data type for model computations
+            - device_map : str
+                Device to run the model on ('cpu', 'cuda', etc.)
+        use_source_package: bool
+            If True, uses the original chronos package.
+            If False, uses the sktime implementation.
+
+        Returns
+        -------
+        _CachedChronos or _CachedChronosBolt
+            A cached instance of the appropriate pipeline class that can be used to load
+            the model checkpoint.
+        """
+        pass
+
+    @abstractmethod
+    def predict(
+        self, pipeline, y_tensor: torch.Tensor, predictions_length: int, config: dict
+    ) -> dict:
+        """Make predictions using the model pipeline.
+
+        Parameters
+        ----------
+        pipeline : ChronosPipeline or ChronosBoltPipeline
+            The initialized model pipeline for making predictions.
+        y_tensor : torch.Tensor
+            Input time series data as a PyTorch tensor.
+        prediction_length : int
+            Number of future time steps to predict.
+        config : dict
+            Configuration dictionary containing model-specific parameters.
+            For Chronos models, this includes:
+                - num_samples : int or None
+                    Number of samples to generate for prediction.
+                - temperature : float or None
+                    Sampling temperature for predictions.
+                - top_k : int or None
+                    Limits sampling to top k predictions.
+                - top_p : float or None
+                    Cumulative probability threshold for nucleus sampling.
+                - limit_prediction_length : bool
+                    Whether to limit prediction length to model's context length.
+            For Chronos-Bolt models, this includes:
+                - limit_prediction_length : bool
+                    Whether to limit prediction length to model's context length.
+
+        Returns
+        -------
+        np.ndarray
+            Array containing the predicted values. For Chronos models, shape is
+            (prediction_length,). For Chronos-Bolt models, shape is
+            (prediction_length,).
+        """
+        pass
+
+
+class ChronosDefaultStrategy(ChronosModelStrategy):
+    """Strategy for handling standard set of Chronos Models."""
+
+    def initialize_config(self) -> dict:
+        return {
+            "num_samples": None,
+            "temperature": None,
+            "top_k": None,
+            "top_p": None,
+            "limit_prediction_length": False,
+            "torch_dtype": torch.bfloat16,
+            "device_map": "cpu",
+        }
+
+    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
+        return _CachedChronos(
+            key=key, chronos_kwargs=kwargs, use_source_package=use_source_package
+        )
+
+    def predict(
+        self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
+    ) -> np.ndarray:
+        prediction_results = pipeline.predict(
+            y_tensor,
+            prediction_length,
+            num_samples=config["num_samples"],
+            temperature=config["temperature"],
+            top_k=config["top_k"],
+            top_p=config["top_p"],
+            limit_prediction_length=config["limit_prediction_length"],
+        )
+        return np.median(prediction_results[0].nump(), axis=0)
+
+
+class ChronosBoltStrategy(ChronosModelStrategy):
+    """Strategy for handling Chronos-Bolt models."""
+
+    def initialize_config(self) -> dict:
+        return {
+            "limit_prediction_length": False,
+            "torch_dtype": torch.bfloat16,
+            "device_map": "cpu",
+        }
+
+    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
+        return _CachedChronosBolt(
+            key=key, chronos_kwargs=kwargs, use_source_package=use_source_package
+        )
+
+    def predict(
+        self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
+    ) -> np.ndarray:
+        prediction_results = pipeline.predict(
+            y_tensor,
+            prediction_length,
+            limit_prediction_length=config["limit_prediction_length"],
+        )
+        return np.median(prediction_results.numpy(), axis=1)
 
 
 class ChronosForecaster(_BaseGlobalForecaster):
@@ -183,8 +325,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
 
-        # initialize model type as None, will be set correctly after loading config.
-        self.is_bolt = None
+        # initialize model_strategy as None, will be set correctly after loading config.
+        self.model_strategy = None
 
         # set config
         self.config = config
@@ -210,19 +352,20 @@ class ChronosForecaster(_BaseGlobalForecaster):
         try:
             config = AutoConfig.from_pretrained(self.model_path)
 
-            self.is_bolt = "ChronosBoltModelForForecasting" in (
-                config.architectures or []
-            )
+            # "ChronosBoltModelForForecasting is the name of the architecture"
+            # as specified in the config.json file
+            is_bolt = "ChronosBoltModelForForecasting" in (config.architectures or [])
 
-            self._default_config = (
-                self._default_chronos_bolt_config.copy()
-                if self.is_bolt
-                else self._default_chronos_config.copy()
-            )
+            if is_bolt:
+                self.model_strategy = ChronosBoltStrategy()
+            else:
+                self.model_strategy = ChronosDefaultStrategy()
 
+            self._default_config = self.model_strategy.initialize_config()
             self._config = self._default_config.copy()
             if self._config is not None:
                 self._config.update(self.config)
+
         except Exception as e:
             raise ValueError(
                 f"Failed to load model configuration from {self.model_path}. "
@@ -247,18 +390,12 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        if self.is_bolt:
-            self.model_pipeline = _CachedChronosBolt(
-                key=self._get_unique_chronos_key(),
-                chronos_bolt_kwargs=self._get_chronos_kwargs(),
-                use_source_package=self.use_source_package,
-            ).load_from_checkpoint()
-        else:
-            self.model_pipeline = _CachedChronos(
-                key=self._get_unique_chronos_key(),
-                chronos_kwargs=self._get_chronos_kwargs(),
-                use_source_package=self.use_source_package,
-            ).load_from_checkpoint()
+        self.model_pipeline = self.model_strategy.create_pipeline(
+            key=self._get_unique_chronos_key(),
+            kwargs=self._get_chronos_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
+        return self
 
     def _get_chronos_kwargs(self):
         """Get the kwargs for Chronos model."""
@@ -320,24 +457,9 @@ class ChronosForecaster(_BaseGlobalForecaster):
             _y_i = _y[i, :, 0]
             _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
 
-            if self.is_bolt:
-                prediction_results = self.model_pipeline.predict(
-                    torch.Tensor(_y_i),
-                    prediction_length,
-                    limit_prediction_length=False,
-                )
-                values = np.median(prediction_results.numpy(), axis=1)
-            else:
-                prediction_results = self.model_pipeline.predict(
-                    torch.Tensor(_y_i),
-                    prediction_length,
-                    num_samples=self._config["num_samples"],
-                    temperature=self._config["temperature"],
-                    top_k=self._config["top_k"],
-                    top_p=self._config["top_p"],
-                    limit_prediction_length=False,
-                )
-                values = np.median(prediction_results[0].numpy(), axis=0)
+            values = self.model_strategy.predict(
+                self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
+            )
             results.append(values)
 
         pred = np.stack(results, axis=1)
