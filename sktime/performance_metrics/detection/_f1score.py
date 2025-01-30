@@ -87,3 +87,28 @@ class WindowedF1Score(BaseDetectionMetric):
         if precision + recall == 0:
             return 0.0
         return 2 * precision * recall / (precision + recall)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param0 = {}
+        param1 = {"margin": 1}
+        param2 = {"margin": 42424242424242}
+
+        return [param0, param1, param2]
