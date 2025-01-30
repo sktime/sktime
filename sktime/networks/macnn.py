@@ -100,7 +100,7 @@ class MACNNNetwork(BaseDeepNetwork):
         x2 = keras.layers.RepeatVector(x1.shape[1])(x2)
 
         return keras.layers.Multiply()([x1, x2])
-    
+
     def _stack(self, x, repeats, kernels, reduce):
         """Build MACNN Blocks and stack them.
 
@@ -124,7 +124,7 @@ class MACNNNetwork(BaseDeepNetwork):
         for _ in range(repeats):
             x = self._macnn_block(x, kernels, reduce)
         return x
-    
+
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
 
