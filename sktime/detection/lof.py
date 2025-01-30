@@ -164,7 +164,7 @@ class SubLOF(BaseDetector):
         self.models = None
         super().__init__()
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit the LOF model to ``X``.
 
         Parameters
