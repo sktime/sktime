@@ -143,7 +143,7 @@ Event detection - anomalies, outliers
     DirectedChamfer
     DirectedHausdorff
     DetectionCount
-    F1ScoreMargin
+    WindowedF1Score
 
 Segment detection
 -----------------
