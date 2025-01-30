@@ -9,6 +9,8 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -17,6 +19,7 @@ from sklearn.pipeline import Pipeline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.parallel import parallelize
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -70,9 +73,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
     n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        The number of jobs to run in parallel for fit.
+
+        - If None, only a single job is used (sequential execution).
+        - If -1, all available processors are used.
+        - If a positive integer, that many parallel jobs are used.
+
+        This parameter is deprecated in favor of `backend` and `backend_params`.
+
+    backend : str or None, optional, default=None
+        The backend to use. If None, then the default backend is used.
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend. If None, then the default backend parameters
 
     Attributes
     ----------
@@ -119,10 +131,16 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         test_size=None,
         random_state=None,
         n_jobs=None,
+        backend=None,
+        backend_params=None,
     ):
+        warnings.warn(
+            "The parameter `n_jobs` is deprecated."
+            "Use `backend` and `backend_params` instead.",
+            DeprecationWarning,
+        )
         super().__init__(
-            forecasters=forecasters,
-            n_jobs=n_jobs,
+            forecasters=forecasters, backend=backend, backend_params=backend_params
         )
         self.method = method
         self.regressor = regressor
@@ -146,6 +164,24 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
+
+        if self.backend == "utils":
+
+            def _fit_single_forecaster(forecaster, y, X, fh):
+                return self._fit_forecaster(forecaster, y, X, fh, meta=None)
+
+            parallelize(
+                fun=_fit_single_forecaster,
+                iter=forecasters,
+                meta=None,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )(y, X, fh)
+
+        else:
+            # If backend is not utils, fallback to default implementation
+            for forecaster in forecasters:
+                self._fit_forecasters(forecaster, y, X, fh)
 
         # get training data for meta-model
         if X is not None:
@@ -212,8 +248,32 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        # apply weights
+        # Return the predictions of ensemble models
+        if self.backend == "utils":
+
+            def _predict_single_forecaster(forecaster, fh, X):
+                return self._predict_forecasters(forecaster, fh, X)
+
+            y_pred_df = pd.concat(
+                parallelize(
+                    fun=_predict_single_forecaster,
+                    iter=self._forecasters,
+                    meta=None,
+                    backend=self.backend,
+                    backend_params=self.backend_params,
+                )(fh, X),
+                axis=1,
+            )
+
+        else:
+            y_pred_df = pd.concat(
+                [
+                    self._predict_forecaster(forecaster, fh, X)
+                    for forecaster in self.forecasters_
+                ],
+                axis=1,
+            )
+
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         y_pred.name = self._y.name
         return y_pred

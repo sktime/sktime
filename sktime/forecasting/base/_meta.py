@@ -5,6 +5,8 @@
 __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
+import warnings
+
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 
@@ -24,10 +26,12 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None, backend="loky", backend_params=None):
         self.forecasters = forecasters
         self.forecasters_ = None
-        self.n_jobs = n_jobs
+        self.n_jobs = n_jobs  # Retain for backwards compatibility
+        self.backend = None
+        self.backend_params = backend_params if backend_params != {} else {}
         super().__init__()
 
     def _check_forecasters(self):
@@ -63,16 +67,26 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
-        from joblib import Parallel, delayed
+        from sktime.utils.parallel import parallelize
 
-        def _fit_forecaster(forecaster, y, X, fh):
+        def _fit_forecaster(forecaster, y, X, fh, meta=None):
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
-        self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
-            for forecaster in forecasters
-        )
+        if self.n_jobs is not None:
+            warnings.warn(
+                "The n_jobs parameter is deprecated and will be removed in "
+                "future release. Use the backend parameter instead.",
+                DeprecationWarning,
+            )
+
+        self.forecasters_ = parallelize(
+            fun=_fit_forecaster,
+            iter=[forecaster.clone() for forecaster in forecasters],
+            meta=None,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )(y, X, fh)
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
