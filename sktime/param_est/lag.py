@@ -53,7 +53,7 @@ class ARLagOrderSelector(BaseParamFitter):
 
     Attributes
     ----------
-    selected_model_ : tuple
+    selected_model_ : tuple of int
         Selected lag order(s) that minimize the information criterion
     ic_value_ : float
         Value of the information criterion for the selected model
