@@ -89,7 +89,7 @@ para_dict = {}
 
 def _parallelize_none(fun, iter, meta, backend, backend_params):
     """Execute loop via simple sequential list comprehension."""
-    ret = [fun(x, meta=meta) for x in iter]
+    ret = [fun(x, y=None, X=None, fh=None, meta=meta) for x in iter]
     return ret
 
 
