@@ -3,6 +3,9 @@ from sklearn.metrics import auc
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
+__author__ = ["Ankit-1204"]
+__all__ = ["TimeSeriesAUPRC"]
+
 
 def _constant_bias_fn(inputs: np.ndarray):
     """Compute the overlap size for a constant bias function that assigns the.
@@ -267,5 +270,6 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         """
         param1 = {}
         param2 = {"integration": "trapezoid", "weighted_precision": True}
+        param3 = {"integration": "trapezoid", "weighted_precision": True}
 
-        return [param1, param2]
+        return [param1, param2, param3]
