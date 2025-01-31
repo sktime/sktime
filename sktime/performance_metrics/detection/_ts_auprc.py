@@ -237,4 +237,11 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         super().__init__()
 
     def _evaluate(self, y_true, scores, X=None):
-        return _ts_auprc(y_true, scores)
+        self._integration = self.integration
+        self._weighted_precision = self.weighted_precision
+        return _ts_auprc(
+            y_true,
+            scores,
+            integration=self._integration,
+            weighted_precision=self._weighted_precision,
+        )
