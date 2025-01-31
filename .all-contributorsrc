@@ -3260,12 +3260,13 @@
       ]
     },
     {
-      "login": "TanviPooranmal",
-      "name": "Tanvi Pooranmal Meena"
-      "avatar_url": "https://avatars.githubusercontent.com/TanviPooranmal",
-      "profile": "https://github.com/TanviPooranmal",
+      "login": "tanvincible",
+      "name": "Tanvi Pooranmal Meena",
+      "avatar_url": "https://avatars.githubusercontent.com/tanvincible",
+      "profile": "https://github.com/tanvincible",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3316,6 +3317,15 @@
       ]
     },
     {
+      "login": "lenaklosik",
+      "name": "Lena Klosik",
+      "avatar_url": "https://avatars.githubusercontent.com/lenaklosik",
+      "profile": "https://github.com/lenaklosik",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "marcosfelt",
       "name": "Kobi Felton",
       "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
@@ -3340,6 +3350,15 @@
       "profile": "https://github.com/VjayRam",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Ankit-1204",
+      "name": "Ankit Upadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112757447?v=4",
+      "profile": "https://github.com/Ankit-1204",
+      "contributions": [
+        "code"
       ]
     }
   ]
