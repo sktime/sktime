@@ -4,6 +4,8 @@ import functools
 from collections.abc import Callable
 from typing import Optional, Union
 
+import numpy as np
+
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -18,6 +20,8 @@ def forecasting_validation(
     estimator: BaseForecaster,
     backend=None,
     backend_params=None,
+    strategy="refit",
+    error_score=np.nan,
     **kwargs,
 ) -> dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -65,6 +69,15 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
 
     Returns
     -------
@@ -82,6 +95,8 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            error_score=error_score,
+            strategy=strategy,
         )
     else:
         scores_df = evaluate(
@@ -91,6 +106,8 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            error_score=error_score,
+            strategy=strategy,
         )
 
     for scorer in scorers:
@@ -108,6 +125,8 @@ def _factory_forecasting_validation(
     scorers: list[BaseMetric],
     backend=None,
     backend_params=None,
+    error_score=np.nan,
+    strategy="refit",
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -117,6 +136,8 @@ def _factory_forecasting_validation(
         scorers,
         backend=backend,
         backend_params=backend_params,
+        error_score=error_score,
+        strategy=strategy,
     )
 
 
@@ -183,6 +204,8 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
+        error_score=np.nan,
+        strategy="refit",
     ):
         """Register a forecasting task to the benchmark.
 
@@ -197,6 +220,16 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+        error_score : "raise" or numeric, default=np.nan
+            Value to assign to the score if an exception occurs in estimator fitting.
+            If set to "raise", the exception is raised. If a numeric value is given,
+            FitFailedWarning is raised.
+        strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+            defines the ingestion mode when the forecaster sees new data when window
+            expands "refit" = forecaster is refitted to each training window
+            "update" = forecaster is updated with training window data, in sequence
+            provided "no-update_params" = fit to first training window, re-used
+            without fit or update
 
         Returns
         -------
@@ -217,6 +250,8 @@ class ForecastingBenchmark(BaseBenchmark):
                 _factory_forecasting_validation,
                 backend=self.backend,
                 backend_params=self.backend_params,
+                error_score=error_score,
+                strategy=strategy,
             ),
             task_kwargs,
             task_id=task_id,
