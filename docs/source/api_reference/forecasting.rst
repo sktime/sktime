@@ -145,7 +145,7 @@ Direct and recursive - 3rd party
     DartsRegressionModel
     DartsLinearRegressionModel
     DartsXGBModel
-
+    DartsTiDEModel
 
 Naive forecasters
 -----------------
