@@ -289,7 +289,7 @@ class HFTransformersForecaster(BaseForecaster):
                 msg=(
                     "PEFT package is required but not installed. Install using:\n"
                     "`pip install peft`\n\n"
-                    "Additionally, if you want to all optional dependencies for sktime,"
+                    "If you want to install all optional dependencies for sktime,"
                     "run:\n"
                     "`pip install sktime[dl]`.\n\n"
                     "For more details on PEFT, visit the official documentation at:\n"
