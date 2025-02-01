@@ -203,6 +203,9 @@ class HFTransformersForecaster(BaseForecaster):
             _config["num_static_categorical_features"] = 0
             _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
+            if hasattr(config, "feature_size"):
+                del _config["feature_size"]
+
             if fh is not None:
                 _config["prediction_length"] = max(
                     *(fh.to_relative(self._cutoff)._values + 1),
