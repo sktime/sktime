@@ -430,6 +430,13 @@ class ReconcilerForecaster(BaseForecaster):
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
 
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for clusterers.
+
         Returns
         -------
         params : dict, default = {}
@@ -446,9 +453,11 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
+                "alpha": alpha,
                 "return_totals": totals,
             }
             for x in cls.METHOD_LIST
             for totals in cls.RETURN_TOTALS_LIST
+            for alpha in [0, 1]
         ]
         return params_list

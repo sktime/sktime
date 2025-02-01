@@ -183,6 +183,10 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
 
 @pytest.mark.parametrize("alpha", [0, 1])
 def test_reconcilerforecaster_singular(alpha):
+    """
+    Test that ReconcilerForecaster handles highly correlated series,
+    where alpha=0 leads to a singular residual covariance matrix.
+    """
     hierarchy_levels = (1, 2)
     levels = [
         [f"h{i}_{j}" for j in range(hierarchy_levels[i])]
