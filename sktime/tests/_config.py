@@ -59,6 +59,8 @@ EXCLUDE_ESTIMATORS = [
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
+    # Large datasets
+    "M5Dataset",
 ]
 
 
