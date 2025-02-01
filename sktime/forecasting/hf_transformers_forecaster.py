@@ -301,7 +301,7 @@ class HFTransformersForecaster(BaseForecaster):
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
-            raise ValueError("Unknown fit strategy")
+            raise ValueError(f"{self.__class__.__name__}: Unknown fit strategy")
 
         # Train the model
         trainer = Trainer(
