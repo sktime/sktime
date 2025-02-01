@@ -287,13 +287,13 @@ class HFTransformersForecaster(BaseForecaster):
                 "peft",
                 severity="error",
                 msg=(
-                    "PEFT package is required but not installed. Install using:\n"
-                    "`pip install peft`\n\n"
-                    "If you want to install all optional dependencies for sktime,"
-                    "run:\n"
-                    "`pip install sktime[dl]`.\n\n"
-                    "For more details on PEFT, visit the official documentation at:\n"
-                    "https://huggingface.co/docs/peft."
+                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
+                    "'peft' is a soft dependency and not included "
+                    "in the base sktime installation. "
+                    "To use this functionality, please install 'peft' by running: "
+                    "`pip install peft` or `pip install sktime[dl]`. "
+                    "To install all soft dependencies, "
+                    "run: `pip install sktime[all_extras]`"
                 ),
             ):
                 from peft import get_peft_model
@@ -301,7 +301,7 @@ class HFTransformersForecaster(BaseForecaster):
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
-            raise ValueError(f"{self.__class__.__name__}: Unknown fit strategy")
+            raise ValueError("Unknown fit strategy")
 
         # Train the model
         trainer = Trainer(
