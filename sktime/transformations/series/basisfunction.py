@@ -5,6 +5,7 @@ __author__ = ["phoeenniixx"]
 import numpy as np
 import pandas as pd
 
+from sktime.forecasting.rbf_forecaster import RBFLayer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
@@ -128,6 +129,7 @@ class RBFTransformer(BaseTransformer):
         self.use_torch = use_torch
         self.fitted_centers_ = None
         self.torch_available_ = None
+        self.rbf_layer = None
 
         super().__init__()
 
@@ -182,23 +184,13 @@ class RBFTransformer(BaseTransformer):
         torch = self._get_torch()
 
         x = torch.as_tensor(x, dtype=torch.float32)
-        c = torch.as_tensor(c, dtype=torch.float32)
+        with torch.no_grad():
+            result = self.rbf_layer(x)
 
-        x_reshaped = x.unsqueeze(-1)
-        c_reshaped = c.reshape((1, 1, -1))
-
-        squared_diff = (x_reshaped - c_reshaped) ** 2
-
-        if self.rbf_type == "gaussian":
-            result = torch.exp(-self.gamma * squared_diff)
-        elif self.rbf_type == "multiquadric":
-            result = torch.sqrt(1 + self.gamma * squared_diff)
-        elif self.rbf_type == "inverse_multiquadric":
-            result = 1 / torch.sqrt(1 + self.gamma * squared_diff)
-        else:
-            raise ValueError(f"Unsupported RBF type: {self.rbf_type}")
-
-        return result.numpy()
+        result = result.numpy()
+        if len(x.shape) == 2:
+            return result.reshape(result.shape[0], 1, -1)
+        return result.reshape(result.shape[0], x.shape[1], -1)
 
     def _rbf_numpy(self, x, c):
         """Compute the selected RBF using NumPy."""
@@ -258,12 +250,12 @@ class RBFTransformer(BaseTransformer):
         # Check torch availability during fit
         self._check_torch()
 
-        if self.centers is None:
-            if self.apply_to == "index":
-                X_numeric = self._get_time_index(X)
-            else:
-                X_numeric = self._get_values(X)
+        if self.apply_to == "index":
+            X_numeric = self._get_time_index(X)
+        else:
+            X_numeric = self._get_values(X)
 
+        if self.centers is None:
             min_val = float(X_numeric.min())
             max_val = float(X_numeric.max())
 
@@ -276,6 +268,21 @@ class RBFTransformer(BaseTransformer):
                 self.fitted_centers_ = np.linspace(min_val, max_val, num=10)
         else:
             self.fitted_centers_ = np.array(self.centers)
+
+        if self.torch_available_:
+            torch = self._get_torch()
+
+            input_feats = X_numeric.shape[1] if X_numeric.shape[1] > 1 else 1
+            output_feats = len(self.fitted_centers_)
+            centers = torch.tensor(self.fitted_centers_).reshape(-1, 1)
+            centers = centers.repeat(1, input_feats)
+            self.rbf_layer = RBFLayer(
+                in_features=input_feats,
+                out_features=output_feats,
+                centers=centers,
+                gamma=self.gamma,
+                rbf_type=self.rbf_type,
+            )
 
         return self
 
@@ -304,7 +311,6 @@ class RBFTransformer(BaseTransformer):
             input_data = self._get_values(X)
 
         X_transform = self._rbf(input_data, self.fitted_centers_)
-
         n_samples, n_features, n_centers = X_transform.shape
         X_transform = X_transform.reshape(n_samples, n_features * n_centers)
 
