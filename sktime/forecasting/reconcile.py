@@ -164,6 +164,9 @@ class ReconcilerForecaster(BaseForecaster):
 
         # Add totals and flatten single levels
         y = self._add_totals(y)
+        if self.return_totals:
+            # Override the series to keep
+            self._series_to_keep = y.index.droplevel(-1).unique()
 
         self.forecaster_ = self.forecaster.clone()
 

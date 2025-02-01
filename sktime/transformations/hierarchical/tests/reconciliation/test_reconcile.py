@@ -8,74 +8,78 @@ import numpy as np
 import pytest
 from pandas.testing import assert_frame_equal
 
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.hierarchical.reconcile import Reconciler
+from sktime.transformations.hierarchical.reconciliation import (
+    BottomUpReconciler,
+    ForecastProportions,
+    MiddleOutReconciler,
+    TopdownShareReconciler,
+)
+from sktime.transformations.hierarchical.reconciliation._utils import (
+    _get_series_for_each_hierarchical_level,
+    loc_series_idxs,
+)
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
-from sktime.utils.dependencies import _check_soft_dependencies
-
-# get all the methods
-METHOD_LIST = Reconciler.METHOD_LIST
-level_list = [1, 2, 3]
-flatten_list = [True, False]
 
 
-# test the reconciled predictions are actually hierarchical
-# test the index/columns on the g and s matrices match
-# test it works for named and unnamed indexes
-@pytest.mark.skipif(
-    not run_test_for_class([Aggregator, Reconciler]),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
-@pytest.mark.parametrize("method", METHOD_LIST)
-@pytest.mark.parametrize("flatten", flatten_list)
-@pytest.mark.parametrize("no_levels", level_list)
-def test_reconciler_fit_transform(method, flatten, no_levels):
-    """Tests fit_transform and output of reconciler.
-
-    Raises
-    ------
-    This test asserts that the output of Reconciler is actually hierarchical
-    in that the predictions sum together appropriately. It also tests the index
-    and columns of the fitted s and g matrix from each method and finally tests
-    if the method works for both named and unnamed indexes
-    """
-    agg = Aggregator(flatten_single_levels=flatten)
+def _generate_unreconciled_hierarchical_data(
+    flatten_single_levels, no_levels, no_bottom_nodes=5
+):
+    agg = Aggregator(flatten_single_levels=flatten_single_levels)
 
     X = _bottom_hier_datagen(
-        no_bottom_nodes=5,
+        no_bottom_nodes=no_bottom_nodes,
         no_levels=no_levels,
         random_seed=123,
     )
     # add aggregate levels
     X = agg.fit_transform(X)
 
-    # forecast all levels
-    fh = ForecastingHorizon([1, 2], is_relative=True)
-    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
-    prds = forecaster.fit(X).predict(fh)
+    prds = X
+    return prds
 
-    # reconcile forecasts
-    reconciler = Reconciler(method=method)
-    prds_recon = reconciler.fit_transform(prds)
 
-    # check the row index and column indexes match
-    msg = "Summation index/columns and G matrix index/columns do not match."
-    assert np.all(reconciler.g_matrix.columns == reconciler.s_matrix.index), msg
-    assert np.all(reconciler.g_matrix.index == reconciler.s_matrix.columns), msg
+@pytest.mark.parametrize(
+    "reconciler, expected_immutable_level",
+    [
+        (BottomUpReconciler, -1),
+        (TopdownShareReconciler, 0),
+        (ForecastProportions, 0),
+        (MiddleOutReconciler, "middle_level"),
+    ],
+)
+@pytest.mark.parametrize("flatten_single_levels", [True, False])
+@pytest.mark.parametrize("no_levels", [2, 3, 4])
+def test_reconcilers_keep_immutable_levels(
+    reconciler, expected_immutable_level, flatten_single_levels, no_levels
+):
+    y = _generate_unreconciled_hierarchical_data(
+        flatten_single_levels=flatten_single_levels, no_levels=no_levels
+    )
 
-    # check if we now remove aggregate levels and use Aggregator it is equal
-    prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
-    assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
+    test_params = reconciler.get_test_params()
+    if not test_params:
+        test_params = [{}]
 
-    # check with unnamed indexes
-    prds.index.rename([None] * prds.index.nlevels, inplace=True)
-    reconciler_unnamed = Reconciler(method=method)
-    msg = "Reconciler returns different output for named and unnamed indexes."
-    assert prds_recon.equals(reconciler_unnamed.fit_transform(prds)), msg
+    for test_param in test_params:
+        instance = reconciler(**test_param)
+
+        instance.fit(y)
+        yt = instance.transform(y)
+        yt = yt + np.random.normal(0, 10, (yt.shape[0], 1))
+        y_reconc = instance.inverse_transform(yt)
+
+        hierarchical_level_nodes = _get_series_for_each_hierarchical_level(
+            y.index.droplevel(-1).unique()
+        )
+
+        _expected_immutable_level = expected_immutable_level
+        if isinstance(expected_immutable_level, str):
+            _expected_immutable_level = getattr(instance, expected_immutable_level)
+
+        immutable_level_series = hierarchical_level_nodes[_expected_immutable_level]
+        y_immutable_reconc = loc_series_idxs(y_reconc, immutable_level_series)
+        y_immutable = loc_series_idxs(yt, immutable_level_series)
+        assert_frame_equal(y_immutable_reconc, y_immutable)
+        # Assert that other levels have changed
+        assert not y_reconc.equals(y)

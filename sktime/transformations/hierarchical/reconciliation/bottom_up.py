@@ -91,7 +91,7 @@ class BottomUpReconciler(BaseTransformer):
         if self._no_hierarchy:
             return X
 
-        X = self._aggregator.transform(X)
+        X = Aggregator(flatten_single_levels=False).fit_transform(X)
         X = loc_series_idxs(X, self._original_series).sort_index()
 
         return X

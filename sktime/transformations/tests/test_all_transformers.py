@@ -248,8 +248,18 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             estimator_instance.fit_transform(X, y)
 
     @pytest.mark.parametrize("no_levels", [0, 1, 2, 3])
-    def test_hierarchical_transformations(self, estimator_instance, no_levels):
-        """Test that hierarchical transformers can handle hierarchical data."""
+    @pytest.mark.parametrize("flatten_single_levels", [True, False])
+    def test_hierarchical_transformations(
+        self, estimator_instance, no_levels, flatten_single_levels
+    ):
+        """Test that hierarchical transformers can handle hierarchical data.
+
+        * Test different number of hierarchical levels. The methods should work
+            for any number of levels.
+        * Test with and without flattening single levels. The methods should
+        return the same original number of series.
+
+        """
         # skip this test if the estimator is not hierarchical
         import numpy as np
         from pandas.testing import assert_frame_equal
@@ -257,9 +267,9 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if not estimator_instance.get_tag(
             "capability:hierarchical_reconciliation", False, raise_error=False
         ):
-            return None
+            pytest.skip("Skipping test for non-hierarchical transformer.")
 
-        agg = Aggregator(flatten_single_levels=True)
+        agg = Aggregator(flatten_single_levels=flatten_single_levels)
 
         X = _bottom_hier_datagen(
             no_bottom_nodes=5,
@@ -269,7 +279,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         # add aggregate levels
         X = agg.fit_transform(X)
 
-        prds = X + np.random.normal(0, 10, X.shape[0])
+        prds = X + np.random.normal(0, 10, (X.shape[0], 1))
 
         # reconcile forecasts
         reconciler = estimator_instance

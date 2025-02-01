@@ -1,5 +1,7 @@
 """Forecast-proportions reconciliation."""
 
+import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._drop_redundant_hierarchical_levels import (  # noqa: E501
@@ -89,7 +91,8 @@ class ForecastProportions(BaseTransformer):
     def _transform(self, X, y):
         if self._no_hierarchy:
             return X
-        X = self._drop_redundant_levels.transform(X)
+
+        X = Aggregator(flatten_single_levels=True).fit_transform(X)
         return X
 
     def _inverse_transform(self, X, y):
@@ -105,29 +108,29 @@ class ForecastProportions(BaseTransformer):
 
         # Map each series to its total series
 
-        idx_map_parents = X.index.map(_promote_hierarchical_indexes_and_keep_timeindex)
-        idx = X.index
-
-        # Df mapping each value to its parent
+        # We will build a df mapping each value to its parent
+        X = self._drop_redundant_levels.transform(X)
         X_parents = X.copy()
-        # Set total to 0 because of the operations below
-        # which would account for it twice
-        X_parents.loc[X_parents.index.droplevel(-1).isin(self._total_series)] = 0
-        X_parents.index = idx_map_parents
+        X_parents = X_parents.loc[
+            ~X_parents.index.droplevel(-1).isin(self._total_series)
+        ]
+        X_total = loc_series_idxs(X, self._total_series)
 
-        # The parent sum according to direct children
+        idx = X_parents.index
+        idx_map_parents = idx.map(_promote_hierarchical_indexes_and_keep_timeindex)
+
         X_parents_bu = X_parents.groupby(
-            level=[i for i in range(X.index.nlevels)]
+            _promote_hierarchical_indexes_and_keep_timeindex
         ).sum()
-        X_parents_bu = X_parents_bu.loc[idx_map_parents]
-        X_parents_bu.index = idx
+        X_parents_bu.index = pd.MultiIndex.from_tuples(X_parents_bu.index.tolist())
 
-        # The forecasted parent total
-        X_parents_total = X.loc[idx_map_parents]
-        X_parents_total.index = idx
+        # The parent according to the original forecast
+        X_ratios = X.loc[X_parents_bu.index] / X_parents_bu
+        X_ratios = X_ratios.loc[idx_map_parents]
+        X_ratios.index = idx
 
-        X_ratios = X_parents_total / X_parents_bu
-        X_ratios.index = X.index
+        # Add totals
+        X_ratios = pd.concat([X_total * 0 + 1, X_ratios], axis=0).sort_index()
 
         # Now, multiply the ratio down to the bottom level, recursively
 

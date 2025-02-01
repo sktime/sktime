@@ -86,7 +86,7 @@ class TopdownShareReconciler(BaseTransformer):
         if self._no_hierarchy:
             return X
 
-        X = self._aggregator.transform(X)
+        # X = self._aggregator.transform(X)
         X_total = loc_series_idxs(X, self._total_series)
         X_bottom = loc_series_idxs(X, self._bottom_series)
 
@@ -106,17 +106,32 @@ class TopdownShareReconciler(BaseTransformer):
         if self._no_hierarchy:
             return X
 
-        X_total = loc_series_idxs(X, self._total_series)
-        X_bottom = loc_series_idxs(X, self._bottom_series)
+        X_shares = X.copy()
+        X_shares.loc[X_shares.index.droplevel(-1).isin(self._total_series)] = 1
 
-        # Keep only timeindex of total series
+        # In the future, we could add an option to keep all levels
+        # and propage the shares from top to bottom as in
+        # ForecastProportions
+        # X_shares = _recursively_propagate_topdown(X_shares)
+
+        # Adjust so that shares sum to 1
+        X_shares_not_total = X_shares.loc[
+            ~X_shares.index.droplevel(-1).isin(self._total_series)
+        ]
+        X_shares_not_total = X_shares_not_total / X_shares_not_total.groupby(
+            level=-1
+        ).transform("sum")
+        X_shares.loc[X_shares_not_total.index] = X_shares_not_total
+
+        X_total = loc_series_idxs(X, self._total_series)
+
         X_total.index = X_total.index.get_level_values(-1)
 
         # Reindex total series to match bottom series
-        X_total_expanded = X_total.reindex(X_bottom.index.get_level_values(-1))
-        X_total_expanded.index = X_bottom.index
+        X_total_expanded = X_total.loc[X_shares.index.get_level_values(-1)]
+        X_total_expanded.index = X_shares.index
 
-        forecasts_from_shares = X_bottom * X_total_expanded
+        forecasts_from_shares = X_shares * X_total_expanded
 
         _X = self._aggregator.transform(forecasts_from_shares)
         _X = loc_series_idxs(_X, self._original_series).sort_index()
