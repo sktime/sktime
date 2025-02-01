@@ -757,10 +757,10 @@ def test_wrong_y_is_not_passed_to_transformer():
     from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
     from sktime.transformations.compose import FitInTransform
     from sktime.transformations.panel.interpolate import TSInterpolator
-    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerPK
+    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
 
-    # this test requires the KalmanFilterTransformerPK to be runnable
-    if not _check_estimator_deps(KalmanFilterTransformerPK, severity="none"):
+    # this test requires the KalmanFilterTransformerFP to be runnable
+    if not _check_estimator_deps(KalmanFilterTransformerFP, severity="none"):
         return None
 
     # Define the multi-index
@@ -774,10 +774,14 @@ def test_wrong_y_is_not_passed_to_transformer():
     X = pd.DataFrame({
         'LeftControllerVelocity_0': [-0.01, -0.01, 0.06, 0.06]
     }, index=index)
-    y = np.array([1,0.5])
+    y = np.array([1, 0.5])
 
+    # noise filter only, this is a reduced MRE
+    noise_filter_only = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    noise_filter_only.fit(X, y)
 
-    noise_filter = FitInTransform(KalmanFilterTransformerPK(1, denoising=True))
+    # in pipeline, this is the full MRE from bug #6417
+    noise_filter = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
     interpolator = TSInterpolator(4000)
     regressor = KNeighborsTimeSeriesRegressor()
 
