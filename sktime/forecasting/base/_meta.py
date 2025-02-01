@@ -28,7 +28,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         self.forecasters = forecasters
         self.forecasters_ = None
         self.backend = backend
-        self.backend_params = backend_params if backend_params is not None else {}
+        self.backend_params = backend_params if backend_params != {} else {}
         self.n_jobs = n_jobs  # Retained for backward compatibility
         super().__init__()
 
@@ -67,7 +67,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         """Fit all forecasters in parallel."""
         from sktime.utils.parallel import parallelize
 
-        def _fit_forecaster(forecaster, y, X, fh):
+        def _fit_forecaster(forecaster, y, X, fh, meta=None):
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
@@ -81,13 +81,14 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             )
 
         self.forecasters_ = parallelize(
-            iterable=[forecaster.clone() for forecaster in forecasters],
-            func=_fit_forecaster,
+            fun=_fit_forecaster,
+            iter=[forecaster.clone() for forecaster in forecasters],
+            meta=None,
             backend=self.backend,
             backend_params=self.backend_params,
         )(y, X, fh)
 
-    def _predict_forecasters(self, fh=None, X=None):
+    def _predict_forecasters(self, y=None, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
         return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
