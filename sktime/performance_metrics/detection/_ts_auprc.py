@@ -12,17 +12,17 @@ __author__ = ["Ankit-1204"]
 __all__ = ["TimeSeriesAUPRC"]
 
 
-def _ts_auprc(y_true, scores, integration="trapezoid", weighted_precision=True):
-    thresholds = np.unique(scores)
+def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
+    thresholds = np.unique(y_pred)
     precision = np.empty(len(thresholds) + 1)
     recall = np.empty(len(thresholds) + 1)
-    predictions = np.empty_like(scores, dtype=int)
+    predictions = np.empty_like(y_pred, dtype=int)
 
     precision[-1] = 1
     recall[-1] = 0
     label_ranges = _compute_window_indices(y_true)
     for i, t in enumerate(thresholds):
-        predictions = scores >= t
+        predictions = y_pred >= t
         prec, rec = _ts_precision_and_recall(
             y_true,
             predictions,
@@ -50,12 +50,12 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
 
         super().__init__()
 
-    def _evaluate(self, y_true, scores, X=None):
+    def _evaluate(self, y_true, y_pred, X=None):
         self._integration = self.integration
         self._weighted_precision = self.weighted_precision
         return _ts_auprc(
             y_true,
-            scores,
+            y_pred,
             integration=self._integration,
             weighted_precision=self._weighted_precision,
         )
