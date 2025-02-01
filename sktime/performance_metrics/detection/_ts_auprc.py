@@ -44,18 +44,32 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
 class TimeSeriesAUPRC(BaseDetectionMetric):
     """Compute the area under the precision-recall curve for time series."""
 
-    def __init__(self, integration="trapezoid", weighted_precision=True):
+    def __init__(
+        self, integration="trapezoid", weighted_precision=True, with_scores=False
+    ):
         self.integration = integration
         self.weighted_precision = weighted_precision
-
+        self.with_scores = with_scores
         super().__init__()
 
     def _evaluate(self, y_true, y_pred, X=None):
         self._integration = self.integration
         self._weighted_precision = self.weighted_precision
+        self._with_scores = self.with_scores
+        if not self._with_scores:
+            n_timepoints = max(max(y_pred["ilocs"]), max(y_true["ilocs"])) + 1
+            scores = np.zeros(n_timepoints)
+            for pred_idx in y_pred["ilocs"]:
+                distances = np.abs(pred_idx - y_true["ilocs"])
+                scores[pred_idx] = 1 / (1 + np.min(distances))
+            true_events = np.zeros(n_timepoints, dtype=bool)
+            true_events[y_true["ilocs"]] = True
+        else:
+            true_events = y_true
+            scores = y_pred
         return _ts_auprc(
-            y_true,
-            y_pred,
+            true_events,
+            scores,
             integration=self._integration,
             weighted_precision=self._weighted_precision,
         )
