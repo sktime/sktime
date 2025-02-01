@@ -140,6 +140,13 @@ class PaddingTransformer(BaseTransformer):
 
         return Xt
 
+    @classmethod
+    def get_test_params(cls):
+        """Return parameter sets for testing."""
+        params1 = {"pad_length": None, "fill_value": 0}
+        params2 = {"pad_length": 5, "fill_value": -1}
+        return [params1, params2]
+
 
 def _get_max_length(X):
     def get_length(input):
