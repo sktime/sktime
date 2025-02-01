@@ -593,7 +593,7 @@ class BaseTransformer(BaseEstimator):
 
         Explicitly, with examples:
 
-            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)´
+            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)
             and ``transform-output`` is ``Series``,
             then the return is a single `Series` of the same mtype.
             Example: detrending a single series
@@ -707,7 +707,7 @@ class BaseTransformer(BaseEstimator):
 
         Explicitly, with examples:
 
-            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)´
+            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)
             and ``transform-output`` is ``Series``,
             then the return is a single `Series` of the same mtype.
             Example: detrending a single series
