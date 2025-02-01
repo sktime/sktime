@@ -19,6 +19,7 @@ from sklearn.pipeline import Pipeline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.parallel import parallelize
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -167,6 +168,27 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         _, forecasters = self._check_forecasters()
 
+<<<<<<< HEAD
+=======
+        if self.backend == "utils":
+            # Use sktime.utils.parallel
+            def _fit_single_forecaster(forecaster, y, X, fh):
+                return self._fit_forecaster(forecaster, y, X, fh, meta=None)
+
+            parallelize(
+                fun=_fit_single_forecaster,
+                iter=forecasters,
+                meta=None,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )(y, X, fh)
+
+        else:
+            # if backend in not utils, fall back to the default implementation
+            for forecaster in forecasters:
+                self._fit_forecasters(forecaster, y, X, fh)
+
+>>>>>>> c1c361f9d (fix import issues)
         # get training data for meta-model
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
@@ -231,8 +253,38 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
+<<<<<<< HEAD
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
+=======
+        # return the predictions of the ensemble models
+        if self.backend == "utils":
+            # Use sktime.utils.parallel
+            def _predict_single_forecaster(forecaster, fh, X):
+                return self._predict_forecaster(forecaster, fh, X)
+
+            y_pred_df = pd.concat(
+                parallelize(
+                    fun=_predict_single_forecaster,
+                    iter=self.forecasters_,
+                    meta=None,
+                    backend=self.backend,
+                    backend_params=self.backend_params,
+                )(fh=fh, X=X),
+                axis=1,
+            )
+
+        else:
+            # if backend is not equal to utils, fallback to sequential prediction
+            y_pred_df = pd.concat(
+                [
+                    self._predict_forecaster(forecaster, fh, X)
+                    for forecaster in self.forecasters_
+                ],
+                axis=1,
+            )
+
+>>>>>>> c1c361f9d (fix import issues)
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         y_pred.name = self._y.name
         return y_pred
