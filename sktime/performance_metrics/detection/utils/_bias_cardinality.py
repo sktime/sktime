@@ -107,6 +107,7 @@ def _ts_precision_and_recall(
         alpha,
         recall_bias_fn,
         recall_cardinality_fn,
+        use_window_weight=weighted_precision,
     )
     precision = _compute_overlap(
         anomalies,
