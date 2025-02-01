@@ -1162,10 +1162,6 @@ class BaseTransformer(BaseEstimator):
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
 
-            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
-                raise TypeError(
-                    "Transformers do not support categorical features in y."
-                )
             elif not y_valid and not y_required:
                 # if y is wrong type, we do not pass it to inner methods
                 y_scitype = None
@@ -1173,6 +1169,11 @@ class BaseTransformer(BaseEstimator):
             else:  # y_valid, (y_required does not matter then, we pass y)
                 y_scitype = y_metadata["scitype"]
                 y_mtype = y_metadata["mtype"]
+
+                if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                    raise TypeError(
+                        "Transformers do not support categorical features in y."
+                    )
 
         else:
             # y_scitype is used below - set to None if y is None
