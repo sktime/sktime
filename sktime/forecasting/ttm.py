@@ -69,7 +69,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
        This causes some of the weights in *model architechture* to be reinitialized
        randomly instead of using the pre-trained weights.
 
-    **Forecasting Modes**:
+    **Training Strategies**:
 
     - **Zero-shot Forecasting**: When all the *pre-trained weights* are correctly
       aligned with the *model architechture*, fine-tuing part is bypassed and
@@ -107,6 +107,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         - "1024_96_v1": For loading model with context_length of 1024
           and prediction_length of 96.
+
+        This param becomes irrelevant when model_path is None
 
     validation_split : float, default=0.2
         Fraction of the data to use for validation
@@ -188,6 +190,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>>
     >>> # global forecasting on multi-index dataset
     >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path=None,
+    ...     fit_strategy="full",
     ...     config={
     ...             "context_length": 8,
     ...             "prediction_length": 2
@@ -199,7 +203,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # model is fine-tuned with the minimal strategy due to a non-default config.
+    >>> # model initialized with random weights due to None model_path
+    >>> # and trained with the full strategy.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -319,12 +324,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                     "This requires 'fit_strategy' to be 'full'."
                     "Please set 'fit_strategy' to 'full' or provide a valid model path."
                 )
-            if config is None:
-                # Load tinytimemixer config
-                config = TinyTimeMixerConfig()
-                config.check_and_init_preprocessing()
-            else:
-                config = TinyTimeMixerConfig(**config)
+            # Load tinytimemixer config
+            config = TinyTimeMixerConfig()
+            # call to initialize attributes like num_patchess
+            config.check_and_init_preprocessing()
         else:
             # Get the pretrained model Configuration
             config = TinyTimeMixerConfig.from_pretrained(
@@ -379,9 +382,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         config = config.from_dict(_config)
 
         if self.model_path is not None:
-            # Get the Model
-            # self.model, info = PatchTSTForPrediction.from_pretrained(
-            # "ibm-granite/granite-timeseries-patchtst",
+            # Load the the pretrained model with updated config
             self.model, info = TinyTimeMixerForPrediction.from_pretrained(
                 self.model_path,
                 revision=self.revision,
@@ -408,7 +409,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             for param in self.model.parameters():
                 param.requires_grad = False
 
-            # Reininit the weights of all layers that have mismatched sizes
+            # Adjust requires_grad property of model weights based on info
             for key, _, _ in info["mismatched_keys"]:
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
@@ -429,8 +430,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             y_eval = None
 
         # Validation check for proper error message during training
-        val_length = len(y_test)
-        if (val_length) < (config.context_length + config.prediction_length):
+        val_length = len(y_eval)
+        if val_length < config.context_length + config.prediction_length:
             raise ValueError(
                 f"Insufficient data for evaluation with the current configuration:\n"
                 f" - Dataset length (after validation split): {val_length}\n"
@@ -438,7 +439,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 f" - Configured prediction size: {config.prediction_length}\n\n"
                 f"Suggested Actions:\n"
                 f" 1. Reduce 'context_length' or 'prediction_size' in config.\n"
-                f" 2. Decrease 'validation_split' (current: {self.validation_split}).\n"
+                f" 2. Increase 'validation_split' (current: {self.validation_split}).\n"
                 f" 3. Adjust the model's fit strategy for smaller datasets.\n"
             )
 
