@@ -158,6 +158,17 @@
       ]
     },
     {
+      "login": "abhishek-iitmadras",
+      "name": "Abhishek Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142383124?v=4",
+      "profile": "https://github.com/abhishek-iitmadras",
+      "contributions": [
+        "code",
+        "infra",
+        "bug"
+      ]
+    },
+    {
       "login": "MatthewMiddlehurst",
       "name": "Matthew Middlehurst",
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
@@ -179,15 +190,6 @@
       "contributions": [
         "code",
         "test"
-      ]
-    },
-    {
-      "login": "jgyasu",
-      "name": "Jigyasu",
-      "avatar_url": "https://avatars.githubusercontent.com/u/94278611?s=400&u=19941ae4723ef841b3a3c7df996214efadc98c45&v=4",
-      "profile": "https://www.linkedin.com/in/jgyasu/",
-      "contributions": [
-        "code"
       ]
     },
     {
@@ -3232,6 +3234,15 @@
       ]
     },
     {
+      "login": "PranavBhatP",
+      "name": "PranavBhatP",
+      "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
+      "profile" :"https://github.com/PranavBhatP",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "mjste",
       "name": "Michał Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
@@ -3278,12 +3289,32 @@
       ]
     },
     {
+      "login": "tanvincible",
+      "name": "Tanvi Pooranmal Meena",
+      "avatar_url": "https://avatars.githubusercontent.com/tanvincible",
+      "profile": "https://github.com/tanvincible",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "y-mx",
       "name": "Yimeng Xie",
       "avatar_url": "https://avatars.githubusercontent.com/y-mx",
       "profile": "https://github.com/y-mx",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "jgyasu",
+      "name": "Jigyasu",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "profile": "https://jgyasu.github.io",
+      "contributions": [
+        "code",
+        "doc"
       ]
     },
     {
@@ -3315,6 +3346,15 @@
       ]
     },
     {
+      "login": "lenaklosik",
+      "name": "Lena Klosik",
+      "avatar_url": "https://avatars.githubusercontent.com/lenaklosik",
+      "profile": "https://github.com/lenaklosik",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "marcosfelt",
       "name": "Kobi Felton",
       "avatar_url": "https://avatars.githubusercontent.com/u/25933639?v=4",
@@ -3339,6 +3379,15 @@
       "profile": "https://github.com/VjayRam",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Ankit-1204",
+      "name": "Ankit Upadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112757447?v=4",
+      "profile": "https://github.com/Ankit-1204",
+      "contributions": [
+        "code"
       ]
     }
   ]
