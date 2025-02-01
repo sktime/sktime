@@ -25,12 +25,21 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
+<<<<<<< HEAD
     def __init__(self, forecasters, backend="loky", backend_params=None):
+=======
+    def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
+>>>>>>> b509423c6 (refactor code files)
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = None
         self.backend = backend
+<<<<<<< HEAD
         self.backend_params = backend_params
+=======
+        self.backend_params = backend_params if backend_params is not None else {}
+        self.n_jobs = n_jobs  # Retained for backward compatibility
+>>>>>>> b509423c6 (refactor code files)
         super().__init__()
 
     def _check_forecasters(self):
@@ -69,16 +78,35 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters using parallel processing."""
 
+<<<<<<< HEAD
         def _fit_single_forecaster(forecaster, meta):
             """Fit single forecaster with meta containing y, X, fh."""
             return forecaster.clone().fit(y, X, fh)
+=======
+        def _fit_forecaster(forecaster, y, X, fh):
+            """Fit single forecaster."""
+            return forecaster.fit(y, X, fh)
+
+        if self.n_jobs is not None:
+            import warnings
+
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future release. "
+                "Please use `backend` and `backend_params` instead.",
+                FutureWarning,
+            )
+>>>>>>> b509423c6 (refactor code files)
 
         self.forecasters_ = parallelize(
             fun=_fit_single_forecaster,
             iter=forecasters,
             backend=self.backend,
             backend_params=self.backend_params,
+<<<<<<< HEAD
         )
+=======
+        )(y, X, fh)
+>>>>>>> b509423c6 (refactor code files)
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""

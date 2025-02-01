@@ -136,9 +136,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             backend_params = backend_params or {"n_jobs": n_jobs}
 
         super().__init__(
+<<<<<<< HEAD
             forecasters=forecasters,
             backend=backend,
             backend_params=backend_params,
+=======
+            forecasters=forecasters, backend=backend, backend_params=backend_params
+>>>>>>> b509423c6 (refactor code files)
         )
         self.method = method
         self.regressor = regressor
