@@ -270,6 +270,6 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         """
         param1 = {}
         param2 = {"integration": "trapezoid", "weighted_precision": True}
-        param3 = {"integration": "trapezoid", "weighted_precision": True}
+        param3 = {"integration": "riemann", "weighted_precision": True}
 
         return [param1, param2, param3]
