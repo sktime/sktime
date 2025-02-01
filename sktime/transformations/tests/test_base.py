@@ -764,16 +764,31 @@ def test_wrong_y_is_not_passed_to_transformer():
         return None
 
     # Define the multi-index
-    index = pd.MultiIndex.from_tuples([
-        (0, datetime.strptime('2024-04-20 18:22:14.877500', '%Y-%m-%d %H:%M:%S.%f')),
-        (0, datetime.strptime('2024-04-20 18:22:14.903000', '%Y-%m-%d %H:%M:%S.%f')),
-        (1, datetime.strptime('2024-04-20 18:24:42.453400', '%Y-%m-%d %H:%M:%S.%f')),
-        (1, datetime.strptime('2024-04-20 18:24:42.478800', '%Y-%m-%d %H:%M:%S.%f'))
-    ], names=['instance', 'Time'])
+    index = pd.MultiIndex.from_tuples(
+        [
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.877500", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.903000", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.453400", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.478800", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+        ],
+        names=["instance", "Time"],
+    )
 
-    X = pd.DataFrame({
-        'LeftControllerVelocity_0': [-0.01, -0.01, 0.06, 0.06]
-    }, index=index)
+    X = pd.DataFrame(
+        {"LeftControllerVelocity_0": [-0.01, -0.01, 0.06, 0.06]}, index=index
+    )
     y = np.array([1, 0.5])
 
     # noise filter only, this is a reduced MRE
