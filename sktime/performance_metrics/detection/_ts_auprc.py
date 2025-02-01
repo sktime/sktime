@@ -2,11 +2,11 @@ import numpy as np
 from sklearn.metrics import auc
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
-from sktime.performance_metrics.detection.utils._bias_cardinality import (
+from sktime.performance_metrics.detection.utils import (
+    _compute_window_indices,
     _improved_cardinality_fn,
     _ts_precision_and_recall,
 )
-from sktime.performance_metrics.detection.utils._window import _compute_window_indices
 
 __author__ = ["Ankit-1204"]
 __all__ = ["TimeSeriesAUPRC"]
