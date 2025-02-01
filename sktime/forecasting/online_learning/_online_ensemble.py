@@ -117,7 +117,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             self.weights = self.ensemble_algorithm.weights
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights
         y_pred = y_pred.sum(axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     @classmethod

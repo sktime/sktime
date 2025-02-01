@@ -121,7 +121,7 @@ class TrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=fh)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     @classmethod

@@ -221,7 +221,7 @@ class AutoREG(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
 
         return y_pred.loc[valid_indices]
         # implement here

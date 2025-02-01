@@ -232,7 +232,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
