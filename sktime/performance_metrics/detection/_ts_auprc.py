@@ -1,3 +1,5 @@
+"""Metric for computing area and precision recall curve for timeseries."""
+
 import numpy as np
 from sklearn.metrics import auc
 
@@ -8,7 +10,7 @@ from sktime.performance_metrics.detection.utils import (
     _ts_precision_and_recall,
 )
 
-__author__ = ["Ankit-1204"]
+__author__ = ["ssarfraz"]
 __all__ = ["TimeSeriesAUPRC"]
 
 
@@ -42,7 +44,49 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
 
 
 class TimeSeriesAUPRC(BaseDetectionMetric):
-    """Compute the area under the precision-recall curve for time series."""
+    """TimeSeriesAUPRC: TimeSeries area under precision recall curve.
+
+    This metric is used to evaluate the performan of anomaly detection models
+    calculating the precision and recall across different threshold of predicted
+    anomaly scores using window based method,and then subsequently calculating
+    the Area under precision recall curve. Based on the work in paper _[1] and _[2]
+
+    Parameters
+    ----------
+    integration : string, optional (default=trapezoid)
+                 This parameter specifies the method used to compute
+                 the Area Under the Precision-Recall Curve (AUPRC).
+    weighted_precision: Boolean, optional (default=True)
+                 parameter determines whether the precision should be
+                 computed in a weighted fashion.
+    with_scores : Boolean, optional (default= False)
+                 This parameter determines whether the input is in
+                 label-score format. If False, then assumes input format
+                 to be Predicted and Actual Events.
+
+    Returns
+    -------
+    area: float
+          calculated metric
+
+    References
+    ----------
+    .. [1] N. Tatbul,T.J. Lee,S. Zdonik,M. Alam,J. Gottschlich.
+    Precision and recall for time series.
+    Advances in neural information processing systems.
+    .. [2] D. Wagner,T. Michels,F.C.F. Schulz,A. Nair,M. Rudolph and M. Kloft.
+    TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection.
+    Transactions on Machine Learning Research (TMLR), (to appear) 2023.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.detection import TimeSeriesAUPRC
+    >>> ts_auprc=TimeSeriesAUPRC(with_scores=True)
+    >>> y_true = np.array([0, 0, 1, 1, 0, 0, 1])
+    >>> y_pred = np.array([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
+    >>> area=ts_auprc.evaluate(y_true, y_pred)
+    """
 
     def __init__(
         self, integration="trapezoid", weighted_precision=True, with_scores=False
