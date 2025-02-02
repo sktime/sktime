@@ -102,7 +102,7 @@ class BaseDatatype(BaseObject):
         else:
             return_metadata_bool = True
 
-        # early type check for python type-by-name and source module
+        # precheck whether obj is of correct python type-by-name and source module
         # this is for optional skip of _check, and of potential imports
         valid, msg = self._precheck(obj=obj, var_name=var_name)
         if not valid:
