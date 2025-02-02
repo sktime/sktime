@@ -79,6 +79,8 @@ Core Developers
      - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
+   * - Jan Beitner
+     - :user:`jdb78`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
    * - Jonathan Bechtel
