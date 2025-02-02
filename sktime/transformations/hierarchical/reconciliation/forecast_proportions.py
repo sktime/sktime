@@ -81,7 +81,7 @@ class ForecastProportions(BaseTransformer):
 
         self._drop_redundant_levels = _DropRedundantHierarchicalLevels()
         self._drop_redundant_levels.fit(X)
-        X = self._drop_redundant_levels.transform(X)
+        # X = self._drop_redundant_levels.transform(X)
 
         self._total_series = get_total_level_idxs(X)
         self._bottom_series = get_bottom_level_idxs(X)
@@ -109,7 +109,7 @@ class ForecastProportions(BaseTransformer):
         # Map each series to its total series
 
         # We will build a df mapping each value to its parent
-        X = self._drop_redundant_levels.transform(X)
+        # X = self._drop_redundant_levels.transform(X)
         X_parents = X.copy()
         X_parents = X_parents.loc[
             ~X_parents.index.droplevel(-1).isin(self._total_series)

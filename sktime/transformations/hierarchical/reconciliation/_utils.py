@@ -242,6 +242,27 @@ def _get_series_for_each_hierarchical_level(idx):
                 (current_level_values != "__total") & (next_level_values == "__total")
             ]
             tree_level_nodes.append(middle_series)
+
+    # Sometimes, when single level series are flattened, t
+    # some levels can be missing, example:
+    # MultiIndex([(  '__total',   '__total',   '__total',   '__total'),
+    #     ('l4_node01', 'l3_node01', 'l2_node01',   '__total'),
+    #     ('l4_node01', 'l3_node01', 'l2_node01', 'l1_node01'),
+    #     ('l4_node01', 'l3_node01', 'l2_node01', 'l1_node04'),
+    #     ('l4_node01', 'l3_node01', 'l2_node02',   '__total'),
+    #     ('l4_node01', 'l3_node01', 'l2_node02', 'l1_node02'),
+    #     ('l4_node01', 'l3_node01', 'l2_node02', 'l1_node03'),
+    #     ('l4_node01', 'l3_node01', 'l2_node02', 'l1_node05')],
+    #    names=['l4_agg', 'l3_agg', 'l2_agg', 'l1_agg'])
+
+    empty_levels = []
+    for i, series in enumerate(tree_level_nodes):
+        if series.empty:
+            empty_levels.append(i)
+    tree_level_nodes = [
+        series for i, series in enumerate(tree_level_nodes) if i not in empty_levels
+    ]
+
     return tree_level_nodes
 
 

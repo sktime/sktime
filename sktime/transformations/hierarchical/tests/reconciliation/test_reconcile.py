@@ -34,6 +34,7 @@ def _generate_unreconciled_hierarchical_data(
     )
     # add aggregate levels
     X = agg.fit_transform(X)
+    # X = _DropRedundantHierarchicalLevels().fit_transform(X)
 
     prds = X
     return prds
@@ -80,6 +81,8 @@ def test_reconcilers_keep_immutable_levels(
         immutable_level_series = hierarchical_level_nodes[_expected_immutable_level]
         y_immutable_reconc = loc_series_idxs(y_reconc, immutable_level_series)
         y_immutable = loc_series_idxs(yt, immutable_level_series)
+
+        assert y_immutable_reconc.shape[0] > 0
         assert_frame_equal(y_immutable_reconc, y_immutable)
         # Assert that other levels have changed
         assert not y_reconc.equals(y)

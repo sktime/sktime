@@ -9,7 +9,6 @@ from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_series_for_each_hierarchical_level,
     _is_hierarchical_dataframe,
-    _split_middle_levels,
     filter_descendants,
     loc_series_idxs,
 )
@@ -158,7 +157,7 @@ class MiddleOutReconciler(BaseTransformer):
         if self._delegate is not None:
             return self._delegate.transform(X, y)
 
-        _, X_middle, _ = _split_middle_levels(X, self.middle_level)
+        X_middle = loc_series_idxs(X, self._hierarchical_level_nodes[self.middle_level])
 
         # 2) For each middle-level aggregator node, get the subtree below it
         #    and apply the bottom approach
@@ -203,7 +202,7 @@ class MiddleOutReconciler(BaseTransformer):
         if self._delegate is not None:
             return self._delegate.inverse_transform(X, y)
 
-        _, X_middle, _ = _split_middle_levels(X, self.middle_level)
+        X_middle = loc_series_idxs(X, self._hierarchical_level_nodes[self.middle_level])
 
         # 2) For each aggregator node, get the subtree and do bottom approach inverse
         bottom_subtrees = []

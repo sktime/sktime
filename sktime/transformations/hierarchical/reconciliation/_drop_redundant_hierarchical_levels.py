@@ -68,16 +68,36 @@ class _DropRedundantHierarchicalLevels(BaseTransformer):
 
         self.levels_to_drop_ = list(range(first_level_with_more_than_one_value))
 
+        Xt = X.droplevel(self.levels_to_drop_).sort_index()
+        self._assert_no_inconsistent_duplicated_indexes(Xt)
+
+        # self.duplicated_indexes_ = (
+        #    Xt.index.drop_duplicates(keep=False).droplevel(-1).unique()
+        # )
+
         self._idx = X.index.droplevel(-1).unique()
         self._dummy_idx_names = ["dummy" + str(i) for i in range(X.index.nlevels)]
         self._idx_names = X.index.names
         return self
 
+    def _assert_no_inconsistent_duplicated_indexes(self, X):
+        X_mean = X.groupby(level=list(range(X.index.nlevels))).transform("mean")
+        diff = (X_mean - X).abs()
+        # Greater than zero
+        if (diff > 1e-9).any().any():
+            raise ValueError(
+                "There are values that are not the same for the same index."
+            )
+
     def _transform(self, X, y):
         if self._no_hierarchy:
             return X
 
-        return X.droplevel(self.levels_to_drop_).sort_index()
+        X = X.droplevel(self.levels_to_drop_).sort_index()
+
+        indexes_to_keep = ~X.index.duplicated(keep="first")
+        X = X[indexes_to_keep]
+        return X
 
     def _inverse_transform(self, X, y=None):
         if self._no_hierarchy:
