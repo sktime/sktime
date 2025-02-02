@@ -48,12 +48,20 @@ Core interface changes
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Dataset object interface (:pr:`7398`) :user:`felipeangelimvieira`
+* a unified API has been introduced for data sets and data loaders,
+following the ``scikit-base`` pattern.
+A unified ``load`` method is now available for all data loaders,
+with further unified API points such as ``keys`` and tags for retrieval.
+For further details, see :ref:`datasets_ref` reference.
 
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] Forecasting metrics dispatch of ``__call__`` to ``evaluate`` vs ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
+* All Forecasting metrics can now be constructed with a ``by_index=True`` argument.
+This will result in a direct call returning the metric per time index.
+This is equivalent to a call of the ``evaluate_by_index`` method.
+``by_index=False`` is the default, and dispatches, as currently, to the ``evaluate``
+method of the metric.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,6 +105,8 @@ Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Remove ``gluonts dependency`` in ``gluonts_ListDataset_panel`` mtype (:pr:`7558`) :user:`PranavBhatP`
+* [ENH] data types: early check for python type and host module to improve performance and dependency isolation (:pr:`7736`) :user:`fkiraly`
+* [ENH] refactor `Alignment` and `Proba` datatypes to `scikit-base` records (:pr:`7739`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
