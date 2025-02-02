@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 from sktime.base import BaseObject
 from sktime.datatypes._base._common import _ret
 from sktime.utils.deep_equals import deep_equals
+from sktime.utils.dependencies import _isinstance_by_name
 
 
 class BaseDatatype(BaseObject):
@@ -22,6 +23,7 @@ class BaseDatatype(BaseObject):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": None,
+        "python_type": "object",  # implied python type (lowest)
     }
 
     def __init__(self):
@@ -99,6 +101,16 @@ class BaseDatatype(BaseObject):
             return_metadata_bool = return_metadata
         else:
             return_metadata_bool = True
+
+        # early type check for python type
+        # this is for optional skip of _check, and of potential imports
+        expected_python_type = self.get_tag("python_type")
+        if not _isinstance_by_name(obj, expected_python_type):
+            msg = (
+                f"{var_name} must be of python type {expected_python_type}, "
+                f"or a subtype thereof, but found {type(obj)}"
+            )
+            return _ret(False, msg)
 
         # call inner _check
         check_res = self._check(
