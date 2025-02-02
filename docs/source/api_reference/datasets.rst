@@ -5,14 +5,64 @@ Datasets
 
 The ``datasets`` module contains:
 
+* dataset objects, which are in-memory representations of time series datasets
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
 * toy data generators for didactic and illustrative purposes
 * utilities to write to, and load from, time series specific file formats
 
+Forecasting datasets
+--------------------
+.. currentmodule:: sktime.datasets.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Airline
+    HierarchicalSalesToyData
+    Longley
+    Lynx
+    M5Dataset
+    Macroeconomic
+    ShampooSales
+    Solar
+    USChange
+
+Classification datasets
+-----------------------
+
+.. currentmodule:: sktime.datasets.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArrowHead
+    BasicMotions
+    GunPoint
+    ItalyPowerDemand
+    JapaneseVowels
+    OSULeaf
+    PLAID
+
+Regression datasets
+-------------------
+
+.. currentmodule:: sktime.datasets.regression
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Tecator
+
+Loaders
+-------
+
 Loaders from dataset repositories
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These loaders access dataset repositories on the internet and fetch one or multiple
 datasets from there, individual datasets specifiable as strings.
@@ -36,7 +86,7 @@ These loaders can be used to access reference datasets for benchmarking.
 
 
 Individual datasets
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 These loaders fetch a commonly used individual dataset,
 usually for illustration purposes.
@@ -87,7 +137,7 @@ Panels of time series
 
 
 Toy data generators
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Hierarchical time series data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
