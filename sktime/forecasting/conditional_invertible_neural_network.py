@@ -108,10 +108,23 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = CINNForecaster() # doctest: +SKIP
+    >>> model = CINNForecaster(window_size=100) # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
     CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
+
+    Handling invalid `window_size`:
+            >>> try:
+            ...     model = CINNForecaster(window_size=5000)  # Assuming len(y) < 5000
+            ...     model.fit(y)
+            ... except ValueError as e:
+            ...     print(f"Error: {e}")
+            Handling curve fitting errors:
+            >>> try:
+            ...     model = CINNForecaster(window_size=100)
+            ...     model.fit(y)
+            ... except RuntimeError as e:
+            ...     print(f"Curve fitting error: {e}")
     """
 
     _tags = {
@@ -205,10 +218,30 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
+        Raises
+        ------
+        ValueError
+            If `self.window_size` is larger than the length of `y`.
+        RuntimeError
+            If curve fitting fails due to non-convergence.
+
+        Additional Processing
+        ---------------------
+        - Validates that `self.window_size` does not exceed the length of `y`.
+        - Fits `self.function` using rolling mean data,
+          raising an error if optimization fails.
+
         Returns
         -------
         self : reference to self
         """
+        if self.window_size > len(y):
+            raise ValueError(
+                f"Invalid window_size: {self.window_size}. "
+                "It must be less than or equal to the size of the training data "
+                f"({len(y)})."
+            )
+
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
             lag_feature={
@@ -222,7 +255,21 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
-        self.function.fit(rolling_mean.dropna())
+
+        try:
+            # Attempt to fit the function with rolling mean data.
+            # This step can fail if the optimization process does not converge,
+            # often leading to a "RuntimeError: Optimal parameters not found".
+            self.function.fit(rolling_mean.dropna())
+        except Exception as e:
+            # Raise a detailed RuntimeError, preserving traceback.
+            raise RuntimeError(
+                "Curve fitting error. Please check the parameters and try again.\n"
+                f"Window size: {self.window_size}\n"
+                f"f_statistic: {self._f_statistic}\n"
+                f"init_param_f_statistic: {self._init_param_f_statistic}"
+            ) from e  # Preserve original traceback
+
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
