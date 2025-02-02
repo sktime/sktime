@@ -113,7 +113,6 @@ def check_align(align_df, name="align_df", index="iloc", return_metadata=False):
             return False, msg
     # no additional restrictions apply if loc or either, so no elif
 
-
     metadata = {}
     if _req("is_multiple", return_metadata):
         metadata["is_multiple"] = n >= 3

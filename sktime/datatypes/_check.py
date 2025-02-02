@@ -319,7 +319,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
 
         valid mtype strings are can be found in :ref:`data_format`
 
-    var_name: str, optional, default="input" 
+    var_name: str, optional, default="input"
         name of input in error messages
 
     Returns
