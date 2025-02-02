@@ -137,13 +137,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             backend_params = backend_params or {"n_jobs": n_jobs}
 
         super().__init__(
-<<<<<<< HEAD
-            forecasters=forecasters,
-            backend=backend,
-            backend_params=backend_params,
-=======
             forecasters=forecasters, backend=backend, backend_params=backend_params
->>>>>>> b509423c6 (refactor code files)
         )
         self.method = method
         self.regressor = regressor
@@ -168,8 +162,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         _, forecasters = self._check_forecasters()
 
-<<<<<<< HEAD
-=======
         if self.backend == "utils":
             # Use sktime.utils.parallel
             def _fit_single_forecaster(forecaster, y, X, fh):
@@ -188,7 +180,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             for forecaster in forecasters:
                 self._fit_forecasters(forecaster, y, X, fh)
 
->>>>>>> c1c361f9d (fix import issues)
         # get training data for meta-model
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
@@ -253,10 +244,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-<<<<<<< HEAD
-        y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        # apply weights
-=======
         # return the predictions of the ensemble models
         if self.backend == "utils":
             # Use sktime.utils.parallel
@@ -284,7 +271,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 axis=1,
             )
 
->>>>>>> c1c361f9d (fix import issues)
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         y_pred.name = self._y.name
         return y_pred

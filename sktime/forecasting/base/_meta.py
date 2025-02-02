@@ -80,19 +80,12 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters using parallel processing."""
+        """Fit all forecasters in parallel."""
+        from sktime.utils.parallel import parallelize
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        def _fit_single_forecaster(forecaster, meta):
-            """Fit single forecaster with meta containing y, X, fh."""
-            return forecaster.clone().fit(y, X, fh)
-=======
-        def _fit_forecaster(forecaster, y, X, fh):
-=======
         def _fit_forecaster(forecaster, y, X, fh, meta=None):
->>>>>>> c1c361f9d (fix import issues)
             """Fit single forecaster."""
+            y, X, fh = meta["y"], meta["X"], meta["fh"]
             return forecaster.fit(y, X, fh)
 
         if self.n_jobs is not None:
@@ -106,23 +99,14 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 >>>>>>> b509423c6 (refactor code files)
 
         self.forecasters_ = parallelize(
-<<<<<<< HEAD
-            fun=_fit_single_forecaster,
-            iter=forecasters,
-=======
             fun=_fit_forecaster,
             iter=[forecaster.clone() for forecaster in forecasters],
             meta=None,
->>>>>>> c1c361f9d (fix import issues)
             backend=self.backend,
             backend_params=self.backend_params,
-<<<<<<< HEAD
-        )
-=======
         )(y, X, fh)
->>>>>>> b509423c6 (refactor code files)
 
-    def _predict_forecasters(self, y=None, fh=None, X=None):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
 
         def _predict_single_forecaster(forecaster, meta):
