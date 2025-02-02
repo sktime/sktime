@@ -21,9 +21,6 @@ Purpose of this implementation template:
     Mandatory implements:
         evaluating            - _evaluate(self, X)
 
-    Optional implements:
-        Evaluate          -  __call__(self, X)
-
     Testing - required for sktime test framework and check_estimator usage:
         get default parameters for test instance(s) - get_test_params()
 
@@ -129,18 +126,23 @@ class MyMetric(BaseDetectionMetric):
 
         Parameters
         ----------
-        y_true : time series in ``sktime`` compatible data container format.
+        y_true : pd.DataFrame
+            time series in ``sktime`` compatible data container format.
             Ground truth (correct) event locations, in ``X``.
-            Should be ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D),
-            of ``Series`` scitype = individual time series.
+            Should only be ``pd.DataFrame`` ,
+            Expected format:
+             Index: time indices or event identifiers
+             Columns: depending on scitype (`points` or `segments`).
+            `points` assumes a single column, `segments` may require ["start", "end"].
 
             For further details on data format, see glossary on :term:`mtype`.
 
-        y_pred : time series in ``sktime`` compatible data container format
+        y_pred : pd.DataFrame
+            time series in ``sktime`` compatible data container format
             Detected events to evaluate against ground truth.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
-        X : optional, pd.DataFrame, pd.Series or np.ndarray
+        X : optional, pd.DataFrame
             Time series that is being labelled.
             If not provided, assumes ``RangeIndex`` for ``X``, and that
             values in ``X`` do not matter.
