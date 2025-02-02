@@ -14,14 +14,3 @@ __all__ = [
     "NonNegativeFullHierarchyReconciler",
     "ForecastProportions",
 ]
-
-
-METHOD_MAP = {
-    "bu": BottomUpReconciler(),
-    "ols": FullHierarchyReconciler(),
-    "ols:nonneg": NonNegativeFullHierarchyReconciler(),
-    "wls_str": FullHierarchyReconciler("wls_str"),
-    "wls_str:nonneg": NonNegativeFullHierarchyReconciler("wls_str"),
-    "td_fcst": ForecastProportions(),
-    "td_share": TopdownShareReconciler(),
-}

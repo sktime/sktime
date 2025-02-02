@@ -14,9 +14,11 @@ from sktime.transformations.hierarchical.aggregate import (
     _check_index_no_total,
 )
 from sktime.transformations.hierarchical.reconciliation import (
-    METHOD_MAP,
+    BottomUpReconciler,
+    ForecastProportions,
     FullHierarchyReconciler,
     NonNegativeFullHierarchyReconciler,
+    TopdownShareReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import loc_series_idxs
 from sktime.utils.warnings import warn
@@ -118,7 +120,24 @@ class ReconcilerForecaster(BaseForecaster):
         "fit_is_empty": False,
     }
 
-    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(METHOD_MAP.keys())
+    # We do not create the instances to avoid error due to
+    # soft dependency on cvxpy for NonNegativeFullHierarchyReconciler
+    TRFORM_METHOD_MAP = {
+        "bu": (BottomUpReconciler, {}),
+        "ols": (FullHierarchyReconciler, {}),
+        "ols:nonneg": (NonNegativeFullHierarchyReconciler, {}),
+        "wls_str": (FullHierarchyReconciler, {"error_covariance_matrix": "wls_str"}),
+        "wls_str:nonneg": (
+            NonNegativeFullHierarchyReconciler,
+            {"error_covariance_matrix": "wls_str"},
+        ),
+        "td_fcst": (ForecastProportions, {}),
+        "td_share": (TopdownShareReconciler, {}),
+    }
+
+    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
+        TRFORM_METHOD_MAP.keys()
+    )
     RETURN_TOTALS_LIST = [True, False]
 
     def __init__(self, forecaster, method="mint_shrink", return_totals=True):
@@ -172,7 +191,8 @@ class ReconcilerForecaster(BaseForecaster):
             X = self._add_totals(X)
 
         if not self._requires_residuals:
-            self.reconciler_transform_ = METHOD_MAP[self.method]
+            Class, kwargs = self.TRFORM_METHOD_MAP[self.method]
+            self.reconciler_transform_ = Class(**kwargs)
             yt = self.reconciler_transform_.fit_transform(y)
             self.forecaster_.fit(y=yt, X=X, fh=fh)
             return self
