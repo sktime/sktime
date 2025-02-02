@@ -8139,7 +8139,7 @@ Highlights
 * Time series classification: deep learning based algorithms, port of ``sktime-dl`` into ``sktime`` (:pr:`2447`) :user:`TonyBagnall`
 * forecasting data splitters now support hierarchical data (:pr:`2599`) :user:`fkiraly`
 * Updated forecasting and classification notebooks (:pr:`2620`, :pr:`2641`) :user:`fkiraly`
-* frequently requested algorithm: Kalman filter transformers (:pr:`2611`) :user:`NoaBenAmi` :user:`lielleravid`
+* frequently requested algorithm: Kalman filter transformers (:pr:`2611`) :user:`NoaWegerhoff` :user:`lielleravid`
 * frequently requested algorithm: top-down reconciler based on forecast proportions (:pr:`2664`) :user:`ciaran-g`
 * frequently requested algorithm: empirical and conformal prediction intervals after Stankeviciute et al, 2021 (:pr:`2542`, :pr:`2706`) :user:`bethrice44` :user:`fkiraly`
 
@@ -8273,7 +8273,7 @@ Time series classification and regression
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] Kalman filter - transformers (:pr:`2611`) :user:`NoaBenAmi` :user:`lielleravid`
+* [ENH] Kalman filter - transformers (:pr:`2611`) :user:`NoaWegerhoff` :user:`lielleravid`
 * [ENH] transformer adaptor for `pandas` native methods (:pr:`2699`) :user:`fkiraly`
 * [ENH] testing hierarchical input to transformers (:pr:`2721`) :user:`fkiraly`
 * [ENH] ``MultiplexTransformer`` for multiplexing transformers (:pr:`2738`, :pr:`2778`, :pr:`2780`) :user:`miraep8`
@@ -8354,7 +8354,7 @@ Maintenance
 * [MNT] Replace deprecated argument ``squeeze`` with the method `.squeeze("columns")` in `pd.read_csv` (:pr:`2693`) :user:`khrapovs`
 * [MNT] Replace ``pandas.DataFrame.append`` with ``pandas.concat`` to address future deprecation (:pr:`2723`) :user:`khrapovs`
 * [MNT] Add [MNT] tag to PR template (:pr:`2727`) :user:`khrapovs`
-* [MNT] Removed redundant ``todo`` from ``transformer_simple`` extension template (:pr:`2740`) :user:`NoaBenAmi`
+* [MNT] Removed redundant ``todo`` from ``transformer_simple`` extension template (:pr:`2740`) :user:`NoaWegerhoff`
 * [MNT] Address various future warnings from ``pandas`` and ``numpy`` (:pr:`2725`) :user:`khrapovs`
 * [MNT] testing ``sktime`` without softdeps (:pr:`2719`) :user:`fkiraly`
 * [MNT] remove accidental ``codecov`` overwrite from ``nosoftdeps`` (:pr:`2782`) :user:`fkiraly`
@@ -8402,7 +8402,7 @@ Contributors
 :user:`lielleravid`,
 :user:`ltsaprounis`,
 :user:`miraep8`,
-:user:`NoaBenAmi`,
+:user:`NoaWegerhoff`,
 :user:`Ris-Bali`,
 :user:`TonyBagnall`,
 :user:`ZiyaoWei`
@@ -8828,7 +8828,7 @@ Refactored
 * [ENH] Classification expected output test updates (:pr:`2295`) :user:`MatthewMiddlehurst`
 * [ENH] Transformers module full refactor - part III, `panel` module (2nd batch) (:pr:`2253`) :user:`fkiraly`
 * [ENH] Transformers module full refactor - part IV, `panel` module (3rd batch) (:pr:`2369`) :user:`fkiraly`
-* [ENH] test parameter refactor: ``TSInterpolator`` (:pr:`2342`) :user:`NoaBenAmi`
+* [ENH] test parameter refactor: ``TSInterpolator`` (:pr:`2342`) :user:`NoaWegerhoff`
 * [ENH] move "sktime forecaster tests" into ``TestAllForecasters`` class (:pr:`2311`) :user:`fkiraly`
 * [ENH] upgrade ``BasePairwiseTransformer`` to use `datatypes` input conversions and checks (:pr:`2363`) :user:`fkiraly`
 * [ENH] extend ``_HeterogeneousMetaEstimator`` estimator to allow mixed tuple/estimator list (:pr:`2406`) :user:`fkiraly`
@@ -8883,7 +8883,7 @@ Contributors
 :user:`lmmentel`,
 :user:`ltsaprounis`,
 :user:`MatthewMiddlehurst`,
-:user:`NoaBenAmi`,
+:user:`NoaWegerhoff`,
 :user:`RISHIKESHAVAN`,
 :user:`TNTran92`
 
