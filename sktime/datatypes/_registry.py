@@ -84,8 +84,10 @@ def _generate_scitype_cls_list(soft_deps="present"):
 
         if deps_tag is None:
             return True
-        if deps_tag in DEPS_PRESENT_IN_ENV:
+        if not isinstance(deps_tag, (list, tuple)) and deps_tag in DEPS_PRESENT_IN_ENV:
             return True
+        if isinstance(deps_tag, (list, tuple)):
+            return all([x in DEPS_PRESENT_IN_ENV for x in deps_tag])
         return False
 
     # subset only to data types with soft dependencies present
