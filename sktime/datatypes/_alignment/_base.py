@@ -24,7 +24,7 @@ class ScitypeAlignment(BaseDatatype):
         "python_dependencies": None,
     }
 
-    def __init__(self, is_multiple = None):
+    def __init__(self, is_multiple=None):
         self.is_multiple = is_multiple
 
         super().__init__()
