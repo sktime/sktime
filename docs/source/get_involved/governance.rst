@@ -500,11 +500,11 @@ core developers.
 -  Proposed changes should be in the form of GitHub pull requests (PR).
    Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
--  For a proposed change to be approved via lazy consensus, it needs to
-   approval by at least one core developer (lazy consensus) and no rejection by a core developer (veto right).
-   The approval required for this condition must be by a core developer different from a proposer.
+-  For a proposed change to be approved via lazy consensus, it needs to satisfy at least one of these two conditions:
+   - approval by at least one core developer (lazy consensus), no rejection by a core developer (veto right)
+   - be authored by a core developer, and not require a STEP (i.e., changes to this governance document, or core interfaces)
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
-   rejection by at least one core developer, and no acceptance by a core developer.
+   rejection by at least one core developer, and no acceptance by a core developer, and not be authored by a core developer.
 -  Approvals must be in the form of a GitHub PR approval of the PR in question.
    Rejections can be expressed as -1 comments, or any written comments
    containing "I formally reject" in the PR, in reference to it.
@@ -514,9 +514,11 @@ core developers.
    Ten working days excluding week-ends constitute "reasonable time" in the above sense.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
--  During this period, the PR can be merged if it has an approval and no rejection, but should be
-   reverted if it receives a rejection in addition.
--  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
+-  During this period, the PR can be merged if it has an approval and no rejection after two working days excluding week-ends,
+   or if five working days excluding week-ends have passed in a case where it has received neither approval nor rejection.
+   Such a merge should be reverted if the merged PR receives a rejection.
+-  If the "reasonable time" period elapses for a PR not authored by a core developer,
+   and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of agenda for the next developer meetup.
    In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
 
@@ -578,7 +580,8 @@ sktime enhancement proposal
 
 sktime enhancement proposals (STEPs) are required for:
 
-* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
+* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__.
+  This includes changes to this governance document, and core software interfaces.
 * for all stage 3 decisions
 
 If a STEP is required by a vote, it must have been made public at least 5 working days (excluding week-ends) before that vote.
@@ -588,14 +591,14 @@ problem statement, a clear description of the proposed solution and a
 comparison with alternative solutions, as outlined in our
 `template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
 
-A complete STEP must always include at least a high-level design for the proposed change,
-not just a wishlist of features.
+In case of software interface changes, a complete STEP must always include at least a
+high-level design for the proposed change, not just a wishlist of features.
 
 Usually, we collect and discuss proposals in sktime's `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
 
 For smaller changes, such as punctual changes to the API or governance documents,
-the STEP can also be be part of an issue or pull request.
+the STEP can also be be part of an issue or pull request header.
 
 .. _algorithm-inclusion-guidelines:
 
