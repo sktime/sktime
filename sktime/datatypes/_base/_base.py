@@ -102,16 +102,31 @@ class BaseDatatype(BaseObject):
         else:
             return_metadata_bool = True
 
-        # early type check for python type
+        # early type check for python type and source module
         # this is for optional skip of _check, and of potential imports
-        expected_python_type = self.get_tag("python_type")
+        expected_module_python_type = self.get_tag("python_type")
+
+        module_plus_type = expected_module_python_type.split(".")
+        if len(module_plus_type) > 1:
+            expected_python_type = module_plus_type[-1]
+            expected_module = module_plus_type[0]
+            if not type(obj).__module__ == expected_module:
+                msg = (
+                    f"{var_name} must be of python type {expected_module_python_type}, "
+                    f"or a subtype thereof, but found {type(obj)}"
+                )
+                return _ret(False, msg)
+        else:
+            expected_python_type = expected_module_python_type
+
         if not _isinstance_by_name(obj, expected_python_type):
             msg = (
-                f"{var_name} must be of python type {expected_python_type}, "
+                f"{var_name} must be of python type {expected_module_python_type}, "
                 f"or a subtype thereof, but found {type(obj)}"
             )
             return _ret(False, msg)
 
+        # early type check has now passed
         # call inner _check
         check_res = self._check(
             obj=obj, return_metadata=return_metadata, var_name=var_name
