@@ -75,7 +75,7 @@ def _generate_scitype_cls_list(soft_deps="present"):
 
     # dependencies implied by the core requirements
     # that may appear in the classes as python_dependencies tag
-    # it is assumed that only single strings, not lists appear
+    # it is assumed that only simple dependency strings, no version requirements appear
     DEPS_PRESENT_IN_ENV = ["numpy", "pandas"]
 
     def _only_core_deps(cls):
