@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.reconciliation.full_hierarchy import (
     NonNegativeFullHierarchyReconciler,
     _create_summing_matrix_from_index,
@@ -90,6 +91,10 @@ def test_create_summing_matrix_from_index(small_hier_index):
     print("All tests passed for create_summing_matrix_from_index!")
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NonNegativeFullHierarchyReconciler),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("hierarchical_levels", [(2, 4), (3, 3), (2, 2, 2)])
 def test_nonnegative_reconciliation(hierarchical_levels):
     y = _make_hierarchical(
