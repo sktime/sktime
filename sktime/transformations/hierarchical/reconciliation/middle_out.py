@@ -202,8 +202,6 @@ class MiddleOutReconciler(BaseTransformer):
         if self._delegate is not None:
             return self._delegate.inverse_transform(X, y)
 
-        X_middle = loc_series_idxs(X, self._hierarchical_level_nodes[self.middle_level])
-
         # 2) For each aggregator node, get the subtree and do bottom approach inverse
         bottom_subtrees = []
         for agg_node in self.middle_level_series_:
@@ -225,12 +223,7 @@ class MiddleOutReconciler(BaseTransformer):
             X_subtree_inv = X_subtree_inv.reorder_levels(_idx.names)
             bottom_subtrees.append(X_subtree_inv)
 
-        if bottom_subtrees:
-            _X = pd.concat(bottom_subtrees, axis=0)
-
-        else:
-            _X = X_middle
-
+        _X = pd.concat(bottom_subtrees, axis=0)
         _X = Aggregator(flatten_single_levels=False).fit_transform(_X)
         _X = loc_series_idxs(_X, self._original_series).sort_index()
 

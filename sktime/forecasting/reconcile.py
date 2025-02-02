@@ -5,8 +5,6 @@
 __all__ = ["ReconcilerForecaster"]
 __author__ = ["ciaran-g", "felipeangelimvieira"]
 
-# todo: top down historical proportions? -> new _get_g_matrix_prop(self)
-
 import numpy as np
 import pandas as pd
 
@@ -94,8 +92,8 @@ class ReconcilerForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": "ciaran-g",
-        "maintainers": "ciaran-g",
+        "authors": ["ciaran-g", "felipeangelimvieira"],
+        "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both

@@ -12,6 +12,7 @@ __all__ = [
     "_get_index_level_aggregators",
     "_promote_hierarchical_indexes",
     "_promote_hierarchical_indexes_and_keep_timeindex",
+    "_recursively_propagate_topdown",
 ]
 
 

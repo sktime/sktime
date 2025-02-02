@@ -4,8 +4,8 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.hierarchical.reconciliation._drop_redundant_hierarchical_levels import (  # noqa: E501
-    _DropRedundantHierarchicalLevels,
+from sktime.transformations.hierarchical.drop_redundant_hierarchical_levels import (  # noqa: E501
+    DropRedundantHierarchicalLevels,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_hierarchical_dataframe,
@@ -33,7 +33,6 @@ class ForecastProportions(BaseTransformer):
     ----------
     .. [1] Hyndman, R. J., & Athanasopoulos, G. (2018). Forecasting:
        principles and practice. OTexts.
-
     """
 
     _tags = {
@@ -79,9 +78,9 @@ class ForecastProportions(BaseTransformer):
         self._aggregator.fit(X)
         X = self._aggregator.transform(X)
 
-        self._drop_redundant_levels = _DropRedundantHierarchicalLevels()
+        self._drop_redundant_levels = DropRedundantHierarchicalLevels()
         self._drop_redundant_levels.fit(X)
-        # X = self._drop_redundant_levels.transform(X)
+        X = self._drop_redundant_levels.transform(X)
 
         self._total_series = get_total_level_idxs(X)
         self._bottom_series = get_bottom_level_idxs(X)
@@ -109,7 +108,7 @@ class ForecastProportions(BaseTransformer):
         # Map each series to its total series
 
         # We will build a df mapping each value to its parent
-        # X = self._drop_redundant_levels.transform(X)
+        X = self._drop_redundant_levels.transform(X)
         X_parents = X.copy()
         X_parents = X_parents.loc[
             ~X_parents.index.droplevel(-1).isin(self._total_series)

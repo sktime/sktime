@@ -7,6 +7,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_hierarchical_dataframe,
+    loc_series_idxs,
 )
 
 # TODO(felipeangelimvieira): Immutable series reconciliation: should this be
@@ -91,6 +92,8 @@ class FullHierarchyReconciler(BaseTransformer):
         if self._is_not_hierarchical:
             return self
 
+        self._original_series = X.index.droplevel(-1).unique()
+
         self.aggregator_ = Aggregator(flatten_single_levels=True)
         X = self.aggregator_.fit_transform(X)
         self.unique_series_ = _get_unique_series_from_df(X)
@@ -138,6 +141,8 @@ class FullHierarchyReconciler(BaseTransformer):
             columns=X.columns,
         )
 
+        df = Aggregator(flatten_single_levels=False).fit_transform(df)
+        df = loc_series_idxs(df, self._original_series).sort_index()
         return df
 
     def _get_error_covariance_matrix(self, error_covariance_matrix):
@@ -181,7 +186,7 @@ class FullHierarchyReconciler(BaseTransformer):
         # We use P[0] instead of P since we have just added a new axis
         S = self.S_.values
         S = P[0] @ S
-        # A is the matrix that maps the bottom nodes to the non-bottom nodes
+        # A is the matrix that maps the bottom nodes to the non-bottom nodes.
         # Because of the ordering after permutation, we can just take the first
         # n_not_bottom columns
         A = S[: self._n_not_bottom, :]

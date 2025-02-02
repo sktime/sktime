@@ -1,24 +1,36 @@
+"""Drop redundant levels from multiindex."""
+
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_hierarchical_dataframe,
 )
 
-__all__ = ["_DropRedundantHierarchicalLevels"]
+__all__ = ["DropRedundantHierarchicalLevels"]
 
 
-class _DropRedundantHierarchicalLevels(BaseTransformer):
+class DropRedundantHierarchicalLevels(BaseTransformer):
     """
     Drop redundant levels from multiindex.
 
     Sometimes, the multiindex can have redundant levels, for example:
 
-    __total, __total, pd.Period("2020-01-01")
-    stateA, regionA, pd.Period("2020-01-01")
-    stateA, regionB, pd.Period("2020-01-01")
+    ```
+    __total, __total, pd.Period("2020-01-01")   0.1
+    stateA, regionA, pd.Period("2020-01-01")    0.05
+    stateA, regionB, pd.Period("2020-01-01")    0.05
+    ```
 
     In this case, stateA is already total at level 0.
     This transformer will drop the first level, as it is redundant.
+
+    In cases where the redundant levels have different values,
+    an error will be raised.
+
+    Raises
+    ------
+    ValueError
+        If there are values that are not the same for the same index.
     """
 
     _tags = {
@@ -58,6 +70,9 @@ class _DropRedundantHierarchicalLevels(BaseTransformer):
         self._aggregator = Aggregator(False)
         Xt = self._aggregator.fit_transform(X)
 
+        # Here, we find the first level with more than one value
+        # (disconsidering `__total``)
+        # i.e. the first non-redundant level
         first_level_with_more_than_one_value = X.index.nlevels
         for level in range(Xt.index.nlevels - 1):
             nuniques = Xt.index.get_level_values(level).drop("__total").nunique()
@@ -71,11 +86,9 @@ class _DropRedundantHierarchicalLevels(BaseTransformer):
         Xt = X.droplevel(self.levels_to_drop_).sort_index()
         self._assert_no_inconsistent_duplicated_indexes(Xt)
 
-        # self.duplicated_indexes_ = (
-        #    Xt.index.drop_duplicates(keep=False).droplevel(-1).unique()
-        # )
-
         self._idx = X.index.droplevel(-1).unique()
+
+        # We create dummy index names to account for when indexes are unnamed
         self._dummy_idx_names = ["dummy" + str(i) for i in range(X.index.nlevels)]
         self._idx_names = X.index.names
         return self

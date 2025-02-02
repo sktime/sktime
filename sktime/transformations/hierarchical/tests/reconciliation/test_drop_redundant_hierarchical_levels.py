@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from sktime.transformations.hierarchical.reconciliation.forecast_proportions import (
-    _DropRedundantHierarchicalLevels,
+    DropRedundantHierarchicalLevels,
 )
 
 
@@ -24,7 +24,7 @@ def hierarchical_data():
 
 def test_fit(hierarchical_data):
     """Test the `_fit` method to ensure it detects levels to drop."""
-    transformer = _DropRedundantHierarchicalLevels()
+    transformer = DropRedundantHierarchicalLevels()
     transformer.fit(hierarchical_data)
 
     assert hasattr(transformer, "levels_to_drop_")
@@ -33,7 +33,7 @@ def test_fit(hierarchical_data):
 
 def test_transform(hierarchical_data):
     """Test the `_transform` method to ensure it drops redundant levels."""
-    transformer = _DropRedundantHierarchicalLevels()
+    transformer = DropRedundantHierarchicalLevels()
     transformer.fit(hierarchical_data)
     transformed = transformer.transform(hierarchical_data, None)
 
@@ -47,7 +47,7 @@ def test_transform(hierarchical_data):
 
 def test_inverse_transform(hierarchical_data):
     """Test the `_inverse_transform`, to ensure it reconstructs the index."""
-    transformer = _DropRedundantHierarchicalLevels()
+    transformer = DropRedundantHierarchicalLevels()
     transformer.fit(hierarchical_data)
     transformed = transformer.transform(hierarchical_data, None)
     inversed = transformer.inverse_transform(transformed, None)
@@ -61,7 +61,7 @@ def test_inverse_transform(hierarchical_data):
 def test_no_hierarchy_handling():
     """Test the transformer with a non-hierarchical DataFrame."""
     non_hierarchical_data = pd.DataFrame({"value": [1, 2, 3]}, index=[0, 1, 2])
-    transformer = _DropRedundantHierarchicalLevels()
+    transformer = DropRedundantHierarchicalLevels()
     transformer.fit(non_hierarchical_data)
 
     assert transformer._no_hierarchy is True, "Expected `_no_hierarchy` to be True."
