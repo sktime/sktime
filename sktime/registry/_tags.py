@@ -2413,18 +2413,6 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer result guaranteed to be equal length series (and series)?",
     ),
     (
-        "capability:contains_y",
-        ["param_est"],
-        "bool",
-        "Indicates whether the estimator supports fitting with y.",
-    ),
-    (
-        "capability:pairwise",
-        ["param_est"],
-        "bool",
-        "Indicates whether the estimator supports pairwise parameter estimation.",
-    ),
-    (
         "capability:missing_values:removes",
         "transformer",
         "bool",
