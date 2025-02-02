@@ -422,14 +422,16 @@ class ReconcilerForecaster(BaseForecaster):
         from sktime.forecasting.trend import TrendForecaster
 
         FORECASTER = TrendForecaster()
+        methods_without_soft_deps = [
+            x for x in cls.METHOD_LIST if not x.endswith("nonneg")
+        ]
         params_list = [
             {
                 "forecaster": FORECASTER,
                 "method": x,
                 "return_totals": totals,
             }
-            for x in cls.METHOD_LIST
-            if not x.endswith("nonneg")
+            for x in methods_without_soft_deps
             for totals in cls.RETURN_TOTALS_LIST
         ]
         return params_list

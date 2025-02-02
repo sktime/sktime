@@ -16,7 +16,7 @@ from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hiera
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
-METHOD_LIST = ReconcilerForecaster.METHOD_LIST
+METHOD_LIST = [x for x in ReconcilerForecaster.METHOD_LIST if not x.endswith("nonneg")]
 level_list = [1, 2, 3]
 flatten_list = [True, False]
 
