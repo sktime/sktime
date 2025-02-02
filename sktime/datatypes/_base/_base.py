@@ -102,29 +102,11 @@ class BaseDatatype(BaseObject):
         else:
             return_metadata_bool = True
 
-        # early type check for python type and source module
+        # early type check for python type-by-name and source module
         # this is for optional skip of _check, and of potential imports
-        expected_module_python_type = self.get_tag("python_type")
-
-        module_plus_type = expected_module_python_type.split(".")
-        if len(module_plus_type) > 1:
-            expected_python_type = module_plus_type[-1]
-            expected_module = module_plus_type[0]
-            if not type(obj).__module__ == expected_module:
-                msg = (
-                    f"{var_name} must be of python type {expected_module_python_type}, "
-                    f"or a subtype thereof, but found {type(obj)}"
-                )
-                return _ret(False, msg)
-        else:
-            expected_python_type = expected_module_python_type
-
-        if not _isinstance_by_name(obj, expected_python_type):
-            msg = (
-                f"{var_name} must be of python type {expected_module_python_type}, "
-                f"or a subtype thereof, but found {type(obj)}"
-            )
-            return _ret(False, msg)
+        valid, msg = self._precheck(obj=obj, var_name=var_name)
+        if not valid:
+            return _ret(False, msg, None, return_metadata_orig)
 
         # early type check has now passed
         # call inner _check
@@ -152,6 +134,58 @@ class BaseDatatype(BaseObject):
 
         self_type = type(self)(**metadata)
         return _ret(True, "", self_type, return_metadata_orig)
+
+    def _precheck(self, obj, var_name="obj"):
+        """Pre-check if obj is of correct python type-by-name, and host module.
+
+        Used to skip unnecessary imports and computations in _check.
+
+        Checks whether:
+
+        * obj is an instance of the python type specified by the tag "python_type",
+        using the full string if no dots are present, or the substring after
+        the last dot, if dots are present.
+        * the source module of obj is equal to the source module specified by the
+        tag "python_type", if dots are present in the string. If yes,
+        then the source module is the part before the first dot.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of correct python type-by-name, and host module.
+        msg : str
+            Error message if obj is not of correct python type-by-name, or host module.
+        """
+        expected_module_python_type = self.get_tag("python_type")
+
+        module_plus_type = expected_module_python_type.split(".")
+        if len(module_plus_type) > 1:
+            expected_python_type = module_plus_type[-1]
+            expected_module = module_plus_type[0]
+            if not type(obj).__module__ == expected_module:
+                msg = (
+                    f"{var_name} must be of python type {expected_module_python_type}, "
+                    f"or a subtype thereof, but found {type(obj)}"
+                )
+                return False, msg
+        else:
+            expected_python_type = expected_module_python_type
+
+        if not _isinstance_by_name(obj, expected_python_type):
+            msg = (
+                f"{var_name} must be of python type {expected_module_python_type}, "
+                f"or a subtype thereof, but found {type(obj)}"
+            )
+            return False, msg
+
+        return True, ""
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
         """Check if obj is of this data type.
