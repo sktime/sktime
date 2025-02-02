@@ -359,6 +359,8 @@ def evaluate(
 
     The experiment run is the following:
 
+    In  case of non-global evaluation (cv_global=None):
+
     Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
     the train/test folds produced by the generator ``cv.split_series(y)``.
     Denote by :math:`X_{train, 1}, X_{test, 1}, \dots, X_{train, K}, X_{test, K}`
@@ -385,6 +387,33 @@ def evaluate(
         with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
 
     8. Go to 3
+
+
+    In case of global evaluation (cv_global is not None):
+
+    The test folds are denoted by :math:`y_{train, 1}, y_{hist, 1}, y_{true, 1},
+    \dots, y_{train, K}`, y_{hist, K}, y_{true, K}`.
+    :math:`y_{train, i}, y_{test, i}`` are produced by the generator
+    ``cv_global.split_series(y)``. Whereby :math:`y_{train, i}, y_{test, i}`
+    are different time series.
+    :math:`y_{test, i}` is further split into :math:`y_{hist, i}, y_{true, i}` by
+    the generator ``cv.split_series(y_test)``.
+    Denote by :math:`X_{train, 1}, X_{hist, 1}, X_{true, 1}, \dots, X_{train, K},
+    X_{hist, K}, X_{true, K}` the train/test folds are produced analogue by
+    ``cv_global.split_series(X)`` and ``cv.split_series(X_test)``.
+
+    1. Initialize the counter to ``i = 1``
+    2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, 1i`,
+       with ``fh`` set to the absolute indices of :math:`y_{true, i}`.
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+        data :math:`X_{true, i}` and the historical values :math:`y{hist, i}`.
+        Predictions are made using either ``predict``,
+        ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+    4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{true, i}`
+    5. If ``i == K``, terminate, otherwise
+    6. Set ``i = i + 1``
+    8. Go to 2
+
 
     Results returned in this function's return are:
 
@@ -462,16 +491,17 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
-    cv_global: sktime InstanceSplitter descendant, optional,
-        If `cv_global` is set, the global benchmarking is applied.
-        I.e., the `cv_global` splitter is used to split data in instance level.
-        `cv_splitter` then splits the instances temporally.
-        With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
+    cv_global:  sklearn splitter, or sktime splitter with tag split_type="instance",
+        optional, default=None
+        If ``cv_global`` is set, the global benchmarking is applied.
+        I.e., the ``cv_global`` splitter is used to split data in instance level.
+        ``cv_splitter`` then splits the instances temporally.
+        With ``y_train``, ``y_hist``, ``y_true``, ``X_train``, ``X_test``
         from each fold, following evaluation will be applied:
         ```python
         forecaster.fit(y=y_train, X=X_train, fh=cv.fh)
         y_pred = forecaster.predict(y=y_hist, X=X_test)
-        # calculate metrics with `y_true` and `y_pred`
+        # calculate metrics with ``y_true`` and ``y_pred``
         ```
 
     Returns
@@ -640,9 +670,9 @@ def evaluate(
         """
         from sktime.split import InstanceSplitter, SingleWindowSplitter
 
-        assert isinstance(
-            cv_global, InstanceSplitter
-        ), "cv_global must be an instance of sktime.split.InstanceSplitter"
+        if not isinstance(cv_global, InstanceSplitter):
+            cv_global = InstanceSplitter(cv_global)
+
         if cv_X is not None:
             assert isinstance(
                 cv_X, SingleWindowSplitter
