@@ -246,8 +246,8 @@ class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
     """
 
     _tags = {
-        "python_dependencies": ["cvxpy"],
         **_COMMON_TAGS,
+        "python_dependencies": ["cvxpy"],
     }
 
     def _inverse_transform(self, X, y):
