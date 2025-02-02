@@ -32,6 +32,9 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
 
@@ -79,6 +82,9 @@ Data types, checks, conversions
 
 Forecasting
 ^^^^^^^^^^^
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^

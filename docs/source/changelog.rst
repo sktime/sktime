@@ -24,22 +24,46 @@ Version 0.35.1 - 2025-01-29
 Highlights
 ~~~~~~~~~~
 
+* Forecasting metrics ``__call__`` can be passed ``by_index`` to return per-index metric ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
+* MAPA forecaster (:pr:`7620`) :user:`phoeenniixx`
+* Interface to ``skforecast.recursive.ForecasterRecursive`` (:pr:`7554`) :user:`yarnabrina`
+* Native reducers (2nd generation) now support arbitrary imputation strategies (:pr:`7535`, :pr:`7646`) :user:`lenaklosik`
+* New detection metrics: RAND Index, windows F1-score (:pr:`7533`, :pr:`7628`) :user:`gavinkatz001`
+* forecasting ``evaluate`` now allows returning fitted estimators via ``return_model`` parameter (:pr:`7637`) :user:`marrov`
+* Tags and object API for Datasets (:pr:`7398`) :user:`felipeangelimvieira`
+* K-visibility clustering algorithm (:pr:`7592`) :user:`seigpe`
+* Interface to ``statmodels`` ``ar_select_order`` for lag order estimation (:pr:`7693`) :user:`satvshr`
+
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
+
+* ``skpro`` (probability distributions soft dependency) bounds have been updated to ``>=2,<2.10.0``
+* ``numba`` (computation soft dependency) bounds have been updated to ``<0.62``
+* ``optuna`` (hyperparameter optimization soft dependency) bounds have been updated to ``<4.3``
+* ``pykan`` (forecasting soft dependency) bounds have been updated to ``>=0.2.1,<0.2.9``
+* ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2025.1.1``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Dataset object interface (:pr:`7398`) :user:`felipeangelimvieira`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Forecasting metrics dispatch of ``__call__`` to ``evaluate`` vs ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-* in ``HierarchyEnsembleForecaster``, the ``fitted_list`` attribute is deprecated.
+In ``HierarchyEnsembleForecaster``, the ``fitted_list`` attribute is deprecated.
 To access the fitted estimators, users should use instead either the ``get_fitted_params`` method,
 or the attribute ``forecasters_``.
 Given a fitted instance ``f``, a deprecated read call to ``f.fitted_list`` can be replaced
 by ``f.get_fitted_params()['forecasters']`` or ``f.forecasters_``.
-
 
 Enhancements
 ~~~~~~~~~~~~
@@ -47,92 +71,95 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] html display of estimators - tag and consistent handling of via ``_steps_attr`` in ``HeterogenousMetaEstimator`` descendants (:pr:`7233`) :user:`mateuszkasprowicz`
+* [ENH] sync dependency checkers with ``scikit-base`` (:pr:`7529`) :user:`fkiraly`
+
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] base design for detection metrics (:pr:`7515`) :user:`fkiraly`
+* [ENH] refactor ``InstanceSplitter`` to a utility ``apply_split`` to apply an ``sklearn`` split to a time series collection (:pr:`7330`) :user:`ksharma6`
+* [ENH] Detection metrics - coercion to detection type in boilerplate (:pr:`7546`) :user:`fkiraly`
+* [ENH] reduce requested metadata in forecasting metric input check (:pr:`7514`) :user:`fkiraly`
+* [ENH] Expose ``evaluate`` params to ``add_task`` of forecasting benchmark (:pr:`7574`) :user:`benHeid`
+* [ENH] Implement efficient ``_evaluate_by_index`` for ``MedianSquaredError`` (:pr:`7615`) :user:`satvshr`
+* [ENH] RAND Index metric for time series segmentation (:pr:`7533`) :user:`gavinkatz001`
+* [ENH] forecasting ``evaluate``: new ``return_model`` parameter to return fitted estimator states (:pr:`7637`) :user:`marrov`
+* [ENH] windowed F1-score for detection (:pr:`7628`) :user:`gavinkatz001`
+* [ENH] Implement efficient ``_evaluate_by_index`` for MdAPE (:pr:`7606`) :user:`HarshvirSandhu`
+* [ENH] Forecasting metrics dispatch of ``__call__`` to ``evaluate`` vs ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] Dataset object interface (:pr:`7398`) :user:`felipeangelimvieira`
+
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Remove ``gluonts dependency`` in ``gluonts_ListDataset_panel`` mtype (:pr:`7558`) :user:`PranavBhatP`
 
 Forecasting
 ^^^^^^^^^^^
 
 * [ENH] deprecate ``fitted_list`` attribute of ``HierarchyEnsembleForecaster`` and  (:pr:`7423`) :user:`sanskarmodi8`
+* [ENH] refactor forecasting metric tests prep - object_type tag ``metric_forecasting`` (:pr:`7516`) :user:`fkiraly`
+* [ENH] Add ``SplineTrendForecaster`` (:pr:`7487`, :pr:`7502`) :user:`Dehelaan`, :user:`jgyasu`
+* [ENH] Interface to ``skforecast.recursive.ForecasterRecursive`` (:pr:`7554`) :user:`yarnabrina`
+* [ENH] naive thresholding detector (:pr:`7576`) :user:`fkiraly`
+* [ENH] Forecaster imputer for ``RecursiveReductionForecaster`` (:pr:`7535`) :user:`lenaklosik`
+* [ENH] ``TinyTimeMixer`` Validation split efficiency fix (:pr:`7647`) :user:`RHYTHM2405`
+* [ENH] allow arbitrary imputation transformers in 2nd generation reducers (:pr:`7646`) :user:`fkiraly`
+* [ENH] MAPA forecaster (:pr:`7620`) :user:`phoeenniixx`
+* [ENH] Set ``context_len`` and ``horizon_len`` per default in ``TimesFMForecaster`` (:pr:`7597`) :user:`tanvincible`
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Interface to ``statmodels`` ``ar_select_order`` (:pr:`7693`) :user:`satvshr`
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
 
-Time series alignment
-^^^^^^^^^^^^^^^^^^^^^
+* [ENH] change ``all_estimators`` retrieval to be entirely tag based (:pr:`7555`) :user:`fkiraly`
 
 Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] detection module rework - populate author and maintainer tags (:pr:`7510`) :user:`fkiraly`
+* [ENH] Fix ``BaseDetector`` for segmentation and HMM estimators (:pr:`7480`) :user:`y-mx`, :user:`fkiraly`
+* [ENH] refactor checks for detector outputs into separate module (:pr:`7542`) :user:`fkiraly`
+* [ENH] detection base class input checks and conversions (:pr:`7577`) :user:`fkiraly`
+* [ENH] ``ClaSPSegmentation`` fixes for new detection interface (:pr:`7585`) :user:`fkiraly`
+* [ENH] ``PyODDetector`` fixes for new detector interface (:pr:`7584`) :user:`fkiraly`
+* [ENH] window based time series segmentation via clustering (:pr:`7612`) :user:`Ankit-1204`
+* [ENH] ``BinarySegmentation`` fixes for new detection interface (:pr:`7504`) :user:`Alex-JG3`
+* [ENH] ``GreedyGaussianSegmentation`` fixes for new detection interface (:pr:`7472`) :user:`Spinachboul`
+
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] add ``sklearn`` compliance to ``RotationForest`` (:pr:`7638`) :user:`PranavBhatP`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Time series regression
-^^^^^^^^^^^^^^^^^^^^^^
+* [ENH] improvements to clusterer base class and tests (:pr:`7665`) :user:`fkiraly`
+* [ENH] K-visibility clustering algorithm (:pr:`7592`) :user:`seigpe`
+* [ENH] clusterers: improved checking for ``X`` in ``fit`` and ``predict`` in ``capability:out_of_sample = False`` case, minor improvements to ``predict_proba`` default (:pr:`7593`) :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] Add multiple test parameter sets for ``YtoX`` transformer (:pr:`7469`) :user:`tanvincible`
+* [ENH] create ``rbf_forecaster.py`` using ``RBFTransformer`` Neural networks (:pr:`7334`) :user:`phoeenniixx`
+
 Test framework
 ^^^^^^^^^^^^^^
 
-
-
-
-* [ENH] refactor forecasting metric tests prep - object_type tag ``metric_forecasting`` (:pr:`7516`) :user:`fkiraly`
-* [ENH] detection module rework - populate author and maintainer tags (:pr:`7510`) :user:`fkiraly`
-* [ENH] html display of estimators - tag and consistent handling of via ``_steps_attr`` in ``HeterogenousMetaEstimator`` descendants (:pr:`7233`) :user:`mateuszkasprowicz`
 * [ENH] Refactor test class registry to type records (:pr:`7525`) :user:`fkiraly`
-* [ENH] Fix ``BaseDetector`` for segmentation and HMM estimators (:pr:`7480`) :user:`y-mx`, :user:`fkiraly`
-* [ENH] Add SplineTrendForecaster  (:pr:`7487`) :user:`jgyasu`
-* [ENH] base design for detection metrics (:pr:`7515`) :user:`fkiraly`
-* [ENH] refactor checks for detector outputs into separate module (:pr:`7542`) :user:`fkiraly`
-* [ENH] refactor ``InstanceSplitter`` to a utility ``apply_split`` to apply an ``sklearn`` split to a time series collection (:pr:`7330`) :user:`ksharma6`
-* [ENH] Detection metrics - coercion to detection type in boilerplate (:pr:`7546`) :user:`fkiraly`
-* [ENH] sync dependency checkers with ``scikit-base`` (:pr:`7529`) :user:`fkiraly`
-* [ENH] reduce requested metadata in forecasting metric input check (:pr:`7514`) :user:`fkiraly`
-* [ENH] Interface to ``skforecast.recursive.ForecasterRecursive`` (:pr:`7554`) :user:`yarnabrina`
-* [ENH] naive thresholding detector (:pr:`7576`) :user:`fkiraly`
-* [ENH] detection base class input checks and conversions (:pr:`7577`) :user:`fkiraly`
-* [ENH] change ``all_estimators`` retrieval to be entirely tag based (:pr:`7555`) :user:`fkiraly`
 * [ENH] migrate tests for point forecasting metrics to test class (:pr:`7532`) :user:`fkiraly`
 * [ENH] clusterer test suite (:pr:`7589`) :user:`fkiraly`
-* [ENH] Add multiple test parameter sets for YtoX transformer (:pr:`7469`) :user:`tanvincible`
-* [ENH] ``ClaSPSegmentation`` fixes for new detection interface (:pr:`7585`) :user:`fkiraly`
-* [ENH] ``PyODDetector`` fixes for new detector interface (:pr:`7584`) :user:`fkiraly`
-* [ENH] Expose ``evaluate`` params to ``add_task`` of forecasting benchmark (:pr:`7574`) :user:`benHeid`
-* [ENH] Remove ``gluonts dependency`` in ``gluonts_ListDataset_panel`` mtype (:pr:`7558`) :user:`PranavBhatP`
-* [ENH] Forecaster imputer for RecursiveReductionForecaster (:pr:`7535`) :user:`lenaklosik`
-* [ENH] add ``sklearn`` compliance to ``RotationForest`` (:pr:`7638`) :user:`PranavBhatP`
-* [ENH] Implement efficient ``_evaluate_by_index`` for MedianSquaredError (:pr:`7615`) :user:`satvshr`
-* [ENH] Validation split fix issue 7644 (:pr:`7647`) :user:`RHYTHM2405`
-* [ENH] RAND Index metric for segmentations (:pr:`7533`) :user:`gavinkatz001`
-* [ENH] forecasting ``evaluate``: new ``return_model`` parameter to return fitted estimator states (:pr:`7637`) :user:`marrov`
-* [ENH] allow arbitrary imputation transformers in 2nd generation reducers (:pr:`7646`) :user:`fkiraly`
-* [ENH] MAPA forecaster (:pr:`7620`) :user:`phoeenniixx`
-* [ENH] Set ``context_len`` and ``horizon_len`` per default in ``TimesFMForecaster`` (:pr:`7597`) :user:`tanvincible`
-* [ENH] improvements to clusterer base class and tests (:pr:`7665`) :user:`fkiraly`
-* [ENH] Kvisibility clustering algorithm (:pr:`7592`) :user:`seigpe`
-* [ENH] clusterers: improved checking for ``X`` in ``fit`` and ``predict`` in ``capability:out_of_sample = False`` case, minor improvements to ``predict_proba`` default (:pr:`7593`) :user:`fkiraly`
-* [ENH] create ``rbf_forecaster.py`` using ``RBFTransformer`` Neural networks (:pr:`7334`) :user:`phoeenniixx`
-* [ENH] windowed F1-score for detection (:pr:`7628`) :user:`gavinkatz001`
-* [ENH] window based time series segmentation via clustering : wclust-restored (:pr:`7612`) :user:`Ankit-1204`
-* [ENH] Implement _evaluate_by_index for MdAPE (:pr:`7606`) :user:`HarshvirSandhu`
-* [ENH] Implemented statmodels' ``ar_select_order`` (:pr:`7693`) :user:`satvshr`
-* [ENH] Add ``SplineTrendForecaster`` (:pr:`7502`) :user:`Dehelaan`
-* [ENH] ``BinarySegmentation`` fixes for new detection interface (:pr:`7504`) :user:`Alex-JG3`
-* [ENH] ``GreedyGaussianSegmentation`` fixes for new detection interface (:pr:`7472`) :user:`Spinachboul`
-* [ENH] Forecasting metrics dispatch of ``__call__`` to ``evaluate`` vs ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
-* [ENH] Dataset object implementation (:pr:`7398`) :user:`felipeangelimvieira`
 
 
 Documentation
