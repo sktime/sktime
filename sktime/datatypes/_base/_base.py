@@ -104,6 +104,10 @@ class BaseDatatype(BaseObject):
 
         # precheck whether obj is of correct python type-by-name and source module
         # this is for optional skip of _check, and of potential imports
+        #
+        # python types and module names are mostly uniquely identifying
+        # for datatypes currently in the register, so this will correctly skip most
+        # candidate types early
         valid, msg = self._precheck(obj=obj, var_name=var_name)
         if not valid:
             return _ret(False, msg, None, return_metadata_orig)
