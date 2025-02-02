@@ -1,7 +1,9 @@
 """Forecasting benchmarks tests."""
 
+import numpy as np
 import pandas as pd
 import pytest
+from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
@@ -12,8 +14,10 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredPercentageError,
 )
-from sktime.split import ExpandingWindowSplitter
+from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
@@ -44,6 +48,35 @@ EXPECTED_RESULTS_2 = pd.DataFrame(
     index=[0],
 )
 
+EXPECTED_RESULTS_GLOBAL_1 = pd.DataFrame(
+    data={
+        "validation_id": "[dataset=data_loader_global]_"
+        + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
+        "model_id": "PytorchForecastingDeepAR",
+        "MeanSquaredPercentageError_fold_0_test": 0.0,
+        "MeanSquaredPercentageError_fold_1_test": 0.0,
+        "MeanSquaredPercentageError_mean": 0.0,
+        "MeanSquaredPercentageError_std": 0.0,
+    },
+    index=[0],
+)
+EXPECTED_RESULTS_GLOBAL_2 = pd.DataFrame(
+    data={
+        "validation_id": "[dataset=data_loader_global]_"
+        + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
+        "model_id": "PytorchForecastingDeepAR",
+        "MeanAbsolutePercentageError_fold_0_test": 0.0,
+        "MeanAbsolutePercentageError_fold_1_test": 0.0,
+        "MeanAbsolutePercentageError_mean": 0.0,
+        "MeanAbsolutePercentageError_std": 0.0,
+        "MeanAbsoluteError_fold_0_test": 0.0,
+        "MeanAbsoluteError_fold_1_test": 0.0,
+        "MeanAbsoluteError_mean": 0.0,
+        "MeanAbsoluteError_std": 0.0,
+    },
+    index=[0],
+)
+
 COER_CASES = [
     (
         NaiveForecaster(),
@@ -70,6 +103,23 @@ COER_CASES = [
 def data_loader_simple() -> pd.DataFrame:
     """Return simple data for use in testing."""
     return pd.DataFrame([2, 2, 3])
+
+
+def data_loader_global():
+    """Return simple data for use in global mode testing."""
+    hierarchy_levels = (4, 4)
+    timepoints = 5
+    data = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels,
+        max_timepoints=timepoints,
+        min_timepoints=timepoints,
+        n_columns=2,
+    )
+    for col in data.columns:
+        data[col] = np.ones(timepoints * np.prod(hierarchy_levels))
+    x = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+    return x, y
 
 
 @pytest.mark.skipif(
@@ -103,6 +153,69 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
 
     pd.testing.assert_frame_equal(
         expected_results_df, results_df, check_exact=False, atol=0, rtol=0.001
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize(
+    "expected_results_df, scorers",
+    [
+        (EXPECTED_RESULTS_GLOBAL_1, [MeanSquaredPercentageError()]),
+        (
+            EXPECTED_RESULTS_GLOBAL_2,
+            [MeanAbsolutePercentageError(), MeanAbsoluteError()],
+        ),
+    ],
+)
+def test_forecastingbenchmark_global_mode(
+    tmp_path,
+    expected_results_df,
+    scorers,
+):
+    """Test benchmarking a forecaster estimator in gloabl mode."""
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+
+    benchmark = ForecastingBenchmark()
+
+    params = {
+        "trainer_params": {
+            # the training process is not deterministic
+            # train 10 epoches to make sure loss is low enough
+            "max_epochs": 1,
+        },
+        "model_params": {
+            "cell_type": "GRU",
+            "rnn_layers": 1,
+            "hidden_size": 2,
+            "log_interval": -1,
+        },
+        "dataset_params": {
+            "max_encoder_length": 3,
+        },
+        "random_log_path": True,  # fix parallel file access error in CI
+    }
+    benchmark.add_estimator(PytorchForecastingDeepAR(**params))
+
+    benchmark.add_task(
+        data_loader_global,
+        SingleWindowSplitter(fh=[1], window_length=5),
+        scorers,
+        cv_global=InstanceSplitter(KFold(2)),
+    )
+
+    results_file = tmp_path / "results_global_mode.csv"
+    results_df = benchmark.run(results_file)
+    results_df = results_df.drop(columns=["runtime_secs"])
+
+    pd.testing.assert_frame_equal(
+        expected_results_df, results_df, check_exact=False, atol=0.01, rtol=0.001
     )
 
 
