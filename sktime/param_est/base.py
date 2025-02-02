@@ -301,7 +301,7 @@ class BaseParamFitter(BaseEstimator):
               * y is provided for an estimator that does not support target values.
               * For multivariate y, if only univariate data is provided when
               multivariate is required.
-              * For pairwise estimators, if X is not square.
+              * TODO: Throw a ValueError for pairwise estimators, if X is not square.
               * The lengths of X and y do not match.
         """
         X_inner, y_inner = None, None
@@ -375,56 +375,32 @@ class BaseParamFitter(BaseEstimator):
             )
 
         if X is not None:
-            # Handle pairwise estimators separately.
-            if self.get_tag("capability:pairwise"):
-                ALLOWED_MTYPES = ["pd.DataFrame", "numpy2D", "numpy3D"]
+            ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
+            FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
-                X_valid, _, X_metadata = check_is_scitype(
-                    X,
-                    scitype=["Pairwise"],
-                    return_metadata=["n_instances", "n_features"],
+            for scitype in ALLOWED_SCITYPES:
+                mtypes = set(scitype_to_mtype(scitype))
+                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+                mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+
+            X_valid, _, X_metadata = check_is_scitype(
+                X,
+                scitype=ALLOWED_SCITYPES,
+                return_metadata=["feature_kind"],
+                var_name="X",
+            )
+            msg = (
+                "X must be in an sktime compatible format, "
+                f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame "
+                "sktime compatible time index. "
+            )
+            if not X_valid:
+                raise TypeError(msg + mtypes_msg)
+
+            if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+                raise TypeError(
+                    "Parameter estimators do not support categorical features in X."
                 )
-
-                if not X_valid:
-                    raise TypeError(
-                        f"X must be a valid pairwise matrix (distance/similarity), "
-                        f"expected one of {ALLOWED_MTYPES} but got {type(X)}."
-                    )
-
-                if X_metadata["n_instances"] != X_metadata["n_features"]:
-                    raise ValueError(
-                        "Pairwise matrix X must be square (n_samples x n_samples)."
-                    )
-
-                return X, None  # For pairwise estimators, y is not used.
-
-            else:
-                ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
-                FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
-
-                for scitype in ALLOWED_SCITYPES:
-                    mtypes = set(scitype_to_mtype(scitype))
-                    mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-                    mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
-
-                X_valid, _, X_metadata = check_is_scitype(
-                    X,
-                    scitype=ALLOWED_SCITYPES,
-                    return_metadata=["feature_kind"],
-                    var_name="X",
-                )
-                msg = (
-                    "X must be in an sktime compatible format, "
-                    f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame "
-                    "sktime compatible time index. "
-                )
-                if not X_valid:
-                    raise TypeError(msg + mtypes_msg)
-
-                if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
-                    raise TypeError(
-                        "Parameter estimators do not support categorical features in X."
-                    )
 
             _check_missing(X)
             X_mtype = X_metadata["mtype"]
