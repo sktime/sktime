@@ -27,7 +27,6 @@ from functools import lru_cache
 
 import numpy as np
 
-from sktime.datatypes._base import BaseDatatype
 from sktime.datatypes._base._common import _metadata_requested, _ret
 from sktime.datatypes._registry import (
     AMBIGUOUS_MTYPES,
