@@ -510,18 +510,25 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
-    cv_global:  sklearn splitter, or sktime splitter with tag split_type="instance",
-        optional, default=None
-        If ``cv_global`` is set, the global benchmarking is applied.
-        I.e., the ``cv_global`` splitter is used to split data in instance level.
-        ``cv_splitter`` then splits the instances temporally.
-        With ``y_train``, ``y_hist``, ``y_true``, ``X_train``, ``X_test``
-        from each fold, following evaluation will be applied:
-        ```python
-        forecaster.fit(y=y_train, X=X_train, fh=cv.fh)
-        y_pred = forecaster.predict(y=y_hist, X=X_test)
-        # calculate metrics with ``y_true`` and ``y_pred``
-        ```
+
+        cv_global:  sklearn splitter, or sktime instance splitter, default=None
+            If ``cv_global`` is passed, then global benchmarking is applied, as follows:
+
+            1. the ``cv_global`` splitter is used to split data at instance level,
+            into a global training set ``y_train``,
+            and a global test set ``y_test_global``.
+            2. The estimator is fitted to the global training set ``y_train``.
+            3. ``cv_splitter`` then splits the global test set ``y_test_global``
+            temporally, to obtain temporal splits ``y_past``, ``y_true``.
+
+            Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
+            the following evaluation will be applied:
+
+            .. code-block:: python
+
+                forecaster.fit(y=y_train, fh=cv.fh)
+                y_pred = forecaster.predict(y=y_past)
+                metric(y_true, y_pred)
 
     Returns
     -------
