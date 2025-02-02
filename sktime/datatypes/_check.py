@@ -76,12 +76,6 @@ def generate_check_dict(soft_deps="present"):
         key = k._get_key()
         check_dict[key] = k
 
-    # temporary while refactoring
-    from sktime.datatypes._proba import check_dict_Proba
-
-    # pool convert_dict-s
-    check_dict.update(check_dict_Proba)
-
     return check_dict
 
 
