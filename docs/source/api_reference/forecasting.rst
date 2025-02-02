@@ -569,6 +569,14 @@ Pre-trained and foundation models
 
     TinyTimeMixerForecaster
 
+.. currentmodule:: sktime.forecasting.timer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
