@@ -128,26 +128,11 @@ def test_change_points_to_segments(change_points, expected_segments, start, end)
     "segments, expected_change_points",
     [
         (
-            pd.DataFrame(
-                {
-                    "ilocs": pd.IntervalIndex.from_tuples(
-                        [
-                            (0, 3),
-                            (3, 4),
-                            (4, 5),
-                            (5, 6),
-                            (6, 7),
-                            (7, 8),
-                            (8, 10),
-                            (10, 11),
-                            (11, 12),
-                            (12, 20),
-                        ]
-                    ),
-                    "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0],
-                }
+            pd.Series(
+                [1, -1, 2],
+                index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left"),
             ),
-            pd.Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12]),
+            pd.Series([2, 5, 7]),
         )
     ],
 )

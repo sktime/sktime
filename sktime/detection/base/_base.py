@@ -578,7 +578,8 @@ class BaseDetector(BaseEstimator):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
-                y_index = pd.DataFrame(y.index, columns=columns)
+                y_index = y.index
+                y_index = pd.DataFrame(y_index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
@@ -1068,19 +1069,19 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.DataFrame
-            A empty DataFrame with a RangeIndex.
+        pd.Series
+            An empty series with a RangeIndex.
         """
         return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
-        """Return an empty sparse DataFrame in segmentation format.
+        """Return an empty sparse series in segmentation format.
 
         Returns
         -------
-        pd.DataFrame
-            A empty DataFrame with an IntervalIndex.
+        pd.Series
+            An empty series with an IntervalIndex.
         """
         empty_segs = pd.DataFrame(
             pd.IntervalIndex([]),
@@ -1163,20 +1164,24 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Index
-            An Index array containing the indexes of the start of each segment.
+        pd.Series
+            A series containing the indexes of the start of each segment.
+            Index is RangeIndex, and values are iloc references to the start of each
+            segment.
 
         Examples
         --------
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
-        >>> segments =  pd.DataFrame({
-                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
-                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
-                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
-            })
+        >>> segments = pd.Series(
+        ...     [3, -1, 2],
+        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
+        ... )
         >>> BaseDetector.segments_to_change_points(segments)
-        Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
+        0    2
+        1    5
+        2    7
+        dtype: int64
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()

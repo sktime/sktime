@@ -315,7 +315,9 @@ class BaseParamFitter(BaseEstimator):
 
         def _check_missing(obj):
             """Raise an error if obj contains missing values (if not supported)."""
-            if obj.isnull().any() and not self.get_tag("capability:missing_values"):
+            if obj.isnull().values.any() and not self.get_tag(
+                "capability:missing_values"
+            ):
                 msg = (
                     f"{type(self).__name__} cannot handle missing data (nans), "
                     f"but the passed data contained missing values."
