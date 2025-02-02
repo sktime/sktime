@@ -1071,6 +1071,8 @@ class PanelPolarsEager(ScitypePanel):
     * variables: columns of ``obj`` (excluding the time index and instance identifier)
     correspond to variables.
     * variable names: column names are taken from ``obj.columns``.
+    * The columns can be named anything, as long as they start with ``__index__``.
+    * The last such column is interpreted as the time index.
 
     Capabilities:
     * can represent multivariate panel data.
