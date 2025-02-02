@@ -158,6 +158,17 @@
       ]
     },
     {
+      "login": "abhishek-iitmadras",
+      "name": "Abhishek Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142383124?v=4",
+      "profile": "https://github.com/abhishek-iitmadras",
+      "contributions": [
+        "code",
+        "infra",
+        "bug"
+      ]
+    },
+    {
       "login": "MatthewMiddlehurst",
       "name": "Matthew Middlehurst",
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
@@ -3223,6 +3234,15 @@
       ]
     },
     {
+      "login": "PranavBhatP",
+      "name": "PranavBhatP",
+      "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
+      "profile" :"https://github.com/PranavBhatP",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "mjste",
       "name": "Michał Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
@@ -3236,6 +3256,15 @@
       "name": "Sohaib Ahmed",
       "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
       "profile": "https://github.com/Sohaib-Ahmed21",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "HarshvirSandhu",
+      "name": "Harshvir Sandhu",
+      "avatar_url": "https://avatars.githubusercontent.com/HarshvirSandhu",
+      "profile": "https://github.com/HarshvirSandhu",
       "contributions": [
         "code"
       ]
@@ -3270,12 +3299,13 @@
       ]
     },
     {
-      "login": "TanviPooranmal",
+      "login": "tanvincible",
       "name": "Tanvi Pooranmal Meena",
-      "avatar_url": "https://avatars.githubusercontent.com/TanviPooranmal",
-      "profile": "https://github.com/TanviPooranmal",
+      "avatar_url": "https://avatars.githubusercontent.com/tanvincible",
+      "profile": "https://github.com/tanvincible",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3303,7 +3333,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/130629672?v=4",
       "profile": "https://github.com/Adarsh2345",
       "contributions": [
-         "doc"
+        "doc"
       ]
     },
     {
@@ -3322,6 +3352,15 @@
       "profile": "https://github.com/gavinkatz001",
       "contributions": [
         "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "lenaklosik",
+      "name": "Lena Klosik",
+      "avatar_url": "https://avatars.githubusercontent.com/lenaklosik",
+      "profile": "https://github.com/lenaklosik",
+      "contributions": [
         "code"
       ]
     },
@@ -3350,6 +3389,15 @@
       "profile": "https://github.com/VjayRam",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Ankit-1204",
+      "name": "Ankit Upadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112757447?v=4",
+      "profile": "https://github.com/Ankit-1204",
+      "contributions": [
+        "code"
       ]
     }
   ]
