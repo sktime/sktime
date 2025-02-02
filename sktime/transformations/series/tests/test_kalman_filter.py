@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Kalman Filter transformers unit tests."""
 
-__author__ = ["NoaBenAmi"]
+__author__ = ["NoaWegerhoff"]
 
 import numpy as np
 import pytest
