@@ -3,7 +3,6 @@
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import distribution, PackageNotFoundError
 from importlib.util import find_spec
 from inspect import isclass
 
