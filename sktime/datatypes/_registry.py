@@ -38,6 +38,66 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 ---
 """
 
+from functools import lru_cache
+
+from sktime.datatypes._base import BaseDatatype
+
+
+def generate_scitype_cls_list(soft_deps="present"):
+    """Generate list of scitype classes using lookup.
+
+    Parameters
+    ----------
+    softdeps : str, optional, default = "present"
+        how inclusion in relation to presence of soft dependencies is handled
+
+        * "exclude" = only classes that do not require soft dependencies are returned
+        * "present" = only classes with soft deps satisfied by the current python
+        environment are returned
+        * "all" = all classes, irrespective of soft deps satisfied or required, returned
+        any other value defaults to "all"
+    """
+    return _generate_scitype_cls_list(soft_deps=soft_deps).copy()
+
+
+@lru_cache(maxsize=1)
+def _generate_scitype_cls_list(soft_deps="present"):
+    """Generate list of scitype classes using lookup, cached function."""
+    from skbase.utils.dependencies import _check_estimator_deps
+
+    from sktime.utils.retrieval import _all_classes
+
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseDatatype)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
+    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
+
+    # dependencies implied by the core requirements
+    # that may appear in the classes as python_dependencies tag
+    # it is assumed that only single strings, not lists appear
+    DEPS_PRESENT_IN_ENV = ["numpy", "pandas"]
+
+    def _only_core_deps(cls):
+        """Return True if the class has only core dependencies."""
+        deps_tag = cls.get_tag("python_dependencies")
+
+        if deps_tag is None:
+            return True
+        if deps_tag in DEPS_PRESENT_IN_ENV:
+            return True
+        return False
+
+    # subset only to data types with soft dependencies present
+    if soft_deps == "present":
+        classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
+    elif soft_deps == "exclude":
+        classes = [x for x in classes if _only_core_deps(x)]
+    # elif soft_deps=="all", no filtering happens
+
+    return classes
+
+
 from sktime.datatypes._alignment._registry import (
     MTYPE_LIST_ALIGNMENT,
     MTYPE_REGISTER_ALIGNMENT,
