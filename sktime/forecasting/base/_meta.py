@@ -67,8 +67,9 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         """Fit all forecasters in parallel."""
         from sktime.utils.parallel import parallelize
 
-        def _fit_forecaster(forecaster, y, X, fh, meta=None):
+        def _fit_forecaster(forecaster, meta):
             """Fit single forecaster."""
+            y, X, fh = meta["y"], meta["X"], meta["fh"]
             return forecaster.fit(y, X, fh)
 
         if self.n_jobs is not None:
@@ -80,15 +81,10 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
                 FutureWarning,
             )
 
-        self.forecasters_ = parallelize(
-            fun=_fit_forecaster,
-            iter=[forecaster.clone() for forecaster in forecasters],
-            meta=None,
-            backend=self.backend,
-            backend_params=self.backend_params,
-        )(y, X, fh)
+        meta = {"y": y, "X": X, "fh": fh}
+        self.forecasters_ = parallelize(_fit_forecaster, forecasters, meta=meta)
 
-    def _predict_forecasters(self, y=None, fh=None, X=None):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
         return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
