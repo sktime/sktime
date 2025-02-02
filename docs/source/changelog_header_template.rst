@@ -11,6 +11,9 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Enhancements
 ~~~~~~~~~~~~
 

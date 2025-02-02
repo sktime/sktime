@@ -20,6 +20,257 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.35.1 - 2025-01-29
 ---------------------------
 
+
+Highlights
+~~~~~~~~~~
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+* in ``HierarchyEnsembleForecaster``, the ``fitted_list`` attribute is deprecated.
+To access the fitted estimators, users should use instead either the ``get_fitted_params`` method,
+or the attribute ``forecasters_``.
+Given a fitted instance ``f``, a deprecated read call to ``f.fitted_list`` can be replaced
+by ``f.get_fitted_params()['forecasters']`` or ``f.forecasters_``.
+
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] deprecate ``fitted_list`` attribute of ``HierarchyEnsembleForecaster`` and  (:pr:`7423`) :user:`sanskarmodi8`
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Test framework
+^^^^^^^^^^^^^^
+
+
+
+
+* [ENH] refactor forecasting metric tests prep - object_type tag ``metric_forecasting`` (:pr:`7516`) :user:`fkiraly`
+* [ENH] detection module rework - populate author and maintainer tags (:pr:`7510`) :user:`fkiraly`
+* [ENH] html display of estimators - tag and consistent handling of via ``_steps_attr`` in ``HeterogenousMetaEstimator`` descendants (:pr:`7233`) :user:`mateuszkasprowicz`
+* [ENH] Refactor test class registry to type records (:pr:`7525`) :user:`fkiraly`
+* [ENH] Fix ``BaseDetector`` for segmentation and HMM estimators (:pr:`7480`) :user:`y-mx`, :user:`fkiraly`
+* [ENH] Add SplineTrendForecaster  (:pr:`7487`) :user:`jgyasu`
+* [ENH] base design for detection metrics (:pr:`7515`) :user:`fkiraly`
+* [ENH] refactor checks for detector outputs into separate module (:pr:`7542`) :user:`fkiraly`
+* [ENH] refactor ``InstanceSplitter`` to a utility ``apply_split`` to apply an ``sklearn`` split to a time series collection (:pr:`7330`) :user:`ksharma6`
+* [ENH] Detection metrics - coercion to detection type in boilerplate (:pr:`7546`) :user:`fkiraly`
+* [ENH] sync dependency checkers with ``scikit-base`` (:pr:`7529`) :user:`fkiraly`
+* [ENH] reduce requested metadata in forecasting metric input check (:pr:`7514`) :user:`fkiraly`
+* [ENH] Interface to ``skforecast.recursive.ForecasterRecursive`` (:pr:`7554`) :user:`yarnabrina`
+* [ENH] naive thresholding detector (:pr:`7576`) :user:`fkiraly`
+* [ENH] detection base class input checks and conversions (:pr:`7577`) :user:`fkiraly`
+* [ENH] change ``all_estimators`` retrieval to be entirely tag based (:pr:`7555`) :user:`fkiraly`
+* [ENH] migrate tests for point forecasting metrics to test class (:pr:`7532`) :user:`fkiraly`
+* [ENH] clusterer test suite (:pr:`7589`) :user:`fkiraly`
+* [ENH] Add multiple test parameter sets for YtoX transformer (:pr:`7469`) :user:`tanvincible`
+* [ENH] ``ClaSPSegmentation`` fixes for new detection interface (:pr:`7585`) :user:`fkiraly`
+* [ENH] ``PyODDetector`` fixes for new detector interface (:pr:`7584`) :user:`fkiraly`
+* [ENH] Expose ``evaluate`` params to ``add_task`` of forecasting benchmark (:pr:`7574`) :user:`benHeid`
+* [ENH] Remove ``gluonts dependency`` in ``gluonts_ListDataset_panel`` mtype (:pr:`7558`) :user:`PranavBhatP`
+* [ENH] Forecaster imputer for RecursiveReductionForecaster (:pr:`7535`) :user:`lenaklosik`
+* [ENH] add ``sklearn`` compliance to ``RotationForest`` (:pr:`7638`) :user:`PranavBhatP`
+* [ENH] Implement efficient ``_evaluate_by_index`` for MedianSquaredError (:pr:`7615`) :user:`satvshr`
+* [ENH] Validation split fix issue 7644 (:pr:`7647`) :user:`RHYTHM2405`
+* [ENH] RAND Index metric for segmentations (:pr:`7533`) :user:`gavinkatz001`
+* [ENH] forecasting ``evaluate``: new ``return_model`` parameter to return fitted estimator states (:pr:`7637`) :user:`marrov`
+* [ENH] allow arbitrary imputation transformers in 2nd generation reducers (:pr:`7646`) :user:`fkiraly`
+* [ENH] MAPA forecaster (:pr:`7620`) :user:`phoeenniixx`
+* [ENH] Set ``context_len`` and ``horizon_len`` per default in ``TimesFMForecaster`` (:pr:`7597`) :user:`tanvincible`
+* [ENH] improvements to clusterer base class and tests (:pr:`7665`) :user:`fkiraly`
+* [ENH] Kvisibility clustering algorithm (:pr:`7592`) :user:`seigpe`
+* [ENH] clusterers: improved checking for ``X`` in ``fit`` and ``predict`` in ``capability:out_of_sample = False`` case, minor improvements to ``predict_proba`` default (:pr:`7593`) :user:`fkiraly`
+* [ENH] create ``rbf_forecaster.py`` using ``RBFTransformer`` Neural networks (:pr:`7334`) :user:`phoeenniixx`
+* [ENH] windowed F1-score for detection (:pr:`7628`) :user:`gavinkatz001`
+* [ENH] window based time series segmentation via clustering : wclust-restored (:pr:`7612`) :user:`Ankit-1204`
+* [ENH] Implement _evaluate_by_index for MdAPE (:pr:`7606`) :user:`HarshvirSandhu`
+* [ENH] Implemented statmodels' ``ar_select_order`` (:pr:`7693`) :user:`satvshr`
+* [ENH] Add ``SplineTrendForecaster`` (:pr:`7502`) :user:`Dehelaan`
+* [ENH] ``BinarySegmentation`` fixes for new detection interface (:pr:`7504`) :user:`Alex-JG3`
+* [ENH] ``GreedyGaussianSegmentation`` fixes for new detection interface (:pr:`7472`) :user:`Spinachboul`
+* [ENH] Forecasting metrics dispatch of ``__call__`` to ``evaluate`` vs ``evaluate_by_index`` (:pr:`7608`) :user:`benHeid`
+* [ENH] Dataset object implementation (:pr:`7398`) :user:`felipeangelimvieira`
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add contributor Gavin Katz to .all-contributorsrc file (:pr:`7513`) :user:`gavinkatz001`
+* [DOC] Added Note in docstring of InceptionTimeClassifier for fixing #7453 (:pr:`7508`) :user:`skinan`
+* [DOC] Fixing some typos in ``transformation.rst`` (:pr:`7520`) :user:`phoeenniixx`
+* [DOC] docstring usage examples for ``AlignerDTW`` and ``AlignerDTWfromDist`` (:pr:`7381`) :user:`Adarsh2345`
+* [DOC] API reference documentation for ``SeriesXarray`` mtype (:pr:`7494`) :user:`SABARNO-PRAMANICK`
+* [DOC] add proper credits to hfawaz and dl-4-tsc in various time series classifiers (:pr:`7518`) :user:`fkiraly`
+* [DOC] API specification docstrings for ``TablePdDataFrame`` and ``TablePdSeries`` mtypes (:pr:`7540`) :user:`VjayRam`
+* [DOC] API reference for mtype PanelGluontsList (:pr:`7539`) :user:`b9junkers`
+* [DOC] document new ``visual_block_kind`` tag (:pr:`7524`) :user:`fkiraly`
+* [DOC] API reference for ``TableNp1D`` mtype (:pr:`7553`) :user:`RUPESH-KUMAR01`
+* [DOC] Add missing docstring for functions in ``/transformations/panel/catch22.py`` (:pr:`7527`) :user:`PranavBhatP`
+* [DOC] Added docstrings for TableNp2d and TableListOfDict classes (:pr:`7563`) :user:`VjayRam`
+* [DOC] minor formatting improvement in ``hf_transformers_forecaster`` (:pr:`7659`) :user:`fkiraly`
+* [DOC] Update the docstring of sameloc splitter with a proper mathematical description (:pr:`7550`) :user:`keitaVigano`
+* [DOC] AutoREG docstring includes non-existent arguments #7653 (:pr:`7654`) :user:`cheachu`
+* [DOC] minor improvements in data loader docs (:pr:`7633`) :user:`fkiraly`
+* [DOC] Fixed ``TablePolarsEager`` rendering issues related to recent merged PR #7666 (:pr:`7699`) :user:`fnhirwa`
+* [DOC] improved formatting and clarity in release manager guide (:pr:`7705`) :user:`fkiraly`
+* [DOC] improvements to git workflow guide, note about avoiding rebase (:pr:`7670`) :user:`fkiraly`
+* [DOC] API reference for detection metrics (:pr:`7722`) :user:`fkiraly`
+* [DOC] improved docstring for grouped/clustering forecaster compositors (:pr:`7709`) :user:`fkiraly`
+* [DOC] add newer patterns to handle multivariate data in tutorial (:pr:`7362`) :user:`PranavBhatP`
+* [DOC] update GitHub name of NoaWegerhoff (:pr:`7682`) :user:`fkiraly`
+* [DOC] Fix typo in example code in documentation requiring double brackets to slice dataframe. DeepAR (:pr:`7641`) :user:`gbilleyPeco`
+* [DOC] Fix typo in Add Estimators Documentation (:pr:`7519`) :user:`jgyasu`
+* [DOC] Fixes #7623 Invalid Link  (:pr:`7625`) :user:`jgyasu`
+* [DOC] Added Description for ``TablePolarsEager`` (:pr:`7666`) :user:`RHYTHM2405`
+* [DOC] Fix invalid link to elections repository in sktime's website (:pr:`7631`) :user:`tanvincible`
+* [DOC] Fix typo in example code in documentation requiring double brackets to slice dataframe. (:pr:`7639`) :user:`gbilleyPeco`
+* [DOC] update ttm docstring to inform about zero-shot/fine-tuning (:pr:`7280`) :user:`geetu040`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Bump ``statsforecast`` to latest version (:pr:`7573`) :user:`yarnabrina`
+* [MNT] ``tsfresh`` estimators - temporary bound on ``scipy`` (:pr:`7624`) :user:`fkiraly`
+* [MNT] temporary skip of ``test_st_on_unit_test`` (:pr:`7726`) :user:`fkiraly`
+* [MNT] fix: add ``aarch64`` installation constraint for ``temporian`` (:pr:`7692`) :user:`abhishek-iitmadras`
+* [MNT] [Dependabot](deps): Update pykan requirement from ``<0.2.7,>=0.2.1`` to ``>=0.2.1,<0.2.9`` (:pr:`7396`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.8.1`` to ``<2025.1.1`` (:pr:`7481`, :pr:`7545`, :pr:`7658`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``skpro`` requirement from ``<2.9.0,>=2`` to ``>=2,<2.10.0`` (:pr:`7704`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``numba`` requirement from ``<0.61`` to ``<0.62`` (:pr:`7677`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update optuna requirement from ``<4.2`` to ``<4.3`` (:pr:`7676`) :user:`dependabot[bot]`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Accepting prereleases as valid python version (:pr:`7544`) :user:`Abelarm`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``get_fitted_params`` access to wrapped estimators in ``_HeterogenousEnsembleForecaster`` descendants (:pr:`7522`) :user:`fkiraly`
+* [BUG] fix use of ``Imputer`` in ``RecursiveReductionForecaster`` (:pr:`7706`) :user:`Salzemann`
+
+Neural networks
+^^^^^^^^^^^^^^^
+
+* [BUG] ``AttentionLSTM`` - Remove activity regularizers (:pr:`7582`) :user:`marcosfelt`
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fixing spurious retrieval of fallback ``Normal`` distribution (:pr:`7720`) :user:`fkiraly`
+* [BUG] fix ``all_estimators`` lookup in case a tag is used that is not scitype specific (:pr:`7679`) :user:`fkiraly`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Ensured that all ``_fit`` etc have lower case ``y`` (:pr:`7673`) :user:`KrishBakshi`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix expected outputs tests of ``ShapeletTransformClassifier`` post shapelet transform fix #7499 (:pr:`7734`) :user:`fkiraly`
+* [BUG] fix bugs in ``MACNNClassifier``, ``MACNNRegressor`` (:pr:`7651`) :user:`KrishBakshi`
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] Fix inconsistency in ``_online_shapelet_distance`` std computation (:pr:`7499`) :user:`fnhirwa`
+* [BUG] ``TSFreshFeatureExtractor`` and ``TSFreshRelevantFeatureExtractor``: fix distributor not getting passed through to ``extract_features`` (:pr:`7541`) :user:`marcosfelt`
+* [BUG] in transformers, do not pass ``y`` to inner in case of scitype mismatch (:pr:`7733`) :user:`fkiraly`
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abelarm`,
+:user:`abhishek-iitmadras`,
+:user:`Adarsh2345`,
+:user:`Alex-JG3`,
+:user:`Ankit-1204`,
+:user:`b9junkers`,
+:user:`benHeid`,
+:user:`cheachu`,
+:user:`Dehelaan`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`gavinkatz001`,
+:user:`gbilleyPeco`,
+:user:`geetu040`,
+:user:`HarshvirSandhu`,
+:user:`jgyasu`,
+:user:`keitaVigano`,
+:user:`KrishBakshi`,
+:user:`ksharma6`,
+:user:`lenaklosik`,
+:user:`marcosfelt`,
+:user:`marrov`,
+:user:`mateuszkasprowicz`,
+:user:`phoeenniixx`,
+:user:`PranavBhatP`,
+:user:`RHYTHM2405`,
+:user:`RUPESH-KUMAR01`,
+:user:`SABARNO-PRAMANICK`,
+:user:`Salzemann`,
+:user:`sanskarmodi8`,
+:user:`satvshr`,
+:user:`seigpe`,
+:user:`skinan`,
+:user:`Spinachboul`,
+:user:`tanvincible`,
+:user:`VjayRam`,
+:user:`y-mx`,
+:user:`yarnabrina`
+
+
 Version 0.35.0 - 2024-12-09
 ---------------------------
 
