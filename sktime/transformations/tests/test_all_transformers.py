@@ -9,8 +9,10 @@ import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
@@ -244,6 +246,58 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             and not estimator_instance.is_composite()
         ):
             estimator_instance.fit_transform(X, y)
+
+    @pytest.mark.parametrize("no_levels", [0, 1, 2, 3])
+    @pytest.mark.parametrize("flatten_single_levels", [True, False])
+    def test_hierarchical_transformations(
+        self, estimator_instance, no_levels, flatten_single_levels
+    ):
+        """Test that hierarchical transformers can handle hierarchical data.
+
+        * Test different number of hierarchical levels. The methods should work
+            for any number of levels.
+        * Test with and without flattening single levels. The methods should
+        return the same original number of series.
+
+        """
+        # skip this test if the estimator is not hierarchical
+        import numpy as np
+        from pandas.testing import assert_frame_equal
+
+        if not estimator_instance.get_tag(
+            "capability:hierarchical_reconciliation", False, raise_error=False
+        ):
+            pytest.skip("Skipping test for non-hierarchical transformer.")
+
+        agg = Aggregator(flatten_single_levels=flatten_single_levels)
+
+        X = _bottom_hier_datagen(
+            no_bottom_nodes=5,
+            no_levels=no_levels,
+            random_seed=123,
+        )
+        # add aggregate levels
+        X = agg.fit_transform(X)
+
+        prds = X + np.random.normal(0, 10, (X.shape[0], 1))
+
+        # reconcile forecasts
+        reconciler = estimator_instance
+        prds_recon = reconciler.fit_transform(prds)
+        prds_recon = reconciler.inverse_transform(prds_recon)
+
+        # check if we now remove aggregate levels and use Aggregator it is equal
+        prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
+        assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
+
+        # check with unnamed indexes
+        if X.index.nlevels > 1:
+            prds.index.rename([None] * prds.index.nlevels, inplace=True)
+            reconciler_unnamed = estimator_instance
+            msg = "Reconciler returns different output for named and unnamed indexes."
+            preds_recon2 = reconciler_unnamed.fit_transform(prds)
+            preds_recon2 = reconciler_unnamed.inverse_transform(preds_recon2)
+            assert prds_recon.equals(preds_recon2), msg
 
 
 # todo: add testing of inverse_transform
