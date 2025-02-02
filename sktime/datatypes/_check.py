@@ -178,7 +178,8 @@ def check_is_mtype(
         list or dict type is controlled via ``msg_return_dict`` argument
 
         * if str: error message for tested mtype
-        * it list: list of len(mtype) with message per mtype if list, same order as mtype
+        * it list: list of len(mtype) with message per mtype if list,
+        same order as in ``mtype`` parameter
         * if dict: dict with mtype as key and error message for mtype as value
         * returned only if return_metadata is True or str, list of str
 
