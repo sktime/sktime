@@ -155,7 +155,7 @@ class ForecastingBenchmark(BaseBenchmark):
 
     def add_task(
         self,
-        dataset_loader: Callable,
+        data: Union[Callable, tuple],
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
@@ -164,8 +164,11 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        dataset_loader : Callable
-            A function which returns a dataset, like from `sktime.datasets`.
+        data : Union[Callable, tuple]
+            Can be
+            - a function which returns a dataset, like from `sktime.datasets`.
+            - a tuple contianing two data container that are sktime comptaible.
+            - single data container that is sktime compatible (only endogenous data).
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
@@ -179,13 +182,17 @@ class ForecastingBenchmark(BaseBenchmark):
         A dictionary of benchmark results for that forecaster
         """
         if task_id is None:
+            if hasattr(data, "__name__"):
+                task_id = (
+                    f"[dataset={data.__name__}]"
+                    f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+                )
             task_id = (
-                f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
             )
         task_kwargs = {
             "id": task_id,
-            "dataset_loader": dataset_loader,
+            "data": data,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
         }
@@ -225,34 +232,24 @@ class ForecastingBenchmark(BaseBenchmark):
         return results
 
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
-        dataset_loader = task.dataset_loader
         cv_splitter = task.cv_splitter
         scorers = task.scorers
-        y = dataset_loader()
-        if isinstance(y, tuple):
-            y, X = y
-            scores_df = evaluate(
-                forecaster=estimator.model,
-                y=y,
-                X=X,
-                cv=cv_splitter,
-                scoring=scorers,
-                backend=self.backend,
-                backend_params=self.backend_params,
-                error_score="raise",
-                return_data=True,
-            )
-        else:
-            scores_df = evaluate(
-                forecaster=estimator.model,
-                y=y,
-                cv=cv_splitter,
-                scoring=scorers,
-                backend=self.backend,
-                backend_params=self.backend_params,
-                error_score="raise",
-                return_data=True,
-            )
+        y, X = task.get_y_X()
+        scores_df = evaluate(
+            forecaster=estimator.model,
+            y=y,
+            X=X,
+            cv=cv_splitter,
+            scoring=scorers,
+            backend=self.backend,
+            backend_params=self.backend_params,
+            error_score="raise", # TODO should be configurable
+            return_data=True, # TODO should be configurable
+            cv_X=task.cv_X,
+            # global_mode = task.global_mode, TODO
+            strategy=task.strategy,
+            return_model=False, #  TODO should be configurable
+        )
 
         folds = {}
         for ix, row in scores_df.iterrows():

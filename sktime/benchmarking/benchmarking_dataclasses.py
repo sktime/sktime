@@ -5,7 +5,7 @@ import copy
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,7 @@ import pandas as pd
 from build.lib.sktime.split.base._base_splitter import BaseSplitter
 from sktime.base._base import BaseEstimator
 from sktime.benchmarking.base import BaseMetric
+from sktime.datatypes import SCITYPE_LIST, check_is_scitype
 
 
 @dataclass
@@ -24,18 +25,35 @@ class TaskObject:
     ----------
     id: str
         The ID of the task.
-    dataset_loader: Callable
-        A function which returns a dataset, like from `sktime.datasets`.
-    cv_splitter: BaseSplitter object
+    data: Union[Callable, tuple]
+        Can be
+        - a function which returns a dataset, like from `sktime.datasets`.
+        - a tuple contianing two data container that are sktime comptaible.
+        - single data container that is sktime compatible (only endogenous data).    cv_splitter: BaseSplitter object
         Splitter used for generating validation folds.
     scorers: list of BaseMetric objects
         Each BaseMetric output will be included in the results.
     """
 
     id: str
-    dataset_loader: Callable
+    data: Union[Callable, tuple]
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
+    strategy: str = "refit"
+    global_mode: bool = False
+    cv_X = None
+
+    def get_y_X(self):
+        if isinstance(self.data, tuple):
+            return self.data
+        elif isinstance(self.data, Callable):
+            data = self.data()
+            if isinstance(data, tuple):
+                return data
+            else :
+                return data, None
+        else:
+            return self.data, None
 
 
 @dataclass
