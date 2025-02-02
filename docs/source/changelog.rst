@@ -203,11 +203,11 @@ Maintenance
 * [MNT] ``tsfresh`` estimators - temporary bound on ``scipy`` (:pr:`7624`) :user:`fkiraly`
 * [MNT] temporary skip of ``test_st_on_unit_test`` (:pr:`7726`) :user:`fkiraly`
 * [MNT] fix: add ``aarch64`` installation constraint for ``temporian`` (:pr:`7692`) :user:`abhishek-iitmadras`
-* [MNT] [Dependabot](deps): Update pykan requirement from ``<0.2.7,>=0.2.1`` to ``>=0.2.1,<0.2.9`` (:pr:`7396`) :user:`dependabot[bot]`
-* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.8.1`` to ``<2025.1.1`` (:pr:`7481`, :pr:`7545`, :pr:`7658`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pykan`` requirement from ``<0.2.7,>=0.2.1`` to ``>=0.2.1,<0.2.9`` (:pr:`7396`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.1`` to ``<2025.1.1`` (:pr:`7481`, :pr:`7545`, :pr:`7658`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``skpro`` requirement from ``<2.9.0,>=2`` to ``>=2,<2.10.0`` (:pr:`7704`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``numba`` requirement from ``<0.61`` to ``<0.62`` (:pr:`7677`) :user:`dependabot[bot]`
-* [MNT] [Dependabot](deps): Update optuna requirement from ``<4.2`` to ``<4.3`` (:pr:`7676`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``optuna`` requirement from ``<4.2`` to ``<4.3`` (:pr:`7676`) :user:`dependabot[bot]`
 
 Fixes
 ~~~~~
