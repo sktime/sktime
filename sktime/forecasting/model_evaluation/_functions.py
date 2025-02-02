@@ -7,6 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
+from copy import deepcopy
 from typing import Optional, Union
 
 import numpy as np
@@ -74,7 +75,11 @@ def _check_scores(metrics) -> dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+    metric_types: dict,
+    return_data: bool = True,
+    cutoff_dtype=None,
+    old_naming=True,
+    return_model: bool = False,
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
@@ -105,6 +110,8 @@ def _get_column_order_and_datatype(
     fit_metadata.update(others_metadata)
     if return_data:
         fit_metadata.update(y_metadata)
+    if return_model:
+        fit_metadata["fitted_forecaster"] = "object"
     metrics_metadata.update(fit_metadata)
     return metrics_metadata.copy()
 
@@ -195,6 +202,7 @@ def _evaluate_window(x, meta):
     strategy = meta["strategy"]
     scoring = meta["scoring"]
     return_data = meta["return_data"]
+    return_model = meta["return_model"]
     error_score = meta["error_score"]
     cutoff_dtype = meta["cutoff_dtype"]
 
@@ -322,12 +330,18 @@ def _evaluate_window(x, meta):
         else:
             temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
+    if return_model:
+        temp_result["fitted_forecaster"] = [deepcopy(forecaster)]
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
     if old_naming:
         result = result.rename(columns=old_name_mapping)
     column_order = _get_column_order_and_datatype(
-        scoring, return_data, cutoff_dtype, old_naming=old_naming
+        metric_types=scoring,
+        return_data=return_data,
+        cutoff_dtype=cutoff_dtype,
+        old_naming=old_naming,
+        return_model=return_model,
     )
     result = result.reindex(columns=column_order.keys())
 
@@ -351,6 +365,7 @@ def evaluate(
     cv_X=None,
     backend_params: Optional[dict] = None,
     cv_global=None,
+    return_model: bool = False,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -421,6 +436,7 @@ def evaluate(
     * runtimes for fitting and/or predicting, from 2, 3, 7, in the ``i``-th loop
     * cutoff state of ``forecaster``, at 3, in the ``i``-th loop
     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+    * fitted forecaster for each fold (optional)
 
     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
 
@@ -450,6 +466,9 @@ def evaluate(
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
+    return_model : bool, default=False
+        If True, returns an additional column 'fitted_forecaster' containing the fitted
+        forecaster for each fold.
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -521,14 +540,18 @@ def evaluate(
         - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
-        - y_train: (pd.Series) only present if see ``return_data=True``
+
+        - y_train: (pd.Series) only present if ``return_data=True``,
         train fold of the i-th split in ``cv``, used to fit/update the forecaster.
 
-        - y_pred: (pd.Series) present if see ``return_data=True``
+        - y_pred: (pd.Series) present if ``return_data=True``,
         forecasts from fitted forecaster for the i-th test fold indices of ``cv``.
 
-        - y_test: (pd.Series) present if see ``return_data=True``
+        - y_test: (pd.Series) present if ``return_data=True``,
         testing fold of the i-th split in ``cv``, used to compute the metric.
+
+        - fitted_forecaster: (BaseForecaster) present if ``return_model=True``,
+        fitted forecaster for the i-th split in ``cv``.
 
     Examples
     --------
@@ -574,6 +597,17 @@ def evaluate(
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
+
+    To return fitted models for each fold, set ``return_model=True``:
+
+    >>> results = evaluate(
+    ...     forecaster=forecaster,
+    ...     y=y,
+    ...     cv=cv,
+    ...     scoring=loss,
+    ...     return_model=True
+    ... )
+    >>> fitted_forecaster = results.iloc[0]["fitted_forecaster"]
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
@@ -615,6 +649,7 @@ def evaluate(
         "scoring": scoring,
         "strategy": strategy,
         "return_data": return_data,
+        "return_model": return_model,
         "error_score": error_score,
         "cutoff_dtype": cutoff_dtype,
         "global_mode": cv_global is not None,
@@ -736,7 +771,9 @@ def evaluate(
     if backend in ["dask", "dask_lazy"] and not not_parallel:
         import dask.dataframe as dd
 
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+        metadata = _get_column_order_and_datatype(
+            scoring, return_data, cutoff_dtype, return_model=return_model
+        )
 
         results = dd.from_delayed(results, meta=metadata)
         if backend == "dask":
