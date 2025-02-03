@@ -35,3 +35,9 @@ repos:
     hooks:
       - id: shellcheck
         name: shellcheck
+
+  - repo: https://github.com/PyCQA/pylint
+    rev: v3.0.2  # Use the latest version
+    hooks:
+      - id: pylint
+        args: ["--load-plugins=pylint.extensions.docparams", "--disable=too-few-public-methods", "--disable=C0111"]
