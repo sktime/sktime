@@ -52,7 +52,7 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib<1.5,>=1.2.0",  # required for parallel processing
-  "numpy<2.2,>=1.21",  # required for framework layer and base class logic
+  "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
