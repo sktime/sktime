@@ -29,8 +29,14 @@ class BaseDatatype(BaseObject):
     def __init__(self):
         super().__init__()
 
-    # call defaults to check
-    def __call__(self, obj, return_metadata=False, var_name="obj"):
+    # call defaults to check with return_metadata_type = "instance"
+    def __call__(
+        self,
+        obj,
+        return_metadata=False,
+        var_name="obj",
+        return_metadata_type="dict",
+    ):
         """Check if obj is of this data type.
 
         Parameters
@@ -51,9 +57,21 @@ class BaseDatatype(BaseObject):
         metadata : instance of self only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return self._check(obj=obj, return_metadata=return_metadata, var_name=var_name)
+        kwargs = {
+            "obj": obj,
+            "return_metadata": return_metadata,
+            "var_name": var_name,
+            "return_metadata_type": return_metadata_type,
+        }
+        return self.check(**kwargs)
 
-    def check(self, obj, return_metadata=False, var_name="obj"):
+    def check(
+        self,
+        obj,
+        return_metadata=False,
+        var_name="obj",
+        return_metadata_type="instance",
+    ):
         """Check if obj is of this data type.
 
         If self has parameters set, the check will in addition
@@ -70,14 +88,27 @@ class BaseDatatype(BaseObject):
         var_name : str, optional (default="obj")
             Name of the variable to check, for use in error messages.
 
+        return_metadata_type : str, optional, one of "instance" or "dict" (default)
+            How metadata in the ``metadata`` field is returned:
+
+            * ``"instance"`` (default): ``metadata`` is an instance of ``self``,
+            with metadata as set as ``__init__`` attribute
+            * ``"dict"``: ``metadata`` is a dictionary with metadata as
+            key-value pairs. The ``"class"`` return is equivalent to constructing
+            ``self`` with the metadata dictionary.
+
         Returns
         -------
         valid : bool
             Whether obj is of this data type.
         msg : str, only returned if return_metadata is True.
             Error message if obj is not of this data type.
-        metadata : instance of self only returned if return_metadata is True.
-            Metadata dictionary.
+        metadata : only returned if return_metadata is True.
+
+            * if ``return_metadata_type = "obj"``: instance of self
+            with metadata dictionary encoded as ``__init__`` parameters
+            * if ``return_metadata_type = "dict"``: dictionary with metadata
+            as key-value pairs.
         """
         self_params = self.get_params()
 
@@ -136,6 +167,9 @@ class BaseDatatype(BaseObject):
             msg = f"metadata of type unequal, {msg}"
             return _ret(False, msg, None, return_metadata_orig)
 
+        if return_metadata_type == "dict":
+            return _ret(True, "", metadata, return_metadata_orig)
+        # else return_metadata_type == "instance"
         self_type = type(self)(**metadata)
         return _ret(True, "", self_type, return_metadata_orig)
 
