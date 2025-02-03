@@ -784,10 +784,12 @@ class TablePolarsLazy(ScitypeTable):
     Name: ``"TablePolarsLazy"``
 
     Short description:
+
         A specification for a data table backed by a lazy Polars DataFrame,
         supporting both univariate and multivariate data with deferred execution.
 
     Long description:
+
         The ``"TablePolarsLazy"`` :term:`mtype` is a concrete specification
         that implements the ``Table`` :term:`scitype`, representing a data table
         with a lazy Polars DataFrame.
@@ -802,10 +804,9 @@ class TablePolarsLazy(ScitypeTable):
           until explicitly executed.
 
     Capabilities:
+
         * supports multivariate data with multiple features.
         * can handle missing values (NaNs) and empty tables.
-        * optimized for large-scale data processing with lazy execution.
-        * includes metadata like feature names, data types, and feature kinds.
 
     Parameters are inferred by check.
 
