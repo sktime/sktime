@@ -1465,7 +1465,7 @@ class BaseTransformer(BaseEstimator):
                         f"In fit, {type(self).__name__} makes one fit per instance, "
                         "and applies that fit to the instance with the same index in "
                         "transform. Vanilla use therefore requires the same number "
-                        "of instances in fit and transform, but"
+                        "of instances in fit and transform, but "
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
                         f"number of instances seen in transform: {n_trafos}. "
