@@ -119,7 +119,6 @@ def test_change_points_to_segments(change_points, expected_segments, start, end)
     testing.assert_series_equal(actual_segments, expected_segments)
 
 
-@pytest.mark.xfail(reason="Changed interface, need to update test")
 @pytest.mark.skipif(
     not run_test_for_class(BaseDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -154,9 +153,7 @@ def test_change_points_to_segments(change_points, expected_segments, start, end)
 def test_segments_to_change_points(segments, expected_change_points):
     """Test converting change points to segments."""
     actual_change_points = BaseDetector.segments_to_change_points(segments)
-    testing.assert_series_equal(
-        actual_change_points, expected_change_points, check_dtype=False
-    )
+    assert actual_change_points.equals(expected_change_points)
 
 
 @pytest.mark.xfail(reason="Changed interface, need to update test")
