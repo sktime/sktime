@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.35.0"
+version = "0.35.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
