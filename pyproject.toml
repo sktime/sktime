@@ -56,7 +56,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.7.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
@@ -310,7 +310,7 @@ mlflow_tests = [
   "moto",
 ]
 numpy1 = [
-  "numpy<2.0.0",
+  "numpy<3.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
