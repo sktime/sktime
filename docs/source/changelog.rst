@@ -24,6 +24,12 @@ Maintenance release with scheduled updates to version bounds.
 
 For the last non-maintenance content update, see 0.35.1.
 
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.3.0``
+* ``scikit-learn`` (core dependency) bounds have been updated to ``<1.7.0``
+
 
 Version 0.35.1 - 2025-02-02
 ---------------------------
