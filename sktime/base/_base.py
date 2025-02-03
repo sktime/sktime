@@ -283,9 +283,10 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
             if file location, self is saved to that file location. If:
-                path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
-                path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
-                stored in ``/home/stored/``.
+
+            - path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
+            - path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
+            stored in ``/home/stored/``.
 
         serialization_format: str, default = "pickle"
             Module to use for serialization.

@@ -45,7 +45,33 @@ PRIMITIVE_TYPES = (float, int, str)
 
 
 class TablePdDataFrame(ScitypeTable):
-    """Data type: pandas.DataFrame based specification of data frame table.
+    """Data type: pandas.DataFrame based specification of tabular data.
+
+    Name: ``"pd_DataFrame_Table"``
+
+    Short description:
+
+    a pandas ``DataFrame`` representing tabular data,
+    with rows = instances, cols = features
+
+    Long description:
+
+    The ``"pd_DataFrame_Table"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: pandas.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` can be any valid pandas index.
+    * features: columns of ``obj`` correspond to different features
+    * feature names: column names ``obj.columns``
+    * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
+
+    Capabilities:
+
+    * can represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
@@ -78,6 +104,7 @@ class TablePdDataFrame(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": True,
@@ -139,7 +166,33 @@ def _check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 
 
 class TablePdSeries(ScitypeTable):
-    """Data type: pandas.Series based specification of data frame table.
+    """Data type: pandas.Series based specification of tabular data.
+
+    Name: ``"pd_Series_Table"``
+
+    Short description:
+
+    a pandas ``Series`` representing tabular data,
+    with rows = instances, single feature
+
+    Long description:
+
+    The ``"pd_Series_Table"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: pandas.Series`` follows the specification iff:
+
+    * structure convention: ``obj.index`` can be any valid pandas index.
+    * feature: the series ``obj`` represents a single feature
+    * feature name: the ``name`` attribute of the ``pd.Series`` object
+    * instances: rows of ``obj`` correspond to different instances
+    * instance index: ``obj.index`` is interpreted as the instance index
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
 
     Parameters are inferred by check.
 
@@ -172,6 +225,7 @@ class TablePdSeries(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": True,
@@ -240,6 +294,33 @@ def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
 class TableNp1D(ScitypeTable):
     """Data type: 1D np.ndarray based specification of data frame table.
 
+    Name: ``"numpy1D"``
+
+    Short description:
+
+    a 1D numpy ``ndarray`` representing a univariate data table,
+    with elements as instances of single feature
+
+    Long description:
+
+    The ``"numpy1D"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: np.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` is a 1D numpy array.
+    * feature: the array ``obj`` represents a single feature
+    * instances: elements of ``obj`` correspond to different instances
+    * instance index: The instance index is implicit and by-convention.
+      The ``i``-th entry (for an integer ``i``) is interpreted as the ``i``-th instance.
+      That is, the index is always interpreted as zero-indexed integer.
+
+    Capabilities:
+
+    * cannot represent multivariate data
+    * can represent missing values
+
     Parameters are inferred by check.
 
     Parameters
@@ -271,6 +352,7 @@ class TableNp1D(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": False,
@@ -339,6 +421,31 @@ def _check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 class TableNp2D(ScitypeTable):
     """Data type: 2D np.ndarray based specification of data frame table.
 
+    Name: ``"numpy2D"``
+
+    Short description:
+
+    a 2D numpy array representing tabular data,
+    with rows = instances, cols = features
+
+    Long description:
+
+    The ``"numpy2D"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: numpy.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj.shape`` is (n_instances, n_features)
+    * features: columns of ``obj`` correspond to different features
+    * feature names: feature names are integers 0, 1, ..., n_features-1
+    * instances: rows of ``obj`` correspond to different instances
+
+    Capabilities:
+
+    * can represent multivariate data
+    * can represent missing values
+
     Parameters are inferred by check.
 
     Parameters
@@ -370,6 +477,7 @@ class TableNp2D(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -437,6 +545,31 @@ def _check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
 class TableListOfDict(ScitypeTable):
     """Data type: list of dict based specification of data frame table.
 
+    Name: ``"list_of_dict"``
+
+    Short description:
+
+    a list of dict representing tabular data,
+    with rows = instances, keys = features
+
+    Long description:
+
+    The ``"list_of_dict"`` :term:`mtype` is a concrete specification
+    that implements the ``Table`` :term:`scitype`, i.e., the abstract
+    type of tabular data.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` is a list of dict
+    * features: keys of dict correspond to different features
+    * feature names: keys of dict
+    * instances: elements of ``obj`` correspond to different instances
+
+    Capabilities:
+
+    * can represent multivariate data
+    * can represent missing values
+
     Parameters are inferred by check.
 
     Parameters
@@ -468,6 +601,7 @@ class TableListOfDict(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -558,6 +692,29 @@ def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
 class TablePolarsEager(ScitypeTable):
     """Data type: eager polars DataFrame based specification of data frame table.
 
+    Name: ``"TablePolarsEager"``
+
+    Short description:
+        A specification for a data table backed by an eager Polars DataFrame,
+        supporting both univariate and multivariate data.
+
+    Long description:
+        The ``"TablePolarsEager"`` :term:`mtype` is a concrete specification
+        that implements the ``Table`` :term:`scitype`, representing a data table
+        with an eager Polars DataFrame.
+        An object ``obj: Polars DataFrame`` follows the specification iff:
+
+        * structure convention: ``obj`` is a Polars DataFrame.
+        * feature: the DataFrame can have multiple features (columns).
+        * instances: rows of the DataFrame represent individual instances.
+        * instance index: The index is implicit, with each row corresponding to
+          a unique instance (zero-indexed by default).
+
+    Capabilities:
+        * supports multivariate data with multiple features.
+        * can handle missing values (NaNs) and empty tables.
+        * includes metadata like feature names, data types, and feature kinds.
+
     Parameters are inferred by check.
 
     Parameters
@@ -589,6 +746,7 @@ class TablePolarsEager(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -654,6 +812,7 @@ class TablePolarsLazy(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.LazyFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,

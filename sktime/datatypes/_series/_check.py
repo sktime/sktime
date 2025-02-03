@@ -114,6 +114,7 @@ class SeriesPdDataFrame(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -273,6 +274,7 @@ class SeriesPdSeries(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -417,6 +419,7 @@ class SeriesNp2D(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -546,6 +549,62 @@ def _index_equally_spaced(index):
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
 
+    Name: ``xr.DataArray``
+
+    Short description:
+
+    An ``xarray.DataArray`` representing a single time series, where:
+
+    - Each row corresponds to a time point.
+    - Columns represent variables or features.
+    - Coordinates provide additional metadata for the time index and variables.
+
+    Long description:
+
+    The ``xr.DataArray`` :term:``mtype`` is a concrete specification
+    that implements the ``Series`` :term:``scitype``, i.e., the abstract
+    type for time series data.
+
+    An object ``obj: xarray.DataArray`` follows the specification iff:
+
+    * structure convention:
+
+      - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
+      - ``obj.coords`` must include:
+
+        - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
+          ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
+        - A variable-like index (``dim_1``) for feature/variable names (optional).
+
+    * time index:
+
+      - The ``dim_0`` coordinate is interpreted as the time index.
+
+    * time points:
+
+      - Each row of ``obj`` represents a single time point.
+      - Rows with the same ``dim_0`` value correspond to the same time point.
+
+    * variables:
+
+      - Columns represent different variables (or features).
+      - Column names are stored in ``dim_1`` if present.
+
+    * variable names:
+
+      - The variable names are the column names (``dim_1``), if present.
+
+    * metadata:
+
+      - Additional metadata (e.g., attributes) may be included in ``obj.attrs``.
+
+    Capabilities:
+
+    * can represent univariate or multivariate time series
+    * requires equally spaced time points (if time index is specified)
+    * supports missing values
+    * cannot represent series with differing sets of variables
+
     Parameters
     ----------
     is_univariate: bool
@@ -575,6 +634,7 @@ class SeriesXarray(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "xarray",
+        "python_type": "xarray.DataArray",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -707,6 +767,7 @@ class SeriesDask(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -776,6 +837,7 @@ class SeriesPolarsEager(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -851,6 +913,7 @@ class SeriesGluontsList(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -994,6 +1057,7 @@ class SeriesGluontsPandas(ScitypeSeries):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
