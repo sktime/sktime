@@ -98,6 +98,18 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     -----
         If ``metric`` is set to ``"euclidean"``, the algorithm expects a dataset of
         equal-sized time series.
+        
+    Examples
+    --------
+    Basic usage:
+
+    >>> from sktime.clustering.k_means import TimeSeriesKMeansTslearn
+    >>> from tslearn.datasets import CachedDatasets
+    >>> data = CachedDatasets().load_dataset("Trace")
+    >>> X_train = data[0]
+    >>> model = TimeSeriesKMeansTslearn(n_clusters=3, metric="euclidean")
+    >>> model.fit(X_train)
+    >>> y_pred = model.predict(X_train)
     """
 
     _tags = {
