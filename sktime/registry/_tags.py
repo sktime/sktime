@@ -1116,7 +1116,7 @@ class scitype__transform_input(_BaseTag):
 
     _tags = {
         "tag_name": "scitype:transform-input",
-        "parent_type": "transformer",
+        "parent_type": ["transformer", "estimator"],
         "tag_type": ("str", ["Series", "Panel"]),
         "short_descr": "what is the scitype of the transformer input X?",
         "user_facing": True,
