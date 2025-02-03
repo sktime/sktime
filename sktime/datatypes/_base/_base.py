@@ -156,6 +156,7 @@ class BaseDatatype(BaseObject):
         else:
             valid = check_res
             msg = ""
+            metadata = {}
 
         if not valid:
             return _ret(False, msg, None, return_metadata_orig)
@@ -211,7 +212,8 @@ class BaseDatatype(BaseObject):
         if len(module_plus_type) > 1:
             expected_python_type = module_plus_type[-1]
             expected_module = module_plus_type[0]
-            if not type(obj).__module__ == expected_module:
+            actual_module = type(obj).__module__.split(".")[0]
+            if not actual_module == expected_module:
                 msg = (
                     f"{var_name} must be of python type {expected_module_python_type}, "
                     f"or a subtype thereof, but found {type(obj)}"
