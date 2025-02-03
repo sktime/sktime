@@ -29,7 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
-    "MACNNClassifier",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -41,7 +40,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "MACNNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -59,6 +57,8 @@ EXCLUDE_ESTIMATORS = [
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
+    # Large datasets
+    "M5Dataset",
 ]
 
 
@@ -167,13 +167,7 @@ EXCLUDED_TESTS = {
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
-    "MACNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "FCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "MACNNRegressor": [
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
@@ -313,7 +307,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFLinearForecaster",
         "LTSFNLinearForecaster",
         "LogTransformer",
-        "MACNNNetwork",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
