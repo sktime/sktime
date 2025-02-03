@@ -310,7 +310,7 @@ mlflow_tests = [
   "moto",
 ]
 numpy1 = [
-  "numpy<3.0.0",
+  "numpy<2.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
