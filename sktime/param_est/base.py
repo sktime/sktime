@@ -72,7 +72,7 @@ class BaseParamFitter(BaseEstimator):
         "scitype:y": "univariate",  # which y are fine: univariate/multivariate/both
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
-        "capability:requires_y": False,  # does estimator require y?
+        "requires_y": False,  # does estimator require y?
         "capability:pairwise": False,  # can handle pairwise parameter estimation?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
@@ -180,7 +180,7 @@ class BaseParamFitter(BaseEstimator):
             Time series data (features) in a format supported by the estimator.
         y : array-like, optional (default=None)
             Target values for supervised parameter estimation. If the estimator does not
-            require target values (i.e., its tag "capability:requires_y" is False),
+            require target values (i.e., its tag "requires_y" is False),
             y must be None.
 
         Returns
@@ -256,7 +256,7 @@ class BaseParamFitter(BaseEstimator):
 
         This method performs several checks and conversions:
           - If both X and y are None, returns (None, None).
-          - If y is provided but the estimator's "capability:requires_y" tag is False,
+          - If y is provided but the estimator's "requires_y" tag is False,
             a ValueError is raised.
           - For y:
               * Checks that y is in one of the allowed sktime formats for its scitype.
@@ -308,7 +308,7 @@ class BaseParamFitter(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        if y is not None and self.get_tag("capability:requires_y") is False:
+        if y is not None and self.get_tag("requires_y") is False:
             raise ValueError(
                 f"{type(self).__name__} does not require y, but y was passed."
             )
