@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.35.0"
+version = "0.35.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -56,7 +56,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.7.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
@@ -92,8 +92,8 @@ all_extras = [
   'keras-self-attention; python_version < "3.11"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
-  'optuna<4.2',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'optuna<4.3',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
@@ -104,13 +104,13 @@ all_extras = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
-  'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  "skpro>=2,<2.9.0",
-  'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  "skpro>=2,<2.10.0",
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
@@ -124,7 +124,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1; python_version < "3.13"',
   'cloudpickle; python_version < "3.13"',
   'dash!=2.9.0; python_version < "3.13"',
-  "dask<2024.12.1; extra == 'dataframe'",
+  "dask<2025.1.1; extra == 'dataframe'",
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
   'esig==0.9.7; python_version < "3.10"',
@@ -136,8 +136,8 @@ all_extras_pandas2 = [
   'keras-self-attention; python_version < "3.11"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
-  'optuna<4.2',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'optuna<4.3',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
@@ -146,13 +146,13 @@ all_extras_pandas2 = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
-  'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  'skpro>=2,<2.9.0',
-  'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  'skpro>=2,<2.10.0',
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
@@ -173,26 +173,28 @@ all_extras_pandas2 = [
 alignment = [
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python>=1.3,<1.6; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
 ]
 annotation = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'networkx<3.5',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+  'ts2vg<1.3; python_version < "3.13"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 forecasting = [
@@ -200,9 +202,9 @@ forecasting = [
   'autots<0.7,>=0.6.1; python_version < "3.13"',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   'prophet<1.2,>=1.1; python_version < "3.13"',
-  'skforecast<0.14,>=0.12.1; python_version < "3.13"',
-  "skpro>=2,<2.9.0",
-  'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  "skpro>=2,<2.10.0",
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
@@ -215,7 +217,7 @@ param_est = [
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 regression = [
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
 ]
 transformations = [
@@ -223,11 +225,11 @@ transformations = [
   'filterpy<1.5,>=1.4.5; python_version < "3.13"',
   'holidays>=0.29,<0.59; python_version < "3.13"',
   'mne>=1.5,<1.9; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 
@@ -277,7 +279,7 @@ binder = [
 cython_extras = [
   "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
-  "numba<0.61",
+  "numba<0.62",
 ]
 datasets = [
   "rdata",
@@ -308,7 +310,7 @@ mlflow_tests = [
   "moto",
 ]
 numpy1 = [
-  "numpy<2.0.0",
+  "numpy<3.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",

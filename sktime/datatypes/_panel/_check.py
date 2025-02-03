@@ -158,6 +158,7 @@ class PanelDfList(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -319,6 +320,7 @@ class PanelNp3D(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -473,7 +475,8 @@ class PanelPdMultiIndex(ScitypePanel):
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "numpy",
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -745,6 +748,7 @@ class PanelNestedDf(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -893,6 +897,7 @@ class PanelNumpyFlat(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -1006,6 +1011,7 @@ class PanelDask(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1080,6 +1086,7 @@ class PanelPolarsEager(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1184,7 +1191,58 @@ def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pan
 
 
 class PanelGluontsList(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonTS representation of univariate and multivariate time series.
+
+    Name: ``"gluonts_ListDataset_panel"``
+
+    Short description:
+
+    A ``list`` of ``dict``,
+    with list index = instances, ``dict['target']`` rows = time points,
+    ``dict['target']`` cols = variables, and ``dict['start']`` marking the interval.
+    Identical to ``gluonts.dataset.common.ListDataset``.
+
+    Long description:
+
+    The ``"gluonts_ListDataset_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a ``list`` of ``dict``.
+      Each ``dict`` must contain a key ``"target"``which
+      maps to a 1D ``numpy.ndarray`` for a univariate, and
+      2D ``numpy.ndarray`` for a multivariate time series.
+      Optionally, it may also contain a key ``"start"``
+      that maps to a ``pandas.Period`` object.
+      eg: ``pandas.Period("2024-01-01", freq="D")`` for a time series starting
+      on 2024-01-01 and sampled daily.
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]['target']`` correspond to
+      different, distinct time points, at which
+      instance ``i`` is observed.
+    * time index: the time index is implicit and by-convention.
+      The ``j``-th element (for an integer ``j``) of instance ``i`` is interpreted
+      as an observation at the time point ``j``.
+      If ``"start"`` key is present, the time index for
+      the ``j``-th element of instance ``i`` is ``obj[i]['start'] + j``.
+    * variables: columns of ``obj[i]['target']`` correspond to different variables
+      available for instance ``i``.
+    * variable names: ``numpy`` mtypes cannot represent variable names. If required,
+      then variable names are assigned ``"value_{k}``
+      where ``k`` is the feature column index.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can not represent panels of unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
 
     Parameters
     ----------
@@ -1220,7 +1278,8 @@ class PanelGluontsList(ScitypePanel):
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "gluonts",
+        "python_dependencies": None,
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1257,7 +1316,7 @@ class PanelGluontsList(ScitypePanel):
             or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
@@ -1371,6 +1430,7 @@ class PanelGluontsPandas(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,

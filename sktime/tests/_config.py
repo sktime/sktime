@@ -29,7 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
-    "MACNNClassifier",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -41,7 +40,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "MACNNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -59,6 +57,8 @@ EXCLUDE_ESTIMATORS = [
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
+    # Large datasets
+    "M5Dataset",
 ]
 
 
@@ -167,13 +167,7 @@ EXCLUDED_TESTS = {
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
-    "MACNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "FCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "MACNNRegressor": [
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
@@ -246,20 +240,11 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "ClaSPSegmentation": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-    ],
     "ClusterSegmenter": [
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
         "test_output_type",
-    ],
-    "BinarySegmentation": [
-        "test_predict_segments",
-        "test_transform_output_type",
     ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
@@ -269,11 +254,6 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "PyODDetector": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-    ],
 }
 
 # exclude tests but keyed by test name
@@ -282,12 +262,10 @@ EXCLUDED_TESTS_BY_TEST = {
         "Arsenal",
         "BaggingForecaster",
         "BOSSEnsemble",
-        "BinarySegmentation",
         "CNTCClassifier",
         "CNTCNetwork",
         "CNTCRegressor",
         "CanonicalIntervalForest",
-        "ClaSPSegmentation",
         "ClaSPTransformer",
         "ClearSky",
         "ClustererPipeline",
@@ -330,7 +308,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFLinearForecaster",
         "LTSFNLinearForecaster",
         "LogTransformer",
-        "MACNNNetwork",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
@@ -358,7 +335,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "HierarchicalProphet",
-        "PyODDetector",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
@@ -403,7 +379,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "WEASEL",
         "WeightedEnsembleClassifier",
         "WhiteNoiseAugmenter",
-        "YtoX",
     ]
 }
 
