@@ -119,7 +119,7 @@ class BaseDatatype(BaseObject):
 
         # update return_metadata to retrieve any self_params
         # return_metadata_bool has updated condition
-        if not len(need_check) == 0:
+        if len(need_check) > 0:
             if isinstance(return_metadata, bool):
                 if not return_metadata:
                     return_metadata = need_check
@@ -160,13 +160,17 @@ class BaseDatatype(BaseObject):
         if not valid:
             return _ret(False, msg, None, return_metadata_orig)
 
-        # now we know the check is valid, but we need to compare fields
-        metadata_sub = {k: metadata[k] for k in self_dict}
-        eqs, msg = deep_equals(self_dict, metadata_sub, return_msg=True)
-        if not eqs:
-            msg = f"metadata of type unequal, {msg}"
-            return _ret(False, msg, None, return_metadata_orig)
+        # now we know the check for general type is valid,
+        # but we may need to compare fields if there were any to check
+        if len(need_check) > 0:
+            metadata_sub = {k: metadata[k] for k in self_dict}
+            eqs, msg = deep_equals(self_dict, metadata_sub, return_msg=True)
+            if not eqs:
+                msg = f"metadata of type unequal, {msg}"
+                return _ret(False, msg, None, return_metadata_orig)
 
+        # metadata is a dict
+        # if return as dict, return right away, otherwise construct an instance
         if return_metadata_type == "dict":
             return _ret(True, "", metadata, return_metadata_orig)
         # else return_metadata_type == "instance"
