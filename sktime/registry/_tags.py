@@ -1116,7 +1116,7 @@ class scitype__transform_input(_BaseTag):
 
     _tags = {
         "tag_name": "scitype:transform-input",
-        "parent_type": ["transformer", "estimator"],
+        "parent_type": "transformer",
         "tag_type": ("str", ["Series", "Panel"]),
         "short_descr": "what is the scitype of the transformer input X?",
         "user_facing": True,
@@ -1310,7 +1310,7 @@ class requires_y(_BaseTag):
 
     _tags = {
         "tag_name": "requires_y",
-        "parent_type": "transformer",
+        "parent_type": ["transformer", "estimator"],
         "tag_type": "bool",
         "short_descr": "does the transformer require y to be passed in fit and transform?",  # noqa: E501
         "user_facing": True,
@@ -2447,6 +2447,12 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "is aligner capable of aligning multiple series (True) or only two (False)?",
+    ),
+    (
+        "capability:pairwise",
+        "param_est",
+        "bool",
+        "Indicates whether the estimator supports pairwise parameter estimation.",
     ),
     (
         "capability:distance",
