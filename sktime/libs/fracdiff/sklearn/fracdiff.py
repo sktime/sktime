@@ -23,8 +23,10 @@ else:
     from sklearn.utils.validation import validate_data as _skl_checker
 
 
-def _sklearn_check_input(method="fit", *args, **kwargs):
+def _sklearn_check_input(*args, **kwargs):
     """Downwards compatibility switch for new input checks from scikit-learn 1.6 on."""
+    method = kwargs.pop("method", None)
+
     if sklearn_ge_16 and method != "fit":
         kwargs.update({"reset": False})
     if sklearn_ge_16:
