@@ -1469,7 +1469,7 @@ class BaseTransformer(BaseEstimator):
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
                         f"number of instances seen in transform: {n_trafos}. "
-                        "For fit/transforming per instance, e.g., for pre-processinng "
+                        "For fit/transforming per instance, e.g., for pre-processing "
                         "in a time series classification, regression or clustering "
                         "pipeline, wrap this transformer in "
                         "FitInTransform, from sktime.transformations.compose."
