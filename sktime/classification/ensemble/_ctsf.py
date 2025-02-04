@@ -166,6 +166,11 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         ``oob_decision_function_`` might contain NaN.
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     References
     ----------
@@ -221,6 +226,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        criterion="gini",
     ):
         self.estimator = estimator
 
@@ -234,6 +240,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.max_samples = max_samples
+        self.criterion = criterion
 
         # Pass on params.
         super().__init__(
