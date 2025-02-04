@@ -34,12 +34,9 @@ def test_FeatureUnion_pipeline():
 
     # pipeline with segmentation plus multiple feature extraction
     steps = [
-        ("segment", RandomIntervalSegmenter(n_intervals=1)),
-        (
-            "transform",
-            FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
-        ),
-        ("clf", DecisionTreeClassifier()),
+        RandomIntervalSegmenter(n_intervals=1),
+        FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
+        DecisionTreeClassifier(),
     ]
     clf = make_pipeline(*steps)
     clf.fit(X_train, y_train)
