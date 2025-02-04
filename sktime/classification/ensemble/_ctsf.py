@@ -20,7 +20,6 @@ from sklearn.utils.multiclass import check_classification_targets
 from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
-from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.warnings import warn
