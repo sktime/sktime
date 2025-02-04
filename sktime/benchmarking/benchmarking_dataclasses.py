@@ -195,6 +195,23 @@ class BenchmarkingResults:
             ]
         )
 
+    def to_dataframe(self):
+        """Convert the results to a pandas DataFrame."""
+        results = []
+        for result in self.results:
+            row = {
+                "task_id": result.task_id,
+                "model_id": result.model_id,
+            }
+            for fold_idx, fold in result.folds.items():
+                for score in fold.scores:
+                    row[f"{fold_idx}_{score.name}"] = score.score
+            for mean in result.means:
+                row[f"mean_{mean.name}"] = mean.score
+            for std in result.stds:
+                row[f"std_{std.name}"] = std.score
+            results.append(row)
+        return pd.DataFrame(results)
 
 def asdict(obj, *, dict_factory=dict, pd_orient="list"):
     """Return the fields of a dataclass as a dict.
