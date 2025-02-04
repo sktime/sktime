@@ -279,21 +279,14 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         """Wrap predict_proba to call BaseClassifier.predict_proba."""
         return BaseClassifier.predict_proba(self, X=X, **kwargs)
 
-    @property
-    def _repr_html_(self):
-        """HTML representation of BaseObject.
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
 
-        This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
-        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
         """
-        if self.get_config()["display"] != "diagram":
-            raise AttributeError(
-                "_repr_html_ is only defined when the "
-                "'display' configuration option is set to "
-                "'diagram'"
-            )
-        return self._repr_html_inner
+        return BaseClassifier._repr_html_inner(self)
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display instances of BaseObject."""
