@@ -225,12 +225,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         RuntimeError
             If curve fitting fails due to non-convergence.
 
-        Additional Processing
-        ---------------------
-        - Validates that `self.window_size` does not exceed the length of `y`.
-        - Fits `self.function` using rolling mean data,
-          raising an error if optimization fails.
-
         Returns
         -------
         self : reference to self
