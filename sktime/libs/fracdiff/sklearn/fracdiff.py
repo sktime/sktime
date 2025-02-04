@@ -23,7 +23,7 @@ else:
     from sklearn.utils.validation import validate_data as _skl_checker
 
 
-def _sklearn_check_input(method="fit", **kwargs):
+def _sklearn_check_input(method="fit", *args, **kwargs):
     """Downwards compatibility switch for new input checks from scikit-learn 1.6 on."""
     if sklearn_ge_16 and method != "fit":
         kwargs.update({"reset": False})
@@ -32,7 +32,7 @@ def _sklearn_check_input(method="fit", **kwargs):
         est = kwargs.pop("estimator", None)
         kwargs.update({"_estimator": est})
 
-    return _skl_checker(**kwargs)
+    return _skl_checker(*args, **kwargs)
 
 
 class Fracdiff(TransformerMixin, BaseEstimator):
@@ -136,7 +136,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = _sklearn_check_input(X=X, estimator=self, method="fit")
+        X = _sklearn_check_input(X, estimator=self, method="fit")
         if hasattr(X, "shape"):
             self.n_features_in_ = X.shape[1]
         self.coef_ = fdiff_coef(self.d, self.window)
@@ -160,7 +160,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             The fractional differentiation of `X`.
         """
         check_is_fitted(self, ["coef_"])
-        X = _skl_checker(X=X, estimator=self, method="transform")
+        X = _skl_checker(X, estimator=self, method="transform")
 
         # Check that the number of features in transform matches fit
         if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
