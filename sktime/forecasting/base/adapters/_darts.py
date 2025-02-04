@@ -623,6 +623,47 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
     return dataset_copy
 
 
+def _handle_panel_data(data: Union[pd.DataFrame, list]):
+    """Convert Panel data to list of TimeSeries Objects.
+
+    Parameters
+    ----------
+    data: Union[pd.DataFrame, list]
+        The Panel data to be converted into Darts compatible format
+
+    Returns
+    -------
+    list[TimeSeries]
+        The list of TimeSeries for multiple time series predictions for
+        Global Forecasting.
+    """
+    from darts import TimeSeries
+
+    if isinstance(data, pd.DataFrame) and isinstance(data.index, pd.MultiIndex):
+        ts_list = []
+        instance_level = data.index.names[0]
+        # handling multi-index conversions to a list of TimeSeries accepted by darts.
+        for instance in data.index.get_level_values(0).unique():
+            instance_df = data.xs(instance, level=instance_level)
+            ts = TimeSeries.from_dataframe(instance_df, fill_missing_dates=True)
+            ts_list.append(ts)
+        return ts_list
+    if isinstance(data, list):
+        return [
+            TimeSeries.from_series(d)
+            if isinstance(d, pd.Series)
+            else TimeSeries.from_dataframe(
+                _handle_input_index(d if isinstance(d, pd.DataFrame) else d.to_frame())
+            )
+            for d in data
+        ]
+    else:
+        raise TypeError(
+            f"""Expected panel data to be pd-multiindex, or list of `Series` object,
+                    got {type(data)}"""
+        )
+
+
 def _is_int64_type(index: pd.Index) -> bool:
     """Check if the index is an Int64Index type for pandas older versions.
 
@@ -684,8 +725,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         "maintainers": ["PranavBhatP"],
         "python_version": ">=3.9",
         "python_dependencies": ["darts>=0.29"],
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "df-list"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "capability:insample": True,
@@ -736,8 +777,9 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             the dataset. Weights can be provided as a `pd.Series` or `pd.DataFrame`,
             matching the target series' structure. Alternatively, a string value can
             specify the weighting schemes:
-            - `"linear"`: Weights decrease linearly for older observations.
-            - `"exponential"`: Weights decrase exponentially for older observations.
+
+                - `"linear"`: Weights decrease linearly for older observations.
+                - `"exponential"`: Weights decrase exponentially for older observations.
             If no weights are specified, all samples are treated equally.
         max_samples_per_ts: Optional[int], optional (default=None)
             Maximum number of samples per time series.
@@ -837,15 +879,15 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
     def convert_to_timeseries(
         self: "_DartsMixedCovariatesTorchModelAdapter",
-        data: Union[pd.Series, pd.DataFrame],
+        data: Union[pd.Series, pd.DataFrame, list],
     ):
         """Convert pandas data structures to Darts TimeSeries objects.
 
         Parameters
         ----------
-        data : Union[pd.Series, pd.DataFrame]
-            The time series data to convert. Can be either a pandas Series for
-            univariate data or DataFrame for multivariate data.
+        data : Union[pd.Series, pd.DataFrame, list]
+            The time series data to convert. Can be `Series` or
+            `Panel ` data.
 
         Returns
         -------
@@ -859,8 +901,13 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         """
         from darts import TimeSeries
 
-        data_copy = _handle_input_index(data)
-        return TimeSeries.from_dataframe(data_copy)
+        if data is None:
+            return None
+        if isinstance(data.index, pd.MultiIndex) or isinstance(data, list):
+            return _handle_panel_data(data)
+        else:
+            data_copy = _handle_input_index(data)
+            return TimeSeries.from_dataframe(data_copy)
 
     def convert_covariates(
         self: "_DartsMixedCovariatesTorchModelAdapter",
@@ -895,17 +942,20 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
             # Converting indices into Darts compatible format
             if isinstance(data, (pd.Series, pd.DataFrame)):
-                processed_data = _handle_input_index(
-                    data if isinstance(data, pd.DataFrame) else data.to_frame()
-                )
-                return [TimeSeries.from_dataframe(processed_data)]
+                if isinstance(data.index, pd.MultiIndex):
+                    return _handle_panel_data(data)
+                else:
+                    processed_data = _handle_input_index(
+                        data if isinstance(data, pd.DataFrame) else data.to_frame()
+                    )
+                    return [TimeSeries.from_dataframe(processed_data)]
             if isinstance(data, Sequence):
                 return [
                     TimeSeries.from_series(d)
                     if isinstance(d, pd.Series)
                     else TimeSeries.from_dataframe(
                         _handle_input_index(
-                            d if isinstance(d, pd.DataFrame) else d.to_frame
+                            d if isinstance(d, pd.DataFrame) else d.to_frame()
                         )
                     )
                     for d in data
@@ -926,7 +976,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
     def fit(
         self,
-        y: pd.DataFrame,
+        y: Union[pd.Series, pd.DataFrame, list],
         X: Optional[pd.DataFrame] = None,
         fh: Optional[ForecastingHorizon] = None,
         past_covariates: Optional[list[str]] = None,
@@ -937,7 +987,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
         Parameters
         ----------
-        y : pd.DataFrame
+        y: Union[pd.Series, pd.DataFrame, list]
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables
@@ -973,7 +1023,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
     def _fit(
         self,
-        y: pd.DataFrame,
+        y: Union[pd.Series, pd.DataFrame, list],
         fh: Optional[ForecastingHorizon] = None,
         X: Optional[pd.DataFrame] = None,
         past_covariates: Optional[list[str]] = None,
@@ -984,7 +1034,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
         Parameters
         ----------
-        y : pd.DataFrame
+        y : Union[pd.DataFrame, pd.Series, list]
             Target time series to which to fit the forecaster.
         fh: ForecastingHorizon, optional(default=None)
             fh - not used by Darts, calculated with `output_chunk_length`.
@@ -1019,19 +1069,26 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
                         )
                 future_covs = X[future_covariates]
 
-        if len(y) < self.input_chunk_length + self.output_chunk_length:
-            raise ValueError(
-                f"""Training data length must be at least
-                (self.input_chunk_length + self.output_chunk_length), got {len(y)}"""
-            )
-
         target = self.convert_to_timeseries(y)
         past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
+        if isinstance(target, list):
+            for ts in target:
+                if len(ts) < self.input_chunk_length + self.output_chunk_length:
+                    raise ValueError(
+                        f"""Training data length is at least (self.input_chunk_length
+                        + self.output_chunk_length), got {len(ts)}"""
+                    )
+        else:
+            if len(target) < self.input_chunk_length + self.output_chunk_length:
+                raise ValueError(
+                    f"""Training data length is at least (self.input_chunk_length
+                    + self.output_chunk_length), got {len(target)}"""
+                )
 
         # Create and fit the forecaster
         self._forecaster = self._create_forecaster()
         self._forecaster.fit(
-            target, past_covariates=past_covs, future_covariates=future_covs
+            series=target, past_covariates=past_covs, future_covariates=future_covs
         )
 
         self._is_fitted = True
@@ -1040,6 +1097,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
     def predict(
         self,
         fh: Optional[ForecastingHorizon],
+        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
         X: Optional[pd.DataFrame] = None,
         past_covariates: Optional[list[str]] = None,
         future_covariates: Optional[list[str]] = None,
@@ -1052,6 +1110,9 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             The forecasting horizon specifying the time steps to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables containing past and/or future covariates
+        y: Union[pd.DataFrame, pd.Series, list], optional (default=None)
+            The time series data, whose forecast is to be predicted. Specified
+            when Panel data is entered by the user.
         past_covariate : List[str], optional (default=None)
             Names of columns in X to be used as past covariates.
         future_covariate : List[str], optional (default=None)
@@ -1066,7 +1127,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
         return self._predict(
             fh=self._fh,
-            X=self._X,
+            y=y,
+            X=X if X is not None else self._X,
             past_covariates=past_covariates,
             future_covariates=future_covariates,
         )
@@ -1074,6 +1136,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
     def _predict(
         self: "_DartsMixedCovariatesTorchModelAdapter",
         fh: Optional[ForecastingHorizon],
+        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
         X: Optional[pd.DataFrame] = None,
         past_covariates: Optional[list[str]] = None,
         future_covariates: Optional[list[str]] = None,
@@ -1084,6 +1147,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         ----------
         fh : ForecastingHorizon
             The forecasting horizon specifying the time steps to predict.
+        y: Union[pd.Series,pd.DataFrame, list], optional (default=None)
+            `y` parameter to specify when multiple time series are to be predicted.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables containing past and/or future covariates
         past_covariate : List[str], optional (default=None)
@@ -1093,7 +1158,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
 
         Returns
         -------
-        pd.DataFrame
+        Union[pd.DataFrame, list]
             Predicted values for the specified forecasting horizon.
         """
         self.check_is_fitted()
@@ -1119,24 +1184,57 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
 
         max_fh = fh.to_relative(self.cutoff)[-1]
+        target = self.convert_to_timeseries(y if y is not None else self._y)
 
-        endogenous_predictions = self._forecaster.predict(
-            n=max_fh,
-            past_covariates=past_covs,
-            future_covariates=future_covs,
-            num_samples=1,
-        )
-        predictions = endogenous_predictions.pd_dataframe()
-        expected_index = fh.get_expected_pred_idx(self.cutoff)
-        predictions = pd.DataFrame(
-            predictions.values, index=expected_index, columns=predictions.columns
-        )
+        if isinstance(target, list):
+            endogenous_predictions = self._forecaster.predict(
+                n=max_fh,
+                series=target,
+                past_covariates=past_covs,
+                future_covariates=future_covs,
+                num_samples=1,
+            )
+            if y is not None and isinstance(y.index, pd.MultiIndex):
+                predictions_list = []
+                instance_names = []
 
-        if isinstance(self._y, pd.Series):
-            predictions = predictions.squeeze()
-            if hasattr(self._y, "name"):
-                # ensuring complete replication
-                predictions.name = self._y.name
+                for idx, pred_ts in enumerate(endogenous_predictions):
+                    df = pred_ts.pd_dataframe()
+
+                    instance_name = (
+                        f"series_{idx}"
+                        if y is None or not isinstance(y.index, pd.MultiIndex)
+                        else self._y.index.get_level_values(0).unique()[idx]
+                    )
+
+                    instance_names.append(instance_name)
+                    predictions_list.append(df)
+                combined_predictions = pd.concat(predictions_list, keys=instance_names)
+
+                if y is not None and isinstance(y.index, pd.MultiIndex):
+                    combined_predictions.index.names = y.index.names
+                else:
+                    combined_predictions.index.names = self._y.index.names
+                return combined_predictions
+            else:
+                return [pred.pd_dataframe() for pred in endogenous_predictions]
+        else:
+            endogenous_predictions = self._forecaster.predict(
+                n=max_fh,
+                past_covariates=past_covariates,
+                future_covariates=future_covariates,
+                num_samples=1,
+            )
+            predictions = endogenous_predictions.pd_dataframe()
+            expected_index = fh.get_expected_pred_idx(self.cutoff)
+            predictions = pd.DataFrame(
+                predictions.values, index=expected_index, columns=predictions.columns
+            )
+            if isinstance(self._y, pd.Series):
+                predictions = predictions.squeeze()
+                if hasattr(self._y, "name"):
+                    # ensuring complete replication
+                    predictions.name = self._y.name
 
         return predictions
 

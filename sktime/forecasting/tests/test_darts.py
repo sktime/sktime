@@ -36,7 +36,7 @@ model_kwargs = {
         "fit_intercept": True,
     },
     DartsTiDEModel: {
-        "n_epochs": 3,
+        "n_epochs": 2,
     },
 }
 
