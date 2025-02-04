@@ -3,18 +3,47 @@
 from typing import TypeVar
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import (
     BaseEstimator,  # type: ignore
     TransformerMixin,  # type: ignore
 )
-from sklearn.utils.validation import (
-    check_array,  # type: ignore
-    check_is_fitted,  # type: ignore
-)
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.libs.fracdiff.fdiff import fdiff, fdiff_coef
 
 T = TypeVar("T", bound="Fracdiff")
+
+
+sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
+
+if sklearn_ge_16:
+    from sklearn.utils.validation import validate_data as _skl_checker
+else:
+    from sklearn.utils.validation import check_array as _skl_checker
+
+
+def _sklearn_check_input(*args, **kwargs):
+    """Downwards compatibility switch for new input checks from scikit-learn 1.6 on.
+
+    Parameters
+    ----------
+    method : str, default None
+        Method from which the check is called, e.g., "fit" or "transform".
+    """
+    method = kwargs.pop("method", None)
+
+    if sklearn_ge_16 and method != "fit":
+        kwargs.update({"reset": False})
+    if sklearn_ge_16:
+        # from sklearn 1.6.0, the estimator arg is called _estimator
+        est = kwargs.pop("estimator", None)
+        args = (est,) + args
+    else:
+        X = kwargs.pop("X", None)
+        args = (X,) + args
+
+    return _skl_checker(*args, **kwargs)
 
 
 class Fracdiff(TransformerMixin, BaseEstimator):
@@ -118,7 +147,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        check_array(X, estimator=self)
+        X = _sklearn_check_input(X=X, estimator=self, method="fit")
         if hasattr(X, "shape"):
             self.n_features_in_ = X.shape[1]
         self.coef_ = fdiff_coef(self.d, self.window)
@@ -142,7 +171,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             The fractional differentiation of `X`.
         """
         check_is_fitted(self, ["coef_"])
-        check_array(X, estimator=self)
+        X = _sklearn_check_input(X=X, estimator=self, method="transform")
 
         # Check that the number of features in transform matches fit
         if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
