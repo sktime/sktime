@@ -522,7 +522,7 @@ def test_deep_estimator_empty():
 @pytest.mark.parametrize("optimizer", [None, "adam", "object-adamax"])
 def test_deep_estimator_full(optimizer):
     """Check if serialization works for full dummy."""
-    from tensorflow.keras.optimizers import Adamax, Optimizer, serialize
+    from tensorflow.keoptimizersras import Adamax, Optimizer, serialize
 
     if optimizer == "object-adamax":
         optimizer = Adamax()
