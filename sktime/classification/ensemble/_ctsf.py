@@ -287,7 +287,13 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         should be favorted in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
-        return BaseClassifier._repr_html_(self)
+        if self.get_config()["display"] != "diagram":
+            raise AttributeError(
+                "_repr_html_ is only defined when the "
+                "'display' configuration option is set to "
+                "'diagram'"
+            )
+        return self._repr_html_inner
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display instances of BaseObject."""
