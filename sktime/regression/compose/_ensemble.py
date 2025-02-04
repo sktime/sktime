@@ -20,12 +20,15 @@ from sklearn.tree import DecisionTreeRegressor
 from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.warnings import warn
 
 
-class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
+class ComposableTimeSeriesForestRegressor(
+    _HTMLDocumentationLinkMixin, BaseTimeSeriesForest, BaseRegressor
+):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random

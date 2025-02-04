@@ -20,12 +20,15 @@ from sklearn.utils.multiclass import check_classification_targets
 from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.warnings import warn
 
 
-class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
+class ComposableTimeSeriesForestClassifier(
+    _HTMLDocumentationLinkMixin, BaseTimeSeriesForest, BaseClassifier
+):
     """Time Series Forest Classifier as described in [1]_.
 
     A time series forest is an adaptation of the random
