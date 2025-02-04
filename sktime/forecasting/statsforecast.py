@@ -983,3 +983,111 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             ]
 
         return params
+
+
+class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
+    """StatsForecast ADIDA (Aggregate-Disaggregate Intermittent Demand Approach) model.
+
+    Direct interface to ``statsforecast.models.ADIDA`` by Nixtla.
+
+    This estimator directly interfaces ``ADIDA``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    The ADIDA model forecasts intermittent demand time series.
+    It handles sparse, irregular demand by aggregating the time series,
+    forecasting the smoother aggregated series, and then disaggregating
+    the forecast back to the original scale.
+    ADIDA offers choices for aggregation (`agg_func`), disaggregation (`dis_func`),
+    and trend specification (`trend`), and can optionally model seasonality.
+    ADIDA requires univariate time series input.
+
+    Parameters
+    ----------
+    agg_func : str, default="sum"
+        Function used to aggregate the time series.
+        Options: 'sum', 'mean', 'median'.
+    dis_func : str, default="mean"
+        Function used to disaggregate the forecasts.
+        Options: 'mean', 'mode', 'median'.
+    trend : str, default="constant"
+        Type of trend to include in the model.
+        Options: 'constant', 'linear'.
+    m : int, optional, default=1
+        Seasonal period. If provided, seasonality will be considered.
+    season_length: int, optional, default=None
+        Alternative way to specify the seasonal period.  If `m` is also provided,
+        `season_length` is ignored.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/docs/models/adida.html#introduction
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
+    >>> y = load_airline()
+    >>> model = StatsForecastADIDA(agg_func="mean", dis_func="mean", trend="linear")
+    >>> fitted_model = model.fit(y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AzulGarza", "yarnabrina", "vedantag17"],
+        "maintainers": ["vedantag17"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
+        "python_dependencies": ["statsforecast>=1.4.0"],
+    }
+
+    def __init__(
+        self,
+        agg_func: str = "sum",
+        dis_func: str = "mean",
+        trend: str = "constant",
+        m: Optional[int] = None,
+        season_length: Optional[int] = None,
+    ):
+        self.agg_func = agg_func
+        self.dis_func = dis_func
+        self.trend = trend
+        self.m = m
+        self.season_length = season_length
+
+        super().__init__()
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import ADIDA
+
+        return ADIDA
+
+    def _get_statsforecast_params(self):
+        params = {
+            "dis_func": self.dis_func,
+        }
+        if self.m is not None:
+            params["m"] = self.m
+        elif self.season_length is not None:
+            params["m"] = self.season_length
+
+        return params
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        del parameter_set
+
+        params = [
+            {},
+            {"agg_func": "mean", "dis_func": "median", "trend": "linear", "m": 12},
+        ]
+
+        return params
