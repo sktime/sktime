@@ -18,9 +18,9 @@ T = TypeVar("T", bound="Fracdiff")
 sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0")
 
 if sklearn_ge_16:
-    from sklearn.utils.validation import check_array as _skl_checker
-else:
     from sklearn.utils.validation import validate_data as _skl_checker
+else:
+    from sklearn.utils.validation import check_array as _skl_checker
 
 
 def _sklearn_check_input(*args, **kwargs):
