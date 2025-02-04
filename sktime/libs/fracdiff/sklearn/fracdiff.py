@@ -24,7 +24,13 @@ else:
 
 
 def _sklearn_check_input(*args, **kwargs):
-    """Downwards compatibility switch for new input checks from scikit-learn 1.6 on."""
+    """Downwards compatibility switch for new input checks from scikit-learn 1.6 on.
+
+    Parameters
+    ----------
+    method : str, default None
+        Method from which the check is called, e.g., "fit" or "transform".
+    """
     method = kwargs.pop("method", None)
 
     if sklearn_ge_16 and method != "fit":
