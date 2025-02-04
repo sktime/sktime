@@ -2490,7 +2490,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    def _get_last_window(cutoff, window_length, y_orig):
+    def _get_last_window(self, cutoff, window_length, y_orig):
         start = _shift(cutoff, by=-window_length + 1)
         cutoff = cutoff[0]
         y = y_orig.loc[start:cutoff]
@@ -2506,7 +2506,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         X = None
         return y, X
 
-    def _is_predictable(last_window, window_length):
+    def _is_predictable(self, last_window, window_length):
         """Check if we can make predictions from last window."""
         return (
             len(last_window) == window_length
