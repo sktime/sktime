@@ -1254,14 +1254,14 @@ class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
             data = data.iloc[:-n]
         return data
 
-    def _multiindex_data(self, max_prediction_length, data_length=10):
+    def _multiindex_data(self, max_prediction_length, min_data=10, max_data=12):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
             (50, 1),
             n_columns=2,
-            max_timepoints=data_length,
-            min_timepoints=data_length,
+            max_timepoints=max_data,
+            min_timepoints=min_data,
         )
         data = data.droplevel(1)
         from sklearn.model_selection import train_test_split
