@@ -191,6 +191,7 @@ class HFTransformersForecaster(BaseForecaster):
                 raise ValueError(
                     "If `model` is given, both `model_path` and `config` must be None."
                 )
+            config = self.model.config
         else:
             # Load model and extract config
             config = AutoConfig.from_pretrained(self.model_path)
