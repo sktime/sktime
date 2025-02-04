@@ -136,7 +136,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = _sklearn_check_input(X, estimator=self)
+        X = _sklearn_check_input(X=X, estimator=self, method="fit")
         if hasattr(X, "shape"):
             self.n_features_in_ = X.shape[1]
         self.coef_ = fdiff_coef(self.d, self.window)
@@ -160,7 +160,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             The fractional differentiation of `X`.
         """
         check_is_fitted(self, ["coef_"])
-        X = _skl_checker(X, estimator=self)
+        X = _skl_checker(X=X, estimator=self, method="transform")
 
         # Check that the number of features in transform matches fit
         if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
