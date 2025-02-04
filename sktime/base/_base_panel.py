@@ -605,3 +605,266 @@ class BasePanelMixin(BaseEstimator):
         if y is None:
             return X
         return X, y
+
+
+import os
+import pickle
+import shutil
+from pathlib import Path
+from zipfile import ZipFile
+
+from sktime.base._base import SERIALIZATION_FORMATS
+from sktime.utils.dependencies import _check_soft_dependencies
+
+
+class DeepSerializationMixin:
+    def __getstate__(self):
+        from tensorflow.keras.optimizers import Optimizer, serialize
+
+        state = self.__dict__.copy()
+        optimizer_attr = state.get("optimizer", -1)
+        if not isinstance(optimizer_attr, str):
+            if optimizer_attr is None:
+                state["optimizer"] = 0
+            elif optimizer_attr == -1:
+                state["optimizer"] = -1
+            elif isinstance(optimizer_attr, Optimizer):
+                state["optimizer"] = serialize(optimizer_attr)
+            else:
+                raise ValueError(
+                    f"`optimizer` of type {type(optimizer_attr)} cannot be serialized, "
+                    "it should be absent/None/str/tf.keras.optimizers.Optimizer object"
+                )
+        for attribute in ["model_", "history", "optimizer_"]:
+            if state.get(attribute) is not None:
+                del state[attribute]
+        return state
+
+    def __setstate__(self, state):
+        from tensorflow.keras.optimizers import deserialize
+
+        self.__dict__ = state
+
+        if hasattr(self, "model_"):
+            self.__dict__["model_"] = self.model_
+            if hasattr(self, "model_.optimizer"):
+                self.__dict__["optimizer_"] = self.model_.optimizer
+
+        if self.__dict__.get("optimizer_") is not None:
+            self.__dict__["optimizer"] = self.__dict__["optimizer_"]
+        else:
+            if self.__dict__.get("optimizer") == 0:
+                self.__dict__["optimizer"] = None
+            elif self.__dict__.get("optimizer") == -1:
+                del self.__dict__["optimizer"]
+            else:
+                if isinstance(self.optimizer, dict):
+                    self.__dict__["optimizer"] = deserialize(self.optimizer)
+
+        if hasattr(self, "history"):
+            self.__dict__["history"] = self.history
+
+    def save(self, path=None, serialization_format="pickle"):
+        """
+        Save the estimator to an in-memory object or as a zip file.
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            If None, the estimator is saved in-memory.
+            Otherwise, a zip file is created at the specified location.
+        serialization_format : str, default="pickle"
+            The serialization format to use. Supported formats are those
+            listed in SERIALIZATION_FORMATS. For example, "cloudpickle" is
+            supported for the classifier.
+
+        Returns
+        -------
+        If path is None, returns a tuple:
+          (type(self), (serialized estimator,in-memory keras model,in-memory history))
+        If path is provided, returns a ZipFile referencing the created zip file.
+        """
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The serialization_format='{serialization_format}' is not supported."
+                f"Supported formats: {SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
+            raise TypeError(
+                f"`path` is expected to be either a string or a Path object,"
+                f" but got type: {type(path)}."
+            )
+
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
+
+        # In-memory saving if no path is provided.
+        if path is None:
+            _check_soft_dependencies("h5py", severity="error")
+            import h5py
+
+            in_memory_model = None
+            if self.model_ is not None:
+                self.model_.save("disk_less.h5")
+                with h5py.File("disk_less.h5", "r") as h5file:
+                    in_memory_model = h5file.id.get_file_image()
+            in_memory_history = pickle.dumps(
+                self.history.history if self.history is not None else None
+            )
+            return (
+                type(self),
+                (
+                    pickle.dumps(self),
+                    in_memory_model,
+                    in_memory_history,
+                ),
+            )
+
+        # On-disk saving
+        if self.model_ is not None:
+            keras_path = path / "keras" / "model.keras"
+            os.makedirs(keras_path.parent, exist_ok=True)
+            self.model_.save(keras_path)
+
+        with open(path / "history", "wb") as history_writer:
+            pickle.dump(
+                self.history.history if self.history is not None else None,
+                history_writer,
+            )
+        with open(path / "_metadata", "wb") as file:
+            pickle.dump(type(self), file)
+        with open(path / "_obj", "wb") as file:
+            pickle.dump(self, file)
+
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+    def _serialize_using_dump_func(self, path, dump, dumps):
+        """
+        Serialize and return the estimator using provided dump functions.
+
+        This helper is used as the serialization format (cloudpickle) has been chosen.
+        """
+        import shutil
+        from zipfile import ZipFile
+
+        history = self.history.history if self.history is not None else None
+        if path is None:
+            _check_soft_dependencies("h5py", severity="error")
+            import h5py
+
+            in_memory_model = None
+            if self.model_ is not None:
+                self.model_.save("disk_less.h5")
+                with h5py.File("disk_less.h5", "r") as h5file:
+                    in_memory_model = h5file.id.get_file_image()
+            in_memory_history = dumps(history)
+            return (
+                type(self),
+                (
+                    dumps(self),
+                    in_memory_model,
+                    in_memory_history,
+                ),
+            )
+
+        if self.model_ is not None:
+            keras_path = path / "keras" / "model.keras"
+            os.makedirs(keras_path.parent, exist_ok=True)
+            self.model_.save(keras_path)
+
+        with open(path / "history", "wb") as history_writer:
+            dump(history, history_writer)
+        with open(path / "_metadata", "wb") as file:
+            dump(type(self), file)
+        with open(path / "_obj", "wb") as file:
+            dump(self, file)
+
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """
+        Load an estimator from an in-memory serialized container.
+
+        Parameters
+        ----------
+        serial : tuple
+            A tuple of three elements as produced by the save method when path is None.
+
+        Returns
+        -------
+        The deserialized estimator.
+        """
+        import pickle
+
+        from tensorflow.keras.models import load_model
+
+        if not isinstance(serial, tuple):
+            raise TypeError(
+                f"`serial` is expected to be a tuple, got type: {type(serial)}."
+            )
+        if len(serial) != 3:
+            raise ValueError(
+                f"`serial` should have 3 elements, found {len(serial)} instead."
+            )
+
+        serial_obj, in_memory_model, in_memory_history = serial
+        if in_memory_model is None:
+            cls.model_ = None
+        else:
+            with open("diskless.h5", "wb") as store_:
+                store_.write(in_memory_model)
+                cls.model_ = load_model("diskless.h5")
+
+        cls.history = pickle.loads(in_memory_history)
+        return pickle.loads(serial_obj)
+
+    @classmethod
+    def load_from_path(cls, serial):
+        """
+        Load an estimator from a zip file.
+
+        Parameters
+        ----------
+        serial : Path
+            The file location of the zip file.
+
+        Returns
+        -------
+        The deserialized estimator.
+        """
+        import pickle
+        from shutil import rmtree
+        from zipfile import ZipFile
+
+        from tensorflow import keras
+
+        temp_unzip_loc = serial.parent / "temp_unzip/"
+        temp_unzip_loc.mkdir()
+
+        with ZipFile(serial, mode="r") as zip_file:
+            for file in zip_file.namelist():
+                if not file.startswith("keras/"):
+                    continue
+                zip_file.extract(file, temp_unzip_loc)
+
+        keras_location_legacy = temp_unzip_loc / "keras"
+        keras_location = temp_unzip_loc / "keras" / "model.keras"
+        if keras_location.exists():
+            cls.model_ = keras.models.load_model(keras_location)
+        elif keras_location_legacy.exists():
+            cls.model_ = keras.models.load_model(keras_location_legacy)
+        else:
+            cls.model_ = None
+
+        rmtree(temp_unzip_loc)
+        cls.history = keras.callbacks.History()
+        with ZipFile(serial, mode="r") as file:
+            cls.history.set_params(pickle.loads(file.open("history").read()))
+            return pickle.loads(file.open("_obj").read())
