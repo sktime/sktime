@@ -26,9 +26,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.warnings import warn
 
 
-class ComposableTimeSeriesForestRegressor(
-    _HTMLDocumentationLinkMixin, BaseTimeSeriesForest, BaseRegressor
-):
+class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -241,6 +239,20 @@ class ComposableTimeSeriesForestRegressor(
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseRegressor.predict_proba."""
         return BaseRegressor.predict_proba(self, X=X, **kwargs)
+
+    @property
+    def _repr_html_(self):
+        """HTML representation of BaseObject.
+
+        This is redundant with the logic of `_repr_mimebundle_`. The latter
+        should be favorted in the long term, `_repr_html_` is only
+        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        """
+        return BaseRegressor._repr_html_(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseRegressor._repr_mimebundle_(self, **kwargs)
 
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
