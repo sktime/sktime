@@ -38,7 +38,7 @@ def _sklearn_check_input(*args, **kwargs):
     if sklearn_ge_16:
         # from sklearn 1.6.0, the estimator arg is called _estimator
         est = kwargs.pop("estimator", None)
-        kwargs.update({"_estimator": est})
+        args = (est,) + args
     else:
         X = kwargs.pop("X", None)
         args = (X,) + args
@@ -171,7 +171,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             The fractional differentiation of `X`.
         """
         check_is_fitted(self, ["coef_"])
-        X = _skl_checker(X=X, estimator=self, method="transform")
+        X = _sklearn_check_input(X=X, estimator=self, method="transform")
 
         # Check that the number of features in transform matches fit
         if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
