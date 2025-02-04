@@ -15,7 +15,7 @@ from sktime.libs.fracdiff.fdiff import fdiff, fdiff_coef
 T = TypeVar("T", bound="Fracdiff")
 
 
-sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0")
+sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
 
 if sklearn_ge_16:
     from sklearn.utils.validation import validate_data as _skl_checker
