@@ -3,13 +3,12 @@
 import numpy as np
 import pytest
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.pipeline import make_pipeline
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
@@ -34,11 +33,14 @@ def test_FeatureUnion_pipeline():
 
     # pipeline with segmentation plus multiple feature extraction
     steps = [
-        RandomIntervalSegmenter(n_intervals=1),
-        FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
-        DecisionTreeClassifier(),
+        ("segment", RandomIntervalSegmenter(n_intervals=1)),
+        (
+            "transform",
+            FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
+        ),
+        ("clf", DecisionTreeClassifier()),
     ]
-    clf = make_pipeline(*steps)
+    clf = Pipeline(steps)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
