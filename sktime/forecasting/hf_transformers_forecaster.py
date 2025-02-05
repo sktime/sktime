@@ -6,27 +6,24 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.hf_transformers_utils.dataset import PyTorchDataset
+from sktime.forecasting.hf_transformers_utils.models import MODEL_MAPPINGS
+from sktime.forecasting.hf_transformers_utils.util_func import (
+    _frame2numpy,
+    _pad_truncate,
+)
 
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-
-__author__ = ["benheid", "geetu040"]
+_author_ = ["benheid", "geetu040", "Sohaib-Ahmed21"]
 
 
-class HFTransformersForecaster(BaseForecaster):
+class HFTransformersForecaster(_BaseGlobalForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
 
     This forecaster fetches the model from the huggingface model hub.
     Note, this forecaster is in an experimental state. It is currently only
-    working for Informer, Autoformer, and TimeSeriesTransformer.
+    working for Informer, Autoformer, Timer and TimeSeriesTransformer.
 
     Parameters
     ----------
@@ -43,31 +40,36 @@ class HFTransformersForecaster(BaseForecaster):
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
           the model with fewer trainable parameters, saving computational resources.
-          Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
+          Note: If the 'peft' package is not available, a ModuleNotFoundError will
           be raised, indicating that the 'peft' package is required. Please install
-          it using `pip install peft` to use this fit strategy.
+          it using pip install peft to use this fit strategy.
 
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
-        Configuration to use for the model. See the `transformers`
+        Configuration to use for the model. See the transformers
         documentation for details.
     training_args : dict, default={}
-        Training arguments to use for the model. See `transformers.TrainingArguments`
+        Training arguments to use for the model. See transformers.TrainingArguments
         for details.
-        Note that the `output_dir` argument is required.
+        Note that the output_dir argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See `transformers.Trainer`
+        List of metrics to compute during training. See transformers.Trainer
         for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
-        List of callbacks to use during training. See `transformers.Trainer`
+        List of callbacks to use during training. See transformers.Trainer
     peft_config : peft.PeftConfig, default=None
         Configuration for Parameter-Efficient Fine-Tuning.
-        When `fit_strategy` is set to "peft",
+        When fit_strategy is set to "peft",
         this will be used to set up PEFT parameters for the model.
-        See the `peft` documentation for details.
+        See the peft documentation for details.
+    trust_remote_code : bool, default=False
+        Whether or not to allow for custom models defined on the Hub in their own
+        modeling files. This option should only be set to True for repositories you
+        trust and in which you have read the code, as it will execute code present on
+        the Hub on your local machine.
 
     Examples
     --------
@@ -136,10 +138,19 @@ class HFTransformersForecaster(BaseForecaster):
         "handles-missing-data": False,
         "capability:pred_int": False,
         "python_dependencies": ["transformers", "torch"],
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -153,6 +164,7 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        trust_remote_code=False,
     ):
         super().__init__()
         self.model_path = model_path
@@ -169,56 +181,50 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.trust_remote_code = trust_remote_code
 
     def _fit(self, y, X, fh):
+        import torch.nn as nn
         from transformers import AutoConfig, Trainer, TrainingArguments
 
         # Load model and extract config
-        config = AutoConfig.from_pretrained(self.model_path)
+        config = AutoConfig.from_pretrained(
+            self.model_path, trust_remote_code=self.trust_remote_code
+        )
+
+        # Find the correct model and adapter classes from the dictionary
+        model_info = MODEL_MAPPINGS.get(config.model_type)
+        if not model_info:
+            raise ValueError(f"Unsupported model type: {config.model_type}")
+
+        # Dynamically import custom adapter class
+        custom_adapter_class = model_info["custom_adapter_class"]
+
+        # Load the Hugging Face model's custom adapter
+        self.adapter = custom_adapter_class(config)
 
         # Update config with user provided config
-        _config = config.to_dict()
-        _config.update(self._config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
-        _config["num_static_real_features"] = 0
-        _config["num_dynamic_real_features"] = 0
-        _config["num_static_categorical_features"] = 0
-        _config["num_time_features"] = 0 if X is None else X.shape[-1]
+        # Find fh values to pass to update_config as adpater
+        # can't access instance attrbiutes like self.cut_off
+        fh_values = fh.to_relative(self._cutoff)._values + 1
+        config = self.adapter.update_config(config, self._config, X, fh_values)
 
-        if hasattr(config, "feature_size"):
-            del _config["feature_size"]
+        # Update self.config
+        self.config = config
 
-        if fh is not None:
-            _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
-                _config["prediction_length"],
-            )
-
-        config = config.from_dict(_config)
-        import transformers
-
-        prediction_model_class = None
-        if hasattr(config, "architectures") and config.architectures is not None:
-            prediction_model_class = config.architectures[0]
-        elif hasattr(config, "model_type"):
-            prediction_model_class = (
-                "".join(x.capitalize() for x in config.model_type.lower().split("_"))
-                + "ForPrediction"
-            )
-        else:
-            raise ValueError(
-                "The model type is not inferable from the config."
-                "Thus, the model cannot be loaded."
-            )
         # Load model with the updated config
-        self.model, info = getattr(
-            transformers, prediction_model_class
-        ).from_pretrained(
+        source_model_class = self.adapter.source_model_class
+        self.model, info = source_model_class.from_pretrained(
             self.model_path,
             config=config,
             output_loading_info=True,
             ignore_mismatched_sizes=True,
+            trust_remote_code=self.trust_remote_code,
         )
+
+        # Get context and pred length from function as their logic
+        # differs from model to model
+        self.context_len, self.pred_len = self.adapter.get_seq_args()
 
         # Freeze all loaded parameters
         for param in self.model.parameters():
@@ -233,7 +239,7 @@ class HFTransformersForecaster(BaseForecaster):
             _model = self.model
             for attr_name in key.split(".")[:-1]:
                 _model = getattr(_model, attr_name)
-            _model.weight = torch.nn.Parameter(
+            _model.weight = nn.Parameter(
                 _model.weight.masked_fill(_model.weight.isnan(), 0.001),
                 requires_grad=True,
             )
@@ -243,23 +249,23 @@ class HFTransformersForecaster(BaseForecaster):
 
             train_dataset = PyTorchDataset(
                 y[:split],
-                config.context_length + max(config.lags_sequence),
+                self.context_len,
                 X=X[:split] if X is not None else None,
-                fh=config.prediction_length,
+                pred_len=self.pred_len,
             )
 
             eval_dataset = PyTorchDataset(
                 y[split:],
-                config.context_length + max(config.lags_sequence),
+                self.context_len,
                 X=X[split:] if X is not None else None,
-                fh=config.prediction_length,
+                pred_len=self.pred_len,
             )
         else:
             train_dataset = PyTorchDataset(
                 y,
-                config.context_length + max(config.lags_sequence),
+                self.context_len,
                 X=X if X is not None else None,
-                fh=config.prediction_length,
+                pred_len=self.pred_len,
             )
 
             eval_dataset = None
@@ -279,13 +285,13 @@ class HFTransformersForecaster(BaseForecaster):
                 "peft",
                 severity="error",
                 msg=(
-                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
+                    f"Error in {self._class.name_}: 'peft' module not found. "
                     "'peft' is a soft dependency and not included "
                     "in the base sktime installation. "
                     "To use this functionality, please install 'peft' by running: "
-                    "`pip install peft` or `pip install sktime[dl]`. "
+                    "pip install peft or pip install sktime[dl]. "
                     "To install all soft dependencies, "
-                    "run: `pip install sktime[all_extras]`"
+                    "run: pip install sktime[all_extras]"
                 ),
             ):
                 from peft import get_peft_model
@@ -304,8 +310,9 @@ class HFTransformersForecaster(BaseForecaster):
         )
         trainer.train()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, y, X=None):
         import transformers
+        from torch import from_numpy
 
         if self.deterministic:
             transformers.set_seed(42)
@@ -314,58 +321,70 @@ class HFTransformersForecaster(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        self.model.eval()
-        from torch import from_numpy
+        _y = y if self._global_forecasting else self._y
 
-        hist = self._y.values.reshape((1, -1))
-        if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
-            if x_.shape[1] < self.model.config.prediction_length:
-                # TODO raise exception here?
-                x_ = np.resize(
-                    x_, (1, self.model.config.prediction_length, x_.shape[-1])
-                )
+        # multi-index conversion goes here
+        if isinstance(_y.index, pd.MultiIndex):
+            hist = _frame2numpy(_y)
         else:
-            hist_x = np.array(
-                [
-                    [[]]
-                    * (
-                        self.model.config.context_length
-                        + max(self.model.config.lags_sequence)
-                    )
-                ]
-            )
-            x_ = np.array([[[]] * self.model.config.prediction_length])
+            hist = np.expand_dims(_y.values, axis=0)
 
-        pred = self.model.generate(
-            past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
-            past_time_features=from_numpy(
+        # hist.shape: (n_hierarchies, n_timestamps, n_cols)
+        # truncate or pad to match sequence length
+        past_values, observed_mask = _pad_truncate(hist, self.context_len)
+
+        # if y is univariate, past_values is having 1 col
+        past_values = past_values.reshape(past_values.shape[0], -1)
+        observed_mask = observed_mask.reshape(past_values.shape[0], -1)
+
+        if X is not None:
+            # multi-index conversion goes here
+            if isinstance(_y.index, pd.MultiIndex):
+                hist_x = _frame2numpy(self._X)
+                x_ = _frame2numpy(X)
+            else:
+                hist_x = np.expand_dims(self._X.values, axis=0)
+                x_ = np.expand_dims(X.values, axis=0)
+
+            # truncate or pad to match sequence length
+            hist_x, _ = _pad_truncate(hist_x, self.context_len)
+            x_ = np.resize(x_, (1, self.pred_len, x_.shape[-1]))
+
+        else:
+            hist_x = np.array([[[]] * (self.context_len)] * past_values.shape[0])
+            x_ = np.array([[[]] * self.pred_len] * past_values.shape[0])
+
+        self.model.eval()
+        past_values = from_numpy(past_values).to(self.model.dtype).to(self.model.device)
+        past_time_features = (
+            from_numpy(
                 hist_x[
                     :,
-                    -self.model.config.context_length
-                    - max(self.model.config.lags_sequence) :,
+                    -self.context_len :,
                 ]
             )
             .to(self.model.dtype)
-            .to(self.model.device),
-            future_time_features=from_numpy(x_)
-            .to(self.model.dtype)
-            .to(self.model.device),
-            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(
-                self.model.device
-            ),
+            .to(self.model.device)
+        )
+        future_time_features = from_numpy(x_).to(self.model.dtype).to(self.model.device)
+        past_observed_mask = (
+            from_numpy(observed_mask).to(self.model.dtype).to(self.model.device)
         )
 
-        pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
-
-        pred = pd.Series(
-            pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
+        pred = self.adapter.pred_output(
+            self.model,
+            past_values,
+            past_time_features,
+            future_time_features,
+            past_observed_mask,
+            fh,
+        )
+        pred = pd.DataFrame(
+            pred,
+            index=ForecastingHorizon(range(1, len(pred) + 1))
             .to_absolute(self._cutoff)
             ._values,
-            # columns=self._y.columns
-            name=self._y.name,
+            columns=self._y.columns,
         )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 
@@ -377,15 +396,15 @@ class HFTransformersForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return "default" set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            MyClass(**params) or MyClass(**params[i]) creates a valid test instance.
+            create_test_instance uses the first (or only) dictionary in params
         """
         test_params = [
             {
@@ -404,20 +423,15 @@ class HFTransformersForecaster(BaseForecaster):
                 "deterministic": True,
             },
             {
-                "model_path": "huggingface/autoformer-tourism-monthly",
+                "model_path": "thuml/timer-base-84m",
                 "fit_strategy": "minimal",
                 "training_args": {
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
                 },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
                 "deterministic": True,
+                "trust_remote_code": True,
             },
         ]
 
@@ -450,40 +464,3 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
         return test_params
-
-
-class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
-
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
-        self.fh = fh
-
-    def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
-
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
-
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
-        else:
-            exog_data = tensor([[]] * self.fh)
-            hist_exog = tensor([[]] * self.seq_len)
-        return {
-            "past_values": hist_y,
-            "past_time_features": hist_exog,
-            "future_time_features": exog_data,
-            "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values": from_numpy(
-                self.y[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float(),
-        }
