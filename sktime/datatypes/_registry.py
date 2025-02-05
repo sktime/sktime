@@ -291,7 +291,7 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
             "mtype must be str, or list of str, nested list/str object, or None"
         )
 
-    scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
+    scitype = [k[1] for k in generate_mtype_register() if k[0] == mtype]
 
     if len(scitype) > 1:
         raise ValueError("multiple scitypes match the mtype, specify scitype")
