@@ -115,6 +115,7 @@ class SeriesPdDataFrame(ScitypeSeries):
         "description": "pandas.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -275,6 +276,7 @@ class SeriesPdSeries(ScitypeSeries):
         "description": "pandas.Series representation of a univariate series",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -420,6 +422,7 @@ class SeriesNp2D(ScitypeSeries):
         "description": "2D numpy.ndarray with rows=samples, cols=variables, index=integers",  # noqa: E501
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -635,6 +638,7 @@ class SeriesXarray(ScitypeSeries):
         "description": "xarray.DataArray representation of a uni- or multivariate time series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "xarray",
+        "python_type": "xarray.DataArray",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -768,6 +772,7 @@ class SeriesDask(ScitypeSeries):
         "description": "dask.DataFrame representation of a uni- or multivariate series",
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -838,6 +843,7 @@ class SeriesPolarsEager(ScitypeSeries):
         "description": "polars.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -914,6 +920,7 @@ class SeriesGluontsList(ScitypeSeries):
         "description": "gluonts ListDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1058,6 +1065,7 @@ class SeriesGluontsPandas(ScitypeSeries):
         "description": "gluonts PandasDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
