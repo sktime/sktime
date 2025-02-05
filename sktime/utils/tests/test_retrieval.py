@@ -15,13 +15,13 @@ def test_all_functions():
     res = _all_functions("sktime.utils.adapters")
     names = [name for name, _ in res]
 
-    EXPECTED_NAMES = [
+    EXPECTED_NAMES = {
         "_clone_fitted_params",
         "_get_fitted_params_safe",
         "_safe_call",
         "_method_has_arg",
         "_method_has_param_and_default",
-    ]
+    }
 
     assert EXPECTED_NAMES == set(names)
 
