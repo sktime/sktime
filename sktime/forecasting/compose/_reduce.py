@@ -2534,9 +2534,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y = y.reindex(idx)
             if self._impute_method:
                 y = self._impute_method.fit_transform(y)
-            else:
-                warn("NaNs in y. No impute method provided, using default bfill & ffill instead")
-                y = y.bfill().ffill()
 
         y = y.to_numpy()
         X = None  # TODO: should we give X_pool here?
@@ -2548,10 +2545,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         date_mask = (y_orig.index.get_level_values(-1) >= start) & (y_orig.index.get_level_values(-1) <= cutoff)
         y = y_orig.loc[date_mask]
 
-        # check for missing values
+        # Fill time based features
         all_time_series_idx = y.index.droplevel(level=-1).unique()
-        for idx in all_time_series_idx:
+        cohort_count = len(all_time_series_idx)
+        y_time_features = np.zeros((cohort_count, window_length))
+        for i, idx in enumerate(all_time_series_idx):
             y_idx = y.loc[idx]
+
+            # check for missing values
             if len(y_idx) < window_length:
                 idx = pd.period_range(
                     start=y_idx.index.min(), end=y_idx.index.max(), freq=y_idx.index.freq
@@ -2559,14 +2560,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_idx = y_idx.reindex(idx)
                 if self._impute_method:
                     y_idx = self._impute_method.fit_transform(y_idx)
-                else:
-                    warn("NaNs in y. No impute method provided, using default bfill & ffill instead")
-                    y_idx = y_idx.bfill().ffill()
                 y.loc[idx] = y_idx
 
-        y = y.to_numpy()
+            y_time_features[i] = y_idx.to_numpy().reshape(1, -1)[
+                     :, ::-1
+                     ]  # reverse order of columns to match lag order
+
         X = None  # TODO: should we give X_pool here?
-        return y, X
+        return y_time_features, X
 
     def _get_window(self, cutoff=None, window_length=None, y_orig=None):
         cutoff = self.cutoff if cutoff is None else cutoff
@@ -2625,6 +2626,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
         if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            warn("Cannot predict, last window contains NaNs or infs. Check impute method.")
             return self._create_nan_df(fh)
 
         fh_max = fh.to_relative(self.cutoff)[-1]
@@ -2636,26 +2638,27 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         y_pred = _create_fcst_df(index_range, self._y)
 
+        y_last_df = self._y.copy()
         for i in range(fh_max):
             # Generate predictions.
-            y_pred_vector = self.estimator_.predict(X_last)
+            y_pred_vector = self.estimator_.predict(y_last)
             y_pred_curr = _create_fcst_df([index_range[i]], self._y, fill=y_pred_vector)
             y_pred.update(y_pred_curr)
 
             # # Update last window with previous prediction.
             if i + 1 != fh_max:
+                # Append preds to previous df  # TODO: Debug this tomorrow
+                y_orig = pd.concat([y_last_df, y_pred_curr])
                 y_last, X_last = self._get_window(
-                    # y_update=y_pred, X_update=X, shift=i + 1
-                    y_update=y_pred,
-                    shift=i + 1,
+                    cutoff=self.cutoff + i + 1,
+                    y_orig=y_orig,
                 )
 
         y_return = self._filter_and_adjust_predictions(fh, y_pred)
 
         return y_return
 
-    def _predict_out_of_sample_v2_local(self, X_pool,
-                                        fh):  # TODO: why are exogenous features and additional lags not used?
+    def _predict_out_of_sample_v2_local(self, X_pool, fh):  # TODO: why are exogenous features and additional lags not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2690,7 +2693,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             self._cutoff, self.window_length, self._y
         )
         if not self._is_predictable(y_last, self.window_length):
-            return self._create_nan_df(fh)  # TODO: ask eric or sebastian (use imputer on y here?)
+            warn("Cannot predict, last window contains NaNs or infs. Check impute method.")
+            return self._create_nan_df(fh)
 
         # Pre-allocate arrays.
         n_columns = 1
@@ -2702,7 +2706,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # Array with input data for prediction.
         last = np.zeros((1, n_columns, window_length + fh_max))
 
-        # Fill pre-allocated arrays with available data.
+        # Fill pre-allocated arrays with available time based features.
         last[:, 0, :window_length] = y_last.T
 
         # Recursively generate predictions by iterating over forecasting horizon.

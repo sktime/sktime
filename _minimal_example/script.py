@@ -33,7 +33,7 @@ regressor = make_pipeline(
 model_xgb = RecursiveReductionForecaster(
     estimator=regressor,
     impute_method="bfill",
-    pooling="global",
+    pooling="local",
     window_length=lags,
 )
 
@@ -57,7 +57,7 @@ data_agg = agg.reset().fit_transform(y)
 #%%
 from sktime. split import temporal_train_test_split
 
-y_train, y_test = temporal_train_test_split(y, test_size=18)
+y_train, y_test = temporal_train_test_split(data_agg, test_size=18)
 test_fh = y_test.index.get_level_values(-1).unique()
 #%%
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
@@ -86,13 +86,13 @@ fold_strategy =  ExpandingWindowSplitter(
 
 # sampler = optuna.samplers.TPESampler(seed=42)
 
-grid = ForecastingGridSearchCV(
-    forecaster=pipe_forecast,
-    param_grid=parameter_search_space_grid,
-    cv=fold_strategy,
-    error_score="raise",
-    scoring=MeanAbsoluteError(),
-)
+# grid = ForecastingGridSearchCV(
+#     forecaster=pipe_forecast,
+#     param_grid=parameter_search_space_grid,
+#     cv=fold_strategy,
+#     error_score="raise",
+#     scoring=MeanAbsoluteError(),
+# )
 
 
 # htcv = ForecastingOptunaSearchCV(
@@ -146,7 +146,7 @@ only_rff_xgb_fitted = model_xgb.fit(
 #%%
 # fails
 # TypeError: Cannot convert input [('Agency_01', 'SKU_01', Period('2013-01', 'M'))] of type <class 'tuple'> to Timestamp
-only_rff_xgb_fitted.predict(fh=test_fh)
+print(f"Preds only RRF: {only_rff_xgb_fitted.predict(fh=18)}")
 #%%
 # optuna_fitted.predict(fh=test_fh)
 #%%
