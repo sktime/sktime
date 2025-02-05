@@ -2769,13 +2769,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         if self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
         else:
+            self.pooling = "local"
             y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)  # TODO: does this work for panel?
 
         y_return = self._filter_and_adjust_predictions(fh, y_pred)
 
         y_abs_no_gaps, _ = self._generate_fh_no_gaps(fh)
 
-        if isinstance(y_return.index, pd.MultiIndex):
+        # Adjust index if MultiIndex is present
+        if isinstance(getattr(y_return, "index", None), pd.MultiIndex):
             y_abs_no_gaps = y_return.index.set_levels(y_abs_no_gaps, level=-1)
 
         y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
