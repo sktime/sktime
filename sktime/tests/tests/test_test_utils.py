@@ -29,8 +29,6 @@ def test_excluded_tests_by_test():
         )
     ]
     for _, excluded_estimators in EXCLUDED_TESTS_BY_TEST.items():
-        print(len(set(filtered_estimators) - set(EXCLUDE_SOFT_DEPS)))
-        print(len(set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS)))
         assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
             filtered_estimators
         ) - set(EXCLUDE_SOFT_DEPS)
