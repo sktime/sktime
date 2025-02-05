@@ -112,6 +112,7 @@ class SeriesPdDataFrame(ScitypeSeries):
         "name": "pd.DataFrame",  # any string
         "name_python": "series_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "pandas",
         "capability:multivariate": True,
@@ -271,6 +272,7 @@ class SeriesPdSeries(ScitypeSeries):
         "name": "pd.Series",  # any string
         "name_python": "series_pd_sr",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.Series representation of a univariate series",
         "python_version": None,
         "python_dependencies": "pandas",
         "capability:multivariate": False,
@@ -415,6 +417,7 @@ class SeriesNp2D(ScitypeSeries):
         "name": "np.ndarray",  # any string
         "name_python": "series_pd_np",  # lower_snake_case
         "name_aliases": [],
+        "description": "2D numpy.ndarray with rows=samples, cols=variables, index=integers",  # noqa: E501
         "python_version": None,
         "python_dependencies": "numpy",
         "capability:multivariate": True,
@@ -629,6 +632,7 @@ class SeriesXarray(ScitypeSeries):
         "name": "xr.DataArray",  # any string
         "name_python": "series_xarray",  # lower_snake_case
         "name_aliases": [],
+        "description": "xarray.DataArray representation of a uni- or multivariate time series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "xarray",
         "capability:multivariate": True,
@@ -761,6 +765,7 @@ class SeriesDask(ScitypeSeries):
         "name": "dask_series",  # any string
         "name_python": "series_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask.DataFrame representation of a uni- or multivariate series",
         "python_version": None,
         "python_dependencies": "dask",
         "capability:multivariate": True,
@@ -830,6 +835,7 @@ class SeriesPolarsEager(ScitypeSeries):
         "name": "pl.DataFrame",  # any string
         "name_python": "series_polars_eager",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "polars",
         "capability:multivariate": True,
@@ -905,6 +911,7 @@ class SeriesGluontsList(ScitypeSeries):
         "name": "gluonts_ListDataset_series",  # any string
         "name_python": "series_gluonts_listdataset",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts ListDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
         "capability:multivariate": True,
@@ -1048,6 +1055,7 @@ class SeriesGluontsPandas(ScitypeSeries):
         "name": "gluonts_PandasDataset_series",  # any string
         "name_python": "series_gluonts_pandasdataset",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts PandasDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
         "capability:multivariate": True,
