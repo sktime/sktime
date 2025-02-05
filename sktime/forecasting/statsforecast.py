@@ -10,6 +10,7 @@ __all__ = [
     "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
+    "StatsForecastADIDA",
 ]
 from typing import Optional, Union
 
@@ -993,30 +994,18 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
     This estimator directly interfaces ``ADIDA``,
     from ``statsforecast`` [1]_ by Nixtla.
 
-    The ADIDA model forecasts intermittent demand time series.
-    It handles sparse, irregular demand by aggregating the time series,
-    forecasting the smoother aggregated series, and then disaggregating
-    the forecast back to the original scale.
-    ADIDA offers choices for aggregation (`agg_func`), disaggregation (`dis_func`),
-    and trend specification (`trend`), and can optionally model seasonality.
-    ADIDA requires univariate time series input.
+    Aggregate-Dissagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been agregated, it uses
+    the optimized SES to generate the forecasts at the new level. It then breaks down
+    the forecast to the original level using equal weights.
+
+    ADIDA specializes on sparse or intermittent series are series with very few
+    non-zero observations.They are notoriously hard to forecast, and so, different
+    methods have been developed especifically for them.
 
     Parameters
     ----------
-    agg_func : str, default="sum"
-        Function used to aggregate the time series.
-        Options: 'sum', 'mean', 'median'.
-    dis_func : str, default="mean"
-        Function used to disaggregate the forecasts.
-        Options: 'mean', 'mode', 'median'.
-    trend : str, default="constant"
-        Type of trend to include in the model.
-        Options: 'constant', 'linear'.
-    m : int, optional, default=1
-        Seasonal period. If provided, seasonality will be considered.
-    season_length: int, optional, default=None
-        Alternative way to specify the seasonal period.  If `m` is also provided,
-        `season_length` is ignored.
+    None
 
     References
     ----------
@@ -1027,7 +1016,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
     >>> y = load_airline()
-    >>> model = StatsForecastADIDA(agg_func="mean", dis_func="mean", trend="linear")
+    >>> model = StatsForecastADIDA()
     >>> fitted_model = model.fit(y) # doctest: +SKIP
     >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
@@ -1047,22 +1036,6 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
-    def __init__(
-        self,
-        agg_func: str = "sum",
-        dis_func: str = "mean",
-        trend: str = "constant",
-        m: Optional[int] = None,
-        season_length: Optional[int] = None,
-    ):
-        self.agg_func = agg_func
-        self.dis_func = dis_func
-        self.trend = trend
-        self.m = m
-        self.season_length = season_length
-
-        super().__init__()
-
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
         from statsforecast.models import ADIDA
@@ -1070,24 +1043,22 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         return ADIDA
 
     def _get_statsforecast_params(self):
-        params = {
-            "dis_func": self.dis_func,
-        }
-        if self.m is not None:
-            params["m"] = self.m
-        elif self.season_length is not None:
-            params["m"] = self.season_length
-
-        return params
+        """Get the parameters for the statsforecast model."""
+        return {}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
-        del parameter_set
+        """Return testing parameter settings for the estimator.
 
-        params = [
-            {},
-            {"agg_func": "mean", "dis_func": "median", "trend": "linear", "m": 12},
-        ]
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
 
-        return params
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class
+        """
+        return []
