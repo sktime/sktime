@@ -211,13 +211,20 @@ MTYPE_LIST_TABLE = generate_mtype_list(scitype="Table")
 MTYPE_REGISTER = generate_mtype_register()
 
 from sktime.datatypes._hierarchical._registry import MTYPE_SOFT_DEPS_HIERARCHICAL
-from sktime.datatypes._panel._registry import MTYPE_SOFT_DEPS_PANEL
 
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
     "pl.DataFrame": "polars",
     "gluonts_ListDataset_series": "gluonts",
+}
+
+MTYPE_SOFT_DEPS_PANEL = {
+    "xr.DataArray": "xarray",
+    "dask_panel": "dask",
+    "gluonts_ListDataset_panel": "gluonts",
+    "gluonts_PandasDataset_panel": "gluonts",
+    "polars_panel": "polars",
 }
 
 MTYPE_SOFT_DEPS = {}

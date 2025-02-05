@@ -156,6 +156,7 @@ class PanelDfList(ScitypePanel):
         "name": "df-list",  # any string
         "name_python": "panel_df_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "list of pd.DataFrame",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "list",
@@ -318,6 +319,7 @@ class PanelNp3D(ScitypePanel):
         "name": "numpy3D",  # any string
         "name_python": "panel_np_3d",  # lower_snake_case
         "name_aliases": [],
+        "description": "3D np.array of format (n_instances, n_columns, n_timepoints)",
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
@@ -474,6 +476,7 @@ class PanelPdMultiIndex(ScitypePanel):
         "name": "pd-multiindex",  # any string
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with multi-index (instances, timepoints)",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -746,6 +749,7 @@ class PanelNestedDf(ScitypePanel):
         "name": "nested_univ",  # any string
         "name_python": "panel_pd_nested",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with one column per variable, pd.Series in cells",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -895,6 +899,10 @@ class PanelNumpyFlat(ScitypePanel):
         "name": "numpyflat",  # any string
         "name_python": "panel_np_flat",  # lower_snake_case
         "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "2D np.array of format (n_instances, n_columns*n_timepoints)"
+        ),
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
@@ -1009,6 +1017,7 @@ class PanelDask(ScitypePanel):
         "name": "dask_panel",  # any string
         "name_python": "panel_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "dask",
         "python_type": "dask.dataframe",
@@ -1084,6 +1093,7 @@ class PanelPolarsEager(ScitypePanel):
         "name": "polars_panel",  # any string
         "name_python": "panel_polars",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars.DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "polars",
         "python_type": "polars.DataFrame",
@@ -1277,6 +1287,7 @@ class PanelGluontsList(ScitypePanel):
         "name": "gluonts_ListDataset_panel",  # any string
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts list based panel of time series",
         "python_version": None,
         "python_dependencies": None,
         "python_type": "list",
@@ -1428,6 +1439,7 @@ class PanelGluontsPandas(ScitypePanel):
         "name": "gluonts_PandasDataset_panel",  # any string
         "name_python": "panel_gluonts_pandas",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts PandasDataset based panel of time series",
         "python_version": None,
         "python_dependencies": "gluonts",
         "python_type": "gluonts.PandasDataset",
