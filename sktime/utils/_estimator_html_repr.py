@@ -55,7 +55,6 @@ class _VisualBlock:
             if name_details is None:
                 name_details = (None,) * len(estimators)
 
-        self.names = names
         self.name_details = name_details
 
     def _sk_visual_block_(self):
