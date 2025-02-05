@@ -2593,7 +2593,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred = pd.DataFrame(index=index, columns=self._y.columns)
         return y_pred
 
-    def _predict_out_of_sample_v2_global(self, X_pool, fh):  # TODO: why are exogenous features and additional lags not used?
+    def _predict_out_of_sample_v2_global(self, X_pool, fh):  # TODO: why are exogenous features not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2647,18 +2647,17 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             # # Update last window with previous prediction.
             if i + 1 != fh_max:
-                # Append preds to previous df  # TODO: Debug this tomorrow
-                y_orig = pd.concat([y_last_df, y_pred_curr])
+                # Append preds to previous df
+                # merge on index except from last
+                y_last_df = pd.concat([y_last_df, y_pred_curr]).sort_index()
                 y_last, X_last = self._get_window(
                     cutoff=self.cutoff + i + 1,
-                    y_orig=y_orig,
+                    y_orig=y_last_df,
                 )
 
-        y_return = self._filter_and_adjust_predictions(fh, y_pred)
+        return y_pred
 
-        return y_return
-
-    def _predict_out_of_sample_v2_local(self, X_pool, fh):  # TODO: why are exogenous features and additional lags not used?
+    def _predict_out_of_sample_v2_local(self, X_pool, fh):  # TODO: why are exogenous features not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2776,7 +2775,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         y_abs_no_gaps, _ = self._generate_fh_no_gaps(fh)
 
-        y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
+        if isinstance(y_return.index, pd.MultiIndex):
+            multi_index = y_return.index.set_levels(y_abs_no_gaps, level=-1)
+            y_alt = pd.DataFrame(y_return, index=multi_index, columns=self._y.columns)
+        else:
+            y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
 
         return y_alt  # y_pred
 
