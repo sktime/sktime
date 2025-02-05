@@ -49,6 +49,7 @@ MTYPE_LIST_SERIES = [
     "dask_series",
     "pl.DataFrame",
     "gluonts_ListDataset_series",
+    "gluonts_PandasDataset_series",
 ]
 
 convert_dict = dict()
