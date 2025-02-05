@@ -31,7 +31,7 @@ from sktime.datatypes._base._common import _metadata_requested, _ret
 from sktime.datatypes._registry import (
     AMBIGUOUS_MTYPES,
     SCITYPE_LIST,
-    generate_scitype_cls_list,
+    generate_mtype_cls_list,
     mtype_to_scitype,
 )
 
@@ -60,7 +60,7 @@ def get_check_dict(soft_deps="present"):
 @lru_cache(maxsize=1)
 def generate_check_dict(soft_deps="present"):
     """Generate check_dict using lookup."""
-    classes = generate_scitype_cls_list(soft_deps=soft_deps)
+    classes = generate_mtype_cls_list(soft_deps=soft_deps)
 
     check_dict = dict()
     for cls in classes:
