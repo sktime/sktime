@@ -2362,7 +2362,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             mtypes = ["pd.DataFrame", "pd-multiindex"]
         else:
             raise ValueError(
-                "pooling in DirectReductionForecaster must be one of"
+                "pooling in RecursiveReductionForecaster must be one of"
                 ' "local", "global", "panel", '
                 f"but found {pooling}"
             )
@@ -2550,19 +2550,19 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         cohort_count = len(all_time_series_idx)
         y_time_features = np.zeros((cohort_count, window_length))
         for i, idx in enumerate(all_time_series_idx):
-            y_idx = y.loc[idx]
+            y_cur = y.loc[idx]
 
             # check for missing values
-            if len(y_idx) < window_length:
-                idx = pd.period_range(
-                    start=y_idx.index.min(), end=y_idx.index.max(), freq=y_idx.index.freq
+            if len(y_cur) < window_length:
+                idx_full = pd.period_range(
+                    start=start, end=cutoff, freq=y_cur.index.freq, name=y_cur.index.name
                 )
-                y_idx = y_idx.reindex(idx)
+                y_cur = y_cur.reindex(idx_full)
                 if self._impute_method:
-                    y_idx = self._impute_method.fit_transform(y_idx)
-                y.loc[idx] = y_idx
+                    y_cur = self._impute_method.fit_transform(y_cur)
+                y.update(y_cur)
 
-            y_time_features[i] = y_idx.to_numpy().reshape(1, -1)[
+            y_time_features[i] = y_cur.to_numpy().reshape(1, -1)[
                      :, ::-1
                      ]  # reverse order of columns to match lag order
 
@@ -2765,8 +2765,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-
-        if self.pooling == "global":
+        # If no multiindex, we can use local implementation
+        if self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
         else:
             y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)  # TODO: does this work for panel?
