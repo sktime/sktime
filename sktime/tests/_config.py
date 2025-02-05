@@ -299,7 +299,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFNLinearForecaster",
         "LogTransformer",
         "M5Dataset",
-        "MACNNNetwork",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
