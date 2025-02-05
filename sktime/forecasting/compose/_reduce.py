@@ -2776,10 +2776,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_abs_no_gaps, _ = self._generate_fh_no_gaps(fh)
 
         if isinstance(y_return.index, pd.MultiIndex):
-            multi_index = y_return.index.set_levels(y_abs_no_gaps, level=-1)
-            y_alt = pd.DataFrame(y_return, index=multi_index, columns=self._y.columns)
-        else:
-            y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
+            y_abs_no_gaps = y_return.index.set_levels(y_abs_no_gaps, level=-1)
+
+        y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
 
         return y_alt  # y_pred
 
