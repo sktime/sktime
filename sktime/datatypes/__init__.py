@@ -11,7 +11,6 @@ from sktime.datatypes._check import (
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import (
-    ALL_TIME_SERIES_MTYPES,
     AMBIGUOUS_MTYPES,
     SCITYPE_LIST,
     SCITYPE_REGISTER,
