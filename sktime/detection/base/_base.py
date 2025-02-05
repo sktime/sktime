@@ -1202,25 +1202,3 @@ class BaseSeriesAnnotator(BaseDetector):
             "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
             stacklevel=2,
         )
-
-
-# todo 0.37.0: remove this
-def _method_has_arg(method, arg="y"):
-    """Return if transformer.method has a parameter, and whether it has a default.
-
-    Parameters
-    ----------
-    method : callable
-        method to check
-    arg : str, optional, default="y"
-        parameter name to check
-
-    Returns
-    -------
-    has_param : bool
-        whether the method ``method`` has a parameter with name ``arg``
-    """
-    from inspect import signature
-
-    method_params = list(signature(method).parameters.keys())
-    return arg in method_params
