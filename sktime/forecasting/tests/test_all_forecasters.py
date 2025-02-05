@@ -285,6 +285,11 @@ class TestAllForecasters(
         y[y > y.mean()] = np.nan
         if estimator_instance.get_tag("handles-missing-data"):
             estimator_instance.fit(y, fh=FH0)
+        else:
+            error_msg = f"{str(estimator_instance.__class__.__name__)} cannot handle missing data (nans), but y passed contained missing data."
+
+            with pytest.raises(ValueError, match=re.escape(error_msg)):
+                estimator_instance.fit(y, fh=FH0)
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
