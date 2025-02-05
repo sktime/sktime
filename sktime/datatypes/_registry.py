@@ -40,8 +40,6 @@ mtype_to_scitype(mtype: str) - convenience function that returns scitype for an 
 
 from functools import lru_cache
 
-from sktime.datatypes._base import BaseDatatype
-
 
 def _only_core_deps(cls):
     """Return True if the class has only core dependencies."""
@@ -95,6 +93,7 @@ def _generate_mtype_cls_list(soft_deps="present"):
     """Generate list of scitype classes using lookup, cached function."""
     from skbase.utils.dependencies import _check_estimator_deps
 
+    from sktime.datatypes._base import BaseDatatype
     from sktime.utils.retrieval import _all_classes
 
     classes = _all_classes("sktime.datatypes")
@@ -201,15 +200,6 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
     return [x[0] for x in generate_mtype_register(scitype=scitype, soft_deps=soft_deps)]
 
 
-MTYPE_LIST_ALIGNMENT = generate_mtype_list(scitype="Alignment")
-MTYPE_LIST_HIERARCHICAL = generate_mtype_list(scitype="Hierarchical")
-MTYPE_LIST_PANEL = generate_mtype_list(scitype="Panel")
-MTYPE_LIST_PROBA = generate_mtype_list(scitype="Proba")
-MTYPE_LIST_SERIES = generate_mtype_list(scitype="Series")
-MTYPE_LIST_TABLE = generate_mtype_list(scitype="Table")
-
-MTYPE_REGISTER = generate_mtype_register()
-
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
@@ -238,21 +228,8 @@ MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_HIERARCHICAL)
 # mtypes to exclude in checking since they are ambiguous and rare
 AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
 
-# all time series mtypes excluding ambiguous ones
-ALL_TIME_SERIES_MTYPES = (
-    list(MTYPE_LIST_PANEL) + list(MTYPE_LIST_SERIES) + list(MTYPE_LIST_HIERARCHICAL)
-)
-ALL_TIME_SERIES_MTYPES = list(set(ALL_TIME_SERIES_MTYPES).difference(AMBIGUOUS_MTYPES))
-
 
 __all__ = [
-    "MTYPE_REGISTER",
-    "MTYPE_LIST_HIERARCHICAL",
-    "MTYPE_LIST_PANEL",
-    "MTYPE_LIST_SERIES",
-    "MTYPE_LIST_ALIGNMENT",
-    "MTYPE_LIST_TABLE",
-    "MTYPE_LIST_PROBA",
     "MTYPE_SOFT_DEPS",
     "SCITYPE_REGISTER",
 ]
