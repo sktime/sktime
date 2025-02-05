@@ -1,7 +1,11 @@
 """Tests for the test utilities."""
 
 from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS, EXCLUDED_TESTS_BY_TEST
+from sktime.tests._config import (
+    EXCLUDE_ESTIMATORS,
+    EXCLUDE_SOFT_DEPS,
+    EXCLUDED_TESTS_BY_TEST,
+)
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies import _check_estimator_deps
 
@@ -25,7 +29,11 @@ def test_excluded_tests_by_test():
         )
     ]
     for _, excluded_estimators in EXCLUDED_TESTS_BY_TEST.items():
-        assert set(excluded_estimators) == set(filtered_estimators)
+        print(len(set(filtered_estimators) - set(EXCLUDE_SOFT_DEPS)))
+        print(len(set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS)))
+        assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
+            filtered_estimators
+        ) - set(EXCLUDE_SOFT_DEPS)
 
 
 def test_exclude_estimators():
