@@ -2384,19 +2384,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"but found {impute_method}"
             )
 
-    def create_lagged_features(self, impute_method, y):
-        """
-        Create lagged time based features from y and shift them forward to align with y(t+1).
+    def create_lagged_features(self, y):
+        """Create lagged time-based features from y and shift them for alignment.
 
-        # TODO: correct understanding?
         This function applies a lag transformation to `y` to create features for
         time series forecasting. The features are then shifted forward so they
         predict the next step in recursive forecasting.
 
         Parameters
         ----------
-        impute_method : sktime transformer or None
-            If provided, applies imputation to handle missing values in the lagged data.
         y : pd.DataFrame
             The endogenous time series used to generate lagged features.
 
@@ -2411,8 +2407,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
+        if self._impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * self._impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
 
         X_time = lagger_y_to_X.fit_transform(y)
@@ -2445,10 +2441,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         X_exogenous = X
-        impute_method = self._impute_method
 
         # Generate lagged features and shift them to align with y(t+1)
-        X_time_aligned = self.create_lagged_features(impute_method, y)
+        X_time_aligned = self.create_lagged_features(y)
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
@@ -2542,7 +2537,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _get_window_global(self, cutoff, window_length, y_orig):
         start = _shift(cutoff, by=-window_length + 1)
         cutoff = cutoff[0]
-        date_mask = (y_orig.index.get_level_values(-1) >= start) & (y_orig.index.get_level_values(-1) <= cutoff)
+        date_mask = (y_orig.index.get_level_values(-1) >= start) & (
+            y_orig.index.get_level_values(-1) <= cutoff
+        )
         y = y_orig.loc[date_mask]
 
         # Fill time based features
@@ -2555,7 +2552,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # check for missing values
             if len(y_cur) < window_length:
                 idx_full = pd.period_range(
-                    start=start, end=cutoff, freq=y_cur.index.freq, name=y_cur.index.name
+                    start=start,
+                    end=cutoff,
+                    freq=y_cur.index.freq,
+                    name=y_cur.index.name,
                 )
                 y_cur = y_cur.reindex(idx_full)
                 if self._impute_method:
@@ -2563,8 +2563,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y.update(y_cur)
 
             y_time_features[i] = y_cur.to_numpy().reshape(1, -1)[
-                     :, ::-1
-                     ]  # reverse order of columns to match lag order
+                :, ::-1
+            ]  # reverse order of columns to match lag order
 
         X = None  # TODO: should we give X_pool here?
         return y_time_features, X
@@ -2593,7 +2593,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred = pd.DataFrame(index=index, columns=self._y.columns)
         return y_pred
 
-    def _predict_out_of_sample_v2_global(self, X_pool, fh):  # TODO: why are exogenous features not used?
+    def _predict_out_of_sample_v2_global(
+        self, X_pool, fh
+    ):  # TODO: why are exogenous features not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2626,7 +2628,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
         if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
-            warn("Cannot predict, last window contains NaNs or infs. Check impute method.")
             return self._create_nan_df(fh)
 
         fh_max = fh.to_relative(self.cutoff)[-1]
@@ -2657,7 +2658,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    def _predict_out_of_sample_v2_local(self, X_pool, fh):  # TODO: why are exogenous features not used?
+    def _predict_out_of_sample_v2_local(
+        self, X_pool, fh
+    ):  # TODO: why are exogenous features not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2688,11 +2691,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
 
-        y_last, X_last = self._get_window(
-            self._cutoff, self.window_length, self._y
-        )
+        y_last, X_last = self._get_window(self._cutoff, self.window_length, self._y)
         if not self._is_predictable(y_last, self.window_length):
-            warn("Cannot predict, last window contains NaNs or infs. Check impute method.")
             return self._create_nan_df(fh)
 
         # Pre-allocate arrays.
@@ -2728,8 +2728,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return y_pred
 
     def _filter_and_adjust_predictions(self, fh, y_pred):
-        """
-        Filters predictions based on forecasting horizon and adjusts frequency if needed.
+        """Filter predictions based on forecasting horizon and adjusts frequency.
 
         While the recursive strategy requires to generate predictions for all steps
         until the furthest step in the forecasting horizon, we only return the
@@ -2749,8 +2748,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return y_return
 
     def _generate_fh_no_gaps(self, fh):
-        """Creates a forecasting horizon with no gaps for continuous indexing."""
-
+        """Create a forecasting horizon with no gaps for continuous indexing."""
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
 
@@ -2770,7 +2768,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
         else:
             self.pooling = "local"
-            y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)  # TODO: does this work for panel?
+            y_pred = self._predict_out_of_sample_v2_local(
+                X_pool, fh
+            )  # TODO: does this work for panel?
 
         y_return = self._filter_and_adjust_predictions(fh, y_pred)
 
