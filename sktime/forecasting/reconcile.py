@@ -58,7 +58,7 @@ class ReconcilerForecaster(BaseForecaster):
         * If True, prediction data frames include total values at ``__total`` levels
         * If False, prediction data frames are returned without ``__total`` levels
 
-    alpha: float
+    alpha: float default=0
         Optional regularization parameter to avoid singular covariance matrix
 
     See Also
