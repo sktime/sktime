@@ -2,8 +2,6 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
-
 from sktime.datatypes._registry import (
     MTYPE_SOFT_DEPS,
     generate_mtype_register,
