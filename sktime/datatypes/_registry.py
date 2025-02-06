@@ -205,6 +205,7 @@ MTYPE_SOFT_DEPS_SERIES = {
     "dask_series": "dask",
     "pl.DataFrame": "polars",
     "gluonts_ListDataset_series": "gluonts",
+    "gluonts_PandasDataset_series": "gluonts",
 }
 
 MTYPE_SOFT_DEPS_PANEL = {
