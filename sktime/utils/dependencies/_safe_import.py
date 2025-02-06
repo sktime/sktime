@@ -24,10 +24,13 @@ def _safe_import(import_path, pkg_name=None):
         returns a MagicMock object that informs the user to install the package.
     """
     if pkg_name is None:
-        pkg_name = import_path.split(".")[0]
+        path_list = import_path.split(".")
+        pkg_name = path_list[0]
 
     if _check_soft_dependencies(pkg_name, severity="none"):
         try:
+            if len(path_list) == 1:
+                return importlib.import_module(pkg_name)
             module_name, attr_name = import_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             return getattr(module, attr_name)
