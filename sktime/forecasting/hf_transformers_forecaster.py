@@ -289,13 +289,13 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 "peft",
                 severity="error",
                 msg=(
-                    f"Error in {self._class.name_}: 'peft' module not found. "
+                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
                     "'peft' is a soft dependency and not included "
                     "in the base sktime installation. "
                     "To use this functionality, please install 'peft' by running: "
-                    "pip install peft or pip install sktime[dl]. "
+                    "`pip install peft` or `pip install sktime[dl]`. "
                     "To install all soft dependencies, "
-                    "run: pip install sktime[all_extras]"
+                    "run: `pip install sktime[all_extras]`"
                 ),
             ):
                 from peft import get_peft_model
@@ -400,15 +400,15 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return "default" set.
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            MyClass(**params) or MyClass(**params[i]) creates a valid test instance.
-            create_test_instance uses the first (or only) dictionary in params
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
             {
