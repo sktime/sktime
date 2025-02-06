@@ -18,10 +18,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("mtype, scitype", mtypes_scitypes)
     if "mtype" in metafunc.fixturenames:
         mtypes = [k[0] for k in register]
-        metafunc.parametrize("dynamic_value", mtypes)
+        metafunc.parametrize("mtype", mtypes)
     if "scitype" in metafunc.fixturenames:
         scitypes = [k[1] for k in register]
-        metafunc.parametrize("dynamic_value", scitypes)
+        metafunc.parametrize("scitype", scitypes)
 
 
 def test_mtype_to_scitype(mtype, scitype):

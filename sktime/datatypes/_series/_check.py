@@ -1140,7 +1140,7 @@ class SeriesGluontsPandas(ScitypeSeries):
         if _req("has_nans", return_metadata):
             metadata["has_nans"] = df.isna().any().any()
 
-        if _req("dtypekind_dfip", return_metadata):
+        if _req(["feature_kind", "dtypekind_dfip"], return_metadata):
             index_cols_count = len(df.columns)
 
             # slicing off additional index columns
