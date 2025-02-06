@@ -53,6 +53,7 @@ def test_mtype_to_scitype_list():
     AssertionError mtype_to_scitype does not convert mtype to scitype
     Exception if any is raised by mtype_to_scitype
     """
+    MTYPE_REGISTER = generate_mtype_register()
     mtype_list = [k[0] for k in MTYPE_REGISTER]
     expected_scitype_list = [k[1] for k in MTYPE_REGISTER]
     result = mtype_to_scitype(mtype_list)
@@ -63,7 +64,7 @@ def test_mtype_to_scitype_list():
     assert result == expected_scitype_list, msg
 
 
-@pytest.mark.parametrize("mtype, scitype", MTYPE_SCITYPE_PAIRS)
+@pytest.mark.parametrize("mtype, scitype", mtype_scitype_pairs)
 def test_scitype_to_mtype(mtype, scitype):
     """Tests that scitype_to_mtype yields the correct output for a string.
 
