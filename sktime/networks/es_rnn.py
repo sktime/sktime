@@ -2,11 +2,19 @@
 
 __author__ = ["Ankit-1204"]
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.networks.base import BaseDeepNetwork
+from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
+
+    nn_module = nn.Module
+else:
+
+    class nn_module:
+        """Dummy class if torch is unavailable."""
+
 
 import numpy as np
 
@@ -22,17 +30,23 @@ def _nonseasonal(x, alpha=0.3):
 
 def _single_seasonal(alpha, beta, season_length, x):
     length = len(x)
+    # input should cover atleast one season length
     if season_length > length:
         season_length = length
+    # number of seasons
     n_season = length // season_length
+
     avg_per_season = [
-        np.mean(x[i * season_length : (i + 1) * season_length]) for i in range(n_season)
+        torch.mean(x[i * season_length : (i + 1) * season_length])
+        for i in range(n_season)
     ]
-    level = np.mean(x[:season_length])
-    seasonality = np.array(
+    # initial value for level
+    level = torch.mean(x[:season_length])
+    seasonality = torch.array(
         [x[i] / avg_per_season[i // season_length] for i in range(season_length)]
     )
-    seasonality = np.exp(seasonality)
+    # alpha and beta should be between 0 and 1
+    seasonality = torch.exp(seasonality)
     alpha = nn.Sigmoid(alpha)
     beta = nn.Sigmoid(beta)
     for i in range(len(x)):
@@ -43,10 +57,11 @@ def _single_seasonal(alpha, beta, season_length, x):
         )
         level = new_level
 
+    # Deserializing the input
     return (
         level,
         seasonality,
-        x / (level * seasonality[np.arange(length) % season_length]),
+        x / (level * seasonality[torch.arange(length) % season_length]),
     )
 
 
@@ -54,7 +69,7 @@ def _double_seasonal(alpha, beta, x):
     pass
 
 
-class ESRNN:
+class ESRNN(BaseDeepNetwork):
     """
     Exponential Smoothing Recurrant Neural Network.
 
@@ -84,7 +99,7 @@ class ESRNN:
 
     """
 
-    class _ESRNN(nn.Module):
+    class _ESRNN(nn_module):
         def __init__(
             self,
             input_shape,
@@ -142,18 +157,30 @@ class ESRNN:
                 output_leveled = (
                     output
                     * level
-                    * seasonality[np.arange(self._horizon) % self.season_length]
+                    * seasonality[torch.arange(self._horizon) % self.season_length]
                 )
                 return output_leveled
 
     def __init__(
-        self, input_shape, hidden_size, horizon, num_layer, seasonality="zero"
+        self,
+        input_shape=1,
+        hidden_size=1,
+        horizon=1,
+        num_layer=1,
+        alpha=0.5,
+        beta=0.5,
+        season_length=12,
+        seasonality="zero",
     ) -> None:
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.horizon = horizon
+        self.alpha = alpha
+        self.beta = beta
+        self.season_length = season_length
         self.seasonality = seasonality
+        super().__init__()
 
     def build_network(self):
         """Build the ES-RNN."""
