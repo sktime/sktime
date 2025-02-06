@@ -15,12 +15,14 @@ from sklearn.pipeline import make_pipeline
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import (
+    DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
     DirRecTimeSeriesRegressionForecaster,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
+    RecursiveReductionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     make_reduction,
@@ -721,3 +723,140 @@ def test_make_reduction_proba():
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh)
 
     assert y_pred.shape == y_test.shape
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("strategy", [("direct"), ("recursive")])
+def test_reduction_without_X(strategy):
+    """Test DirectReductionForecaster with manual calculation (no exogenous)."""
+
+    y = np.array([1, 2, 3, 4]).reshape(-1, 1)
+
+    X_manual = np.array([[1, 2], [2, 3]])  # t-2, t-1 steps
+    y_manual = np.array([3, 4])  # step t
+
+    manual_reg = LinearRegression().fit(X_manual, y_manual)
+
+    forecaster = make_reduction(
+        LinearRegression(),
+        window_length=2,
+        strategy=strategy,
+        scitype="tabular-regressor",
+        pooling="local",
+    )
+    forecaster.fit(y, fh=[1])
+
+    manual_pred = manual_reg.predict([[3, 4]])
+    forecaster_pred = forecaster.predict()
+    assert np.allclose(forecaster_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize(
+    "x_treatment",
+    ["concurrent", "shifted"],
+)
+def test_direct_reduction_with_X(x_treatment):
+    """Testing DirectReductionForecaster with exogenous variables."""
+    X = np.array([[10, 20], [30, 40], [50, 60], [70, 80]])
+    y = np.array([1, 2, 3, 4]).reshape(-1, 1)
+
+    if x_treatment == "concurrent":
+        X_manual = np.hstack(
+            [
+                y[:2],
+                y[1:3],
+                X[2:4],  # X(t+h) for concurrent.
+            ]
+        )
+    else:
+        X_manual = np.hstack(
+            [
+                y[:2],
+                y[1:3],
+                X[1:3],  # Use X(t) for shifted.
+            ]
+        )
+
+    y_manual = np.array([3, 4])
+    lr = LinearRegression()
+
+    forecaster = DirectReductionForecaster(
+        LinearRegression(), window_length=2, X_treatment=x_treatment
+    )
+    forecaster.fit(y, X=X, fh=[1])
+    lr.fit(X_manual, y_manual)
+
+    input_X = X[3:4]
+    input_y = y[2:4].reshape(1, -1)
+    y_pred = forecaster.predict(X=X)
+    lr_pred = lr.predict([np.hstack([input_y, input_X]).flatten()])
+
+    assert np.isclose(y_pred, lr_pred, rtol=1e-3)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_pooled_direct_reduction():
+    """Test pooled forecasting on DirectReductionForecaster."""
+
+    y = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+    lr = LinearRegression()
+    forecaster = DirectReductionForecaster(
+        LinearRegression(),
+        window_length=2,
+        pooling="global",
+        windows_identical=True,
+    )
+    fh = ForecastingHorizon([1], is_relative=True)
+    forecaster.fit(y=y, fh=fh)
+    y_pred = forecaster.predict()
+
+    X_manual = np.array([[1, 2], [2, 3], [5, 6], [6, 7]])
+
+    y_manual = np.array([3, 4, 7, 8])
+
+    lr.fit(X_manual, y_manual)
+
+    last_win = np.array([[3, 4], [7, 8]])
+    lr_pred = lr.predict(last_win)
+
+    return np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_pooled_recursive_reduction():
+    """Test pooled forecasting on RecursiveReductionForecaster."""
+
+    y = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+    lr = LinearRegression()
+    forecaster = RecursiveReductionForecaster(
+        LinearRegression(),
+        window_length=2,
+        pooling="global",
+    )
+    fh = ForecastingHorizon([1], is_relative=True)
+    forecaster.fit(y=y, fh=fh)
+    y_pred = forecaster.predict()
+
+    X_manual = np.array([[1, 2], [2, 3], [5, 6], [6, 7]])
+
+    y_manual = np.array([3, 4, 7, 8])
+
+    lr.fit(X_manual, y_manual)
+
+    last_win = np.array([[3, 4], [7, 8]])
+    lr_pred = lr.predict(last_win)
+
+    return np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
