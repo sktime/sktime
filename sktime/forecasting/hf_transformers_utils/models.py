@@ -7,19 +7,12 @@ class TransformersForecaster:
     def __init__(self, config):
         """Initialize the adapter with the model configuration."""
         self.config = config
-        from transformers import (
-            AutoformerForPrediction,
-            InformerForPrediction,
-            TimeSeriesTransformerForPrediction,
-        )
 
-        # Select the appropriate model based on the model type in config
-        if self.config.model_type == "autoformer":
-            self.source_model_class = AutoformerForPrediction
-        elif self.config.model_type == "informer":
-            self.source_model_class = InformerForPrediction
-        elif self.config.model_type == "time_series_transformer":
-            self.source_model_class = TimeSeriesTransformerForPrediction
+        # Select the appropriate model based on the architecture in config
+        source_model_class = config.architectures[0]
+        self.source_model_class = getattr(
+            transformers, source_model_class
+        )
 
     def pred_output(
         self,
