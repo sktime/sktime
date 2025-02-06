@@ -286,7 +286,11 @@ class TestAllForecasters(
         if estimator_instance.get_tag("handles-missing-data"):
             estimator_instance.fit(y, fh=FH0)
         else:
-            error_msg = f"{str(estimator_instance.__class__.__name__)} cannot handle missing data (nans), but y passed contained missing data."
+            cls_name = estimator_instance.__class__.__name__
+            error_msg = (
+                f"{cls_name} cannot handle missing data (nans), but y passed contained "
+                "missing data."
+            )
 
             with pytest.raises(ValueError, match=re.escape(error_msg)):
                 estimator_instance.fit(y, fh=FH0)
