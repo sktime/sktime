@@ -1481,7 +1481,7 @@ class PanelGluontsPandas(ScitypePanel):
 
         if not hasattr(obj._data_entries.iterable, "iterable"):
             msg = f"{var_name} must be formed with a multiindex DataFrame to "
-            +"be a valid `pandasDataset_panel`"
+            + "be a valid `pandasDataset_panel`"
             return _ret(False, msg, None, return_metadata)
 
         # Convert to a pandas DF for easier checks
