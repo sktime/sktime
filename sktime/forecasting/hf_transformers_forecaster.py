@@ -40,31 +40,31 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
           the model with fewer trainable parameters, saving computational resources.
-          Note: If the 'peft' package is not available, a ModuleNotFoundError will
+          Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
-          it using pip install peft to use this fit strategy.
+          it using `pip install peft` to use this fit strategy.
 
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
-        Configuration to use for the model. See the transformers
+        Configuration to use for the model. See the `transformers`
         documentation for details.
     training_args : dict, default={}
-        Training arguments to use for the model. See transformers.TrainingArguments
+        Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
-        Note that the output_dir argument is required.
+        Note that the `output_dir` argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See transformers.Trainer
+        List of metrics to compute during training. See `transformers.Trainer`
         for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
-        List of callbacks to use during training. See transformers.Trainer
+        List of callbacks to use during training. See `transformers.Trainer`
     peft_config : peft.PeftConfig, default=None
         Configuration for Parameter-Efficient Fine-Tuning.
-        When fit_strategy is set to "peft",
+        When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
-        See the peft documentation for details.
+        See the `peft` documentation for details.
     trust_remote_code : bool, default=False
         Whether or not to allow for custom models defined on the Hub in their own
         modeling files. This option should only be set to True for repositories you
@@ -203,11 +203,15 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         # Load the Hugging Face model's custom adapter
         self.adapter = custom_adapter_class(config)
 
-        # Update config with user provided config
         # Find fh values to pass to update_config as adpater
         # can't access instance attrbiutes like self.cut_off
         fh_values = fh.to_relative(self._cutoff)._values + 1
-        config = self.adapter.update_config(config, self._config, X, fh_values)
+        _config = config.to_dict()
+        # Update config with user provided config
+        _config.update(self._config)
+        # update config attributes
+        _config = self.adapter.update_config(_config, X, fh_values)
+        config = config.from_dict(_config)
 
         # Update self.config
         self.config = config
@@ -371,7 +375,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             from_numpy(observed_mask).to(self.model.dtype).to(self.model.device)
         )
 
-        pred = self.adapter.pred_output(
+        pred = self.adapter.predict_output(
             self.model,
             past_values,
             past_time_features,

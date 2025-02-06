@@ -7,12 +7,13 @@ class TransformersForecaster:
     def __init__(self, config):
         """Initialize the adapter with the model configuration."""
         self.config = config
+        import transformers
 
         # Select the appropriate model based on the architecture in config
         source_model_class = config.architectures[0]
         self.source_model_class = getattr(transformers, source_model_class)
 
-    def pred_output(
+    def predict_output(
         self,
         model,
         past_values,
@@ -35,33 +36,30 @@ class TransformersForecaster:
         pred = pred.reshape((-1,))
         return pred
 
-    def update_config(self, config, user_config, X, fh):
-        """Update config with user provided config."""
-        _config = config.to_dict()
-        _config.update(user_config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
-        _config["num_static_real_features"] = 0
-        _config["num_dynamic_real_features"] = 0
-        _config["num_static_categorical_features"] = 0
-        _config["num_time_features"] = 0 if X is None else X.shape[-1]
+    def update_config(self, config, X, fh):
+        """Update config attributes."""
+        config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
+        config["num_static_real_features"] = 0
+        config["num_dynamic_real_features"] = 0
+        config["num_static_categorical_features"] = 0
+        config["num_time_features"] = 0 if X is None else X.shape[-1]
 
-        if hasattr(config, "feature_size"):
-            del _config["feature_size"]
+        if "feature_size" in config:
+            del config["feature_size"]
 
         if fh is not None:
-            _config["prediction_length"] = max(
+            config["prediction_length"] = max(
                 *(fh),
-                _config["prediction_length"],
+                config["prediction_length"],
             )
 
-        config = config.from_dict(_config)
         self.config = config
         return config
 
     def get_seq_args(self):
         """Get context and prediction length."""
-        context_len = self.config.context_length + max(self.config.lags_sequence)
-        pred_len = self.config.prediction_length
+        context_len = self.config["context_length"] + max(self.config["lags_sequence"])
+        pred_len = self.config["prediction_length"]
         return context_len, pred_len
 
 
@@ -75,7 +73,7 @@ class TimerForecaster:
 
         self.source_model_class = AutoModelForCausalLM
 
-    def pred_output(
+    def predict_output(
         self,
         model,
         past_values,
@@ -95,28 +93,24 @@ class TimerForecaster:
         pred = pred.reshape((-1,))
         return pred
 
-    def update_config(self, config, user_config, X, fh):
-        """Update config with user provided config."""
-        """Update config with user provided config."""
+    def update_config(self, config, X, fh):
+        """Update config attributes."""
         # X for interface consistency as we're giving
         # superset of possible args for each function
-        _config = config.to_dict()
-        _config.update(user_config)
 
         if fh is not None:
-            _config["output_token_lens"][0] = max(
+            config["output_token_lens"][0] = max(
                 *(fh),
-                _config["output_token_lens"][0],
+                config["output_token_lens"][0],
             )
 
-        config = config.from_dict(_config)
         self.config = config
         return config
 
     def get_seq_args(self):
         """Get context and pred length."""
-        context_length = self.config.input_token_len
-        prediction_length = self.config.output_token_lens[0]
+        context_length = self.config["input_token_len"]
+        prediction_length = self.config["output_token_lens"][0]
         return context_length, prediction_length
 
 
