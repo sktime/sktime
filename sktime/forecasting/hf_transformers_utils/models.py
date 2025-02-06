@@ -2,7 +2,7 @@
 
 
 class TransformersForecaster:
-    """Adapter for Timer model."""
+    """Adapter for Autoformer, Informer, and TimeSeriesTransformer models."""
 
     def __init__(self, config):
         """Initialize the adapter with the model configuration."""
@@ -23,7 +23,7 @@ class TransformersForecaster:
         fh,
     ):
         """Predict output based on unique method of each model."""
-        # fh param for interface consistency as we're giving
+        # fh param passed for interface consistency as we're giving
         # superset of possible args for each function
         pred = model.generate(
             past_values=past_values,
@@ -64,7 +64,7 @@ class TransformersForecaster:
 
 
 class TimerForecaster:
-    """Adapter for Autoformer, Informer, and TimeSeriesTransformer models."""
+    """Adapter for Timer model."""
 
     def __init__(self, config):
         """Initialize the adapter with the model configuration."""
@@ -83,8 +83,8 @@ class TimerForecaster:
         fh,
     ):
         """Predict output based on unique method of each model."""
-        # unused args are for interface consistency as we're giving
-        # superset of possible args for each function
+        # unused args passed for interface consistency as we're
+        # giving superset of possible args for each function
 
         pred = model.generate(
             inputs=past_values,
@@ -95,7 +95,7 @@ class TimerForecaster:
 
     def update_config(self, config, X, fh):
         """Update config attributes."""
-        # X for interface consistency as we're giving
+        # X passed for interface consistency as we're giving
         # superset of possible args for each function
 
         if fh is not None:
@@ -114,8 +114,8 @@ class TimerForecaster:
         return context_length, prediction_length
 
 
-# Dictionary mapping model types to custom adapter class
-MODEL_MAPPINGS = {
+# Dictionary mapping model types from config to custom adapter class
+ADAPTER_MAPPINGS = {
     "timer": {
         "custom_adapter_class": TimerForecaster,
     },

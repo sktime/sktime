@@ -8,7 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.forecasting.hf_transformers_utils.dataset import PyTorchDataset
-from sktime.forecasting.hf_transformers_utils.models import MODEL_MAPPINGS
+from sktime.forecasting.hf_transformers_utils.models import ADAPTER_MAPPINGS
 from sktime.forecasting.hf_transformers_utils.util_func import (
     _frame2numpy,
     _pad_truncate,
@@ -193,7 +193,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         )
 
         # Find the correct model and adapter classes from the dictionary
-        model_info = MODEL_MAPPINGS.get(config.model_type)
+        model_info = ADAPTER_MAPPINGS.get(config.model_type)
         if not model_info:
             raise ValueError(f"Unsupported model type: {config.model_type}")
 
