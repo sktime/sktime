@@ -53,10 +53,10 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
     ForecastByLevel
-    GroupbyCategoryForecaster
-    Permute
-    HierarchyEnsembleForecaster
     TransformSelectForecaster
+    GroupbyCategoryForecaster
+    HierarchyEnsembleForecaster
+    Permute
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -517,6 +517,14 @@ Deep learning based forecasters
     :template: class.rst
 
     PyKANForecaster
+
+.. currentmodule:: sktime.forecasting.rbf_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFForecaster
 
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

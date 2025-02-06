@@ -69,6 +69,8 @@ with their subtypes, can be accessed below:
     ScitypeTable
 
 
+.. _mtypes_series:
+
 ``Series`` mtype specifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -90,6 +92,8 @@ The ``Series`` mtype represents a single time series.
     SeriesGluontsPandas
 
 
+.. _mtypes_panel:
+
 ``Panel`` mtype specifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -110,6 +114,8 @@ The ``Panel`` mtype represents a flat collection of time series.
     PanelGluontsPandas
 
 
+.. _mtypes_hierarchical:
+
 ``Hierarchical`` mtype specifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -125,6 +131,8 @@ The ``Hierarchical`` mtype represents a hierarchical collection of time series.
     HierarchicalDask
     HierarchicalPolarsEager
 
+
+.. _mtypes_table:
 
 ``Table`` mtype specifications
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
