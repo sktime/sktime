@@ -18,8 +18,7 @@ def mtype_scitype_pairs():
     return [(k[0], k[1]) for k in generate_mtype_register()]
 
 
-@pytest.mark.parametrize("mtype, scitype", mtype_scitype_pairs)
-def test_mtype_to_scitype(mtype, scitype):
+def test_mtype_to_scitype(mtype_scitype_pairs):
     """Tests that mtype_to_scitype yields the correct output for a string.
 
     Parameters
@@ -32,6 +31,7 @@ def test_mtype_to_scitype(mtype, scitype):
     AssertionError mtype_to_scitype does not convert mtype to scitype
     Exception if any is raised by mtype_to_scitype
     """
+    mtype, scitype = mtype_scitype_pairs
     result = mtype_to_scitype(mtype)
     msg = (
         f'mtype_to_scitype does not correctly convert mtype "{mtype}" to scitype '
@@ -64,8 +64,7 @@ def test_mtype_to_scitype_list():
     assert result == expected_scitype_list, msg
 
 
-@pytest.mark.parametrize("mtype, scitype", mtype_scitype_pairs)
-def test_scitype_to_mtype(mtype, scitype):
+def test_scitype_to_mtype(mtype_scitype_pairs):
     """Tests that scitype_to_mtype yields the correct output for a string.
 
     Parameters
@@ -78,6 +77,7 @@ def test_scitype_to_mtype(mtype, scitype):
     AssertionError scitype_to_mtype does not return correct list of mtypes
     Exception if any is raised by scitype_to_mtype
     """
+    mtype, scitype = mtype_scitype_pairs
     # check that mtype is always returned in "all" setting
     result = scitype_to_mtype(scitype, softdeps="all")
     msg = (
