@@ -16,10 +16,10 @@ def pytest_generate_tests(metafunc):
     if "mtype" in metafunc.fixturenames and "scitype" in metafunc.fixturenames:
         mtypes_scitypes = [(k[0], k[1]) for k in register]
         metafunc.parametrize("mtype, scitype", mtypes_scitypes)
-    if "mtype" in metafunc.fixturenames:
+    elif "mtype" in metafunc.fixturenames:
         mtypes = [k[0] for k in register]
         metafunc.parametrize("mtype", mtypes)
-    if "scitype" in metafunc.fixturenames:
+    elif "scitype" in metafunc.fixturenames:
         scitypes = [k[1] for k in register]
         metafunc.parametrize("scitype", scitypes)
 
