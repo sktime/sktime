@@ -805,6 +805,35 @@ def test_direct_reduction_with_X(x_treatment):
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
     reason="run test only if reduce module has changed",
 )
+def test_recursive_reduction_with_X():
+    """Test RecursiveReduction with exogenous inputs."""
+    X = np.array([[10, 20], [30, 40], [50, 60], [70, 80]])
+    y = np.array([1, 2, 3, 4]).reshape(-1, 1)
+
+    X_manual = np.hstack([y[:2], X[0:2]])
+
+    y_manual = np.array([3, 4])
+    lr = LinearRegression()
+
+    forecaster = RecursiveReductionForecaster(
+        LinearRegression(),
+        window_length=2,
+    )
+
+    fh = ForecastingHorizon([1], is_relative=True)
+    forecaster.fit(y, X=X, fh=fh)
+    lr.fit(X_manual, y_manual)
+
+    y_pred = forecaster.predict(X=X)
+    lr_pred = lr.predict([np.hstack([y[2:4], X[3:4]]).flatten()])
+
+    assert np.allclose(y_pred, lr_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 def test_pooled_direct_reduction():
     """Test pooled forecasting on DirectReductionForecaster."""
 
