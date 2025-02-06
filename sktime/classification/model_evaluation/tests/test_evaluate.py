@@ -85,6 +85,9 @@ def test_evaluate_common_configs(CV, scoring, backend):
 
     X, y = make_classification_problem(n_timepoints=30)
     classifier = DummyClassifier()
+    classifier.fit(X)
+    y_pred = classifier.predict()
+
     cv = CV(n_splits=3, shuffle=False)
 
     out = evaluate(
@@ -96,7 +99,12 @@ def test_evaluate_common_configs(CV, scoring, backend):
         **backend,
     )
     _check_evaluate_output(
-        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+        out=out,
+        cv=cv,
+        y=y,
+        scoring=scoring(y_true=y, y_pred=y_pred),
+        return_data=False,
+        return_model=False,
     )
 
     # check scoring
