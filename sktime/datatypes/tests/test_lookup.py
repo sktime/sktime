@@ -5,17 +5,20 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.datatypes._registry import (
-    MTYPE_REGISTER,
     MTYPE_SOFT_DEPS,
+    generate_mtype_register,
     mtype_to_scitype,
     scitype_to_mtype,
 )
 from sktime.utils.dependencies import _check_soft_dependencies
 
-MTYPE_SCITYPE_PAIRS = [(k[0], k[1]) for k in MTYPE_REGISTER]
+
+@pytest.fixture
+def mtype_scitype_pairs():
+    return [(k[0], k[1]) for k in generate_mtype_register()]
 
 
-@pytest.mark.parametrize("mtype, scitype", MTYPE_SCITYPE_PAIRS)
+@pytest.mark.parametrize("mtype, scitype", mtype_scitype_pairs)
 def test_mtype_to_scitype(mtype, scitype):
     """Tests that mtype_to_scitype yields the correct output for a string.
 
