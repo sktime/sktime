@@ -10,9 +10,7 @@ class TransformersForecaster:
 
         # Select the appropriate model based on the architecture in config
         source_model_class = config.architectures[0]
-        self.source_model_class = getattr(
-            transformers, source_model_class
-        )
+        self.source_model_class = getattr(transformers, source_model_class)
 
     def pred_output(
         self,
