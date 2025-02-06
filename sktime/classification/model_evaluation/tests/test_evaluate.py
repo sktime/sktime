@@ -18,19 +18,16 @@ import pytest
 from sklearn import metrics
 from sklearn.model_selection import KFold
 
-#from sktime.datasets import load_airline, load_longley
-
+# from sktime.datasets import load_airline, load_longley
 from sktime.classification.base import BaseClassifier
+from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
 from sktime.classification.model_evaluation._functions import (
     _check_scores,
     _get_column_order_and_datatype,
 )
-from sktime.classification.dummy import DummyClassifier
 from sktime.tests.test_switch import run_test_for_class
-
 from sktime.utils._testing.panel import make_classification_problem
-
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
@@ -71,29 +68,27 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
             for f in out["fitted_classifier"].values
         )
 
+
 @pytest.mark.skipif(
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-
 @pytest.mark.parametrize("CV", KFold)
 @pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
-def test_evaluate_common_configs(
-    CV, scoring, backend
-):
+def test_evaluate_common_configs(CV, scoring, backend):
     """Test evaluate common configs."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
         return None
-    
+
     X, y = make_classification_problem(n_timepoints=30)
     classifier = DummyClassifier()
     cv = CV(n_splits=3, shuffle=False)
 
     out = evaluate(
-        classifier = classifier,
+        classifier=classifier,
         cv=KFold(n_splits=3, shuffle=False),
         X=X,
         y=y,
