@@ -1061,4 +1061,4 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict
             Parameters to create testing instances of the class
         """
-        return []
+        return {}
