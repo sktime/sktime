@@ -49,8 +49,8 @@ def test_inverse_transform(hierarchical_data):
     """Test the `_inverse_transform`, to ensure it reconstructs the index."""
     transformer = DropRedundantHierarchicalLevels()
     transformer.fit(hierarchical_data)
-    transformed = transformer.transform(hierarchical_data, None)
-    inversed = transformer.inverse_transform(transformed, None)
+    transformed = transformer.transform(hierarchical_data)
+    inversed = transformer.inverse_transform(transformed)
 
     pd.testing.assert_frame_equal(hierarchical_data, inversed)
     assert (
