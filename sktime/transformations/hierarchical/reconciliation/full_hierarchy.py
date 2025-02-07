@@ -211,6 +211,14 @@ class FullHierarchyReconciler(BaseTransformer):
         M = np.repeat(M[np.newaxis, :, :], X_arr.shape[0], axis=0)
         return X_arr, M, S, E, P, Pt
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        return [
+            {"error_covariance_matrix": "ols"},
+            {"error_covariance_matrix": "wls_str"},
+        ]
+
 
 class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
     """
@@ -294,6 +302,10 @@ class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
             index=X.index,
             columns=X.columns,
         )
+
+        df = Aggregator(flatten_single_levels=False).fit_transform(df)
+        df = loc_series_idxs(df, self._original_series).sort_index()
+
         return df
 
 
