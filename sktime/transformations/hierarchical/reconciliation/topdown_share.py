@@ -133,6 +133,6 @@ class TopdownShareReconciler(BaseTransformer):
 
         forecasts_from_shares = X_shares * X_total_expanded
 
-        _X = self._aggregator.transform(forecasts_from_shares)
+        _X = Aggregator(False).fit_transform(forecasts_from_shares)
         _X = loc_series_idxs(_X, self._original_series).sort_index()
         return _X

@@ -137,5 +137,6 @@ class ForecastProportions(BaseTransformer):
         _X = X_ratios_propagated * X
 
         _X = self._drop_redundant_levels.inverse_transform(_X)
+        _X = Aggregator(flatten_single_levels=False).fit_transform(_X)
         _X = loc_series_idxs(_X, self._original_series).sort_index()
         return _X
