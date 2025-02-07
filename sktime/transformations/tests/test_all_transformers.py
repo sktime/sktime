@@ -249,8 +249,13 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     @pytest.mark.parametrize("no_levels", [0, 1, 2, 3])
     @pytest.mark.parametrize("flatten_single_levels", [True, False])
-    def test_hierarchical_transformations(
-        self, estimator_instance, no_levels, flatten_single_levels
+    @pytest.mark.parametrize("unnamed_levels", [True, False])
+    def test_hierarchical_reconcilers(
+        self,
+        estimator_instance,
+        no_levels,
+        flatten_single_levels,
+        unnamed_levels,
     ):
         """Test that hierarchical transformers can handle hierarchical data.
 
@@ -279,25 +284,21 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         # add aggregate levels
         X = agg.fit_transform(X)
 
-        prds = X + np.random.normal(0, 10, (X.shape[0], 1))
+        if unnamed_levels:
+            X.index.names = [None] * X.index.nlevels
+
+        X = X + np.random.normal(0, 10, (X.shape[0], 1))
 
         # reconcile forecasts
         reconciler = estimator_instance
-        prds_recon = reconciler.fit_transform(prds)
-        prds_recon = reconciler.inverse_transform(prds_recon)
+        Xt = reconciler.fit_transform(X)
+        prds = Xt + np.random.normal(0, 10, (Xt.shape[0], 1))
+        prds_recon = reconciler.inverse_transform(prds)
 
         # check if we now remove aggregate levels and use Aggregator it is equal
-        prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
-        assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
-
-        # check with unnamed indexes
-        if X.index.nlevels > 1:
-            prds.index.rename([None] * prds.index.nlevels, inplace=True)
-            reconciler_unnamed = estimator_instance
-            msg = "Reconciler returns different output for named and unnamed indexes."
-            preds_recon2 = reconciler_unnamed.fit_transform(prds)
-            preds_recon2 = reconciler_unnamed.inverse_transform(preds_recon2)
-            assert prds_recon.equals(preds_recon2), msg
+        prds_recon_bottomlevel = Aggregator(False).fit_transform(prds_recon)
+        prds_recon_bottomlevel = prds_recon_bottomlevel.loc[X.index]
+        assert_frame_equal(prds_recon, prds_recon_bottomlevel)
 
 
 # todo: add testing of inverse_transform
