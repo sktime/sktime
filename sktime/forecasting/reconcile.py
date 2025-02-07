@@ -180,15 +180,18 @@ class ReconcilerForecaster(BaseForecaster):
         self._series_to_keep = y.index.droplevel(-1).unique()
 
         # Add totals and flatten single levels
-        y = self._add_totals(y)
+        if _check_index_no_total(y):
+            y = self._add_totals(y)
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         if self.return_totals:
             # Override the series to keep
             self._series_to_keep = y.index.droplevel(-1).unique()
 
         self.forecaster_ = self.forecaster.clone()
-
-        if X is not None:
-            X = self._add_totals(X)
 
         if not self._requires_residuals:
             Class, kwargs = self.TRFORM_METHOD_MAP[self.method]
@@ -255,8 +258,14 @@ class ReconcilerForecaster(BaseForecaster):
             return base_fc
 
         reconc_fc = self.reconciler_transform_.inverse_transform(base_fc)
-        reconc_fc = Aggregator(False).fit_transform(reconc_fc)
+
+        agg = Aggregator(False).fit(reconc_fc)
+        if not self.return_totals:
+            return agg.inverse_transform(reconc_fc)
+
+        reconc_fc = agg.fit_transform(reconc_fc)
         reconc_fc = loc_series_idxs(reconc_fc, self._series_to_keep)
+
         return reconc_fc
 
     def _update(self, y, X=None, update_params=True):
