@@ -68,6 +68,7 @@ class Aggregator(BaseTransformer):
         ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": True,  # does transformer have inverse
+        "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
