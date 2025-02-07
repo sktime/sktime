@@ -40,8 +40,8 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
         "maintainers": "felipeangelimvieira",
         # estimator type
         # --------------
-        "scitype:transform-input": ["Series", "Hierachical"],
-        "scitype:transform-output": ["Series", "Hierarchical", "Panel"],
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         # todo instance wise?
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -51,7 +51,7 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "None",
         "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -83,6 +83,15 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
 
         self.levels_to_drop_ = list(range(first_level_with_more_than_one_value))
 
+        # Remove level -3 from levels to drop, since Hierarchical representation
+        # always have at least 3 levels
+        # So if nlevels = 3, no levels will be dropped
+        # If nlevels is 4, only the first level will be dropped
+        max_hierarchical_level_to_drop = Xt.index.nlevels - 1 - 3
+        self.levels_to_drop_ = [
+            x for x in self.levels_to_drop_ if x <= max_hierarchical_level_to_drop
+        ]
+
         Xt = X.droplevel(self.levels_to_drop_).sort_index()
         self._assert_no_inconsistent_duplicated_indexes(Xt)
 
@@ -103,7 +112,7 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
             )
 
     def _transform(self, X, y):
-        if self._no_hierarchy:
+        if self._no_hierarchy:  # or isinstance(X, np.ndarray):
             return X
 
         X = X.droplevel(self.levels_to_drop_).sort_index()
@@ -113,7 +122,7 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
         return X
 
     def _inverse_transform(self, X, y=None):
-        if self._no_hierarchy:
+        if self._no_hierarchy:  # or isinstance(X, np.ndarray):
             return X
 
         _X = X.copy()
