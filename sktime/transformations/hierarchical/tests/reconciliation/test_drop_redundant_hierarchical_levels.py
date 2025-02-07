@@ -53,16 +53,27 @@ def create_redundant_hierarchical_indexes(
         index=pd.MultiIndex.from_tuples(
             indexes, names=[f"level_{i}" for i in range(n_hier_levels)] + ["time"]
         ),
-    )
+    ).sort_index()
 
 
-def test_fit(hierarchical_data):
+@pytest.mark.parametrize(
+    "n_redundant,n_hier_levels", [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
+)
+def test_fit(n_redundant, n_hier_levels, n_instances_per_level=2):
     """Test the `_fit` method to ensure it detects levels to drop."""
+
+    X = create_redundant_hierarchical_indexes(
+        n_hier_levels, n_redundant, n_instances_per_level
+    )
     transformer = DropRedundantHierarchicalLevels()
-    transformer.fit(hierarchical_data)
+    transformer.fit(X)
+
+    expected_levels_to_drop = min(n_redundant, n_hier_levels - 2)
 
     assert hasattr(transformer, "levels_to_drop_")
-    assert transformer.levels_to_drop_ == [0], "Expected to drop the first level."
+    assert (
+        len(transformer.levels_to_drop_) == expected_levels_to_drop
+    ), "Expected to drop the first level."
 
 
 @pytest.mark.parametrize(
@@ -85,16 +96,22 @@ def test_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     ), "Expected the transformed index to have 3 levels."
 
 
-def test_inverse_transform(hierarchical_data):
+@pytest.mark.parametrize(
+    "n_redundant,n_hier_levels", [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
+)
+def test_inverse_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     """Test the `_inverse_transform`, to ensure it reconstructs the index."""
+    X = create_redundant_hierarchical_indexes(
+        n_hier_levels, n_redundant, n_instances_per_level
+    )
     transformer = DropRedundantHierarchicalLevels()
-    transformer.fit(hierarchical_data)
-    transformed = transformer.transform(hierarchical_data)
+    transformer.fit(X)
+    transformed = transformer.transform(X)
     inversed = transformer.inverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(hierarchical_data, inversed)
+    pd.testing.assert_frame_equal(X, inversed)
     assert (
-        inversed.index.nlevels == hierarchical_data.index.nlevels
+        inversed.index.nlevels == X.index.nlevels
     ), "Expected the index to match the original."
 
 
