@@ -2,10 +2,11 @@
 
 import math
 
-from sktime.utils.torch.torch import torch
+from sktime.utils.dependencies import _safe_import
 
-nn = torch.nn
-Tensor = torch.Tensor
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+Tensor = _safe_import("torch.Tensor")
 
 
 class PositionalEmbedding(nn.Module):

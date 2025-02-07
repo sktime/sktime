@@ -1,8 +1,9 @@
 """Implement standard normalization."""
 
-from sktime.utils.torch.torch import torch
+from sktime.utils.dependencies import _safe_import
 
-nn = torch.nn
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 class Normalize(nn.Module):

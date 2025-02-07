@@ -2,25 +2,21 @@
 
 from math import sqrt
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-from sktime.utils.torch.torch import torch
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-nn = torch.nn
-
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-    from transformers import (
-        BertConfig,
-        BertModel,
-        BertTokenizer,
-        GPT2Config,
-        GPT2Model,
-        GPT2Tokenizer,
-        LlamaConfig,
-        LlamaModel,
-        LlamaTokenizer,
-    )
+transformers = _safe_import("transformers")
+BertConfig = _safe_import("transformers.BertConfig")
+BertModel = _safe_import("transformers.BertModel")
+BertTokenizer = _safe_import("transformers.BertTokenizer")
+GPT2Config = _safe_import("transformers.GPT2Config")
+GPT2Model = _safe_import("transformers.GPT2Model")
+GPT2Tokenizer = _safe_import("transformers.GPT2Tokenizer")
+LlamaConfig = _safe_import("transformers.LlamaConfig")
+LlamaModel = _safe_import("transformers.LlamaModel")
+LlamaTokenizer = _safe_import("transformers.LlamaTokenizer")
 
 from sktime.libs.time_llm.layers.Embed import PatchEmbedding
 from sktime.libs.time_llm.layers.StandardNorm import Normalize
