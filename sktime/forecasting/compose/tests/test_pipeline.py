@@ -270,10 +270,13 @@ def test_nested_pipeline_with_index_creation_y_before_X():
     f.fit(y=y_train, X=X_train, fh=1)
     y_pred = f.predict(X=X_test)
 
+    expected_y_pred_length = (
+        1 if y.index.nlevels == 1 else y.index.droplevel(-1).nunique()
+    )
     # some basic expected output format checks
     assert isinstance(y_pred, pd.DataFrame)
     assert isinstance(y_pred.index, pd.MultiIndex)
-    assert len(y_pred) == 9
+    assert len(y_pred) == expected_y_pred_length
 
 
 @pytest.mark.skipif(
