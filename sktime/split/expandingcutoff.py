@@ -53,16 +53,24 @@ class ExpandingCutoffSplitter(BaseSplitter):
     training set expands by `step_length`, including all prior data up to the new cutoff.
 
     .. math::
-        TrainingFolds = \{ [j, \ldots, cutoff + j]\}_{j=0, \ldots, n - cutoff - fh + 1}
+        TrainingFolds = \{ [j, \ldots, cutoff + j]\}_{j=0, \ldots, N + 1}
 
     where
+
+    .. math::
+        N = \left\lceil \frac{len(time_serie) - cutoff - n_{fh}}{step_length} \right\rceil
+
+    and :math:`n_{fh}= fh` if :math:`fh` is an integer or :math:`len(fh)` if :math:`fh` is a list/array.
+
 
     The test folds are defined as follows: The test set consists of the indices immediately following the
     cutoff in each split, defined by `fh`. The number of test samples in each fold
     corresponds to the number of indices specified in `fh`.
 
     .. math::
-        TestFolds = \{ (cutoff + j, \ldots, cutoff + fh + j]\}_{j=0, \ldots, n - cutoff - fh + 1}
+        TestFolds = \{ (cutoff + j, \ldots, cutoff + fh + j]\}_{j=0, \ldots, N + 1}
+
+    and :math:`N` is defined as above.
 
     The valid types of y-index and cutoff pairings are datelike-datelike, datelike-int,
     and int-int. When a datelike index is combined with an int cutoff, the cutoff
