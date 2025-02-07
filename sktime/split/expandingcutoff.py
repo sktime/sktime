@@ -53,22 +53,22 @@ class ExpandingCutoffSplitter(BaseSplitter):
     training set expands by `step_length`, including all prior data up to the new cutoff.
 
     .. math::
-        TrainingFolds = \{ [j, \ldots, cutoff + j]\}_{j=0, \ldots, N + 1}
+        \text{TrainingFolds} = \{ [j, \ldots, cutoff + j]\}_{j=0, \ldots, N + 1}
 
     where
 
     .. math::
-        N = \left\lceil \frac{len(time_serie) - cutoff - n_{fh}}{step_length} \right\rceil
+        N = \left\lceil \frac{len(\text{time_serie}) - cutoff - n_{fh}}{\textbf{step_length}} \right\rceil
 
     and :math:`n_{fh}= fh` if :math:`fh` is an integer or :math:`len(fh)` if :math:`fh` is a list/array.
 
 
-    The test folds are defined as follows: The test set consists of the indices immediately following the
+    The test folds are defined as follows: the test set consists of the indices immediately following the
     cutoff in each split, defined by `fh`. The number of test samples in each fold
     corresponds to the number of indices specified in `fh`.
 
     .. math::
-        TestFolds = \{ (cutoff + j, \ldots, cutoff + fh + j]\}_{j=0, \ldots, N + 1}
+        \textbf{TestFolds} = \{ (cutoff + j, \ldots, cutoff + fh + j]\}_{j=0, \ldots, N + 1}
 
     and :math:`N` is defined as above.
 
@@ -79,19 +79,13 @@ class ExpandingCutoffSplitter(BaseSplitter):
     functions as an iloc indexer.
 
     For example for ``cutoff = 10``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
-    here is a representation of the folds:
+    here is a representation of the folds::
 
-    ```
-                          c
-    |---------------------|----fh----|------|
+    |---------------------------------------|
     | * * * * * * * * * * x x x x x x - - - |
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
-
-    ```
-
-    ``c`` = cutoff date or index.
 
     ``*`` = training fold.
 
