@@ -64,7 +64,7 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     prds_recon = reconciler.predict(fh=fh)
 
     # Aggregate to check if
-    prds_recon_bu = agg.fit_transform(prds_recon)
+    prds_recon_bu = agg.transform(agg.inverse_transform(prds_recon))
     assert_frame_equal(prds_recon, prds_recon_bu)
 
     # check with unnamed indexes
