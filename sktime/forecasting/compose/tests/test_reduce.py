@@ -763,7 +763,7 @@ def test_reduction_without_X(strategy):
     ["concurrent", "shifted"],
 )
 def test_direct_reduction_with_X(x_treatment):
-    """Testing DirectReductionForecaster with exogenous variables."""
+    """Test DirectReductionForecaster with exogenous variables."""
     X = np.array([[10, 20], [30, 40], [50, 60], [70, 80]])
     y = np.array([1, 2, 3, 4]).reshape(-1, 1)
 
