@@ -238,11 +238,11 @@ class MiddleOutReconciler(BaseTransformer):
 
         return [
             {
-                "middle_level": 1,
+                "middle_level": 0,
                 "middle_bottom_reconciler": TopdownShareReconciler(),
             },
             {
-                "middle_level": 2,
+                "middle_level": -1,
                 "middle_bottom_reconciler": TopdownShareReconciler(),
             },
         ]
