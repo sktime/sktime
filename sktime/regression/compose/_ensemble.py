@@ -239,6 +239,19 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         """Wrap predict_proba to call BaseRegressor.predict_proba."""
         return BaseRegressor.predict_proba(self, X=X, **kwargs)
 
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseRegressor._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseRegressor._repr_mimebundle_(self, **kwargs)
+
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
