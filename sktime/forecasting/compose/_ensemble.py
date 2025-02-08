@@ -386,6 +386,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        raise RuntimeError("testing")
+
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y, X, fh)
         return self
