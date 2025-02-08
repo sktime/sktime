@@ -28,7 +28,7 @@ def test_excluded_tests_by_test():
             )
         )
     ]
-    excluded_estimators = next(iter(EXCLUDED_TESTS_BY_TEST.values()))
+    excluded_estimators = EXCLUDED_TESTS_BY_TEST["test_get_test_params_coverage"]
     assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
         filtered_estimators
     ) - set(EXCLUDE_SOFT_DEPS), (
