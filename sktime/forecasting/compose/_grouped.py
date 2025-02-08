@@ -12,6 +12,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.registry import coerce_scitype
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.adi_cv import ADICVTransformer
 
@@ -155,9 +156,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         dict of forecasters with the key corresponding to categories generated
         by the given transformer and the value corresponding to a sktime forecaster.
 
-    transformer : sktime transformer, default = ADICVTransformer()
-        A series-to-primitives sk-time transformer that generates a value
+    transformer : sktime transformer or clusterer, default = ADICVTransformer()
+        A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
+
+        If a clusterer is used, it must suport cluster assignment,
+        i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
         generated category in the first column of the returned values when
@@ -250,7 +254,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = self.transformer.clone()
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
         super().__init__()
 
