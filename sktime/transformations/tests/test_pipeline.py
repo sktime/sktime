@@ -21,6 +21,7 @@ std_transformer = TabularToSeriesAdaptor(
 )
 
 
+@pytest.mark.xfail(reason="due to changes in sklearn pipelines, use sktime instead")
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.transformations"]),
     reason="test only if anything in sktime.transformations module has changed",
