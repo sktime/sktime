@@ -386,7 +386,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters = self._check_forecasters()
+        forecasters = [f[1] for f in self._forecasters]
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
@@ -405,7 +405,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             will be of same mtype as y in _fit
             Ensembled predictions
         """
-        names, _ = self._check_forecasters()
+        names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
         y_pred = (
             y_pred.T.groupby(level=1)
