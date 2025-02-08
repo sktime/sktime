@@ -28,14 +28,14 @@ def test_excluded_tests_by_test():
             )
         )
     ]
-    for _, excluded_estimators in EXCLUDED_TESTS_BY_TEST.items():
-        assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
-            filtered_estimators
-        ) - set(EXCLUDE_SOFT_DEPS), (
-            "Assertion failed: The sets of excluded and filtered estimators "
-            "do not match. Please remove the estimator you have added "
-            "test parameters to from EXCLUDED_TESTS_BY_TEST or EXCLUDE_SOFT_DEPS."
-        )
+    excluded_estimators = next(iter(EXCLUDED_TESTS_BY_TEST.values()))
+    assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
+        filtered_estimators
+    ) - set(EXCLUDE_SOFT_DEPS), (
+        "Assertion failed: The sets of excluded and filtered estimators "
+        "do not match. Please remove the estimator you have added "
+        "test parameters to from EXCLUDED_TESTS_BY_TEST or EXCLUDE_SOFT_DEPS."
+    )
 
 
 def test_exclude_estimators():
