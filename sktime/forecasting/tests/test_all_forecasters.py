@@ -141,7 +141,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
 
 
-def _get_expected_columns(self, y_test):
+def _get_expected_columns(y_test):
     if isinstance(y_test, pd.Series):
         if hasattr(y_test, "name") and y_test.name is not None:
             return [y_test.name]
@@ -151,7 +151,7 @@ def _get_expected_columns(self, y_test):
         return y_test.columns
 
 
-def _check_predict_intervals(self, pred_ints, y_test, fh, coverage):
+def _check_predict_intervals(pred_ints, y_test, fh, coverage):
     """Check expected interval prediction output."""
     # check expected type
     valid, msg, _ = check_is_mtype(
@@ -185,7 +185,7 @@ def _check_predict_intervals(self, pred_ints, y_test, fh, coverage):
     assert all(expected == found), msg
 
 
-def _check_predict_quantiles(self, pred_quantiles, y_test, fh, alpha):
+def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
     """Check expected quantile prediction output."""
     # check expected type
     valid, msg, _ = check_is_mtype(
@@ -227,7 +227,7 @@ def _check_predict_quantiles(self, pred_quantiles, y_test, fh, alpha):
         #        assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
 
-def _check_predict_proba(self, pred_dist, y_test, fh_int):
+def _check_predict_proba(pred_dist, y_test, fh_int):
     assert hasattr(pred_dist, "get_tag")
     obj_type = pred_dist.get_tag("object_type", None, False)
     assert obj_type == "distribution"
