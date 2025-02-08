@@ -9,12 +9,8 @@ from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.croston import Croston
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.registry import coerce_scitype
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.adi_cv import ADICVTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -249,6 +245,8 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self.transformer = transformer
 
         else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
             self.transformer = ADICVTransformer(features=["class"])
 
         self.forecasters = forecasters
@@ -512,6 +510,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
+        from sktime.forecasting.croston import Croston
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.transformations.series.adi_cv import ADICVTransformer
+
         param1 = {
             "forecasters": {
                 "smooth": NaiveForecaster(),
@@ -530,7 +534,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "fallback_forecaster": Croston(),
         }
 
-        params = [param1, param2]
+        # use with clusterer
+        param3 = {
+            "forecasters": {},
+            "transformer": TimeSeriesDBSCAN.create_test_instance(),
+            "fallback_forecaster": Croston(),
+        }
+
+        params = [param1, param2, param3]
         return params
 
     def _iterate_predict_method_over_categories(
