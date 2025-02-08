@@ -594,19 +594,26 @@ class BaseTransformer(BaseEstimator):
         combinations not in the table are currently not supported
 
         Explicitly, with examples:
-            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
-                then the return is a single `Series` of the same mtype
-                Example: detrending a single series
-            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
-                then the return is `Panel` with same number of instances as `X`
-                    (the transformer is applied to each input Series instance)
-                Example: all series in the panel are detrended individually
-            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
-                then the return is `pd.DataFrame` with as many rows as instances in `X`
-                Example: i-th row of the return has mean and variance of the i-th series
-            if `X` is `Series` and `transform-output` is `Panel`
-                then the return is a `Panel` object of type `pd-multiindex`
-                Example: i-th instance of the output is the i-th window running over `X`
+
+            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)
+            and ``transform-output`` is ``Series``,
+            then the return is a single `Series` of the same mtype.
+            Example: detrending a single series
+
+            * if ``X`` is ``Panel`` (e.g., ``pd-multiindex``) and ``transform-output``
+            is ``Series``,
+            then the return is `Panel` with same number of instances as ``X``
+            (the transformer is applied to each input Series instance).
+            Example: all series in the panel are detrended individually
+
+            * if ``X`` is ``Series`` or ``Panel`` and ``transform-output`` is
+            ``Primitives``,
+            then the return is ``pd.DataFrame`` with as many rows as instances in ``X``
+            Example: i-th row of the return has mean and variance of the i-th series
+
+            * if ``X`` is ``Series`` and ``transform-output`` is ``Panel``,
+            then the return is a ``Panel`` object of type ``pd-multiindex``.
+            Example: i-th instance of the output is the i-th window running over ``X``
         """
         # check whether is fitted
         self.check_is_fitted()
@@ -701,19 +708,26 @@ class BaseTransformer(BaseEstimator):
         combinations not in the table are currently not supported
 
         Explicitly, with examples:
-            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
-                then the return is a single `Series` of the same mtype
-                Example: detrending a single series
-            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
-                then the return is `Panel` with same number of instances as `X`
-                    (the transformer is applied to each input Series instance)
-                Example: all series in the panel are detrended individually
-            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
-                then the return is `pd.DataFrame` with as many rows as instances in `X`
-                Example: i-th row of the return has mean and variance of the i-th series
-            if `X` is `Series` and `transform-output` is `Panel`
-                then the return is a `Panel` object of type `pd-multiindex`
-                Example: i-th instance of the output is the i-th window running over `X`
+
+            * if ``X`` is ``Series`` (e.g., ``pd.DataFrame``)
+            and ``transform-output`` is ``Series``,
+            then the return is a single `Series` of the same mtype.
+            Example: detrending a single series
+
+            * if ``X`` is ``Panel`` (e.g., ``pd-multiindex``) and ``transform-output``
+            is ``Series``,
+            then the return is `Panel` with same number of instances as ``X``
+            (the transformer is applied to each input Series instance).
+            Example: all series in the panel are detrended individually
+
+            * if ``X`` is ``Series`` or ``Panel`` and ``transform-output`` is
+            ``Primitives``,
+            then the return is ``pd.DataFrame`` with as many rows as instances in ``X``
+            Example: i-th row of the return has mean and variance of the i-th series
+
+            * if ``X`` is ``Series`` and ``transform-output`` is ``Panel``,
+            then the return is a ``Panel`` object of type ``pd-multiindex``.
+            Example: i-th instance of the output is the i-th window running over ``X``
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
@@ -1136,8 +1150,10 @@ class BaseTransformer(BaseEstimator):
                 var_name="y",
             )
 
+            y_required = self.get_tag("requires_y")
+
             # raise informative error message if y is is in wrong format
-            if not y_valid:
+            if not y_valid and y_required:
                 allowed_msg = (
                     f"Allowed scitypes for y in transformations depend on X passed. "
                     f"Passed X scitype was {X_scitype}, "
@@ -1148,13 +1164,18 @@ class BaseTransformer(BaseEstimator):
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
 
-            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
-                raise TypeError(
-                    "Transformers do not support categorical features in y."
-                )
+            elif not y_valid and not y_required:
+                # if y is wrong type, we do not pass it to inner methods
+                y_scitype = None
+                y_inner_mtype = ["None"]
+            else:  # y_valid, (y_required does not matter then, we pass y)
+                y_scitype = y_metadata["scitype"]
+                y_mtype = y_metadata["mtype"]
 
-            y_scitype = y_metadata["scitype"]
-            y_mtype = y_metadata["mtype"]
+                if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                    raise TypeError(
+                        "Transformers do not support categorical features in y."
+                    )
 
         else:
             # y_scitype is used below - set to None if y is None
@@ -1446,11 +1467,11 @@ class BaseTransformer(BaseEstimator):
                         f"In fit, {type(self).__name__} makes one fit per instance, "
                         "and applies that fit to the instance with the same index in "
                         "transform. Vanilla use therefore requires the same number "
-                        "of instances in fit and transform, but"
+                        "of instances in fit and transform, but "
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
                         f"number of instances seen in transform: {n_trafos}. "
-                        "For fit/transforming per instance, e.g., for pre-processinng "
+                        "For fit/transforming per instance, e.g., for pre-processing "
                         "in a time series classification, regression or clustering "
                         "pipeline, wrap this transformer in "
                         "FitInTransform, from sktime.transformations.compose."
