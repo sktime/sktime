@@ -31,11 +31,7 @@ from sktime.split import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.tests.test_all_estimators import (
-    BaseFixtureGenerator,
-    QuickTester,
-    TestAllObjects,
-)
+from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
@@ -145,118 +141,115 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
 
 
-class _ProbalisticPredictionCheck:
-    def __init__(self) -> None:
-        pass
-
-    def _get_expected_columns(self, y_test):
-        if isinstance(y_test, pd.Series):
-            if hasattr(y_test, "name") and y_test.name is not None:
-                return [y_test.name]
-            else:
-                return [0]
+def _get_expected_columns(y_test):
+    if isinstance(y_test, pd.Series):
+        if hasattr(y_test, "name") and y_test.name is not None:
+            return [y_test.name]
         else:
-            return y_test.columns
+            return [0]
+    else:
+        return y_test.columns
 
-    def _check_predict_intervals(self, pred_ints, y_test, fh, coverage):
-        """Check expected interval prediction output."""
-        # check expected type
-        valid, msg, _ = check_is_mtype(
-            pred_ints,
-            mtype="pred_interval",
-            scitype="Proba",
-            return_metadata=True,
-            msg_return_dict="list",
-        )  # type: ignore
-        assert valid, msg
 
-        # check index (also checks forecasting horizon is more than one element)
-        cutoff = get_cutoff(y_test, return_index=True)
-        _assert_correct_pred_time_index(pred_ints.index, cutoff, fh)
+def _check_predict_intervals(pred_ints, y_test, fh, coverage):
+    """Check expected interval prediction output."""
+    # check expected type
+    valid, msg, _ = check_is_mtype(
+        pred_ints,
+        mtype="pred_interval",
+        scitype="Proba",
+        return_metadata=True,
+        msg_return_dict="list",
+    )  # type: ignore
+    assert valid, msg
 
-        # check columns
-        # Forecasters where name of variables do not exist
-        # In this cases y_train is series - the upper level in dataframe == 'Coverage'
-        expected_columns = self._get_expected_columns(y_test)
-        expected_coverages = [coverage] if isinstance(coverage, float) else coverage
-        expected = pd.MultiIndex.from_product(
-            [expected_columns, expected_coverages, ["lower", "upper"]]
+    # check index (also checks forecasting horizon is more than one element)
+    cutoff = get_cutoff(y_test, return_index=True)
+    _assert_correct_pred_time_index(pred_ints.index, cutoff, fh)
+
+    # check columns
+    # Forecasters where name of variables do not exist
+    # In this cases y_train is series - the upper level in dataframe == 'Coverage'
+    expected_columns = _get_expected_columns(y_test)
+    expected_coverages = [coverage] if isinstance(coverage, float) else coverage
+    expected = pd.MultiIndex.from_product(
+        [expected_columns, expected_coverages, ["lower", "upper"]]
+    )
+
+    found = pred_ints.columns.to_flat_index()
+    msg = (
+        "columns of returned prediction interval DataFrame do not "
+        f"match up with expected columns. Expected: {expected},"
+        f"found: {found}"
+    )
+    assert all(expected == found), msg
+
+
+def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
+    """Check expected quantile prediction output."""
+    # check expected type
+    valid, msg, _ = check_is_mtype(
+        pred_quantiles,
+        mtype="pred_quantiles",
+        scitype="Proba",
+        return_metadata=True,
+        msg_return_dict="list",
+    )  # type: ignore
+    assert valid, msg
+
+    # check index (also checks forecasting horizon is more than one element)
+    cutoff = get_cutoff(y_test, return_index=True)
+    _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
+
+    # check columns
+    expected_columns = _get_expected_columns(y_test)
+    expected_quantiles = [alpha] if isinstance(alpha, float) else alpha
+    expected = pd.MultiIndex.from_product([expected_columns, expected_quantiles])
+
+    found = pred_quantiles.columns.to_flat_index()
+    msg = (
+        "columns of returned quantile prediction DataFrame do not"
+        f"match up with expected columns. Expected: {expected},"
+        f"found: {found}"
+    )
+    assert all(expected == found), msg
+
+    if isinstance(alpha, list):
+        # sorts the columns that correspond to alpha values
+        pred_quantiles = pred_quantiles.reindex(
+            columns=pred_quantiles.columns.reindex(sorted(alpha), level=1)[0]
         )
 
-        found = pred_ints.columns.to_flat_index()
-        msg = (
-            "columns of returned prediction interval DataFrame do not "
-            f"match up with expected columns. Expected: {expected},"
-            f"found: {found}"
-        )
-        assert all(expected == found), msg
+        # check if values are monotonically increasing
+        # commented out until #4431 is resolved
+        # for var in pred_quantiles.columns.levels[0]:
+        #     for index in range(len(pred_quantiles.index)):
+        #        assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
-    def _check_predict_quantiles(self, pred_quantiles, y_test, fh, alpha):
-        """Check expected quantile prediction output."""
-        # check expected type
-        valid, msg, _ = check_is_mtype(
-            pred_quantiles,
-            mtype="pred_quantiles",
-            scitype="Proba",
-            return_metadata=True,
-            msg_return_dict="list",
-        )  # type: ignore
-        assert valid, msg
 
-        # check index (also checks forecasting horizon is more than one element)
-        cutoff = get_cutoff(y_test, return_index=True)
-        _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
+def _check_predict_proba(pred_dist, y_test, fh_int):
+    assert hasattr(pred_dist, "get_tag")
+    obj_type = pred_dist.get_tag("object_type", None, False)
+    assert obj_type == "distribution"
 
-        # check columns
-        expected_columns = self._get_expected_columns(y_test)
-        expected_quantiles = [alpha] if isinstance(alpha, float) else alpha
-        expected = pd.MultiIndex.from_product([expected_columns, expected_quantiles])
+    pred_cols = pred_dist.columns
+    pred_index = pred_dist.index
 
-        found = pred_quantiles.columns.to_flat_index()
-        msg = (
-            "columns of returned quantile prediction DataFrame do not"
-            f"match up with expected columns. Expected: {expected},"
-            f"found: {found}"
-        )
-        assert all(expected == found), msg
+    # check time index
+    cutoff = get_cutoff(y_test, return_index=True)
+    _assert_correct_pred_time_index(pred_index, cutoff, fh_int)
 
-        if isinstance(alpha, list):
-            # sorts the columns that correspond to alpha values
-            pred_quantiles = pred_quantiles.reindex(
-                columns=pred_quantiles.columns.reindex(sorted(alpha), level=1)[0]
-            )
-
-            # check if values are monotonically increasing
-            # commented out until #4431 is resolved
-            # for var in pred_quantiles.columns.levels[0]:
-            #     for index in range(len(pred_quantiles.index)):
-            #        assert pred_quantiles[var].iloc[index].is_monotonic_increasing
-
-    def _check_predict_proba(self, pred_dist, y_test, fh_int):
-        assert hasattr(pred_dist, "get_tag")
-        obj_type = pred_dist.get_tag("object_type", None, False)
-        assert obj_type == "distribution"
-
-        pred_cols = pred_dist.columns
-        pred_index = pred_dist.index
-
-        # check time index
-        cutoff = get_cutoff(y_test, return_index=True)
-        _assert_correct_pred_time_index(pred_index, cutoff, fh_int)
-
-        # check columns
-        if isinstance(y_test, pd.Series):
-            if y_test.name is not None:
-                assert (pred_cols == y_test.name).all()
-            else:
-                assert (pred_cols == pd.Index([0])).all()
+    # check columns
+    if isinstance(y_test, pd.Series):
+        if y_test.name is not None:
+            assert (pred_cols == y_test.name).all()
         else:
-            assert (pred_cols == y_test.columns).all()
+            assert (pred_cols == pd.Index([0])).all()
+    else:
+        assert (pred_cols == y_test.columns).all()
 
 
-class TestAllForecasters(
-    ForecasterFixtureGenerator, QuickTester, _ProbalisticPredictionCheck
-):
+class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):
@@ -532,7 +525,7 @@ class TestAllForecasters(
             pred_ints = estimator_instance.predict_interval(
                 fh=fh_int_oos, coverage=coverage
             )
-            self._check_predict_intervals(
+            _check_predict_intervals(
                 pred_ints,
                 y_train,
                 fh_int_oos,
@@ -568,7 +561,7 @@ class TestAllForecasters(
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
             quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
-            self._check_predict_quantiles(
+            _check_predict_quantiles(
                 quantiles,
                 y_train,
                 fh_int_oos,
@@ -602,7 +595,7 @@ class TestAllForecasters(
         if estimator_instance.get_tag("capability:pred_int"):
             try:
                 pred_dist = estimator_instance.predict_proba()
-                self._check_predict_proba(pred_dist, y_train, fh_int_oos)
+                _check_predict_proba(pred_dist, y_train, fh_int_oos)
             except NotImplementedError:  # noqa: S110
                 pass
         else:
@@ -947,7 +940,7 @@ class TestAllForecasters(
         _assert_correct_columns(y_pred, y_train)
 
 
-class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
+class TestAllGlobalForecasters(BaseFixtureGenerator):
     """Module level tests for all global forecasters."""
 
     estimator_type_filter = "global_forecaster"
@@ -1147,7 +1140,7 @@ class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
             pred_ints = estimator_instance.predict_interval(
                 fh=fh_int_oos, coverage=coverage, X=X_test, y=y_test
             )
-            self._check_predict_intervals(
+            _check_predict_intervals(
                 pred_ints,
                 y_test,
                 fh_int_oos,
@@ -1194,7 +1187,7 @@ class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
             quantiles = estimator_instance.predict_quantiles(
                 fh=fh_int_oos, alpha=alpha, y=y_test, X=X_test
             )
-            self._check_predict_quantiles(
+            _check_predict_quantiles(
                 quantiles,
                 y_test,
                 fh_int_oos,
@@ -1237,7 +1230,7 @@ class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
         if estimator_instance.get_tag("capability:pred_int"):
             try:
                 pred_dist = estimator_instance.predict_proba(X=X_test, y=y_test)
-                self._check_predict_proba(pred_dist, y_test, fh_int_oos)
+                _check_predict_proba(pred_dist, y_test, fh_int_oos)
             except NotImplementedError:  # noqa: S110
                 pass
         else:
