@@ -39,18 +39,18 @@ class ExpandingCutoffSplitter(BaseSplitter):
     r"""
     Expanding cutoff splitter for time series data.
 
-    This splitter combines elements of `ExpandingWindowSplitter` and `CutoffSplitter`
-    to create training and testing sets. Unlike `ExpandingWindowSplitter` which begins
+    This splitter combines elements of ``ExpandingWindowSplitter`` and ``CutoffSplitter``
+    to create training and testing sets. Unlike ``ExpandingWindowSplitter`` which begins
     with a fixed initial window, this splitter uses a specific cutoff point as the
     starting window for the training set. The training set then expands incrementally
     in each split until it reaches the end of the series.
 
-    The test set is defined by a forecast horizon (`fh`) relative to the last point in the
+    The test set is defined by a forecast horizon (``fh``) relative to the last point in the
     training set, containing the specified number of subsequent indices.
 
     The traning folds are defined as follows: the training set starts from the beginning of the
-    series and extends up to the `cutoff` index for the first split. In each subsequent split, the
-    training set expands by `step_length`, including all prior data up to the new cutoff.
+    series and extends up to the ``cutoff`` index for the first split. In each subsequent split, the
+    training set expands by ``step_length``, including all prior data up to the new cutoff.
 
     .. math::
         \text{TrainingFolds} = \{ [j, \ldots, cutoff + j]\}_{j=0, \ldots, N + 1}
@@ -60,12 +60,12 @@ class ExpandingCutoffSplitter(BaseSplitter):
     .. math::
         N = \left\lceil \frac{len(\text{time_serie}) - cutoff - n_{fh}}{\textbf{step_length}} \right\rceil
 
-    and :math:`n_{fh}= fh` if :math:`fh` is an integer or :math:`len(fh)` if :math:`fh` is a list/array.
+    and :math:`n_{fh}= fh` if ``fh`` is an integer or :math:`len(fh)` if ``fh`` is a list/array.
 
 
     The test folds are defined as follows: the test set consists of the indices immediately following the
-    cutoff in each split, defined by `fh`. The number of test samples in each fold
-    corresponds to the number of indices specified in `fh`.
+    cutoff in each split, defined by ``fh``. The number of test samples in each fold
+    corresponds to the number of indices specified in ``fh``.
 
     .. math::
         \textbf{TestFolds} = \{ (cutoff + j, \ldots, cutoff + fh + j]\}_{j=0, \ldots, N + 1}
@@ -93,15 +93,15 @@ class ExpandingCutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cutoff: int or pd.Timestamp
+    cutoff : int or pd.Timestamp
         The initial cutoff point in the series, which marks the beginning of the
         first test set.
-    fh: int, list, or np.array
+    fh : int, list, or np.array
         Forecasting horizon, determining the size and  indices of the test sets.
-        It can be:
-            - An integer: indication how many steps ahead to forecast
-            - A list or array of integers: specifying exact test indices relative to the cutoff
-    step_length: int
+
+        - If an integer, indication how many steps ahead to forecast
+        - If a list or an array of integers, specifying exact test indices relative to the cutoff
+    step_length : int
         The step length to expand the training set size in each split.
 
     Examples
