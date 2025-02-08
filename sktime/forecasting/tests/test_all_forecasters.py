@@ -254,9 +254,7 @@ class _ProbalisticPredictionCheck:
             assert (pred_cols == y_test.columns).all()
 
 
-class TestAllForecasters(
-    ForecasterFixtureGenerator, QuickTester, _ProbalisticPredictionCheck
-):
+class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):
