@@ -48,6 +48,15 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+    
+    Examples
+    --------
+    >>> from sktime.clustering.k_shapes import TimeSeriesKShapes
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, _ = load_basic_motions(split="train", return_X_y=True)
+    >>> model = TimeSeriesKShapes(n_clusters=3, max_iter=50, tol=1e-4, random_state=42)
+    >>> model.fit(X_train)
+    >>> y_pred = model.predict(X_train)
     """
 
     _tags = {
