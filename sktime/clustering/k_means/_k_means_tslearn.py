@@ -104,9 +104,8 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     Basic usage:
 
     >>> from sktime.clustering.k_means import TimeSeriesKMeansTslearn
-    >>> from sklearn.datasets import make_blobs
-    >>> X_train, _ = make_blobs(n_samples=100, centers=3, n_features=10, random_state=42)
-    >>> X_train = data[0]
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train", return_X_y=True)
     >>> model = TimeSeriesKMeansTslearn(n_clusters=3, metric="euclidean")
     >>> model.fit(X_train)
     >>> y_pred = model.predict(X_train)
