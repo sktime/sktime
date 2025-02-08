@@ -157,6 +157,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        raise ValueError("Intentional failure to test CI")
+
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._instantiate_model()
