@@ -55,11 +55,28 @@ class BaseDeepClassifier(BaseClassifier, DeepSerializationMixin):
         ...
 
     def summary(self):
-        """Return a summary of the model's training losses/metrics."""
+        """Summary function to return the losses/metrics for model fit.
+
+        Returns
+        -------
+        history: dict or None,
+            Dictionary containing model's train/validation losses and metrics
+        """
         return self.history.history if self.history is not None else None
 
     def _predict_proba(self, X, **kwargs):
-        """Predict class probability estimates for all cases in X."""
+        """Find probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
+            The training input samples.         input_checks: boolean
+            whether to check the X parameter
+
+        Returns
+        -------
+        output : array of shape = [n_instances, n_classes] of probabilities
+        """
         X = X.transpose((0, 2, 1))
         probs = self.model_.predict(X, self.batch_size, **kwargs)
         if probs.shape[1] == 1:  # binary classification

@@ -50,7 +50,18 @@ class BaseDeepRegressor(BaseRegressor, DeepSerializationMixin):
         ...
 
     def _predict(self, X, **kwargs):
-        """Predict regression estimates for all cases in X."""
+        """Find regression estimate for all cases in X.
+
+        Parameters
+        ----------
+        X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
+            The training input samples.
+
+        Returns
+        -------
+        predictions : 1d numpy array
+            array of predictions of each instance
+        """
         X = X.transpose((0, 2, 1))
         y_pred = self.model_.predict(X, self.batch_size, **kwargs)
         y_pred = np.squeeze(y_pred, axis=-1)

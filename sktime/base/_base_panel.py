@@ -619,6 +619,12 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 class DeepSerializationMixin:
     def __getstate__(self):
+        """Get Dict config that will be used when a serialization method is called.
+
+        Returns
+        -------
+        copy : dict, the config to be serialized
+        """
         from tensorflow.keras.optimizers import Optimizer, serialize
 
         state = self.__dict__.copy()
@@ -641,6 +647,16 @@ class DeepSerializationMixin:
         return state
 
     def __setstate__(self, state):
+        """Magic method called during deserialization.
+
+        Parameters
+        ----------
+        state : dict, as returned from __getstate__(), used for correct deserialization
+
+        Returns
+        -------
+        -
+        """
         from tensorflow.keras.optimizers import deserialize
 
         self.__dict__ = state
@@ -827,17 +843,15 @@ class DeepSerializationMixin:
 
     @classmethod
     def load_from_path(cls, serial):
-        """
-        Load an estimator from a zip file.
+        """Load object from file location.
 
         Parameters
         ----------
-        serial : Path
-            The file location of the zip file.
+        serial : Name of the zip file.
 
         Returns
         -------
-        The deserialized estimator.
+        deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
         from shutil import rmtree
