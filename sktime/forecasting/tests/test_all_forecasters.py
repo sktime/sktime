@@ -150,6 +150,7 @@ def _get_expected_columns(self, y_test):
     else:
         return y_test.columns
 
+
 def _check_predict_intervals(self, pred_ints, y_test, fh, coverage):
     """Check expected interval prediction output."""
     # check expected type
@@ -182,6 +183,7 @@ def _check_predict_intervals(self, pred_ints, y_test, fh, coverage):
         f"found: {found}"
     )
     assert all(expected == found), msg
+
 
 def _check_predict_quantiles(self, pred_quantiles, y_test, fh, alpha):
     """Check expected quantile prediction output."""
@@ -223,6 +225,7 @@ def _check_predict_quantiles(self, pred_quantiles, y_test, fh, alpha):
         # for var in pred_quantiles.columns.levels[0]:
         #     for index in range(len(pred_quantiles.index)):
         #        assert pred_quantiles[var].iloc[index].is_monotonic_increasing
+
 
 def _check_predict_proba(self, pred_dist, y_test, fh_int):
     assert hasattr(pred_dist, "get_tag")
