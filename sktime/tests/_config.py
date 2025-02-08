@@ -260,7 +260,6 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "BOSSEnsemble",
-        "BaggingForecaster",
         "CAPA",
         "CNTCClassifier",
         "CNTCNetwork",
@@ -277,17 +276,13 @@ EXCLUDED_TESTS_BY_TEST = {
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
-        "DirectTabularRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
         "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
-        "EnbPIForecaster",
         "FeatureSelection",
-        "FittedParamExtractor",
-        "ForecastingOptunaSearchCV",
         "FreshPRINCE",
         "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
@@ -295,7 +290,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "HIVECOTEV2",
         "Hidalgo",
         "HierarchicalProphet",
-        "HolidayFeatures",
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
@@ -304,6 +298,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFLinearForecaster",
         "LTSFNLinearForecaster",
         "LogTransformer",
+        "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
@@ -326,10 +321,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "PCATransformer",
         "PELT",
         "PaddingTransformer",
-        "ParamFitterPipeline",
         "PlateauFinder",
-        "PluginParamsForecaster",
-        "PluginParamsTransformer",
         "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
@@ -360,11 +352,9 @@ EXCLUDED_TESTS_BY_TEST = {
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",
-        "TSBootstrapAdapter",
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "ThetaModularForecaster",
         "TimeBinner",
         "TimeSeriesForestClassifier",
         "TimeSeriesForestRegressor",
@@ -376,6 +366,25 @@ EXCLUDED_TESTS_BY_TEST = {
         "WhiteNoiseAugmenter",
     ]
 }
+
+# estimators that have 2 test params only when their soft dependency is installed
+EXCLUDE_SOFT_DEPS = [
+    "BaggingForecaster",
+    "ClustererPipeline",
+    "DirectTabularRegressionForecaster",
+    "EnbPIForecaster",
+    "FittedParamExtractor",
+    "ForecastingOptunaSearchCV",
+    "HolidayFeatures",
+    "ParamFitterPipeline",
+    "PluginParamsForecaster",
+    "PluginParamsTransformer",
+    "RegressorPipeline",
+    "SupervisedIntervals",
+    "TSBootstrapAdapter",
+    "ThetaModularForecaster",
+    "WeightedEnsembleClassifier",
+]
 
 # add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS
 # the latter is the single source of truth
