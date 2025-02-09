@@ -8,7 +8,9 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.registry import all_estimators
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -247,6 +249,68 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         ):
             estimator_instance.fit_transform(X, y)
 
+
+# todo: add testing of inverse_transform
+# todo: refactor the below, equivalent index check
+
+# def check_transform_returns_same_time_index(Estimator):
+#     estimator = Estimator.create_test_instance()
+#     if estimator.get_tag("transform-returns-same-time-index"):
+#         assert issubclass(Estimator, (_SeriesToSeriesTransformer, BaseTransformer))
+#         estimator = Estimator.create_test_instance()
+#         fit_args = _make_args(estimator, "fit")
+#         estimator.fit(*fit_args)
+#         for method in ["transform", "inverse_transform"]:
+#             if _has_capability(estimator, method):
+#                 X = _make_args(estimator, method)[0]
+#                 Xt = estimator.transform(X)
+#                 np.testing.assert_array_equal(X.index, Xt.index)
+
+
+class ReconciliationTransformerFixtureGenerator(BaseFixtureGenerator):
+    """Fixture generator for transformer tests.
+
+    Uses the tag "capability:hierarchical_reconciliation" to
+    filter for transformers
+
+    Fixtures parameterized
+    ----------------------
+    estimator_class: estimator inheriting from BaseTransformer and
+        with the tag "capability:hierarchical_reconciliation" set to True
+    estimator_instance: instance of estimator inheriting from BaseTransformer
+        and with the tag "capability:hierarchical_reconciliation" set to True
+    scenario: instance of TestScenario
+    ranges over all scenarios returned by retrieve_scenarios
+    """
+
+    # note: this should be separate from TestAllTransformers
+    #   additional fixtures, parameters, etc should be added here
+    #   TestAllTransformers should contain the tests only
+
+    estimator_type_filter = "transformer"
+
+    def _all_estimators(self):
+        """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        filter_tags = {
+            "capability:hierarchical_reconciliation": True,
+        }
+
+        est_list = all_estimators(
+            estimator_types=getattr(self, "estimator_type_filter", None),
+            return_names=False,
+            filter_tags=filter_tags,
+        )
+
+        est_list = [est for est in est_list if run_test_for_class(est)]
+
+        return est_list
+
+
+class TestAllReconciliationTransformers(
+    ReconciliationTransformerFixtureGenerator, QuickTester
+):
+    """Module level tests for all sktime transformers."""
+
     @pytest.mark.parametrize("no_levels", [0, 1, 2, 3])
     @pytest.mark.parametrize("flatten_single_levels", [True, False])
     @pytest.mark.parametrize("unnamed_levels", [True, False])
@@ -299,20 +363,3 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         prds_recon_bottomlevel = Aggregator(False).fit_transform(prds_recon)
         prds_recon_bottomlevel = prds_recon_bottomlevel.loc[X.index]
         assert_frame_equal(prds_recon, prds_recon_bottomlevel)
-
-
-# todo: add testing of inverse_transform
-# todo: refactor the below, equivalent index check
-
-# def check_transform_returns_same_time_index(Estimator):
-#     estimator = Estimator.create_test_instance()
-#     if estimator.get_tag("transform-returns-same-time-index"):
-#         assert issubclass(Estimator, (_SeriesToSeriesTransformer, BaseTransformer))
-#         estimator = Estimator.create_test_instance()
-#         fit_args = _make_args(estimator, "fit")
-#         estimator.fit(*fit_args)
-#         for method in ["transform", "inverse_transform"]:
-#             if _has_capability(estimator, method):
-#                 X = _make_args(estimator, method)[0]
-#                 Xt = estimator.transform(X)
-#                 np.testing.assert_array_equal(X.index, Xt.index)
