@@ -31,7 +31,9 @@ class HFTransformersForecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str or PreTrainedModel
-        Either:
+        Path to the huggingface model to use for forecasting. Currently,
+        Informer, Autoformer, and TimeSeriesTransformer are supported.
+        This can be one of the following:
         - A string specifying the Hugging Face model name or path
           (e.g., `"huggingface/autoformer-tourism-monthly"`).
         - An instance of a `PreTrainedModel`, allowing manual initialization
@@ -71,11 +73,6 @@ class HFTransformersForecaster(BaseForecaster):
         When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the `peft` documentation for details.
-    model : transformers.PreTrainedModel, optional
-        An instantiated Hugging Face model object. If provided, this will override
-        the `model_path` and `config` parameters, and the passed model will be used
-        directly for forecasting. In this case, the `model_path` and `config` should
-        be set to None, as they are not needed.
 
     Examples
     --------
@@ -97,16 +94,20 @@ class HFTransformersForecaster(BaseForecaster):
     ...     config={
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
-    ...         "prediction_length": 4
-    ...     }
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...     },
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
     **Using an Initialized Model**
 
-    >>> from transformers import AutoModelForSeq2SeqLM, AutoConfig
-    >>> config = AutoConfig.from_pretrained("huggingface/autoformer-tourism-monthly")
-    >>> model = AutoModelForSeq2SeqLM.from_config(config)
+    >>> from transformers import AutoModel, AutoConfig
+    >>> config = AutoConfig.from_pretrained("huggingface/informer-tourism-monthly")
+    >>> model = AutoModel.from_config(config)
     >>> forecaster = HFTransformersForecaster(
     ...     model_path=model,
     ...     fit_strategy="minimal",
@@ -118,10 +119,20 @@ class HFTransformersForecaster(BaseForecaster):
     ...     config={
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
-    ...         "prediction_length": 4
-    ...     }
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...     },
+    ...     peft_config=LoraConfig(
+    ...         r=8,
+    ...         lora_alpha=32,
+    ...         target_modules=["q_proj", "v_proj"],
+    ...         lora_dropout=0.01,
+    ...     ),
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
