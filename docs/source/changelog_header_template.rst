@@ -11,14 +11,17 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Enhancements
 ~~~~~~~~~~~~
 
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Benchmarking and Metrics
-^^^^^^^^^^^^^^^^^^^^^^^^
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,6 +31,9 @@ Data types, checks, conversions
 
 Forecasting
 ^^^^^^^^^^^
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
@@ -65,8 +71,8 @@ Fixes
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Benchmarking and Metrics
-^^^^^^^^^^^^^^^^^^^^^^^^
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -76,6 +82,9 @@ Data types, checks, conversions
 
 Forecasting
 ^^^^^^^^^^^
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^

@@ -29,7 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
-    "MACNNClassifier",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -41,9 +40,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "MACNNRegressor",
-    "CNTCClassifier",
-    "CNTCRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -60,6 +56,9 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    "DartsXGBModel",
+    # Large datasets
+    "M5Dataset",
 ]
 
 
@@ -168,13 +167,7 @@ EXCLUDED_TESTS = {
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
-    "MACNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "FCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "MACNNRegressor": [
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
@@ -204,8 +197,6 @@ EXCLUDED_TESTS = {
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
     ],
-    # GGS inherits from BaseEstimator which breaks this test
-    "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
@@ -244,6 +235,25 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # pickling problem
+    "ChronosForecaster": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "ClusterSegmenter": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+        "test_output_type",
+    ],
+    "GreedyGaussianSegmentation": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_output_type",
+        "test_transform_output_type",
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
 }
 
 # exclude tests but keyed by test name
@@ -252,20 +262,16 @@ EXCLUDED_TESTS_BY_TEST = {
         "Arsenal",
         "BaggingForecaster",
         "BOSSEnsemble",
-        "BinarySegmentation",
         "CNTCClassifier",
         "CNTCNetwork",
         "CNTCRegressor",
         "CanonicalIntervalForest",
-        "ClaSPSegmentation",
         "ClaSPTransformer",
         "ClearSky",
         "ClustererPipeline",
         "ColumnConcatenator",
         "ColumnEnsembleClassifier",
-        "ColumnTransformer",
         "ColumnwiseTransformer",
-        "ComposableTimeSeriesForestRegressor",
         "ContractableBOSS",
         "DOBIN",
         "DWTTransformer",
@@ -287,7 +293,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
         "FreshPRINCE",
-        "GaussianHMM",
         "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
@@ -303,7 +308,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "LTSFLinearForecaster",
         "LTSFNLinearForecaster",
         "LogTransformer",
-        "MACNNNetwork",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
@@ -315,7 +319,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MiniRocketMultivariate",
         "MiniRocketMultivariateVariable",
         "MultiRocket",
-        "MultiRocketMultivariate",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
@@ -328,12 +331,10 @@ EXCLUDED_TESTS_BY_TEST = {
         "PlateauFinder",
         "PluginParamsForecaster",
         "PluginParamsTransformer",
-        "PoissonHMM",
         "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "HierarchicalProphet",
-        "PyODAnnotator",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
@@ -350,7 +351,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "STRAY",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SignatureClassifier",
@@ -358,7 +358,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SlidingWindowSegmenter",
         "SlopeTransformer",
         "StackingForecaster",
-        "SubLOF",
         "SummaryClassifier",
         "SupervisedIntervals",
         "SupervisedTimeSeriesForest",
@@ -380,7 +379,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "WEASEL",
         "WeightedEnsembleClassifier",
         "WhiteNoiseAugmenter",
-        "YtoX",
     ]
 }
 

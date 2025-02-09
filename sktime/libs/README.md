@@ -14,9 +14,14 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from June 2024 onwards,
   see [pykalman issue 109](https://github.com/pykalman/pykalman/issues/109).
 
+* `timesfm` - a package implementing TimesFM, adapted from [google-research/timesfm](https://github.com/google-research/timesfm). This is an unofficial fork created to address the lack of recent updates of `timesfm` package on [pypi](https://pypi.org/project/timesfm/) and the instability caused by significant interface changes in recent versions without prior deprecation warnings. The fork has minimal dependencies and focuses on the core features required for compatibility with the `sktime` forecaster.
+
+* `uni2ts` - a package implementing the MOIRAIForecaster. Unofficial fork of
+ the package with minimal dependencies and code specific to the forecaster.
+ Official package available at [pypi](https://pypi.org/project/uni2ts/).
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
-
 
 # Snippets from other libraries:
 

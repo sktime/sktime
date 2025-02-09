@@ -1061,6 +1061,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         repr(estimator)
 
+    def test_repr_html(self, estimator_instance):
+        """Check that _repr_html_ call to instance does not raise exceptions."""
+        estimator_instance._repr_html_()
+
     def test_constructor(self, estimator_class):
         """Check that the constructor has sklearn compatible signature and behaviour.
 
@@ -1155,12 +1159,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):

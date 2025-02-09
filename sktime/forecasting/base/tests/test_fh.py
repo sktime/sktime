@@ -571,6 +571,18 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_absolute_with_multiple_freq(freq: str):
+    """Test to_absolute with multiple freq"""
+    fh = ForecastingHorizon([0, 1, 2, 3, 4], is_relative=True)
+    start = "2024-09-26 17:24"
+    cutoff = pd.PeriodIndex([start], freq=freq)
+    absolute = fh.to_absolute(cutoff)
+    date_range = pd.date_range(start=start, freq=freq, periods=5)
+    period_index = date_range.to_period(freq)
+    assert_array_equal(period_index.to_numpy(), absolute.to_numpy())
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
@@ -733,7 +745,7 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
-# todo 0.34.0: check whether numpy 2 bound is still necessary
+# todo 0.36.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
     or not _check_estimator_deps(AutoARIMA, severity="none")
