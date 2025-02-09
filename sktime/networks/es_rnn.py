@@ -2,6 +2,8 @@
 
 __author__ = ["Ankit-1204"]
 
+from warnings import warn
+
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -12,61 +14,17 @@ if _check_soft_dependencies("torch", severity="none"):
     nn_module = nn.Module
 else:
 
-    class nn_module:
-        """Dummy class if torch is unavailable."""
+    class nn:
+        """dummy class if torch is not available."""
+
+        class Module:
+            """dummy class if torch is not available."""
+
+            def __init__(self, *args, **kwargs):
+                raise ImportError("torch is not available. Please install torch first.")
 
 
 import numpy as np
-
-
-def _nonseasonal(x, alpha=0.3):
-    """Calculate and returns the level at last data point."""
-    level = x[0]
-    for t in range(1, len(x)):
-        level = alpha * t + (1 - alpha) * level
-
-    return level, x / level
-
-
-def _single_seasonal(alpha, beta, season_length, x):
-    length = len(x)
-    # input should cover atleast one season length
-    if season_length > length:
-        season_length = length
-    # number of seasons
-    n_season = length // season_length
-
-    avg_per_season = [
-        torch.mean(x[i * season_length : (i + 1) * season_length])
-        for i in range(n_season)
-    ]
-    # initial value for level
-    level = torch.mean(x[:season_length])
-    seasonality = torch.array(
-        [x[i] / avg_per_season[i // season_length] for i in range(season_length)]
-    )
-    # alpha and beta should be between 0 and 1
-    seasonality = torch.exp(seasonality)
-    alpha = nn.Sigmoid(alpha)
-    beta = nn.Sigmoid(beta)
-    for i in range(len(x)):
-        season_index = i % season_length
-        new_level = alpha * (x[i] / seasonality[season_index]) + (1 - alpha) * level
-        seasonality[season_index] = (
-            beta * (x[i] / new_level) + (1 - beta) * seasonality[season_index]
-        )
-        level = new_level
-
-    # Deserializing the input
-    return (
-        level,
-        seasonality,
-        x / (level * seasonality[torch.arange(length) % season_length]),
-    )
-
-
-def _double_seasonal(alpha, beta, x):
-    pass
 
 
 class ESRNN(BaseDeepNetwork):
@@ -93,9 +51,9 @@ class ESRNN(BaseDeepNetwork):
     seasonality : string
         Type of seasonality
 
-    alpha : int
+    level_coeff : int
 
-    beta : int
+    seasonal_coeff_1 : int
 
     """
 
@@ -106,8 +64,8 @@ class ESRNN(BaseDeepNetwork):
             hidden_size,
             horizon,
             num_layer,
-            alpha,
-            beta,
+            level_coeff,
+            seasonal_coeff_1,
             season_length,
             seasonality="zero",
         ) -> None:
@@ -116,8 +74,8 @@ class ESRNN(BaseDeepNetwork):
             self.num_layer = num_layer
             self.horizon = horizon
             self.seasonality = seasonality
-            self.alpha = alpha
-            self.beta = beta
+            self.level_coeff = level_coeff
+            self.seasonal_coeff_1 = seasonal_coeff_1
             self.season_length = season_length
             super().__init__()
             self.input_layer = torch.Sequential(nn.Linear(input_shape))
@@ -125,6 +83,55 @@ class ESRNN(BaseDeepNetwork):
                 nn.LSTM(self.input_shape, self.hidden_size, self.num_layer),
                 nn.Linear(self.hidden_size, self.horizon),
             )
+
+        def _nonseasonal(self, x):
+            """Calculate and returns the level at last data point."""
+            level = x[0]
+            for t in range(1, len(x)):
+                level = self.level_coeff * t + (1 - self.level_coeff) * level
+
+            return level, x / level
+
+        def _single_seasonal(self, x):
+            length = len(x)
+            if self.season_length > length:
+                warn("Input window should atleast cover one season")
+                season_length = length
+            n_season = length // season_length
+
+            avg_per_season = [
+                torch.mean(x[i * season_length : (i + 1) * season_length])
+                for i in range(n_season)
+            ]
+            level = torch.mean(x[:season_length])
+            seasonality = torch.array(
+                [
+                    x[i] / avg_per_season[i // season_length]
+                    for i in range(season_length)
+                ]
+            )
+            seasonality = torch.exp(seasonality)
+            self.level_coeff = nn.Sigmoid(self.level_coeff)
+            self.seasonal_coeff_1 = nn.Sigmoid(self.seasonal_coeff_1)
+            for i in range(len(x)):
+                season_index = i % season_length
+                new_level = (
+                    self.level_coeff * (x[i] / seasonality[season_index])
+                    + (1 - self.level_coeff) * level
+                )
+                seasonality[season_index] = (
+                    self.seasonal_coeff_1 * (x[i] / new_level)
+                    + (1 - self.seasonal_coeff_1) * seasonality[season_index]
+                )
+                level = new_level
+            return (
+                level,
+                seasonality,
+                x / (level * seasonality[torch.arange(length) % season_length]),
+            )
+
+        def _double_seasonal(level_coeff, seasonal_coeff_1, x):
+            pass
 
         def forward(self, x):
             """
@@ -140,7 +147,7 @@ class ESRNN(BaseDeepNetwork):
             self._seasonality = self.seasonality
             self._horizon = self.horizon
             if self._seasonality == "zero":
-                level, new_x = _nonseasonal(x)
+                level, new_x = self._nonseasonal(x)
 
                 x_input = self.input_layer(new_x.float())
                 output = self.output_layer(x_input.unsqueeze(0))
@@ -148,8 +155,8 @@ class ESRNN(BaseDeepNetwork):
                 output_leveled = output * level
                 return output_leveled
             elif self.seasonality == "single":
-                level, seasonality, new_x = _single_seasonal(
-                    x, self.alpha, self.beta, self.season_length
+                level, seasonality, new_x = self._single_seasonal(
+                    x, self.level_coeff, self.seasonal_coeff_1, self.season_length
                 )
                 x_input = self.input_layer(new_x.float())
                 output = self.output_layer(x_input.unsqueeze(0))
@@ -167,8 +174,8 @@ class ESRNN(BaseDeepNetwork):
         hidden_size=1,
         horizon=1,
         num_layer=1,
-        alpha=0.5,
-        beta=0.5,
+        level_coeff=0.5,
+        seasonal_coeff_1=0.5,
         season_length=12,
         seasonality="zero",
     ) -> None:
@@ -176,8 +183,8 @@ class ESRNN(BaseDeepNetwork):
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.horizon = horizon
-        self.alpha = alpha
-        self.beta = beta
+        self.level_coeff = level_coeff
+        self.seasonal_coeff_1 = seasonal_coeff_1
         self.season_length = season_length
         self.seasonality = seasonality
         super().__init__()
@@ -220,8 +227,8 @@ class ESRNN(BaseDeepNetwork):
             "hidden_size": 3,
             "horizon": 5,
             "num_layer": 5,
-            "alpha": 0.5,
-            "beta": 0.5,
+            "level_coeff": 0.5,
+            "seasonal_coeff_1": 0.5,
             "season_length": 12,
             "seasonality": "zero",
         }
