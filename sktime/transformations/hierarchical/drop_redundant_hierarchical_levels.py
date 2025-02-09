@@ -127,20 +127,15 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
 
         _X = X.copy()
 
-        # To account for when indexes are unnamed
+        # To account for when indexes are unnamed we add dummy names
         self._dummy_idx_names = ["dummy" + str(i) for i in range(len(self._idx_names))]
         idx = self._idx.copy()
         idx.names = self._dummy_idx_names[:-1]
         _X.index.names = self._dummy_idx_names[len(self.levels_to_drop_) :]
 
-        new_idx = idx.join(_X.index, how="right")
+        new_idx = idx.join(_X.index, how="left")
+        new_idx = new_idx.reorder_levels(self._dummy_idx_names)
         _X.index = new_idx
 
-        correct_index_order = list(range(self._idx.nlevels + 1))
-        correct_index_order = (
-            correct_index_order[X.index.nlevels :]
-            + correct_index_order[: X.index.nlevels]
-        )
-        _X = _X.reorder_levels(correct_index_order)
         _X.index.names = self._idx_names
         return _X.sort_index()
