@@ -273,7 +273,9 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         cv_global=cv_global,
         **backend,
     )
-    _check_evaluate_output(out, cv, y, scoring, False, cv_global=cv_global)
+    _check_evaluate_output(
+        out, cv, y, scoring, False, cv_global=cv_global, return_model=False
+    )
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
     assert np.all(np.abs(actual) < 1e-3)
