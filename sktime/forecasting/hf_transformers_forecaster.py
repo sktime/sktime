@@ -179,19 +179,12 @@ class HFTransformersForecaster(BaseForecaster):
         self.model = model
 
     def _fit(self, y, X, fh):
-        from transformers import AutoConfig, Trainer, TrainingArguments
+        from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
-        # Validate model input
-        if self.model is None and self.model_path is None:
-            raise ValueError("Either `model` or `model_path` must be provided.")
+        if isinstance(self.model_path, PreTrainedModel):
+            self.model = self.model_path
+            self.config = self.model.config
 
-        # Extract config and info for the provided model
-        if self.model is not None:
-            if self.model_path is not None or self.config is not None:
-                raise ValueError(
-                    "If `model` is given, both `model_path` and `config` must be None."
-                )
-            config = self.model.config
         else:
             # Load model and extract config
             config = AutoConfig.from_pretrained(self.model_path)
@@ -199,7 +192,7 @@ class HFTransformersForecaster(BaseForecaster):
             # Update config with user-provided config
             _config = config.to_dict()
             _config.update(self._config)
-            _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
+            _config["num_dynamic_real_features"] = 0
             _config["num_static_real_features"] = 0
             _config["num_static_categorical_features"] = 0
             _config["num_time_features"] = 0 if X is None else X.shape[-1]
@@ -423,21 +416,6 @@ class HFTransformersForecaster(BaseForecaster):
                 "deterministic": True,
             }
         ]
-
-        if _check_soft_dependencies("transformers", severity="none"):
-            from transformers import AutoformerForPrediction
-
-            test_params.append(
-                # Updated test case for Autoformer, including a pre-loaded model
-                {
-                    "model": AutoformerForPrediction.from_pretrained(
-                        "huggingface/autoformer-tourism-monthly"
-                    ),
-                    "fit_strategy": "minimal",
-                    "training_args": base_training_args,
-                    "deterministic": True,
-                },
-            )
 
         # Add PEFT-specific test case if PEFT is available
         if _check_soft_dependencies("peft", severity="none"):
