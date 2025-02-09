@@ -30,10 +30,12 @@ class HFTransformersForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str, optional
-        Path to the huggingface model to use for forecasting. Currently,
-        Informer, Autoformer, and TimeSeriesTransformer are supported.
-        This should be None, if a model is passed via the parameter ``model``.
+    model_path : str or PreTrainedModel
+        Either:
+        - A string specifying the Hugging Face model name or path
+          (e.g., `"huggingface/autoformer-tourism-monthly"`).
+        - An instance of a `PreTrainedModel`, allowing manual initialization
+          and configuration.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
@@ -77,61 +79,49 @@ class HFTransformersForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... )
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecaster = HFTransformersForecaster(
-    ...    model_path="huggingface/autoformer-tourism-monthly",
-    ...    training_args ={
-    ...        "num_train_epochs": 20,
-    ...        "output_dir": "test_output",
-    ...        "per_device_train_batch_size": 32,
-    ...    },
-    ...    config={
-    ...         "lags_sequence": [1, 2, 3],
-    ...         "context_length": 2,
-    ...         "prediction_length": 4,
-    ...         "use_cpu": True,
-    ...         "label_length": 2,
-    ...    },
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+    **Using a Pretrained Model from Hugging Face**
 
     >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
+    ...     HFTransformersForecaster
     ... )
     >>> from sktime.datasets import load_airline
-    >>> from peft import LoraConfig
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
-    ...    model_path="huggingface/autoformer-tourism-monthly",
-    ...    fit_strategy="peft",
-    ...    training_args={
-    ...        "num_train_epochs": 20,
-    ...        "output_dir": "test_output",
-    ...        "per_device_train_batch_size": 32,
-    ...    },
-    ...    config={
+    ...     model_path="huggingface/autoformer-tourism-monthly",
+    ...     fit_strategy="minimal",
+    ...     training_args={
+    ...         "num_train_epochs": 10,
+    ...         "output_dir": "output",
+    ...         "per_device_train_batch_size": 4
+    ...     },
+    ...     config={
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
-    ...         "prediction_length": 4,
-    ...         "use_cpu": True,
-    ...         "label_length": 2,
-    ...    },
-    ...    peft_config=LoraConfig(
-    ...        r=8,
-    ...        lora_alpha=32,
-    ...        target_modules=["q_proj", "v_proj"],
-    ...        lora_dropout=0.01,
-    ...    )
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+    ...         "prediction_length": 4
+    ...     }
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+
+    **Using an Initialized Model**
+
+    >>> from transformers import AutoModelForSeq2SeqLM, AutoConfig
+    >>> config = AutoConfig.from_pretrained("huggingface/autoformer-tourism-monthly")
+    >>> model = AutoModelForSeq2SeqLM.from_config(config)
+    >>> forecaster = HFTransformersForecaster(
+    ...     model_path=model,
+    ...     fit_strategy="minimal",
+    ...     training_args={
+    ...         "num_train_epochs": 10,
+    ...         "output_dir": "output",
+    ...         "per_device_train_batch_size": 4
+    ...     },
+    ...     config={
+    ...         "lags_sequence": [1, 2, 3],
+    ...         "context_length": 2,
+    ...         "prediction_length": 4
+    ...     }
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -159,7 +149,6 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
-        model=None,  # new parameter for directly providing the model
     ):
         super().__init__()
         self.model_path = model_path
@@ -176,7 +165,6 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
-        self.model = model
 
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
