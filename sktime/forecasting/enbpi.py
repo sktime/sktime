@@ -15,6 +15,7 @@ from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -77,7 +78,7 @@ class EnbPIForecaster(BaseForecaster):
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
     ...    forecaster=NaiveForecaster(sp=12),
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
-    >>> forecaster = forecaster.fit(y, fh=range(1, 12)) # Range is broken
+    >>> forecaster = forecaster.fit(y, fh=range(1, 12))
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
 
@@ -142,19 +143,19 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_ = bootstrap_transformer
 
         if self.bootstrap_transformer is None:
+            # todo: 0.38.0 remove this warning
             warn(
                 "The default value for the bootstrap_transformer will change to the"
-                + "sktime MovingBlockBootstrap in version 0.37.0."
-                + "If you want to use the current behavior"
-                + "Please pass TSBootstrapAdapter(MovingBlockBootstrap())"
+                + "sktime MovingBlockBootstrap in version 0.38.0."
+                + "For obtaining the current default behaviour after 0.37.0, pass "
+                + "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap())"
             )
             from tsbootstrap import MovingBlockBootstrap
 
-            self.bootstrap_transformer_ = (
-                clone(bootstrap_transformer)
-                if bootstrap_transformer is not None
-                else TSBootstrapAdapter(MovingBlockBootstrap())
-            )
+            # todo: 0.38.0 replace with Moving Block Bootstrap from sktime. And set
+            # the return_indices=True
+            self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
+
         if (
             not self.bootstrap_transformer_.get_tags()["can_return_indices"]
             or not self.bootstrap_transformer_.return_indices
@@ -265,13 +266,16 @@ class EnbPIForecaster(BaseForecaster):
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(
                     return_indices=True
                 ),
-            },
-            {
-                "forecaster": NaiveForecaster(),
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(
-                    return_indices=True
-                ),
-            },
+            }
         ]
+        if _check_soft_dependencies("tsbootstrap", severity="none"):
+            from tsbootstrap import BlockBootstrap
+
+            params.append(
+                {
+                    "forecaster": NaiveForecaster(),
+                    "bootstrap_transformer": BlockBootstrap(),
+                }
+            )
 
         return params
