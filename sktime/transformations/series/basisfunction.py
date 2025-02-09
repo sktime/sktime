@@ -5,7 +5,7 @@ __author__ = ["phoeenniixx"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.rbf_forecaster import RBFLayer
+from sktime.networks.rbf import RBFLayer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
