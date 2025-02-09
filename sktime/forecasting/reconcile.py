@@ -130,8 +130,8 @@ class ReconcilerForecaster(BaseForecaster):
             NonNegativeFullHierarchyReconciler,
             {"error_covariance_matrix": "wls_str"},
         ),
-        "td_fcst": (TopdownReconciler(method="td_fcst"), {}),
-        "td_share": (TopdownReconciler(method="td_share"), {}),
+        "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
+        "td_share": (TopdownReconciler, {"method": "td_share"}),
     }
 
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
