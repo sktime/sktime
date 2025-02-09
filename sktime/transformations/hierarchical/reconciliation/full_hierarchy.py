@@ -6,8 +6,9 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
+    _is_ancestor,
     _is_hierarchical_dataframe,
-    loc_series_idxs,
+    _loc_series_idxs,
 )
 
 # TODO(felipeangelimvieira): Immutable series reconciliation: should this be
@@ -142,7 +143,7 @@ class FullHierarchyReconciler(BaseTransformer):
         )
 
         df = Aggregator(flatten_single_levels=False).fit_transform(df)
-        df = loc_series_idxs(df, self._original_series).sort_index()
+        df = _loc_series_idxs(df, self._original_series).sort_index()
         return df
 
     def _get_error_covariance_matrix(self, error_covariance_matrix):
@@ -304,7 +305,7 @@ class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
         )
 
         df = Aggregator(flatten_single_levels=False).fit_transform(df)
-        df = loc_series_idxs(df, self._original_series).sort_index()
+        df = _loc_series_idxs(df, self._original_series).sort_index()
 
         return df
 
@@ -343,20 +344,10 @@ def _create_summing_matrix_from_index(hier_index):
     M = len(bottom_nodes)
     S = np.zeros((N, M), dtype=int)
 
-    # Helper function: check if 'agg' is an ancestor of 'bot'
-    # Ancestor means that for each level `a_level` in agg and `b_level` in bot:
-    #    a_level == '__total' OR a_level == b_level
-    def is_ancestor(agg, bot):
-        if isinstance(agg, str):
-            agg = (agg,)
-        if isinstance(bot, str):
-            bot = (bot,)
-        return all(a == b or a == "__total" for a, b in zip(agg, bot))
-
     # Populate the summation matrix
     for i, agg_node in enumerate(all_nodes):
         for j, bottom_node in enumerate(bottom_nodes):
-            if is_ancestor(agg_node, bottom_node):
+            if _is_ancestor(agg_node, bottom_node):
                 S[i, j] = 1
 
     # Create a DataFrame with the same row index and MultiIndex columns

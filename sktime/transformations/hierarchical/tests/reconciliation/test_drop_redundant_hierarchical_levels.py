@@ -3,7 +3,7 @@ import itertools
 import pandas as pd
 import pytest
 
-from sktime.transformations.hierarchical.reconciliation.forecast_proportions import (
+from sktime.transformations.hierarchical.reconciliation.topdown import (
     DropRedundantHierarchicalLevels,
 )
 

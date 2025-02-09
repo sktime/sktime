@@ -15,12 +15,11 @@ from sktime.transformations.hierarchical.aggregate import (
 )
 from sktime.transformations.hierarchical.reconciliation import (
     BottomUpReconciler,
-    ForecastProportions,
     FullHierarchyReconciler,
     NonNegativeFullHierarchyReconciler,
-    TopdownShareReconciler,
+    TopdownReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation._utils import loc_series_idxs
+from sktime.transformations.hierarchical.reconciliation._utils import _loc_series_idxs
 from sktime.utils.warnings import warn
 
 
@@ -131,8 +130,8 @@ class ReconcilerForecaster(BaseForecaster):
             NonNegativeFullHierarchyReconciler,
             {"error_covariance_matrix": "wls_str"},
         ),
-        "td_fcst": (ForecastProportions, {}),
-        "td_share": (TopdownShareReconciler, {}),
+        "td_fcst": (TopdownReconciler(method="td_fcst"), {}),
+        "td_share": (TopdownReconciler(method="td_share"), {}),
     }
 
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
@@ -264,7 +263,7 @@ class ReconcilerForecaster(BaseForecaster):
             return agg.inverse_transform(reconc_fc)
 
         reconc_fc = agg.fit_transform(reconc_fc)
-        reconc_fc = loc_series_idxs(reconc_fc, self._series_to_keep)
+        reconc_fc = _loc_series_idxs(reconc_fc, self._series_to_keep)
 
         return reconc_fc
 

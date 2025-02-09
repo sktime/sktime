@@ -3,9 +3,9 @@
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
+    _get_bottom_level_idxs,
     _is_hierarchical_dataframe,
-    get_bottom_level_idxs,
-    loc_series_idxs,
+    _loc_series_idxs,
 )
 
 __all__ = [
@@ -74,7 +74,7 @@ class BottomUpReconciler(BaseTransformer):
         self._aggregator.fit(X)
         X = self._aggregator.transform(X)
 
-        self._bottom_series = get_bottom_level_idxs(X)
+        self._bottom_series = _get_bottom_level_idxs(X)
 
         return self
 
@@ -83,7 +83,7 @@ class BottomUpReconciler(BaseTransformer):
             return X
 
         X = self._aggregator.transform(X)
-        X_bottom = loc_series_idxs(X, self._bottom_series)
+        X_bottom = _loc_series_idxs(X, self._bottom_series)
 
         return X_bottom
 
@@ -92,6 +92,6 @@ class BottomUpReconciler(BaseTransformer):
             return X
 
         X = Aggregator(flatten_single_levels=False).fit_transform(X)
-        X = loc_series_idxs(X, self._original_series).sort_index()
+        X = _loc_series_idxs(X, self._original_series).sort_index()
 
         return X

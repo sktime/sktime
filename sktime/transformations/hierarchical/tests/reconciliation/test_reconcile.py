@@ -11,13 +11,13 @@ from pandas.testing import assert_frame_equal
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation import (
     BottomUpReconciler,
-    ForecastProportions,
     MiddleOutReconciler,
+    TopdownReconciler,
     TopdownShareReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_series_for_each_hierarchical_level,
-    loc_series_idxs,
+    _loc_series_idxs,
 )
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
@@ -45,7 +45,7 @@ def _generate_unreconciled_hierarchical_data(
     [
         (BottomUpReconciler, -1),
         (TopdownShareReconciler, 0),
-        (ForecastProportions, 0),
+        (TopdownReconciler, 0),
         (MiddleOutReconciler, "middle_level"),
     ],
 )
@@ -79,8 +79,19 @@ def test_reconcilers_keep_immutable_levels(
             _expected_immutable_level = getattr(instance, expected_immutable_level)
 
         immutable_level_series = hierarchical_level_nodes[_expected_immutable_level]
-        y_immutable_reconc = loc_series_idxs(y_reconc, immutable_level_series)
-        y_immutable = loc_series_idxs(yt, immutable_level_series)
+
+        # Some reconcilers may change the index levels, by dropping
+        # redundant levels, so we need to adjust the immutable level
+        levels_droped_at_transform = list(
+            set(immutable_level_series.names).difference(yt.index.names)
+        )
+        immutable_level_series_transformed = immutable_level_series.droplevel(
+            levels_droped_at_transform
+        )
+        y_immutable = _loc_series_idxs(yt, immutable_level_series_transformed)
+
+        y_immutable_reconc = _loc_series_idxs(y_reconc, immutable_level_series)
+        y_immutable_reconc = y_immutable_reconc.droplevel(levels_droped_at_transform)
 
         assert y_immutable_reconc.shape[0] > 0
         assert_frame_equal(y_immutable_reconc, y_immutable)

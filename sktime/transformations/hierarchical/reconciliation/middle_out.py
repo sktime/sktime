@@ -7,16 +7,16 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
+    _filter_descendants,
     _get_series_for_each_hierarchical_level,
     _is_hierarchical_dataframe,
-    filter_descendants,
-    loc_series_idxs,
+    _loc_series_idxs,
 )
 from sktime.transformations.hierarchical.reconciliation.bottom_up import (
     BottomUpReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation.forecast_proportions import (
-    ForecastProportions,
+from sktime.transformations.hierarchical.reconciliation.topdown import (
+    TopdownReconciler,
 )
 
 __all__ = ["MiddleOutReconciler"]
@@ -76,7 +76,7 @@ class MiddleOutReconciler(BaseTransformer):
 
         self._middle_bottom_reconciler = self.middle_bottom_reconciler
         if self._middle_bottom_reconciler is None:
-            self._middle_bottom_reconciler = ForecastProportions()
+            self._middle_bottom_reconciler = TopdownReconciler()
 
         self._delegate = None
 
@@ -120,7 +120,7 @@ class MiddleOutReconciler(BaseTransformer):
         self.middle_botttom_reconcilers_ = {}
         self.middle_bottom_drop_redundant_levels_ = {}
         for middle_node, descendants_idx in self.middle_bottom_subtrees_.items():
-            X_subtree = loc_series_idxs(X, descendants_idx)
+            X_subtree = _loc_series_idxs(X, descendants_idx)
 
             X_subtree = X_subtree.droplevel(
                 level=list(range(middle_node.index("__total")))
@@ -128,7 +128,7 @@ class MiddleOutReconciler(BaseTransformer):
 
             y_subtree = y
             if y is not None:
-                y_subtree = loc_series_idxs(y, descendants_idx)
+                y_subtree = _loc_series_idxs(y, descendants_idx)
                 y_subtree = y_subtree.droplevel(
                     level=list(range(middle_node.index("__total")))
                 )
@@ -144,7 +144,7 @@ class MiddleOutReconciler(BaseTransformer):
         #    and apply the bottom approach
         bottom_subtrees = {}
         for agg_node in self.middle_level_series_:
-            X_subtree = filter_descendants(X, agg_node)
+            X_subtree = _filter_descendants(X, agg_node)
             if len(X_subtree) == 0:
                 continue
             bottom_subtrees[agg_node] = X_subtree.index.droplevel(-1).unique()
@@ -157,13 +157,15 @@ class MiddleOutReconciler(BaseTransformer):
         if self._delegate is not None:
             return self._delegate.transform(X, y)
 
-        X_middle = loc_series_idxs(X, self._hierarchical_level_nodes[self.middle_level])
+        X_middle = _loc_series_idxs(
+            X, self._hierarchical_level_nodes[self.middle_level]
+        )
 
         # 2) For each middle-level aggregator node, get the subtree below it
         #    and apply the bottom approach
         bottom_subtrees = []
         for agg_node in self.middle_level_series_:
-            X_subtree = filter_descendants(X, agg_node)
+            X_subtree = _filter_descendants(X, agg_node)
             if len(X_subtree) == 0:
                 continue
 
@@ -175,7 +177,7 @@ class MiddleOutReconciler(BaseTransformer):
 
             y_subtree = y
             if y is not None:
-                y_subtree = loc_series_idxs(y, _idx.droplevel(-1))
+                y_subtree = _loc_series_idxs(y, _idx.droplevel(-1))
                 y_subtree = y_subtree.droplevel(level=list(range(first_relevant_level)))
 
             X_subtree_trans = self.middle_botttom_reconcilers_[agg_node].transform(
@@ -205,7 +207,7 @@ class MiddleOutReconciler(BaseTransformer):
         # 2) For each aggregator node, get the subtree and do bottom approach inverse
         bottom_subtrees = []
         for agg_node in self.middle_level_series_:
-            X_subtree = filter_descendants(X, agg_node)
+            X_subtree = _filter_descendants(X, agg_node)
             if len(X_subtree) == 0:
                 continue
 
@@ -225,24 +227,24 @@ class MiddleOutReconciler(BaseTransformer):
 
         _X = pd.concat(bottom_subtrees, axis=0)
         _X = Aggregator(flatten_single_levels=False).fit_transform(_X)
-        _X = loc_series_idxs(_X, self._original_series).sort_index()
+        _X = _loc_series_idxs(_X, self._original_series).sort_index()
 
         return _X
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Get test params."""
-        from sktime.transformations.hierarchical.reconciliation.topdown_share import (
-            TopdownShareReconciler,
+        from sktime.transformations.hierarchical.reconciliation.topdown import (
+            TopdownReconciler,
         )
 
         return [
             {
                 "middle_level": 0,
-                "middle_bottom_reconciler": TopdownShareReconciler(),
+                "middle_bottom_reconciler": TopdownReconciler(),
             },
             {
                 "middle_level": -1,
-                "middle_bottom_reconciler": TopdownShareReconciler(),
+                "middle_bottom_reconciler": TopdownReconciler(),
             },
         ]

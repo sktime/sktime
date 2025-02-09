@@ -1,14 +1,12 @@
 import pandas as pd
 
 __all__ = [
-    "loc_series_idxs",
-    "get_bottom_level_idxs",
-    "get_bottom_series",
-    "get_total_level_idxs",
-    "get_total_series",
-    "get_middle_level_series",
-    "is_ancestor",
-    "filter_descendants",
+    "_loc_series_idxs",
+    "_get_bottom_level_idxs",
+    "_get_total_level_idxs",
+    "_is_ancestor",
+    "_filter_descendants",
+    "_is_hierarchical_dataframe",
     "_get_index_level_aggregators",
     "_promote_hierarchical_indexes",
     "_promote_hierarchical_indexes_and_keep_timeindex",
@@ -16,50 +14,33 @@ __all__ = [
 ]
 
 
-def loc_series_idxs(y, idxs):
+def _loc_series_idxs(y, idxs):
     return y.loc[y.index.droplevel(-1).isin(idxs)]
 
 
-def get_bottom_level_idxs(y):
+def _get_bottom_level_idxs(y):
     idx = y.index
     idx = idx.droplevel(-1).unique()
     return idx[idx.get_level_values(-1) != "__total"]
 
 
-def get_bottom_series(y):
-    bottom_idx = get_bottom_level_idxs(y)
-    return loc_series_idxs(y, bottom_idx)
-
-
-def get_total_level_idxs(y):
+def _get_total_level_idxs(y):
     nlevels = y.index.droplevel(-1).nlevels
     if nlevels == 1:
         return pd.Index(["__total"])
     return pd.Index([tuple(["__total"] * nlevels)])
 
 
-def get_total_series(y):
-    total_idx = get_total_level_idxs(y)
-    return loc_series_idxs(y, total_idx)
-
-
-def get_middle_level_series(y, middle_level):
-    idx = y.index
-    idx = idx.droplevel(-1).unique()
-    idx_middle_level = idx.get_level_values(middle_level)
-    idx_below_middle_level = idx.get_level_values(middle_level + 1)
-    is_middle_level_mask = (idx_below_middle_level == "__total") & (
-        idx_middle_level != "__total"
-    )
-    return idx[is_middle_level_mask]
-
-
-def is_ancestor(agg_node, node):
+def _is_ancestor(agg, bot):
     """Return True if agg_node is an ancestor of node."""
-    return all(a == b or a == "__total" for a, b in zip(agg_node, node))
+    if isinstance(agg, str):
+        agg = (agg,)
+    if isinstance(bot, str):
+        bot = (bot,)
+    return all(a == b or a == "__total" for a, b in zip(agg, bot))
 
 
-def filter_descendants(X, aggregator_node):
+def _filter_descendants(X, aggregator_node):
     """
     Get descendants of aggregator_node from X.
 
@@ -78,7 +59,7 @@ def filter_descendants(X, aggregator_node):
     # i.e., aggregator_node is an ancestor of that node.
     # Because aggregator_node is "at" middle_level,
     # but it may also have __total at deeper levels.
-    descendant_mask = [is_ancestor(aggregator_node, n) for n in nodes]
+    descendant_mask = [_is_ancestor(aggregator_node, n) for n in nodes]
     descendant_nodes = nodes[descendant_mask]
     descendant_nodes = descendant_nodes.unique()
 
@@ -177,10 +158,22 @@ def _promote_hierarchical_indexes(idx_tuple: tuple):
 
 
 def _promote_hierarchical_indexes_and_keep_timeindex(idx_tuple: tuple):
+    """
+    Promote series to its parent series in the hierarchy.
+
+    This function maps an index to its parent index in the hierarchy,
+    while keeping the last index level constant (the time index).
+    """
     return (*_promote_hierarchical_indexes(idx_tuple[:-1]), idx_tuple[-1])
 
 
 def _recursively_propagate_topdown(X):
+    """
+    Multiply the ratios from top levels to bottom levels.
+
+    This function takes a DataFrame with a hierarchical index
+    and propagates the ratios from the top levels to the bottom levels.
+    """
     # Initialize the transformed data
     _X = X.copy()
 
@@ -196,7 +189,7 @@ def _recursively_propagate_topdown(X):
         # Apply the ratio to the current level
         idx_current_level = _get_index_level_aggregators(_X, index_level=level)
 
-        idx_current_level = loc_series_idxs(_X, idx_current_level).index
+        idx_current_level = _loc_series_idxs(_X, idx_current_level).index
         _X.loc[idx_current_level] *= parent_ratio.loc[idx_current_level].values
 
     return _X
@@ -265,27 +258,3 @@ def _get_series_for_each_hierarchical_level(idx):
     ]
 
     return tree_level_nodes
-
-
-def _split_middle_levels(y, middle_level):
-    """Return two series: middle level and above, and middle level and below."""
-    idx = y.index
-    idx = idx.droplevel(-1).unique()
-    hierarchical_level_nodes = _get_series_for_each_hierarchical_level(idx)
-
-    idx_middle_level = loc_series_idxs(y, hierarchical_level_nodes[middle_level])
-    if middle_level >= len(hierarchical_level_nodes):
-        idx_below_middle_level = None
-    else:
-        idx_below_middle_level = loc_series_idxs(
-            y, hierarchical_level_nodes[middle_level + 1]
-        )
-
-    if middle_level == 0:
-        idx_above_middle_level = None
-    else:
-        idx_above_middle_level = loc_series_idxs(
-            y, hierarchical_level_nodes[middle_level - 1]
-        )
-
-    return idx_above_middle_level, idx_middle_level, idx_below_middle_level

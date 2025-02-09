@@ -73,7 +73,7 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
         # Here, we find the first level with more than one value
         # (disconsidering `__total``)
         # i.e. the first non-redundant level
-        first_level_with_more_than_one_value = X.index.nlevels
+        first_level_with_more_than_one_value = 0
         for level in range(Xt.index.nlevels - 1):
             nuniques = Xt.index.get_level_values(level).drop("__total").nunique()
 
@@ -81,16 +81,18 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
                 first_level_with_more_than_one_value = level
                 break
 
-        self.levels_to_drop_ = list(range(first_level_with_more_than_one_value))
+        # Convert to negative index
+        # This makes possible to transform
+        # with series with different number of levels
+        self.levels_to_drop_ = [
+            x - X.index.nlevels for x in range(first_level_with_more_than_one_value)
+        ]
 
         # Remove level -3 from levels to drop, since Hierarchical representation
         # always have at least 3 levels
         # So if nlevels = 3, no levels will be dropped
         # If nlevels is 4, only the first level will be dropped
-        max_hierarchical_level_to_drop = Xt.index.nlevels - 1 - 3
-        self.levels_to_drop_ = [
-            x for x in self.levels_to_drop_ if x <= max_hierarchical_level_to_drop
-        ]
+        self.levels_to_drop_ = [x for x in self.levels_to_drop_ if x < -3]
 
         Xt = X.droplevel(self.levels_to_drop_).sort_index()
         self._assert_no_inconsistent_duplicated_indexes(Xt)
@@ -115,7 +117,9 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
         if self._no_hierarchy:  # or isinstance(X, np.ndarray):
             return X
 
-        X = X.droplevel(self.levels_to_drop_).sort_index()
+        levels_to_drop = [x for x in self.levels_to_drop_ if x >= -X.index.nlevels]
+
+        X = X.droplevel(levels_to_drop).sort_index()
 
         indexes_to_keep = ~X.index.duplicated(keep="first")
         X = X[indexes_to_keep]

@@ -14,12 +14,12 @@ from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.transformations.hierarchical.reconciliation.bottom_up import (
     BottomUpReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation.forecast_proportions import (
-    ForecastProportions,
-)
 from sktime.transformations.hierarchical.reconciliation.full_hierarchy import (
     FullHierarchyReconciler,
     NonNegativeFullHierarchyReconciler,
+)
+from sktime.transformations.hierarchical.reconciliation.topdown import (
+    TopdownReconciler,
 )
 from sktime.utils.warnings import warn
 
@@ -34,8 +34,9 @@ class Reconciler(BaseTransformer):
     hierarchy or the forecasts values for reconciliation.
 
     These functions are intended for transforming hierarchical forecasts, i.e.
-    after prediction. However they are general and can be used to transform
-    hierarchical time-series data.
+    after prediction. If you are looking to transform the data before
+    forecasting, please refer to BottomUpReconciler, FullHierarchyReconciler,
+    TopdownReconciler, or MiddleOutReconciler.
 
     Please refer to [1]_ for further information
 
@@ -127,7 +128,7 @@ class Reconciler(BaseTransformer):
         elif self.method == "wls_str:nonneg":
             return NonNegativeFullHierarchyReconciler("wls_str")
         elif self.method == "td_fcst":
-            return ForecastProportions()
+            return TopdownReconciler()
         else:
             raise ValueError(f"""method must be one of {self.METHOD_LIST}.""")
 
