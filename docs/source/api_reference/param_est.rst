@@ -89,3 +89,14 @@ Stationarity estimators
     StationarityKPSSArch
     StationarityZivotAndrews
     StationarityVarianceRatio
+
+Lag estimators
+~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARLagOrderSelector
