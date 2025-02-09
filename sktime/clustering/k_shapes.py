@@ -48,7 +48,7 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
-    
+
     Examples
     --------
     >>> from sktime.clustering.k_shapes import TimeSeriesKShapes
