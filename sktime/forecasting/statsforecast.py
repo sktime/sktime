@@ -19,6 +19,7 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.forecasting.conformal import ConformalIntervals
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
@@ -1005,7 +1006,8 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    None
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
 
     References
     ----------
@@ -1036,6 +1038,14 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
+    def __init__(
+        self,
+        prediction_intervals: Optional[ConformalIntervals] = None,
+    ):
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
         from statsforecast.models import ADIDA
@@ -1044,7 +1054,9 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     def _get_statsforecast_params(self):
         """Get the parameters for the statsforecast model."""
-        return {}
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1061,4 +1073,8 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict
             Parameters to create testing instances of the class
         """
-        return {}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        params = [{}, {"prediction_intervals": ConformalIntervals()}]
+
+        return params
