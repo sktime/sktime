@@ -46,15 +46,15 @@ class ExpandingCutoffSplitter(BaseSplitter):
     for the training set. The training set then expands incrementally
     in each split until it reaches the end of the series.
 
+    The test set is defined by a forecast horizon (``fh``) relative
+    to the last point in the training set, containing the specified
+    number of subsequent indices.
+
     The valid types of y-index and cutoff pairings are datelike-datelike, datelike-int,
     and int-int. When a datelike index is combined with an int cutoff, the cutoff
     functions as an iloc indexer. When an int index is paired with a positive int
     cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
     functions as an iloc indexer.
-
-    The test set is defined by a forecast horizon (``fh``) relative
-    to the last point in the training set, containing the specified
-    number of subsequent indices.
 
     The traning folds are defined as follows: the training set
     starts from the beginning of the series and extends up to
