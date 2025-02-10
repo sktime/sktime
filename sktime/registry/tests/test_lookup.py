@@ -216,23 +216,28 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
-@pytest.mark.parametrize("pred_int", [True, False])
-def test_all_estimators_tag_filter(pred_int):
+@pytest.mark.parametrize("tag_name", ["capability:pred_int", "handles-missing-data"])
+@pytest.mark.parametrize("tag_value", [True, False])
+def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""
-    NOPROBA_EXAMPLE = "TrendForecaster"
-    PROBA_EXAMPLE = "ARIMA"
+    FALSE_EXAMPLE = "TrendForecaster"  # tag_value known False for both tag_name
+    TRUE_EXAMPLE = "ARIMA"  # tag_value known True for both tag_name
 
-    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    res = all_estimators("forecaster", filter_tags={tag_name: tag_value})
     names, ests = zip(*res)
 
-    if pred_int:
-        assert PROBA_EXAMPLE in names
-        assert NOPROBA_EXAMPLE not in names
-        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    if tag_value:
+        assert TRUE_EXAMPLE in names
+        assert FALSE_EXAMPLE not in names
+        assert [est.get_class_tag(tag_name) for est in ests]
     else:
-        assert PROBA_EXAMPLE not in names
-        assert NOPROBA_EXAMPLE in names
-        assert [not est.get_class_tag("capability:pred_int") for est in ests]
+        assert TRUE_EXAMPLE not in names
+        assert FALSE_EXAMPLE in names
+        assert [not est.get_class_tag(tag_name) for est in ests]
+
+    for est in ests:  # not done as comprehension to make this easier to read
+        est_type = scitype(est, force_single_scitype=False, coerce_to_list=True)
+        assert "forecaster" in est_type
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)

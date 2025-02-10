@@ -158,6 +158,7 @@ class PanelDfList(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -319,6 +320,7 @@ class PanelNp3D(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -473,7 +475,8 @@ class PanelPdMultiIndex(ScitypePanel):
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "numpy",
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -745,6 +748,7 @@ class PanelNestedDf(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -893,6 +897,7 @@ class PanelNumpyFlat(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -1006,6 +1011,7 @@ class PanelDask(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1080,6 +1086,7 @@ class PanelPolarsEager(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1271,7 +1278,8 @@ class PanelGluontsList(ScitypePanel):
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "gluonts",
+        "python_dependencies": None,
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1308,7 +1316,7 @@ class PanelGluontsList(ScitypePanel):
             or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
@@ -1422,6 +1430,7 @@ class PanelGluontsPandas(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,

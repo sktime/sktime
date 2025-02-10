@@ -9,12 +9,19 @@ from sktime.registry import coerce_scitype
 
 
 class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Compositor that utilizes varying forecasters by time series data's nature.
+    """Choosing a forecaster based on category or cluster of time series.
+
+    Programmatic generalization of "cluster then apply forecaster" approach,
+    or the Syntetos/Boylan heuristic to apply forecaster by categories
+    smooth, erratic, intermittent, lumpy.
 
     Applies a series-to-primitives transformer on a given time series. Based on the
     generated value from the transformer, one of multiple forecasters provided by
     the user in the form of a dictionary (key => category, value => forecaster) is
     selected. Finally, the chosen forecaster is fit to the data for future predictions.
+
+    To apply a global forecaster per category, use the ``GroupbyCategoryForecaster``
+    compositor instead.
 
     Parameters
     ----------
