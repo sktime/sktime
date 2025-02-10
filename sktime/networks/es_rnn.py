@@ -130,7 +130,7 @@ class ESRNN(BaseDeepNetwork):
                 x / (level * seasonality[torch.arange(length) % season_length]),
             )
 
-        def _double_seasonal(level_coeff, seasonal_coeff_1, x):
+        def _double_seasonal(x):
             pass
 
         def forward(self, x):
@@ -166,6 +166,8 @@ class ESRNN(BaseDeepNetwork):
                     * level
                     * seasonality[torch.arange(self._horizon) % self.season_length]
                 )
+            else:
+                pass
                 return output_leveled
 
     def __init__(
