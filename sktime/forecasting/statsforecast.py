@@ -1075,6 +1075,13 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        params = [{}, {"prediction_intervals": ConformalIntervals()}]
+        params = [
+            {},
+            {
+                "prediction_intervals": ConformalIntervals(
+                    forecaster=StatsForecastADIDA()
+                )
+            },
+        ]
 
         return params
