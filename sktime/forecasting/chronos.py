@@ -22,11 +22,16 @@ else:
     class torch:
         """Dummy class if torch is unavailable."""
 
-        bfloat16 = None
+        class Tensor:
+            """Dummy class if torch is unavailable."""
 
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
+else:
+
+    class PreTrainedModel:
+        """Dummy class if transformers is unavailable."""
 
 
 class ChronosModelStrategy(ABC):
