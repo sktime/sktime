@@ -12,7 +12,7 @@ from sktime.tests.test_switch import run_test_for_class
 TRANSFORMERS_AVAILABLE = _check_soft_dependencies("transformers", severity="none")
 
 if TRANSFORMERS_AVAILABLE:
-    from transformers import AutoModel
+    from transformers import AutoformerConfig, AutoformerForPrediction
 
     from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 else:
@@ -28,13 +28,22 @@ else:
 )
 def test_initialized_model():
     """Test passing an initialized model to HFTransformersForecaster."""
-    model_name = "huggingface/autoformer-tourism-monthly"
 
-    try:
-        model = AutoModel.from_pretrained(model_name)
-    except Exception as e:
-        pytest.skip(f"Skipping test due to model loading error: {e}")
+    # Define model configuration
+    config = AutoformerConfig(
+        num_dynamic_real_features=0,
+        num_static_real_features=0,
+        num_static_categorical_features=0,
+        num_time_features=0,
+        context_length=32,
+        prediction_length=8,
+        lags_sequence=[1, 2, 3],
+    )
 
+    # Initialize the model
+    model = AutoformerForPrediction(config)
+
+    # Initialize the forecaster with the model
     forecaster = HFTransformersForecaster(
         model_path=model,
         fit_strategy="minimal",
@@ -62,16 +71,26 @@ def test_initialized_model():
 
 def test_forecaster_pipeline():
     """Test if HFTransformersForecaster integrates with sktime pipeline."""
+    from transformers import AutoformerConfig, AutoformerForPrediction
+
     from sktime.forecasting.compose import ForecastingPipeline
     from sktime.forecasting.naive import NaiveForecaster
 
-    model_name = "huggingface/autoformer-tourism-monthly"
+    # Define model configuration
+    config = AutoformerConfig(
+        num_dynamic_real_features=0,
+        num_static_real_features=0,
+        num_static_categorical_features=0,
+        num_time_features=0,
+        context_length=32,
+        prediction_length=8,
+        lags_sequence=[1, 2, 3],
+    )
 
-    try:
-        model = AutoModel.from_pretrained(model_name)
-    except Exception as e:
-        pytest.skip(f"Skipping test due to model loading error: {e}")
+    # Initialize the model
+    model = AutoformerForPrediction(config)
 
+    # Initialize the HFTransformersForecaster
     forecaster = HFTransformersForecaster(
         model_path=model,
         fit_strategy="minimal",
@@ -80,17 +99,13 @@ def test_forecaster_pipeline():
             "output_dir": "test_output",
             "per_device_train_batch_size": 4,
         },
-        config={
-            "lags_sequence": [1, 2, 3],
-            "context_length": 2,
-            "prediction_length": 4,
-        },
     )
 
     assert isinstance(
         forecaster, HFTransformersForecaster
     ), "Forecaster not initialized correctly"
 
+    # Create the forecasting pipeline
     try:
         pipeline = ForecastingPipeline(
             steps=[("naive", NaiveForecaster()), ("hf_transformer", forecaster)]
