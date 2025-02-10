@@ -430,16 +430,17 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             y_eval = None
 
         # Validation check for proper error message during training
-        val_length = len(y_eval)
-        if val_length < config.context_length + config.prediction_length:
+        min_length = len(y_train) if y_eval is None else min(len(y_train), len(y_eval))
+        if min_length < config.context_length + config.prediction_length:
             raise ValueError(
                 f"Insufficient data for evaluation with the current configuration:\n"
-                f" - Dataset length (after validation split): {val_length}\n"
+                f" - Dataset length (after validation split): {min_length}\n"
                 f" - Configured context length: {config.context_length}\n"
                 f" - Configured prediction size: {config.prediction_length}\n\n"
                 f"Suggested Actions:\n"
                 f" 1. Reduce 'context_length' or 'prediction_size' in config.\n"
-                f" 2. Increase 'validation_split' (current: {self.validation_split}).\n"
+                f" 2. Increase 'validation_split' (current: {self.validation_split})"
+                f" or set to None.\n"
                 f" 3. Adjust the model's fit strategy for smaller datasets.\n"
             )
 
