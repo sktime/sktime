@@ -851,7 +851,7 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     :template: class.rst
 
     MiddleOutReconciler
-    TopdownShareReconciler
+    TopdownReconciler
     BottomUpReconciler
     FullHierarchyReconciler
     NonNegativeFullHierarchyReconciler

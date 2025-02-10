@@ -13,7 +13,6 @@ from sktime.transformations.hierarchical.reconciliation import (
     BottomUpReconciler,
     MiddleOutReconciler,
     TopdownReconciler,
-    TopdownShareReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_series_for_each_hierarchical_level,
@@ -44,7 +43,6 @@ def _generate_unreconciled_hierarchical_data(
     "reconciler, expected_immutable_level",
     [
         (BottomUpReconciler, -1),
-        (TopdownShareReconciler, 0),
         (TopdownReconciler, 0),
         (MiddleOutReconciler, "middle_level"),
     ],
