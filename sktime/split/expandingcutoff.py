@@ -47,8 +47,8 @@ class ExpandingCutoffSplitter(BaseSplitter):
     in each split until it reaches the end of the series.
 
     The test set is defined by a forecast horizon (``fh``) relative
-    to the last point in the training set, containing the specified
-    number of subsequent indices.
+    to the last point in the training set, containing as many subsequent
+    indices as specified by the ``fh`` parameter.
 
     The valid types of y-index and cutoff pairings are datelike-datelike, datelike-int,
     and int-int. When a datelike index is combined with an int cutoff, the cutoff
