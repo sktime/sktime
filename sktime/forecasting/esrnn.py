@@ -92,7 +92,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def _get_windows(self, y):
         length = len(y)
-        x_arr = [], y_arr = []
+        x_arr = []
+        y_arr = []
         for i in range(0, length - self.window - self.horizon + 1, self.stride):
             inp = y[i : i + self.window]
             out = y[i + self.window : i + self.window + self.horizon]
@@ -134,6 +135,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def _fit(self, y, fh, X=None):
         """Fit ES-RNN Model for provided data."""
+        self._y = y
         self.horizon = fh
         self.network = ESRNN(
             self.input_shape,
@@ -145,7 +147,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.season_length,
             self.seasonality,
         ).build_network()
-        x_train, y_train = self._get_windows(y)
+        x_train, y_train = self._get_windows(self._y)
         x_train = torch.FloatTensor(x_train)
         y_train = torch.FloatTensor(y_train)
 
@@ -158,4 +160,61 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         return self
 
     def _predict(self, X=None, fh=None):
-        """Predict with fitted model."""
+        """
+        Predict with fitted model.
+
+        Parameters
+        ----------
+        X:  Optional, If X is not provided then forecast
+            is made on the fitted series.
+
+        fh: Forecasting horizon,
+            not used since, forecasting horizon at time of
+            fitting is used (direct mode only)
+        """
+        self.network.eval()
+        if X is None:
+            input = self._y[-self.window :]
+        else:
+            input = X[-self.window :]
+        with torch.no_grad():
+            prediction = self.network(input)
+            return prediction
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "input_shape": 1,
+            "hidden_size": 1,
+            "num_layer": 1,
+            "season_length": 12,
+            "seasonality": "zero",
+            "window": 5,
+            "stride": 1,
+            "batch_size": 32,
+            "epoch": 50,
+            "optimizer": "Adam",
+            "criterion": "pinball",
+        }
+        return [params1, params2]
