@@ -141,7 +141,7 @@ class ChronosDefaultStrategy(ChronosModelStrategy):
             top_p=config["top_p"],
             limit_prediction_length=config["limit_prediction_length"],
         )
-        return np.median(prediction_results[0].nump(), axis=0)
+        return np.median(prediction_results[0].numpy(), axis=0)
 
 
 class ChronosBoltStrategy(ChronosModelStrategy):
@@ -156,7 +156,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
 
     def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
         return _CachedChronosBolt(
-            key=key, chronos_kwargs=kwargs, use_source_package=use_source_package
+            key=key, chronos_bolt_kwargs=kwargs, use_source_package=use_source_package
         )
 
     def predict(
@@ -167,7 +167,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
             prediction_length,
             limit_prediction_length=config["limit_prediction_length"],
         )
-        return np.median(prediction_results.numpy(), axis=1)
+        return np.median(prediction_results[0].numpy(), axis=1)
 
 
 class ChronosForecaster(_BaseGlobalForecaster):
@@ -363,7 +363,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
 
             self._default_config = self.model_strategy.initialize_config()
             self._config = self._default_config.copy()
-            if self._config is not None:
+            if self.config is not None:
                 self._config.update(self.config)
 
         except Exception as e:

@@ -38,7 +38,6 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import AutoConfig
     from transformers.models.t5.modeling_t5 import (
         ACT2FN,
-        T5Config,
         T5LayerNorm,
         T5PreTrainedModel,
         T5Stack,
@@ -259,7 +258,7 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
     Parameters
     ----------
-    config: T5Config
+    config: ChronosBoltConfig
         The configuration to use for ChronosBolt models.
     """
 
@@ -270,7 +269,7 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"lm_head.weight"]
     _tied_weights_keys = ["encoder.embed_tokens.weight", "decoder.embed_tokens.weight"]
 
-    def __init__(self, config: T5Config):
+    def __init__(self, config: ChronosBoltConfig):
         assert hasattr(config, "chronos_config"), "Not a Chronos config file"
 
         super().__init__(config)
@@ -278,6 +277,7 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
         self.chronos_config = ChronosBoltConfig(**config.chronos_config)
 
+        self.config.context_length = self.chronos_config.context_length
         # Only decoder_start_id (and optionally REG token)
         if self.chronos_config.use_reg_token:
             config.reg_token_id = 1
@@ -605,6 +605,20 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         return decoder_outputs.last_hidden_state  # sequence_outputs, b x 1 x d_model
 
 
+def left_pad_and_stack_1D(tensors: list):
+    """Pad a list of 1D tensors with ``torch.nan`` and stack them."""
+    max_len = max(len(c) for c in tensors)
+    padded = []
+    for c in tensors:
+        assert isinstance(c, torch.Tensor)
+        assert c.ndim == 1
+        padding = torch.full(
+            size=(max_len - len(c),), fill_value=torch.nan, device=c.device
+        )
+        padded.append(torch.concat((padding, c), dim=-1))
+    return torch.stack(padded)
+
+
 @dataclass
 class ChronosBoltPipeline:
     """
@@ -615,13 +629,28 @@ class ChronosBoltPipeline:
 
     Parameters
     ----------
+    model: ChronosBoltModelForForecasting
+        The model to use.
+
     default_context_length: int (default=2048)
         The default context length of the model in the case that it is not explicitly
         specified.
-
     """
 
+    model: ChronosBoltModelForForecasting
     default_context_length: int = 2048
+
+    def _prepare_and_validate_context(
+        self, context: Union[torch.Tensor, list[torch.Tensor]]
+    ):
+        if isinstance(context, list):
+            context = left_pad_and_stack_1D(context)
+        assert isinstance(context, torch.Tensor)
+        if context.ndim == 1:
+            context = context.unsqueeze(0)
+        assert context.ndim == 2
+
+        return context
 
     @torch.no_grad()
     def embed(
