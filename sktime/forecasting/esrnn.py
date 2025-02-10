@@ -53,7 +53,34 @@ class PinballLoss(nn.Module):
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
-    """Exponential Smoothing Recurrant Neural Network."""
+    """
+    Exponential Smoothing Recurrant Neural Network.
+
+    Parameters
+    ----------
+    input_shape : int
+        Number of features in the input
+
+    hidden_size : int
+        Number of features in the hidden state
+
+    horizon : int
+        Forecasting horizon
+
+    num_layer : int
+        Number of layers
+
+    season_length : int
+        Period of season
+
+    seasonality : string
+        Type of seasonality
+
+    level_coeff : int
+
+    seasonal_coeff_1 : int
+
+    """
 
     def __init__(
         self,

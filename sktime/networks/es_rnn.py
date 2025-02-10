@@ -14,14 +14,8 @@ if _check_soft_dependencies("torch", severity="none"):
     nn_module = nn.Module
 else:
 
-    class nn:
-        """dummy class if torch is not available."""
-
-        class Module:
-            """dummy class if torch is not available."""
-
-            def __init__(self, *args, **kwargs):
-                raise ImportError("torch is not available. Please install torch first.")
+    class nn_module:
+        """Dummy class if torch is unavailable."""
 
 
 import numpy as np
