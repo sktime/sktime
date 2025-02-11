@@ -1446,6 +1446,9 @@ class ForecastX(BaseForecaster):
         # remember if X seen was None
         self.X_was_None_ = X is None
 
+        if not hasattr(self, "_X") or self._X is None:
+            self._X = X
+
         # initialize forecaster_X_ and forecaster_y_
         self.forecaster_y_ = self.forecaster_y.clone()
         if X is not None:

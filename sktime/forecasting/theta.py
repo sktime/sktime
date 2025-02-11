@@ -487,7 +487,7 @@ class ThetaModularForecaster(BaseForecaster):
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
         y_pred = _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_metadata["feature_names"][0]
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
