@@ -21,6 +21,8 @@ __author__ = ["fkiraly", "satvshr"]
 
 __all__ = ["BaseParamFitter"]
 
+import numpy as np
+
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     check_is_scitype,
@@ -29,6 +31,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.adapters._safe_call import _safe_call
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.warnings import warn
@@ -45,9 +48,10 @@ def _coerce_to_list(obj):
 class BaseParamFitter(BaseEstimator):
     """Base parameter fitting estimator class.
 
-    This base class defines the interface for parameter estimators that accept
-    both feature data (X) and target values (y). It provides methods for fitting,
-    updating, and inspecting the fitted parameters.
+    The base parameter fitter specifies the methods and method signatures that all
+    parameter fitter have to implement.
+
+    Specific implementations of these methods is deferred to concrete instances.
 
     Parameters
     ----------
@@ -67,7 +71,10 @@ class BaseParamFitter(BaseEstimator):
     _tags = {
         "object_type": "param_est",  # type of object
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which types do _fit/_predict support for y?
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd.Series",
+        ],  # which types do _fit/_predict support for y?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "scitype:y": "univariate",  # which y are fine: univariate/multivariate/both
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -176,12 +183,16 @@ class BaseParamFitter(BaseEstimator):
 
         Parameters
         ----------
-        X : sktime-compatible container
-            Time series data (features) in a format supported by the estimator.
-        y : array-like, optional (default=None)
-            Target values for supervised parameter estimation. If the estimator does not
-            require target values (i.e., its tag "requires_y" is False),
-            y must be None.
+        X : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -201,7 +212,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        self._fit(X=X_inner, y=y_inner)
+        _safe_call(self._fit, args=(X_inner, y_inner), kwargs={})
 
         # this should happen last
         self._is_fitted = True
@@ -213,17 +224,15 @@ class BaseParamFitter(BaseEstimator):
 
         This method allows for updating the estimator with additional observations.
         If a custom update method is not implemented, the default behavior is to refit
-        the estimator using all data seen so far. Note that the primary parameter is y;
-        if X is provided, it is used to update the stored feature data.
+        the estimator using all data seen so far. Note that the primary parameter is X.
 
         Parameters
         ----------
-        X : sktime-compatible container, optional (default=None)
-            New time series data (features) for updating the estimator. If not provided,
-            only y is updated.
-        y : array-like
-            New target values for updating the estimator. An empty or None y will result
-            in no update and a warning will be issued.
+        X : sktime-compatible container
+            New time series data (features) for updating the estimator.
+        y : array-like, optional (default=None)
+            New target values for updating the estimator. If not provided,
+            only X is updated.
 
         Returns
         -------
@@ -231,23 +240,24 @@ class BaseParamFitter(BaseEstimator):
         """
         self.check_is_fitted()
 
-        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+        if X is None or (hasattr(X, "__len__") and len(X) == 0):
             warn(
                 f"empty y passed to update of {self}, no update was carried out",
                 obj=self,
             )
             return self
 
-        if X is not None:
+        if y is not None:
             # Validate and convert the new X and y data
             X_inner, y_inner = self._check_X_y(X=X, y=y)
             self._update_y_X(y_inner, X_inner)
         else:
             # Update only the target data
-            self._update_y_X(y, None)
+            X_inner = self._check_X(X=X)
+            self._update_y_X(None, X_inner)
 
         # Pass the checked and converted data to the estimator-specific _update logic
-        self._update(X=X_inner, y=y_inner)
+        _safe_call(self._update, args=(X_inner, y_inner), kwargs={})
 
         return self
 
@@ -315,9 +325,12 @@ class BaseParamFitter(BaseEstimator):
 
         def _check_missing(obj):
             """Raise an error if obj contains missing values (if not supported)."""
-            if obj.isnull().values.any() and not self.get_tag(
-                "capability:missing_values"
-            ):
+            if isinstance(obj, np.ndarray):
+                has_nan = np.isnan(obj).any()
+            else:
+                has_nan = obj.isnull().values.any()
+
+            if has_nan and not self.get_tag("capability:missing_values"):
                 msg = (
                     f"{type(self).__name__} cannot handle missing data (nans), "
                     f"but the passed data contained missing values."
