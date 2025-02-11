@@ -326,7 +326,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PAA",
         "PAAlegacy",
         "PCATransformer",
-        "PaddingTransformer",
         "ParamFitterPipeline",
         "PlateauFinder",
         "PluginParamsForecaster",
