@@ -622,7 +622,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                     "context_length": 2,
                     "prediction_length": 2,
                 },
-                "validation_split": 0.2,
+                "validation_split": 0.3,
                 "training_args": {
                     "max_steps": 5,
                     "output_dir": "test_output",
