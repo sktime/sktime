@@ -3,12 +3,11 @@
 __author__ = ["Spinachboul"]
 
 import pytest
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
+from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 from sktime.tests.test_switch import run_test_for_class
 
-from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 
 @pytest.mark.skipif(
     not run_test_for_class(HFTransformersForecaster),
