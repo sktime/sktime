@@ -1,6 +1,6 @@
 """Tests for specific bugfixes to conversion logic."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly","ericjb"]
 
 import pytest
 
