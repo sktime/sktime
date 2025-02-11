@@ -79,35 +79,87 @@ class HFTransformersForecaster(BaseForecaster):
     **Using a Pretrained Model from Hugging Face**
 
     >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster
+    ...     HFTransformersForecaster,
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
-    ...     model_path="huggingface/autoformer-tourism-monthly",
-    ...     fit_strategy="minimal",
-    ...     training_args={
-    ...         "num_train_epochs": 10,
-    ...         "output_dir": "output",
-    ...         "per_device_train_batch_size": 4
-    ...     },
-    ...     config={
+    ...    model_path="huggingface/autoformer-tourism-monthly",
+    ...    training_args ={
+    ...        "num_train_epochs": 20,
+    ...        "output_dir": "test_output",
+    ...        "per_device_train_batch_size": 32,
+    ...    },
+    ...    config={
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
     ...         "prediction_length": 4,
     ...         "use_cpu": True,
     ...         "label_length": 2,
-    ...     },
-    ... )  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    ...    },
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+
+    **Using PEFT for Fine-Tuning**
+
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster,
+    ... )
+    >>> from sktime.datasets import load_airline
+    >>> from peft import LoraConfig
+    >>> y = load_airline()
+    >>> forecaster = HFTransformersForecaster(
+    ...    model_path="huggingface/autoformer-tourism-monthly",
+    ...    fit_strategy="peft",
+    ...    training_args={
+    ...        "num_train_epochs": 20,
+    ...        "output_dir": "test_output",
+    ...        "per_device_train_batch_size": 32,
+    ...    },
+    ...    config={
+    ...         "lags_sequence": [1, 2, 3],
+    ...         "context_length": 2,
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...    },
+    ...    peft_config=LoraConfig(
+    ...        r=8,
+    ...        lora_alpha=32,
+    ...        target_modules=["q_proj", "v_proj"],
+    ...        lora_dropout=0.01,
+    ...    )
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
     **Using an Initialized Model**
 
-    >>> from transformers import AutoModel, AutoConfig
-    >>> config = AutoConfig.from_pretrained("huggingface/informer-tourism-monthly")
-    >>> model = AutoModel.from_config(config)
+    >>> from sktime.datasets import load_airline
+    >>> from transformers import AutoformerConfig, AutoformerForPrediction
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster
+    ... )
+    >>> y = load_airline()
+
+    >>> # Define model configuration
+    >>> config = AutoformerConfig(
+    ...     num_dynamic_real_features=0,
+    ...     num_static_real_features=0,
+    ...     num_static_categorical_features=0,
+    ...     num_time_features=0,
+    ...     context_length=2,
+    ...     prediction_length=4,
+    ...     lags_sequence=[1, 2, 3],
+    ... )
+
+    >>> # Initialize the model
+    >>> model = AutoformerForPrediction(config)
+
+    >>> # Initialize the forecaster with the model
     >>> forecaster = HFTransformersForecaster(
     ...     model_path=model,
     ...     fit_strategy="minimal",
@@ -116,20 +168,8 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "output_dir": "output",
     ...         "per_device_train_batch_size": 4
     ...     },
-    ...     config={
-    ...         "lags_sequence": [1, 2, 3],
-    ...         "context_length": 2,
-    ...         "prediction_length": 4,
-    ...         "use_cpu": True,
-    ...         "label_length": 2,
-    ...     },
-    ...     peft_config=LoraConfig(
-    ...         r=8,
-    ...         lora_alpha=32,
-    ...         target_modules=["q_proj", "v_proj"],
-    ...         lora_dropout=0.01,
-    ...     ),
-    ... )  # doctest: +SKIP
+    ... )
+
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
