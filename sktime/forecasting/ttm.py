@@ -604,7 +604,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": None,
                 "fit_strategy": "full",
                 "config": {
-                    "context_length": 4,
+                    "context_length": 2,
                     "prediction_length": 2,
                     "num_patches": 4,
                 },
@@ -619,7 +619,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 4,
+                    "context_length": 2,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
