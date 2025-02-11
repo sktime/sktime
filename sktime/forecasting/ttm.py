@@ -601,10 +601,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
+                "validation_split": None,
                 "model_path": None,
                 "fit_strategy": "full",
                 "config": {
-                    "context_length": 1,
+                    "context_length": 2,
                     "prediction_length": 1,
                     "num_patches": 4,
                 },
@@ -616,10 +617,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
             },
             {
+                "validation_split": None,
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 1,
+                    "context_length": 2,
                     "prediction_length": 1,
                 },
                 "training_args": {
