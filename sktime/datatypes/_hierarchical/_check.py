@@ -196,9 +196,11 @@ class HierarchicalDask(ScitypeHierarchical):
 
     An object ``obj: dask.DataFrame`` follows the specification iff:
 
-    * structure convention: ``obj`` must have at least three index columns, where:
+     * structure convention: ``obj`` must have at least three index columns, where:
       - The first ``n-1`` index columns define the hierarchy.
       - The last index column represents time.
+      - All index columns must be explicitly named following the pattern ``__index__*``,
+        such as ``__index__0``, ``__index__1``, ..., ``__index__N-1``.
     * hierarchy level: rows with the same values in the hierarchy columns belong 
       to the same hierarchy unit, while different hierarchy values correspond to 
       different hierarchy units.
