@@ -260,7 +260,6 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "Arsenal",
-        "BaggingForecaster",
         "BOSSEnsemble",
         "CNTCClassifier",
         "CNTCNetwork",
