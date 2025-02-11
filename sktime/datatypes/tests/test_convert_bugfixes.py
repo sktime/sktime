@@ -8,7 +8,6 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.datasets import load_airline
 from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
 
-
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
