@@ -530,6 +530,70 @@ class distribution(_BaseScitypeOfObject):
         return BaseDistribution
 
 
+class dataset(_BaseScitypeOfObject):
+    """Dataset object."""
+
+    _tags = {
+        "scitype_name": "dataset",
+        "short_descr": "dataset object",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.base import BaseDataset
+
+        return BaseDataset
+
+
+class dataset_classification(_BaseScitypeOfObject):
+    """Classification Dataset."""
+
+    _tags = {
+        "scitype_name": "dataset_classification",
+        "short_descr": "classification dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.classification._base import BaseClassificationDataset
+
+        return BaseClassificationDataset
+
+
+class dataset_forecasting(_BaseScitypeOfObject):
+    """Forecasting Dataset class."""
+
+    _tags = {
+        "scitype_name": "dataset_forecasting",
+        "short_descr": "forecasting dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.forecasting._base import BaseForecastingDataset
+
+        return BaseForecastingDataset
+
+
+class dataset_regression(_BaseScitypeOfObject):
+    """Regression Dataset class."""
+
+    _tags = {
+        "scitype_name": "dataset_regression",
+        "short_descr": "regression dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.regression._base import BaseRegressionDataset
+
+        return BaseRegressionDataset
+
+
 # ----------------------------------
 # utility functions for base classes
 # ----------------------------------

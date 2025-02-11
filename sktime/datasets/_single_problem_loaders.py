@@ -1257,7 +1257,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30T")
+    y = y.asfreq("30MIN")
     y = y.squeeze("columns")
     if api_version is None:
         return y
@@ -1530,7 +1530,7 @@ def load_m5(
             calander : pd.DataFrame
 
     Dataset Description
-    --------------------
+    -------------------
     - **Number of Rows**: Approximately 58 million rows (for the full dataset).
     - **Number of Columns**: Varies based on `include_events` parameter.
       - Without events: 9 columns.
@@ -1585,7 +1585,7 @@ def load_m5(
 
             _download_and_extract(
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=path_to_data_dir,
+                extract_path=extract_path,
             )
         else:
             path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
