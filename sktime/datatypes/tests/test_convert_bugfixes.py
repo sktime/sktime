@@ -1,12 +1,13 @@
 """Tests for specific bugfixes to conversion logic."""
 
-__author__ = ["fkiraly","ericjb"]
+__author__ = ["fkiraly", "ericjb"]
 
 import pytest
 
-from sktime.tests.test_switch import run_test_module_changed
 from sktime.datasets import load_airline
 from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
+from sktime.tests.test_switch import run_test_module_changed
+
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.datatypes"),
@@ -26,6 +27,7 @@ def test_multiindex_to_df_list_large_level_values():
     X1 = X.loc[:3]
 
     convert_to(X1, "df-list")
+
 
 def test_convert_MvS_to_UvS_as_Series():
     """Checks that column name in MvS is preserved as attr name in UvS"""
