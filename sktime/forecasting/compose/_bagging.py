@@ -332,7 +332,7 @@ class BaggingForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        from skpro.proba.empirical import Empirical
+        from skpro.distributions.empirical import Empirical
 
         # generate replicates of exogenous data for bootstrap
         X_inner = self._gen_X_bootstraps(X)
