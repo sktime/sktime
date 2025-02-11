@@ -8,19 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
 
-# Check if transformers is installed
-TRANSFORMERS_AVAILABLE = _check_soft_dependencies("transformers", severity="none")
-
-if TRANSFORMERS_AVAILABLE:
-    from transformers import AutoformerConfig, AutoformerForPrediction
-
-    from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
-else:
-    pytest.skip(
-        "Skipping HFTransformersForecaster tests since transformers is not installed.",
-        allow_module_level=True,
-    )
-
+from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 
 @pytest.mark.skipif(
     not run_test_for_class(HFTransformersForecaster),
@@ -28,6 +16,7 @@ else:
 )
 def test_initialized_model():
     """Test passing an initialized model to HFTransformersForecaster."""
+    from transformers import AutoformerConfig, AutoformerForPrediction
 
     # Define model configuration
     config = AutoformerConfig(
