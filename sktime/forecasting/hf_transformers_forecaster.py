@@ -151,8 +151,8 @@ class HFTransformersForecaster(BaseForecaster):
     ...     num_static_real_features=0,
     ...     num_static_categorical_features=0,
     ...     num_time_features=0,
-    ...     context_length=2,
-    ...     prediction_length=4,
+    ...     context_length=32,
+    ...     prediction_length=8,
     ...     lags_sequence=[1, 2, 3],
     ... )
 
