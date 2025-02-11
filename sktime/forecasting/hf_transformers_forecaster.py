@@ -182,7 +182,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         if isinstance(self.model_path, PreTrainedModel):
             self.model = self.model_path
-            self.config = self.model.config
+            config = self.model.config
 
         else:
             # Load model and extract config
