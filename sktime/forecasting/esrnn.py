@@ -10,20 +10,12 @@ from sktime.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
-    from torch.optim import SGD, Adam
-    from torch.utils.data import DataLoader, TensorDataset
 
     nn_module = nn.Module
 else:
 
-    class nn:
-        """dummy class if torch is not available."""
-
-        class Module:
-            """dummy class if torch is not available."""
-
-            def __init__(self, *args, **kwargs):
-                raise ImportError("torch is not available. Please install torch first.")
+    class nn_module:
+        """Dummy class if torch is unavailable."""
 
 
 class PinballLoss(nn.Module):
@@ -35,7 +27,6 @@ class PinballLoss(nn.Module):
     tau : Quantile Value
     target : Ground truth
     predec: Predicted value
-
     loss = max( (predec-target)(1-tau), (target-predec)*tau)
     """
 
@@ -48,7 +39,7 @@ class PinballLoss(nn.Module):
         predec = predec.float()
         target = target.float()
         diff = predec - target
-        loss = max(-diff * (1 - self.tau), diff * self.tau)
+        loss = torch.maximum(-diff * (1 - self.tau), diff * self.tau)
         return loss.mean()
 
 
@@ -96,12 +87,21 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         optimizer="Adam",
         criterion="pinball",
     ) -> None:
+        super().__init__()
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+            import torch.nn as nn
+
+            nn_module = nn.Module
+        else:
+
+            class nn_module:
+                """Dummy class if torch is unavailable."""
+
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality = seasonality
-        self.level_coeff = torch.nn.Parameter(torch.rand(1), requires_grad=True)
-        self.seasonal_coeff_1 = torch.nn.Parameter(torch.rand(1), requires_grad=True)
         self.season_length = season_length
         self.window = window
         self.stride = stride
@@ -109,13 +109,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.epoch = epoch
         self.optimizer = optimizer
         self.criterion = criterion
-        self.opti_list = {"adam": Adam, "sgd": SGD}
+        self.lr = 1e-5
         self.loss_list = {
             "mse": nn.MSELoss,
             "cross": nn.CrossEntropyLoss,
             "l1": nn.L1Loss,
         }
-        super().__init__()
+        self.opti_list = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
 
     def _get_windows(self, y):
         length = len(y)
@@ -125,8 +125,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             inp = y[i : i + self.window]
             out = y[i + self.window : i + self.window + self.horizon]
 
-            x_arr.append(inp.flatten())
-            y_arr.append(out.flattent())
+            x_arr.append(inp)
+            y_arr.append(out)
 
         if not x_arr:
             raise ValueError("Input size to small")
@@ -134,15 +134,17 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         return np.array(x_arr), np.array(y_arr)
 
     def _instantiate_optimizer(self):
+        import torch
+
         if self.optimizer:
             if self.optimizer.lower() in self.opti_list:
-                return self.optimizers[self.optimizer](
+                return self.opti_list[self.optimizer.lower()](
                     self.network.parameters(),
                     lr=self.lr,
                 )
             else:
                 raise TypeError(
-                    f"Please pass one of {self.optimizers.keys()} for `optimizer`."
+                    f"Please pass one of {self.opti_list.keys()} for `optimizer`."
                 )
         else:
             return torch.optim.Adam(self.network.parameters(), lr=self.lr)
@@ -150,11 +152,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     def _instantiate_criterion(self):
         if self.criterion:
             if self.criterion in self.loss_list:
-                return self.criterions[self.criterion]()
+                return self.loss_list[self.criterion]()
             else:
-                raise TypeError(
-                    f"Please pass one of {self.criterions.keys()} for `criterion`."
-                )
+                loss = PinballLoss()
+                return loss
         else:
             # default criterion
             loss = PinballLoss()
@@ -162,15 +163,16 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def _fit(self, y, fh, X=None):
         """Fit ES-RNN Model for provided data."""
+        import torch
+        from torch.utils.data import DataLoader, TensorDataset
+
         self._y = y
-        self.horizon = fh
+        self.horizon = len(fh)
         self.network = ESRNN(
             self.input_shape,
             self.hidden_size,
             self.horizon,
             self.num_layer,
-            self.level_coeff,
-            self.seasonal_coeff_1,
             self.season_length,
             self.seasonality,
         ).build_network()
@@ -180,6 +182,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
         data = TensorDataset(x_train, y_train)
         loader = DataLoader(data, self.batch_size, shuffle=True)
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
         self.network.train()
         for i in range(self.epoch):
             self._run_epoch(i, loader)
@@ -199,6 +203,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             not used since, forecasting horizon at time of
             fitting is used (direct mode only)
         """
+        import torch
+
         self.network.eval()
         if X is None:
             input = self._y[-self.window :]
@@ -242,6 +248,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "batch_size": 32,
             "epoch": 50,
             "optimizer": "Adam",
-            "criterion": "pinball",
+            "criterion": "mse",
         }
         return [params1, params2]
