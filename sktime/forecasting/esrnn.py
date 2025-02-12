@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
-from sktime.networks.es_rnn import ESRNN, PinballLoss
+from sktime.networks.es_rnn import ESRNN
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
@@ -114,11 +114,11 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             if self.criterion in self.loss_list:
                 return self.loss_list[self.criterion]()
             else:
-                loss = PinballLoss()
+                loss = ESRNN().DefaultLoss()
                 return loss
         else:
             # default criterion
-            loss = PinballLoss()
+            loss = ESRNN().DefaultLoss()
             return loss
 
     def _fit(self, y, fh, X=None):
