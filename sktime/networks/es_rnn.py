@@ -55,9 +55,11 @@ class ESRNN(BaseDeepNetwork):
         seasonality="single",
     ) -> None:
         super().__init__()
-        _check_soft_dependencies("torch", severity="none")
-        import torch
-        import torch.nn as nn
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+            import torch.nn as nn
+        else:
+            raise ImportError("torch is not available. Please install torch first.")
 
         self.input_shape = input_shape
         self.hidden_size = hidden_size
