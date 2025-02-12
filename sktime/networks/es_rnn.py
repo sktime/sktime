@@ -2,13 +2,10 @@
 
 __author__ = ["Ankit-1204"]
 
-import logging
 from warnings import warn
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_soft_dependencies
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 class ESRNN(BaseDeepNetwork):
@@ -55,8 +52,6 @@ class ESRNN(BaseDeepNetwork):
         import torch
         import torch.nn as nn
 
-        torch.autograd.set_detect_anomaly(True)
-
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
@@ -72,7 +67,7 @@ class ESRNN(BaseDeepNetwork):
                 horizon,
                 num_layer,
                 season_length,
-                seasonality="zero",
+                seasonality,
             ) -> None:
                 self.input_shape = input_shape
                 self.hidden_size = hidden_size
@@ -85,7 +80,6 @@ class ESRNN(BaseDeepNetwork):
                 self.seasonal_coeff_1 = torch.nn.Parameter(
                     torch.rand(1), requires_grad=True
                 )
-                logging.debug(f"horizon in layer : {self.horizon}")
                 self.input_layer = nn.Linear(input_shape, input_shape)
                 self.lstm = nn.LSTM(
                     self.input_shape, self.hidden_size, self.num_layer, batch_first=True
@@ -132,9 +126,6 @@ class ESRNN(BaseDeepNetwork):
                     x / (level * seasonality[:, -seq_length:, :]),
                 )
 
-            def _double_seasonal(x):
-                pass
-
             def forward(self, x):
                 """
                 Forward pass through ES-RNN.
@@ -144,7 +135,6 @@ class ESRNN(BaseDeepNetwork):
                 x : torch.Tensor
                     Input tensor of shape (batch_size, input_length).
                 """
-                # logging.debug(f"Input to forward(): {x}")
                 if self.seasonality == "zero":
                     level, new_x = self._nonseasonal(x)
                     x_input = self.input_layer(new_x.float())
