@@ -42,7 +42,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
-        "python_dependencies": ["torch"],
+        "python_dependencies": "torch",
     }
 
     def __init__(
@@ -60,12 +60,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         criterion="pinball",
     ) -> None:
         super().__init__()
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
-            import torch.nn as nn
-        else:
-            raise ImportError("torch is not available. Please install torch first.")
-
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
@@ -78,12 +72,16 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.optimizer = optimizer
         self.criterion = criterion
         self.lr = 1e-5
-        self.loss_list = {
-            "mse": nn.MSELoss,
-            "cross": nn.CrossEntropyLoss,
-            "l1": nn.L1Loss,
-        }
-        self.opti_list = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+            import torch.nn as nn
+
+            self.loss_list = {
+                "mse": nn.MSELoss,
+                "cross": nn.CrossEntropyLoss,
+                "l1": nn.L1Loss,
+            }
+            self.opti_list = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
 
     def _get_windows(self, y):
         length = len(y)
