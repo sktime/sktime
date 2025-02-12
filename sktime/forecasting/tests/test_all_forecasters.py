@@ -940,7 +940,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_columns(y_pred, y_train)
 
 
-class TestAllGlobalForecasters(BaseFixtureGenerator):
+class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
     estimator_type_filter = "global_forecaster"
