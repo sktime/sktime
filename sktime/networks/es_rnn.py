@@ -66,7 +66,13 @@ class ESRNN(BaseDeepNetwork):
             import torch
             import torch.nn as nn
 
-        class PinballLoss(nn.Module):
+            NNModule = nn.Module
+        else:
+
+            class NNModule:
+                """Dummy class if torch is unavailable."""
+
+        class PinballLoss(NNModule):
             """
             Default Loss Pinball/Quantile Loss.
 
@@ -90,7 +96,7 @@ class ESRNN(BaseDeepNetwork):
                 loss = torch.maximum(-diff * (1 - self.tau), diff * self.tau)
                 return loss.mean()
 
-        class _ESRNN(nn.Module):
+        class _ESRNN(NNModule):
             def __init__(
                 self,
                 input_shape,
