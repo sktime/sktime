@@ -8,15 +8,9 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
 from sktime.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-
-    nn_module = nn.Module
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
+_check_soft_dependencies("torch", severity="none")
+import torch
+import torch.nn as nn
 
 
 class PinballLoss(nn.Module):
