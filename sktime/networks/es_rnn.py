@@ -4,6 +4,9 @@ __author__ = ["Ankit-1204"]
 
 from warnings import warn
 
+import torch
+import torch.nn as nn
+
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -167,3 +170,28 @@ class ESRNN(BaseDeepNetwork):
             self.season_length,
             self.seasonality,
         )
+
+
+class PinballLoss(nn.Module):
+    """
+    Default Loss Pinball/Quantile Loss.
+
+    Parameters
+    ----------
+    tau : Quantile Value
+    target : Ground truth
+    predec: Predicted value
+    loss = max( (predec-target)(1-tau), (target-predec)*tau)
+    """
+
+    def __init__(self, tau=0.49):
+        super().__init__()
+        self.tau = tau
+
+    def forward(self, predec, target):
+        """Calculate Pinball Loss."""
+        predec = predec.float()
+        target = target.float()
+        diff = predec - target
+        loss = torch.maximum(-diff * (1 - self.tau), diff * self.tau)
+        return loss.mean()

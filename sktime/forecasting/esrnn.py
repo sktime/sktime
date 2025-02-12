@@ -5,37 +5,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
-from sktime.networks.es_rnn import ESRNN
+from sktime.networks.es_rnn import ESRNN, PinballLoss
 from sktime.utils.dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("torch", severity="none")
-import torch
-import torch.nn as nn
-
-
-class PinballLoss(nn.Module):
-    """
-    Default Loss Pinball/Quantile Loss.
-
-    Parameters
-    ----------
-    tau : Quantile Value
-    target : Ground truth
-    predec: Predicted value
-    loss = max( (predec-target)(1-tau), (target-predec)*tau)
-    """
-
-    def __init__(self, tau=0.49):
-        super().__init__()
-        self.tau = tau
-
-    def forward(self, predec, target):
-        """Calculate Pinball Loss."""
-        predec = predec.float()
-        target = target.float()
-        diff = predec - target
-        loss = torch.maximum(-diff * (1 - self.tau), diff * self.tau)
-        return loss.mean()
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
