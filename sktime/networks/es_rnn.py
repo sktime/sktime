@@ -42,7 +42,6 @@ class ESRNN(BaseDeepNetwork):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
-        "python_dependencies": "torch",
     }
 
     def __init__(
