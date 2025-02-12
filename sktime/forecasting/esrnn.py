@@ -1,6 +1,5 @@
 """Interface for ES RNN for Time Series Forecasting."""
 
-__author__ = ["Ankit-1204"]
 import numpy as np
 import pandas as pd
 
@@ -38,6 +37,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     seasonal_coeff_1 : int
 
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["Ankit-1204"],
+        "python_dependencies": ["torch"],
+    }
 
     def __init__(
         self,
