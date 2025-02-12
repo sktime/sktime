@@ -2,6 +2,7 @@
 
 __author__ = ["Ankit-1204"]
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
@@ -78,8 +79,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         input_shape=1,
         hidden_size=1,
         num_layer=1,
-        season_length=12,
-        seasonality="zero",
+        season_length=3,
+        seasonality="single",
         window=5,
         stride=1,
         batch_size=32,
@@ -163,11 +164,17 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def _fit(self, y, fh, X=None):
         """Fit ES-RNN Model for provided data."""
+        import logging
+
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
+        logging.basicConfig(level=logging.DEBUG)
         self._y = y
         self.horizon = len(fh)
+        self._fh = fh
+        logging.debug(f"Horizon : {self.horizon}")
+        self.input_shape = y.shape[1]
         self.network = ESRNN(
             self.input_shape,
             self.hidden_size,
@@ -182,6 +189,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
         data = TensorDataset(x_train, y_train)
         loader = DataLoader(data, self.batch_size, shuffle=True)
+        # logging.debug(f"Input to forward(): {x_train}")
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
         self.network.train()
@@ -203,16 +211,28 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             not used since, forecasting horizon at time of
             fitting is used (direct mode only)
         """
+        import logging
+
         import torch
 
+        logging.basicConfig(level=logging.DEBUG)
         self.network.eval()
         if X is None:
+            index = self._fh.to_absolute(self._y.index[-1]).to_numpy()
+            logging.debug(self._y)
             input = self._y[-self.window :]
+            input = torch.FloatTensor(np.array(input))
+            input = input.unsqueeze(0)
         else:
-            input = X[-self.window :]
+            index = self._fh.to_absolute(X.index[-1]).to_numpy()
+            input = torch.FloatTensor(np.array(X[-self.window :]))
+            input = input.unsqueeze(0)
         with torch.no_grad():
             prediction = self.network(input)
-            return prediction
+            if prediction.shape[-1] == 1:
+                return pd.Series(prediction.squeeze(), index=index)
+            else:
+                return pd.DataFrame(prediction.squeeze(0), index=index)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -242,8 +262,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "hidden_size": 1,
             "num_layer": 1,
             "season_length": 12,
-            "seasonality": "zero",
-            "window": 5,
+            "seasonality": "single",
+            "window": 13,
             "stride": 1,
             "batch_size": 32,
             "epoch": 50,
