@@ -174,7 +174,7 @@ class MiniRocket(BaseTransformer):
         return pd.DataFrame(X_)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter sets for the estimator."""
         return [
             {"random_state": 0},  # Default Paramters
@@ -182,5 +182,6 @@ class MiniRocket(BaseTransformer):
                 "num_kernels": 84,
                 "max_dilations_per_kernel": 32,
                 "random_state": 42,
+                "n_jobs": -1,
             },  # Use a small amount of kernels (but compute on all cores)
         ]
