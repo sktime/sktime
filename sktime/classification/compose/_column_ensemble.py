@@ -284,20 +284,35 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         )
 
         if parameter_set == "results_comparison":
-            cboss = ContractableBOSS(
+            cboss0 = ContractableBOSS(
                 n_parameter_samples=4, max_ensemble_size=2, random_state=0
             )
-            cif = CanonicalIntervalForest(
+            cif0 = CanonicalIntervalForest(
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
-            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
+            params0 = {"estimators": [("cBOSS", cboss0, 5), ("CIF", cif0, [3, 4])]}
+            cboss1 = ContractableBOSS(
+                n_parameter_samples=2, max_ensemble_size=5, random_state=0
+            )
+            cif1 = CanonicalIntervalForest(
+                n_estimators=5, n_intervals=2, att_subsample_size=2, random_state=0
+            )
+            params1 = {"estimators": [("cBOSS", cboss1, 2), ("CIF", cif1, [1, 8])]}
+            return [params0, params1]
         else:
-            return {
+            params0 = {
                 "estimators": [
-                    ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=2), 0),
+                    ("tsf1", TSFC(n_estimators=2, random_state=0), 0.5),
+                    ("tsf2", TSFC(n_estimators=5, random_state=1), 0.5),
                 ]
             }
+            params1 = {
+                "estimators": [
+                    ("tsf1", TSFC(n_estimators=10, random_state=2), 0.3),
+                    ("tsf2", TSFC(n_estimators=2, random_state=3), 0.7),
+                ]
+            }
+            return [params0, params1]
 
 
 def _get_column(X, key):
