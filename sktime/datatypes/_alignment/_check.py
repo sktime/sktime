@@ -82,7 +82,7 @@ def check_align(align_df, name="align_df", index="iloc", return_metadata=False):
 
     if not set(cols) == set(correctcols):
         msg = f"{name} index columns must be named 'ind0', 'ind1', ... 'ind{n}'"
-        return False, msg
+        return False, msg, {}
 
     if index == "iloc":
         # checks whether df columns are of integer (numpy or pandas nullable) type
