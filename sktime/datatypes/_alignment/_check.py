@@ -155,6 +155,7 @@ class AlignmentIloc(ScitypeAlignment):
         "name": "alignment",  # any string
         "name_python": "alignment_iloc",  # lower_snake_case
         "name_aliases": [],
+        "description": "alignment in pd.DataFram format, values are iloc index references",  # noqa: E501
         "python_version": None,
         "python_dependencies": "pandas",
     }
@@ -223,6 +224,7 @@ class AlignmentLoc(ScitypeAlignment):
         "name": "alignment_loc",  # any string
         "name_python": "alignment_loc",  # lower_snake_case
         "name_aliases": [],
+        "description": "alignment in pd.DataFram format, values are loc index references",  # noqa: E501
         "python_version": None,
         "python_dependencies": "pandas",
     }
