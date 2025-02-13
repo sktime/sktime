@@ -964,8 +964,8 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.34.0:
-    # Check at every minor release whether lower pandas bound >=0.15.0
+    # TODO: 0.37.0:
+    # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #
     # context:

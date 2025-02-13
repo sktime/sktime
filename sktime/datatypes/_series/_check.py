@@ -57,6 +57,34 @@ FREQ_SET_CHECK = False
 class SeriesPdDataFrame(ScitypeSeries):
     """Data type: pandas.DataFrame based specification of single time series.
 
+    Name: ``"pd.DataFrame"``
+
+    Short description:
+
+    a uni- or multivariate ``pandas.DataFrame``,
+    with rows = time points, cols = variables
+
+    Long description:
+
+    The ``"pd.DataFrame"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: pandas.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be monotonic,
+      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+    * variables: columns of ``obj`` correspond to different variables
+    * variable names: column names ``obj.columns``
+    * time points: rows of ``obj`` correspond to different, distinct time points
+    * time index: ``obj.index`` is interpreted as the time index.
+
+    Capabilities:
+
+    * cannot represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -84,8 +112,10 @@ class SeriesPdDataFrame(ScitypeSeries):
         "name": "pd.DataFrame",  # any string
         "name_python": "series_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -186,6 +216,36 @@ def _check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 class SeriesPdSeries(ScitypeSeries):
     """Data type: pandas.Series based specification of single time series.
 
+    Name: ``"pd.Series"``
+
+    Short description:
+
+    a (univariate) ``pandas.Series``,
+    with entries corresponding to different time points
+
+    Long description:
+
+    The ``"pd.Series"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: pandas.Series`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be monotonic,
+      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+    * variables: there is a single variable, corresponding to the values of ``obj``.
+      Only univariate series can be represented.
+    * variable names: by default, there is no column name.
+      If needed, a variable name can be provided as ``obj.name``.
+    * time points: entries of ``obj`` correspond to different, distinct time points
+    * time index: ``obj.index`` is interpreted as a time index.
+
+    Capabilities:
+
+    * cannot represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -213,8 +273,10 @@ class SeriesPdSeries(ScitypeSeries):
         "name": "pd.Series",  # any string
         "name_python": "series_pd_sr",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.Series representation of a univariate series",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -300,6 +362,36 @@ class SeriesPdSeries(ScitypeSeries):
 class SeriesNp2D(ScitypeSeries):
     """Data type: 2D np.ndarray based specification of single time series.
 
+    Name: ``"np.ndarray"``
+
+    Short description:
+
+    a 2D ``numpy.ndarray``, with rows = time points, cols = variables
+
+    Long description:
+
+    The ``"np.ndarray"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: numpy.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` must be 2D, i.e., ``obj.shape`` must have length 2.
+      This is also true for univariate time series.
+    * variables: variables correspond to columns of ``obj``.
+    * variable names: the ``"np.ndarray"`` mtype cannot represent variable names.
+    * time points: the rows of ``obj`` correspond to different, distinct time points.
+    * time index: The time index is implicit and by-convention.
+      The ``i``-th row (for an integer ``i``) is interpreted as an observation
+      at the time point ``i``. That is, the index is always interpreted as zero-indexed
+      integer.
+
+    Capabilities:
+
+    * can represent multivariate series
+    * cannot represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -327,8 +419,10 @@ class SeriesNp2D(ScitypeSeries):
         "name": "np.ndarray",  # any string
         "name_python": "series_pd_np",  # lower_snake_case
         "name_aliases": [],
+        "description": "2D numpy.ndarray with rows=samples, cols=variables, index=integers",  # noqa: E501
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -458,6 +552,62 @@ def _index_equally_spaced(index):
 class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
 
+    Name: ``xr.DataArray``
+
+    Short description:
+
+    An ``xarray.DataArray`` representing a single time series, where:
+
+    - Each row corresponds to a time point.
+    - Columns represent variables or features.
+    - Coordinates provide additional metadata for the time index and variables.
+
+    Long description:
+
+    The ``xr.DataArray`` :term:``mtype`` is a concrete specification
+    that implements the ``Series`` :term:``scitype``, i.e., the abstract
+    type for time series data.
+
+    An object ``obj: xarray.DataArray`` follows the specification iff:
+
+    * structure convention:
+
+      - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
+      - ``obj.coords`` must include:
+
+        - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
+          ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
+        - A variable-like index (``dim_1``) for feature/variable names (optional).
+
+    * time index:
+
+      - The ``dim_0`` coordinate is interpreted as the time index.
+
+    * time points:
+
+      - Each row of ``obj`` represents a single time point.
+      - Rows with the same ``dim_0`` value correspond to the same time point.
+
+    * variables:
+
+      - Columns represent different variables (or features).
+      - Column names are stored in ``dim_1`` if present.
+
+    * variable names:
+
+      - The variable names are the column names (``dim_1``), if present.
+
+    * metadata:
+
+      - Additional metadata (e.g., attributes) may be included in ``obj.attrs``.
+
+    Capabilities:
+
+    * can represent univariate or multivariate time series
+    * requires equally spaced time points (if time index is specified)
+    * supports missing values
+    * cannot represent series with differing sets of variables
+
     Parameters
     ----------
     is_univariate: bool
@@ -485,8 +635,10 @@ class SeriesXarray(ScitypeSeries):
         "name": "xr.DataArray",  # any string
         "name_python": "series_xarray",  # lower_snake_case
         "name_aliases": [],
+        "description": "xarray.DataArray representation of a uni- or multivariate time series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "xarray",
+        "python_type": "xarray.DataArray",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -617,8 +769,10 @@ class SeriesDask(ScitypeSeries):
         "name": "dask_series",  # any string
         "name_python": "series_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask.DataFrame representation of a uni- or multivariate series",
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -686,8 +840,10 @@ class SeriesPolarsEager(ScitypeSeries):
         "name": "pl.DataFrame",  # any string
         "name_python": "series_polars_eager",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars.DataFrame representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -761,8 +917,10 @@ class SeriesGluontsList(ScitypeSeries):
         "name": "gluonts_ListDataset_series",  # any string
         "name_python": "series_gluonts_listdataset",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts ListDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -904,8 +1062,10 @@ class SeriesGluontsPandas(ScitypeSeries):
         "name": "gluonts_PandasDataset_series",  # any string
         "name_python": "series_gluonts_pandasdataset",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts PandasDataset representation of a uni- or multivariate series",  # noqa: E501
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -980,7 +1140,7 @@ class SeriesGluontsPandas(ScitypeSeries):
         if _req("has_nans", return_metadata):
             metadata["has_nans"] = df.isna().any().any()
 
-        if _req("dtypekind_dfip", return_metadata):
+        if _req(["feature_kind", "dtypekind_dfip"], return_metadata):
             index_cols_count = len(df.columns)
 
             # slicing off additional index columns

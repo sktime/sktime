@@ -156,7 +156,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --matrixdesign=False --timeout=600" test_softdeps_full
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
     needs: test-nosoftdeps
@@ -262,7 +262,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-13, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -301,7 +301,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

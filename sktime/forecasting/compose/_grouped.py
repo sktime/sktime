@@ -136,13 +136,17 @@ class ForecastByLevel(_DelegatedForecaster):
 
 
 class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Compositor that utilizes varying forecasters based on inferred category.
+    """Choosing a global forecaster based on category or cluster of time series.
+
+    Programmatic generalization of "cluster then apply forecaster" approach,
+    or the Syntetos/Boylan heuristic to apply forecaster by categories
+    smooth, erratic, intermittent, lumpy.
 
     Applies a series-to-primitives transformer on a given time series. Series are
     grouped by the generated value from the transformer, and the corresponding
     forecaster is used to predict the time series.
 
-    Differently from `TransformSelectForecaster`, this compositor passes all timeseries
+    Different from ``TransformSelectForecaster``, this compositor passes all timeseries
     of a given category to the forecaster, instead of passing only one at a time.
 
     Parameters
@@ -172,7 +176,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     --------
     This example showcases how the GroupbyCategoryForecaster can be utilized to select
     appropriate forecasters on the basis of the time series category determined by
-    the ADICVTransformer!
+    the ADICVTransformer:
 
     >>> from sktime.forecasting.compose import GroupbyCategoryForecaster
     >>> from sktime.forecasting.croston import Croston
@@ -180,13 +184,13 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.adi_cv import ADICVTransformer
 
-    # Importing the methods which can generate data of specific categories
+    Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
     >>> from sktime.transformations.series.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
-    # The forecaster is defined which accepts a dictionary of forecasters,
+    The forecaster is defined which accepts a dictionary of forecasters,
     a transformer and optionally a fallback_forecaster
 
     >>> group_forecaster = GroupbyCategoryForecaster(
@@ -198,9 +202,9 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     >>> generated_data = _generate_erratic_series()
 
-    # The fit function firstly passes the data through the given transformer
-    # to generate a given category. This category can be seen by the variable
-    # self.category_.
+    The fit function firstly passes the data through the given transformer
+    to generate a given category. This category can be seen by the variable
+    self.category_.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -227,9 +231,8 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "authors": ["felipeangelimvieira", "shlok191"],
         "maintainers": ["felipeangelimvieira"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
-
-    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -320,6 +323,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
+
+    @property
+    def _steps(self):
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+
+    @property
+    def steps_(self):
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -570,8 +581,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             fallback forecaster with the category: "fallback_forecaster"
         """
         return list(self.forecasters.items()) + [
-            "fallback_forecaster",
-            self.fallback_forecaster,
+            ("fallback_forecaster", self.fallback_forecaster)
         ]
 
     @_forecasters.setter

@@ -10,18 +10,17 @@ __all__ = ["RotationForest"]
 import time
 
 import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.base._base import _clone_estimator
-from sktime.exceptions import NotFittedError
 from sktime.utils.validation import check_n_jobs
 
 
-class RotationForest(BaseEstimator):
+class RotationForest(ClassifierMixin, BaseEstimator):
     """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
@@ -160,18 +159,14 @@ class RotationForest(BaseEstimator):
         """
         from joblib import Parallel, delayed
 
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
-        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
-
+        X, y = self._validate_data(
+            X,
+            y,
+            dtype=[np.float32, np.float64],
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances_, self.n_atts_ = X.shape
@@ -269,6 +264,7 @@ class RotationForest(BaseEstimator):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        check_is_fitted(self)
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -292,27 +288,20 @@ class RotationForest(BaseEstimator):
         """
         from joblib import Parallel, delayed
 
-        if not self._is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
+        check_is_fitted(self)
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
             return np.repeat([[1]], X.shape[0], axis=0)
 
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
-        X = self._validate_data(X=X, reset=False)
+        X = self._validate_data(
+            X,
+            dtype=[np.float32, np.float64],
+            reset=False,
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
 
         # replace missing values with 0 and remove useless attributes
         X = X[:, self._useful_atts]
@@ -338,21 +327,15 @@ class RotationForest(BaseEstimator):
     def _get_train_probs(self, X, y):
         from joblib import Parallel, delayed
 
-        if not self._is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
+        check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            dtype=[np.float32, np.float64],
+            reset=False,
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
         X = self._validate_data(X=X, reset=False)
 
         # handle the single-class-label case

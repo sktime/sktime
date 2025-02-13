@@ -13,6 +13,7 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.exceptions import NotFittedError
 
@@ -186,6 +187,8 @@ class ContinuousIntervalTree(BaseEstimator):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        check_is_fitted(self)
+
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -207,6 +210,8 @@ class ContinuousIntervalTree(BaseEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        check_is_fitted(self)
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
