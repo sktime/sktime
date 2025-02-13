@@ -102,7 +102,6 @@ class TablePdDataFrame(ScitypeTable):
         "name": "pd_DataFrame_Table",  # any string
         "name_python": "table_pd_df",  # lower_snake_case
         "name_aliases": [],
-        "description": "pandas.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -224,7 +223,6 @@ class TablePdSeries(ScitypeTable):
         "name": "pd_Series_Table",  # any string
         "name_python": "table_pd_series",  # lower_snake_case
         "name_aliases": [],
-        "description": "pandas.Series representation of a data table",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.Series",
@@ -352,7 +350,6 @@ class TableNp1D(ScitypeTable):
         "name": "numpy1D",  # any string
         "name_python": "table_numpy1d",  # lower_snake_case
         "name_aliases": [],
-        "description": "1D np.narray representation of a univariate data table",
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
@@ -478,7 +475,6 @@ class TableNp2D(ScitypeTable):
         "name": "numpy2D",  # any string
         "name_python": "table_numpy2d",  # lower_snake_case
         "name_aliases": [],
-        "description": "2D np.narray representation of a multivariate data table",
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
@@ -603,7 +599,6 @@ class TableListOfDict(ScitypeTable):
         "name": "list_of_dict",  # any string
         "name_python": "table_list_of_dict",  # lower_snake_case
         "name_aliases": [],
-        "description": "list of dictionaries with primitive entries",
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "list",
@@ -749,7 +744,6 @@ class TablePolarsEager(ScitypeTable):
         "name": "polars_eager_table",  # any string
         "name_python": "table_polars_eager",  # lower_snake_case
         "name_aliases": [],
-        "description": "eager polars.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
         "python_type": "polars.DataFrame",
@@ -816,7 +810,6 @@ class TablePolarsLazy(ScitypeTable):
         "name": "polars_lazy_table",  # any string
         "name_python": "table_polars_lazy",  # lower_snake_case
         "name_aliases": [],
-        "description": "lazy polars.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
         "python_type": "polars.LazyFrame",

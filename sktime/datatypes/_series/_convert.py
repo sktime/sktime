@@ -38,19 +38,8 @@ import pandas as pd
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
+from sktime.datatypes._series._registry import MTYPE_LIST_SERIES
 from sktime.utils.dependencies import _check_soft_dependencies
-
-# this needs to be refactored with the convert module
-MTYPE_LIST_SERIES = [
-    "pd.Series",
-    "pd.DataFrame",
-    "np.ndarray",
-    "xr.DataArray",
-    "dask_series",
-    "pl.DataFrame",
-    "gluonts_ListDataset_series",
-    "gluonts_PandasDataset_series",
-]
 
 convert_dict = dict()
 

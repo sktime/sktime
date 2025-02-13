@@ -68,7 +68,6 @@ class ProbaPredQuantiles(ScitypeProba):
         "name": "pred_quantiles",  # any string
         "name_python": "proba_pred_quantiles",  # lower_snake_case
         "name_aliases": [],
-        "description": "pandas.DataFrame based specification of predictive quantiles",
         "python_version": None,
         "python_dependencies": "pandas",
     }
@@ -177,7 +176,6 @@ class ProbaPredInterval(ScitypeProba):
         "name": "pred_interval",  # any string
         "name_python": "proba_pred_interval",  # lower_snake_case
         "name_aliases": [],
-        "description": "pandas.DataFrame based specification of predictive intervals",
         "python_version": None,
         "python_dependencies": "pandas",
     }
