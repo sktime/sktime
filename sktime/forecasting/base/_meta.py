@@ -7,29 +7,29 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
+from sktime.utils.parallel import parallelize
 
 
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
+    # *steps*attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "forecasters"
 
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # the fitted estimators should be in a different attribute, *steps*fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
+    def __init__(self, forecasters, backend="loky", backend_params=None):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.backend = backend
-        self.backend_params = backend_params if backend_params != {} else {}
-        self.n_jobs = n_jobs  # Retained for backward compatibility
+        self.backend_params = backend_params
         super().__init__()
 
     def _check_forecasters(self):
@@ -42,6 +42,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
             )
+
         names, forecasters = zip(*self.forecasters)
         # defined by MetaEstimatorMixin
         self._check_names(names)
@@ -61,34 +62,38 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
                     f"The estimator {forecaster.__class__.__name__} should be a "
                     f"Forecaster."
                 )
+
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel."""
-        from sktime.utils.parallel import parallelize
+        """Fit all forecasters using parallel processing."""
 
-        def _fit_forecaster(forecaster, meta):
+        def _fit_single_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""
-            y, X, fh = meta["y"], meta["X"], meta["fh"]
-            return forecaster.fit(y, X, fh)
+            return forecaster.clone().fit(y, X, fh)
 
-        if self.n_jobs is not None:
-            import warnings
-
-            warnings.warn(
-                "`n_jobs` is deprecated and will be removed in a future release. "
-                "Please use `backend` and `backend_params` instead.",
-                FutureWarning,
-            )
-
-        meta = {"y": y, "X": X, "fh": fh}
-        self.forecasters_ = parallelize(_fit_forecaster, forecasters, meta=meta)
+        self.forecasters_ = parallelize(
+            fun=_fit_single_forecaster,
+            iter=forecasters,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
-    def _update(self, y, X=None, update_params=True):
+        def _predict_single_forecaster(forecaster, fh, X):
+            """Predict with single forecaster."""
+            return forecaster.predict(fh=fh, X=X)
+
+        return parallelize(
+            fun=_predict_single_forecaster,
+            iter=self.forecasters_,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
+
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters.
 
         Parameters
@@ -99,8 +104,18 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
         Returns
         -------
-        self : an instance of self.
+        self : an instance of self
         """
-        for forecaster in self.forecasters_:
-            forecaster.update(y, X, update_params=update_params)
+
+        def _update_single_forecaster(forecaster, y, X, update_params):
+            """Update single forecaster."""
+            return forecaster.update(y, X, update_params=update_params)
+
+        self.forecasters_ = parallelize(
+            fun=_update_single_forecaster,
+            iter=self.forecasters_,
+            backend=self.backend,
+            backend_params=self.backend_params,
+            update_params=update_params,
+        )
         return self
