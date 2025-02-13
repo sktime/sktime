@@ -249,16 +249,17 @@ def test_darts_tide_model_multivariate(model):
     """Test functionality for multivariate forecasting"""
 
     kwargs = model_kwargs.get(model, {})
-    sktime_model = model(input_chunk_length=3, output_chunk_length=2, kwargs=kwargs)
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
     future_covariates = ["ARMED"]
-
-    sktime_model.fit(
-        y_train,
-        X=X,
+    sktime_model = model(
+        input_chunk_length=3,
+        output_chunk_length=2,
+        kwargs=kwargs,
         past_covariates=past_covariates,
         future_covariates=future_covariates,
     )
+
+    sktime_model.fit(y_train, X=X)
     fh = list(range(1, 3))
     pred = sktime_model.predict(fh=fh)
 

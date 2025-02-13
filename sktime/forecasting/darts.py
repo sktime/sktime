@@ -715,6 +715,12 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         Dropout probability to be used in fully connected layers.
     use_static_covariates : bool, optional (default=True)
         Whether to use static covariates
+    past_covariates : Optional[List[str]], optional (default=None)
+        Names of columns in X to be used as past covariates. Past covariates are
+        variables that are only known for past time steps.
+    future_covariates : Optional[List[str]], optional (default=None)
+        Names of columns in X to be used as future covariates, which are variables
+        that are known for future time steps (e.g., holidays, scheduled events).
     kwargs: dict, optional (default=True`)
         Optional arguments to initialize the pytorch_lightning.Module,
         pytorch_lightning.Trainer.
@@ -739,6 +745,7 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         "handles-missing-data": True,
         "capability:insample": True,
         "capability:pred_int": True,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -756,12 +763,16 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
+        past_covariates: Optional[list[str]] = None,
+        future_covariates: Optional[list[str]] = None,
         kwargs: Optional[dict] = None,
     ):
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length
         self.output_chunk_shift = output_chunk_shift
         self.use_static_covariates = use_static_covariates
+        self.past_covariates = past_covariates
+        self.future_covariates = future_covariates
         self.num_encoder_layers = num_encoder_layers
         self.num_decoder_layers = num_decoder_layers
         self.decoder_output_dim = decoder_output_dim
@@ -778,6 +789,8 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
             output_chunk_length=output_chunk_length,
             output_chunk_shift=output_chunk_shift,
             use_static_covariates=use_static_covariates,
+            past_covariates=past_covariates,
+            future_covariates=future_covariates,
         )
 
     def _create_forecaster(self: "DartsTiDEModel"):

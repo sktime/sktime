@@ -8,7 +8,11 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _BaseGlobalForecaster,
+)
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
@@ -125,6 +129,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         "handles-missing-data": False,
         "capability:insample": False,
         "capability:pred_int": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -685,7 +690,7 @@ def _is_int64_type(index: pd.Index) -> bool:
         return False
 
 
-class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
+class _DartsMixedCovariatesTorchModelAdapter(_BaseGlobalForecaster):
     """Base adapter for Darts Models using MixedCovariates.
 
     This class serves as a base adapter for implementing forecasting models that use
@@ -716,6 +721,14 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         output_chunk_shift steps after the end of the target series. If
         output_chunk_shift is set, the model cannot generate autoregressive predictions
         (n > output_chunk_length).
+    past_covariates : list[str], optional (default=None)
+        Names of columns in X to be used as past covariates. Past covariates
+        are a sequence of past covariates time series. These are variables that are
+        only known for past time steps.
+    future_covariates : list[str], optional (default=None)
+        Names of columns in X to be used as future covariates, which are a
+        sequence of future covariates time series. These are variables that
+        are known for future time steps (e.g., holidays, scheduled events).
     use_static_covariates : bool (default=True)
         Whether to incorporate static covariates in the model training and prediction.
     """
@@ -738,6 +751,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         input_chunk_length: int,
         output_chunk_length: int,
         output_chunk_shift: int = 0,
+        past_covariates: list[str] = None,
+        future_covariates: list[str] = True,
         use_static_covariates: bool = True,
     ):
         super().__init__()
@@ -745,7 +760,20 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         self.input_chunk_length = input_chunk_length
         self.output_chunk_length = output_chunk_length
         self.output_chunk_shift = output_chunk_shift
+        self.past_covariates = past_covariates
+        self.future_covariates = future_covariates
         self.use_static_covariates = use_static_covariates
+
+        if past_covariates is not None and not isinstance(past_covariates, list):
+            raise TypeError(
+                f"Expected past_covariates to be a list, found {type(past_covariates)}."
+            )
+        self.past_covariates = past_covariates
+        if future_covariates is not None and not isinstance(future_covariates, list):
+            raise TypeError(
+                f"Expected future_covariates to be a list, found {type(future_covariates)}."  # noqa: E501
+            )
+        self.future_covariates = future_covariates
         self._is_fitted = False
         self._forecaster = None
 
@@ -969,65 +997,50 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         future_covs = convert_to_list(future_covariates)
         return past_covs, future_covs
 
+    def _get_covariates_from_X(self, X: Optional[pd.DataFrame]):
+        """Extract past and future covariates from X based on specified column names.
+
+        Parameters
+        ----------
+        X : Optional[pd.DataFrame]
+            Exogenous variables DataFrames.
+
+        Returns
+        -------
+        Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]
+            Tuple of (past_covariates, future_covariates)
+        """
+        past_covs = None
+        future_covs = None
+
+        if X is not None and isinstance(X, pd.DataFrame):
+            if self.past_covariates:
+                for col in self.past_covariates:
+                    if col not in X.columns:
+                        raise ValueError(
+                            f"Column {col} in past_covariates not found in X"
+                        )
+                past_covs = X[self.past_covariates]
+            if self.future_covariates:
+                for col in self.future_covariates:
+                    if col not in X.columns:
+                        raise ValueError(
+                            f"Column {col} in future_covariates not found in X"
+                        )
+                future_covs = X[self.future_covariates]
+
+        return past_covs, future_covs
+
     @classmethod
     @abc.abstractmethod
     def _create_forecaster(self="_DartsMixedCovariatesTorchModelAdapter"):
         """Create Darts Model."""
 
-    def fit(
-        self,
-        y: Union[pd.Series, pd.DataFrame, list],
-        X: Optional[pd.DataFrame] = None,
-        fh: Optional[ForecastingHorizon] = None,
-        past_covariates: Optional[list[str]] = None,
-        future_covariates: Optional[list[str]] = None,
-    ):
-        """
-        Fit forecaster to training data.
-
-        Parameters
-        ----------
-        y: Union[pd.Series, pd.DataFrame, list]
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables
-        fh : ForecastingHorizon, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        past_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as past covariates. Past covariates
-            are a sequence of past covariates time series. These are variables that are
-            only known for past time steps.
-        future_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as future covariates, which are a
-            sequence of future covariates time series. These are variables that
-            are known for future time steps (e.g., holidays, scheduled events).
-
-        Returns
-        -------
-        self : _DartsMixedCovariatesTorchModelAdapter
-            Fitted forecaster.
-        """
-        # First call the parent's fit method to handle base functionality
-        super().fit(y=y, X=X, fh=fh)
-
-        # Then call our custom _fit with the additional parameters
-        self._fit(
-            y=self._y,
-            X=self._X,
-            fh=self._fh,
-            past_covariates=past_covariates,
-            future_covariates=future_covariates,
-        )
-
-        return self
-
     def _fit(
         self,
         y: Union[pd.Series, pd.DataFrame, list],
-        fh: Optional[ForecastingHorizon] = None,
         X: Optional[pd.DataFrame] = None,
-        past_covariates: Optional[list[str]] = None,
-        future_covariates: Optional[list[str]] = None,
+        fh: Optional[ForecastingHorizon] = None,
     ):
         """
         Internally fit the forecaster to training data.
@@ -1040,35 +1053,13 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             fh - not used by Darts, calculated with `output_chunk_length`.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables
-        past_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as past covariates.
-        future_covariates : list[str], optional (default=None)
-            Names of columns in X to be used as future covariates.
 
         Returns
         -------
         self : _DartsMixedCovariatesTorchModelAdapter
             Fitted model.
         """
-        past_covs = None
-        future_covs = None
-
-        if X is not None and isinstance(X, pd.DataFrame):
-            if past_covariates:
-                for col in past_covariates:
-                    if col not in X.columns:
-                        raise ValueError(
-                            f"Column {col} in past_covariates not found in X"
-                        )
-                past_covs = X[past_covariates]
-            if future_covariates:
-                for col in future_covariates:
-                    if col not in X.columns:
-                        raise ValueError(
-                            f"Column {col} in future_covariates not found in X"
-                        )
-                future_covs = X[future_covariates]
-
+        past_covs, future_covs = self._get_covariates_from_X(X)
         target = self.convert_to_timeseries(y)
         past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
         if isinstance(target, list):
@@ -1094,52 +1085,11 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         self._is_fitted = True
         return self
 
-    def predict(
-        self,
-        fh: Optional[ForecastingHorizon],
-        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
-        X: Optional[pd.DataFrame] = None,
-        past_covariates: Optional[list[str]] = None,
-        future_covariates: Optional[list[str]] = None,
-    ):
-        """Generate predictions for the given forecasting horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            The forecasting horizon specifying the time steps to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables containing past and/or future covariates
-        y: Union[pd.DataFrame, pd.Series, list], optional (default=None)
-            The time series data, whose forecast is to be predicted. Specified
-            when Panel data is entered by the user.
-        past_covariate : List[str], optional (default=None)
-            Names of columns in X to be used as past covariates.
-        future_covariate : List[str], optional (default=None)
-            Names of columns in X to be used as future covariates.
-
-        Returns
-        -------
-        pd.DataFrame
-            Predicted values for the specified forecasting horizon.
-        """
-        super().predict(fh=fh, X=X)
-
-        return self._predict(
-            fh=self._fh,
-            y=y,
-            X=X if X is not None else self._X,
-            past_covariates=past_covariates,
-            future_covariates=future_covariates,
-        )
-
     def _predict(
         self: "_DartsMixedCovariatesTorchModelAdapter",
         fh: Optional[ForecastingHorizon],
-        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
         X: Optional[pd.DataFrame] = None,
-        past_covariates: Optional[list[str]] = None,
-        future_covariates: Optional[list[str]] = None,
+        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
     ):
         """Internally generates predictions for the given forecasting horizon.
 
@@ -1150,11 +1100,7 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         y: Union[pd.Series,pd.DataFrame, list], optional (default=None)
             `y` parameter to specify when multiple time series are to be predicted.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables containing past and/or future covariates
-        past_covariate : List[str], optional (default=None)
-            Names of columns in X to be used as past covariates.
-        future_covariate : List[str], optional (default=None)
-            Names of columns in X to be used as future covariates.
+            Exogenous variables containing past and/or future covariates.
 
         Returns
         -------
@@ -1162,26 +1108,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
             Predicted values for the specified forecasting horizon.
         """
         self.check_is_fitted()
-        past_covs = None
-        future_covs = None
-
-        if X is not None and isinstance(X, pd.DataFrame):
-            if past_covariates:
-                for col in past_covariates:
-                    if col not in X.columns:
-                        raise ValueError(
-                            f"Column {col} in past_covariates not found in X"
-                        )
-                past_covs = X[past_covariates]
-            if future_covariates:
-                for col in future_covariates:
-                    if col not in X.columns:
-                        raise ValueError(
-                            f"Column {col} in future_covariates not found in X"
-                        )
-                future_covs = X[future_covariates]
-
-            past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
+        past_covs, future_covs = self._get_covariates_from_X(X)
+        past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
 
         max_fh = fh.to_relative(self.cutoff)[-1]
         target = self.convert_to_timeseries(y if y is not None else self._y)
@@ -1221,8 +1149,8 @@ class _DartsMixedCovariatesTorchModelAdapter(BaseForecaster):
         else:
             endogenous_predictions = self._forecaster.predict(
                 n=max_fh,
-                past_covariates=past_covariates,
-                future_covariates=future_covariates,
+                past_covariates=past_covs,
+                future_covariates=future_covs,
                 num_samples=1,
             )
             predictions = endogenous_predictions.pd_dataframe()
