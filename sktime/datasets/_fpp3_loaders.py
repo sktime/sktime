@@ -69,28 +69,30 @@ tsibbledata = [
 DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
 
 
-def _get_dataset_url(dataset_name):
-    url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_1.0.1.tar.gz"
-    url_tsibble = "https://cran.r-project.org/src/contrib/tsibble_1.1.6.tar.gz"
-    url_tsibbledata = "https://cran.r-project.org/src/contrib/tsibbledata_0.4.1.tar.gz"
-
-    if dataset_name in fpp3:
-        return (True, url_fpp3)
-    if dataset_name in tsibble:
-        return (True, url_tsibble)
-    if dataset_name in tsibbledata:
-        return (True, url_tsibbledata)
-
-    return (False, None)
-
-
-def _decompress_file_to_temp(url, temp_folder=None):
+def _decompress_file_to_temp(
+    datafile=None, archivedir=None, temp_folder=None, robust=True
+):
     import requests
 
     if temp_folder is None:
         temp_folder = tempfile.gettempdir()
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
-    response = requests.get(url)  # noqa: S113
+    try:
+        response = requests.get("https://cran.r-project.org/src/contrib/" + datafile)
+        response.raise_for_status()
+    except requests.exceptions.RequestException:
+        if not robust:
+            return None
+        try:
+            response = requests.get(
+                "https://cran.r-project.org/src/contrib/00Archive/"
+                + archivedir
+                + "/"
+                + datafile
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Failed to download dataset from both URLs: {e}")
     temp_file = os.path.join(temp_dir, "foo.tar.gz")
     with open(temp_file, "wb") as f:
         f.write(response.content)
@@ -306,32 +308,43 @@ def _dataset_to_mtype(dataset_name, obj):
     return (True, obj)
 
 
-def _process_dataset(dataset_name, temp_folder=None):
-    known, url = _get_dataset_url(dataset_name)
-    if known:
-        temp_dir = _decompress_file_to_temp(url=url, temp_folder=temp_folder)
-        found, path = _find_dataset(temp_dir, dataset_name)
-        if found:
-            ret, obj = _import_rda(path)
-        else:
-            return (False, None)
-
-        shutil.rmtree(temp_dir)  # cleanup
-
-        if not ret:
-            return (False, None)
-
-        do_mtype = True
-        if do_mtype:
-            result = _dataset_to_mtype(dataset_name, obj)
-            return result
-        else:
-            return (True, obj)
+def _process_dataset(dataset_name, temp_folder=None, robust=True):
+    if dataset_name in fpp3:
+        datafile = "fpp3_1.0.1.tar.gz"
+        archivedir = "fpp3"
+    elif dataset_name in tsibble:
+        datafile = "tsibble_1.1.6.tar.gz"
+        archivedir = "tsibble"
+    elif dataset_name in tsibbledata:
+        datafile = "tsibbledata_0.4.1.tar.gz"
+        archivedir = "tsibbledata"
+    else:
+        return (False, None)
+    temp_dir = _decompress_file_to_temp(
+        datafile=datafile, archivedir=archivedir, temp_folder=temp_folder, robust=robust
+    )
+    if temp_dir is None:
+        return (False, None)
+    found, path = _find_dataset(temp_dir, dataset_name)
+    if found:
+        ret, obj = _import_rda(path)
     else:
         return (False, None)
 
+    shutil.rmtree(temp_dir)  # cleanup
 
-def load_fpp3(dataset, temp_folder=None):
+    if not ret:
+        return (False, None)
+
+    do_mtype = True
+    if do_mtype:
+        result = _dataset_to_mtype(dataset_name, obj)
+        return result
+    else:
+        return (True, obj)
+
+
+def load_fpp3(dataset, temp_folder=None, robust=True):
     """Load a dataset from the fpp3 package.
 
     Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
@@ -349,6 +362,8 @@ def load_fpp3(dataset, temp_folder=None):
     temp_folder: str, optional
         Location of temporary data folder for downloading and extracting the dataset.
         Deleted if the operation is successful.
+    robust: logical, optional (default=True)
+        This is a hook for sktime internal tests. Ignore this parameter.
 
     Returns
     -------
@@ -375,7 +390,7 @@ def load_fpp3(dataset, temp_folder=None):
             f"Valid datasets are: {DATASET_NAMES_FPP3}"
         )
 
-    status, y = _process_dataset(dataset, temp_folder)
+    status, y = _process_dataset(dataset, temp_folder=temp_folder, robust=robust)
 
     if not status:
         raise RuntimeError(f"Error in load_fpp3, dataset = {dataset}.")

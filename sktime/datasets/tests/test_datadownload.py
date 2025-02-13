@@ -133,18 +133,15 @@ def test_load_forecasting_data_invalid_name(name):
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""
 
-    import requests
-
-    from sktime.datasets._fpp3_loaders import _get_dataset_url
-
-    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
-        ret, url = _get_dataset_url(dataset_name)
-        assert ret is True
+    for dataset_name in [
+        "aus_accommodation",
+        "pedestrian",
+        "ansett",
+    ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
         try:
-            response = requests.head(url)
-            if response.status_code != 200:
-                ret = False
-        except requests.RequestException:
+            _ = load_fpp3(dataset_name, temp_folder=None, robust=False)
+            ret = True
+        except RuntimeError:
             ret = False
         assert ret is True
 
