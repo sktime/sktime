@@ -37,11 +37,14 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     num_layer : int
         Number of layers
 
-    season_length : int
-        Period of season
-
     seasonality_type : string
         Type of seasonality_type, could be zero ,single or double
+
+    season1_length : int
+        Period of season 1
+
+    season2_length : int
+        Period of season 2
 
     window : int
         Size of Input window, default=5
@@ -63,8 +66,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         input_shape=1,
         hidden_size=1,
         num_layer=1,
-        season_length=3,
-        seasonality_type="single",
+        season1_length=3,
+        season2_length=3,
+        seasonality_type="zero",
         window=5,
         stride=1,
         batch_size=32,
@@ -78,7 +82,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
-        self.season_length = season_length
+        self.season1_length = season1_length
+        self.season2_length = season2_length
         self.window = window
         self.stride = stride
         self.batch_size = batch_size
@@ -155,8 +160,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.hidden_size,
             self.horizon,
             self.num_layer,
-            self.season_length,
             self.seasonality_type,
+            self.season1_length,
+            self.season2_length,
         ).build_network()
         x_train, y_train = self._get_windows(self._y)
         x_train = torch.FloatTensor(x_train)
@@ -231,7 +237,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "input_shape": 1,
             "hidden_size": 1,
             "num_layer": 1,
-            "season_length": 2,
+            "season1_length": 2,
+            "season2_length": 2,
             "seasonality_type": "single",
             "window": 3,
             "stride": 1,

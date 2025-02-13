@@ -37,7 +37,7 @@ class ESRNN(BaseDeepNetwork):
     num_layer : int
         Number of layers
 
-    season_length : int
+    season1_length : int
         Period of season
 
     seasonality : string
@@ -63,8 +63,8 @@ class ESRNN(BaseDeepNetwork):
         hidden_size=1,
         horizon=1,
         num_layer=1,
-        season_length=12,
         seasonality="single",
+        season1_length=12,
     ) -> None:
         super().__init__()
 
@@ -72,7 +72,7 @@ class ESRNN(BaseDeepNetwork):
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.horizon = horizon
-        self.season_length = season_length
+        self.season1_length = season1_length
         self.seasonality = seasonality
 
         if _check_soft_dependencies("torch", severity="none"):
@@ -116,18 +116,23 @@ class ESRNN(BaseDeepNetwork):
                 hidden_size,
                 horizon,
                 num_layer,
-                season_length,
                 seasonality,
+                season1_length,
+                season2_length,
             ) -> None:
                 self.input_shape = input_shape
                 self.hidden_size = hidden_size
                 self.num_layer = num_layer
                 self.horizon = horizon
                 self.seasonality = seasonality
-                self.season_length = season_length
+                self.season1_length = season1_length
+                self.season2_length = season2_length
                 super().__init__()
                 self.level_coeff = torch.nn.Parameter(torch.rand(1), requires_grad=True)
                 self.seasonal_coeff_1 = torch.nn.Parameter(
+                    torch.rand(1), requires_grad=True
+                )
+                self.seasonal_coeff_2 = torch.nn.Parameter(
                     torch.rand(1), requires_grad=True
                 )
                 self.input_layer = nn.Linear(input_shape, input_shape)
@@ -137,7 +142,16 @@ class ESRNN(BaseDeepNetwork):
                 self.output_layer = nn.Linear(self.hidden_size, self.input_shape)
 
             def _nonseasonal(self, x):
-                """Calculate and returns the level at last data point."""
+                """
+                Calculate level component for time series without seasonal patterns.
+
+                Args:
+                    x: Input tensor of shape (batch, seq_length, num_features)
+
+                Returns
+                -------
+                    tuple: (level, remainder)
+                """
                 batch, seq_length, num_features = x.shape
                 level = x[:, 0, :]
                 level_coeff = torch.sigmoid(self.level_coeff)
@@ -148,20 +162,27 @@ class ESRNN(BaseDeepNetwork):
 
             def _single_seasonal(self, x):
                 """
-                Calculate and returns the level and seasonality.
+                Calculate and return the level and one seasonality components.
 
-                Used for single seasonality condition.
+                Used for single seasonality condition where the time series exhibits
+                one distinct seasonal patterns (e.g., Yearly pattern).
 
+                Args:
+                    x: Input tensor of shape (batch, seq_length, num_features)
+
+                Returns
+                -------
+                    tuple: (level, seasonality1, remainder)
                 """
                 batch, seq_length, num_features = x.shape
-                season_length = self.season_length
-                if self.season_length > seq_length:
+                season1_length = self.season1_length
+                if self.season1_length > seq_length:
                     warn(f"Input window should atleast cover one season,{seq_length}")
-                    season_length = seq_length
-                level = x[:, :season_length, :].mean(dim=1, keepdim=True)
-                initial_seasonality = x[:, :season_length, :] / level
+                    season1_length = seq_length
+                level = x[:, :season1_length, :].mean(dim=1, keepdim=True)
+                initial_seasonality = x[:, :season1_length, :] / level
                 seasonality = []
-                for i in range(season_length):
+                for i in range(season1_length):
                     seasonality.append(torch.exp(initial_seasonality[:, i, :]))
                 level_coeff = torch.sigmoid(self.level_coeff)
                 seasonal_coeff_1 = torch.sigmoid(self.seasonal_coeff_1)
@@ -180,6 +201,74 @@ class ESRNN(BaseDeepNetwork):
                     level,
                     seasonality,
                     x / (level * seasonality[:, -seq_length:, :]),
+                )
+
+            def _double_seasonal(self, x):
+                """
+                Calculate and return the level and two seasonality components.
+
+                Used for double seasonality condition where the time series exhibits
+                two distinct seasonal patterns (e.g., daily and weekly patterns).
+
+                Args:
+                    x: Input tensor of shape (batch, seq_length, num_features)
+
+                Returns
+                -------
+                    tuple: (level, seasonality1, seasonality2, remainder)
+                """
+                batch, seq_length, num_features = x.shape
+                season1_length = self.season1_length
+                if self.season1_length > seq_length:
+                    season1_length = seq_length
+                    warn(f"Input window should atleast cover one season,{seq_length}")
+
+                season2_length = self.season2_length
+                if self.season2_length > seq_length:
+                    season2_length = seq_length
+                    warn(f"Input window should atleast cover one season,{seq_length}")
+
+                level = x[:, : max(season1_length, season2_length), :].mean(
+                    dim=1, keepdim=True
+                )
+                initial_seasonality_1 = x[:, :season1_length, :] / level
+                initial_seasonality_2 = x[:, :season2_length, :] / level
+                seasonality_1 = []
+                seasonality_2 = []
+                for i in range(season1_length):
+                    seasonality_1.append(torch.exp(initial_seasonality_1[:, i, :]))
+                for i in range(season2_length):
+                    seasonality_2.append(torch.exp(initial_seasonality_2[:, i, :]))
+
+                level_coeff = torch.sigmoid(self.level_coeff)
+                seasonal_coeff_1 = torch.sigmoid(self.seasonal_coeff_1)
+                seasonal_coeff_2 = torch.sigmoid(self.seasonal_coeff_2)
+                for i in range(seq_length):
+                    new_level = level_coeff * (
+                        x[:, i, :] / seasonality_1[i] * seasonality_2[i]
+                    ) + (1 - level_coeff) * level.squeeze(1)
+
+                    seasonality_1.append(
+                        seasonal_coeff_1 * (x[:, i, :] / new_level * seasonality_2[i])
+                        + (1 - seasonal_coeff_1) * seasonality_1[i]
+                    )
+                    seasonality_2.append(
+                        seasonal_coeff_2 * (x[:, i, :] / new_level * seasonality_1[i])
+                        + (1 - seasonal_coeff_2) * seasonality_2[i]
+                    )
+                    level = new_level.unsqueeze(1)
+                seasonality_1 = torch.stack(seasonality_1, dim=1)
+                seasonality_2 = torch.stack(seasonality_2, dim=1)
+                return (
+                    level,
+                    seasonality_1,
+                    seasonality_2,
+                    x
+                    / (
+                        level
+                        * seasonality_1[:, -seq_length:, :]
+                        * seasonality_2[:, -seq_length:, :]
+                    ),
                 )
 
             def forward(self, x):
@@ -209,7 +298,19 @@ class ESRNN(BaseDeepNetwork):
                     )
                     return output_leveled
                 else:
-                    pass
+                    level, seasonality_1, seasonality_2, new_x = self._double_seasonal(
+                        x
+                    )
+                    x_input = self.input_layer(new_x.float())
+                    output, _ = self.lstm(x_input)
+                    output = self.output_layer(output[:, -self.horizon :, :])
+                    output_leveled = (
+                        (output)
+                        * level
+                        * seasonality_1[:, -self.horizon :, :]
+                        * seasonality_2[:, -self.horizon :, :]
+                    )
+                    return output_leveled
 
         self._network_class = _ESRNN
         self.loss = PinballLoss
@@ -225,7 +326,7 @@ class ESRNN(BaseDeepNetwork):
             self.hidden_size,
             self.horizon,
             self.num_layer,
-            self.season_length,
+            self.season1_length,
             self.seasonality,
         )
 
@@ -257,7 +358,8 @@ class ESRNN(BaseDeepNetwork):
             "hidden_size": 1,
             "horizon": 1,
             "num_layer": 1,
-            "season_length": 3,
             "seasonality": "single",
+            "season1_length": 3,
+            "season2_length": 2,
         }
         return [params1, params2]
