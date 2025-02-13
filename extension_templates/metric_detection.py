@@ -59,14 +59,6 @@ class MyMetric(BaseDetectionMetric):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
     """
 
     # optional todo: override base class estimator default tags here if necessary
