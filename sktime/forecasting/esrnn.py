@@ -55,10 +55,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
-        # estimator type
-        # --------------
-        "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
     }
 
     def __init__(
@@ -160,9 +156,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.hidden_size,
             self.horizon,
             self.num_layer,
-            self.seasonality_type,
             self.season1_length,
             self.season2_length,
+            self.seasonality_type,
         ).build_network()
         x_train, y_train = self._get_windows(self._y)
         x_train = torch.FloatTensor(x_train)
