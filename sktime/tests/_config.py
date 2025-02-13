@@ -20,7 +20,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "MiniRocket",
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
