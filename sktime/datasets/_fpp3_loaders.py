@@ -6,6 +6,7 @@ __author__ = [
 
 __all__ = [
     "load_fpp3",
+    "_load_fpp3",
 ]
 
 import os
@@ -344,7 +345,35 @@ def _process_dataset(dataset_name, temp_folder=None, robust=True):
         return (True, obj)
 
 
-def load_fpp3(dataset, temp_folder=None, robust=True):
+def _load_fpp3(dataset, temp_folder=None, robust=True):
+    """See public function load_fpp3 for most of the explanation.
+
+    The essential difference between this function and load_fppp3 is
+    that this function exposes an additional parameter ``robust``.
+    If robust is False and a new version of the dataset has become available,
+    a test function will fail, flagging the existence of a newer version.
+    The public function is robust (robust=True) and will use the non-latest version,
+    protecting users from failures.
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies(["requests", "rdata"])
+
+    if dataset not in DATASET_NAMES_FPP3:
+        raise ValueError(
+            f"Unknown dataset name in load_fpp3: {dataset}. "
+            f"Valid datasets are: {DATASET_NAMES_FPP3}"
+        )
+
+    status, y = _process_dataset(dataset, temp_folder=temp_folder, robust=robust)
+
+    if not status:
+        raise RuntimeError(f"Error in load_fpp3, dataset = {dataset}.")
+
+    return y
+
+
+def load_fpp3(dataset, temp_folder=None):
     """Load a dataset from the fpp3 package.
 
     Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
@@ -362,8 +391,6 @@ def load_fpp3(dataset, temp_folder=None, robust=True):
     temp_folder: str, optional
         Location of temporary data folder for downloading and extracting the dataset.
         Deleted if the operation is successful.
-    robust: logical, optional (default=True)
-        This is a hook for sktime internal tests. Ignore this parameter.
 
     Returns
     -------
@@ -380,19 +407,6 @@ def load_fpp3(dataset, temp_folder=None, robust=True):
     RuntimeError
         If there is an error loading the dataset.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
-
-    _check_soft_dependencies(["requests", "rdata"])
-
-    if dataset not in DATASET_NAMES_FPP3:
-        raise ValueError(
-            f"Unknown dataset name in load_fpp3: {dataset}. "
-            f"Valid datasets are: {DATASET_NAMES_FPP3}"
-        )
-
-    status, y = _process_dataset(dataset, temp_folder=temp_folder, robust=robust)
-
-    if not status:
-        raise RuntimeError(f"Error in load_fpp3, dataset = {dataset}.")
+    y = _load_fpp3(dataset, temp_folder=None, robust=True)
 
     return y

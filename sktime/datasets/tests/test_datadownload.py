@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (
+    _load_fpp3,
     load_forecastingdata,
     load_fpp3,
     load_m5,
@@ -138,12 +139,7 @@ def test_load_fpp3():
         "pedestrian",
         "ansett",
     ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
-        try:
-            _ = load_fpp3(dataset_name, temp_folder=None, robust=False)
-            ret = True
-        except RuntimeError:
-            ret = False
-        assert ret is True
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=False)
 
     olympic_running = load_fpp3("olympic_running")
 
