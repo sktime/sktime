@@ -90,7 +90,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.epoch = epoch
         self.optimizer = optimizer
         self.criterion = criterion
-        self.lr = lr_rate
+        self.lr_rate = lr_rate
         if _check_soft_dependencies("torch", severity="none"):
             import torch
             import torch.nn as nn
@@ -125,14 +125,14 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             if self.optimizer.lower() in self.opti_list:
                 return self.opti_list[self.optimizer.lower()](
                     self.network.parameters(),
-                    lr=self.lr,
+                    lr=self.lr_rate,
                 )
             else:
                 raise TypeError(
                     f"Please pass one of {self.opti_list.keys()} for `optimizer`."
                 )
         else:
-            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+            return torch.optim.Adam(self.network.parameters(), lr=self.lr_rate)
 
     def _instantiate_criterion(self):
         if self.criterion:
