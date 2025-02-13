@@ -2344,6 +2344,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
+        self.lagger_y_to_X_ = None
         self._lags = list(range(window_length))
         super().__init__()
 
@@ -2361,7 +2362,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             mtypes = ["pd.DataFrame", "pd-multiindex"]
         else:
             raise ValueError(
-                "pooling in DirectReductionForecaster must be one of"
+                "pooling in RecursiveReductionForecaster must be one of"
                 ' "local", "global", "panel", '
                 f"but found {pooling}"
             )
@@ -2382,6 +2383,39 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"impute_method must be str, None, or sktime transformer, "
                 f"but found {impute_method}"
             )
+
+    def create_lagged_features(self, y):
+        """Create lagged time-based features from y and shift them for alignment.
+
+        This function applies a lag transformation to `y` to create features for
+        time series forecasting. The features are then shifted forward so they
+        predict the next step in recursive forecasting.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            The endogenous time series used to generate lagged features.
+
+        Returns
+        -------
+        X_lagged_aligned : pd.DataFrame
+            A transformed dataset where lagged features are shifted to align
+            with the next target value `y(t+1)`.
+        """
+        from sktime.transformations.series.lag import Lag
+
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+
+        if self._impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * self._impute_method.clone()
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        X_time = lagger_y_to_X.fit_transform(y)
+
+        lag_shifter = Lag(lags=1, index_out="extend")
+        X_time_aligned = lag_shifter.fit_transform(X_time)
+        return X_time_aligned
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -2406,43 +2440,35 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
+        X_exogenous = X
 
-        impute_method = self._impute_method
-
-        # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
-        self.lagger_y_to_X_ = lagger_y_to_X
-
-        Xt = lagger_y_to_X.fit_transform(y)
-
-        # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lags=1, index_out="extend")
-        Xtt = lag_plus.fit_transform(Xt)
-        Xtt_notna_idx = _get_notna_idx(Xtt)
-        notna_idx = Xtt_notna_idx.intersection(y.index)
-
-        yt = y.loc[notna_idx]
-        Xtt = Xtt.loc[notna_idx]
+        # Generate lagged features and shift them to align with y(t+1)
+        X_time_aligned = self.create_lagged_features(y)
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
-        if len(notna_idx) == 0:
+        Xta_valid_idx = _get_notna_idx(X_time_aligned)
+        valid_idx = Xta_valid_idx.intersection(y.index)
+
+        if len(valid_idx) == 0:
             self.estimator_ = y.mean()
         else:
-            if X is not None:
-                Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
+            y = y.loc[valid_idx]  # remove rows with nans -> valid training samples
+            X_time_aligned = X_time_aligned.loc[valid_idx]
 
-            Xtt = prep_skl_df(Xtt)
-            yt = prep_skl_df(yt)
+            if X_exogenous is not None:
+                X = pd.concat([X_exogenous.loc[valid_idx], X_time_aligned], axis=1)
+                self._X = X.copy()
+            else:
+                X = X_time_aligned
+                self._X = None
+
+            X = prep_skl_df(X)
+            y = prep_skl_df(y)
 
             estimator = clone(self.estimator)
-            estimator.fit(Xtt, yt)
+            estimator.fit(X, y)
             self.estimator_ = estimator
 
         return self
@@ -2490,8 +2516,279 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
+    def _get_window_local(self, cutoff, window_length, y_orig):
+        start = _shift(cutoff, by=-window_length + 1)
+        cutoff = cutoff[0]
+        y = y_orig.loc[start:cutoff]
+
+        # check for missing values
+        if len(y) < window_length:
+            idx = pd.period_range(
+                start=y.index.min(), end=y.index.max(), freq=y.index.freq
+            )
+            y = y.reindex(idx)
+            if self._impute_method:
+                y = self._impute_method.fit_transform(y)
+
+        y = y.to_numpy()
+        X = None  # TODO: should we give X_pool here?
+        return y, X
+
+    def _get_window_global(self, cutoff, window_length, y_orig):
+        start = _shift(cutoff, by=-window_length + 1)
+        cutoff = cutoff[0]
+        date_mask = (y_orig.index.get_level_values(-1) >= start) & (
+            y_orig.index.get_level_values(-1) <= cutoff
+        )
+        y = y_orig.loc[date_mask]
+
+        # Fill time based features
+        all_time_series_idx = y.index.droplevel(level=-1).unique()
+        cohort_count = len(all_time_series_idx)
+        y_time_features = np.zeros((cohort_count, window_length))
+        for i, idx in enumerate(all_time_series_idx):
+            y_cur = y.loc[idx]
+
+            # check for missing values
+            if len(y_cur) < window_length:
+                idx_full = pd.period_range(
+                    start=start,
+                    end=cutoff,
+                    freq=y_cur.index.freq,
+                    name=y_cur.index.name,
+                )
+                y_cur = y_cur.reindex(idx_full)
+                if self._impute_method:
+                    y_cur = self._impute_method.fit_transform(y_cur)
+                y.update(y_cur)
+
+            y_time_features[i] = y_cur.to_numpy().reshape(1, -1)[
+                :, ::-1
+            ]  # reverse order of columns to match lag order
+
+        X = None  # TODO: should we give X_pool here?
+        return y_time_features, X
+
+    def _get_window(self, cutoff=None, window_length=None, y_orig=None):
+        cutoff = self.cutoff if cutoff is None else cutoff
+        window_length = self.window_length if window_length is None else window_length
+        y_orig = self._y if y_orig is None else y_orig
+
+        if self.pooling == "local":
+            return self._get_window_local(cutoff, window_length, y_orig)
+        elif self.pooling == "global":
+            return self._get_window_global(cutoff, window_length, y_orig)
+
+    def _is_predictable(self, last_window, window_length):
+        """Check if we can make predictions from last window."""
+        return (
+            len(last_window) == window_length
+            and np.sum(np.isnan(last_window)) == 0
+            and np.sum(np.isinf(last_window)) == 0
+        )
+
+    def _create_nan_df(self, fh):
+        """Return nan predictions for horizon fh."""
+        index = fh.to_absolute(self.cutoff).to_pandas()
+        y_pred = pd.DataFrame(index=index, columns=self._y.columns)
+        return y_pred
+
+    def _predict_out_of_sample_v2_global(
+        self, X_pool, fh
+    ):  # TODO: why are exogenous features not used?
+        """Recursive reducer: predict out of sample (ahead of cutoff).
+
+        Copied and hacked from _RecursiveReducer._predict_last_window.
+
+        In recursive reduction, iteration must be done over the
+        entire forecasting horizon. Specifically, when transformers are
+        applied to y that generate features in X, forecasting must be done step by
+        step to integrate the latest prediction of for the new set of features in
+        X derived from that y.
+
+        Parameters
+        ----------
+        X_pool : pd.DataFrame
+            Exogenous & time based features for the forecast
+
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+
+        Returns
+        -------
+        y_return = pd.Series or pd.DataFrame
+        """
+        if self._X is not None:
+            raise ValueError(
+                "Do not call this function if model uses exogenous variables X."
+            )
+
+        # Get last window of available data.
+        # If we cannot generate a prediction from the available data, return nan.
+        y_last, X_last = self._get_window()
+        ys = np.array(y_last)
+        if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            return self._create_nan_df(fh)
+
+        fh_max = fh.to_relative(self.cutoff)[-1]
+        relative = pd.Index(list(map(int, range(1, fh_max + 1))))
+        index_range = _index_range(relative, self.cutoff)
+        if isinstance(self.cutoff, pd.DatetimeIndex):
+            if self.cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(self.cutoff.tzinfo)
+
+        y_pred = _create_fcst_df(index_range, self._y)
+
+        y_last_df = self._y.copy()
+        for i in range(fh_max):
+            # Generate predictions.
+            y_pred_vector = self.estimator_.predict(y_last)
+            y_pred_curr = _create_fcst_df([index_range[i]], self._y, fill=y_pred_vector)
+            y_pred.update(y_pred_curr)
+
+            # # Update last window with previous prediction.
+            if i + 1 != fh_max:
+                # Append preds to previous df
+                # merge on index except from last
+                y_last_df = pd.concat([y_last_df, y_pred_curr]).sort_index()
+                y_last, X_last = self._get_window(
+                    cutoff=self.cutoff + i + 1,
+                    y_orig=y_last_df,
+                )
+
+        return y_pred
+
+    def _predict_out_of_sample_v2_local(
+        self, X_pool, fh
+    ):  # TODO: why are exogenous features not used?
+        """Recursive reducer: predict out of sample (ahead of cutoff).
+
+        Copied and hacked from _RecursiveReducer._predict_last_window.
+
+        In recursive reduction, iteration must be done over the
+        entire forecasting horizon. Specifically, when transformers are
+        applied to y that generate features in X, forecasting must be done step by
+        step to integrate the latest prediction for the new set of features in
+        X derived from that y.
+
+        Parameters
+        ----------
+        X_pool : pd.DataFrame
+            Exogenous & time based features for the forecast
+
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+
+        Returns
+        -------
+        y_return = pd.Series or pd.DataFrame
+        """
+        if self._X is not None:
+            raise ValueError(
+                "Do not call this function if model uses exogenous variables X."
+            )
+
+        # Get last window of available data.
+        # If we cannot generate a prediction from the available data, return nan.
+
+        y_last, X_last = self._get_window(self._cutoff, self.window_length, self._y)
+        if not self._is_predictable(y_last, self.window_length):
+            return self._create_nan_df(fh)
+
+        # Pre-allocate arrays.
+        n_columns = 1
+        window_length = self.window_length
+        fh_max = fh.to_relative(self.cutoff)[-1]
+
+        y_pred = np.zeros(fh_max)
+
+        # Array with input data for prediction.
+        last = np.zeros((1, n_columns, window_length + fh_max))
+
+        # Fill pre-allocated arrays with available time based features.
+        last[:, 0, :window_length] = y_last.T
+
+        # Recursively generate predictions by iterating over forecasting horizon.
+        for i in range(fh_max):
+            # Slice prediction window.
+            X_pred = last[:, :, i : window_length + i]
+
+            # Reshape data into tabular array.
+            # if self._estimator_scitype == "tabular-regressor":
+            X_pred = X_pred.reshape(1, -1)[
+                :, ::-1
+            ]  # reverse order of columns to match lag order
+
+            # Generate predictions.
+            y_pred[i] = self.estimator_.predict(X_pred)[0]
+
+            # Update last window with previous prediction.
+            last[:, 0, window_length + i] = y_pred[i]
+
+        return y_pred
+
+    def _filter_and_adjust_predictions(self, fh, y_pred):
+        """Filter predictions based on forecasting horizon and adjusts frequency.
+
+        While the recursive strategy requires to generate predictions for all steps
+        until the furthest step in the forecasting horizon, we only return the
+        requested ones.
+        """
+        fh_idx = fh.to_indexer(self.cutoff)
+        if isinstance(self._y.index, pd.MultiIndex):
+            yi_grp = self._y.index.names[0:-1]
+            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+        elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
+            y_return = y_pred.iloc[fh_idx]
+            if hasattr(y_return.index, "freq"):
+                if y_return.index.freq != y_pred.index.freq:
+                    y_return.index.freq = None
+        else:
+            y_return = y_pred[fh_idx]
+        return y_return
+
+    def _generate_fh_no_gaps(self, fh):
+        """Create a forecasting horizon with no gaps for continuous indexing."""
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
+
+        # Ensure all positive forecast horizons are covered
+        y_lags_no_gaps = range(1, y_lags[-1] + 1)
+        y_abs_no_gaps = ForecastingHorizon(
+            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
+        ).to_absolute_index(self._cutoff)
+
+        return y_abs_no_gaps, y_lags_no_gaps
+
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
+        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+        # If no multiindex, we can use local implementation
+        if self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
+            y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
+        else:
+            self.pooling = "local"
+            y_pred = self._predict_out_of_sample_v2_local(
+                X_pool, fh
+            )  # TODO: does this work for panel?
+
+        y_return = self._filter_and_adjust_predictions(fh, y_pred)
+
+        y_abs_no_gaps, _ = self._generate_fh_no_gaps(fh)
+
+        # Adjust index if MultiIndex is present
+        if isinstance(getattr(y_return, "index", None), pd.MultiIndex):
+            y_abs_no_gaps = y_return.index.set_levels(y_abs_no_gaps, level=-1)
+
+        y_alt = pd.DataFrame(y_return, columns=self._y.columns, index=y_abs_no_gaps)
+
+        return y_alt  # y_pred
+
+    def _predict_out_of_sample_v1(self, X_pool, fh):
+        """Recursive reducer: predict out of sample (ahead of cutoff).
+
+        Prior state before PR 7380 - left for comparison and potential refactor.
+        """
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.lag import Lag
 
@@ -2500,15 +2797,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_rel = fh.to_relative(self.cutoff)
-        y_lags = list(fh_rel)
-
-        # for all positive fh
-        y_lags_no_gaps = range(1, y_lags[-1] + 1)
-        y_abs_no_gaps = ForecastingHorizon(
-            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
-        )
-        y_abs_no_gaps = y_abs_no_gaps.to_absolute_index(self._cutoff)
+        y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
 
         # we will keep growing y_plus_preds recursively
         y_plus_preds = self._y
