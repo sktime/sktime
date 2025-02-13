@@ -9,8 +9,19 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
-    """
+    r"""
     Exponential Smoothing Recurrant Neural Network.
+
+    This model combines Exponential Smoothing (ES) and (LSTM) networks
+    for time series forecasting. ES is used to balance the level and
+    seasonality of the series.
+
+    References
+    ----------
+    [1] Smyl, S. (2020). A hybrid method of exponential smoothing and
+        recurrent neural networks for time series forecasting.
+
+        https://www.sciencedirect.com/science/article/pii/S0169207019301153
 
     Parameters
     ----------
@@ -29,12 +40,11 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     season_length : int
         Period of season
 
-    seasonality : string
-        Type of seasonality
+    seasonality_type : string
+        Type of seasonality_type, could be zero ,single or double
 
-    level_coeff : int
-
-    seasonal_coeff_1 : int
+    window : int
+        Size of Input window, default=5
 
     """
 
@@ -42,6 +52,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(
@@ -50,19 +64,20 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         hidden_size=1,
         num_layer=1,
         season_length=3,
-        seasonality="single",
+        seasonality_type="single",
         window=5,
         stride=1,
         batch_size=32,
-        epoch=50,
+        epoch=10,
         optimizer="Adam",
         criterion="pinball",
+        lr_rate=1e-5,
     ) -> None:
         super().__init__()
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
-        self.seasonality = seasonality
+        self.seasonality_type = seasonality_type
         self.season_length = season_length
         self.window = window
         self.stride = stride
@@ -70,7 +85,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.epoch = epoch
         self.optimizer = optimizer
         self.criterion = criterion
-        self.lr = 1e-5
+        self.lr = lr_rate
         if _check_soft_dependencies("torch", severity="none"):
             import torch
             import torch.nn as nn
@@ -141,7 +156,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.horizon,
             self.num_layer,
             self.season_length,
-            self.seasonality,
+            self.seasonality_type,
         ).build_network()
         x_train, y_train = self._get_windows(self._y)
         x_train = torch.FloatTensor(x_train)
@@ -217,12 +232,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "hidden_size": 1,
             "num_layer": 1,
             "season_length": 2,
-            "seasonality": "single",
+            "seasonality_type": "single",
             "window": 3,
             "stride": 1,
             "batch_size": 32,
-            "epoch": 50,
+            "epoch": 10,
             "optimizer": "Adam",
             "criterion": "mse",
+            "lr_rate": 1e-3,
         }
         return [params1, params2]

@@ -12,6 +12,17 @@ class ESRNN(BaseDeepNetwork):
     """
     Exponential Smoothing Recurrant Neural Network.
 
+    This model combines Exponential Smoothing (ES) and (LSTM) networks
+    for time series forecasting. ES is used to balance the level and
+    seasonality of the series.
+
+    References
+    ----------
+    [1] Smyl, S. (2020). A hybrid method of exponential smoothing and
+        recurrent neural networks for time series forecasting.
+
+        https://www.sciencedirect.com/science/article/pii/S0169207019301153
+
     Parameters
     ----------
     input_shape : int
@@ -33,8 +44,10 @@ class ESRNN(BaseDeepNetwork):
         Type of seasonality
 
     level_coeff : int
+        Coefficient for smoothing of the level component
 
     seasonal_coeff_1 : int
+        Coefficient for smoothing of the season component
 
     """
 
@@ -74,7 +87,7 @@ class ESRNN(BaseDeepNetwork):
 
         class PinballLoss(NNModule):
             """
-            Default Loss Pinball/Quantile Loss.
+            Default Pinball/Quantile Loss.
 
             Parameters
             ----------
@@ -134,6 +147,12 @@ class ESRNN(BaseDeepNetwork):
                 return level, x / level.unsqueeze(1)
 
             def _single_seasonal(self, x):
+                """
+                Calculate and returns the level and seasonality.
+
+                Used for single seasonality condition.
+
+                """
                 batch, seq_length, num_features = x.shape
                 season_length = self.season_length
                 if self.season_length > seq_length:
