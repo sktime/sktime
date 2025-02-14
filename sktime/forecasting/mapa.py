@@ -135,7 +135,7 @@ class MAPAForecaster(BaseForecaster):
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "authors": ["trnnick", "phoeenniixx"],
         "python_dependencies": "statsmodels",
