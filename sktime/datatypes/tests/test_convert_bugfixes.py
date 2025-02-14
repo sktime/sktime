@@ -33,7 +33,7 @@ def test_multiindex_to_df_list_large_level_values():
 )
 @pytest.mark.parametrize("name", ["0", 0, None])
 def test_pdseries_round_trips(name):
-    """Tests for consistency of round trips between pd.Series and pd.DataFrame mtypes."""
+    """Test consistency of round trips between pd.Series and pd.DataFrame mtypes."""
     import pandas as pd
 
     from sktime.datatypes import convert_to
