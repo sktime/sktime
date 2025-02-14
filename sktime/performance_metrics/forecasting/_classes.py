@@ -7,6 +7,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+from copy import deepcopy
 from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
@@ -662,10 +663,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig = deepcopy(y_pred_orig)
                 y_pred_orig.X.index = y_true.index
             else:
+                y_pred_orig = y_pred_orig.copy()
                 y_pred_orig.index = y_true.index
         if not same_cols:
             warn(
@@ -674,10 +676,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig = deepcopy(y_pred_orig)
                 y_pred_orig.X.columns = y_true.columns
             else:
+                y_pred_orig = y_pred_orig.copy()
                 y_pred_orig.columns = y_true.columns
         # check multioutput arg
         # todo: add this back when variance_weighted is supported
