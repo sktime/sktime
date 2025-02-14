@@ -70,22 +70,16 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters using parallel processing."""
 
-        def _fit_forecaster(forecaster, meta):
+        def _fit_single_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""
-            y, X, fh = meta["y"], meta["X"], meta["fh"]
-            return forecaster.fit(y, X, fh)
+            return forecaster.clone().fit(y, X, fh)
 
-        if self.n_jobs is not None:
-            import warnings
-
-            warnings.warn(
-                "`n_jobs` is deprecated and will be removed in a future release. "
-                "Please use `backend` and `backend_params` instead.",
-                FutureWarning,
-            )
-
-        meta = {"y": y, "X": X, "fh": fh}
-        self.forecasters_ = parallelize(_fit_forecaster, forecasters, meta=meta)
+        self.forecasters_ = parallelize(
+            fun=_fit_single_forecaster,
+            iter=forecasters,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
