@@ -25,3 +25,37 @@ def test_multiindex_to_df_list_large_level_values():
     X1 = X.loc[:3]
 
     convert_to(X1, "df-list")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+@pytest.mark.parametrize("name", ["0", 0, None])
+def test_pdseries_round_trips(name):
+    """Tests for consistency of round trips between pd.Series and pd.DataFrame mtypes."""
+    import pandas as pd
+
+    from sktime.datatypes import convert_to
+
+    # series -> df -> series round trip
+    y = pd.Series([1, 2, 3], name=name)
+
+    store = {}
+
+    y_df = convert_to(y, "pd.DataFrame", store=store)
+
+    y_round_trip = convert_to(y_df, "pd.Series", store=store)
+
+    assert y_round_trip.name == name
+
+    # df -> series -> df round trip
+    y = pd.DataFrame([1, 2, 3], columns = [name])
+
+    store = {}
+
+    y_series = convert_to(y, "pd.Series", store=store)
+
+    y_round_trip = convert_to(y_series, "pd.DataFrame", store=store)
+
+    assert y_round_trip.columns[0] == name
