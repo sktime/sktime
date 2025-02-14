@@ -316,7 +316,7 @@ class SeriesPdSeries(ScitypeSeries):
         if _req("n_features", return_metadata):
             metadata["n_features"] = 1
         if _req("feature_names", return_metadata):
-            if not hasattr(obj, "name") or obj.name is None:
+            if not hasattr(obj, "name"):
                 metadata["feature_names"] = [0]
             else:
                 metadata["feature_names"] = [obj.name]
