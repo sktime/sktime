@@ -364,20 +364,23 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-
         dataset = PyTorchDataset(
             y=y,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
-        if self.validation_split is not None
-            train, eval = random_split(dataset, [1 - self.validation_split, self.validation_split])
+        if self.validation_split is not None:
+            train, eval = random_split(
+                dataset, [1 - self.validation_split, self.validation_split]
+            )
         else:
             train, eval = dataset, None
 
         if train.__len__() <= 0:
-            raise ValueError("Training dataset is empty, either provide longer series" + 
-                             "or reduce the context_length and prediction_length")
+            raise ValueError(
+                "Training dataset is empty, either provide longer series"
+                + "or reduce the context_length and prediction_length"
+            )
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
