@@ -68,13 +68,14 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters using parallel processing."""
 
-        def _fit_single_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster."""
-            return forecaster.clone().fit(y, X, fh)
+        def _fit_single_forecaster(forecaster, meta):
+            """Fit single forecaster with meta containing y, X, fh."""
+            return forecaster.clone().fit(meta["y"], meta["X"], meta["fh"])
 
         self.forecasters_ = parallelize(
             fun=_fit_single_forecaster,
             iter=forecasters,
+            meta={"y": y, "X": X, "fh": fh},
             backend=self.backend,
             backend_params=self.backend_params,
         )
