@@ -1306,7 +1306,10 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             assert isinstance(y_pred, pd.DataFrame)
             assert check_is_mtype(
                 y_pred,
-                mtype(y_test, exclude_mtypes=["pd_DataFrame_Table"]),
+                mtype(
+                    y_test,
+                    exclude_mtypes=["pd_DataFrame_Table", "alignment", "alignment_loc"],
+                ),
                 msg_return_dict="list",
             )
             msg = (
