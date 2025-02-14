@@ -84,7 +84,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
 
-        def _predict_single_forecaster(forecaster, fh, X):
+        def _predict_single_forecaster(forecaster, meta):
             """Predict with single forecaster."""
             return forecaster.predict(fh=fh, X=X)
 
