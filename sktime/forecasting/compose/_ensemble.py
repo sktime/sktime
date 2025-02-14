@@ -9,6 +9,8 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -52,9 +54,19 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
+        n_jobs=None,
         backend="loky",
         backend_params=None,
     ):
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "locky"  # use default backend if not set
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
         super().__init__(
             forecasters=forecasters,
             backend=backend,
@@ -173,11 +185,21 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
+        n_jobs=None,
         backend="loky",
         backend_params=None,
         aggfunc="mean",
         weights=None,
     ):
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "loky"
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
         self.aggfunc = aggfunc
         self.weights = weights
         super().__init__(
