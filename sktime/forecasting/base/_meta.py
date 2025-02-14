@@ -83,9 +83,19 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
-    def _update(self, y, X=None, update_params=True):
+        def _predict_single_forecaster(forecaster, meta):
+            """Predict with single forecaster."""
+            return forecaster.predict(fh=fh, X=X)
+
+        return parallelize(
+            fun=_predict_single_forecaster,
+            iter=self.forecasters_,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
+
+    def update(self, y, X=None, update_params=True):
         """Update fitted parameters.
 
         Parameters
