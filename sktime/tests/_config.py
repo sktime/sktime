@@ -46,14 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "Repeat",
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
-    "VARMAX",
-    "BATS",
-    "TBATS",
-    "ARIMA",
-    "AutoARIMA",
-    "StatsForecastAutoARIMA",
-    "SARIMAX",
-    "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
     # Large datasets
