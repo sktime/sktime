@@ -14,8 +14,6 @@ __all__ = [
 ]
 from typing import Optional, Union
 
-from statsforecast.utils import ConformalIntervals
-
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
@@ -1041,10 +1039,12 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        prediction_intervals: Optional[ConformalIntervals] = None,
+        prediction_intervals: Optional[object] = None,
     ):
+        if prediction_intervals is not None:
+            pass
         self.prediction_intervals = prediction_intervals
-        self.forecasters = BaseForecaster
+
         super().__init__()
 
     def _get_statsforecast_class(self):
@@ -1076,9 +1076,15 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        params = [
-            {},
-            {"prediction_intervals": ConformalIntervals()},
-        ]
+        try:
+            _check_soft_dependencies("statsforecast")
+            from statsforecast.utils import ConformalIntervals
 
-        return params
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        except ImportError:
+            return [{}]
