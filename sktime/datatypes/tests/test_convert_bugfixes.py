@@ -50,7 +50,7 @@ def test_pdseries_round_trips(name):
     assert y_round_trip.name == name
 
     # df -> series -> df round trip
-    y = pd.DataFrame([1, 2, 3], columns = [name])
+    y = pd.DataFrame([1, 2, 3], columns=[name])
 
     store = {}
 
