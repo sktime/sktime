@@ -9,6 +9,8 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -118,16 +120,19 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        backend=None,
+        n_jobs=None,
+        backend="loky",
         backend_params=None,
     ):
-        # Handle the deprecation of n_jobs
-        warnings.warn(
-            "The parameter `n_jobs` is deprecated. "
-            "Use `backend` and `backend_params` instead.",
-            DeprecationWarning,
-        )
-        # this is used to inherit from the parent class
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "locky"  # use default backend if not set
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
         super().__init__(
             forecasters=forecasters,
             backend=backend,
@@ -349,7 +354,24 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
+    def __init__(
+        self,
+        forecasters,
+        n_jobs=None,
+        backend="loky",
+        backend_params=None,
+        aggfunc="mean",
+        weights=None,
+    ):
+        if n_jobs is not None:
+            warnings.warn(
+                "`n_jobs` is deprecated and will be removed in a future version. "
+                "Use `backend` instead.",
+                FutureWarning,
+            )
+            backend = backend or "loky"
+            backend_params = backend_params or {"n_jobs": n_jobs}
+
         self.aggfunc = aggfunc
         self.weights = weights
         super().__init__(
