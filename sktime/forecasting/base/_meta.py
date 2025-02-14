@@ -28,6 +28,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def __init__(self, forecasters, backend="loky", backend_params=None):
         self.forecasters = forecasters
         self.forecasters_ = None
+        self.n_jobs = None
         self.backend = backend
         self.backend_params = backend_params
         super().__init__()

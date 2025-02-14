@@ -165,6 +165,37 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred.name = self._y.name
         return y_pred
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        params2 = {
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
+            "method": "inverse-variance",
+            "regressor": LinearRegression(),
+            "test_size": 0.2,
+        }
+
+        return [params1, params2]
+
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters."""
@@ -281,6 +312,37 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             .T
         )
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
+
+        # univariate case
+        FORECASTER = NaiveForecaster()
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        return [params0, params1, params2]
 
 
 # Helper functions remain unchanged
