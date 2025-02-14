@@ -1308,7 +1308,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
                 y_pred,
                 mtype(
                     y_test,
-                    exclude_mtypes=["pd_DataFrame_Table", "alignment", "alignment_loc"],
+                    as_scitype=["Series", "Panel", "Hierarchical"],
                 ),
                 msg_return_dict="list",
             )
