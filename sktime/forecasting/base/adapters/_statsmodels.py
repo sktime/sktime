@@ -56,8 +56,11 @@ class _StatsModelsAdapter(BaseForecaster):
         # save info needed for _predict: should these be saved to self._y_metadata?
         self._y_len = len(y)
         self._y_first_index = y.index[0]
-        self._y_was_series_without_name = hasattr(y, "name") and y.name is None
         self._set_cutoff_from_y(y)
+
+        self._y_was_series = isinstance(y, pd.Series)
+        if isinstance(y, pd.Series):
+            self._y_name = y.name
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
@@ -136,8 +139,8 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        if isinstance(y_pred, pd.Series) and self._y_was_series_without_name:
-            y_pred.name = None
+        if self._y_was_series:
+            y_pred.name = self._y_name
         return y_pred
 
     @staticmethod
