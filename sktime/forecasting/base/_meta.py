@@ -71,12 +71,11 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
         def _fit_single_forecaster(forecaster, meta):
             """Fit single forecaster with meta containing y, X, fh."""
-            return forecaster.clone().fit(meta["y"], meta["X"], meta["fh"])
+            return forecaster.clone().fit(y, X, fh)
 
         self.forecasters_ = parallelize(
             fun=_fit_single_forecaster,
             iter=forecasters,
-            meta={"y": y, "X": X, "fh": fh},
             backend=self.backend,
             backend_params=self.backend_params,
         )
@@ -95,7 +94,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             backend_params=self.backend_params,
         )
 
-    def update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
 
         Parameters
@@ -106,17 +105,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
         Returns
         -------
-        self : an instance of self
+        self : an instance of self.
         """
-
-        def _update_single_forecaster(forecaster, meta):
-            """Update single forecaster."""
-            return forecaster.update(y, X, update_params=update_params)
-
-        self.forecasters_ = parallelize(
-            fun=_update_single_forecaster,
-            iter=self.forecasters_,
-            backend=self.backend,
-            backend_params=self.backend_params,
-        )
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
         return self
