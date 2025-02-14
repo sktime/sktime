@@ -232,8 +232,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return y_pred
 
     @classmethod
-
-    # this is used to test the model
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
@@ -265,26 +263,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return [params1, params2]
 
 
-# this function is used to get the optimal weights of the model based on the method type
-def _get_weights(regressor):
-    # tree-based models from sklearn which have feature importance values
-    if hasattr(regressor, "feature_importances_"):
-        weights = regressor.feature_importances_
-    # linear regression models from sklearn which have coefficient values
-    elif hasattr(regressor, "coef_"):
-        weights = regressor.coef_
-    else:
-        raise NotImplementedError(
-            """The given regressor is not supported. It must have
-            either an attribute feature_importances_ or coef_ after fitting."""
-        )
-    # avoid ZeroDivisionError if all weights are 0
-    if weights.sum() == 0:
-        weights += 1
-    return list(weights)
-
-
-# this is another class which is used to find the average of all predictions
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
 
@@ -454,22 +432,36 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         )
         return y_pred
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-# Helper functions remain unchanged
-def _get_weights(regressor):
-    if hasattr(regressor, "feature_importances_"):
-        weights = regressor.feature_importances_
-    elif hasattr(regressor, "coef_"):
-        weights = regressor.coef_
-    else:
-        raise NotImplementedError(
-            """The given regressor is not supported. It must have
-            either an attribute feature_importances_ or coef_ after fitting."""
-        )
-    # avoid ZeroDivisionError if all weights are 0
-    if weights.sum() == 0:
-        weights += 1
-    return list(weights)
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
+
+        # univariate case
+        FORECASTER = NaiveForecaster()
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        return [params0, params1, params2]
 
 
 # Helper functions remain unchanged
