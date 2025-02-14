@@ -33,8 +33,7 @@ __all__ = ["convert_dict"]
 import numpy as np
 import pandas as pd
 
-# this needs to be refactored with the convert module
-MTYPE_LIST_PROBA = ["pred_interval", "pred_quantiles"]
+from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA
 
 ##############################################################
 # methods to convert one machine type to another machine type
