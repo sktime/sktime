@@ -109,7 +109,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         self : an instance of self
         """
 
-        def _update_single_forecaster(forecaster, y, X, update_params):
+        def _update_single_forecaster(forecaster, meta):
             """Update single forecaster."""
             return forecaster.update(y, X, update_params=update_params)
 
