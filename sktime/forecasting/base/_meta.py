@@ -118,6 +118,5 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             iter=self.forecasters_,
             backend=self.backend,
             backend_params=self.backend_params,
-            update_params=update_params,
         )
         return self
