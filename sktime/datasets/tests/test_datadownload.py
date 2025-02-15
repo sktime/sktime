@@ -131,7 +131,7 @@ def test_load_forecasting_data_invalid_name(name):
     reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
-def test_load_fpp3():
+def test_load_fpp3_private():
     """Test loading downloaded dataset from ."""
 
     for dataset_name in [
@@ -140,6 +140,12 @@ def test_load_fpp3():
         "ansett",
     ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
         _ = _load_fpp3(dataset_name, temp_folder=None, robust=False)
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=True)
+
+
+@pytest.mark.datadownload
+def test_load_fpp3_public():
+    """Test loading downloaded dataset from ."""
 
     olympic_running = load_fpp3("olympic_running")
 
