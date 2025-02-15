@@ -19,22 +19,110 @@ Testing - required for sktime test framework and check_estimator usage:
 
 """
 
+from sktime.base import BaseObject
 from sktime.param_est.base import BaseParamFitter
-from sklearn.metrics import silhouette_score
+from sktime.distances import pairwise_distance
 import numpy as np
+
+class BaseClusterMetric(BaseObject):
+    """Base class for cluster evaluation metrics"""
+
+    def evaluate(self, X, labels):
+        """
+        Evaluate the quality of clustering performed on data X for given labels.
+
+        Parameters
+        ----------
+        X : panel-like object
+            The input time series data.
+        labels : array-like of int
+            Cluster labels for each time series in X.
+
+        Returns
+        -------
+        score : float
+            The computed metric score.
+        """ 
+        raise NotImplementedError()
+    
+class TimeSeriesSilhouetteScore(BaseClusterMetric):
+    """
+    Silhouette score for time series clustering.
+
+    This implementation computes the silhouette score by first calculating the
+    pairwise distance matrix using a specified time series distance metric.
+    """
+
+    def __init__(self, metric="euclidean", **metric_params):
+        """
+        Initialize the silhouette score metric.
+
+        Parameters
+        ----------
+        metric : str, default="euclidean"
+            The distance metric to use.
+        **metric_params : dict
+            Additional keyword arguments to pass to the distance function.
+        """
+        self.metric = metric
+        self.metric_params = metric_params.copy()
+
+    def evaluate(self, X, labels):
+        """
+        Compute the silhouette score for time series clustering.
+
+        Parameters
+        ----------
+        X : panel-like object
+            The input time series data. It must be in the format expected by pairwise_distance.
+        labels : array-like of int
+            Cluster labels for each time series in X.
+
+        Returns
+        -------
+        score : float
+            The mean silhouette score over all time series.
+        """
+
+        distance_matrix = pairwise_distance(X, metric=self.metric, **self.metric_params)
+        n = len(labels)
+        unique_labels = np.unique(labels)
+
+        # If there's only one cluster, the silhouette score is not defined.
+        if len(unique_labels) < 2:
+            return 0.0
+
+        silhouette_values = np.zeros(n)
+
+        for i in range(n):
+            same_cluster = np.where(labels == labels[i])[0]
+            same_cluster = same_cluster[same_cluster != i]  # Exclude self
+            a = np.mean(distance_matrix[i, same_cluster]) if same_cluster.size > 0 else 0.0
+
+            b = np.inf
+            for label in unique_labels:
+                if label == labels[i]:
+                    continue
+                other_cluster = np.where(labels == label)[0]
+                if other_cluster.size > 0:
+                    b = min(b, np.mean(distance_matrix[i, other_cluster]))
+
+            silhouette_values[i] = (b - a) / max(a, b) if max(a, b) > 0 else 0.0
+
+        return np.mean(silhouette_values)
 
 class ClusterSupportDetection(BaseParamFitter):
     """Custom parameter fitter for clustering optimization.
-    
+
     Automatically determines the optimal number of clusters using a specified metric.
 
     Hyper-parameters
     ----------------
     estimator : clustering model instance
-        The clustering model to tune, must have a `fit_predict` method.
+        The clustering model to tune.
     param_range : list or range
         The range of cluster numbers to evaluate.
-    metric : function, default=None
+    metric : function or object with an evaluate method, default=None
         Function to evaluate clustering quality. If None, uses the elbow method.
     metric_params : dict, optional
         Additional parameters for the metric function.
@@ -45,7 +133,7 @@ class ClusterSupportDetection(BaseParamFitter):
     """
 
     _tags = {
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "numpy3D",
         "scitype:X": "Panel",
         "capability:missing_values": False,
         "capability:multivariate": False,
@@ -53,21 +141,22 @@ class ClusterSupportDetection(BaseParamFitter):
     }
 
     def __init__(
-            self,
-            estimator,
-            param_range,
-            metric=None,
-            metric_params=None,
-            sample_size=None,
-            verbose=0
+        self,
+        estimator,
+        param_range,
+        metric=None,
+        metric_params=None,
+        sample_size=None,
+        verbose=0,
     ):
         self.estimator = estimator
         self.param_range = param_range
         self.metric = metric
-        self.metric_params = metric_params if metric_params is not None else {}
+        # Ensure metric_params is not modified after initialization.
+        self.metric_params = metric_params.copy() if metric_params is not None else {}
         self.sample_size = sample_size
         self.verbose = verbose
-        
+
         super().__init__()
 
     def _fit(self, X, y=None):
@@ -76,39 +165,43 @@ class ClusterSupportDetection(BaseParamFitter):
         best_param = None
         scores = {}
         inertia_values = []
-        
+
         for param in self.param_range:
             if self.verbose:
                 print(f"Evaluating {param} clusters...")
-            
+
             estimator = self.estimator.set_params(n_clusters=param)
             labels = estimator.fit_predict(X)
-            
+
             if self.metric:
-                score = self.metric(X, labels, **self.metric_params)
+                # If the metric has an 'evaluate' method, use it.
+                if hasattr(self.metric, "evaluate"):
+                    score = self.metric.evaluate(X, labels)
+                else:
+                    score = self.metric(X, labels, **self.metric_params)
                 scores[param] = score
             else:
                 inertia = estimator.inertia_
                 inertia_values.append(inertia)
                 scores[param] = -inertia  # Minimizing inertia
-        
+
         if not self.metric:
             # Find the elbow point
-            best_param = self._find_elbow_point(inertia_values)
+            best_param = self._find_elbow_point(self.param_range, inertia_values)
             best_score = -inertia_values[best_param - self.param_range[0]]
         else:
             best_param = max(scores, key=scores.get)
             best_score = scores[best_param]
-        
+
         self.best_param_ = best_param
         self.best_score_ = best_score
         self.scores_ = scores
-        
+
         if self.verbose:
             print(f"Best parameter: {best_param} with score: {best_score}")
-        
+
         return self
-    
+
     def _find_elbow_point(self, param_range, inertia_values):
         """Finds the elbow point by detecting when the slope drops below a threshold."""
         diffs = np.diff(inertia_values)
@@ -117,7 +210,7 @@ class ClusterSupportDetection(BaseParamFitter):
             if abs(diff) < threshold:
                 return param_range[i]
         return param_range[-1]
-    
+
     def _get_fitted_params(self):
         """Return the best parameter found."""
         return {"best_n_clusters": self.best_param_}
@@ -125,22 +218,22 @@ class ClusterSupportDetection(BaseParamFitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-
+        
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.clustering.k_medoids import TimeSeriesKMedoids
         from sktime.clustering.k_shapes import TimeSeriesKShapes
-        
+
         params = {
             "estimator": TimeSeriesKMeans(),
             "param_range": range(2, 10),
-            "metric": silhouette_score,
-            "metric_params": None
+            "metric": TimeSeriesSilhouetteScore(metric="dtw"),
+            "metric_params": {},
         }
 
         params2 = {
             "estimator": TimeSeriesKMedoids(),
             "param_range": range(2, 10),
-            "metric": silhouette_score,
+            "metric": None,
             "metric_params": {"elbow_threshold": 0.05},
         }
 
@@ -148,6 +241,6 @@ class ClusterSupportDetection(BaseParamFitter):
             "estimator": TimeSeriesKShapes(),
             "param_range": range(2, 10),
             "metric": None,
-            "metric_params": None,
+            "metric_params": {},
         }
         return [params, params2, params3]
