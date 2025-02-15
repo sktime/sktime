@@ -364,8 +364,8 @@ def evaluate(
     backend: Optional[str] = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
-    cv_global=None,
     return_model: bool = False,
+    cv_global=None,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
