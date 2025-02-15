@@ -31,13 +31,15 @@ class AlignerLuckyDtw(BaseAligner):
     Example
     -------
     >>> import pandas as pd
-    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.datasets import load_osuleaf
     >>> from sktime.alignment.lucky import AlignerLuckyDtw
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> ts1 = pd.DataFrame({"value": X_train.iloc[0, 0]})
-    >>> ts2 = pd.DataFrame({"value": X_train.iloc[1, 0]})
-    >>> aligner = AlignerLuckyDtw(window=3)
-    >>> aligner.fit([ts1, ts2])
+    >>> X, _ = load_osuleaf(return_type="pd-multiindex")
+    >>> ts1 = X.loc[0]
+    >>> ts2 = X.loc[1]
+    >>> ts1_df = pd.DataFrame({"value": ts1.values.reshape(-1)})
+    >>> ts2_df = pd.DataFrame({"value": ts2.values.reshape(-1)})
+    >>> aligner = AlignerLuckyDtw(window=10)
+    >>> aligner.fit([ts1_df, ts2_df])
     >>> alignment = aligner.get_alignment()
     """
 
