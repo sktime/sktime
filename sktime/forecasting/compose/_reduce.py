@@ -2442,33 +2442,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         X_exogenous = X
 
-<<<<<<< HEAD
-        # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * impute_method
-        self.lagger_y_to_X_ = lagger_y_to_X
-
-        Xt = lagger_y_to_X.fit_transform(y)
-
-        # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lags=1, index_out="extend")
-        Xtt = lag_plus.fit_transform(Xt)
-        Xtt_notna_idx = _get_notna_idx(Xtt)
-        notna_idx = Xtt_notna_idx.intersection(y.index)
-
-        yt = y.loc[notna_idx]
-        Xtt = Xtt.loc[notna_idx]
-=======
         # Generate lagged features and shift them to align with y(t+1)
-<<<<<<< HEAD
-        X_time_aligned = self.create_lagged_features(impute_method, y)
->>>>>>> 325cc22d5 (- add _get_window_global and local)
-=======
         X_time_aligned = self.create_lagged_features(y)
->>>>>>> 752709c58 (code quality (pre-commits))
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
@@ -2752,69 +2727,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-<<<<<<< HEAD
-    def _predict_out_of_sample(self, X_pool, fh):
-        """Recursive reducer: predict out of sample (ahead of cutoff)."""
-        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-<<<<<<< HEAD
-        y_cols = self._y.columns
-
-        fh_rel = fh.to_relative(self.cutoff)
-        y_lags = list(fh_rel)
-
-        # for all positive fh
-        y_lags_no_gaps = range(1, y_lags[-1] + 1)
-        y_abs_no_gaps = ForecastingHorizon(
-            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
-        )
-        y_abs_no_gaps = y_abs_no_gaps.to_absolute_index(self._cutoff)
-
-        if self.pooling == "global":
-            y_pred = self._predict_out_of_sample_v2_global(fh)
-        else:
-            y_pred = self._predict_out_of_sample_v2_local(fh)
-
-        # While the recursive strategy requires to generate predictions for all steps
-        # until the furthest step in the forecasting horizon, we only return the
-        # requested ones.
-        fh_idx = fh.to_indexer(self.cutoff)
-
-        if isinstance(self._y.index, pd.MultiIndex):
-            yi_grp = self._y.index.names[0:-1]
-            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
-        elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
-            y_return = y_pred.iloc[fh_idx]
-            if hasattr(y_return.index, "freq"):
-                if y_return.index.freq != y_pred.index.freq:
-                    y_return.index.freq = None
-        else:
-            y_return = y_pred[fh_idx]
-
-        y_alt = pd.DataFrame(y_return, columns=y_cols, index=y_abs_no_gaps)
-
-        return y_alt  # y_pred
-
-    def _predict_out_of_sample_v2(self, X_pool, fh):
-        """Recursive reducer: predict out of sample (ahead of cutoff).
-
-        Prior state before PR 7380 - left for comparison and potential refactor.
-        """
-        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
-        from sktime.transformations.series.lag import Lag
-
-=======
->>>>>>> fa524f8af (Update _reduce.py)
-        y_cols = self._y.columns
-=======
     def _filter_and_adjust_predictions(self, fh, y_pred):
-<<<<<<< HEAD
-        """
-        Filters predictions based on forecasting horizon and adjusts frequency if needed.
->>>>>>> 325cc22d5 (- add _get_window_global and local)
-=======
         """Filter predictions based on forecasting horizon and adjusts frequency.
->>>>>>> 752709c58 (code quality (pre-commits))
 
         While the recursive strategy requires to generate predictions for all steps
         until the furthest step in the forecasting horizon, we only return the
