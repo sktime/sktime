@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements EnbPIForecaster."""
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -16,6 +14,7 @@ from sktime.transformations.bootstrap import (
     TSBootstrapAdapter,
 )
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -146,9 +145,12 @@ class EnbPIForecaster(BaseForecaster):
             # todo: 0.38.0 remove this warning
             warn(
                 "The default value for the bootstrap_transformer will change to the"
-                + "sktime MovingBlockBootstrap in version 0.38.0."
-                + "For obtaining the current default behaviour after 0.37.0, pass "
-                + "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap())"
+                "sktime MovingBlockBootstrap in version 0.38.0."
+                "For obtaining the current default behaviour after 0.37.0, pass "
+                "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap()), "
+                "with moving block bootstrap from tsbootstrap.",
+                obj=self,
+                stacklevel=2,
             )
             from tsbootstrap import MovingBlockBootstrap
 
