@@ -39,7 +39,6 @@ class AlignerLuckyDtw(BaseAligner):
     >>> aligner = AlignerLuckyDtw(window=3)
     >>> aligner.fit([ts1, ts2])
     >>> alignment = aligner.get_alignment()
-    >>> distance = aligner._get_distance()
     """
 
     _tags = {
