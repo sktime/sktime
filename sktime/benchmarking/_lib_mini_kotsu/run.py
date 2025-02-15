@@ -60,7 +60,11 @@ def run(
         run_params = {}
 
     # Check for tqdm availability
-    tqdm_available, _ = _check_soft_dependencies("tqdm", severity="none")
+    tqdm_available = _check_soft_dependencies("tqdm", severity="none")
+
+    if verbose and not tqdm_available:
+        warn("tqdm is not installed. Continuing without progress bars.", logger)
+
     if verbose:
         if tqdm_available:
             from tqdm import tqdm  # Import inside the block
