@@ -12,18 +12,20 @@ from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation import (
     BottomUpReconciler,
     MiddleOutReconciler,
+    OptimalReconciler,
     TopdownReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
 )
+from sktime.transformations.hierarchical.reconciliation.optimal import (
+    _create_summing_matrix_from_index,
+)
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 
-def _generate_unreconciled_hierarchical_data(
-    flatten_single_levels, no_levels, no_bottom_nodes=5
-):
+def _generate_hier_data(flatten_single_levels, no_levels, no_bottom_nodes=5):
     agg = Aggregator(flatten_single_levels=flatten_single_levels)
 
     X = _bottom_hier_datagen(
@@ -33,7 +35,6 @@ def _generate_unreconciled_hierarchical_data(
     )
     # add aggregate levels
     X = agg.fit_transform(X)
-    # X = _DropRedundantHierarchicalLevels().fit_transform(X)
 
     prds = X
     return prds
@@ -52,7 +53,7 @@ def _generate_unreconciled_hierarchical_data(
 def test_reconcilers_keep_immutable_levels(
     reconciler, expected_immutable_level, flatten_single_levels, no_levels
 ):
-    y = _generate_unreconciled_hierarchical_data(
+    y = _generate_hier_data(
         flatten_single_levels=flatten_single_levels, no_levels=no_levels
     )
 
@@ -95,3 +96,27 @@ def test_reconcilers_keep_immutable_levels(
         assert_frame_equal(y_immutable_reconc, y_immutable)
         # Assert that other levels have changed
         assert not y_reconc.equals(y)
+
+
+def test_optimal_reconciliation_ols():
+    """Test optimal reconciliation with OLS.
+
+    Check if the vector from original forecasts to reconciled forecasts
+    is orthogonal to the reconciliation plane.
+    """
+
+    y = _generate_hier_data(flatten_single_levels=True, no_levels=3)
+    # Keep only one timepoint
+    y = y.loc[y.index.get_level_values(-1) == y.index.get_level_values(-1).max()]
+    reconciler = OptimalReconciler("ols")
+    reconciler.fit(y)
+    yt = reconciler.transform(y)
+    yt = yt + np.random.normal(0, 10, (yt.shape[0], 1))
+    y_reconc = reconciler.inverse_transform(yt)
+
+    # We have to assert that the angle between the reconciled series
+    # and the reconciliation plane is orthogonal
+    diff = y_reconc - yt
+    S = _create_summing_matrix_from_index(y.index.droplevel(-1).unique())
+    projection = S.T @ diff.droplevel(-1)
+    assert np.allclose(projection, 0, atol=1e-10)
