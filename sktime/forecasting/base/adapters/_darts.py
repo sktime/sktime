@@ -742,7 +742,7 @@ class _DartsMixedCovariatesTorchModelAdapter(_BaseGlobalForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
-        "capability:insample": True,
+        "capability:insample": False,
         "capability:pred_int": False,
     }
 
@@ -1154,6 +1154,7 @@ class _DartsMixedCovariatesTorchModelAdapter(_BaseGlobalForecaster):
                 num_samples=1,
             )
             predictions = endogenous_predictions.pd_dataframe()
+            predictions = predictions.iloc[fh.to_relative(self.cutoff) - 1]
             expected_index = fh.get_expected_pred_idx(self.cutoff)
             predictions = pd.DataFrame(
                 predictions.values, index=expected_index, columns=predictions.columns

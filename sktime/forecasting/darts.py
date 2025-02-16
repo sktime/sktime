@@ -743,8 +743,8 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
-        "capability:insample": True,
-        "capability:pred_int": True,
+        "capability:insample": False,
+        "capability:pred_int": False,
         "capability:global_forecasting": True,
     }
 
@@ -798,6 +798,15 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
         from darts.models import TiDEModel
 
         kwargs = self.kwargs or {}
+
+        kwargs.setdefault(
+            "pl_trainer_kwargs",
+            {
+                "enable_progress_bar": False,
+                "enable_model_summary": False,
+                "logger": False,
+            },
+        )
         return TiDEModel(
             input_chunk_length=self.input_chunk_length,
             output_chunk_length=self.output_chunk_length,
@@ -833,19 +842,8 @@ class DartsTiDEModel(_DartsMixedCovariatesTorchModelAdapter):
 
         params = [
             {
-                "input_chunk_length": 12,
-                "output_chunk_length": 6,
-            },
-            {
-                "input_chunk_length": 24,
-                "output_chunk_length": 12,
-                "hidden_size": 64,
-                "num_encoder_layers": 2,
-                "num_decoder_layers": 2,
-                "temporal_width_past": 8,
-                "temporal_width_future": 8,
-                "use_layer_norm": True,
-                "dropout": 0.2,
+                "input_chunk_length": 3,
+                "output_chunk_length": 1,
             },
         ]
         return params
