@@ -1272,7 +1272,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
         y_test = self._remove_last_n(y_test, max_prediction_length)
         return X_train, y_train, X_test, y_test
 
-    def _multiindex_hier_data(self, max_prediction_length, data_length=10):
+    def _multiindex_hier_data(self, max_prediction_length, data_length=15):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
