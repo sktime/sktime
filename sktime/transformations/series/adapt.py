@@ -5,13 +5,12 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
 
-from inspect import signature
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.adapters._safe_call import _method_has_param_and_default
 from sktime.utils.sklearn import prep_skl_df
 
 
@@ -249,14 +248,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             whether the parameter ``arg`` of method ``method`` has a default value
         """
         method_fun = getattr(self.transformer, method)
-        method_params = list(signature(method_fun).parameters.keys())
-        if arg in method_params:
-            param = signature(self.transformer.fit).parameters[arg]
-            default = param.default
-            has_default = default is not param.empty
-            return True, has_default
-        else:
-            return False, False
+        return _method_has_param_and_default(method_fun, arg)
 
     def _get_args(self, X, y, method="fit"):
         """Get kwargs for method, depending on pass_y and method.
