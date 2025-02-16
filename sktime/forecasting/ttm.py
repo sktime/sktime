@@ -429,21 +429,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             y_train = y
             y_eval = None
 
-        # Validation check for proper error message during training
-        min_length = len(y_train) if y_eval is None else min(len(y_train), len(y_eval))
-        if min_length < config.context_length + config.prediction_length:
-            raise ValueError(
-                f"Insufficient data for evaluation with the current configuration:\n"
-                f" - Dataset length (after validation split): {min_length}\n"
-                f" - Configured context length: {config.context_length}\n"
-                f" - Configured prediction size: {config.prediction_length}\n\n"
-                f"Suggested Actions:\n"
-                f" 1. Reduce 'context_length' or 'prediction_size' in config.\n"
-                f" 2. Increase 'validation_split' (current: {self.validation_split})"
-                f" or set to None.\n"
-                f" 3. Adjust the model's fit strategy for smaller datasets.\n"
-            )
-
         train = PyTorchDataset(
             y=y_train,
             context_length=config.context_length,
@@ -601,14 +586,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
-                "validation_split": None,
-                "model_path": None,
-                "fit_strategy": "full",
-                "config": {
-                    "context_length": 2,
-                    "prediction_length": 1,
-                    "num_patches": 4,
-                },
                 "training_args": {
                     "max_steps": 5,
                     "output_dir": "test_output",
@@ -617,13 +594,13 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
             },
             {
-                "validation_split": None,
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 2,
-                    "prediction_length": 1,
+                    "context_length": 5,
+                    "prediction_length": 2,
                 },
+                "validation_split": 0.2,
                 "training_args": {
                     "max_steps": 5,
                     "output_dir": "test_output",
