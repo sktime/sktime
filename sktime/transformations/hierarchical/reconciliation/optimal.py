@@ -3,54 +3,22 @@
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_ancestor,
-    _is_hierarchical_dataframe,
-    _loc_series_idxs,
 )
 
 # TODO(felipeangelimvieira): Immutable series reconciliation: should this be
 # a separate class?
 
 __all__ = [
-    "FullHierarchyReconciler",
-    "NonNegativeFullHierarchyReconciler",
+    "OptimalReconciler",
+    "NonNegativeOptimalReconciler",
 ]
 
 
-_COMMON_TAGS = {
-    # packaging info
-    # --------------
-    "authors": "felipeangelimvieira",
-    "maintainers": "felipeangelimvieira",
-    # estimator type
-    # --------------
-    "scitype:transform-input": "Series",
-    "scitype:transform-output": "Series",
-    # todo instance wise?
-    "scitype:instancewise": True,  # is this an instance-wise transform?
-    "X_inner_mtype": [
-        "pd.Series",
-        "pd.DataFrame",
-        "pd-multiindex",
-        "pd_multiindex_hier",
-    ],
-    "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-    "capability:inverse_transform": True,  # does transformer have inverse
-    "capability:inverse_transform:exact": False,
-    "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-    "univariate-only": True,  # can the transformer handle multivariate X?
-    "handles-missing-data": False,  # can estimator handle missing data?
-    "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-    "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-    "transform-returns-same-time-index": False,
-    "capability:hierarchical_reconciliation": True,
-}
-
-
-class FullHierarchyReconciler(BaseTransformer):
+class OptimalReconciler(_ReconcilerTransformer):
     """
     Reconciliation for hierarchical time series.
 
@@ -79,22 +47,11 @@ class FullHierarchyReconciler(BaseTransformer):
 
     """
 
-    _tags = _COMMON_TAGS
-
     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
         self.error_covariance_matrix = error_covariance_matrix
         super().__init__()
 
-        self._is_not_hierarchical = False
-
-    def _fit(self, X, y):
-        self._is_not_hierarchical = not _is_hierarchical_dataframe(X)
-
-        if self._is_not_hierarchical:
-            return self
-
-        self._original_series = X.index.droplevel(-1).unique()
-
+    def _fit_reconciler(self, X, y):
         self.aggregator_ = Aggregator(flatten_single_levels=True)
         X = self.aggregator_.fit_transform(X)
         self.unique_series_ = _get_unique_series_from_df(X)
@@ -109,9 +66,7 @@ class FullHierarchyReconciler(BaseTransformer):
 
         self._permutation_matrix = _get_permutation_matrix(self.S_)
 
-    def _transform(self, X, y):
-        if self._is_not_hierarchical:
-            return X
+    def _transform_reconciler(self, X, y):
         X = self.aggregator_.transform(X)
         return X
 
@@ -127,10 +82,7 @@ class FullHierarchyReconciler(BaseTransformer):
     def _n_series(self):
         return self.S_.shape[0]
 
-    def _inverse_transform(self, X, y=None):
-        if self._is_not_hierarchical:
-            return X
-
+    def _inverse_transform_reconciler(self, X, y=None):
         X_arr, M, _, _, _, Pt = self._get_arrays(X)
 
         # Reconciled forecasts
@@ -141,9 +93,6 @@ class FullHierarchyReconciler(BaseTransformer):
             index=X.index,
             columns=X.columns,
         )
-
-        df = Aggregator(flatten_single_levels=False).fit_transform(df)
-        df = _loc_series_idxs(df, self._original_series).sort_index()
         return df
 
     def _get_error_covariance_matrix(self, error_covariance_matrix):
@@ -221,7 +170,7 @@ class FullHierarchyReconciler(BaseTransformer):
         ]
 
 
-class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
+class NonNegativeOptimalReconciler(OptimalReconciler):
     """
     Apply non-negative reconciliation to hierarchical time series.
 
@@ -255,14 +204,10 @@ class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
     """
 
     _tags = {
-        **_COMMON_TAGS,
         "python_dependencies": ["cvxpy"],
     }
 
-    def _inverse_transform(self, X, y):
-        if self._is_not_hierarchical:
-            return X
-
+    def _inverse_transform_reconciler(self, X, y=None):
         import cvxpy as cp
 
         X_arr, M, S, E, P, Pt = self._get_arrays(X)
@@ -303,10 +248,6 @@ class NonNegativeFullHierarchyReconciler(FullHierarchyReconciler):
             index=X.index,
             columns=X.columns,
         )
-
-        df = Aggregator(flatten_single_levels=False).fit_transform(df)
-        df = _loc_series_idxs(df, self._original_series).sort_index()
-
         return df
 
 

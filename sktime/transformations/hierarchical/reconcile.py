@@ -4,8 +4,9 @@
 These reconcilers only depend on the structure of the hierarchy.
 """
 
-__author__ = ["ciaran-g", "eenticott-shell", "k1m190r", "felipeangelimvieira"]
 __all__ = [
     "Reconciler",
 ]
-from sktime.transformations.hierarchical.reconciliation.reconciler import Reconciler
+from sktime.transformations.hierarchical.reconciliation.reconciler import (
+    ReconcileForecasts as Reconciler,
+)

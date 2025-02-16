@@ -4,12 +4,11 @@ import warnings
 
 import pandas as pd
 
+from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
-    _is_hierarchical_dataframe,
     _loc_series_idxs,
 )
 from sktime.transformations.hierarchical.reconciliation.bottom_up import (
@@ -22,7 +21,7 @@ from sktime.transformations.hierarchical.reconciliation.topdown import (
 __all__ = ["MiddleOutReconciler"]
 
 
-class MiddleOutReconciler(BaseTransformer):
+class MiddleOutReconciler(_ReconcilerTransformer):
     """
     Reconciliation using a middle-out approach.
 
@@ -80,13 +79,7 @@ class MiddleOutReconciler(BaseTransformer):
 
         self._delegate = None
 
-    def _fit(self, X, y):
-        self._no_hierarchy = not _is_hierarchical_dataframe(X)
-        if self._no_hierarchy:
-            return self
-
-        self._original_series = X.index.droplevel(-1).unique()
-
+    def _fit_reconciler(self, X, y):
         self._hierarchical_level_nodes = _get_series_for_each_hierarchical_level(
             self._original_series
         )
@@ -150,10 +143,7 @@ class MiddleOutReconciler(BaseTransformer):
             bottom_subtrees[agg_node] = X_subtree.index.droplevel(-1).unique()
         return bottom_subtrees
 
-    def _transform(self, X, y=None):
-        if self._no_hierarchy:
-            return X
-
+    def _transform_reconciler(self, X, y=None):
         if self._delegate is not None:
             return self._delegate.transform(X, y)
 
@@ -197,10 +187,7 @@ class MiddleOutReconciler(BaseTransformer):
 
         return Xt
 
-    def _inverse_transform(self, X, y=None):
-        if self._no_hierarchy:
-            return X
-
+    def _inverse_transform_reconciler(self, X, y=None):
         if self._delegate is not None:
             return self._delegate.inverse_transform(X, y)
 
@@ -226,9 +213,6 @@ class MiddleOutReconciler(BaseTransformer):
             bottom_subtrees.append(X_subtree_inv)
 
         _X = pd.concat(bottom_subtrees, axis=0)
-        _X = Aggregator(flatten_single_levels=False).fit_transform(_X)
-        _X = _loc_series_idxs(_X, self._original_series).sort_index()
-
         return _X
 
     @classmethod

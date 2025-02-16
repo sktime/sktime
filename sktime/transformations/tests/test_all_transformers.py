@@ -311,7 +311,7 @@ class TestAllReconciliationTransformers(
 ):
     """Module level tests for all sktime transformers."""
 
-    @pytest.mark.parametrize("no_levels", [0, 1, 2, 3])
+    @pytest.mark.parametrize("no_levels", [2, 3, 4])
     @pytest.mark.parametrize("flatten_single_levels", [True, False])
     @pytest.mark.parametrize("unnamed_levels", [True, False])
     def test_hierarchical_reconcilers(
@@ -333,11 +333,6 @@ class TestAllReconciliationTransformers(
         import numpy as np
         from pandas.testing import assert_frame_equal
 
-        if not estimator_instance.get_tag(
-            "capability:hierarchical_reconciliation", False, raise_error=False
-        ):
-            pytest.skip("Skipping test for non-hierarchical transformer.")
-
         agg = Aggregator(flatten_single_levels=flatten_single_levels)
 
         X = _bottom_hier_datagen(
@@ -357,9 +352,44 @@ class TestAllReconciliationTransformers(
         reconciler = estimator_instance
         Xt = reconciler.fit_transform(X)
         prds = Xt + np.random.normal(0, 10, (Xt.shape[0], 1))
-        prds_recon = reconciler.inverse_transform(prds)
+        prds_recon = reconciler._inverse_transform_reconciler(prds)
+
+        # Assert not empty
+        assert not prds_recon.empty
+        # Assert no Nans
+        assert not prds_recon.isnull().values.any()
 
         # check if we now remove aggregate levels and use Aggregator it is equal
         prds_recon_bottomlevel = Aggregator(False).fit_transform(prds_recon)
-        prds_recon_bottomlevel = prds_recon_bottomlevel.loc[X.index]
+        prds_recon_bottomlevel = prds_recon_bottomlevel.loc[prds_recon.index]
         assert_frame_equal(prds_recon, prds_recon_bottomlevel)
+
+    def test_implement_inverse_transform(self, estimator_instance):
+        """Test that the reconciler has implemented the inverse_transform method."""
+        methods_to_implement = [
+            "_inverse_transform_reconciler",
+        ]
+
+        for method in methods_to_implement:
+            assert method in estimator_instance.__class__.__dict__
+
+    @pytest.mark.parametrize("no_levels", [1])
+    def test_behaves_as_identity_if_input_not_hierarchical(
+        self, estimator_instance, no_levels
+    ):
+        """Test that the reconciler behaves as identity when required."""
+        X = _bottom_hier_datagen(
+            no_bottom_nodes=5,
+            no_levels=no_levels,
+            random_seed=123,
+        )
+
+        # reconcile forecasts
+        reconciler = estimator_instance
+        Xt = reconciler.fit_transform(X)
+
+        assert reconciler._no_hierarchy
+        assert Xt.equals(X)
+
+        Xinv = reconciler.inverse_transform(Xt)
+        assert Xinv.equals(X)

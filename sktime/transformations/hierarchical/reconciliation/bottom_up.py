@@ -1,10 +1,9 @@
 """Single-level reconciliation."""
 
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_bottom_level_idxs,
-    _is_hierarchical_dataframe,
     _loc_series_idxs,
 )
 
@@ -13,7 +12,7 @@ __all__ = [
 ]
 
 
-class BottomUpReconciler(BaseTransformer):
+class BottomUpReconciler(_ReconcilerTransformer):
     """
     Bottom-up reconciliation for hierarchical time series data.
 
@@ -63,13 +62,7 @@ class BottomUpReconciler(BaseTransformer):
         "capability:hierarchical_reconciliation": True,
     }
 
-    def _fit(self, X, y):
-        self._no_hierarchy = not _is_hierarchical_dataframe(X)
-
-        if self._no_hierarchy:
-            return self
-
-        self._original_series = X.index.droplevel(-1).unique()
+    def _fit_reconciler(self, X, y):
         self._aggregator = Aggregator()
         self._aggregator.fit(X)
         X = self._aggregator.transform(X)
@@ -78,20 +71,13 @@ class BottomUpReconciler(BaseTransformer):
 
         return self
 
-    def _transform(self, X, y=None):
-        if self._no_hierarchy:
-            return X
-
+    def _transform_reconciler(self, X, y=None):
         X = self._aggregator.transform(X)
         X_bottom = _loc_series_idxs(X, self._bottom_series)
 
         return X_bottom
 
-    def _inverse_transform(self, X, y=None):
-        if self._no_hierarchy:
-            return X
-
+    def _inverse_transform_reconciler(self, X, y=None):
         X = Aggregator(flatten_single_levels=False).fit_transform(X)
         X = _loc_series_idxs(X, self._original_series).sort_index()
-
         return X

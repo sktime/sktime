@@ -6,7 +6,6 @@ __all__ = [
     "_get_total_level_idxs",
     "_is_ancestor",
     "_filter_descendants",
-    "_is_hierarchical_dataframe",
     "_get_index_level_aggregators",
     "_promote_hierarchical_indexes",
     "_promote_hierarchical_indexes_and_keep_timeindex",
@@ -65,17 +64,6 @@ def _filter_descendants(X, aggregator_node):
 
     # Now filter X by these nodes
     return X.loc[idx_upper.isin(descendant_nodes)]
-
-
-def _is_hierarchical_dataframe(X):
-    if not X.index.nlevels > 1:
-        return False
-    has_total = False
-    for i in range(X.index.nlevels - 1):
-        if "__total" in X.index.get_level_values(i):
-            has_total = True
-            break
-    return has_total or X.index.nlevels > 2
 
 
 def _get_index_level_aggregators(X, index_level):

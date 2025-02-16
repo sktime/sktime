@@ -1,10 +1,8 @@
 """Drop redundant levels from multiindex."""
 
+from sktime.datatypes._hierarchical._check import HierarchicalPdMultiIndex
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.hierarchical.reconciliation._utils import (
-    _is_hierarchical_dataframe,
-)
 
 __all__ = ["DropRedundantHierarchicalLevels"]
 
@@ -16,12 +14,12 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
     Sometimes, the multiindex can have redundant levels, for example:
 
     ```
-    __total, __total, pd.Period("2020-01-01")   0.1
-    stateA, regionA, pd.Period("2020-01-01")    0.05
-    stateA, regionB, pd.Period("2020-01-01")    0.05
+    __total,__total, __total, pd.Period("2020-01-01")   0.1
+    countryA, stateA, regionA, pd.Period("2020-01-01")    0.05
+    countryA, stateB, regionB, pd.Period("2020-01-01")    0.05
     ```
 
-    In this case, stateA is already total at level 0.
+    In this case, countryA is already total at level 0.
     This transformer will drop the first level, as it is redundant.
 
     In cases where the redundant levels have different values,
@@ -63,7 +61,9 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
     }
 
     def _fit(self, X, y):
-        self._no_hierarchy = not _is_hierarchical_dataframe(X)
+        self._no_hierarchy = not HierarchicalPdMultiIndex()._check(
+            obj=X, return_metadata=False
+        )
         if self._no_hierarchy:
             return self
 

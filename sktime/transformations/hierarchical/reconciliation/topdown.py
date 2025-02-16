@@ -2,14 +2,13 @@
 
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.drop_redundant_hierarchical_levels import (  # noqa: E501
     DropRedundantHierarchicalLevels,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_total_level_idxs,
-    _is_hierarchical_dataframe,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,
     _recursively_propagate_topdown,
@@ -18,7 +17,7 @@ from sktime.transformations.hierarchical.reconciliation._utils import (
 __all__ = ["TopdownReconciler"]
 
 
-class TopdownReconciler(BaseTransformer):
+class TopdownReconciler(_ReconcilerTransformer):
     """
     Apply Topdown hierarchical reconciliation.
 
@@ -46,35 +45,6 @@ class TopdownReconciler(BaseTransformer):
        principles and practice. OTexts.
     """
 
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": "felipeangelimvieira",
-        "maintainers": "felipeangelimvieira",
-        # estimator type
-        # --------------
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
-        "scitype:transform-labels": "None",
-        # todo instance wise?
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": [
-            "pd.Series",
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        "capability:hierarchical_reconciliation": True,
-    }
-
     def __init__(self, method="td_fcst"):
         self.method = method
         super().__init__()
@@ -84,13 +54,7 @@ class TopdownReconciler(BaseTransformer):
                 "Method must be one of 'td_fcst' or 'td_share'." f"Got {method}."
             )
 
-    def _fit(self, X, y):
-        self._no_hierarchy = not _is_hierarchical_dataframe(X)
-
-        if self._no_hierarchy:
-            return self
-
-        self._original_series = X.index.droplevel(-1).unique()
+    def _fit_reconciler(self, X, y=None):
         self._aggregator = Aggregator()
         self._aggregator.fit(X)
         X = self._aggregator.transform(X)
@@ -103,7 +67,7 @@ class TopdownReconciler(BaseTransformer):
 
         return self
 
-    def _transform(self, X, y):
+    def _transform_reconciler(self, X, y=None):
         """
         Prepare the data for the forecaster.
 
@@ -126,9 +90,6 @@ class TopdownReconciler(BaseTransformer):
         X : pd.DataFrame
             The transformed series.
         """
-        if self._no_hierarchy:
-            return X
-
         X = Aggregator(flatten_single_levels=True).fit_transform(X)
 
         X = self._drop_redundant_levels.transform(X)
@@ -136,22 +97,16 @@ class TopdownReconciler(BaseTransformer):
             X = self._transform_non_total_to_ratios(X)
         return X
 
-    def _inverse_transform(self, X, y):
-        """Apply reconciliation."""
-        if self._no_hierarchy:
-            return X
-
+    def _inverse_transform_reconciler(self, X, y=None):
         if self.method == "td_share":
-            _X = self._inverse_transform_td_share(X)
+            _X = self._reconcile_td_share(X)
         else:
-            _X = self._inverse_transform_td_fcst(X)
+            _X = self._reconcile_td_fcst(X)
 
         _X = self._drop_redundant_levels.inverse_transform(_X)
-        _X = Aggregator(flatten_single_levels=False).fit_transform(_X)
-        _X = _loc_series_idxs(_X, self._original_series).sort_index()
         return _X
 
-    def _inverse_transform_td_share(self, X):
+    def _reconcile_td_share(self, X):
         """
         Apply topdown share to the hierarchical time series.
 
@@ -197,7 +152,7 @@ class TopdownReconciler(BaseTransformer):
         _X = X_total * X_ratios
         return _X
 
-    def _inverse_transform_td_fcst(self, X):
+    def _reconcile_td_fcst(self, X):
         """
         Apply Forecast Proportions to the hierarchical time series.
 

@@ -15,8 +15,8 @@ from sktime.transformations.hierarchical.aggregate import (
 )
 from sktime.transformations.hierarchical.reconciliation import (
     BottomUpReconciler,
-    FullHierarchyReconciler,
-    NonNegativeFullHierarchyReconciler,
+    NonNegativeOptimalReconciler,
+    OptimalReconciler,
     TopdownReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation._utils import _loc_series_idxs
@@ -123,11 +123,11 @@ class ReconcilerForecaster(BaseForecaster):
     # soft dependency on cvxpy for NonNegativeFullHierarchyReconciler
     TRFORM_METHOD_MAP = {
         "bu": (BottomUpReconciler, {}),
-        "ols": (FullHierarchyReconciler, {}),
-        "ols:nonneg": (NonNegativeFullHierarchyReconciler, {}),
-        "wls_str": (FullHierarchyReconciler, {"error_covariance_matrix": "wls_str"}),
+        "ols": (OptimalReconciler, {}),
+        "ols:nonneg": (NonNegativeOptimalReconciler, {}),
+        "wls_str": (OptimalReconciler, {"error_covariance_matrix": "wls_str"}),
         "wls_str:nonneg": (
-            NonNegativeFullHierarchyReconciler,
+            NonNegativeOptimalReconciler,
             {"error_covariance_matrix": "wls_str"},
         ),
         "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
@@ -219,9 +219,9 @@ class ReconcilerForecaster(BaseForecaster):
                 shrink=False, diag_only=True
             )
 
-        ReconcilerClass = FullHierarchyReconciler
+        ReconcilerClass = OptimalReconciler
         if self.method.endswith(":nonneg"):
-            ReconcilerClass = NonNegativeFullHierarchyReconciler
+            ReconcilerClass = NonNegativeOptimalReconciler
         self.reconciler_transform_ = ReconcilerClass(self.error_cov_matrix_)
         self.reconciler_transform_.fit(y)
 

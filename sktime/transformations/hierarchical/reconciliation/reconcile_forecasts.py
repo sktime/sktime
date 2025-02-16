@@ -14,17 +14,19 @@ from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.transformations.hierarchical.reconciliation.bottom_up import (
     BottomUpReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation.full_hierarchy import (
-    FullHierarchyReconciler,
-    NonNegativeFullHierarchyReconciler,
+from sktime.transformations.hierarchical.reconciliation.optimal import (
+    NonNegativeOptimalReconciler,
+    OptimalReconciler,
 )
 from sktime.transformations.hierarchical.reconciliation.topdown import (
     TopdownReconciler,
 )
 from sktime.utils.warnings import warn
 
+__all__ = ["ReconcileForecasts"]
 
-class Reconciler(BaseTransformer):
+
+class ReconcileForecasts(BaseTransformer):
     """Hierarchical reconciliation transformer.
 
     Hierarchical reconciliation is a transformation which is used to make the
@@ -119,14 +121,14 @@ class Reconciler(BaseTransformer):
             return BottomUpReconciler()
         # OLS
         elif self.method == "ols":
-            return FullHierarchyReconciler()
+            return OptimalReconciler()
         elif self.method == "ols:nonneg":
-            return NonNegativeFullHierarchyReconciler("ols")
+            return NonNegativeOptimalReconciler("ols")
         # Structural WLS
         elif self.method == "wls_str":
-            return FullHierarchyReconciler("wls_str")
+            return OptimalReconciler("wls_str")
         elif self.method == "wls_str:nonneg":
-            return NonNegativeFullHierarchyReconciler("wls_str")
+            return NonNegativeOptimalReconciler("wls_str")
         elif self.method == "td_fcst":
             return TopdownReconciler()
         else:
