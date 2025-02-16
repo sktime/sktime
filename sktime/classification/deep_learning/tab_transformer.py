@@ -4,7 +4,9 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
+    import torch
     import torch.nn as nn
+    from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
     NNModule = nn.Module
 else:
@@ -16,8 +18,37 @@ else:
 class Tab_Transformer(NNModule):
     """Tab Transformer Architecture."""
 
-    def __init__(self, num_cat_feat, embedding_dim, num_layer) -> None:
+    def __init__(
+        self,
+        num_cat_feat,
+        num_cont_features,
+        embedding_dim,
+        n_transformer_layer,
+        n_heads,
+    ) -> None:
         super().__init__()
+        self.embedding = nn.ModuleList(
+            [nn.Embedding(cat, embedding_dim) for cat in num_cat_feat]
+        )
+        self.transformer_layer = TransformerEncoderLayer(
+            d_model=embedding_dim, nhead=n_heads
+        )
+        self.transformer = TransformerEncoder(
+            self.transformer_layer, num_layers=n_transformer_layer
+        )
+        self.feed_forward = nn.Sequential(
+            nn.Linear(embedding_dim * num_cat_feat + num_cont_features, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1),
+        )
+
+    def forward(self, x_cat, x_cont):
+        """Implement forward for Tab Transformer."""
+        embedded = [emb(x_cat[:, i]) for i, emb in enumerate(self.embedding)]
+        embedded = torch.stack(dim=1)
+
+        context = self.transformer(embedded)
+        context
 
 
 class TabTransformer(BaseDeepNetworkPyTorch):
