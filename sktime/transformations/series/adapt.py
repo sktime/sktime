@@ -184,7 +184,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         # sklearn transformers that are known to fit in transform do not need fit
         if hasattr(transformer, "_get_tags"):
-            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+            trafo_fit_in_transform = not transformer._get_tags()["requires_fit"]
         else:
             trafo_fit_in_transform = False
 
