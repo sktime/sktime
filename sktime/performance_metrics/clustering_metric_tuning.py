@@ -23,9 +23,14 @@ from sktime.base import BaseObject
 from sktime.param_est.base import BaseParamFitter
 from sktime.distances import pairwise_distance
 import numpy as np
+import logging
+
+log = logging.getLogger()
+console = logging.StreamHandler()
+log.addHandler(console)
 
 class BaseClusterMetric(BaseObject):
-    """Base class for cluster evaluation metrics"""
+    """Base class for cluster evaluation metrics."""
 
     def evaluate(self, X, labels):
         """
@@ -74,7 +79,8 @@ class TimeSeriesSilhouetteScore(BaseClusterMetric):
         Parameters
         ----------
         X : panel-like object
-            The input time series data. It must be in the format expected by pairwise_distance.
+            The input time series data.
+            It must be in the format expected by pairwise_distance.
         labels : array-like of int
             Cluster labels for each time series in X.
 
@@ -116,8 +122,8 @@ class ClusterSupportDetection(BaseParamFitter):
 
     Automatically determines the optimal number of clusters using a specified metric.
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     estimator : clustering model instance
         The clustering model to tune.
     param_range : list or range
@@ -130,6 +136,12 @@ class ClusterSupportDetection(BaseParamFitter):
         Number of samples to use if dataset is large.
     verbose : int, default=0
         Verbosity level (0 for silent, 1 for progress updates).
+    random_state : int or None, default=None
+        Random seed for reproducibility. If provided and the estimator supports
+        a `random_state` parameter, it will be set accordingly.
+    direction : str, default="max"
+        Optimization direction. Use "max" if a higher metric score is better
+        or "min" if a lower metric score is better.
     """
 
     _tags = {
@@ -148,6 +160,8 @@ class ClusterSupportDetection(BaseParamFitter):
         metric_params=None,
         sample_size=None,
         verbose=0,
+        random_state=None,
+        direction="max",
     ):
         self.estimator = estimator
         self.param_range = param_range
@@ -156,11 +170,13 @@ class ClusterSupportDetection(BaseParamFitter):
         self.metric_params = metric_params.copy() if metric_params is not None else {}
         self.sample_size = sample_size
         self.verbose = verbose
+        self.random_state = random_state
+        self.direction = direction
 
         super().__init__()
 
     def _fit(self, X, y=None):
-        """Finds the optimal number of clusters by evaluating different values."""
+        """Return the optimal number of clusters by evaluating different values."""
         best_score = -np.inf
         best_param = None
         scores = {}
@@ -168,7 +184,13 @@ class ClusterSupportDetection(BaseParamFitter):
 
         for param in self.param_range:
             if self.verbose:
-                print(f"Evaluating {param} clusters...")
+                log.info(f"Evaluating {param} clusters...")
+
+            params = {"n_clusters": param}
+            # add the random state only if the estimator supports it
+            if self.random_state is not None:
+                if "random_state" in self.estimator.get_params():
+                    params["random_state"] = self.random_state
 
             estimator = self.estimator.set_params(n_clusters=param)
             labels = estimator.fit_predict(X)
@@ -190,7 +212,14 @@ class ClusterSupportDetection(BaseParamFitter):
             best_param = self._find_elbow_point(self.param_range, inertia_values)
             best_score = -inertia_values[best_param - self.param_range[0]]
         else:
-            best_param = max(scores, key=scores.get)
+            if self.direction == "max":
+                best_param = max(scores, key=scores.get)
+            elif self.direction == "min":
+                best_param = min(scores, key=scores.get)
+            else:
+                raise ValueError(
+                    f"Invalid direction: {self.direction} should be either 'max' or 'min'."
+                )
             best_score = scores[best_param]
 
         self.best_param_ = best_param
@@ -203,7 +232,7 @@ class ClusterSupportDetection(BaseParamFitter):
         return self
 
     def _find_elbow_point(self, param_range, inertia_values):
-        """Finds the elbow point by detecting when the slope drops below a threshold."""
+        """Return the elbow point by detecting when the slope drops below a threshold."""
         diffs = np.diff(inertia_values)
         threshold = self.metric_params.get("elbow_threshold", 0.1)
         for i, diff in enumerate(diffs):
@@ -228,6 +257,8 @@ class ClusterSupportDetection(BaseParamFitter):
             "param_range": range(2, 10),
             "metric": TimeSeriesSilhouetteScore(metric="dtw"),
             "metric_params": {},
+            "random_state": 42,
+            "direction" : "max", 
         }
 
         params2 = {
@@ -242,5 +273,7 @@ class ClusterSupportDetection(BaseParamFitter):
             "param_range": range(2, 10),
             "metric": None,
             "metric_params": {},
+            "random_state": 1,
+            "direction" : "max", 
         }
         return [params, params2, params3]
