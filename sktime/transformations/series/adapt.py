@@ -187,6 +187,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
         if sklearn_ge_16:
             from sklearn.utils import get_tags
+
             trafo_fit_in_transform = not get_tags(transformer).requires_fit
         else:
             if hasattr(transformer, "_get_tags"):
