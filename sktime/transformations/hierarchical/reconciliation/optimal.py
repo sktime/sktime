@@ -36,11 +36,11 @@ class OptimalReconciler(_ReconcilerTransformer):
     Examples
     --------
     >>> from sktime.transformations.hierarchical.reconciliation import (
-    ...     FullHierarchyReconciler)
+    ...     OptimalReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeFullHierarchyReconciler()
+    >>> reconciler = NonNegativeOptimalReconciler()
     >>> pipe = reconciler * ExponentialSmoothing()
     >>> pipe.fit(y)
     >>> y_pred = pipe.predict()
@@ -191,11 +191,11 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     Examples
     --------
     >>> from sktime.transformations.hierarchical.reconciliation import (
-    ...     NonNegativeFullHierarchyReconciler)
+    ...     NonNegativeOptimalReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeFullHierarchyReconciler()
+    >>> reconciler = NonNegativeOptimalReconciler()
     >>> pipe = reconciler * ExponentialSmoothing()
     >>> pipe.fit(y)
     >>> y_pred = pipe.predict()

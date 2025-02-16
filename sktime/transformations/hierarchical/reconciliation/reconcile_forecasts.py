@@ -37,7 +37,7 @@ class ReconcileForecasts(BaseTransformer):
 
     These functions are intended for transforming hierarchical forecasts, i.e.
     after prediction. If you are looking to transform the data before
-    forecasting, please refer to BottomUpReconciler, FullHierarchyReconciler,
+    forecasting, please refer to BottomUpReconciler, OptimalReconciler,
     TopdownReconciler, or MiddleOutReconciler.
 
     Please refer to [1]_ for further information

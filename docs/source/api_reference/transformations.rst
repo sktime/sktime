@@ -853,6 +853,6 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     MiddleOutReconciler
     TopdownReconciler
     BottomUpReconciler
-    FullHierarchyReconciler
-    NonNegativeFullHierarchyReconciler
+    OptimalReconciler
+    NonNegativeOptimalReconciler
     ForecastProportions

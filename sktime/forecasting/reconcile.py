@@ -120,7 +120,7 @@ class ReconcilerForecaster(BaseForecaster):
     }
 
     # We do not create the instances to avoid error due to
-    # soft dependency on cvxpy for NonNegativeFullHierarchyReconciler
+    # soft dependency on cvxpy for NonNegativeOptimalReconciler
     TRFORM_METHOD_MAP = {
         "bu": (BottomUpReconciler, {}),
         "ols": (OptimalReconciler, {}),
