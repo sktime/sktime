@@ -29,6 +29,7 @@ log = logging.getLogger()
 console = logging.StreamHandler()
 log.addHandler(console)
 
+
 class BaseClusterMetric(BaseObject):
     """Base class for cluster evaluation metrics."""
 
@@ -47,9 +48,10 @@ class BaseClusterMetric(BaseObject):
         -------
         score : float
             The computed metric score.
-        """ 
+        """
         raise NotImplementedError()
-    
+
+
 class TimeSeriesSilhouetteScore(BaseClusterMetric):
     """
     Silhouette score for time series clustering.
@@ -103,7 +105,11 @@ class TimeSeriesSilhouetteScore(BaseClusterMetric):
         for i in range(n):
             same_cluster = np.where(labels == labels[i])[0]
             same_cluster = same_cluster[same_cluster != i]  # Exclude self
-            a = np.mean(distance_matrix[i, same_cluster]) if same_cluster.size > 0 else 0.0
+            a = (
+                np.mean(distance_matrix[i, same_cluster])
+                if same_cluster.size > 0
+                else 0.0
+            )
 
             b = np.inf
             for label in unique_labels:
@@ -116,6 +122,7 @@ class TimeSeriesSilhouetteScore(BaseClusterMetric):
             silhouette_values[i] = (b - a) / max(a, b) if max(a, b) > 0 else 0.0
 
         return np.mean(silhouette_values)
+
 
 class ClusterSupportDetection(BaseParamFitter):
     """Custom parameter fitter for clustering optimization.
@@ -247,7 +254,7 @@ class ClusterSupportDetection(BaseParamFitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        
+
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.clustering.k_medoids import TimeSeriesKMedoids
         from sktime.clustering.k_shapes import TimeSeriesKShapes
@@ -258,7 +265,7 @@ class ClusterSupportDetection(BaseParamFitter):
             "metric": TimeSeriesSilhouetteScore(metric="dtw"),
             "metric_params": {},
             "random_state": 42,
-            "direction" : "max", 
+            "direction": "max",
         }
 
         params2 = {
@@ -274,6 +281,6 @@ class ClusterSupportDetection(BaseParamFitter):
             "metric": None,
             "metric_params": {},
             "random_state": 1,
-            "direction" : "max", 
+            "direction": "max",
         }
         return [params, params2, params3]
