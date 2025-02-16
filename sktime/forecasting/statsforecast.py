@@ -1005,7 +1005,8 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    None
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
 
     References
     ----------
@@ -1036,6 +1037,16 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
+    def __init__(
+        self,
+        prediction_intervals: Optional[object] = None,
+    ):
+        if prediction_intervals is not None:
+            pass
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
         from statsforecast.models import ADIDA
@@ -1044,7 +1055,9 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     def _get_statsforecast_params(self):
         """Get the parameters for the statsforecast model."""
-        return {}
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1061,4 +1074,17 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict
             Parameters to create testing instances of the class
         """
-        return {}
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("statsforecast")
+            from statsforecast.utils import ConformalIntervals
+
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        except ImportError:
+            return [{}]
