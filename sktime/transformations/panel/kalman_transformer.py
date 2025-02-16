@@ -6,9 +6,11 @@ It provides smoothing and filtering capabilities.
 
 import numpy as np
 import pandas as pd
-from simdkalman import KalmanFilter
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import (
+    _check_soft_dependencies,
+)  # Ensure optional dependency checking
 
 
 class SimdKalmanTransformer(BaseTransformer):
@@ -57,6 +59,12 @@ class SimdKalmanTransformer(BaseTransformer):
 
     def _fit(self, X, y=None):
         """Initialize the Kalman filter model."""
+        _check_soft_dependencies(
+            "simdkalman", severity="error"
+        )  # Ensure simdkalman is installed
+
+        from simdkalman import KalmanFilter  # Import only inside the function
+
         self.kf_ = KalmanFilter(
             state_transition=self.transition_matrices,
             process_noise=self.transition_covariance,
@@ -67,6 +75,11 @@ class SimdKalmanTransformer(BaseTransformer):
 
     def _transform(self, X, y=None):
         """Apply Kalman filter smoothing to the input panel data."""
+        if self.kf_ is None:
+            raise ValueError(
+                "The Kalman filter must be fitted before calling transform."
+            )
+
         X_arr = X.to_numpy().reshape(1, *X.shape)  # Reshape to (N, T, D) format
         smoothed = self.kf_.smooth(X_arr)
         return pd.DataFrame(smoothed.means[0], index=X.index, columns=X.columns)
