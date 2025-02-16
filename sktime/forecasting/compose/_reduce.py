@@ -2515,7 +2515,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred_list = []
 
         for _ in y_lags_no_gaps:
-            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+            if hasattr(self.fh, "freq") and self.fh.freq is not None and not isinstance(y_plus_preds.index, pd.MultiIndex):
                 y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
 
             Xt = lagger_y_to_X.transform(y_plus_preds)
@@ -2552,9 +2552,16 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
-        y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
-        y_pred = slice_at_ix(y_pred, fh_idx)
+        if isinstance(y_plus_preds.index, pd.MultiIndex):
+            y_pred_list_pd = []
+            for y_pred in y_pred_list:
+                y_pred_list_pd.append(pd.DataFrame(y_pred, columns=y_cols, index=y_plus_preds.unstack(-1).index))
+            y_pred = pd.concat(y_pred_list_pd, axis=0, keys=y_abs_no_gaps)
+            y_pred = y_pred.reorder_levels([1,2,0]).sort_index().loc[fh_idx]
+        else:
+            y_pred = np.concatenate(y_pred_list)
+            y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
+            y_pred = slice_at_ix(y_pred, fh_idx)
 
         return y_pred
 
