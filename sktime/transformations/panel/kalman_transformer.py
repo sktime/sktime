@@ -8,9 +8,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import (
-    _check_soft_dependencies,
-)  # Ensure optional dependency checking
 
 
 class SimdKalmanTransformer(BaseTransformer):
@@ -36,6 +33,7 @@ class SimdKalmanTransformer(BaseTransformer):
         "scitype:transform-output": "Panel",
         "requires-fh-in-fit": False,
         "capability:inverse_transform": True,
+        "python_dependencies": ["simdkalman"],
     }
 
     def __init__(
@@ -59,10 +57,6 @@ class SimdKalmanTransformer(BaseTransformer):
 
     def _fit(self, X, y=None):
         """Initialize the Kalman filter model."""
-        _check_soft_dependencies(
-            "simdkalman", severity="error"
-        )  # Ensure simdkalman is installed
-
         from simdkalman import KalmanFilter  # Import only inside the function
 
         self.kf_ = KalmanFilter(
