@@ -98,7 +98,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     -----
         If ``metric`` is set to ``"euclidean"``, the algorithm expects a dataset of
         equal-sized time series.
-        
+
     Examples
     --------
     Basic usage:
