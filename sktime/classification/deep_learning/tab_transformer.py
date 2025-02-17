@@ -48,7 +48,9 @@ class Tab_Transformer(NNModule):
         embedded = torch.stack(dim=1)
 
         context = self.transformer(embedded)
-        context
+        context = context.view(context.size(0), -1)
+        combined = torch.concat([context, x_cont], dim=1)
+        return self.feed_forward(combined)
 
 
 class TabTransformer(BaseDeepNetworkPyTorch):
