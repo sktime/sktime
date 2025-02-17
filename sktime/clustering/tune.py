@@ -28,6 +28,7 @@ log = logging.getLogger()
 console = logging.StreamHandler()
 log.addHandler(console)
 
+
 class ClusterSupportDetection(BaseParamFitter):
     """Custom parameter fitter for clustering optimization.
 
