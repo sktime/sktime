@@ -21,7 +21,6 @@ __author__ = ["fkiraly", "satvshr"]
 
 __all__ = ["BaseParamFitter"]
 
-import numpy as np
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -378,20 +377,6 @@ class BaseParamFitter(BaseEstimator):
             raise ValueError(
                 f"{type(self).__name__} does not require y, but y was passed."
             )
-
-        def _check_missing(obj):
-            """Raise an error if obj contains missing values (if not supported)."""
-            if isinstance(obj, np.ndarray):
-                has_nan = np.isnan(obj).any()
-            else:
-                has_nan = obj.isnull().values.any()
-
-            if has_nan and not self.get_tag("capability:missing_values"):
-                msg = (
-                    f"{type(self).__name__} cannot handle missing data (nans), "
-                    f"but the passed data contained missing values."
-                )
-                raise ValueError(msg)
 
         # Process y if provided
         if y is not None:
