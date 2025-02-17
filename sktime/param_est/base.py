@@ -76,7 +76,7 @@ class BaseParamFitter(BaseEstimator):
             "pd.Series",
         ],  # which types do _fit/_predict support for y?
         "scitype:X": "Series",  # which X scitypes are supported natively?
-        "scitype:y": "univariate",  # which y are fine: univariate/multivariate/both
+        "scitype:y": "Series",  # which y scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "requires_y": False,  # does estimator require y?
@@ -169,6 +169,48 @@ class BaseParamFitter(BaseEstimator):
         else:
             return NotImplemented
 
+    def _validate_data(self, ALLOWED_SCITYPES, FORBIDDEN_MTYPES, data, var_name="data"):
+        """Validate input data (X or y)."""
+        # Prepare a message about allowed mtypes
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+
+        data_valid, _, data_metadata = check_is_scitype(
+            data,
+            scitype=ALLOWED_SCITYPES,
+            return_metadata=["feature_kind"],
+            var_name=var_name,
+        )
+
+        msg = (
+            f"{var_name} must be in an sktime compatible format, "
+            f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame with "
+            "an sktime compatible time index. See the data format tutorial for "
+            "more details. "
+        )
+
+        if not data_valid:
+            raise TypeError(msg + mtypes_msg)
+
+        if DtypeKind.CATEGORICAL in data_metadata["feature_kind"]:
+            raise TypeError(
+                "Parameter estimators do not support categorical features "
+                f" in {var_name}. "
+            )
+
+        data_mtype = data_metadata["mtype"]
+        data_inner_mtype = _coerce_to_list(self.get_tag(f"{var_name}_inner_mtype"))
+        data_scitype = data_metadata["scitype"]
+
+        return convert(
+            data,
+            from_type=data_mtype,
+            to_type=data_inner_mtype,
+            as_scitype=data_scitype,
+        )
+
     def fit(self, X, y=None):
         """Fit estimator and estimate parameters.
 
@@ -212,7 +254,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        _safe_call(self._fit, args=(X_inner, y_inner), kwargs={})
+        _safe_call(self._fit, args=(), kwargs={"X": X_inner, "y": y_inner})
 
         # this should happen last
         self._is_fitted = True
@@ -222,17 +264,31 @@ class BaseParamFitter(BaseEstimator):
     def update(self, X, y=None):
         """Update fitted parameters on more data.
 
-        This method allows for updating the estimator with additional observations.
-        If a custom update method is not implemented, the default behavior is to refit
-        the estimator using all data seen so far. Note that the primary parameter is X.
+        If no estimator-specific update method has been implemented,
+        default fall-back is fitting to all observed data so far
+        State required:
+            Requires state to be "fitted".
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            Pointers to seen data, self._X
+            self._is_fitted
+            model attributes ending in "_".
+        Writes to self:
+            Update self._X with `X`, by appending rows.
+            Updates fitted model attributes ending in "_".
 
         Parameters
         ----------
-        X : sktime-compatible container
-            New time series data (features) for updating the estimator.
-        y : array-like, optional (default=None)
-            New target values for updating the estimator. If not provided,
-            only X is updated.
+        X : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -257,62 +313,62 @@ class BaseParamFitter(BaseEstimator):
             self._update_y_X(None, X_inner)
 
         # Pass the checked and converted data to the estimator-specific _update logic
-        _safe_call(self._update, args=(X_inner, y_inner), kwargs={})
+        _safe_call(self._fit, args=(), kwargs={"X": X_inner, "y": y_inner})
 
         return self
 
     def _check_X_y(self, X=None, y=None):
-        """Validate and coerce feature and target data for fit and update.
-
-        This method performs several checks and conversions:
-          - If both X and y are None, returns (None, None).
-          - If y is provided but the estimator's "requires_y" tag is False,
-            a ValueError is raised.
-          - For y:
-              * Checks that y is in one of the allowed sktime formats for its scitype.
-              * Ensures y does not contain categorical values.
-              * For multivariate estimators, ensures y has multiple variables.
-              * Checks for missing values if the estimator does not support them.
-              * Converts y to the format specified by the "y_inner_mtype" tag.
-          - For X:
-              * If the estimator is pairwise (tag "capability:pairwise" is True), X must
-                 be a square pairwise distance/similarity matrix; y is ignored.
-              * Otherwise, checks that X is in one of the allowed sktime formats for
-              its declared scitype.
-              * Ensures X does not contain categorical values.
-              * Checks for missing values if not supported.
-              * Converts X to the format specified by the "X_inner_mtype" tag.
-          - If both X and y are provided (and the estimator is not pairwise), verifies
-            that the lengths of X and y match.
+        """Check and coerce X and y for fit/update functions.
 
         Parameters
         ----------
-        X : sktime-compatible container, optional (default=None)
-            Feature data (time series) to be validated and converted.
-        y : array-like, optional (default=None)
-            Target values for parameter estimation to be validated and converted.
+        X : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            X can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+
+        y : time series in sktime compatible data container format, optional
+            (default=None) Target values for parameter estimation to be validated and
+            converted. y can be in one of the following formats,
+            must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        X_inner : object or None
-            The converted feature data, in the format specified by the estimator's tag
-            "X_inner_mtype". Returns None if X is None.
-        y_inner : object or None
-            The converted target data, in the format specified by the estimator's tag
-            "y_inner_mtype". Returns None if y is None or if the estimator is pairwise.
+        X_inner : Series, Panel, or Hierarchical object
+                compatible with self.get_tag("X_inner_mtype") format
+            Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
+                converted/coerced version of X, mtype determined by "X_inner_mtype" tag
+            Case 2: None if X was None
+
+        y_inner : Series, Panel, or Hierarchical object or None
+                compatible with self.get_tag("y_inner_mtype") format
+            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
+                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            Case 2: None if y was None or if the estimator is pairwise
 
         Raises
         ------
         TypeError
-            If X or y is not in an allowed sktime-compatible format, or if y contains
-            categorical values.
+            If X or y is not one of the permissible Series mtypes
+            If X or y is of a different scitype as self.get_tag("scitype:X")
+            or self.get_tag("scitype:y")
         ValueError
-            If:
-              * y is provided for an estimator that does not support target values.
-              * For multivariate y, if only univariate data is provided when
-              multivariate is required.
-              * TODO: Throw a ValueError for pairwise estimators, if X is not square.
-              * The lengths of X and y do not match.
+            If y is provided for an estimator that does not support target values.
+            If the lengths of X and y do not match.
+            TODO: Throw a ValueError for pairwise estimators, if X is not square.
         """
         X_inner, y_inner = None, None
         if X is None and y is None:
@@ -341,92 +397,12 @@ class BaseParamFitter(BaseEstimator):
         if y is not None:
             ALLOWED_SCITYPES = [_coerce_to_list(self.get_tag("scitype:y"))]
             FORBIDDEN_MTYPES = []
-
-            # Prepare a message about allowed mtypes
-            for scitype in ALLOWED_SCITYPES:
-                mtypes = set(scitype_to_mtype(scitype))
-                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-                mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
-
-            y_valid, _, y_metadata = check_is_scitype(
-                y,
-                scitype=ALLOWED_SCITYPES,
-                return_metadata=["feature_kind"],
-                var_name="y",
-            )
-            msg = (
-                "y must be in an sktime compatible format, "
-                f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame with "
-                "an sktime compatible time index. See the data format tutorial for "
-                "more details. "
-            )
-            if not y_valid:
-                raise TypeError(msg + mtypes_msg)
-
-            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
-                raise TypeError(
-                    "Parameter estimators do not support categorical features in y."
-                )
-
-            if (
-                self.get_tag("scitype:y") == "multivariate"
-                and y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    f"Unsupported input data type in {type(self).__name__}: "
-                    "this estimator accepts only strictly multivariate data. "
-                    "y must have two or more variables, but only one was found."
-                )
-
-            _check_missing(y)
-            y_mtype = y_metadata["mtype"]
-            y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
-            y_scitype = y_metadata["scitype"]
-            y_inner = convert(
-                y,
-                from_type=y_mtype,
-                to_type=y_inner_mtype,
-                as_scitype=y_scitype,
-            )
+            y_inner = self._validate_data(ALLOWED_SCITYPES, FORBIDDEN_MTYPES, y, "y")
 
         if X is not None:
             ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
             FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
-
-            for scitype in ALLOWED_SCITYPES:
-                mtypes = set(scitype_to_mtype(scitype))
-                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-                mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
-
-            X_valid, _, X_metadata = check_is_scitype(
-                X,
-                scitype=ALLOWED_SCITYPES,
-                return_metadata=["feature_kind"],
-                var_name="X",
-            )
-            msg = (
-                "X must be in an sktime compatible format, "
-                f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame "
-                "sktime compatible time index. "
-            )
-            if not X_valid:
-                raise TypeError(msg + mtypes_msg)
-
-            if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
-                raise TypeError(
-                    "Parameter estimators do not support categorical features in X."
-                )
-
-            _check_missing(X)
-            X_mtype = X_metadata["mtype"]
-            X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-            X_scitype = X_metadata["scitype"]
-            X_inner = convert(
-                X,
-                from_type=X_mtype,
-                to_type=X_inner_mtype,
-                as_scitype=X_scitype,
-            )
+            X_inner = self._validate_data(ALLOWED_SCITYPES, FORBIDDEN_MTYPES, X, "X")
 
         # If both X and y are provided, check that their lengths match.
         if y_inner is not None and len(y_inner) != len(X_inner):
@@ -454,18 +430,49 @@ class BaseParamFitter(BaseEstimator):
         return self._check_X_y(X=X)[0]
 
     def _update_y_X(self, y, X):
-        """Update internal memory with the provided target and feature data.
+        """Update internal memory of seen training data.
 
-        If the estimator's configuration indicates that data should be remembered
-        (see config "remember_data"), the new data will be appended to the stored
-        `_y` and `_X` attributes.
+        Accesses in self:
+        _X : only if exists, then assumed same type as X and same cols
+            these assumptions should be guaranteed by calls
+        _y : only if exists, then assumed same type as y
+
+        Writes to self:
+        _X : same type as X - new rows from X are added to current _X
+            if _X does not exist, stores X as _X
+        _y : same type as y - new rows from y are added to current _y
+            if _y does not exist, stores y as _y
+
+        _X is guaranteed to be one of mtypes:
+            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
+            pd_multiindex_hier
+        _y is guaranteed to be one of mtypes:
+            pd.Series, pd.DataFrame, np.ndarray (1D or 2D), pd-multiindex,
+            numpy3D, pd_multiindex_hier
 
         Parameters
         ----------
-        y : array-like or None
-            New target data to be remembered. If None, `_y` remains unchanged.
-        X : sktime-compatible container or None
-            New feature data to be remembered. If None, `_X` remains unchanged.
+        X : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            X can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+
+        y : time series in sktime compatible data container format, optional
+            (default=None) Target values to update the internal memory.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         """
         if y is not None and self.get_config()["remember_data"]:
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
@@ -506,8 +513,7 @@ class BaseParamFitter(BaseEstimator):
 
         Returns
         -------
-        self : BaseParamFitter
-            Reference to the estimator with updated fitted attributes.
+        self : reference to self
         """
         raise NotImplementedError("abstract method")
 
@@ -534,8 +540,7 @@ class BaseParamFitter(BaseEstimator):
 
         Returns
         -------
-        self : BaseParamFitter
-            Reference to the updated estimator.
+        self : reference to self
         """
         warn(
             f"NotImplementedWarning: {self.__class__.__name__} "
@@ -544,7 +549,7 @@ class BaseParamFitter(BaseEstimator):
             f"`update` is called.",
             obj=self,
         )
-        # Default behavior: refit with all stored data
+        # refit with updated data, not only passed data
         self.fit(X=self._X, y=self._y)
         # todo: should probably be self._fit, not self.fit
         # but looping to self.fit for now to avoid interface break

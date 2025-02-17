@@ -38,7 +38,7 @@ class FixedParams(BaseParamFitter):
         self.param_dict = param_dict
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit

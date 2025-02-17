@@ -92,7 +92,7 @@ class StationarityADF(BaseParamFitter):
         self.autolag = autolag
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit
@@ -232,7 +232,7 @@ class StationarityKPSS(BaseParamFitter):
         self.nlags = nlags
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit

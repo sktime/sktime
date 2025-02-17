@@ -176,7 +176,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         else:
             return NotImplemented
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit

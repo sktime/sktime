@@ -112,7 +112,7 @@ class SeasonalityACF(BaseParamFitter):
         self.missing = missing
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit
@@ -303,7 +303,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.missing = missing
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit
@@ -472,7 +472,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         self.thresh = thresh
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit
