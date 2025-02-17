@@ -269,7 +269,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ClearSky",
         "ClustererPipeline",
         "ColumnConcatenator",
-        "ColumnEnsembleClassifier",
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
