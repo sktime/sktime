@@ -22,6 +22,8 @@ else:
     class torch:
         """Dummy class if torch is unavailable."""
 
+        bfloat16 = None
+
         class Tensor:
             """Dummy class if torch is unavailable."""
 

@@ -45,8 +45,11 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers.utils import ModelOutput
 else:
 
-    class PreTrainedModel:
+    class T5PreTrainedModel:
         """Dummy class if transformers is unavailable."""
+
+    class ModelOutput:
+        """Dummy model output if transformers is unavailable."""
 
 
 logger = logging.getLogger(__file__)
@@ -652,7 +655,6 @@ class ChronosBoltPipeline:
 
         return context
 
-    @torch.no_grad()
     def embed(
         self, context: Union[torch.Tensor, list[torch.Tensor]]
     ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
@@ -676,21 +678,22 @@ class ChronosBoltPipeline:
             where num_patches is the number of patches in the time series
             and the extra 1 is for the [REG] token (if used by the model).
         """
-        context_tensor = self._prepare_and_validate_context(context=context)
-        model_context_length = self.model.config.chronos_config["context_length"]
+        with torch.no_grad():
+            context_tensor = self._prepare_and_validate_context(context=context)
+            model_context_length = self.model.config.chronos_config["context_length"]
 
-        if context_tensor.shape[-1] > model_context_length:
-            context_tensor = context_tensor[..., -model_context_length:]
+            if context_tensor.shape[-1] > model_context_length:
+                context_tensor = context_tensor[..., -model_context_length:]
 
-        context_tensor = context_tensor.to(
-            device=self.model.device,
-            dtype=torch.float32,
-        )
-        embeddings, loc_scale, *_ = self.model.encode(context=context_tensor)
-        return embeddings.cpu(), (
-            loc_scale[0].squeeze(-1).cpu(),
-            loc_scale[1].squeeze(-1).cpu(),
-        )
+            context_tensor = context_tensor.to(
+                device=self.model.device,
+                dtype=torch.float32,
+            )
+            embeddings, loc_scale, *_ = self.model.encode(context=context_tensor)
+            return embeddings.cpu(), (
+                loc_scale[0].squeeze(-1).cpu(),
+                loc_scale[1].squeeze(-1).cpu(),
+            )
 
     def predict(  # type: ignore[override]
         self,
