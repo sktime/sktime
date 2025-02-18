@@ -306,7 +306,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MVCAPA",
         "MatrixProfile",
         "MatrixProfileTransformer",
-        "MiniRocket",
         "MiniRocketMultivariate",
         "MiniRocketMultivariateVariable",
         "MovingWindow",
