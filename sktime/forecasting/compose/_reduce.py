@@ -2790,7 +2790,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Prior state before PR 7380 - left for comparison and potential refactor.
         """
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2811,8 +2810,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+            if self._impute_method is not None:
+                lag_plus = lag_plus * self._impute_method.clone()
 
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
