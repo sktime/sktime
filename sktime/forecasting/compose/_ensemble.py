@@ -39,8 +39,8 @@ VALID_AGG_FUNCS = {
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
-    The AutoEnsembleForecaster finds optimal weights for the ensembled
-    forecasters using given method or a meta-model (regressor).
+    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
+    using given method or a meta-model (regressor) .
     The regressor has to be sklearn-like and needs to have either an attribute
     ``feature_importances_`` or ``coef_``, as this is used as weights.
     Regressor can also be a sklearn.Pipeline.
@@ -51,7 +51,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Estimators to apply to the input series.
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
-
         - feature-importance:
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
@@ -71,10 +70,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        It is deprecated and will be removed in a future version. Use `backend` instead.
 
     Attributes
     ----------
@@ -275,15 +277,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
-
         * (str, estimator) tuples: the string is a name for the estimator.
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
-
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+        the backend will be set to "loky".
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        It is deprecated and will be removed in a future version. Use `backend` instead.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
@@ -482,7 +486,22 @@ def _get_weights(regressor):
 
 
 def _aggregate(y, aggfunc, weights):
-    """Apply aggregation function by row."""
+    """Apply aggregation function by row.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Multivariate series to transform.
+    aggfunc : str
+        Aggregation function used for transformation.
+    weights : list of floats
+        Weights to apply in aggregation.
+
+    Returns
+    -------
+    y_agg: pd.Series
+        Transformed univariate series.
+    """
     if weights is None:
         aggfunc = _check_aggfunc(aggfunc, weighted=False)
         y_agg = aggfunc(y, axis=1)
