@@ -37,7 +37,75 @@ VALID_AGG_FUNCS = {
 
 
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
-    """Automatically find best weights for the ensembled forecasters."""
+    """Automatically find best weights for the ensembled forecasters.
+
+    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
+    using given method or a meta-model (regressor) .
+    The regressor has to be sklearn-like and needs to have either an attribute
+    ``feature_importances_`` or ``coef_``, as this is used as weights.
+    Regressor can also be a sklearn.Pipeline.
+
+    Parameters
+    ----------
+    forecasters : list of (str, estimator) tuples
+        Estimators to apply to the input series.
+    method : str, optional, default="feature-importance"
+        Strategy used to compute weights. Available choices:
+        - feature-importance:
+            use the ``feature_importances_`` or ``coef_`` from
+            given ``regressor`` as optimal weights.
+        - inverse-variance:
+            use the inverse variance of the forecasting error
+            (based on the internal train-test-split) to compute optimal
+            weights, a given ``regressor`` will be omitted.
+    regressor : sklearn-like regressor, optional, default=None.
+        Used to infer optimal weights from coefficients (linear models) or from
+        feature importance scores (decision tree-based models). If None, then
+        a GradientBoostingRegressor(max_depth=5) is used.
+        The regressor can also be a sklearn.Pipeline().
+    test_size : int or float, optional, default=None
+        Used to do an internal temporal_train_test_split(). The test_size data
+        will be the endog data of the regressor and it is the most recent data.
+        The exog data of the regressor are the predictions from the temporarily
+        trained ensemble models. If None, it will be set to 0.25.
+    random_state : int, RandomState instance or None, default=None
+        Used to set random_state of the default regressor.
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
+    n_jobs : int or None, optional, default=None
+        The number of jobs to run in parallel for fit. None means 1 unless
+        It is deprecated and will be removed in a future version. Use `backend` instead.
+
+    Attributes
+    ----------
+    regressor_ : sklearn-like regressor
+        Fitted regressor.
+    weights_ : np.array
+        The weights based on either ``regressor.feature_importances_`` or
+        ``regressor.coef_`` values.
+
+    See Also
+    --------
+    EnsembleForecaster
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import AutoEnsembleForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
+    >>> forecaster.fit(y=y, fh=[1,2,3])
+    AutoEnsembleForecaster(...)
+    >>> y_pred = forecaster.predict()
+    """
 
     _tags = {
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
@@ -198,7 +266,53 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
-    """Ensemble of forecasters."""
+    """Ensemble of forecasters.
+
+    Overview: Input one series of length ``n`` and EnsembleForecaster performs
+    fitting and prediction for each estimator passed in ``forecasters``. It then
+    applies ``aggfunc`` aggregation function by row to the predictions dataframe
+    and returns final prediction - one series.
+
+    Parameters
+    ----------
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
+        Estimators to apply to the input series.
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+    backend : str or None, optional, default=None
+        Specify the backend used by joblib for parallelization. If None, then
+        the backend will be set to "loky".
+    backend_params : dict or None, optional, default=None
+        Parameters to pass to the backend.
+    n_jobs : int or None, optional, default=None
+        The number of jobs to run in parallel for fit. None means 1 unless
+        It is deprecated and will be removed in a future version. Use `backend` instead.
+    aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
+        The function to aggregate prediction from individual forecasters.
+    weights : list of floats
+        Weights to apply in aggregation.
+
+    See Also
+    --------
+    AutoEnsembleForecaster
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import EnsembleForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecasters = [
+    ...     ("trend", PolynomialTrendForecaster()),
+    ...     ("naive", NaiveForecaster()),
+    ... ]
+    >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
+    >>> forecaster.fit(y=y, fh=[1,2,3])
+    EnsembleForecaster(...)
+    >>> y_pred = forecaster.predict()
+    """
 
     _tags = {
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
@@ -363,7 +477,22 @@ def _get_weights(regressor):
 
 
 def _aggregate(y, aggfunc, weights):
-    """Apply aggregation function by row."""
+    """Apply aggregation function by row.
+
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Multivariate series to transform.
+    aggfunc : str
+        Aggregation function used for transformation.
+    weights : list of floats
+        Weights to apply in aggregation.
+
+    Returns
+    -------
+    y_agg: pd.Series
+        Transformed univariate series.
+    """
     if weights is None:
         aggfunc = _check_aggfunc(aggfunc, weighted=False)
         y_agg = aggfunc(y, axis=1)
