@@ -51,7 +51,7 @@ Highlights
 * MAPA forecaster (:pr:`7620`) :user:`phoeenniixx`
 * Interface to ``skforecast.recursive.ForecasterRecursive`` (:pr:`7554`) :user:`yarnabrina`
 * Native reducers (2nd generation) now support arbitrary imputation strategies (:pr:`7535`, :pr:`7646`) :user:`lenaklosik`
-* New detection metrics: RAND Index, windows F1-score (:pr:`7533`, :pr:`7628`) :user:`gavinkatz001`
+* New detection metrics: RAND Index, windowed F1-score (:pr:`7533`, :pr:`7628`) :user:`gavinkatz001`
 * forecasting ``evaluate`` now allows returning fitted estimators via ``return_model`` parameter (:pr:`7637`) :user:`marrov`
 * Tags and object API for Datasets (:pr:`7398`) :user:`felipeangelimvieira`
 * K-visibility clustering algorithm (:pr:`7592`) :user:`seigpe`

@@ -245,7 +245,7 @@ class RandIndex(BaseDetectionMetric):
         # Case 2/3: user-provided 'ilocs'
         if "ilocs" in y.columns:
             col_dtype = y["ilocs"].dtype
-            if pd.api.types.is_interval_dtype(col_dtype):
+            if isinstance(col_dtype, pd.IntervalDtype):
                 for i, row in y.iterrows():
                     interval = row["ilocs"]
                     seg_start, seg_end = interval.left, interval.right
