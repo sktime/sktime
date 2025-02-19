@@ -1,7 +1,11 @@
-"""Package for integrating external forecast providers into sktime."""
+"""
+Module for integrating external weather forecast APIs into sktime.
 
-# sktime/sktime/forecasting/external_forecast_adapter/__init__.py
-from .external_forecasts import ExternalForecasts
-from .forecast_provider import ForecastProvider
+This module provides an adapter that allows using external weather data
+as a forecaster for time-series analysis.
+"""
 
-"""This package contains external forecast adapters for sktime."""
+from .external_forecasts import ExternalForecastAdapter
+from .weather_forecast_provider import WeatherForecastProvider
+
+__all__ = ["ExternalForecastAdapter", "WeatherForecastProvider"]

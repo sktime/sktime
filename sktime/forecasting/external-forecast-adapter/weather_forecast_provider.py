@@ -1,30 +1,69 @@
-"""Implements the weather forecast provider interface."""
+"""WeatherForecastProvider fetches forecast data from an external weather API."""
 
-import pandas as pd
+import os
+
 import requests
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 class WeatherForecastProvider:
-    """Provides weather forecast data from an external API."""
+    """
+    Fetch weather forecast data from an external API.
 
-    def get_forecast(self, cutoff: pd.Timestamp, fh):
-        """Fetch weather forecasts from an external API."""
-        api_key = "632a98356425485c8b8182343251802"  # Replace with your API key
-        location = "New York"
-        url = f"https://api.weatherapi.com/v1/forecast.json?key={api_key}&q={location}&days=3"
+    Attributes
+    ----------
+    BASE_URL : str
+        API endpoint for fetching weather data.
+    api_key : str
+        API key loaded from environment variables.
+    """
 
-        response = requests.get(url)
-        data = response.json()
+    BASE_URL = "https://api.weatherapi.com/v1/forecast.json"  # Example API endpoint
 
-        # Ensure API response contains expected data
-        if "forecast" not in data:
-            raise ValueError("API response does not contain 'forecast' key.")
+    def __init__(self):
+        """Initialize the provider and load the API key."""
+        self.api_key = os.getenv("WEATHER_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "Missing API Key! Set WEATHER_API_KEY in environment variables."
+            )
 
-        fh_list = list(fh)  # Convert forecasting horizon to a list
+    def get_forecast(self, location: str, days: int = 1):
+        """
+        Fetch weather forecast for a given location.
 
-        # Extract forecast values
-        forecast_values = {
-            h: data["forecast"]["forecastday"][0]["day"]["avgtemp_c"] for h in fh_list
+        Parameters
+        ----------
+        location : str
+            City name or coordinates.
+        days : int, optional
+            Number of days to forecast (default: 1).
+
+        Returns
+        -------
+        dict
+            Weather data in JSON format.
+
+        Raises
+        ------
+        Exception
+            If the API request fails.
+        """
+        params = {
+            "key": self.api_key,
+            "q": location,
+            "days": days,
         }
 
-        return pd.Series(forecast_values, index=fh_list)
+        response = requests.get(self.BASE_URL, params=params)
+        if response.status_code != 200:
+            error_msg = (
+                f"API request failed! Status: {response.status_code}, "
+                f"Response: {response.text[:75]}..."
+            )
+            raise Exception(error_msg)
+
+        return response.json()

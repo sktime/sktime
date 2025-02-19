@@ -1,21 +1,34 @@
-"""Unit tests for the weather forecast provider integration."""
+"""Unit tests for ExternalForecastAdapter."""
+
+import unittest
 
 import pandas as pd
-from external_forecasts import ExternalForecasts
-from weather_forecast_provider import WeatherForecastProvider
+from external_forecasts import ExternalForecastAdapter
 
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon
 
-# Create provider and forecaster
-provider = WeatherForecastProvider()
-weather_forecaster = ExternalForecasts(provider)
 
-# Define forecasting horizon (e.g., next 3 days)
-fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+class TestExternalForecastAdapter(unittest.TestCase):
+    """Unit tests for the ExternalForecastAdapter class."""
 
-# Fit the forecaster (dummy fit)
-weather_forecaster.fit(y=pd.Series([20, 21, 22]), fh=fh)
+    def setUp(self):
+        """Set up sample data and initialize the forecaster."""
+        self.dates = pd.date_range(start="2023-01-01", periods=10, freq="D")
+        self.y = pd.Series([15, 16, 14, 18, 20, 19, 17, 16, 15, 14], index=self.dates)
+        self.forecaster = ExternalForecastAdapter(location="New York", forecast_days=3)
 
-# Predict
-forecast = weather_forecaster.predict(fh)
-print(forecast)
+    def test_fit(self):
+        """Test the fit method of ExternalForecastAdapter."""
+        self.forecaster.fit(self.y)
+        self.assertIsNotNone(self.forecaster.y_)
+
+    def test_predict(self):
+        """Test the predict method of ExternalForecastAdapter."""
+        self.forecaster.fit(self.y)
+        fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+        forecast = self.forecaster.predict(fh)
+        self.assertEqual(len(forecast), 3)  # Ensure it predicts 3 days ahead
+
+
+if __name__ == "__main__":
+    unittest.main()
