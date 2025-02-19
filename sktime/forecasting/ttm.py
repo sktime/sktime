@@ -9,11 +9,10 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
-    from torch.utils.data import Dataset
+    from torch.utils.data import Dataset, random_split
 else:
 
     class Dataset:
@@ -365,26 +364,22 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-        if self.validation_split is not None:
-            y_train, y_eval = temporal_train_test_split(
-                y, test_size=self.validation_split
-            )
-        else:
-            y_train = y
-            y_eval = None
-
-        train = PyTorchDataset(
-            y=y_train,
+        dataset = PyTorchDataset(
+            y=y,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
-
-        eval = None
         if self.validation_split is not None:
-            eval = PyTorchDataset(
-                y=y_eval,
-                context_length=config.context_length,
-                prediction_length=config.prediction_length,
+            train, eval = random_split(
+                dataset, [1 - self.validation_split, self.validation_split]
+            )
+        else:
+            train, eval = dataset, None
+
+        if train.__len__() <= 0:
+            raise ValueError(
+                "Training dataset is empty, either provide longer series"
+                + "or reduce the context_length and prediction_length"
             )
 
         # Get Training Configuration
@@ -541,7 +536,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 8,
+                    "context_length": 5,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
