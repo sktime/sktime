@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to search for missing init FILES.
-:set ff=unix
+set -euxo pipefail
 
 FILES=$( find ./sktime -type d '!' -exec test -e "{}/__init__.py" ";" -not -path "**/__pycache__" -not -path "**/datasets/data*" -not -path "**/contrib/*" -print )
 
