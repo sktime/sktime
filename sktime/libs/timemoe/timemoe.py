@@ -63,6 +63,9 @@ else:
     class StaticCache:
         """Dummy class if transformers is not installed."""
 
+    class PreTrainedModel:
+        """Dummy class if transformers is not installed."""
+
 
 from .timemoe_config import TimeMoeConfig
 from .ts_generation_mixin import TSGenerationMixin
