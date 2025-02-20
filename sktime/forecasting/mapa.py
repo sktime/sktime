@@ -176,11 +176,6 @@ class MAPAForecaster(BaseForecaster):
 
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
-        # if not all(
-        #     isinstance(level, int) and level > 0 for level in aggregation_levels
-        # ):
-        #     raise ValueError("All aggregation levels must be positive integers")
-
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
         if base_forecaster is not None:
