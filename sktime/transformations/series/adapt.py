@@ -11,6 +11,7 @@ from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.adapters._safe_call import _method_has_param_and_default
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 
 
@@ -183,10 +184,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        if hasattr(transformer, "_get_tags"):
-            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
+        if sklearn_ge_16:
+            from sklearn.utils import get_tags
+
+            trafo_fit_in_transform = not get_tags(transformer).requires_fit
         else:
-            trafo_fit_in_transform = False
+            if hasattr(transformer, "_get_tags"):
+                trafo_fit_in_transform = transformer._get_tags()["stateless"]
+            else:
+                trafo_fit_in_transform = False
 
         self._skip_fit = fit_in_transform or trafo_fit_in_transform
 
