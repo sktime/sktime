@@ -402,6 +402,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": False,
     }
 
     def __init__(
