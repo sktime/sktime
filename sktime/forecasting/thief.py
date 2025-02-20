@@ -36,6 +36,7 @@ Optional implements:
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
+
 # todo: write an informative docstring for the file or module, remove the above
 # todo: add an appropriate copyright notice for your estimator
 #       estimators contributed to sktime should have the copyright notice at the top
@@ -48,7 +49,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.forecasting.mapa import MAPAForecaster
 
 # todo: add any necessary imports here
 
@@ -83,12 +84,12 @@ class THieFForecaster(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         # requires-fh-in-fit = is forecasting horizon always required in fit?
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "authors": "satvshr",
     }
 
@@ -98,6 +99,7 @@ class THieFForecaster(BaseForecaster):
         self.base_forecaster = base_forecaster
         self.aggregation_levels = aggregation_levels
         self.reconciliation_method = reconciliation_method
+        self.agg_method = "mean"
         self.forecasters = {}
         super().__init__()
 
@@ -139,24 +141,18 @@ class THieFForecaster(BaseForecaster):
 
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
-        freq = y.index.freq or pd.infer_freq(y.index)
+        freq = y.index.freqstr or pd.infer_freq(y.index)
         if freq is None:
             raise ValueError("Could not determine frequency of time series.")
 
-        freq_map = {"D": 7, "W": 52, "M": 12, "H": 24, "Q": 4, "Y": 1}
-        m = freq_map.get(freq[0], None)
+        freq_map = {"D": 7, "W": 52, "ME": 12, "H": 24, "Q": 4, "Y": 1}
+        m = freq_map.get(freq, None)
 
         if m is None:
             raise ValueError(f"Unsupported frequency '{freq}'.")
 
         aggregation_levels = [i for i in range(1, m + 1) if m % i == 0]
-
         return aggregation_levels
-
-    def _aggregate(self, y, level):
-        """Aggregate the time series to the specified temporal level."""
-        aggregator = Aggregator(func="mean", window_length=level)
-        return aggregator.fit_transform(y)
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
@@ -189,18 +185,30 @@ class THieFForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._y_cols = (
+            y.columns
+            if isinstance(y, pd.DataFrame)
+            else pd.Index([y.name])
+            if y.name
+            else pd.Index(["c0"])
+        )
         if isinstance(y, pd.Series):
-            raise AttributeError("THieF requires a DataFrame with an index column.")
+            y = pd.DataFrame(y)
         self.aggregation_levels_ = self._determine_aggregation_levels(y)
         for level in self.aggregation_levels_:
-            y_agg = self._aggregate(y, level)
+            y_agg = MAPAForecaster._aggregate(self, y, level)
+            y_agg.columns = self._y_cols
+            print("*************")
+            print(y_agg)
+            print("*************")
             forecaster = self.base_forecaster.clone()
             forecaster.fit(y_agg, X, fh)
             self.forecasters[level] = forecaster
+
         return self
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -227,12 +235,22 @@ class THieFForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        self._forecast_store = {}
+        for level, forecaster in self.forecasters.items():
+            y_pred_agg = forecaster.predict(fh, X)
+            self._forecast_store[level] = y_pred_agg
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+        result = self._reconcile_forecasts(self._forecast_store)
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
+        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+        self._y_pred = pd.DataFrame(
+            result.reshape(-1, len(self._y_cols)),
+            index=forecast_index,
+            columns=self._y_cols,
+        )
+
+        return self._y_pred
+
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -269,9 +287,19 @@ class THieFForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        if isinstance(y, pd.Series):
+            raise AttributeError("THieF requires a DataFrame with an index column.")
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+        for level in self.aggregation_levels_:
+            y_agg = MAPAForecaster._aggregate(self, y, level)
+            if level in self.forecasters:
+                self.forecasters[level].update(y_agg, X, update_params=update_params)
+            else:
+                raise ValueError(
+                    f"No trained forecaster found for aggregation level {level}"
+                )
+
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
