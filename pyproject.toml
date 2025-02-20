@@ -407,7 +407,7 @@ ignore=[
   "S602", # sub process call with shell=True unsafe
   "C419", # Unnecessary list comprehension, some are flagged yet are not
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
-  "S113", # Probable use of httpx call withour timeout
+  "S113", # Probable use of httpx call without timeout
 ]
 allowed-confusables=["σ"]
 
