@@ -48,6 +48,9 @@ else:
     class StoppingCriteriaList:
         """Dummy class if the transformers module is not available."""
 
+    class ModelOutput:
+        """Dummy class if the transformers module is not available."""
+
 
 class TSGenerationMixin(GenerationMixin):
     """Mixin class for generation of token sequences."""
