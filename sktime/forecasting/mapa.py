@@ -176,10 +176,15 @@ class MAPAForecaster(BaseForecaster):
 
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
+        if not all(
+            isinstance(level, int) and level > 0 for level in aggregation_levels
+        ):
+            raise ValueError("All aggregation levels must be positive integers")
+
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
         if base_forecaster is not None:
-            return base_forecaster.clone()
+            return base_forecaster
 
         try:
             if _check_soft_dependencies("statsmodels", severity="none"):
@@ -432,9 +437,12 @@ class MAPAForecaster(BaseForecaster):
             else pd.Index(["c0"])
         )
         self._y_name = y.name if isinstance(y, pd.Series) else None
-        self._fh = fh
 
         y = self._ensure_positive_values(y)
+        y = self._handle_missing_data(y)
+
+        if isinstance(y, pd.Series):
+            y = pd.DataFrame(y)
 
         valid_levels = []
         for level in self._aggregation_levels:
@@ -465,7 +473,7 @@ class MAPAForecaster(BaseForecaster):
                 trend_data = decomposed[trend_cols].copy()
                 trend_data.columns = self._y_cols
 
-                forecaster.fit(trend_data, X=X, fh=fh)
+                forecaster.fit(trend_data)
                 self.forecasters[level] = forecaster
                 valid_levels.append(level)
 
@@ -506,7 +514,7 @@ class MAPAForecaster(BaseForecaster):
                     warn(f"No forecaster found for level {level}")
                     continue
 
-                forecast = self.forecasters[level].predict(fh, X)
+                forecast = self.forecasters[level].predict(fh)
 
                 if isinstance(forecast, pd.Series):
                     forecast = pd.DataFrame(forecast)
@@ -530,10 +538,12 @@ class MAPAForecaster(BaseForecaster):
                     else:  # additive
                         forecast = forecast.add(seasonal_adjustments, axis=0)
 
-                if forecast.values.ndim == 1:
-                    forecast.values = forecast.values.reshape(-1, 1)
+                forecast_values = forecast.values
 
-                forecasts.append(forecast.values.ravel())
+                if forecast_values.ndim == 1:
+                    forecast_values = forecast_values.reshape(-1, 1)
+
+                forecasts.append(forecast_values.ravel())
 
             except Exception as e:
                 warn(f"Failed to generate forecast for level {level}: {str(e)}\n")
@@ -656,6 +666,7 @@ class MAPAForecaster(BaseForecaster):
             y.columns = self._y_cols
 
         y = self._ensure_positive_values(y)
+        y = self._handle_missing_data(y)
 
         for level in self._aggregation_levels:
             try:
@@ -664,11 +675,9 @@ class MAPAForecaster(BaseForecaster):
 
                 if update_params:
                     if hasattr(self.forecasters[level], "update"):
-                        self.forecasters[level].update(
-                            y_agg, X=X, fh=self._fh, update_params=True
-                        )
+                        self.forecasters[level].update(y_agg, update_params=True)
                     else:
-                        self.forecasters[level].fit(y_agg, X=X, fh=self._fh)
+                        self.forecasters[level].fit(y_agg)
 
             except Exception as e:
                 warn(f"Failed to update level {level}: {str(e)}")
