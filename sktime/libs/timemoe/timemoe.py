@@ -66,6 +66,12 @@ else:
     class PreTrainedModel:
         """Dummy class if transformers is not installed."""
 
+    class MoeModelOutputWithPast:
+        """Dummy class if transformers is not installed."""
+
+    class MoeCausalLMOutputWithPast:
+        """Dummy class if transformers is not installed."""
+
 
 from .timemoe_config import TimeMoeConfig
 from .ts_generation_mixin import TSGenerationMixin
