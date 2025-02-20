@@ -118,6 +118,49 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
             weighted_precision=self._weighted_precision,
         )
 
+    def evaluate(self, y_true=None, y_pred=None, X=None):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pd.DataFrame
+            time series in ``sktime`` compatible data container format.
+            Ground truth (correct) event locations, in ``X``.
+            Should only be ``pd.DataFrame`` ,
+            Expected format:
+                Index: time indices or event identifiers
+                Columns: depending on scitype (`points` or `segments`).
+                `points` assumes single column, `segments` require ["start","end"].
+
+            For further details on data format, see glossary on :term:`mtype`.
+
+        y_pred : pd.DataFrame
+            time series in ``sktime`` compatible data container format
+            Detected events to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        X : optional, pd.DataFrame
+            Time series that is being labelled.
+            If not provided, assumes ``RangeIndex`` for ``X``, and that
+            values in ``X`` do not matter.
+
+        Returns
+        -------
+        loss : float
+            Calculated metric.
+        """
+        # Input checks and conversions
+        y_true_inner, y_pred_inner, X_inner = self._check_ys(y_true, y_pred, X)
+
+        # pass to inner function
+        out = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, X=X_inner)
+
+        if not isinstance(out, float):
+            out = float(out)
+        return out
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
