@@ -11,6 +11,8 @@ from sktime.utils.dependencies import _check_estimator_deps
 
 
 def test_excluded_tests_by_test():
+    a = EXCLUDED_TESTS_BY_TEST["test_get_test_params_coverage"].copy()
+    b = EXCLUDE_SOFT_DEPS.copy()
     """Test that EXCLUDED_TESTS_BY_TEST contains estimators with <2 test params."""
     all_ests = all_estimators()
     filtered_estimators = [
@@ -36,6 +38,8 @@ def test_excluded_tests_by_test():
         "do not match. Please remove the estimator you have added "
         "test parameters to from EXCLUDED_TESTS_BY_TEST or EXCLUDE_SOFT_DEPS."
     )
+    assert a == EXCLUDED_TESTS_BY_TEST["test_get_test_params_coverage"]
+    assert b == EXCLUDE_SOFT_DEPS
 
 
 def test_exclude_estimators():
