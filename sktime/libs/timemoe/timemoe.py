@@ -55,7 +55,6 @@ if _check_soft_dependencies("transformers", severity="none"):
         MoeCausalLMOutputWithPast,
         MoeModelOutputWithPast,
     )
-    from transformers.utils import logging
 else:
 
     class Cache:
@@ -67,8 +66,6 @@ else:
 
 from .timemoe_config import TimeMoeConfig
 from .ts_generation_mixin import TSGenerationMixin
-
-logger = logging.get_logger(__name__)
 
 
 def _get_unpad_data(attention_mask):
@@ -594,7 +591,7 @@ class TimeMoeAttention(nn.Module):
         self.config = config
         self.layer_idx = layer_idx
         if layer_idx is None:
-            logger.warning_once(
+            warnings.warn(
                 f"Instantiating {self.__class__.__name__} without passing `layer_idx`"
                 "is not recommended and will to errors during the forward call,"
                 "if caching is used. Please make sure to provide a `layer_idx`, when"
@@ -882,7 +879,7 @@ class TimeMoePreTrainedModel(PreTrainedModel):
 
     Inherits from PreTrainedModel.
 
-    Attributes
+    Parameters
     ----------
     config_class : class
         The configuration class to use for this model.
@@ -1052,7 +1049,7 @@ class TimeMoeModel(TimeMoePreTrainedModel):
 
         if self.gradient_checkpointing and self.training:
             if use_cache:
-                logger.warning_once(
+                warnings.warn(
                     "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."  # noqa: E501
                 )
                 use_cache = False
@@ -1552,7 +1549,7 @@ class TimeMoeForPrediction(TimeMoePreTrainedModel, TSGenerationMixin):
         # if `inputs_embeds` are passed, we only want to use them in the 1st generation
         # step.
         if inputs_embeds is not None and past_key_values is None:
-            logger.info("Use input_embedding")
+            warnings.warn("Use input_embedding")
             model_inputs = {"inputs_embeds": inputs_embeds}
         else:
             model_inputs = {"input_ids": input_ids}
