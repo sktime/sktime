@@ -7,16 +7,13 @@ __author__ = ["KimMeen", "jgyasu"]
 from types import SimpleNamespace
 from typing import Optional
 
-import pandas as pd
-
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import _BaseGlobalForecaster
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.validation.forecasting import check_X
 
 torch = _safe_import("torch")
 
 
-class TimeLLMForecaster(BaseForecaster):
+class TimeLLMForecaster(_BaseGlobalForecaster):
     """
     Interface to the Time-LLM.
 
@@ -79,15 +76,24 @@ class TimeLLMForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "scitype:y": "univariate",
         "authors": ["KimMeen", "jgyasu"],
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM
         "maintainers": ["jgyasu"],
         "python_dependencies": ["torch", "transformers"],
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -97,6 +103,7 @@ class TimeLLMForecaster(BaseForecaster):
         seq_len=96,
         llm_model="GPT2",
         llm_layers=3,
+        llm_dim=768,
         patch_len=16,
         stride=8,
         d_model=128,
@@ -104,98 +111,126 @@ class TimeLLMForecaster(BaseForecaster):
         n_heads=4,
         dropout=0.1,
         device: Optional[str] = None,
+        broadcasting=False,
+        prompt_domain=False,
     ):
         self.task_name = task_name
         self.pred_len = pred_len
         self.seq_len = seq_len
         self.llm_model = llm_model
         self.llm_layers = llm_layers
+        self.llm_dim = llm_dim
         self.patch_len = patch_len
         self.stride = stride
         self.d_model = d_model
         self.d_ff = d_ff
         self.n_heads = n_heads
         self.dropout = dropout
-
         self.device = device
+        self.broadcasting = broadcasting
+        self.prompt_domain = prompt_domain
+
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
 
         super().__init__()
 
-    def _model_config(self, n_variables):
-        return SimpleNamespace(
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        configs = SimpleNamespace(
             task_name=self.task_name,
             pred_len=self.pred_len,
             seq_len=self.seq_len,
-            enc_in=n_variables,
+            llm_model=self.llm_model,
+            llm_layers=self.llm_layers,
+            llm_dim=self.llm_dim,
+            patch_len=self.patch_len,
+            stride=self.stride,
             d_model=self.d_model,
             d_ff=self.d_ff,
             n_heads=self.n_heads,
-            llm_layers=self.llm_layers,
             dropout=self.dropout,
-            patch_len=self.patch_len,
-            stride=self.stride,
-            llm_model=self.llm_model,
-            llm_dim=768 if self.llm_model in ["GPT2", "BERT"] else 4096,
+            enc_in=1 if self.broadcasting else y.shape[1],
             prompt_domain=False,
         )
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data."""
+        if self.device is None:
+            self.device_ = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device_ = self.device
+
         from sktime.libs.time_llm.TimeLLM import Model
 
-        X = check_X(X)
+        self.model_ = Model(configs).to(self.device_)
 
-        if isinstance(X, pd.DataFrame):
-            self.n_variables_ = X.shape[1]
-        else:
-            self.n_variables_ = 1
+        # todo
 
-        if self.device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = torch.device(self.device)
-
-        config = self._model_config(self.n_variables_)
-        self.model_ = Model(config).to(self.device)
-
-        self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon."""
-        if not self._is_fitted:
-            raise RuntimeError("Forecaster is not fitted yet.")
+    def _predict(self, fh, X=None, y=None):
+        """Forecast time series at future horizon.
 
-        if isinstance(X, pd.DataFrame):
-            x_enc = torch.FloatTensor(X.values).unsqueeze(0)
-        else:
-            x_enc = torch.FloatTensor(X).unsqueeze(0).unsqueeze(-1)
+        private _predict containing the core logic, called from predict
 
-        x_enc = x_enc.to(self.device)
+        State required:
+            Requires state to be "fitted".
 
-        x_mark_enc = torch.zeros((1, x_enc.shape[1], 1)).to(self.device)
-        x_dec = torch.zeros((1, self.pred_len, x_enc.shape[2])).to(self.device)
-        x_mark_dec = torch.zeros((1, self.pred_len, 1)).to(self.device)
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
-        with torch.no_grad():
-            predictions = self.model_(x_enc, x_mark_enc, x_dec, x_mark_dec)
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+            (for_global)
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+        y : sktime time series object, optional (default=None) (for_global)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
 
-        predictions = predictions.cpu().numpy().squeeze()
 
-        if self.n_variables_ == 1:
-            predictions = predictions.reshape(-1, 1)
-
-        index = pd.RangeIndex(
-            start=X.index[-1] + 1, stop=X.index[-1] + self.pred_len + 1
-        )
-
-        if isinstance(X, pd.DataFrame):
-            columns = X.columns
-            predictions = pd.DataFrame(predictions, index=index, columns=columns)
-        else:
-            predictions = pd.DataFrame(predictions, index=index)
-
-        return predictions
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Point predictions
+        """
+        # todo
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -207,6 +242,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "seq_len": 96,
                 "llm_model": "GPT2",
                 "llm_layers": 3,
+                "llm_dim": 768,
                 "patch_len": 16,
                 "stride": 8,
                 "d_model": 128,
@@ -214,6 +250,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "n_heads": 4,
                 "dropout": 0.1,
                 "device": None,
+                "prompt_domain": False,
             },
             {
                 "task_name": "short_term_forecast",
@@ -221,6 +258,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "seq_len": 96,
                 "llm_model": "BERT",
                 "llm_layers": 3,
+                "llm_dim": 768,
                 "patch_len": 16,
                 "stride": 8,
                 "d_model": 128,
@@ -228,13 +266,15 @@ class TimeLLMForecaster(BaseForecaster):
                 "n_heads": 4,
                 "dropout": 0.1,
                 "device": None,
+                "prompt_domain": False,
             },
             {
-                "task_name": "long_term_forecast",
+                "task_name": "short_term_forecast",
                 "pred_len": 24,
                 "seq_len": 96,
-                "llm_model": "LLAMA",
+                "llm_model": "GPT2",
                 "llm_layers": 3,
+                "llm_dim": 768,
                 "patch_len": 16,
                 "stride": 8,
                 "d_model": 128,
@@ -242,6 +282,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "n_heads": 4,
                 "dropout": 0.1,
                 "device": None,
+                "prompt_domain": False,
             },
         ]
 
