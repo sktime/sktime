@@ -352,7 +352,7 @@ class TimeMoeRotaryEmbedding(nn.Module):
 
 
 # Copied from transformers.models.llama.modeling_llama.LlamaRMSNorm with Llama->TimeMOE
-class TimeMoeRMSNorm(torch.nn.Module):
+class TimeMoeRMSNorm(nn.Module):
     """
     Implement RMSNorm (Root Mean Square Layer Normalization) for TimeMOE as outlined in
     `transformers.models.llama.modeling_llama.LlamaRMSNorm`.
