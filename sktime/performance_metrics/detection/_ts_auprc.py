@@ -44,7 +44,7 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
 
 
 class TimeSeriesAUPRC(BaseDetectionMetric):
-    """TimeSeriesAUPRC: TimeSeries area under precision recall curve.
+    r"""TimeSeriesAUPRC: TimeSeries area under precision recall curve.
 
     This metric is used to evaluate the performan of anomaly detection models
     calculating the precision and recall across different threshold of predicted
@@ -53,13 +53,13 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
 
     Parameters
     ----------
-    integration : string, optional (default=trapezoid)
+    integration : str, optional (default=trapezoid)
                  This parameter specifies the method used to compute
                  the Area Under the Precision-Recall Curve (AUPRC).
-    weighted_precision: Boolean, optional (default=True)
+    weighted_precision: bool, optional (default=True)
                  parameter determines whether the precision should be
                  computed in a weighted fashion.
-    with_scores : Boolean, optional (default= False)
+    with_scores : bool, optional (default= False)
                  This parameter determines whether the input is in
                  label-score format. If False, then assumes input format
                  to be Predicted and Actual Events.
@@ -121,29 +121,28 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
     def evaluate(self, y_true=None, y_pred=None, X=None):
         """Evaluate the desired metric on given inputs.
 
-        private _evaluate containing core logic, called from evaluate
+        private _evaluate containing core logic, called from evaluate.
 
         Parameters
         ----------
-        y_true : pd.DataFrame
-            time series in ``sktime`` compatible data container format.
-            Ground truth (correct) event locations, in ``X``.
-            Should only be ``pd.DataFrame`` ,
-            Expected format:
-                Index: time indices or event identifiers
-                Columns: depending on scitype (`points` or `segments`).
-                `points` assumes single column, `segments` require ["start","end"].
-
+        y_true :pd.DataFrame
+                time series in ``sktime`` compatible data container format.
+                Ground truth (correct) event locations, in ``X``\
+                Should only be ``pd.DataFrame``.
+                Expected format:
+                    Index: time indices or event identifiers
+                    Columns: depending on scitype (`points` or `segments`).
+                    `points` assumes single column, `segments` require ["start","end"].
             For further details on data format, see glossary on :term:`mtype`.
 
-        y_pred : pd.DataFrame
-            time series in ``sktime`` compatible data container format
-            Detected events to evaluate against ground truth.
-            Must be of same format as ``y_true``, same indices and columns if indexed.
+        y_pred :pd.DataFrame
+                time series in ``sktime`` compatible data container format \
+                Detected events to evaluate against ground truth. \
+                Must be same format as ``y_true``, same indices and columns if indexed.
 
         X : optional, pd.DataFrame
             Time series that is being labelled.
-            If not provided, assumes ``RangeIndex`` for ``X``, and that
+            If not provided, assumes ``RangeIndex`` for ``X``, and that \
             values in ``X`` do not matter.
 
         Returns
