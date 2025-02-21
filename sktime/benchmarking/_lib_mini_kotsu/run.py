@@ -8,6 +8,9 @@ from typing import Optional, Union
 
 import pandas as pd
 
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +21,7 @@ def run(
     force_rerun: Optional[list[str]] = None,
     artefacts_store_dir: Optional[str] = None,
     run_params: Optional[dict] = None,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Run a registry of models through a registry of validations.
 
@@ -26,7 +30,7 @@ def run(
     model_registry: ModelRegistry
         contains the registry of models to be run through validations.
     validation_registry: ValidationRegistry
-        contains the registry of validations to runeach model through.
+        contains the registry of validations to run each model through.
     results_path: string, default = "./validation_results.csv"
         The file path to which the results will be written to, and results from prior
         runs will be read from.
@@ -45,6 +49,8 @@ def run(
         `validation_artefacts_dir` and `model_artefacts_dir`.
     run_params: dict, default=None
         A dictionary of optional run parameters.
+    verbose: bool, default=False
+        If True, displays a progress bar using tqdm (if installed).
 
     Returns
     -------
@@ -52,6 +58,18 @@ def run(
     """
     if run_params is None:
         run_params = {}
+
+    # Check for tqdm availability
+    tqdm_available = _check_soft_dependencies("tqdm", severity="none")
+
+    if verbose and not tqdm_available:
+        warn("tqdm is not installed. Continuing without progress bars.", logger)
+
+    if verbose:
+        if tqdm_available:
+            from tqdm import tqdm  # Import inside the block
+        else:
+            warn("tqdm is not installed. Continuing without progress bars.", logger)
 
     try:
         results_df = pd.read_csv(results_path)
@@ -62,13 +80,26 @@ def run(
     results_df = results_df.set_index(["validation_id", "model_id"], drop=False)
     results_list = []
 
-    for validation_spec in validation_registry.all():
+    # Prepare generators for loops based on verbose mode
+    validation_gen = (
+        tqdm(validation_registry.all(), desc="Running validations")
+        if verbose and tqdm_available
+        else validation_registry.all()
+    )
+    model_gen = (
+        tqdm(model_registry.all(), desc="Running models", leave=False)
+        if verbose and tqdm_available
+        else model_registry.all()
+    )
+
+    for validation_spec in validation_gen:
         if validation_spec.deprecated:
             logger.info(
                 f"Skipping validation: {validation_spec.id} - as is deprecated."
             )
             continue
-        for model_spec in model_registry.all():
+
+        for model_spec in model_gen:
             if model_spec.deprecated:
                 logger.info(f"Skipping model: {model_spec.id} - as is deprecated.")
                 continue
