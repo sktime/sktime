@@ -497,3 +497,34 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
         ValueError, match="(could not interpret freq).*(use a valid offset in index)"
     ):
         model.fit(y, fh=[1, 2, 3])
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        NeuralForecastDilatedRNN,
+        NeuralForecastGRU,
+        NeuralForecastLSTM,
+        NeuralForecastRNN,
+        NeuralForecastTCN,
+    ],
+)
+def test_neural_forecast_with_hierarchical_data(model_class) -> None:
+    """Test with hierarchical data."""
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    df = pandas.read_csv(
+        "https://raw.githubusercontent.com/felipeangelimvieira/prophetverse/f61e948d2840f73688570561218d2cf810a256bc/src/prophetverse/datasets/raw/tourism.csv"
+    )
+    df["Quarter"] = pandas.to_datetime(df["Quarter"]).dt.to_period("Q")
+    y = df.set_index(["State", "Region", "Purpose", "Quarter"])[["Trips"]]
+    y = y.groupby(level=["Purpose", "State", "Quarter"]).sum()
+    y = Aggregator().fit_transform(y)
+
+    lstm = model_class(freq="Q", trainer_kwargs={"accelerator": "cpu"})
+    lstm.fit(y, fh=[1, 2, 3])
+
+    with pytest.raises(
+        ValueError, match="Keyerror raised while predicting Hierarchical data."
+    ):
+        lstm.predict(fh=[1, 2, 3])
