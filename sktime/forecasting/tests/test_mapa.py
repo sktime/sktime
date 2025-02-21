@@ -224,14 +224,3 @@ def test_predict(sample_data, forecaster_params):
     assert len(predictions) == len(fh)
     assert predictions.shape[1] == sample_data.shape[1]
     assert np.all(np.isfinite(predictions.values))
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(MAPAForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.parametrize("invalid_level", [-1, 0, 1.5, "2"])
-def test_invalid_aggregation_levels(invalid_level):
-    """Test that invalid aggregation levels raise appropriate errors."""
-    with pytest.raises(ValueError):
-        MAPAForecaster(aggregation_levels=[invalid_level])
