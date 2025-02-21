@@ -197,10 +197,6 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OSX packages
-        shell: bash
-        run: ./.github/scripts/install_osx_dependencies.sh
-
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[dev,cython_extras] --no-cache-dir
@@ -279,9 +275,6 @@ jobs:
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-
-      - name: Install OSX packages
-        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         shell: bash
