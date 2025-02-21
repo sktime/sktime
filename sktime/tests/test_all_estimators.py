@@ -824,7 +824,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         if (
             len(unreserved_param_names) > 0
-        ) and estimator_class not in EXCLUDE_SOFT_DEPS:
+        ) and estimator_class.__name__ not in EXCLUDE_SOFT_DEPS:
             msg = (
                 f"{estimator_class.__name__}.get_test_params should return "
                 f"at least two test parameter sets, but only {len(param_list)} found."
