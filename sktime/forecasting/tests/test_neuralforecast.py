@@ -509,6 +509,18 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
         NeuralForecastTCN,
     ],
 )
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            NeuralForecastLSTM,
+            NeuralForecastRNN,
+            NeuralForecastDilatedRNN,
+            NeuralForecastGRU,
+            NeuralForecastTCN,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_neural_forecast_with_hierarchical_data(model_class) -> None:
     """Test with hierarchical data."""
     from sktime.transformations.hierarchical.aggregate import Aggregator
