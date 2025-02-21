@@ -30,7 +30,6 @@ from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
-    EXCLUDE_SOFT_DEPS,
     EXCLUDED_TESTS,
     NON_STATE_CHANGING_METHODS,
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
@@ -822,9 +821,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         #     f"but found the following reserved parameters as keys: {reserved_errs}"
         # )
 
-        if (
-            len(unreserved_param_names) > 0
-        ) and estimator_class.__name__ not in EXCLUDE_SOFT_DEPS:
+        if len(unreserved_param_names) > 0:
             msg = (
                 f"{estimator_class.__name__}.get_test_params should return "
                 f"at least two test parameter sets, but only {len(param_list)} found."
