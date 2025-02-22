@@ -61,18 +61,14 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     --------
     >>> from sktime.forecasting.time_llm import TimeLLMForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.split import temporal_train_test_split
-    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y)
-    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> forecaster = TimeLLMForecaster(
     ...     pred_len=36,
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y_train)
-    >>> y_pred = forecaster.predict(fh)
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(y)
     """
 
     _tags = {
@@ -191,10 +187,6 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
 
         self.model_ = Model(configs).to(self.device_)
 
-        # todo
-
-        return self
-
     def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
 
@@ -230,7 +222,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        # todo
+        return self.model_.forward(X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
