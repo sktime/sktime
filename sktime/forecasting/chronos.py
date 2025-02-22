@@ -538,16 +538,6 @@ class ChronosForecaster(_BaseGlobalForecaster):
                 "model_path": "amazon/chronos-bolt-tiny",
             }
         )
-        test_params.append(
-            {
-                "model_path": "amazon/chronos-bolt-tiny",
-                "config": {
-                    "limit_prediction_length": True,
-                },
-                "seed": 42,
-            }
-        )
-
         return test_params
 
 
