@@ -1889,16 +1889,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
 
     impute_method : str, None, or sktime transformation, optional
-        Imputation method to use for missing values in the lagged data
-
-        * default="bfill"
-        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
-          To pass further parameters, pass the ``Imputer`` transformer directly,
-          as described below.
-        * if sktime transformer, this transformer is applied to the lagged data.
-          This needs to be a transformer that removes missing data, and can be
-          an ``Imputer``.
-        * if None, no imputation is done when applying ``Lag`` transformer
+        Imputation method passed for backward compatibility
 
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
@@ -1996,14 +1987,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
-        impute_method = self.impute_method
         lags = self._lags
         trafos = self.transformers
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lagger_y_to_X = ReducerTransform(
-            lags=lags, transformers=trafos, impute_method=impute_method
-        )
+        lagger_y_to_X = ReducerTransform(lags=lags, transformers=trafos)
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
@@ -2026,10 +2014,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         else:
             self.empty_lags_ = False
 
-        yt = yt.loc[y_notna_idx]
-
         Xt = lagger_y_to_X.fit_transform(X=y, y=X)
-        Xt = Xt.loc[y_notna_idx]
+
+        Xt_notna_idx = _get_notna_idx(Xt)
+        yt_notna_idx = _get_notna_idx(yt)
+        notna_idx = Xt_notna_idx.intersection(yt_notna_idx)
+
+        yt = yt.loc[notna_idx]
+        Xt = Xt.loc[notna_idx]
 
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
@@ -2075,7 +2067,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
-        impute_method = self.impute_method
         X_treatment = self.X_treatment
         windows_identical = self.windows_identical
 
@@ -2102,7 +2093,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             yt = lagger_y_to_y[lag].fit_transform(X=y)
 
-            impute_method = self.impute_method
             lags = self._lags
             trafos = self.transformers
 
@@ -2112,10 +2102,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             # lagger_y_to_X_ will lag y to obtain the sklearn X
             # also updates self.lagger_y_to_X_ by reference
             lagger_y_to_X[lag] = ReducerTransform(
-                lags=lags,
-                shifted_vars_lag=X_lag,
-                transformers=trafos,
-                impute_method=impute_method,
+                lags=lags, shifted_vars_lag=X_lag, transformers=trafos
             )
 
             Xtt = lagger_y_to_X[lag].fit_transform(X=y, y=X)
@@ -2129,7 +2116,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             if windows_identical:
                 # determine offset for uniform window length
                 # convert to abs values to account for in-sample prediction
-                offset = np.abs(fh_rel.to_numpy()).max() - abs(lag)
+                # when lag is in-sample and less than window length, then
+                # take values from first non-nan sample onwards i.e. first
+                # window onwards
+                lag_len = lags[-1]
+                if lag >= 0 and lag < lag_len:
+                    offset = np.abs(fh_rel.to_numpy()).max() - lag_len
+                else:
+                    offset = np.abs(fh_rel.to_numpy()).max() - abs(lag)
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
 
@@ -2305,16 +2299,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         window length used in the reduction algorithm
 
     impute_method : str, None, or sktime transformation, optional
-        Imputation method to use for missing values in the lagged data
-
-        * default="bfill"
-        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
-          To pass further parameters, pass the ``Imputer`` transformer directly,
-          as described below.
-        * if sktime transformer, this transformer is applied to the lagged data.
-          This needs to be a transformer that removes missing data, and can be
-          an ``Imputer``.
-        * if None, no imputation is done when applying ``Lag`` transformer
+        Imputation method passed for backward compatibility
 
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
@@ -2367,21 +2352,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
-
-        if isinstance(impute_method, str):
-            from sktime.transformations.series.impute import Imputer
-
-            self._impute_method = Imputer(method=impute_method)
-        elif impute_method is None:
-            self._impute_method = None
-        elif scitype(impute_method) == "transformer":
-            self._impute_method = impute_method.clone()
-        else:
-            raise ValueError(
-                f"Error in ReducerTransform, "
-                f"impute_method must be str, None, or sktime transformer, "
-                f"but found {impute_method}"
-            )
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -2518,9 +2488,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lags=1, index_out="extend")
 
-            if self._impute_method is not None:
-                lag_plus = lag_plus * self._impute_method.clone()
-
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
             predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
@@ -2570,9 +2537,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lag_plus = Lag(lags=1, index_out="extend")
 
-        if self._impute_method is not None:
-            lag_plus = lag_plus * self._impute_method.clone()
-
         Xtt = lag_plus.fit_transform(Xt)
 
         Xtt_predrows = slice_at_ix(Xtt, fh_abs)
@@ -2618,13 +2582,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
-        from sktime.transformations.series.impute import Imputer
-
         est = LinearRegression()
-        forecaster_imputer = Imputer(
-            method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
-        )
 
         params1 = {
             "estimator": est,
@@ -2635,34 +2593,19 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
-            "impute_method": None,  # None is the default
         }
         params3 = {
             "estimator": est,
             "window_length": 4,
             "pooling": "local",
-            "impute_method": forecaster_imputer,  # test imputation with forecaster
         }
         params4 = {
             "estimator": est,
             "window_length": 4,
             "pooling": "global",
-            "impute_method": forecaster_imputer,
-        }
-        params5 = {
-            "estimator": est,
-            "window_length": 4,
-            "pooling": "local",
-            "impute_method": "pad",
-        }
-        params6 = {
-            "estimator": est,
-            "window_length": 4,
-            "pooling": "global",
-            "impute_method": "pad",
         }
 
-        return [params1, params2, params3, params4, params5, params6]
+        return [params1, params2, params3, params4]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):

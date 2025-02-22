@@ -548,13 +548,10 @@ class ReducerTransform(BaseTransformer):
                 exog_t = exog_t * Lag(
                     lags=lag, freq=freq, index_out="original", keep_column_names=True
                 )
-            transformers += [("exog", exog_t)]
+            transformers += [("exog", exog_t * impute_method)]
         if self.transformers is not None:
             transformers += self.transformers
         t = FeatureUnion(transformers, flatten_transform_index=False)
-
-        if impute_method is not None:
-            t = t * impute_method
 
         self.trafo_ = t.fit(X=X, y=y)
 
