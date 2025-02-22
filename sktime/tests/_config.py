@@ -382,6 +382,7 @@ EXCLUDE_SOFT_DEPS = [
     "EnbPIForecaster",
     "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
+    "HFTransformersForecaster",
     "HolidayFeatures",
     "ParamFitterPipeline",
     "PluginParamsForecaster",
