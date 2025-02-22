@@ -35,7 +35,10 @@ def test_multiindex_to_df_list_large_level_values():
 )
 @pytest.mark.parametrize("name", ["0", 0, None])
 def test_pdseries_round_trips(name):
-    """Test consistency of round trips between pd.Series and pd.DataFrame mtypes."""
+    """Test consistency of round trips between pd.Series and pd.DataFrame mtypes.
+
+    One of the failures modes in bug report #7763.
+    """
     import pandas as pd
 
     from sktime.datatypes import convert_to
@@ -68,7 +71,10 @@ def test_pdseries_round_trips(name):
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_MvS_to_UvS_as_Series():
-    """Checks that column name in MvS is preserved as attr name in UvS"""
+    """Checks that column name in MvS is preserved as attr name in UvS.
+
+    One of the failures modes in bug report #7763.
+    """
     y = load_airline()
     z = y.to_frame()
     w = convert_MvS_to_UvS_as_Series(z)
