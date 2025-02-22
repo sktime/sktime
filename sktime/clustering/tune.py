@@ -147,9 +147,9 @@ class ClusterSupportDetection(BaseParamFitter):
         """Return the elbow point by detecting when the point of maximum curvature."""
         inertia_values = np.array(inertia_values)
         x = np.array(param_range)
-        dy_dx = np.diff(inertia_values)/np.diff(x)
-        d2y_dx2 = np.diff(dy_dx)/np.diff(x[:-1])
-        curvature = np.abs(d2y_dx2) / (1 + dy_dx[:-1]**2)**(3/2)
+        dy_dx = np.diff(inertia_values) / np.diff(x)
+        d2y_dx2 = np.diff(dy_dx) / np.diff(x[:-1])
+        curvature = np.abs(d2y_dx2) / (1 + dy_dx[:-1] ** 2) ** (3 / 2)
         max_curvature_idx = np.argmax(curvature)
         return param_range[max_curvature_idx + 1]
 
