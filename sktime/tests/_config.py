@@ -362,6 +362,23 @@ EXCLUDED_TESTS_BY_TEST = {
         "UnobservedComponents",
         "WEASEL",
         "WhiteNoiseAugmenter",
+        # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
+        # too after adding test parameters to them
+        "BaggingForecaster",
+        "ClustererPipeline",
+        "DirectTabularRegressionForecaster",
+        "EnbPIForecaster",
+        "FittedParamExtractor",
+        "ForecastingOptunaSearchCV",
+        "HolidayFeatures",
+        "ParamFitterPipeline",
+        "PluginParamsForecaster",
+        "PluginParamsTransformer",
+        "RegressorPipeline",
+        "SupervisedIntervals",
+        "TSBootstrapAdapter",
+        "ThetaModularForecaster",
+        "WeightedEnsembleClassifier",
     ]
 }
 
