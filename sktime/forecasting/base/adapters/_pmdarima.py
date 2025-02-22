@@ -281,6 +281,13 @@ class _PmdArimaAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
+        end_int = fh_abs_int[-1] + 2
+        if X is not None:
+            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
+            X = X.iloc[:end_int]
+            
         # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
@@ -321,7 +328,7 @@ class _PmdArimaAdapter(BaseForecaster):
             pred_int[(var_name, a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
             pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
-        return pred_int
+        return pred_int.astype(float)
 
     def _get_fitted_params(self):
         """Get fitted parameters.
