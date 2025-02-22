@@ -209,6 +209,18 @@ Time Series Segmentation
 
     STRAY
 
+.. currentmodule:: sktime.detection.bs.BinarySegmentation
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BinarySegmentation
+
+
+Reduction to clustering
+^^^^^^^^^^^^^^^^^^^^^^^
+
 .. currentmodule:: sktime.detection.clust
 
 .. autosummary::
@@ -217,13 +229,14 @@ Time Series Segmentation
 
     ClusterSegmenter
 
-.. currentmodule:: sktime.detection.bs.BinarySegmentation
+.. currentmodule:: sktime.detection.wclust
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    BinarySegmentation
+    WindowSegmenter
+
 
 Naive Baselines
 ^^^^^^^^^^^^^^^

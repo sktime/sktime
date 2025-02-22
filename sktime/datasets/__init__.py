@@ -43,6 +43,14 @@ __all__ = [
     "load_tecator",
     "load_fpp3",
     "DATASET_NAMES_FPP3",
+    "BaseDataset",
+    "Airline",
+    "Longley",
+    "Lynx",
+    "Macroeconomic",
+    "ShampooSales",
+    "Solar",
+    "USChange",
 ]
 
 from sktime.datasets._data_io import (
@@ -92,4 +100,14 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
+)
+from sktime.datasets.base import BaseDataset
+from sktime.datasets.forecasting import (
+    Airline,
+    Longley,
+    Lynx,
+    Macroeconomic,
+    ShampooSales,
+    Solar,
+    USChange,
 )
