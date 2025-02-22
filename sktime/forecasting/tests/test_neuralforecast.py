@@ -533,10 +533,12 @@ def test_neural_forecast_with_hierarchical_data(model_class) -> None:
     y = y.groupby(level=["Purpose", "State", "Quarter"]).sum()
     y = Aggregator().fit_transform(y)
 
-    lstm = model_class(freq="Q", trainer_kwargs={"accelerator": "cpu"})
-    lstm.fit(y, fh=[1, 2, 3])
+    model = model_class(
+        freq="Q", trainer_kwargs={"accelerator": "cpu", "logger": False}
+    )
+    model.fit(y, fh=[1, 2, 3])
 
     with pytest.raises(
-        ValueError, match="Keyerror raised while predicting Hierarchical data."
+        ValueError, match="KeyError None of [{key}] are in the [{axis_name}]"
     ):
-        lstm.predict(fh=[1, 2, 3])
+        model.predict(fh=[1, 2, 3])
