@@ -178,7 +178,7 @@ class ClusterSupportDetection(BaseParamFitter):
             "estimator": TimeSeriesKMedoids(),
             "param_range": range(2, 10),
             "metric": None,
-            "metric_params": {"elbow_threshold": 0.05},
+            "metric_params": {},
         }
 
         params3 = {
