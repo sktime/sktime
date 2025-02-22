@@ -46,14 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "Repeat",
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
-    "VARMAX",
-    "BATS",
-    "TBATS",
-    "ARIMA",
-    "AutoARIMA",
-    "StatsForecastAutoARIMA",
-    "SARIMAX",
-    "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
     # Large datasets
@@ -362,6 +354,23 @@ EXCLUDED_TESTS_BY_TEST = {
         "UnobservedComponents",
         "WEASEL",
         "WhiteNoiseAugmenter",
+        # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
+        # too after adding test parameters to them
+        "BaggingForecaster",
+        "ClustererPipeline",
+        "DirectTabularRegressionForecaster",
+        "EnbPIForecaster",
+        "FittedParamExtractor",
+        "ForecastingOptunaSearchCV",
+        "HolidayFeatures",
+        "ParamFitterPipeline",
+        "PluginParamsForecaster",
+        "PluginParamsTransformer",
+        "RegressorPipeline",
+        "SupervisedIntervals",
+        "TSBootstrapAdapter",
+        "ThetaModularForecaster",
+        "WeightedEnsembleClassifier",
     ]
 }
 
