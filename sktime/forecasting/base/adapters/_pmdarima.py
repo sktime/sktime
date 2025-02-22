@@ -90,7 +90,8 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        X = self._slice_X(fh, X)
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        X = self._slice_X(fh, X, fh_abs)
 
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
@@ -115,6 +116,16 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred.name = self._y.name
         y_pred.index = fh_abs
         return y_pred
+
+    def _slice_X(self, fh, X, fh_abs):
+        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
+        end_int = fh_abs_int[-1] + 2
+        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
+
+        if X is not None:
+            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
+            X = X.iloc[:end_int]
+        return X
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -274,8 +285,9 @@ class _PmdArimaAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._slice_X(fh, X)
-            
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        X = self._slice_X(fh, X, fh_abs)
+
         # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
@@ -317,17 +329,6 @@ class _PmdArimaAdapter(BaseForecaster):
             pred_int[(var_name, a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int.astype(float)
-
-    def _slice_X(self, fh, X):
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
-        end_int = fh_abs_int[-1] + 2
-        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
-
-        if X is not None:
-            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
-            X = X.iloc[:end_int]
-        return X
 
     def _get_fitted_params(self):
         """Get fitted parameters.
