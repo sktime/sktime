@@ -143,6 +143,7 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
         "name": "pd_multiindex_hier",  # any string
         "name_python": "hier_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.DataFrame with hierarchical MultiIndex",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -223,6 +224,7 @@ class HierarchicalDask(ScitypeHierarchical):
         "name": "dask_hierarchical",  # any string
         "name_python": "hier_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask frame with multiple hierarchical indices, as per dask_to_pd convention",  # noqa: E501
         "python_version": None,
         "python_dependencies": "dask",
         "python_type": "dask.dataframe",
@@ -304,6 +306,7 @@ class HierarchicalPolarsEager(ScitypeHierarchical):
         "name": "polars_hierarchical",  # any string
         "name_python": "hier_polars_eager",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars frame with multiple hierarchical indices, as per polars_to_pd convention",  # noqa: E501
         "python_version": None,
         "python_dependencies": "polars",
         "python_type": "polars.DataFrame",
