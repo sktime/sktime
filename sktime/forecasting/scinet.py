@@ -250,6 +250,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
+                "num_stacks": 1,
             },
             {
                 "seq_len": 16,
@@ -257,6 +258,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 4,
                 "num_epochs": 2,
+                "num_stacks": 2,
             },
         ]
 
