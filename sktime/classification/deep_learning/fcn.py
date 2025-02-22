@@ -47,8 +47,8 @@ class FCNClassifier(BaseDeepClassifier):
     .. [1] Zhao et. al, Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics, 28(1):2017.
 
-    .. [2] Wang, Z., Yan, W., & Oates, T. (2017). Time series classification from 
-    scratch with deep neural networks: A strong baseline. 
+    .. [2] Wang et. al, Time series classification from scratch with 
+    deep neural networks: A strong baseline. 
     2017 International Joint Conference on Neural Networks (IJCNN)
 
     Examples
