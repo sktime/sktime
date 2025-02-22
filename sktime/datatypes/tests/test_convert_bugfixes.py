@@ -1,9 +1,11 @@
 """Tests for specific bugfixes to conversion logic."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ericjb"]
 
 import pytest
 
+from sktime.datasets import load_airline
+from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
 from sktime.tests.test_switch import run_test_module_changed
 
 
@@ -59,3 +61,16 @@ def test_pdseries_round_trips(name):
     y_round_trip = convert_to(y_series, "pd.DataFrame", store=store)
 
     assert y_round_trip.columns[0] == name
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_convert_MvS_to_UvS_as_Series():
+    """Checks that column name in MvS is preserved as attr name in UvS"""
+    y = load_airline()
+    z = y.to_frame()
+    w = convert_MvS_to_UvS_as_Series(z)
+
+    assert y.name == w.name
