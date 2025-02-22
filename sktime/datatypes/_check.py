@@ -76,14 +76,6 @@ def generate_check_dict(soft_deps="present"):
         key = k._get_key()
         check_dict[key] = k
 
-    # temporary while refactoring
-    from sktime.datatypes._alignment import check_dict_Alignment
-    from sktime.datatypes._proba import check_dict_Proba
-
-    # pool convert_dict-s
-    check_dict.update(check_dict_Alignment)
-    check_dict.update(check_dict_Proba)
-
     return check_dict
 
 
@@ -138,68 +130,96 @@ def check_is_mtype(
 ):
     """Check object for compliance with mtype specification, return metadata.
 
+    See glossary for explanations of :glossary:`mtype` and :glossary:`scitype`.
+
     Parameters
     ----------
     obj - object to check
+
     mtype: str or list of str, mtype to check obj as
         valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
+
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
         valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
+
     return_metadata - bool, str, or list of str, optional, default=False
-        if False, returns only "valid" return
-        if True, returns all three return objects
-        if str, list of str, metadata return dict is subset to keys in return_metadata
+
+        * if False, returns only ``valid`` return. No metadata is returned.
+        * if True, returns all three return objects. All metadata fields are returned.
+        * if str, list of str, metadata return dict is subset to keys in
+        ``return_metadata``. This allows selective return of metadata fields,
+        to avoid unnecessary computation.
+
     var_name: str, optional, default="obj"
         name of input in error messages
+
     msg_return_dict: str, one of ``"list"`` or ``"dict"``, optional, default="dict"
         whether returned msg, if returned, is a str, dict or list
 
         * if ``msg_return_dict="list"``,
-          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
-          returned ``msg`` is ``list`` of ``str`` if ``mtype`` is ``list``
+        returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+        returned ``msg`` is ``list`` of ``str`` if ``mtype`` is ``list``
 
         * if ``msg_return_dict="dict"``,
-          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
-          returned ``msg`` is ``dict`` of ``str`` if ``mtype`` is ``list``.
-          If ``dict``, has str in ``mtype`` as key,
-          and error message for mtype as value.
+        returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+        returned ``msg`` is ``dict`` of ``str`` if ``mtype`` is ``list``.
+        If ``dict``, has str in ``mtype`` as key,
+        and error message for mtype as value.
 
     Returns
     -------
-    valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list/dict of str - error messages if object is not valid, otherwise None
-        list or dict type is controlled via msg_return_dict
-        if str: error message for tested mtype
-        it list: list of len(mtype) with message per mtype if list, same order as mtype
-        if dict: dict with mtype as key and error message for mtype as value
-        returned only if return_metadata is True or str, list of str
+    valid: bool
+        whether obj is a valid object of mtype/scitype
+
+    msg: str or list/dict of str
+        error messages if object is not valid, otherwise None
+
+        list or dict type is controlled via ``msg_return_dict`` argument
+
+        * if str: error message for tested mtype
+        * it list: list of len(mtype) with message per mtype if list,
+        same order as in ``mtype`` parameter
+        * if dict: dict with mtype as key and error message for mtype as value
+        * returned only if return_metadata is True or str, list of str
+
     metadata: dict - metadata about obj if valid, otherwise None
-            returned only if return_metadata is True or str, list of str
+        returned only if ``return_metadata`` is True or str, list of str
+
         Keys populated depend on (assumed, otherwise identified) scitype of obj.
+
         Always returned:
-            "mtype": str, mtype of obj (assumed or inferred)
-            "scitype": str, scitype of obj (assumed or inferred)
+
+            * "mtype": str, mtype of obj (assumed or inferred)
+            * "scitype": str, scitype of obj (assumed or inferred)
+
         For scitype "Series":
-            "is_univariate": bool, True iff series has one variable
-            "is_equally_spaced": bool, True iff series index is equally spaced
-            "is_empty": bool, True iff series has no variables or no instances
-            "has_nans": bool, True iff the series contains NaN values
+
+            * "is_univariate": bool, True iff series has one variable
+            * "is_equally_spaced": bool, True iff series index is equally spaced
+            * "is_empty": bool, True iff series has no variables or no instances
+            * "has_nans": bool, True iff the series contains NaN values
+
         For scitype "Panel":
-            "is_univariate": bool, True iff all series in panel have one variable
-            "is_equally_spaced": bool, True iff all series indices are equally spaced
-            "is_equal_length": bool, True iff all series in panel are of equal length
-            "is_empty": bool, True iff one or more of the series in the panel are empty
-            "is_one_series": bool, True iff there is only one series in the panel
-            "has_nans": bool, True iff the panel contains NaN values
-            "n_instances": int, number of instances in the panel
+
+            * "is_univariate": bool, True iff all series in panel have one variable
+            * "is_equally_spaced": bool, True iff all series indices are equally spaced
+            * "is_equal_length": bool, True iff all series in panel are of equal length
+            * "is_empty": bool, True iff one or more series in the panel are empty
+            * "is_one_series": bool, True iff there is only one series in the panel
+            * "has_nans": bool, True iff the panel contains NaN values
+            * "n_instances": int, number of instances in the panel
+
         For scitype "Table":
-            "is_univariate": bool, True iff table has one variable
-            "is_empty": bool, True iff table has no variables or no instances
-            "has_nans": bool, True iff the panel contains NaN values
-            "n_instances": int, number of instances/rows in the table
+
+            * "is_univariate": bool, True iff table has one variable
+            * "is_empty": bool, True iff table has no variables or no instances
+            * "has_nans": bool, True iff the panel contains NaN values
+            * "n_instances": int, number of instances/rows in the table
+
         For scitype "Alignment":
-            currently none
+
+            * "is_multiple" : bool, True iff multiple alignment of (3 or more) series
 
     Raises
     ------
@@ -283,15 +303,25 @@ def check_is_mtype(
 def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     """Check object for compliance with mtype specification, raise errors.
 
+    See glossary for explanations of :glossary:`mtype` and :glossary:`scitype`.
+
     Parameters
     ----------
-    obj - object to check
+    obj
+        object to check
+
     mtype: str or list of str, mtype to check obj as
         valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
-    scitype: str, optional, scitype to check obj as; default = inferred from mtype
+
+    scitype: str, optional; default = inferred from mtype
+        scitype to check obj against
+
         if inferred from mtype, list elements of mtype need not have same scitype
-        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
-    var_name: str, optional, default="input" - name of input in error messages
+
+        valid mtype strings are can be found in :ref:`data_format`
+
+    var_name: str, optional, default="input"
+        name of input in error messages
 
     Returns
     -------
@@ -332,11 +362,16 @@ def mtype(
     ----------
     obj : object to infer type of - any type, should comply with some mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
+
     as_scitype : str, list of str, or None, optional, default=None
         name of scitype(s) the object "obj" is considered as, finds mtype for that
+
         if None (default), does not assume a specific as_scitype and tests all mtypes
-            generally, as_scitype should be provided for maximum efficiency
+
+        generally, as_scitype should be provided for maximum efficiency
+
         valid scitype type strings are in datatypes.SCITYPE_REGISTER (1st column)
+
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
 
@@ -413,52 +448,74 @@ def check_is_scitype(
 ):
     """Check object for compliance with scitype specification, return metadata.
 
+    See glossary for explanations of :glossary:`mtype` and :glossary:`scitype`.
+
     Parameters
     ----------
-    obj - object to check
+    obj
+        object to check
+
     scitype: str or list of str, scitype to check obj as
         valid mtype strings are in datatypes.SCITYPE_REGISTER
-    return_metadata - bool, optional, default=False
-        if False, returns only "valid" return
-        if True, returns all three return objects
-        if str, list of str, metadata return dict is subset to keys in return_metadata
+
+    return_metadata - bool, str, or list of str, optional, default=False
+
+        * if False, returns only ``valid`` return. No metadata is returned.
+        * if True, returns all three return objects. All metadata fields are returned.
+        * if str, list of str, metadata return dict is subset to keys in
+        ``return_metadata``. This allows selective return of metadata fields,
+        to avoid unnecessary computation.
+
     var_name: str, optional, default="obj" - name of input in error messages
+
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
 
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
+
     msg: dict[str, str] or None
-        error messages if object is not valid, otherwise None
+        error messages if object is not valid, otherwise None.
         keys are all mtypes tested, value for key is error message for that key
+
     metadata: dict - metadata about obj if valid, otherwise None
-            returned only if return_metadata is True
-        Fields depend on scitpe.
+        returned only if ``return_metadata`` is True or str, list of str
+
+        Keys populated depend on (assumed, otherwise identified) scitype of obj.
+
         Always returned:
-            "mtype": str, mtype of obj (assumed or inferred)
-                mtype strings with explanation are in datatypes.MTYPE_REGISTER
-            "scitype": str, scitype of obj (assumed or inferred)
-                scitype strings with explanation are in datatypes.SCITYPE_REGISTER
+
+            * "mtype": str, mtype of obj (assumed or inferred)
+            * "scitype": str, scitype of obj (assumed or inferred)
+
         For scitype "Series":
-            "is_univariate": bool, True iff series has one variable
-            "is_equally_spaced": bool, True iff series index is equally spaced
-            "is_empty": bool, True iff series has no variables or no instances
-            "has_nans": bool, True iff the series contains NaN values
+
+            * "is_univariate": bool, True iff series has one variable
+            * "is_equally_spaced": bool, True iff series index is equally spaced
+            * "is_empty": bool, True iff series has no variables or no instances
+            * "has_nans": bool, True iff the series contains NaN values
+
         For scitype "Panel":
-            "is_univariate": bool, True iff all series in panel have one variable
-            "is_equally_spaced": bool, True iff all series indices are equally spaced
-            "is_equal_length": bool, True iff all series in panel are of equal length
-            "is_empty": bool, True iff one or more of the series in the panel are empty
-            "is_one_series": bool, True iff there is only one series in the panel
-            "has_nans": bool, True iff the panel contains NaN values
-            "n_instances": int, number of instances in the panel
+
+            * "is_univariate": bool, True iff all series in panel have one variable
+            * "is_equally_spaced": bool, True iff all series indices are equally spaced
+            * "is_equal_length": bool, True iff all series in panel are of equal length
+            * "is_empty": bool, True iff one or more series in the panel are empty
+            * "is_one_series": bool, True iff there is only one series in the panel
+            * "has_nans": bool, True iff the panel contains NaN values
+            * "n_instances": int, number of instances in the panel
+
         For scitype "Table":
-            "is_univariate": bool, True iff table has one variable
-            "is_empty": bool, True iff table has no variables or no instances
-            "has_nans": bool, True iff the panel contains NaN values
+
+            * "is_univariate": bool, True iff table has one variable
+            * "is_empty": bool, True iff table has no variables or no instances
+            * "has_nans": bool, True iff the panel contains NaN values
+            * "n_instances": int, number of instances/rows in the table
+
         For scitype "Alignment":
-            currently none
+
+            * "is_multiple" : bool, True iff multiple alignment of (3 or more) series
 
     Raises
     ------
@@ -560,12 +617,16 @@ def check_is_error_msg(msg, var_name="obj", allowed_msg=None, raise_exception=Fa
 def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):
     """Infer the scitype of an object.
 
+    See glossary for explanations of :glossary:`mtype` and :glossary:`scitype`.
+
     Parameters
     ----------
     obj : object to infer type of - any type, should comply with some mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
+
     candidate_scitypes: str or list of str, scitypes to pick from
         valid scitype strings are in datatypes.SCITYPE_REGISTER
+
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
         valid mtype strings are in datatypes.MTYPE_REGISTER

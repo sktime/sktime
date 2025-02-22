@@ -28,7 +28,8 @@ sktime.
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
         For more details on the general concept, and precise specifications, see the
         :ref:`data_format` and
-        `the datatypes and datasets user guide :doc:</examples/AA_datatypes_and_datasets>`.
+        the datatypes and datasets user guide (example notebook AA),
+        here: :ref:`examples`.
 
     scitype
         Short for scientific type, denotes the abstract type of an ``sktime`` object,
@@ -48,10 +49,10 @@ sktime.
         Compliance with concrete implementations of data scitypes can be checked using
         the ``sktime.datatypes.check_is_scitype`` utility; for estimators, compliance
         is checked using ``sktime.utils.check_estimator``.
-        For more details on data scitpyes, see :term:`mtype`.
-        For exact specifications of scitypes, see the :ref:`data_format`.
+        For more details on data mtpyes, see :term:`mtype`.
+        For exact specifications of data scitypes, see the :ref:`data_format`.
         For more details on estimator scitypes, see the user guides on individual
-        learning tasks.
+        learning tasks, here: :ref:`examples`.
 
     Scientific type
         See :term:`scitype`.

@@ -42,6 +42,7 @@ class _AlignmentSimpleAlignment(_AlignmentSimple):
         "mtype": "alignment",
         "python_dependencies": None,
         "lossy": False,
+        "metadata": {"is_multiple": False},
     }
 
     def build(self):
@@ -53,6 +54,7 @@ class _AlignmentSimpleAlignmentLoc(_AlignmentSimple):
         "mtype": "alignment_loc",
         "python_dependencies": None,
         "lossy": False,
+        "metadata": {"is_multiple": False},
     }
 
     def build(self):

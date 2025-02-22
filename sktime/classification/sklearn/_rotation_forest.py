@@ -20,7 +20,7 @@ from sktime.base._base import _clone_estimator
 from sktime.utils.validation import check_n_jobs
 
 
-class RotationForest(BaseEstimator, ClassifierMixin):
+class RotationForest(ClassifierMixin, BaseEstimator):
     """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al

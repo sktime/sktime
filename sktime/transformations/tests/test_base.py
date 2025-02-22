@@ -737,3 +737,68 @@ def test_vectorize_reconstruct_correct_hierarchy():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == Xt.index).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_wrong_y_is_not_passed_to_transformer():
+    """Tests that y incompatible with internal type is not passed to transformer.
+
+    Failure case of bug #6417.
+    """
+    from datetime import datetime
+
+    import numpy as np
+    import pandas as pd
+
+    from sktime.pipeline import make_pipeline
+    from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    from sktime.transformations.compose import FitInTransform
+    from sktime.transformations.panel.interpolate import TSInterpolator
+    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
+
+    # this test requires the KalmanFilterTransformerFP to be runnable
+    if not _check_estimator_deps(KalmanFilterTransformerFP, severity="none"):
+        return None
+
+    # Define the multi-index
+    index = pd.MultiIndex.from_tuples(
+        [
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.877500", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.903000", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.453400", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.478800", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+        ],
+        names=["instance", "Time"],
+    )
+
+    X = pd.DataFrame(
+        {"LeftControllerVelocity_0": [-0.01, -0.01, 0.06, 0.06]}, index=index
+    )
+    y = np.array([1, 0.5])
+
+    # noise filter only, this is a reduced MRE
+    noise_filter_only = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    noise_filter_only.fit(X, y)
+
+    # in pipeline, this is the full MRE from bug #6417
+    noise_filter = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    interpolator = TSInterpolator(4000)
+    regressor = KNeighborsTimeSeriesRegressor()
+
+    model = make_pipeline(noise_filter, interpolator, regressor)
+    model.fit(X, y)

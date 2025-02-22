@@ -10,11 +10,7 @@ if _check_soft_dependencies("lightning", severity="none"):
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-if _check_soft_dependencies(
-    "huggingface-hub",
-    severity="none",
-    package_import_alias={"huggingface-hub": "huggingface_hub"},
-):
+if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import hf_hub_download
 
 
@@ -113,11 +109,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
-        "python_dependencies_alias": {
-            "salesforce-uni2ts": "uni2ts",
-            "huggingface-hub": "huggingface_hub",
-            "hydra-core": "hydra",
-        },
     }
 
     def __init__(
@@ -159,11 +150,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies(
-        ["lightning", "huggingface-hub"],
-        severity="none",
-        package_import_alias={"huggingface-hub": "huggingface_hub"},
-    ):
+    if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
