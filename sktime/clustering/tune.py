@@ -144,13 +144,14 @@ class ClusterSupportDetection(BaseParamFitter):
         return self
 
     def _find_elbow_point(self, param_range, inertia_values):
-        """Return the elbow point by detecting when the slope drops below a threshold."""
-        diffs = np.diff(inertia_values)
-        threshold = self.metric_params.get("elbow_threshold", 0.1)
-        for i, diff in enumerate(diffs):
-            if abs(diff) < threshold:
-                return param_range[i]
-        return param_range[-1]
+        """Return the elbow point by detecting when the point of maximum curvature."""
+        inertia_values = np.array(inertia_values)
+        x = np.array(param_range)
+        dy_dx = np.diff(inertia_values)/np.diff(x)
+        d2y_dx2 = np.diff(dy_dx)/np.diff(x[:-1])
+        curvature = np.abs(d2y_dx2) / (1 + dy_dx[:-1]**2)**(3/2)
+        max_curvature_idx = np.argmax(curvature)
+        return param_range[max_curvature_idx + 1]
 
     def _get_fitted_params(self):
         """Return the best parameter found."""
