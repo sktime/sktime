@@ -34,8 +34,8 @@ class AlignerLuckyDtw(BaseAligner):
     >>> from sktime.datasets import load_osuleaf
     >>> from sktime.alignment.lucky import AlignerLuckyDtw
     >>> X, _ = load_osuleaf(return_type="pd-multiindex")
-    >>> ts1 = X.loc[0]
-    >>> ts2 = X.loc[1]
+    >>> ts1 = X.xs(0, level=0)
+    >>> ts2 = X.xs(1, level=0)
     >>> ts1_df = pd.DataFrame({"value": ts1.values.reshape(-1)})
     >>> ts2_df = pd.DataFrame({"value": ts2.values.reshape(-1)})
     >>> aligner = AlignerLuckyDtw(window=10)
