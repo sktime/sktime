@@ -994,14 +994,14 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
     This estimator directly interfaces ``ADIDA``,
     from ``statsforecast`` [1]_ by Nixtla.
 
-    Aggregate-Dissagregate Intermittent Demand Approach: Uses temporal aggregation to
-    reduce the number of zero observations. Once the data has been agregated, it uses
+    Aggregate-Disagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been aggregated, it uses
     the optimized SES to generate the forecasts at the new level. It then breaks down
     the forecast to the original level using equal weights.
 
     ADIDA specializes on sparse or intermittent series are series with very few
     non-zero observations.They are notoriously hard to forecast, and so, different
-    methods have been developed especifically for them.
+    methods have been developed specifically for them.
 
     Parameters
     ----------
@@ -1032,7 +1032,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.4.0"],
     }
@@ -1041,8 +1041,6 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         self,
         prediction_intervals: Optional[object] = None,
     ):
-        if prediction_intervals is not None:
-            pass
         self.prediction_intervals = prediction_intervals
 
         super().__init__()
