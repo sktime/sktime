@@ -697,13 +697,16 @@ def load_from_tsfile(
         encoding=encoding,
         y_dtype=y_dtype,
     )
-
-    if y_dtype == "str":
+    if isinstance(y_dtype, np.dtype):
+        y = y.astype(y_dtype)
+    elif y_dtype == "str":
         y = y.astype(str)
     elif y_dtype == "int":
         y = y.astype(np.int8)
     elif y_dtype == "float":
         y = y.astype(np.float32)
+    else:
+        raise ValueError(f"Invalid y_dtype: {y_dtype}")
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
     if return_y:
