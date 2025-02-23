@@ -1,8 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common utilities for polars based data containers."""
 
-from sktime.datatypes._common import _req
-from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _polars_dtype_to_kind
 
 

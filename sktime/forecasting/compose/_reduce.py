@@ -24,6 +24,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
     "YfromX",
 ]
 
@@ -1874,18 +1875,31 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     ----------
     estimator : sklearn regressor, must be compatible with sklearn interface
         tabular regression algorithm used in reduction algorithm
+
     window_length : int, optional, default=10
         window length used in the reduction algorithm
+
     transformers : currently not used
+
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
         "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
         "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
-    impute : str or None, optional, method string passed to Imputer
-        default="bfill", admissible strings are of Imputer.method parameter, see there
-        if None, no imputation is done when applying Lag transformer to obtain inner X
+
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method to use for missing values in the lagged data
+
+        * default="bfill"
+        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
+          To pass further parameters, pass the ``Imputer`` transformer directly,
+          as described below.
+        * if sktime transformer, this transformer is applied to the lagged data.
+          This needs to be a transformer that removes missing data, and can be
+          an ``Imputer``.
+        * if None, no imputation is done when applying ``Lag`` transformer
+
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -1893,6 +1907,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+
     windows_identical : bool, optional, default=False
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
@@ -2285,11 +2300,22 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     ----------
     estimator : sklearn regressor, must be compatible with sklearn interface
         tabular regression algorithm used in reduction algorithm
+
     window_length : int, optional, default=10
         window length used in the reduction algorithm
-    impute : str or None, optional, method string passed to Imputer
-        default="bfill", admissible strings are of Imputer.method parameter, see there
-        if None, no imputation is done when applying Lag transformer to obtain inner X
+
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method to use for missing values in the lagged data
+
+        * default="bfill"
+        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
+          To pass further parameters, pass the ``Imputer`` transformer directly,
+          as described below.
+        * if sktime transformer, this transformer is applied to the lagged data.
+          This needs to be a transformer that removes missing data, and can be
+          an ``Imputer``.
+        * if None, no imputation is done when applying ``Lag`` transformer
+
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -2342,6 +2368,21 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
+        if isinstance(impute_method, str):
+            from sktime.transformations.series.impute import Imputer
+
+            self._impute_method = Imputer(method=impute_method)
+        elif impute_method is None:
+            self._impute_method = None
+        elif scitype(impute_method) == "transformer":
+            self._impute_method = impute_method.clone()
+        else:
+            raise ValueError(
+                f"Error in ReducerTransform, "
+                f"impute_method must be str, None, or sktime transformer, "
+                f"but found {impute_method}"
+            )
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -2365,16 +2406,16 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
-        impute_method = self.impute_method
+        impute_method = self._impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
+
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
@@ -2452,7 +2493,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2481,8 +2521,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+            if self._impute_method is not None:
+                lag_plus = lag_plus * self._impute_method.clone()
 
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
@@ -2519,7 +2560,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2533,8 +2573,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.transform(y)
 
         lag_plus = Lag(lags=1, index_out="extend")
-        if self.impute_method is not None:
-            lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+        if self._impute_method is not None:
+            lag_plus = lag_plus * self._impute_method.clone()
 
         Xtt = lag_plus.fit_transform(Xt)
 
@@ -2581,14 +2622,51 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.transformations.series.impute import Imputer
+
         est = LinearRegression()
+        forecaster_imputer = Imputer(
+            method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
+        )
+
         params1 = {
             "estimator": est,
             "window_length": 3,
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
+        params2 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": None,  # None is the default
+        }
+        params3 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": forecaster_imputer,  # test imputation with forecaster
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": forecaster_imputer,
+        }
+        params5 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": "pad",
+        }
+        params6 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": "pad",
+        }
 
-        return params1
+        return [params1, params2, params3, params4, params5, params6]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
@@ -2634,8 +2712,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX

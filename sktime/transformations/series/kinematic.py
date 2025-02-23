@@ -49,8 +49,8 @@ class KinematicFeatures(BaseTransformer):
         * "a_abs" - absolute acceleration
         * "curv" - curvature
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.transformations.series.kinematic import KinematicFeatures

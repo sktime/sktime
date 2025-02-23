@@ -138,6 +138,16 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     def _transformers(self, value):
         self.transformers_._steps = value
 
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.param_est)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.param_est_)]
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.
 

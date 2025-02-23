@@ -241,7 +241,7 @@ class ThetaForecaster(ExponentialSmoothing):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
+        pred_int = BaseForecaster._predict_interval(self, fh=fh, X=X, coverage=coverage)
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
