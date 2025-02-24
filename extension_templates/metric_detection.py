@@ -114,29 +114,28 @@ class MyMetric(BaseDetectionMetric):
     def _evaluate(self, y_true, y_pred, X):
         """Evaluate the desired metric on given inputs.
 
-        private _evaluate containing core logic, called from evaluate
+        private _evaluate containing core logic, called from evaluate.
 
         Parameters
         ----------
-        y_true : pd.DataFrame
-            time series in ``sktime`` compatible data container format.
-            Ground truth (correct) event locations, in ``X``.
-            Should only be ``pd.DataFrame`` ,
-            Expected format:
-             Index: time indices or event identifiers
-             Columns: depending on scitype (`points` or `segments`).
-            `points` assumes a single column, `segments` may require ["start", "end"].
-
+        y_true :pd.DataFrame
+                time series in ``sktime`` compatible data container format.
+                Ground truth (correct) event locations, in ``X``\
+                Should only be ``pd.DataFrame``.
+                Expected format:
+                    Index: time indices or event identifiers
+                    Columns: depending on scitype (`points` or `segments`).
+                    `points` assumes single column, `segments` require ["start","end"].
             For further details on data format, see glossary on :term:`mtype`.
 
-        y_pred : pd.DataFrame
-            time series in ``sktime`` compatible data container format
-            Detected events to evaluate against ground truth.
-            Must be of same format as ``y_true``, same indices and columns if indexed.
+        y_pred :pd.DataFrame
+                time series in ``sktime`` compatible data container format \
+                Detected events to evaluate against ground truth. \
+                Must be same format as ``y_true``, same indices and columns if indexed.
 
         X : optional, pd.DataFrame
             Time series that is being labelled.
-            If not provided, assumes ``RangeIndex`` for ``X``, and that
+            If not provided, assumes ``RangeIndex`` for ``X``, and that \
             values in ``X`` do not matter.
 
         Returns
