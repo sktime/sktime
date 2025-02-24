@@ -10,9 +10,11 @@ from sktime.utils.validation.forecasting import check_X
 __all__ = [
     "plot_time_series_with_change_points",
     "plot_time_series_with_profiles",
+    "plot_time_series_with_subsequent_outliers",
 ]
 
-__author__ = ["patrickzib"]
+
+__author__ = ["patrickzib", "alex-jg3"]
 
 
 def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
@@ -169,5 +171,53 @@ def plot_time_series_with_profiles(
             )
 
     ax[0].legend(prop={"size": font_size})
+
+    return fig, ax
+
+
+def plot_time_series_with_subsequent_outliers(
+    ts,
+    ax=None,
+    intervals=None,
+):
+    """Plot the time series with subsequent outliers.
+
+    Parameters
+    ----------
+    ts: array-like, shape=[n]
+        the univariate time series of length n to be annotated.
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+    intervals: array-like, shape=[n_intervals]
+        the intervals of the outliers
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    ax.plot(ts.iloc[:, 0], label="Not Anomalous")
+    ax.plot(ts.loc[ts.iloc[:, 1] == 1.0, ts.columns[0]], label="Anomalous")
+
+    if intervals is not None:
+        for interval in intervals:
+            left = interval.left
+            right = interval.right
+            ax.axvspan(
+                left, right, color="tab:green", alpha=0.3, label="Predicted Anomalies"
+            )
+
+    ax.legend()
 
     return fig, ax
