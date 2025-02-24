@@ -123,28 +123,6 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         super().__init__()
 
     def _evaluate(self, y_true, y_pred, X=None):
-        self._integration = self.integration
-        self._weighted_precision = self.weighted_precision
-        self._with_scores = self.with_scores
-        if not self._with_scores:
-            n_timepoints = max(max(y_pred["ilocs"]), max(y_true["ilocs"])) + 1
-            scores = np.zeros(n_timepoints)
-            for pred_idx in y_pred["ilocs"]:
-                distances = np.abs(pred_idx - y_true["ilocs"])
-                scores[pred_idx] = 1 / (1 + np.min(distances))
-            true_events = np.zeros(n_timepoints, dtype=bool)
-            true_events[y_true["ilocs"]] = True
-        else:
-            true_events = y_true
-            scores = y_pred
-        return _ts_auprc(
-            true_events,
-            scores,
-            integration=self._integration,
-            weighted_precision=self._weighted_precision,
-        )
-
-    def evaluate(self, y_true=None, y_pred=None, X=None):
         """Evaluate the desired metric on given inputs.
 
         private _evaluate containing core logic, called from evaluate.
@@ -176,15 +154,26 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         loss : float
             Calculated metric.
         """
-        # Input checks and conversions
-        y_true_inner, y_pred_inner, X_inner = self._check_ys(y_true, y_pred, X)
-
-        # pass to inner function
-        out = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, X=X_inner)
-
-        if not isinstance(out, float):
-            out = float(out)
-        return out
+        self._integration = self.integration
+        self._weighted_precision = self.weighted_precision
+        self._with_scores = self.with_scores
+        if not self._with_scores:
+            n_timepoints = max(max(y_pred["ilocs"]), max(y_true["ilocs"])) + 1
+            scores = np.zeros(n_timepoints)
+            for pred_idx in y_pred["ilocs"]:
+                distances = np.abs(pred_idx - y_true["ilocs"])
+                scores[pred_idx] = 1 / (1 + np.min(distances))
+            true_events = np.zeros(n_timepoints, dtype=bool)
+            true_events[y_true["ilocs"]] = True
+        else:
+            true_events = y_true
+            scores = y_pred
+        return _ts_auprc(
+            true_events,
+            scores,
+            integration=self._integration,
+            weighted_precision=self._weighted_precision,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
