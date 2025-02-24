@@ -1,7 +1,5 @@
-"""Tests for BaseForecaster API points.
-
+"""Tests for BaseForecaster API points."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
@@ -940,7 +938,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_columns(y_pred, y_train)
 
 
-class TestAllGlobalForecasters(BaseFixtureGenerator):
+class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
     estimator_type_filter = "global_forecaster"
