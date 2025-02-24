@@ -1,7 +1,8 @@
 """TabTransformer : Modeling Tabular Data using Contextual Embedding."""
 
+import numpy as np
+
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.datatypes._convert import convert_to
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -17,7 +18,26 @@ else:
 
 
 class Tab_Transformer(NNModule):
-    """Tab Transformer Architecture."""
+    r"""Tab Transformer Architecture.
+
+    Parameters
+    ----------
+    num_cat_feat : list,
+        array of unique classes for each categorical feature
+    num_cont_features : int,
+        number of continuos features
+    embedding dim : int,
+        value of embedding dimension
+    n_transformer_layer : int,
+        number of transformer layers
+    n_heads : int,
+        number of attention heads
+    output_dim : int,
+        dimension for network output
+    task : string,
+        classification or regression task.
+
+    """
 
     def __init__(
         self,
@@ -74,6 +94,23 @@ class TabTransformer(BaseDeepClassifierPytorch):
     r"""
     Tab Transformer for Tabular Data.
 
+    Parameters
+    ----------
+    num_cat_feat : list,
+        array of unique classes for each categorical feature
+    num_cont_features : int,
+        number of continuos features
+    embedding dim : int,
+        value of embedding dimension
+    n_transformer_layer : int,
+        number of transformer layers
+    n_heads : int,
+        number of attention heads
+    output_dim : int,
+        dimension for network output
+    task : string,
+        classification or regression task.
+
     References
     ----------
     TabTransformer: Tabular Data Modeling Using Contextual Embeddings.
@@ -85,43 +122,53 @@ class TabTransformer(BaseDeepClassifierPytorch):
         self,
         num_epochs=16,
         batch_size=8,
-        in_channels=1,
-        individual=False,
-        criterion_kwargs=None,
         optimizer=None,
-        optimizer_kwargs=None,
         lr=0.001,
     ):
-        super().__init__(
-            num_epochs,
-            batch_size,
-            in_channels,
-            individual,
-            criterion_kwargs,
-            optimizer,
-            optimizer_kwargs,
-            lr,
-        )
+        self.num_epochs = num_epochs
+        self.batch_size = (batch_size,)
+        self.optimizer = (optimizer,)
+        self.lr = (lr,)
+        super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
-            import torch.nn as nn
+            pass
 
-            NNModule = nn.Module
-        else:
-
-            class NNModule:
-                """Dummy class if torch is unavailable."""
-
-    def _window(self, X, y, window_size=3):
+    def _window_classification(self, X, y, window_size=3):
         r"""Convert Timeseries into Tabular Format.
 
         Parameters
         ----------
-        Window Size : int, Optional (default=3)
-        Defines the size of the sliding window
+        window_size : int, Optional (default=3)
+            Defines the size of the sliding window
+        X : 3d numpy array
+            shape : (n_instances, series_length, n_dimensions)
+        y : Required for Classification
 
-        X : Nested Dataframe
-        y : Optional (Required for Classification)
         """
-        X_new = convert_to(X, to_type="numpyflat", as_scitype="Panel")
-        X_new
+        x_transf = []
+        y_transf = []
+        for sample_id in range(len(X)):
+            for i in range(X.shape[1] - window_size):
+                x_curr = X[sample_id, i : i + window_size, :].flatten()
+                y_transf.append(y[sample_id])
+                x_transf.append(x_curr)
+        x_transf = torch.tensor(np.array(x_transf), dtype=torch.float32)
+        y_transf = torch.tensor(np.array(y_transf), dtype=torch.int)
+
+        return x_transf, y_transf
+
+    def _fit(self, X, y):
+        r"""Fit the model on input.
+
+        Parameters
+        ----------
+        X : 3d numpy array
+            shape : (n_instances, series_length, n_dimensions)
+        y : Required for Classification
+        """
+        y = self._encode_y(y)
+        x_new, y_new = self._window_classification(X, y)
+
+        dataloader = self._build_dataloader(X, y)
+        dataloader
         return
