@@ -2450,15 +2450,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.lag import Lag
 
-        impute_method = self._impute_method
+        # impute_method = self._impute_method
         X_treatment = self.X_treatment
 
         # lagger_y_to_X_ will lag y and later concat X to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
+        # if impute_method is not None:
+        #    lagger_y_to_X = lagger_y_to_X * impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
@@ -2549,7 +2549,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y = self._impute_method.fit_transform(y)
 
         y = y.to_numpy()
-        X = None  # TODO: should we give X_pool here?
+        X = (
+            self._X.loc[cutoff].to_frame().T if self._X is not None else None
+        )  # exoxenous
+
         return y, X
 
     def _get_window_global(self, cutoff, window_length, y_orig):
@@ -2701,10 +2704,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         -------
         y_return = pd.Series or pd.DataFrame
         """
-        if self._X is not None:
-            raise ValueError(
-                "Do not call this function if model uses exogenous variables X."
-            )
+        # if self._X is not None:
+        #    raise ValueError(
+        #        "Do not call this function if model uses exogenous variables X."
+        #    )
 
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
@@ -2726,6 +2729,17 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # Fill pre-allocated arrays with available time based features.
         last[:, 0, :window_length] = y_last.T
 
+        if X_pool is not None:
+            fh_absolute = fh.to_absolute(self.cutoff)
+            i_row = X_pool.index.get_loc(fh_absolute[0])
+            if self.X_treatment == "shifted":
+                if i_row == 0:
+                    raise ValueError(
+                        "shifted from 1st row needs unavailable lagged info"
+                    )
+                else:
+                    i_row = i_row - 1
+
         # Recursively generate predictions by iterating over forecasting horizon.
         for i in range(fh_max):
             # Slice prediction window.
@@ -2736,6 +2750,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             X_pred = X_pred.reshape(1, -1)[
                 :, ::-1
             ]  # reverse order of columns to match lag order
+
+            if X_pool is not None:
+                X_pred = np.concatenate(
+                    (X_pool.iloc[i_row].to_numpy().reshape(1, -1), X_pred), axis=1
+                )
+                i_row = i_row + 1  # set up for next time through loop
 
             # Generate predictions.
             y_pred[i] = self.estimator_.predict(X_pred)[0]
