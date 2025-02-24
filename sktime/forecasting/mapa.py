@@ -143,7 +143,7 @@ class MAPAForecaster(BaseForecaster):
 
     def __init__(
         self,
-        aggregation_levels=[1, 2, 4],
+        aggregation_levels=None,
         base_forecaster=None,
         agg_method="mean",
         decompose_type="multiplicative",
@@ -161,6 +161,10 @@ class MAPAForecaster(BaseForecaster):
         self.weights = weights
         self.base_forecaster = base_forecaster
 
+        self.aggregation_levels = (
+            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
+        )
+
         self.forecasters = {}
         self._decomposition_info = {}
         self._y_cols = None
@@ -171,6 +175,11 @@ class MAPAForecaster(BaseForecaster):
         super().__init__()
 
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
+
+        if not all(
+            isinstance(level, int) and level > 0 for level in aggregation_levels
+        ):
+            raise ValueError("All aggregation levels must be positive integers")
 
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
@@ -428,7 +437,6 @@ class MAPAForecaster(BaseForecaster):
             else pd.Index(["c0"])
         )
         self._y_name = y.name if isinstance(y, pd.Series) else None
-        self._fh = fh
 
         y = self._ensure_positive_values(y)
 
