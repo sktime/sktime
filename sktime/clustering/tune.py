@@ -16,13 +16,14 @@ Optional implements:
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
-
 """
+
+import logging
+
+import numpy as np
 
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics._clustering_metrics import TimeSeriesSilhouetteScore
-import numpy as np
-import logging
 
 log = logging.getLogger()
 console = logging.StreamHandler()
@@ -78,12 +79,14 @@ class ClusterSupportDetection(BaseParamFitter):
         self.estimator = estimator
         self.param_range = param_range
         self.metric = metric
-        # Ensure metric_params is not modified after initialization.
         self.metric_params = metric_params.copy() if metric_params is not None else {}
         self.sample_size = sample_size
         self.verbose = verbose
         self.random_state = random_state
         self.direction = direction
+        self.best_param_ = None
+        self.best_score_ = None
+        self.scores_ = None
 
         super().__init__()
 
@@ -96,10 +99,9 @@ class ClusterSupportDetection(BaseParamFitter):
 
         for param in self.param_range:
             if self.verbose:
-                log.info(f"Evaluating {param} clusters...")
+                log.info("Evaluating %d clusters...", param)
 
             params = {"n_clusters": param}
-            # add the random state only if the estimator supports it
             if self.random_state is not None:
                 if "random_state" in self.estimator.get_params():
                     params["random_state"] = self.random_state
@@ -108,7 +110,6 @@ class ClusterSupportDetection(BaseParamFitter):
             labels = estimator.fit_predict(X)
 
             if self.metric:
-                # If the metric has an 'evaluate' method, use it.
                 if hasattr(self.metric, "evaluate"):
                     score = self.metric.evaluate(X, labels)
                 else:
@@ -117,10 +118,9 @@ class ClusterSupportDetection(BaseParamFitter):
             else:
                 inertia = estimator.inertia_
                 inertia_values.append(inertia)
-                scores[param] = -inertia  # Minimizing inertia
+                scores[param] = -inertia
 
         if not self.metric:
-            # Find the elbow point
             best_param = self._find_elbow_point(self.param_range, inertia_values)
             best_score = -inertia_values[best_param - self.param_range[0]]
         else:
@@ -130,7 +130,7 @@ class ClusterSupportDetection(BaseParamFitter):
                 best_param = min(scores, key=scores.get)
             else:
                 raise ValueError(
-                    f"Invalid direction: {self.direction} should be either 'max' or 'min'."
+                    f"Invalid argument: {self.direction} must be either 'max' or 'min'."
                 )
             best_score = scores[best_param]
 
@@ -139,19 +139,19 @@ class ClusterSupportDetection(BaseParamFitter):
         self.scores_ = scores
 
         if self.verbose:
-            print(f"Best parameter: {best_param} with score: {best_score}")
+            print("Best parameter: %d with score: %f", best_param, best_score)
 
         return self
 
-    def _find_elbow_point(self, param_range, inertia_values):
-        """Return the elbow point by detecting when the point of maximum curvature."""
+    def _find_elbow_point(self, range_, inertia_values):
+        """Return the elbow point by detecting the point of maximum curvature."""
         inertia_values = np.array(inertia_values)
-        x = np.array(param_range)
+        x = np.array(range_)
         dy_dx = np.diff(inertia_values) / np.diff(x)
         d2y_dx2 = np.diff(dy_dx) / np.diff(x[:-1])
         curvature = np.abs(d2y_dx2) / (1 + dy_dx[:-1] ** 2) ** (3 / 2)
         max_curvature_idx = np.argmax(curvature)
-        return param_range[max_curvature_idx + 1]
+        return range_[max_curvature_idx + 1]
 
     def _get_fitted_params(self):
         """Return the best parameter found."""
@@ -160,7 +160,6 @@ class ClusterSupportDetection(BaseParamFitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.clustering.k_medoids import TimeSeriesKMedoids
         from sktime.clustering.k_shapes import TimeSeriesKShapes

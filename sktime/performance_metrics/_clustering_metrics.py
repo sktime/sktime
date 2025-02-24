@@ -1,6 +1,9 @@
+"""Metrics to assess performance on the clustering task."""
+
+import numpy as np
+
 from sktime.base import BaseObject
 from sktime.distances import pairwise_distance
-import numpy as np
 
 
 class BaseClusterMetric(BaseObject):
@@ -46,6 +49,7 @@ class TimeSeriesSilhouetteScore(BaseClusterMetric):
         """
         self.metric = metric
         self.metric_params = metric_params.copy()
+        super().__init__()
 
     def evaluate(self, X, labels):
         """
@@ -64,7 +68,6 @@ class TimeSeriesSilhouetteScore(BaseClusterMetric):
         score : float
             The mean silhouette score over all time series.
         """
-
         distance_matrix = pairwise_distance(X, metric=self.metric, **self.metric_params)
         n = len(labels)
         unique_labels = np.unique(labels)
