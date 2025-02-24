@@ -2,11 +2,18 @@ __author__ = ["jgyasu"]
 
 from unittest.mock import MagicMock
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+
+
+def test_import_present_module():
+    """Test importing a dependency that is installed."""
+    result = _safe_import("pandas")
+    assert result is not None
+    assert _check_soft_dependencies("pandas", severity="error")
 
 
 def test_import_missing_module():
-    """Test importing a module that is not installed."""
+    """Test importing a dependency that is not installed."""
     result = _safe_import("nonexistent_module")
     assert isinstance(result, MagicMock)
     assert str(result) == (
@@ -15,19 +22,19 @@ def test_import_missing_module():
 
 
 def test_import_without_pkg_name():
-    """Test importing a module with the same name as package name."""
+    """Test importing a dependency with the same name as package name."""
     result = _safe_import("torch")
     assert result is not None
 
 
 def test_import_with_different_pkg_name_1():
-    """Test importing a module with a different package name."""
-    result = _safe_import("skbase.base.BaseObject", pkg_name="scikit-base")
+    """Test importing a dependency with a different package name."""
+    result = _safe_import("skbase", pkg_name="scikit-base")
     assert result is not None
 
 
 def test_import_with_different_pkg_name_2():
-    """Test importing another module with a different package name."""
+    """Test importing another dependency with a different package name."""
     result = _safe_import("cv2", pkg_name="opencv-python")
     assert result is not None
 
