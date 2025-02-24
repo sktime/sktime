@@ -5,17 +5,26 @@ __author__ = ["Spinachboul"]
 __all__ = ["GrangerCausalityFitter"]
 
 import pandas as pd
-from statsmodels.tsa.stattools import (
-    adfuller,
-    coint,
-    grangercausalitytests,
-    kpss,
-    pacf,
-    range_unit_root_test,
-)
 
 from sktime.exceptions import NotFittedError
 from sktime.param_est.base import BaseParamFitter
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+# Import statsmodels functions conditionally
+_check_soft_dependencies("statsmodels", severity="warning")
+try:
+    from statsmodels.tsa.stattools import (
+        adfuller,
+        coint,
+        grangercausalitytests,
+        kpss,
+        pacf,
+        range_unit_root_test,
+    )
+
+    _statsmodels_available = True
+except ImportError:
+    _statsmodels_available = False
 
 
 class GrangerCausalityFitter(BaseParamFitter):
@@ -68,6 +77,16 @@ class GrangerCausalityFitter(BaseParamFitter):
         self._is_fitted = False
         super().__init__()
 
+        # Check if statsmodels is available during initialization
+        if not _statsmodels_available:
+            import warnings
+
+            warnings.warn(
+                "The 'statsmodels' package is required for GrangerCausalityFitter. "
+                "Please install it with: pip install statsmodels",
+                UserWarning,
+            )
+
     def _fit(self, X):
         """
         Fit the Granger causality model and run related statistical tests.
@@ -88,6 +107,8 @@ class GrangerCausalityFitter(BaseParamFitter):
             If X is not a pandas DataFrame.
         ValueError
             If X does not have exactly two columns or if columns are not numeric.
+        ModuleNotFoundError
+            If statsmodels is not installed.
 
         Notes
         -----
@@ -97,6 +118,13 @@ class GrangerCausalityFitter(BaseParamFitter):
         - Partial autocorrelation analysis
         - Granger causality tests to determine the optimal lag
         """
+        # Check if statsmodels is available
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for GrangerCausalityFitter. "
+                "Please install it with: pip install statsmodels"
+            )
+
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input X must be a pandas DataFrame.")
 
@@ -181,6 +209,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         result = adfuller(
             series, maxlag=self.maxlag, regression="c", autolag="AIC", regresults=False
         )
@@ -220,6 +254,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         statistic, p_value, lags, critical_values = kpss(
             series, regression="c", nlags="auto", store=False
         )
@@ -258,6 +298,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.range_unit_root_test.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         stat, p_value, crit, rstore = range_unit_root_test(series, store=False)
         return {
             "RUR Statistic": stat,
@@ -299,6 +345,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.coint.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         stat, p_value, crit = coint(
             y0, y1, trend="c", method="aeg", maxlag=self.maxlag, autolag="AIC"
         )
@@ -340,6 +392,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.pacf.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         pacf_vals, confint = pacf(series, nlags=nlags, method=method, alpha=0.05)
         return {"PACF": pacf_vals, "Confidence Interval": confint}
 
@@ -373,6 +431,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.grangercausalitytests.html
         """
+        if not _statsmodels_available:
+            raise ModuleNotFoundError(
+                "The 'statsmodels' package is required for this method. "
+                "Please install it with: pip install statsmodels"
+            )
+
         result = grangercausalitytests(
             data, maxlag=self.maxlag, verbose=self.verbose, addconst=self.addconst
         )
