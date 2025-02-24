@@ -160,12 +160,12 @@ class ClusterSupportDetection(BaseParamFitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.clustering.k_medoids import TimeSeriesKMedoids
         from sktime.clustering.k_shapes import TimeSeriesKShapes
+        from sktime.clustering.kvisibility import TimeSeriesKvisibility
 
         params = {
-            "estimator": TimeSeriesKMeans(),
+            "estimator": TimeSeriesKMedoids(),
             "param_range": range(2, 10),
             "metric": TimeSeriesSilhouetteScore(metric="dtw"),
             "metric_params": {},
@@ -174,7 +174,7 @@ class ClusterSupportDetection(BaseParamFitter):
         }
 
         params2 = {
-            "estimator": TimeSeriesKMedoids(),
+            "estimator": TimeSeriesKvisibility(),
             "param_range": range(2, 10),
             "metric": None,
             "metric_params": {},
