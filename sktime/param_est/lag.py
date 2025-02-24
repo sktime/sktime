@@ -88,7 +88,6 @@ class ARLagOrderSelector(BaseParamFitter):
         "scitype:X": "Series",
         "capability:missing_values": False,
         "capability:multivariate": False,
-        "requires_y": False,
         "capability:pairwise": True,
         "authors": "satvshr",
         "python_dependencies": "statsmodels",

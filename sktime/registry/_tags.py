@@ -1310,7 +1310,7 @@ class requires_y(_BaseTag):
 
     _tags = {
         "tag_name": "requires_y",
-        "parent_type": ["transformer", "estimator"],
+        "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "does the transformer require y to be passed in fit and transform?",  # noqa: E501
         "user_facing": True,
