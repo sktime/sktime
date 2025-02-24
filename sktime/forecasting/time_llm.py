@@ -68,7 +68,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     ...     llm_model='GPT2'
     ... )
     >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(y)
+    >>> y_pred = forecaster.predict(X=y, fh=[1])
     """
 
     _tags = {
