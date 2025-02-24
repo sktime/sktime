@@ -23,7 +23,7 @@ def test_import_missing_module():
 
 def test_import_without_pkg_name():
     """Test importing a dependency with the same name as package name."""
-    result = _safe_import("torch")
+    result = _safe_import("torch", pkg_name="torch")
     assert result is not None
 
 
@@ -49,3 +49,13 @@ def test_import_class():
     """Test importing a class."""
     result = _safe_import("torch.nn.Linear")
     assert result is not None
+
+
+def test_import_existing_object():
+    """Test importing an existing object."""
+    result = _safe_import("pandas.DataFrame")
+    assert result is not None
+    assert result.__name__ == "DataFrame"
+    from pandas import DataFrame
+
+    assert result is DataFrame
