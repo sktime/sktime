@@ -74,7 +74,6 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("CV", KFold)
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_common_configs(CV, scoring, backend):
