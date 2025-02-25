@@ -75,7 +75,7 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
 )
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
-def test_evaluate_common_configs(CV, scoring, backend):
+def test_evaluate_common_configs(scoring, backend):
     """Test evaluate common configs."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
