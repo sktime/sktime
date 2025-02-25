@@ -2443,7 +2443,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        if X is not None and self._X is not None:
+        X_treatment = self.X_treatment
+        if X_treatment == "shifted":
+            X_pool = self._X
+        elif X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
             X_pool = self._X
@@ -2475,6 +2478,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
+        X_treatment = self.X_treatment
 
         lagger_y_to_X = self.lagger_y_to_X_
 
@@ -2514,7 +2518,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             if X_pool is not None:
                 # apply lag of 1 on X_pool to include predict_idx in X_pool
                 # otherwise it gives error
-                X_pool = lag_plus.fit_transform(X_pool)
+                if X_treatment == "shifted" or predict_idx not in X_pool.index:
+                    X_pool = lag_plus.fit_transform(X_pool)
                 Xtt_predrow = pd.concat(
                     [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
                 )
@@ -2550,6 +2555,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
+        X_treatment = self.X_treatment
 
         lagger_y_to_X = self.lagger_y_to_X_
 
@@ -2571,6 +2577,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xtt_predrows = slice_at_ix(Xtt, fh_abs)
         if X_pool is not None:
+            X_pool = (
+                lag_plus.fit_transform(X_pool) if X_treatment == "shifted" else X_pool
+            )
             Xtt_predrows = pd.concat(
                 [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
             )
