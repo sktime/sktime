@@ -62,16 +62,18 @@ class EnbPIForecaster(BaseForecaster):
     Examples
     --------
     >>> from tsbootstrap import MovingBlockBootstrap
-    >>> from sktime.forecasting.compose import EnbPIForecaster
+    >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.difference import Differencer
     >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
     ...    forecaster=NaiveForecaster(sp=12),
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
-    >>> forecaster.fit(y, fh=range(12))
+    >>> fh = ForecastingHorizon(np.arange(1, 13))
+    >>> forecaster.fit(y, fh=fh)
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
 

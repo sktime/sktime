@@ -12,7 +12,7 @@ Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
-(select "transformere" in the "Estimator type" dropdown).
+(select "transformer" in the "Estimator type" dropdown).
 
 For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
 
@@ -240,6 +240,14 @@ Auto-correlation-based features
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.signature
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureMoments
 
 .. currentmodule:: sktime.transformations.panel.signature_based
 
@@ -597,7 +605,7 @@ Seasonality and Date-Time Features
     :toctree: auto_generated/
     :template: class.rst
 
-    RBFTramsformer
+    RBFTransformer
 
 .. currentmodule:: sktime.transformations.series.peak
 

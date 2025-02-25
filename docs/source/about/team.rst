@@ -25,7 +25,7 @@ Community Council
      - :user:`onyekaugochukwu`
 
 For further information on past and future council elections,
-refer to the `elections repository <www.github.com/sktime/elections>`_.
+refer to the `elections repository <https://www.github.com/sktime/elections>`_.
 
 Community Council Observers
 ---------------------------
@@ -73,10 +73,14 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
+   * - Jan Beitner
+     - :user:`jdb78`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
    * - Jonathan Bechtel
@@ -91,8 +95,8 @@ Core Developers
      - :user:`miraep8`
    * - Pranav Prajapati
      - :user:`pranavvp16`
-   * - Sagar Mishra
-     - :user:`achieveordie`
+   * - Sai Revanth Gowravajhala
+     - :user:`SaiRevanth25`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
@@ -128,8 +132,6 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Łukasz Mentel
@@ -146,6 +148,10 @@ Former Core Developers
      - :user:`prockenschaub`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
    * - Stanislav Khrapov
