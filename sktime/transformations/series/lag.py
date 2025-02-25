@@ -548,7 +548,11 @@ class ReducerTransform(BaseTransformer):
                 exog_t = exog_t * Lag(
                     lags=lag, freq=freq, index_out="original", keep_column_names=True
                 )
-            transformers += [("exog", exog_t * impute_method)]
+            if impute_method is not None:
+                transformers += [("exog", exog_t * impute_method)]
+            else:
+                transformers += [("exog", exog_t)]
+
         if self.transformers is not None:
             transformers += self.transformers
         t = FeatureUnion(transformers, flatten_transform_index=False)
@@ -635,5 +639,14 @@ class ReducerTransform(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"lags": 2}
+        params2 = {
+            "lags": 2,
+            "shifted_vars_lag": 2,
+            "impute_method": None,
+        }
+        params3 = {
+            "lags": 2,
+            "shifted_vars_lag": 2,
+        }
 
-        return [params1]
+        return [params1, params2, params3]
