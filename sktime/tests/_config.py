@@ -325,7 +325,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "ReducerTransform",
-        "Rocket",
         "SAX",
         "SAXlegacy",
         "SFA",
