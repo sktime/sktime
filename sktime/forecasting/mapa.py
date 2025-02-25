@@ -162,7 +162,7 @@ class MAPAForecaster(BaseForecaster):
         self.base_forecaster = base_forecaster
 
         self._aggregation_levels = (
-            self._aggregation_levels if self._aggregation_levels else [1, 2, 4]
+            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
         )
 
         self.forecasters = {}
