@@ -44,13 +44,6 @@ class GrangerCausalityFitter(BaseParamFitter):
     For more information on the parameters, see the documentation for
     `statsmodels.tsa.stattools.grangercausalitytests`.
 
-    Notes
-    -----
-    This estimator implements Granger causality testing using the statsmodels library.
-    Granger causality is a statistical concept that tests whether one time series is
-    useful in forecasting another. This class also provides additional time series
-    testing capabilities for stationarity (ADF, KPSS, range unit root tests),
-    cointegration, and partial autocorrelation.
 
     References
     ----------
@@ -110,13 +103,6 @@ class GrangerCausalityFitter(BaseParamFitter):
         ModuleNotFoundError
             If statsmodels is not installed.
 
-        Notes
-        -----
-        This method performs multiple tests on the provided time series data:
-        - Stationarity tests (ADF, KPSS, Range Unit Root)
-        - Cointegration test between the two series
-        - Partial autocorrelation analysis
-        - Granger causality tests to determine the optimal lag
         """
         # Check if statsmodels is available
         if not _statsmodels_available:
@@ -199,11 +185,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'p-value': p-value of the test
             - 'critical values': Critical values for different significance levels
 
-        Notes
-        -----
-        The null hypothesis is that the series has a unit root (non-stationary).
-        If the p-value is less than the significance level (typically 0.05),
-        we can reject the null hypothesis and conclude that the series is stationary.
 
         References
         ----------
@@ -242,13 +223,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'lags': Number of lags used
             - 'critical values': Critical values for different significance levels
 
-        Notes
-        -----
-        The null hypothesis is that the series is stationary.
-        If the p-value is less than the significance level (typically 0.05),
-        we can reject the null hypothesis and conclude that the series is
-        non-stationary. This test complements the ADF test as they have
-        opposite null hypotheses.
 
         References
         ----------
@@ -288,11 +262,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'critical values': Critical values for different significance levels
             - 'rstore': Additional test results
 
-        Notes
-        -----
-        The Range Unit Root Test is another test for the presence of unit roots
-        in time series data. The null hypothesis is that the series has a unit root
-        (non-stationary).
 
         References
         ----------
@@ -331,15 +300,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'p-value': p-value of the test
             - 'critical values': Critical values for different significance levels
 
-        Notes
-        -----
-        Cointegration tests whether two non-stationary time series move together
-        over time and are in a long-run equilibrium relationship. The test
-        implemented is the Augmented Engle-Granger cointegration test.
-
-        The null hypothesis is that the series are not cointegrated.
-        If the p-value is less than the significance level (typically 0.05),
-        we can reject the null hypothesis and conclude that the series are cointegrated.
 
         References
         ----------
@@ -381,12 +341,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'PACF': PACF values for each lag
             - 'Confidence Interval': 95% confidence intervals for each PACF value
 
-        Notes
-        -----
-        The partial autocorrelation function (PACF) measures the correlation between
-        observations that are k time periods apart, after controlling for the effects of
-        intermediate observations. It is useful for identifying the appropriate order
-        for an autoregressive (AR) model.
 
         References
         ----------
@@ -418,14 +372,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             - 'best_pvalue': The p-value associated with the best lag
             - 'full_result': Complete results from statsmodels grangercausalitytests
 
-        Notes
-        -----
-        Granger causality tests whether a timer series helps forecasting another.
-        The null hypothesis is that the first series does not Granger-cause the
-        second series.
 
-        This function runs tests for lags 1 to maxlag and identifies the best lag order
-        based on the specified information criterion.
 
         References
         ----------
