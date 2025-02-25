@@ -5,7 +5,10 @@ __author__ = ["Maple728", "KimMeen", "PranavBhatP"]
 __all__ = ["TimeMoEForecaster"]
 
 
+import numpy as np
+
 from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.utils.singleton import _multiton
 
 
 class TimeMoEForecaster(_BaseGlobalForecaster):
@@ -110,3 +113,109 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
     }
+
+    def __init__(
+        self,
+        model_path: str,
+        config: dict = None,
+        seed: int = None,
+        use_source_package: bool = False,
+        ignore_deps: bool = False,
+    ):
+        self.seed = seed
+        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+
+        self.config = config
+        _config = self._default_config.copy()
+        _config.update(config if config is not None else {})
+        self._config = _config
+
+        self.model_path = model_path
+        self.use_source_package = use_source_package
+        self.ignore_deps = ignore_deps
+
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
+        elif self.use_source_package:
+            self.set_tags(python_dependencies=["timemoe"])
+        else:
+            self.set_tags(
+                python_dependencies=[
+                    "torch",
+                    "transformers<=4.40.1",
+                    "accelerate<=0.28.0",
+                ]
+            )
+
+        super().__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : ForecastingHorizon, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.model = _CachedTimeMoE(
+            key=self._get_unique_timemoe_key(),
+            timemoe_kwargs=self._get_timemoe_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
+
+        return self
+
+    def _predict():
+        """Forecast time series at future horizon.
+
+        Private _predict containing the core logic, called from predict
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        y : pd.Series, optional (default=None)
+            Optional series to use instead of the series passed in fit.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Predicted forecasts.
+        """
+        # implementation logic here.
+
+
+@_multiton
+class _CachedTimeMoE:
+    """Cached TimeMoE model to ensure only one instance exists in memory.
+
+    TimeMoE is a zero-shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, timemoe_kwargs, use_source_package):
+        self.key = key
+        self.timemoe_kwargs = timemoe_kwargs
+        self.use_source_package = use_source_package
+        self.model = None
+
+    def load_from_checkpoint(self):
+        """Load the model from checkpoint."""
+        if self.use_source_package:
+            from timemoe import TimeMoEForPrediction
+        else:
+            from sktime.libs.timemoe import TimeMoEForPrediction
+
+            model = TimeMoEForPrediction.get_decoder()
+
+            return model
