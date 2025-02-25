@@ -137,7 +137,7 @@ class MAPAForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "authors": ["trnnick", "phoeenniixx"],
+        "authors": ["phoeenniixx", "trnnick", "satvshr"],
         "python_dependencies": "statsmodels",
     }
 
@@ -169,7 +169,6 @@ class MAPAForecaster(BaseForecaster):
         self._decomposition_info = {}
         self._y_cols = None
         self._y_name = None
-        self._fh = None
         self._transformation_offset = None
 
         super().__init__()
@@ -177,14 +176,14 @@ class MAPAForecaster(BaseForecaster):
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
         if not all(
-            isinstance(level, int) and level > 0 for level in aggregation_levels
+            isinstance(level, int) and level > 0 for level in self._aggregation_levels
         ):
             raise ValueError("All aggregation levels must be positive integers")
 
     def _initialize_base_forecaster(self, base_forecaster):
         """Initialize the base forecaster with appropriate fallbacks."""
         if base_forecaster is not None:
-            return base_forecaster
+            return base_forecaster.clone()
 
         try:
             if _check_soft_dependencies("statsmodels", severity="none"):
@@ -439,10 +438,6 @@ class MAPAForecaster(BaseForecaster):
         self._y_name = y.name if isinstance(y, pd.Series) else None
 
         y = self._ensure_positive_values(y)
-        y = self._handle_missing_data(y)
-
-        if isinstance(y, pd.Series):
-            y = pd.DataFrame(y)
 
         valid_levels = []
         for level in self._aggregation_levels:
@@ -473,7 +468,7 @@ class MAPAForecaster(BaseForecaster):
                 trend_data = decomposed[trend_cols].copy()
                 trend_data.columns = self._y_cols
 
-                forecaster.fit(trend_data)
+                forecaster.fit(trend_data, X=X, fh=fh)
                 self.forecasters[level] = forecaster
                 valid_levels.append(level)
 
@@ -514,7 +509,7 @@ class MAPAForecaster(BaseForecaster):
                     warn(f"No forecaster found for level {level}")
                     continue
 
-                forecast = self.forecasters[level].predict(fh)
+                forecast = self.forecasters[level].predict(fh, X)
 
                 if isinstance(forecast, pd.Series):
                     forecast = pd.DataFrame(forecast)
@@ -538,12 +533,10 @@ class MAPAForecaster(BaseForecaster):
                     else:  # additive
                         forecast = forecast.add(seasonal_adjustments, axis=0)
 
-                forecast_values = forecast.values
+                if forecast.values.ndim == 1:
+                    forecast.values = forecast.values.reshape(-1, 1)
 
-                if forecast_values.ndim == 1:
-                    forecast_values = forecast_values.reshape(-1, 1)
-
-                forecasts.append(forecast_values.ravel())
+                forecasts.append(forecast.values.ravel())
 
             except Exception as e:
                 warn(f"Failed to generate forecast for level {level}: {str(e)}\n")
@@ -666,7 +659,6 @@ class MAPAForecaster(BaseForecaster):
             y.columns = self._y_cols
 
         y = self._ensure_positive_values(y)
-        y = self._handle_missing_data(y)
 
         for level in self._aggregation_levels:
             try:
@@ -675,9 +667,9 @@ class MAPAForecaster(BaseForecaster):
 
                 if update_params:
                     if hasattr(self.forecasters[level], "update"):
-                        self.forecasters[level].update(y_agg, update_params=True)
+                        self.forecasters[level].update(y_agg, X=X, update_params=True)
                     else:
-                        self.forecasters[level].fit(y_agg)
+                        self.forecasters[level].fit(y_agg, X=X)
 
             except Exception as e:
                 warn(f"Failed to update level {level}: {str(e)}")
@@ -700,7 +692,6 @@ class MAPAForecaster(BaseForecaster):
         params : dict or list of dict
         """
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.trend import PolynomialTrendForecaster
 
         params = [
             {
@@ -710,14 +701,7 @@ class MAPAForecaster(BaseForecaster):
                 "decompose_type": "multiplicative",
                 "forecast_combine": "mean",
             },
-            {
-                "aggregation_levels": [1, 3, 6],
-                "base_forecaster": PolynomialTrendForecaster(degree=2),
-                "imputation_method": "ffill",
-                "decompose_type": "multiplicative",
-                "forecast_combine": "weighted_mean",
-                "weights": [0.5, 0.3, 0.2],
-            },
+            {},
         ]
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.forecasting.exp_smoothing import ExponentialSmoothing
