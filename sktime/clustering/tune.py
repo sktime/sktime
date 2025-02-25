@@ -7,7 +7,7 @@ Purpose:
 This class follows the sktime parameter estimator template.
 
 Mandatory implements:
-    fitting                     - _fit(self, X)
+    fitting                     - _fit_predict(self, X)
     fitted parameter inspection - _get_fitted_params()
 
 Optional implements:
@@ -160,15 +160,15 @@ class ClusterSupportDetection(BaseParamFitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.clustering.k_medoids import TimeSeriesKMedoids
-        from sktime.clustering.k_shapes import TimeSeriesKShapes
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.kvisibility import TimeSeriesKvisibility
+        from sktime.clustering.partitioning._lloyds import BaseTimeSeriesLloyds
 
         params = {
-            "estimator": TimeSeriesKMedoids(),
+            "estimator": BaseTimeSeriesLloyds(),
             "param_range": range(2, 10),
-            "metric": TimeSeriesSilhouetteScore(metric="dtw"),
-            "metric_params": {},
+            "metric": TimeSeriesSilhouetteScore,
+            "metric_params": {"metric": "dtw"},
             "random_state": 42,
             "direction": "max",
         }
@@ -181,7 +181,7 @@ class ClusterSupportDetection(BaseParamFitter):
         }
 
         params3 = {
-            "estimator": TimeSeriesKShapes(),
+            "estimator": TimeSeriesDBSCAN(),
             "param_range": range(2, 10),
             "metric": None,
             "metric_params": {},
