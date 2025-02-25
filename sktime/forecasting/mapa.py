@@ -152,7 +152,7 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
-        self._aggregation_levels = aggregation_levels
+        self.aggregation_levels = aggregation_levels
         self.agg_method = agg_method
         self.decompose_type = decompose_type
         self.forecast_combine = forecast_combine
