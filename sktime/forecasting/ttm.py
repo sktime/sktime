@@ -597,7 +597,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 5,
+                    "context_length": 3,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
