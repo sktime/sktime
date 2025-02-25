@@ -169,7 +169,6 @@ class MAPAForecaster(BaseForecaster):
         self._decomposition_info = {}
         self._y_cols = None
         self._y_name = None
-        self._fh = None
         self._transformation_offset = None
 
         super().__init__()
@@ -668,11 +667,9 @@ class MAPAForecaster(BaseForecaster):
 
                 if update_params:
                     if hasattr(self.forecasters[level], "update"):
-                        self.forecasters[level].update(
-                            y_agg, X=X, fh=self._fh, update_params=True
-                        )
+                        self.forecasters[level].update(y_agg, X=X, update_params=True)
                     else:
-                        self.forecasters[level].fit(y_agg, X=X, fh=self._fh)
+                        self.forecasters[level].fit(y_agg, X=X)
 
             except Exception as e:
                 warn(f"Failed to update level {level}: {str(e)}")
