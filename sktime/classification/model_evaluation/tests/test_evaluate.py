@@ -73,7 +73,6 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("CV", KFold)
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_common_configs(CV, scoring, backend):
@@ -87,11 +86,11 @@ def test_evaluate_common_configs(CV, scoring, backend):
     classifier.fit(X)
     y_pred = classifier.predict()
 
-    cv = CV(n_splits=3, shuffle=False)
+    cv=KFold(n_splits=3, shuffle=False),
 
     out = evaluate(
         classifier=classifier,
-        cv=KFold(n_splits=3, shuffle=False),
+        cv=cv,
         X=X,
         y=y,
         scoring=scoring,
