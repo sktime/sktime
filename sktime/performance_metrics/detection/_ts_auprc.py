@@ -46,66 +46,66 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
 class TimeSeriesAUPRC(BaseDetectionMetric):
     r"""TimeSeriesAUPRC: TimeSeries area under precision recall curve.
 
-     This metric is used to evaluate the performan of anomaly detection models
-     calculating the precision and recall across different threshold of predicted
-     anomaly scores using window based method,and then subsequently calculating
-     the Area under precision recall curve. Based on the work in paper _[1] and _[2]
+    This metric is used to evaluate the performan of anomaly detection models
+    calculating the precision and recall across different threshold of predicted
+    anomaly scores using window based method,and then subsequently calculating
+    the Area under precision recall curve. Based on the work in paper _[1] and _[2]
 
-     1. Trapezoidal Rule (Default):
+    1. Trapezoidal Rule (Default):
 
     .. math::
 
         \text{AUPRC} \approx \sum_{i=1}^{N}
         \frac{(R_i - R_{i-1}) \cdot (P_i + P_{i-1})}{2}
 
-     2. Left Riemann Sum (Alternative):
+    2. Left Riemann Sum (Alternative):
 
     .. math::
 
         \text{AUPRC} \approx \sum_{i=1}^{N} (R_i - R_{i-1}) \cdot P_{i-1}
 
-     TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection, TMLR, 2023.
+    TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection, TMLR, 2023.
 
-     .. math::
+    .. math::
 
         \left(\frac{\text{gt\_length}-1}{\text{gt\_length}}\right)^{\text{cardinality}-1}
 
 
     Parameters
     ----------
-     integration : str, optional (default=trapezoid)
-                  This parameter specifies the method used to compute
-                  the Area Under the Precision-Recall Curve (AUPRC).
-     weighted_precision: bool, optional (default=True)
-                  parameter determines whether the precision should be
-                  computed in a weighted fashion.
-     with_scores : bool, optional (default= False)
-                  This parameter determines whether the input is in
-                  label-score format. If False, then assumes input format
-                  to be Predicted and Actual Events.
+    integration : str, optional (default=trapezoid)
+                This parameter specifies the method used to compute
+                the Area Under the Precision-Recall Curve (AUPRC).
+    weighted_precision: bool, optional (default=True)
+                parameter determines whether the precision should be
+                computed in a weighted fashion.
+    with_scores : bool, optional (default= False)
+                This parameter determines whether the input is in
+                label-score format. If False, then assumes input format
+                to be Predicted and Actual Events.
 
     Returns
     -------
-     area: float
-           calculated metric
+    area: float
+        calculated metric
 
     References
     ----------
-     .. [1] N. Tatbul,T.J. Lee,S. Zdonik,M. Alam,J. Gottschlich.
-     Precision and recall for time series.
-     Advances in neural information processing systems.
-     .. [2] D. Wagner,T. Michels,F.C.F. Schulz,A. Nair,M. Rudolph and M. Kloft.
-     TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection.
-     Transactions on Machine Learning Research (TMLR), (to appear) 2023.
+    .. [1] N. Tatbul,T.J. Lee,S. Zdonik,M. Alam,J. Gottschlich.
+    Precision and recall for time series.
+    Advances in neural information processing systems.
+    .. [2] D. Wagner,T. Michels,F.C.F. Schulz,A. Nair,M. Rudolph and M. Kloft.
+    TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection.
+    Transactions on Machine Learning Research (TMLR), (to appear) 2023.
 
     Examples
     --------
-     >>> import numpy as np
-     >>> from sktime.performance_metrics.detection import TimeSeriesAUPRC
-     >>> ts_auprc=TimeSeriesAUPRC(with_scores=True)
-     >>> y_true = np.array([0, 0, 1, 1, 0, 0, 1])
-     >>> y_pred = np.array([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
-     >>> area=ts_auprc.evaluate(y_true, y_pred)
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.detection import TimeSeriesAUPRC
+    >>> ts_auprc=TimeSeriesAUPRC(with_scores=True)
+    >>> y_true = np.array([0, 0, 1, 1, 0, 0, 1])
+    >>> y_pred = np.array([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
+    >>> area=ts_auprc.evaluate(y_true, y_pred)
     """
 
     _tags = {
