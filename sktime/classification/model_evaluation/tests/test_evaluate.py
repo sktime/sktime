@@ -32,7 +32,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 METRICS = [
-    metrics.accuracy_score(),
+    metrics.accuracy_score,
 ]
 
 # list of parallelization backends to test
