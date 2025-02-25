@@ -86,7 +86,7 @@ def test_evaluate_common_configs(scoring, backend):
     classifier.fit(X)
     y_pred = classifier.predict()
 
-    cv=KFold(n_splits=3, shuffle=False),
+    cv = KFold(n_splits=3, shuffle=False),
 
     out = evaluate(
         classifier=classifier,
