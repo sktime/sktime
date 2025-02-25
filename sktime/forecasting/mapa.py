@@ -152,7 +152,7 @@ class MAPAForecaster(BaseForecaster):
         sp=6,
         weights=None,
     ):
-        self.aggregation_levels = aggregation_levels
+        self._aggregation_levels = aggregation_levels
         self.agg_method = agg_method
         self.decompose_type = decompose_type
         self.forecast_combine = forecast_combine
@@ -161,8 +161,8 @@ class MAPAForecaster(BaseForecaster):
         self.weights = weights
         self.base_forecaster = base_forecaster
 
-        self.aggregation_levels = (
-            self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
+        self._aggregation_levels = (
+            self._aggregation_levels if self._aggregation_levels else [1, 2, 4]
         )
 
         self.forecasters = {}
@@ -176,7 +176,7 @@ class MAPAForecaster(BaseForecaster):
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
         if not all(
-            isinstance(level, int) and level > 0 for level in self.aggregation_levels
+            isinstance(level, int) and level > 0 for level in self._aggregation_levels
         ):
             raise ValueError("All aggregation levels must be positive integers")
 
@@ -440,7 +440,7 @@ class MAPAForecaster(BaseForecaster):
         y = self._ensure_positive_values(y)
 
         valid_levels = []
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 y_agg = self._aggregate(y, level)
                 y_agg.columns = self._y_cols
@@ -479,7 +479,7 @@ class MAPAForecaster(BaseForecaster):
         if not valid_levels:
             raise ValueError("Failed to fit any aggregation levels")
 
-        self.aggregation_levels = valid_levels
+        self._aggregation_levels = valid_levels
         return self
 
     def _predict(self, fh, X=None):
@@ -499,7 +499,7 @@ class MAPAForecaster(BaseForecaster):
         """
         forecasts = []
 
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 info = self._decomposition_info.get(level, {})
                 seasonal_enabled = info.get("seasonal_enabled", False)
@@ -545,7 +545,7 @@ class MAPAForecaster(BaseForecaster):
         if not forecasts:
             raise ValueError(
                 "Failed to generate any forecasts. Check the following:\n"
-                f"1. Valid levels: {self.aggregation_levels}\n"
+                f"1. Valid levels: {self._aggregation_levels}\n"
                 f"2. Decomposition info: {self._decomposition_info}\n"
                 f"3. Available forecasters: {list(self.forecasters.keys())}"
             )
@@ -660,7 +660,7 @@ class MAPAForecaster(BaseForecaster):
 
         y = self._ensure_positive_values(y)
 
-        for level in self.aggregation_levels:
+        for level in self._aggregation_levels:
             try:
                 y_agg = self._aggregate(y, level)
                 y_agg.columns = self._y_cols
