@@ -357,7 +357,6 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
     scoring = _check_scores(scoring)
-    ALLOWED_SCITYPES = ["Panel"]
 
     y_valid, _, y_metadata = check_is_scitype(y, scitype="Table", return_metadata=[])
     if not y_valid:
@@ -370,7 +369,7 @@ def evaluate(
     if not X_valid:
         raise TypeError(f"Expected X dtype Panel. Got {type(X)} instead.")
     X_mtype = X_metadata.get("mtype", None)
-    X = convert(X, from_type=X_metadata, to_type=PANDAS_MTYPES)
+    X = convert(X, from_type=X_mtype, to_type=PANDAS_MTYPES)
 
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
