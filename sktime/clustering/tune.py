@@ -23,7 +23,6 @@ import logging
 import numpy as np
 
 from sktime.param_est.base import BaseParamFitter
-from sktime.performance_metrics._clustering_metrics import TimeSeriesSilhouetteScore
 
 log = logging.getLogger()
 console = logging.StreamHandler()
@@ -43,8 +42,6 @@ class ClusterSupportDetection(BaseParamFitter):
         The range of cluster numbers to evaluate.
     metric : function or object with an evaluate method, default=None
         Function to evaluate clustering quality. If None, uses the elbow method.
-    metric_params : dict, optional
-        Additional parameters for the metric function.
     sample_size : int, optional
         Number of samples to use if dataset is large.
     verbose : int, default=0
@@ -70,7 +67,6 @@ class ClusterSupportDetection(BaseParamFitter):
         estimator,
         param_range,
         metric=None,
-        metric_params=None,
         sample_size=None,
         verbose=0,
         random_state=None,
@@ -79,12 +75,6 @@ class ClusterSupportDetection(BaseParamFitter):
         self.estimator = estimator
         self.param_range = param_range
         self.metric = metric
-        if metric_params is None:
-            self._init_metric_params = {}
-            self.metric_params = {}
-        else:
-            self._init_metric_params = metric_params
-            self.metric_params = metric_params.copy()
         self.sample_size = sample_size
         self.verbose = verbose
         self.random_state = random_state
@@ -93,46 +83,12 @@ class ClusterSupportDetection(BaseParamFitter):
         self.best_score_ = None
         self.scores_ = None
 
+        if hasattr(estimator, "predict"):
+            self._tags["capability:predict"] = True
+        if hasattr(estimator, "predict_proba"):
+            self._tags["capability:predict_proba"] = True
+
         super().__init__()
-
-    def get_params(self, deep=True):
-        """Return parameters for this estimator.
-
-        This method is implemented manually to ensure that the original
-        metric_params (as passed in the constructor) are returned.
-        """
-        params = {
-            "estimator": self.estimator,
-            "param_range": self.param_range,
-            "metric": self.metric,
-            "metric_params": self._init_metric_params,
-            "sample_size": self.sample_size,
-            "verbose": self.verbose,
-            "random_state": self.random_state,
-            "direction": self.direction,
-        }
-        # Optionally, include deep parameters from the estimator.
-        if deep and hasattr(self.estimator, "get_params"):
-            estimator_params = self.estimator.get_params()
-            for key, value in estimator_params.items():
-                params["estimator__" + key] = value
-        return params
-
-    def set_params(self, **params):
-        """Set the parameters of this estimator.
-
-        Updates both the original metric_params and other parameters.
-        """
-        for key, value in params.items():
-            if key.startswith("estimator__"):
-                sub_key = key[len("estimator__") :]
-                self.estimator.set_params(**{sub_key: value})
-            elif key == "metric_params":
-                self._init_metric_params = value
-                self.metric_params = value.copy() if value is not None else {}
-            else:
-                setattr(self, key, value)
-        return self
 
     def _fit(self, X, y=None):
         """Return the optimal number of clusters by evaluating different values."""
@@ -197,30 +153,29 @@ class ClusterSupportDetection(BaseParamFitter):
         max_curvature_idx = np.argmax(curvature)
         return range_[max_curvature_idx + 1]
 
-    def _get_fitted_params(self):
-        """Return the best parameter found."""
-        return {"best_n_clusters": self.best_param_}
+    def predict(self, X):
+        """Predict clusters using the best found parameters."""
+        if not hasattr(self.estimator, "predict"):
+            raise NotImplementedError("Inner estimator does not support predict.")
+        self.estimator.set_params(n_clusters=self.best_n_clusterers_)
+        return self.estimator.fit_predict(X)
+
+    def predict_proba(self, X):
+        """Predict cluster probabilities if supported."""
+        if not hasattr(self.estimator, "predict_proba"):
+            raise NotImplementedError("Inner estimator does not support predict_proba.")
+        self.estimator.set_params(n_clusters=self.best_n_clusterers_)
+        return self.estimator.fit(X).predict_proba(X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         from sktime.clustering.kvisibility import TimeSeriesKvisibility
-        from sktime.clustering.partitioning._lloyds import BaseTimeSeriesLloyds
 
         params = {
-            "estimator": BaseTimeSeriesLloyds(),
-            "param_range": range(2, 10),
-            "metric": TimeSeriesSilhouetteScore,
-            "metric_params": {"metric": "dtw"},
-            "random_state": 42,
-            "direction": "max",
-        }
-
-        params2 = {
             "estimator": TimeSeriesKvisibility(),
             "param_range": range(2, 10),
             "metric": None,
-            "metric_params": {},
         }
 
-        return [params, params2]
+        return [params]
