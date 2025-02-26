@@ -9,46 +9,53 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
-    r"""
+    """
     Exponential Smoothing Recurrant Neural Network.
 
     This model combines Exponential Smoothing (ES) and (LSTM) networks
     for time series forecasting. ES is used to balance the level and
-    seasonality of the series.
-
-    References
-    ----------
-    [1] Smyl, S. (2020). A hybrid method of exponential smoothing and
-        recurrent neural networks for time series forecasting.
-
-        https://www.sciencedirect.com/science/article/pii/S0169207019301153
+    seasonality of the series. This method has been proposed in [1]_.
 
     Parameters
     ----------
     input_shape : int
         Number of features in the input
-
     hidden_size : int
         Number of features in the hidden state
-
-    horizon : int
-        Forecasting horizon
-
     num_layer : int
         Number of layers
-
     seasonality_type : string
         Type of seasonality_type, could be zero ,single or double
-
     season1_length : int
         Period of season 1
-
     season2_length : int
         Period of season 2
-
+    criterion : torch.nn Loss Function, default=torch.nn.MSELoss
+        loss function to be used for training
+    criterion_kwargs : dict, default=None
+        keyword arguments to pass to criterion
+    optimizer : torch.optim.Optimizer, default=torch.optim.Adam
+        optimizer to be used for training
+    optimizer_kwargs : dict, default=None
+        keyword arguments to pass to optimizer
     window : int
         Size of Input window, default=5
 
+    References
+    ----------
+    .. [1] Smyl, S. 2020.
+    A hybrid method of exponential smoothing and recurrent \
+    neural networks for time series forecasting.
+    https://www.sciencedirect.com/science/article/pii/S0169207019301153
+
+    Examples
+    --------
+    >>> from sktime.forecasting.es_rnn import ESRNNForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = ESRNNForecaster(10, 3)
+    >>> forecaster.fit(y, fh=[1,2,3])
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -70,7 +77,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         batch_size=32,
         epoch=10,
         optimizer="Adam",
+        optimizer_kwargs=None,
         criterion="pinball",
+        criterion_kwargs=None,
         lr_rate=1e-5,
     ) -> None:
         super().__init__()
@@ -86,17 +95,26 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.epoch = epoch
         self.optimizer = optimizer
         self.criterion = criterion
+        self.optimizer_kwargs = optimizer_kwargs
+        self.criterion_kwargs = criterion_kwargs
         self.lr_rate = lr_rate
         if _check_soft_dependencies("torch", severity="none"):
             import torch
-            import torch.nn as nn
 
-            self.loss_list = {
-                "mse": nn.MSELoss,
-                "cross": nn.CrossEntropyLoss,
-                "l1": nn.L1Loss,
+            self.criterions = {
+                "MSE": torch.nn.MSELoss,
+                "L1": torch.nn.L1Loss,
+                "SmoothL1": torch.nn.SmoothL1Loss,
+                "Huber": torch.nn.HuberLoss,
             }
-            self.opti_list = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
+
+            self.optimizers = {
+                "Adadelta": torch.optim.Adadelta,
+                "Adagrad": torch.optim.Adagrad,
+                "Adam": torch.optim.Adam,
+                "AdamW": torch.optim.AdamW,
+                "SGD": torch.optim.SGD,
+            }
 
     def _get_windows(self, y):
         length = len(y)
@@ -114,33 +132,11 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
         return np.array(x_arr), np.array(y_arr)
 
-    def _instantiate_optimizer(self):
-        import torch
-
-        if self.optimizer:
-            if self.optimizer.lower() in self.opti_list:
-                return self.opti_list[self.optimizer.lower()](
-                    self.network.parameters(),
-                    lr=self.lr_rate,
-                )
-            else:
-                raise TypeError(
-                    f"Please pass one of {self.opti_list.keys()} for `optimizer`."
-                )
-        else:
-            return torch.optim.Adam(self.network.parameters(), lr=self.lr_rate)
-
     def _instantiate_criterion(self):
         if self.criterion:
-            if self.criterion in self.loss_list:
-                return self.loss_list[self.criterion]()
-            else:
-                loss = ESRNN().DefaultLoss()
-                return loss
+            return super()._instantiate_criterion()
         else:
-            # default criterion
-            loss = ESRNN().DefaultLoss()
-            return loss
+            return ESRNN().DefaultLoss()
 
     def _fit(self, y, fh, X=None):
         """Fit ES-RNN Model for provided data."""
@@ -217,7 +213,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             special parameters are defined for a value, will return ``"default"`` set.
             Reserved values for classifiers:
                 "results_comparison" - used for identity testing in some classifiers
-                    should contain parameter settings comparable to "TSC bakeoff"
+                should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
         -------

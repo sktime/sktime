@@ -4,24 +4,16 @@ __author__ = ["Ankit-1204"]
 
 from warnings import warn
 
-from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class ESRNN(BaseDeepNetwork):
+class ESRNN:
     """
     Exponential Smoothing Recurrant Neural Network.
 
     This model combines Exponential Smoothing (ES) and (LSTM) networks
     for time series forecasting. ES is used to balance the level and
     seasonality of the series.
-
-    References
-    ----------
-    [1] Smyl, S. (2020). A hybrid method of exponential smoothing and
-        recurrent neural networks for time series forecasting.
-
-        https://www.sciencedirect.com/science/article/pii/S0169207019301153
 
     Parameters
     ----------
@@ -49,6 +41,12 @@ class ESRNN(BaseDeepNetwork):
     seasonal_coeff_1 : int
         Coefficient for smoothing of the season component
 
+    References
+    ----------
+    .. [1] Smyl, S. 2020.
+    A hybrid method of exponential smoothing and recurrent \
+    neural networks for time series forecasting.
+    https://www.sciencedirect.com/science/article/pii/S0169207019301153
     """
 
     _tags = {
