@@ -2362,6 +2362,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "https://github.com/alan-turing-institute/sktime/issues/3224"
         )
 
+        assert X_treatment in ["concurrent", "shifted"], f"X_treatment must be one of 'concurrent', 'shifted', but found {X_treatment}"
+
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2551,7 +2553,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y = y.to_numpy()
         X = (
             self._X.loc[cutoff].to_frame().T if self._X is not None else None
-        )  # exoxenous
+        )  # exogenous
 
         return y, X
 
@@ -2616,7 +2618,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_out_of_sample_v2_global(
         self, X_pool, fh
-    ):  # TODO: why are exogenous features not used?
+    ):
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2639,11 +2641,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         -------
         y_return = pd.Series or pd.DataFrame
         """
-        if self._X is not None:
-            raise ValueError(
-                "Do not call this function if model uses exogenous variables X."
-            )
-
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
         y_last, X_last = self._get_window()
@@ -2657,6 +2654,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         if isinstance(self.cutoff, pd.DatetimeIndex):
             if self.cutoff.tzinfo is not None:
                 index_range = index_range.tz_localize(self.cutoff.tzinfo)
+
+        if X_pool is not None:
+            # TODO: incorporate X_pool similar to local
+            raise NotImplementedError(
+                "X_pool not yet implemented for global pooling in RecursiveReducer"
+            )
 
         y_pred = _create_fcst_df(index_range, self._y)
 
@@ -2681,7 +2684,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_out_of_sample_v2_local(
         self, X_pool, fh
-    ):  # TODO: why are exogenous features not used?
+    ):
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -2704,11 +2707,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         -------
         y_return = pd.Series or pd.DataFrame
         """
-        # if self._X is not None:
-        #    raise ValueError(
-        #        "Do not call this function if model uses exogenous variables X."
-        #    )
-
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
 
@@ -2729,6 +2727,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # Fill pre-allocated arrays with available time based features.
         last[:, 0, :window_length] = y_last.T
 
+        # TODO: Where is X_last used here? Think that needs to be concatenated with X_pool?
         if X_pool is not None:
             fh_absolute = fh.to_absolute(self.cutoff)
             i_row = X_pool.index.get_loc(fh_absolute[0])
