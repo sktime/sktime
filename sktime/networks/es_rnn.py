@@ -315,11 +315,11 @@ class ESRNN:
         self._network_class = _ESRNN
         self.loss = PinballLoss
 
-    def DefaultLoss(self):
+    def pin_ball(self):
         """Return the default Pinball Loss."""
         return self.loss()
 
-    def build_network(self):
+    def _build(self):
         """Build the ES-RNN."""
         return self._network_class(
             self.input_shape,

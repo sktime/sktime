@@ -7,6 +7,51 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
 from sktime.utils.dependencies import _check_soft_dependencies
 
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+
+class ESRNNDataset(Dataset):
+    """Implements Pytorch Dataset class for ESS-RNN."""
+
+    def __init__(self, y, horizon, window, stride) -> None:
+        self.y = y
+        self.window = window
+        self.horizon = horizon
+        self.stride = stride
+        x_train, y_train = self._get_windows(y)
+        self.x_train = torch.FloatTensor(x_train)
+        self.y_train = torch.FloatTensor(y_train)
+
+    def _get_windows(self, y):
+        length = len(y)
+        x_arr = []
+        y_arr = []
+        for i in range(0, length - self.window - self.horizon + 1, self.stride):
+            inp = y[i : i + self.window]
+            out = y[i + self.window : i + self.window + self.horizon]
+
+            x_arr.append(inp)
+            y_arr.append(out)
+
+        if not x_arr:
+            raise ValueError("Input size to small")
+
+        return np.array(x_arr), np.array(y_arr)
+
+    def __len__(self):
+        """Get length of the dataset."""
+        return len(self.x_train)
+
+    def __getitem__(self, idx):
+        """Get data pairs at this index."""
+        return self.x_train[idx], self.y_train[idx]
+
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
     """
@@ -75,7 +120,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         window=5,
         stride=1,
         batch_size=32,
-        epoch=10,
+        num_epochs=10,
+        custom_dataset_train=None,
         optimizer="Adam",
         optimizer_kwargs=None,
         criterion="pinball",
@@ -92,11 +138,12 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.window = window
         self.stride = stride
         self.batch_size = batch_size
-        self.epoch = epoch
+        self.num_epochs = num_epochs
         self.optimizer = optimizer
         self.criterion = criterion
         self.optimizer_kwargs = optimizer_kwargs
         self.criterion_kwargs = criterion_kwargs
+        self.custom_dataset_train = custom_dataset_train
         self.lr_rate = lr_rate
         if _check_soft_dependencies("torch", severity="none"):
             import torch
@@ -136,17 +183,11 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         if self.criterion:
             return super()._instantiate_criterion()
         else:
-            return ESRNN().DefaultLoss()
+            return ESRNN().pin_ball()
 
-    def _fit(self, y, fh, X=None):
-        """Fit ES-RNN Model for provided data."""
-        import torch
-        from torch.utils.data import DataLoader, TensorDataset
-
-        self._y = y.copy()
+    def _build_network(self, fh):
         self.horizon = len(fh)
-        self._fh = fh
-        self.input_shape = y.shape[1]
+        self.input_shape = self._y.shape[1]
         self.network = ESRNN(
             self.input_shape,
             self.hidden_size,
@@ -155,19 +196,33 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.season1_length,
             self.season2_length,
             self.seasonality_type,
-        ).build_network()
-        x_train, y_train = self._get_windows(self._y)
-        x_train = torch.FloatTensor(x_train)
-        y_train = torch.FloatTensor(y_train)
-        data = TensorDataset(x_train, y_train)
-        loader = DataLoader(data, self.batch_size, shuffle=True)
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-        self.network.train()
-        for i in range(self.epoch):
-            self._run_epoch(i, loader)
+        )._build()
 
-        return self
+    def build_pytorch_train_dataloader(self, y):
+        """Build PyTorch DataLoader for training."""
+        from torch.utils.data import DataLoader
+
+        if self.custom_dataset_train:
+            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
+                self.custom_dataset_train.build_dataset
+            ):
+                self.custom_dataset_train.build_dataset(y)
+                dataset = self.custom_dataset_train
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please "
+                    f"refer to the {self.__class__.__name__}.build_dataset "
+                    "documentation."
+                )
+        else:
+            dataset = ESRNNDataset(
+                y=y,
+                window=self.window,
+                horizon=self.horizon,
+                stride=self.stride,
+            )
+
+        return DataLoader(dataset, self.batch_size, shuffle=True)
 
     def _predict(self, X=None, fh=None):
         """
@@ -235,7 +290,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "window": 3,
             "stride": 1,
             "batch_size": 32,
-            "epoch": 10,
+            "num_epochs": 10,
             "optimizer": "Adam",
             "criterion": "mse",
             "lr_rate": 1e-3,
