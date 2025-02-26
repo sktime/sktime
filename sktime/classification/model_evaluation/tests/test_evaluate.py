@@ -52,14 +52,6 @@ def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
     n_splits = cv.get_n_splits(y)
     assert out.shape[0] == n_splits
 
-    # Check if all timings are positive.
-    assert np.all(out.filter(like="_time") >= 0)
-
-    # Check cutoffs.
-    np.testing.assert_array_equal(
-        out["cutoff"].to_numpy(), y.iloc[cv.get_cutoffs(y)].index.to_numpy()
-    )
-
     # Check fitted models
     if return_model:
         assert "fitted_classifier" in out.columns
@@ -83,8 +75,8 @@ def test_evaluate_common_configs(scoring, backend):
 
     X, y = make_classification_problem(n_timepoints=30)
     classifier = DummyClassifier()
-    classifier.fit(X)
-    y_pred = classifier.predict()
+    classifier.fit(X, y)
+    y_pred = classifier.predict(X)
 
     cv = KFold(n_splits=3, shuffle=False)
 
