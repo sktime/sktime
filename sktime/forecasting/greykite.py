@@ -4,6 +4,8 @@
 __author__ = ["vedantag17"]
 
 
+from typing import Optional
+
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
@@ -40,19 +42,6 @@ class GreykiteForecaster(BaseForecaster):
     _X : pandas.DataFrame
         The exogenous variables, if provided.
     """
-
-    # Import dependencies inside the class definition
-    from typing import Optional
-
-    from greykite.framework.pipeline.pipeline import forecast_pipeline
-    from greykite.framework.templates.autogen.forecast_config import (
-        ComputationParam,
-        EvaluationMetricParam,
-        EvaluationPeriodParam,
-        ForecastConfig,
-        MetadataParam,
-        ModelComponentsParam,
-    )
 
     _tags = {
         "scitype:y": "univariate",  # Handles univariate targets here.
@@ -96,8 +85,17 @@ class GreykiteForecaster(BaseForecaster):
         # Set train_end_date explicitly using the maximum timestamp in y
         train_end_date = y.index.max() if y is not None else None
 
+        from greykite.framework.templates.autogen.forecast_config import (
+            ComputationParam,
+            EvaluationMetricParam,
+            EvaluationPeriodParam,
+            ForecastConfig,
+            MetadataParam,
+            ModelComponentsParam,
+        )
+
         # Expects DataFrame with timestamp column named "ts" and value column named "y".
-        metadata_param = self.MetadataParam(
+        metadata_param = MetadataParam(
             time_col="ts",
             value_col="y",
             date_format=self.date_format,
@@ -105,18 +103,18 @@ class GreykiteForecaster(BaseForecaster):
             train_end_date=train_end_date,
         )
         # Default model components.
-        model_components_param = self.ModelComponentsParam()
+        model_components_param = ModelComponentsParam()
 
         # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = self.ForecastConfig(
+        self.forecast_config = ForecastConfig(
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
             forecast_horizon=self.forecast_horizon,
             coverage=self.coverage,
-            evaluation_metric_param=self.EvaluationMetricParam(),
-            evaluation_period_param=self.EvaluationPeriodParam(),
-            computation_param=self.ComputationParam(),
+            evaluation_metric_param=EvaluationMetricParam(),
+            evaluation_period_param=EvaluationPeriodParam(),
+            computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
         return self.forecast_config
