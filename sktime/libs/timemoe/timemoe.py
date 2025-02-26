@@ -943,7 +943,7 @@ class TimeMoeModel(TimeMoePreTrainedModel):
     def __init__(self, config: TimeMoeConfig):
         super().__init__(config)
         self.embed_layer = TimeMoeInputEmbedding(config)
-        self.layers = nn.Modulelist(
+        self.layers = nn.ModuleList(
             [
                 TimeMoeDecoderLayer(config, layer_idx)
                 for layer_idx in range(config.num_hidden_layers)

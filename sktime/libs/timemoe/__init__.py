@@ -214,4 +214,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sktime.libs.timemoe.timemoe import TimeMoeForPrediction
+from sktime.libs.timemoe.timemoe import TimeMoeConfig, TimeMoeForPrediction
