@@ -70,10 +70,14 @@ class _SuppressWarningPattern:
     def _custom_showwarning(
         self, message, category, filename, lineno, file=None, line=None
     ):
-        right_type = issubclass(category, self.warning_type)
-        fits_pattern = self.message_pattern.search(str(message))
-        if not (right_type and fits_pattern):
-            self.original_showwarning(message, category, filename, lineno, file, line)
+        if not hasattr(self, "_in_warning"):
+            self._in_warning = True
+            try:
+                self.original_showwarning(
+                    message, category, filename, lineno, file, line
+                )
+            finally:
+                del self._in_warning
 
 
 _suppress_pd22_warning = _SuppressWarningPattern(
