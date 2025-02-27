@@ -1,4 +1,3 @@
-from sktime.datatypes._hierarchical._check import HierarchicalPdMultiIndex
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
@@ -70,9 +69,7 @@ class _ReconcilerTransformer(BaseTransformer):
         -------
         self
         """
-        self._no_hierarchy = not HierarchicalPdMultiIndex()._check(
-            obj=X, return_metadata=False
-        )
+        self._no_hierarchy = X.index.nlevels < 3
         if self._no_hierarchy:
             return self
         self._original_series = X.index.droplevel(-1).unique()
