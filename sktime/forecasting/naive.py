@@ -12,7 +12,7 @@ __author__ = [
     "IlyasMoutawwakil",
     "fkiraly",
     "bethrice44",
-    "XinyuWu",
+    "XinyuWuu",
 ]
 
 import math
