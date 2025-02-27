@@ -24,6 +24,7 @@ __all__ = ["BaseParamFitter"]
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
+    VectorizedDF,
     check_is_scitype,
     convert,
     scitype_to_mtype,
@@ -78,7 +79,6 @@ class BaseParamFitter(BaseEstimator):
         "scitype:y": "Series",  # which y scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
-        "requires_y": False,  # does estimator require y?
         "capability:pairwise": False,  # can handle pairwise parameter estimation?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
@@ -302,17 +302,12 @@ class BaseParamFitter(BaseEstimator):
             )
             return self
 
-        if y is not None:
-            # Validate and convert the new X and y data
-            X_inner, y_inner = self._check_X_y(X=X, y=y)
-            self._update_y_X(y_inner, X_inner)
-        else:
-            # Update only the target data
-            X_inner = self._check_X(X=X)
-            self._update_y_X(None, X_inner)
+        # Validate and convert the new X and y data
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        self._update_y_X(y_inner, X_inner)
 
         # Pass the checked and converted data to the estimator-specific _update logic
-        _safe_call(self._fit, args=(), kwargs={"X": X_inner, "y": y_inner})
+        _safe_call(self._update, args=(), kwargs={"X": X_inner, "y": y_inner})
 
         return self
 
@@ -373,11 +368,6 @@ class BaseParamFitter(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        if y is not None and self.get_tag("requires_y") is False:
-            raise ValueError(
-                f"{type(self).__name__} does not require y, but y was passed."
-            )
-
         # Process y if provided
         if y is not None:
             ALLOWED_SCITYPES = [_coerce_to_list(self.get_tag("scitype:y"))]
@@ -388,12 +378,6 @@ class BaseParamFitter(BaseEstimator):
             ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
             FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
             X_inner = self._validate_data(ALLOWED_SCITYPES, FORBIDDEN_MTYPES, X, "X")
-
-        # If both X and y are provided, check that their lengths match.
-        if y_inner is not None and len(y_inner) != len(X_inner):
-            raise ValueError(
-                f"Length of X ({len(X_inner)}) and y ({len(y_inner)}) must match."
-            )
 
         return X_inner, y_inner
 
@@ -466,6 +450,9 @@ class BaseParamFitter(BaseEstimator):
                 self._y = update_data(self._y, y)
 
         if X is not None:
+            # unwrap X if VectorizedDF
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
             else:
@@ -527,6 +514,7 @@ class BaseParamFitter(BaseEstimator):
         -------
         self : reference to self
         """
+        # default to re-fitting if update is not implemented
         warn(
             f"NotImplementedWarning: {self.__class__.__name__} "
             f"does not have a custom `update` method implemented. "
