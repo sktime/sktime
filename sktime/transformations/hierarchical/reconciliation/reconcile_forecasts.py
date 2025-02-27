@@ -11,6 +11,7 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.transformations.hierarchical.reconciliation._utils import _loc_series_idxs
 from sktime.transformations.hierarchical.reconciliation.bottom_up import (
     BottomUpReconciler,
 )
@@ -190,6 +191,8 @@ class ReconcileForecasts(BaseTransformer):
             )
             return X
 
+        self._original_series = X.index.droplevel(-1).unique()
+
         # check index for no "__total", if not add totals to X
         if _check_index_no_total(X):
             warn(
@@ -208,6 +211,8 @@ class ReconcileForecasts(BaseTransformer):
             ).sort_index()
 
         recon_preds = self.reconciler_.inverse_transform(X)
+
+        recon_preds = _loc_series_idxs(recon_preds, self._original_series).sort_index()
 
         return recon_preds
 
