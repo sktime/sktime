@@ -25,8 +25,8 @@ def reindex_iloc(df, inds, copy=True):
         out of bound indices will result in np.nan values
         entries are references to original DataFrame if copy=False
 
-    Example
-    -------
+    Examples
+    --------
     >>> X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
     >>> reindex_iloc(X, [1, 2, 6])
          a
@@ -56,8 +56,8 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
     pd.DataFrame in alignment format, with columns 'ind'+str(i) for integer i
         cols contain loc index of X[i] mapped to alignment coordinate for alignment
 
-    Example
-    -------
+    Examples
+    --------
     align_df = pd.DataFrame({'ind0' : [1,2,3], 'ind1' : [0,2,4]})
     X = [pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14]),
             pd.DataFrame({'a' : [1,2,3,5,6]}, index=[4,8,12,16,20])

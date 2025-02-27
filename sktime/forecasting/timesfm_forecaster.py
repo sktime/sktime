@@ -21,10 +21,25 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     developed by Google Research for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
+    TimesFM can be used either as a locally maintained package in sktime or directly
+    from the source package, allowing users to leverage either their own
+    environment or the latest updates from the source package `timesfm`.
+
+    The class offers two flags for handling dependencies and source package behavior:
+
+    - ``use_source_package``: Determines the source of the package code:
+      False for the vendor fork in ``sktime`` with its default dependencies.
+      True for the source package ``timesfm``.
+    - ``ignore_deps``: If set, bypasses dependency checks entirely.
+      This is for users who want to manage their environment manually.
+
     Parameters
     ----------
-    context_len : int
+    context_len : int, optional (default=None)
         The length of the input context sequence.
+        If set to None, the context length is automatically computed as the smallest
+        multiple of ``input_patch_len`` that is larger than the length
+        of the input time series `y`.
         It should be a multiple of ``input_patch_len`` (32).
         The maximum context length currently supported is 512, but this can be
         increased in future releases.
@@ -32,8 +47,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         and padding or truncation will
         be handled by the model's inference code if necessary.
 
-    horizon_len : int
-        The length of the forecast horizon. This can be set to any value, although it
+    horizon_len : int, optional (default=128)
+        The length of the forecast horizon.
+        If set to None, the forecast horizon is dynamically determined based on the
+        provided forecasting horizon `fh`, if available.
+        This can be set to any value, although it
         is generally recommended to keep it less than or equal to ``context_len`` for
         optimal performance. The model will still function
         if ``horizon_len`` exceeds ``context_len``.
@@ -80,12 +98,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         only one multiindex output from ``predict``.
     use_source_package : bool, default=False
         If True, the model will be loaded directly from the source package ``timesfm``.
-        This is useful if you want to bypass the local version of the package
-        or when working in an environment where the latest updates
-        from the source package are needed.
-        If False, the model will be loaded from the local version of package maintained
-        in sktime.
-        To install the source package, follow the instructions here [1]_.
+        This also enforces a version bound for ``timesfm`` to be <1.2.0.
+        This setting is useful if the latest updates from the source package are needed,
+        bypassing the local version of the package.
+    ignore_deps : bool, default=False
+        If True, dependency checks will be ignored, and the user is expected to handle
+        the installation of required packages manually. If False, the class will enforce
+        the default dependencies required for the vendor library or the pypi
+        package, as described above, via ``use_source_package``.
 
     References
     ----------
@@ -135,6 +155,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # when relaxing deps, check whether the extra test in
         # test_timesfm.py are still needed
         "python_version": ">=3.10,<3.11",
+        "env_marker": "sys_platform=='linux'",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -144,7 +165,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
-        "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -166,8 +186,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        context_len,
-        horizon_len,
+        context_len=None,
+        horizon_len=128,
         freq=0,
         repo_id="google/timesfm-1.0-200m",
         input_patch_len=32,
@@ -179,10 +199,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         verbose=False,
         broadcasting=False,
         use_source_package=False,
+        ignore_deps=False,
     ):
         self.context_len = context_len
+        self._context_len = None
         self.horizon_len = horizon_len
         self._horizon_len = None
+        self._context_len = None
         self.freq = freq
         self.repo_id = repo_id
         self.input_patch_len = input_patch_len
@@ -194,6 +217,22 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.verbose = verbose
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.ignore_deps = ignore_deps
+
+        if not self.ignore_deps:
+            if self.use_source_package:
+                # Use timesfm with a version bound if use_source_package is True
+                # todo 0.37.0: Regularly check whether timesfm version can be updated
+                # if changed, also needs to be changed in docstring
+                self.set_tags(python_dependencies=["timesfm<1.2.0"])
+        else:
+            # Ignore dependencies, leave the dependency set empty
+            clear_deps = {
+                "python_dependencies": None,
+                "python_version": None,
+                "env_marker": None,
+            }
+            self.set_tags(**clear_deps)
 
         if self.broadcasting:
             self.set_tags(
@@ -204,18 +243,33 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 }
             )
 
-        # to avoid RuntimeError when backed=="cpu"
+        # Set environment variables for JAX backend based on CPU, GPU, or TPU
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
 
         super().__init__()
 
     def _fit(self, y, X, fh):
-        if fh is not None:
+        if fh is None and self.horizon_len is None:
+            raise ValueError(
+                "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
+            )
+        elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
             self._horizon_len = max(self.horizon_len, *fh._values.values)
+        elif fh is not None:
+            fh = fh.to_relative(self.cutoff)
+            self._horizon_len = max(*fh._values.values)
         else:
             self._horizon_len = self.horizon_len
+
+        if self.context_len is not None:
+            self._context_len = self.context_len
+        else:
+            # Compute context_len as the smallest multiple of input_patch_len
+            # that is larger than the length of y.
+            context_multiple = (len(y) // self.input_patch_len) + 1
+            self._context_len = context_multiple * self.input_patch_len
 
         self.tfm = _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
@@ -227,7 +281,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
         return {
-            "context_len": self.context_len,
+            "context_len": self._context_len,
             "horizon_len": self._horizon_len,
             "input_patch_len": self.input_patch_len,
             "output_patch_len": self.output_patch_len,
@@ -255,10 +309,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self.horizon_len:
+        if max(fh._values.values) > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
-                f" specified horizon_len of {self.horizon_len}. Change the horizon_len"
+                f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
@@ -293,7 +347,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 names=_y.index.names,
             )
             pred = pd.DataFrame(
-                # batch_size * num_timestams
+                # batch_size * num_timestamps
                 pred.ravel(),
                 index=index,
                 columns=_y.columns,
@@ -305,7 +359,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 ._values
             )
             pred = pd.Series(
-                # batch_size * num_timestams
+                # batch_size * num_timestamps
                 pred.ravel(),
                 index=index,
                 name=_y.name,
@@ -339,6 +393,12 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
+            {
+                "context_len": None,
+                "horizon_len": 128,
+                "freq": 0,
+                "verbose": False,
+            },
             {
                 "context_len": 64,
                 "horizon_len": 32,

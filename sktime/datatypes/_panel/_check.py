@@ -84,6 +84,45 @@ def _list_all_equal(obj):
 class PanelDfList(ScitypePanel):
     """Data type: list-of-pandas.DataFrame based specification of panel of time series.
 
+    Name: ``"df-list"``
+
+    Short description:
+
+    a ``list`` of ``pandas.DataFrame``,
+    with list index = instances, data frame rows = time points,
+    data frame cols = variables
+
+    Long description:
+
+    The ``"df-list"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a list of ``pandas.DataFrames``.
+      Individual list elements of `obj` must follow the ``"pd.DataFrame"``
+      mtype convention for the ``"Series"`` scitype.
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]`` correspond to different, distinct time points,
+      at which instance ``i`` is observed.
+    * time index: ``obj[i].index`` is interpreted as the time index for instance ``i``.
+    * variables: columns of ``obj[i]`` correspond to different variables available
+      for instance ``i``.
+    * variable names: column names ``obj[i].columns`` are the names of variables
+      available for instance ``i``.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -119,6 +158,7 @@ class PanelDfList(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -210,6 +250,41 @@ def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
 class PanelNp3D(ScitypePanel):
     """Data type: 3D np.ndarray based specification of panel of time series.
 
+    Name: ``"numpy3D"``
+
+    Short description:
+
+    a 3D ``numpy.ndarray``,
+    with axis 0 = instances, axis 1 = variables, axis 2 = time points
+
+    Long description:
+
+    The ``"numpy3D"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: numpy.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` must be 3D, i.e., ``obj.shape`` must have length 3.
+    * instances: instances correspond to axis 0 elements of ``obj``.
+    * instance index: the instance index is implicit and by-convention.
+      The ``i``-th element of axis 0 (for an integer ``i``) is interpreted as indicative
+      of observing instance `i`.
+    * variables: variables correspond to axis 1 elements of ``obj``.
+    * variable names: the ``"numpy3D"`` mtype cannot represent variable names.
+    * time points: time points correspond to axis 2 elements of ``obj``.
+    * time index: the time index is implicit and by-convention.
+      The ``i``-th element of axis 2 (for an integer ``i``) is interpreted
+      as an observation at the time point ``i``.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * cannot represent unequally spaced series
+    * cannot represent panels of unequally supported series
+    * cannot represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -245,6 +320,7 @@ class PanelNp3D(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -326,6 +402,45 @@ def _check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 class PanelPdMultiIndex(ScitypePanel):
     """Data type: MultiIndex-ed pd.DataFrame specification of panel of time series.
 
+    Name: ``"pd-multiindex"``
+
+    Short description:
+
+    a ``pandas.DataFrame``, with row multi-index (instances, time), cols = variables
+
+    Long description:
+
+    The ``"pd-multiindex"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: pd.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be a pair multi-index of
+      type ``(Index, t)``, where ``t`` is one of ``Int64Index``, ``RangeIndex``,
+      ``DatetimeIndex``, ``PeriodIndex`` and monotonic.
+      ``obj.index`` must have two levels (can be named or not).
+    * instance index: the first element of pairs in ``obj.index`` (0-th level value)
+      is interpreted as an instance index, we call it "instance index" below.
+    * instances: rows with the same "instance index" index value correspond to the same
+      instance; rows with different "instance index" values correspond
+      to different instances.
+    * time index: the second element of pairs in ``obj.index`` (1-st level value)
+      is interpreted as a time index, we call it "time index" below.
+    * time points: rows of ``obj`` with the same "time index" value correspond
+      correspond to the same time point; rows of `obj` with different "time index"
+      index correspond to the different time points.
+    * variables: columns of ``obj`` correspond to different variables
+    * variable names: column names ``obj.columns``
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * cannot represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -360,7 +475,8 @@ class PanelPdMultiIndex(ScitypePanel):
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "numpy",
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -632,6 +748,7 @@ class PanelNestedDf(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -780,6 +897,7 @@ class PanelNumpyFlat(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -893,6 +1011,7 @@ class PanelDask(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -967,6 +1086,7 @@ class PanelPolarsEager(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1071,7 +1191,58 @@ def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pan
 
 
 class PanelGluontsList(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonTS representation of univariate and multivariate time series.
+
+    Name: ``"gluonts_ListDataset_panel"``
+
+    Short description:
+
+    A ``list`` of ``dict``,
+    with list index = instances, ``dict['target']`` rows = time points,
+    ``dict['target']`` cols = variables, and ``dict['start']`` marking the interval.
+    Identical to ``gluonts.dataset.common.ListDataset``.
+
+    Long description:
+
+    The ``"gluonts_ListDataset_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a ``list`` of ``dict``.
+      Each ``dict`` must contain a key ``"target"``which
+      maps to a 1D ``numpy.ndarray`` for a univariate, and
+      2D ``numpy.ndarray`` for a multivariate time series.
+      Optionally, it may also contain a key ``"start"``
+      that maps to a ``pandas.Period`` object.
+      eg: ``pandas.Period("2024-01-01", freq="D")`` for a time series starting
+      on 2024-01-01 and sampled daily.
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]['target']`` correspond to
+      different, distinct time points, at which
+      instance ``i`` is observed.
+    * time index: the time index is implicit and by-convention.
+      The ``j``-th element (for an integer ``j``) of instance ``i`` is interpreted
+      as an observation at the time point ``j``.
+      If ``"start"`` key is present, the time index for
+      the ``j``-th element of instance ``i`` is ``obj[i]['start'] + j``.
+    * variables: columns of ``obj[i]['target']`` correspond to different variables
+      available for instance ``i``.
+    * variable names: ``numpy`` mtypes cannot represent variable names. If required,
+      then variable names are assigned ``"value_{k}``
+      where ``k`` is the feature column index.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can not represent panels of unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
 
     Parameters
     ----------
@@ -1107,7 +1278,8 @@ class PanelGluontsList(ScitypePanel):
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
-        "python_dependencies": "gluonts",
+        "python_dependencies": None,
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1144,7 +1316,7 @@ class PanelGluontsList(ScitypePanel):
             or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
@@ -1258,6 +1430,7 @@ class PanelGluontsPandas(ScitypePanel):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,

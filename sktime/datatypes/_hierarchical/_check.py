@@ -65,6 +65,45 @@ def _list_all_equal(obj):
 class HierarchicalPdMultiIndex(ScitypeHierarchical):
     """Data type: pandas.DataFrame based specification of hierarchical series.
 
+    Name: ``"pd_multiindex_hier"``
+
+    Short description:
+    a ``pandas.DataFrame``, with row multi-index,
+    last level interpreted as time, others as hierarchy, cols = variables
+
+    Long description:
+
+    The ``"pd_multiindex_hier"`` :term:`mtype` is a concrete specification
+    that implements the ``Hierarchical`` :term:`scitype`, i.e., the abstract
+    type of a hierarchically indexed collection of time series.
+
+    An object ``obj: pandas.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be a 3 or more level multi-index of type
+      ``(Index, ..., Index, t)``, where ``t`` is one of ``Int64Index``, ``RangeIndex``,
+      ``DatetimeIndex``, ``PeriodIndex`` and monotonic.
+      We call the last index the "time-like" index.
+    * hierarchy level: rows with the same non-time-like index values correspond to the
+      same hierarchy unit; rows with different non-time-like index combination
+      correspond to different hierarchy unit.
+    * hierarchy: the non-time-like indices in ``obj.index`` are interpreted as a
+      hierarchy identifying index.
+    * time index: the last element of tuples in ``obj.index`` is interpreted
+      as a time index.
+    * time points: rows of ``obj`` with the same ``"timepoints"`` index correspond
+      to the same time point; rows of ``obj`` with different ``"timepoints"`` index
+      correspond to the different time points.
+    * variables: columns of ``obj`` correspond to different variables
+    * variable names: column names ``obj.columns``
+
+    Capabilities:
+
+    * can represent multivariate hierarchical series
+    * can represent unequally spaced hierarchical series
+    * can represent unequally supported hierarchical series
+    * cannot represent hierarchical series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -106,6 +145,7 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -185,6 +225,7 @@ class HierarchicalDask(ScitypeHierarchical):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -265,6 +306,7 @@ class HierarchicalPolarsEager(ScitypeHierarchical):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
