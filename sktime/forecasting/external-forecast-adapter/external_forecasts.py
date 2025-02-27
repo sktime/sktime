@@ -1,40 +1,42 @@
 """
-ExternalForecastAdapter integrates external weather forecast APIs into sktime.
+ExternalForecasts integrates external forecast APIs into sktime.
 
-This adapter fetches weather forecasts from a weather API and uses them
+This adapter fetches forecasts from an external provider and uses them
 as predicted values in a time-series forecasting workflow.
 """
 
 import pandas as pd
+from forecast_provider import ForecastProvider
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
-from .weather_forecast_provider import WeatherForecastProvider
 
-
-class ExternalForecastAdapter(BaseForecaster):
+class ExternalForecasts(BaseForecaster):
     """
-    Adapter for integrating external weather forecast APIs into sktime.
+    Adapter for integrating external forecast APIs into sktime.
 
-    This forecaster fetches weather data from an external API and returns predictions
-    based on the weather forecast.
+    This forecaster fetches data from an external provider and returns predictions
+    based on the external forecast.
 
     Attributes
     ----------
-    location : str
-        City or coordinates for fetching weather data.
-    forecast_days : int
-        Number of days to predict.
-    provider : WeatherForecastProvider
-        Handles API requests.
+    api_url : str
+        URL of the external forecast API.
+    api_key : str
+        API key for authentication.
+        Handles API requests or external data retrieval.
     """
 
-    def __init__(self, location: str, forecast_days: int = 1):
+    _tags = {
+        "requires-fh-in-fit": False,
+        "non-deterministic": True,
+        "capability:pred_int": False,
+    }
+
+    def __init__(self, provider: ForecastProvider):
         """Initialize the external forecast adapter."""
-        self.location = location
-        self.forecast_days = forecast_days
-        self.provider = WeatherForecastProvider()
+        self.provider = provider
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -54,7 +56,7 @@ class ExternalForecastAdapter(BaseForecaster):
 
         Returns
         -------
-        self : ExternalForecastAdapter
+        self : ExternalForecasts
             Returns the instance itself.
         """
         self.y_ = y
@@ -62,7 +64,7 @@ class ExternalForecastAdapter(BaseForecaster):
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """
-        Predict using external weather data.
+        Predict using external forecast data.
 
         Parameters
         ----------
@@ -80,23 +82,9 @@ class ExternalForecastAdapter(BaseForecaster):
         pd.Series
             Forecasted values.
         """
-        forecast_data = self.provider.get_forecast(
-            self.location, days=self.forecast_days
-        )
-
-        # Extract relevant weather forecast (e.g., temperature)
-        forecast_values = [
-            forecast_data["forecast"]["forecastday"][i]["day"]["avgtemp_c"]
-            for i in range(self.forecast_days)
-        ]
-
-        index = pd.date_range(
-            start=self.y_.index[-1] + pd.Timedelta(days=1),
-            periods=self.forecast_days,
-            freq="D",
-        )
-
-        return pd.Series(forecast_values, index=index)
+        cutoff = self.cutoff
+        forecast_values = self.provider.get_forecast(cutoff, fh)
+        return forecast_values
 
     def _update(self, y, X=None, update_params=True):
         """
@@ -113,7 +101,7 @@ class ExternalForecastAdapter(BaseForecaster):
 
         Returns
         -------
-        self : ExternalForecastAdapter
+        self : ExternalForecasts
             Returns the instance itself.
         """
         self.y_ = y
@@ -121,22 +109,23 @@ class ExternalForecastAdapter(BaseForecaster):
 
 
 def example_usage():
-    """Demonstrate how to use the ExternalForecastAdapter with sktime."""
+    """Demonstrate how to use the ExternalForecasts with sktime."""
     from sktime.forecasting.base import ForecastingHorizon
 
-    # Sample historical temperature data
     dates = pd.date_range(start="2023-01-01", periods=10, freq="D")
     y = pd.Series([15, 16, 14, 18, 20, 19, 17, 16, 15, 14], index=dates)
 
-    # Initialize forecaster
-    forecaster = ExternalForecastAdapter(location="New York", forecast_days=3)
+    provider = ForecastProvider(
+        api_url="https://forecast.example.com/get_forecast", api_key="your_api_key"
+    )
 
-    # Fit and predict
+    forecaster = ExternalForecasts(provider)
+
     forecaster.fit(y)
     fh = ForecastingHorizon([1, 2, 3], is_relative=True)
     forecast = forecaster.predict(fh)
 
-    print("Weather-based forecast:")
+    print("External API forecast:")
     print(forecast)
 
 
