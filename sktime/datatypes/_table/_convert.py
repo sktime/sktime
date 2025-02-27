@@ -34,18 +34,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
+from sktime.datatypes._table._registry import MTYPE_LIST_TABLE
 from sktime.utils.dependencies import _check_soft_dependencies
-
-# this needs to be refactored with the convert module
-MTYPE_LIST_TABLE = [
-    "pd_DataFrame_Table",
-    "numpy1D",
-    "numpy2D",
-    "pd_Series_Table",
-    "list_of_dict",
-    "polars_eager_table",
-    "polars_lazy_table",
-]
 
 ##############################################################
 # methods to convert one machine type to another machine type
