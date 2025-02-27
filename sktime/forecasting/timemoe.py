@@ -14,6 +14,13 @@ from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+else:
+
+    class torch:
+        """Dummy implementation class if torch is not available."""
+
+        blfloat16 = None
+
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
@@ -37,31 +44,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware utilization.
-
-        - input_size: int, default=1
-            The size of the input time series.
-        - hidden_size: int, default=4096
-            The size of the hidden layers in the TimeMOE model.
-        - intermediate_size: int, default=22016
-            The size of the intermediate layers in the TimeMOE model.
-        - horizon_lengths: list[int], default=[1]
-            The prediction horizon length.
-        - num_hidden_layers: int, default=32
-            The number of hidden layers in the TimeMOE model.
-        - num_attention_heads: int, default=32
-            The number of attention heads in the TimeMOE model.
-        - num_experts_per_tok: int, default=2
-            The number of experts per token in the TimeMOE model.
-        - num_experts: int, default=1
-            The number of experts in the TimeMOE model.
-        - max_position_embeddings: int, default=32768
-            The maximum position embeddings in the TimeMOE model.
-        - rms_norm_eps: float, default=1e-6
-            The epsilon value for RMS normalization in the TimeMOE model.
-        - rope_theta: int, default=10000
-            Initialise theta for RoPE (Rotational Positional Embeddings).
-        - attention_dropout: float, default=0.1
-            The dropout rate for attention layers in the TimeMOE model.
 
     seed: int, optional (default=None)
         Seed for reproducibility.
@@ -89,11 +71,12 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     --------
     >>> from sktime.forecasting.timemoe import TimeMoEForecaster
     >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)
     """
 
     _tags = {
@@ -143,6 +126,8 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "apply_aux_loss": True,
         "router_aux_loss_factor": 0.02,
         "tie_word_embeddings": False,
+        "torch_dtype": torch.bfloat16,
+        "device_map": "cpu",
     }
 
     def __init__(
@@ -207,32 +192,10 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     def _get_timemoe_kwargs(self):
         """Get the kwargs for TimeMoE model."""
         kwargs = {
-            "input_size": self._config["input_size"],
-            "hidden_size": self._config["hidden_size"],
-            "intermediate_size": self._config["intermediate_size"],
-            "horizon_lengths": self._config["horizon_lengths"],
-            "num_hidden_layers": self._config["num_hidden_layers"],
-            "num_attention_heads": self._config["num_attention_heads"],
-            "num_key_value_heads": self._config["num_key_value_heads"],
-            "hidden_act": self._config["hidden_act"],
-            "num_experts_per_tok": self._config["num_experts_per_tok"],
-            "num_experts": self._config["num_experts"],
-            "max_position_embeddings": self._config["max_position_embeddings"],
-            "initializer_range": self._config["initializer_range"],
-            "rms_norm_eps": self._config["rms_norm_eps"],
-            "use_cache": self._config["use_cache"],
-            "use_dense": self._config["use_dense"],
-            "rope_theta": self._config["rope_theta"],
-            "attention_dropout": self._config["attention_dropout"],
-            "apply_aux_loss": self._config["apply_aux_loss"],
-            "router_aux_loss_factor": self._config["router_aux_loss_factor"],
-            "tie_word_embeddings": self._config["tie_word_embeddings"],
+            "pretrained_model_name_or_path": self.model_path,
+            "torch_dtype": self._config["torch_dtype"],
+            "device_map": self._config["device_map"],
         }
-
-        if "torch_dtype" in self._config:
-            kwargs["torch_dtype"] = self._config["torch_dtype"]
-        if "device_map" in self._config:
-            kwargs["device_map"] = self._config["device_map"]
 
         return kwargs
 
@@ -295,7 +258,9 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
 
-            input_tensor = torch.tensor(_y_i, type=torch.float32).unsqueeze(0)
+            input_tensor = torch.tensor(
+                _y_i, dtype=self._config["torch_dtype"]
+            ).unsqueeze(0)
 
             attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
@@ -308,21 +273,29 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                     return_dict=True,
                 )
 
-            predictions = output.logits.squeeze(0).cpu().numpy()
+            predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
             reshaped_predictions = predictions[
-                :, : prediction_length * self.config["input_size"]
+                :, : prediction_length * self._config["input_size"]
             ]
             reshaped_predictions = reshaped_predictions.reshape(
-                -1, prediction_length, self.config["input_size"]
+                -1, prediction_length, self._config["input_size"]
             )
             final_predictions = reshaped_predictions[-1]
+            selected_indices = [h - 1 for h in fh.to_relative(self.cutoff)]
+            final_predictions = final_predictions[selected_indices]
             results.append(final_predictions)
+
         if len(results) > 1:
             combined_results = np.concatenate(results, axis=0)
         else:
             combined_results = results[0]
 
         forecast_index = fh.to_absolute(self.cutoff)
+
+        if hasattr(forecast_index, "to_numpy"):
+            forecast_index = forecast_index.to_numpy()
+        else:
+            forecast_index = list(forecast_index)
 
         if isinstance(_y_df.index, pd.MultiIndex):
             # creates a a time index which replaces the existing tiume index with
@@ -350,6 +323,32 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             )
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_default="default"):
+        """Get the test parameters for the forecaster.
+
+        Parameters
+        ----------
+        parameter_default : str, optional (default='default')
+            The default parameter to use for the test.
+
+        Returns
+        -------
+        params : dict
+            Dictionary of test parameters.
+        """
+        test_params = []
+        test_params.append(
+            {
+                "model_path": "Maple728/TimeMoE-50M",
+            }
+        )
+        test_params.append(
+            {"model_path": "Maple728/TimeMoE-50M", "config": {"num_experts": 2}}
+        )
+
+        return test_params
 
 
 def _same_index(data):
@@ -387,25 +386,12 @@ class _CachedTimeMoE:
     def load_from_checkpoint(self):
         """Load the model from checkpoint."""
         if self.use_source_package:
-            from time_moe.models.modeling_time_moe import (
-                TimeMoeConfig,
-                TimeMoeForPrediction,
-            )
+            from timemoe.models.modeling_timemoe import TimeMoeForPrediction
 
-            config = TimeMoeConfig(**self.timemoe_kwargs)
-
-            model = TimeMoeForPrediction.from_pretrained(
-                self.key,
-                config=config,
-            )
+            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
         else:
-            from sktime.libs.timemoe import TimeMoeConfig, TimeMoeForPrediction
+            from sktime.libs.timemoe import TimeMoeForPrediction
 
-            config = TimeMoeConfig(**self.timemoe_kwargs)
-
-            model = TimeMoeForPrediction.from_pretrained(
-                self.key,
-                config=config,
-            )
+            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
 
         return model
