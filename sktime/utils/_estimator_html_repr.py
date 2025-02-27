@@ -1,10 +1,11 @@
 """Functionality to represent instance of BaseObject as html."""
-# based on the slearn module of the same name
+# based on the sklearn module of the same name
 
 import html
 import importlib
 import uuid
 from contextlib import closing
+from inspect import isclass
 from io import StringIO
 from pathlib import Path
 from string import Template
@@ -113,15 +114,20 @@ def _get_visual_block(base_object):
     elif base_object is None:
         return _VisualBlock("single", base_object, names="None", name_details="None")
 
-    # check if base_object looks like a meta base_object wraps base_object
-    if hasattr(base_object, "get_params"):
-        base_objects = []
-        for key, value in base_object.get_params().items():
-            # Only look at the BaseObjects in the first layer
-            if "__" not in key and hasattr(value, "get_params"):
-                base_objects.append(value)
-        if len(base_objects):
-            return _VisualBlock("parallel", base_objects, names=None)
+    # check if estimator looks like a meta estimator (wraps estimators)
+    if hasattr(base_object, "get_params") and not isclass(base_object):
+        base_objects = [
+            (key, est)
+            for key, est in base_object.get_params(deep=False).items()
+            if hasattr(est, "get_params") and hasattr(est, "fit") and not isclass(est)
+        ]
+        if base_objects:
+            return _VisualBlock(
+                "parallel",
+                [est for _, est in base_objects],
+                names=[f"{key}: {est.__class__.__name__}" for key, est in base_objects],
+                name_details=[str(est) for _, est in base_objects],
+            )
 
     return _VisualBlock(
         "single",
@@ -236,16 +242,34 @@ def _object_html_repr(base_object):
         return html_output
 
 
+def _get_reduced_path(input_path_string):
+    """Remove submodules starting with an underscore to get a reduced path string."""
+    substrings = input_path_string.split(".")
+
+    index_to_remove = None
+    for i, substring in enumerate(substrings):
+        if substring.startswith("_"):
+            index_to_remove = i
+            break
+
+    if index_to_remove is not None:
+        substrings = substrings[:index_to_remove] + substrings[-1:]
+
+    result_string = ".".join(substrings)
+
+    return result_string
+
+
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
     This mixin relies on three attributes:
-    - `_doc_link_module`: it corresponds to the root module (e.g. `sklearn`). Using this
-      mixin, the default value is `sklearn`.
+    - `_doc_link_module`: it corresponds to the root module (e.g. `sktime`). Using this
+      mixin, the default value is `sktime`.
     - `_doc_link_template`: it corresponds to the template used to generate the
       link to the API documentation. Using this mixin, the default value is
-      `"https://www.sktime.net/en/v{version_url}/api_reference/auto_generated/
-      {modpath}.html"`.
+      `"https://www.sktime.net/en/v{sktime_version}/api_reference/auto_generated/
+      {path_reduced}.html"`.
     - `_doc_link_url_param_generator`: it corresponds to a function that generates the
       parameters to be used in the template when the estimator module and name are not
       sufficient.
@@ -269,7 +293,7 @@ class _HTMLDocumentationLinkMixin:
             "__doc_link_template",
             (
                 f"https://www.sktime.net/en/v{sktime_version}"
-                "/api_reference/auto_generated/{modpath}.html"
+                "/api_reference/auto_generated/{reduced_path}.html"
             ),
         )
 
@@ -294,10 +318,10 @@ class _HTMLDocumentationLinkMixin:
             return ""
 
         if self._doc_link_url_param_generator is None:
-            modclass = self.__class__
-            modpath = str(modclass)[8:-2]
+            modpath = str(self.__class__)[8:-2]
+            reduced_path = _get_reduced_path(modpath)
 
-            return self._doc_link_template.format(modpath=modpath)
+            return self._doc_link_template.format(reduced_path=reduced_path)
         return self._doc_link_template.format(
             **self._doc_link_url_param_generator(self)
         )

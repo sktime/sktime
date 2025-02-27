@@ -149,7 +149,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # TODO 0.34.0: check whether python 3.8 has reached EoL.
     # If so, remove warning altogether
     def __init__(self):
         super().__init__()
@@ -163,7 +163,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # todo 0.34.0 - check whether python 3.8 eol is reached.
         # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
@@ -184,7 +184,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.32.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.34.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
@@ -205,7 +205,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["prophet", "numba"]
+        NOT_NP2_COMPATIBLE = ["prophet", "pmdarima"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:

@@ -50,6 +50,8 @@ Tags can be inspected at runtime using the following utilities:
     all_estimators
 
 
+.. _packaging_tags:
+
 General tags, packaging
 -----------------------
 

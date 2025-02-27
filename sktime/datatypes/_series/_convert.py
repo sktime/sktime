@@ -38,7 +38,7 @@ import pandas as pd
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._registry import MTYPE_LIST_SERIES
+from sktime.datatypes._series._registry import MTYPE_LIST_SERIES
 from sktime.utils.dependencies import _check_soft_dependencies
 
 convert_dict = dict()
@@ -265,6 +265,57 @@ if _check_soft_dependencies("dask", severity="none"):
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
     )
+
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_uvs_as_series(obj, store=None):
+        pd_df = convert_polars_to_pandas(obj)
+        return convert_MvS_to_UvS_as_Series(pd_df, store=store)
+
+    convert_dict[("pl.DataFrame", "pd.Series", "Series")] = (
+        convert_polars_to_uvs_as_series
+    )
+
+    def convert_polars_to_mvs_as_series(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("pl.DataFrame", "pd.DataFrame", "Series")] = (
+        convert_polars_to_mvs_as_series
+    )
+
+    def convert_mvs_to_polars_as_series(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd.DataFrame", "pl.DataFrame", "Series")] = (
+        convert_mvs_to_polars_as_series
+    )
+
+    def convert_uvs_to_polars_as_series(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd.Series", "pl.DataFrame", "Series")] = (
+        convert_uvs_to_polars_as_series
+    )
+
+    def convert_polars_lazy_to_mvs_as_series(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("pl.LazyFrame", "pd.DataFrame", "Series")] = (
+        convert_polars_lazy_to_mvs_as_series
+    )
+
+    def convert_mvs_to_polars_lazy_as_series(obj, store=None):
+        return convert_pandas_to_polars(obj, lazy=True)
+
+    convert_dict[("pd.DataFrame", "pl.LazyFrame", "Series")] = (
+        convert_mvs_to_polars_lazy_as_series
+    )
+
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (

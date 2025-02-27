@@ -50,7 +50,7 @@ def check_task(task):
         Annotation task.
     """
     valid_tasks = ["segmentation", "change_point_detection", "anomaly_detection"]
-    if task not in valid_tasks:
+    if task != "None" and task not in valid_tasks:
         raise ValueError(f"`task` must be in: {valid_tasks}, but found: {task}.")
 
 

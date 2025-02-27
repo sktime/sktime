@@ -442,6 +442,33 @@ def test_make_reduction_infer_scitype_for_sklearn_pipeline():
 
 
 @pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"])
+    or not _check_soft_dependencies("catboost", severity="none"),
+    reason="run test only if forecasting or split module has changed",
+)
+def test_make_reduction_with_catboost():
+    """Test make_reduction with catboost.
+
+    catboost is an example of a package that does not fully comply with the
+    sklearn API. We therefore need to rely on the branch of scitype inference
+    that assumes the estimator is a tabular regressor.
+    """
+    from catboost import CatBoostRegressor
+
+    estimator = CatBoostRegressor(
+        learning_rate=1, depth=6, loss_function="RMSE", verbose=False
+    )
+
+    forecaster = make_reduction(estimator, scitype="infer")
+    assert forecaster._estimator_scitype == "tabular-regressor"
+
+    fh = [1, 2, 3]
+    y, X = make_forecasting_problem(make_X=True)
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+    forecaster.fit(y_train, X_train, fh=fh).predict(fh, X_test)
+
+
+@pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
     reason="run test only if reduce module has changed",
 )

@@ -22,6 +22,34 @@ class PaddingTransformer(BaseTransformer):
     ----------
     pad_length : int, optional (default=None) length to pad the series too.
         if None, will find the longest sequence and use instead.
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> from sktime.transformations.panel.padder import PaddingTransformer
+    >>>
+    >>> # Create a sample nested DataFrame with unequal length time series
+    >>> data = {
+    ...     'feature1': [
+    ...         pd.Series([1, 2, 3]), pd.Series([4, 5]), pd.Series([6, 7, 8, 9])
+    ...     ],
+    ...     'feature2': [
+    ...         pd.Series([10, 11]), pd.Series([12, 13, 14]), pd.Series([15])
+    ...     ]
+    ... }
+    >>> X = pd.DataFrame(data)
+    >>>
+    >>> # Initialize the PaddingTransformer
+    >>> padder = PaddingTransformer()
+    >>>
+    >>> # Fit the transformer to the data
+    >>> padder.fit(X)
+    >>>
+    >>> # Transform the data
+    >>> Xt = padder.transform(X)
+    >>>
+    >>> # Display the transformed data
+    >>> print(Xt)
     """
 
     _tags = {

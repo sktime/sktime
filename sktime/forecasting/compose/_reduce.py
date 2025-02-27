@@ -36,7 +36,7 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.registry import scitype
+from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
@@ -1631,13 +1631,12 @@ def _infer_scitype(estimator):
     if is_sklearn_estimator(estimator):
         return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        inferred_skt_scitype = scitype(estimator)
-        if inferred_skt_scitype in ["object", "estimator"]:
+        if is_scitype(estimator, ["object", "estimator"]):
             return "tabular-regressor"
-        if inferred_skt_scitype == "regressor":
+        if is_scitype(estimator, "regressor"):
             return "time-series-regressor"
         else:
-            return inferred_skt_scitype
+            return scitype(estimator, raise_on_unknown=False)
 
 
 def _check_strategy(strategy):
@@ -1828,10 +1827,6 @@ class _ReducerMixin:
         return fh_idx
 
 
-# TODO (release 0.32.0)
-# change the default of `windows_identical` to `False`
-# update the docstring for parameter `windows_identical`
-# remove the corresponding warning and simplify __init__
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
@@ -1898,7 +1893,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
-    windows_identical : bool, optional, default=True
+    windows_identical : bool, optional, default=False
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
 
@@ -1911,8 +1906,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         * `False` : Window size differs for each forecasting horizon. Window
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
-
-        Default value will change to `False` in version 0.32.0.
     """
 
     _tags = {
@@ -1932,7 +1925,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
-        windows_identical="changing_value",
+        windows_identical=False,
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1942,22 +1935,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self.windows_identical = windows_identical
-        if windows_identical == "changing_value":
-            warn(
-                "In `DirectReductionForecaster`, the default value of parameter "
-                "`windows_identical` will change to `False` in version 0.32.0. "
-                "Before the introduction of `windows_identical`, the parameter "
-                "defaulted implicitly to `True` when `X_treatment` was set to "
-                "`shifted`, and to `False` when `X_treatment` was set to "
-                "`concurrent`. To keep current behaviour and to silence this "
-                "warning, set `windows_identical` explicitly.",
-            )
-            if X_treatment == "shifted":
-                self._windows_identical = True
-            else:
-                self._windows_identical = False
-        else:
-            self._windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
 
@@ -1985,7 +1962,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """Fit dispatcher based on X_treatment and windows_identical."""
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
-        if (self.X_treatment == "shifted") and (self._windows_identical is True):
+        if (self.X_treatment == "shifted") and (self.windows_identical is True):
             return self._fit_multioutput(y=y, X=X, fh=fh)
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
@@ -1993,7 +1970,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
         if self.X_treatment == "shifted":
-            if self._windows_identical is True:
+            if self.windows_identical is True:
                 return self._predict_multioutput(X=X, fh=fh)
             else:
                 return self._predict_multiple(X=self._X, fh=fh)
@@ -2085,7 +2062,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
-        windows_identical = self._windows_identical
+        windows_identical = self.windows_identical
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2260,7 +2237,21 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "windows_identical": False,
         }
         params5 = {"estimator": est, "window_length": 0}
-        return [params1, params2, params3, params4, params5]
+
+        params = [params1, params2, params3, params4, params5]
+
+        # this fails because catboost is not sklearn compatible
+        # and fails set_params contracts already in sklearn;
+        # so it also fails them in sktime...
+        # left here for future reference, e.g., test for non-compliant estimators
+        #
+        # if _check_soft_dependencies("catboost", severity="none"):
+        #     from catboost import CatBoostRegressor
+        #
+        #     est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+        #     params6 = {"estimator": est, "window_length": 3}
+        #     params.append(params6)
+        return params
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):

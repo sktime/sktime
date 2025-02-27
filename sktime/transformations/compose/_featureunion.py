@@ -9,7 +9,6 @@ import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose._common import _coerce_to_sktime
 from sktime.utils.multiindex import flatten_multiindex
 
 
@@ -144,7 +143,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (last).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -170,7 +171,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (first).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,

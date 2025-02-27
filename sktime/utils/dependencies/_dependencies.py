@@ -5,7 +5,6 @@ __author__ = ["fkiraly", "mloning"]
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -15,14 +14,11 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
-# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
-    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
-    suppress_import_stdout="deprecated",
     normalize_reqs=True,
 ):
     """Check if required soft dependencies are installed and raise error or warning.
@@ -39,8 +35,6 @@ def _check_soft_dependencies(
         ``_check_soft_dependencies("package1", "package2")``
         ``_check_soft_dependencies(("package1", "package2"))``
         ``_check_soft_dependencies(["package1", "package2"])``
-
-    package_import_alias : ignored, present only for backwards compatibility
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
@@ -83,22 +77,6 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    # todo 0.32.0: remove this warning
-    if suppress_import_stdout != "deprecated":
-        warnings.warn(
-            "In sktime _check_soft_dependencies, the suppress_import_stdout argument "
-            "is deprecated and no longer has any effect. "
-            "The argument will be removed in version 0.32.0, so users of the "
-            "_check_soft_dependencies utility should not pass this argument anymore. "
-            "The _check_soft_dependencies utility also no longer causes imports, "
-            "hence no stdout "
-            "output is created from imports, for any setting of the "
-            "suppress_import_stdout argument. If you wish to import packages "
-            "and make use of stdout prints, import the package directly instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
@@ -280,9 +258,19 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
+    from importlib.metadata import distributions, version
+
     dists = distributions()
-    packages = {dist.metadata["Name"]: dist.version for dist in dists}
-    return packages
+    package_names = {dist.metadata["Name"] for dist in dists}
+    package_versions = {pkg_name: version(pkg_name) for pkg_name in package_names}
+    # developer note:
+    # we cannot just use distributions naively,
+    # because the same top level package name may appear *twice*,
+    # e.g., in a situation where a virtual env overrides a base env,
+    # such as in deployment environments like databricks.
+    # the "version" contract ensures we always get the version that corresponds
+    # to the importable distribution, i.e., the top one in the sys.path.
+    return package_versions
 
 
 def _get_installed_packages():

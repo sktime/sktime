@@ -211,6 +211,8 @@
       "contributions": [
         "bug",
         "code",
+        "ideas",
+        "projectManagement",
         "test"
       ]
     },
@@ -1777,6 +1779,7 @@
         "mentoring",
         "question",
         "review",
+        "talk",
         "tutorial"
       ]
     },
@@ -2018,6 +2021,8 @@
       "contributions": [
         "code",
         "ideas",
+        "projectManagement",
+        "talk",
         "test"
       ]
     },
@@ -2217,7 +2222,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54272586?v=4",
       "profile": "https://github.com/marrov",
       "contributions": [
-        "doc"
+        "design",
+        "doc",
+        "ideas",
+        "mentoring",
+        "projectManagement",
+        "talk"
       ]
     },
     {
@@ -2636,10 +2646,20 @@
       ]
     },
     {
-      "login": "Xinyu-Wu-0000",
+      "login": "SaiRevanth25",
+      "name": "Sai Revanth Gowravajhala",
+      "avatar_url": "https://avatars.githubusercontent.com/SaiRevanth25",
+      "profile": "https://github.com/SaiRevanth25",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "XinyuWuu",
       "name": "Xinyu Wu",
       "avatar_url": "https://avatars.githubusercontent.com/u/57612792?v=4",
-      "profile": "https://github.com/Xinyu-Wu-0000",
+      "profile": "https://github.com/XinyuWuu",
       "contributions": [
         "bug",
         "code",
@@ -2652,8 +2672,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/37468543?v=4",
       "profile": "https://github.com/meraldoantonio",
       "contributions": [
+        "bug",
+        "code",
         "doc",
-        "bug"
+        "test"
       ]
     },
     {
@@ -2957,14 +2979,124 @@
       ]
     },
     {
-        "login": "DinoBektesevic",
-        "name": "Dino Bektesevic",
-        "avatar_url": "https://avatars.githubusercontent.com/u/29500910?v=4?s=100",
-        "profile": "https://github.com/DinoBektesevic",
-        "contributions": [
-            "code",
-            "maintenance"
-        ]
+      "login": "DinoBektesevic",
+      "name": "Dino Bektesevic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29500910?v=4?s=100",
+      "profile": "https://github.com/DinoBektesevic",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "wirrywoo",
+      "name": "Wilson Cheung",
+      "avatar_url": "https://avatars.githubusercontent.com/u/148647848?v=4?s=100",
+      "profile": "https://github.com/wirrywoo",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "janasberger",
+      "name": "Jana Schmidberger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111234477?v=4",
+      "profile": "https://github.com/janasberger",
+      "contributions": [
+        "business",
+        "ideas",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "kirilral",
+      "name": "Kiril Ralinovski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34281484?v=4",
+      "profile": "https://github.com/kirilral",
+      "contributions": [
+        "ideas",
+        "mentoring",
+        "projectManagement",
+        "talk"
+      ]
+    },
+    {
+      "login": "onyekaugochukwu",
+      "name": "Ugochukwu Onyeka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92909501?v=4",
+      "profile": "https://github.com/onyekaugochukwu",
+      "contributions": [
+        "business",
+        "doc",
+        "ideas",
+        "mentoring",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "wpdonders",
+      "name": "Wouter Donders",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1868824?v=4?s=100",
+      "profile": "https://github.com/wpdonders",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Saptarshi-Bandopadhyay",
+      "name": "Saptarshi Bandopadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88289395?v=4",
+      "profile": "https://github.com/Saptarshi-Bandopadhyay",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Dehelaan",
+      "name": "Nihal Chaudhary",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120308161?s=400&v=4",
+      "profile": "https://github.com/Dehelaan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login":"vedantag17",
+      "name": "Vedant Agrawal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
+      "profile": "https://github.com/vedantag17",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "jan-mue",
+      "name": "Jan Müller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
+      "profile": "https://github.com/jan-mue",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Z-Fran",
+      "name": "Jindong Zhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49083766?v=4",
+      "profile": "https://github.com/Z-Fran",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "RigvedManoj",
+      "name": "Rigved Manoj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28307990?v=4",
+      "profile": "https://github.com/RigvedManoj",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

@@ -335,8 +335,8 @@ def test_shift_index(length1_index, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.TimedeltaIndex(range(3), unit="D", freq="D"),
-    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(3), unit="D"), freq="D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(0, 9, 3), unit="D"), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing
@@ -733,9 +733,11 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
+# todo 0.34.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_estimator_deps(AutoARIMA, severity="none"),
+    or not _check_estimator_deps(AutoARIMA, severity="none")
+    or _check_soft_dependencies("numpy>=2.0", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 def test_auto_arima():
