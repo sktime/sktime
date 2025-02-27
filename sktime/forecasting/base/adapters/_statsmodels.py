@@ -53,10 +53,14 @@ class _StatsModelsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        # save info needed for _predict: should these be saved to self._y_metdata?
+        # save info needed for _predict: should these be saved to self._y_metadata?
         self._y_len = len(y)
         self._y_first_index = y.index[0]
         self._set_cutoff_from_y(y)
+
+        self._y_was_series = isinstance(y, pd.Series)
+        if isinstance(y, pd.Series):
+            self._y_name = y.name
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
@@ -135,7 +139,8 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._get_varnames()[0]
+        if self._y_was_series:
+            y_pred.name = self._y_name
         return y_pred
 
     @staticmethod

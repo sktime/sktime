@@ -104,6 +104,7 @@ class TablePdDataFrame(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": True,
@@ -224,6 +225,7 @@ class TablePdSeries(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": True,
@@ -350,6 +352,7 @@ class TableNp1D(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": False,
@@ -474,6 +477,7 @@ class TableNp2D(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -597,6 +601,7 @@ class TableListOfDict(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -687,6 +692,29 @@ def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
 class TablePolarsEager(ScitypeTable):
     """Data type: eager polars DataFrame based specification of data frame table.
 
+    Name: ``"TablePolarsEager"``
+
+    Short description:
+        A specification for a data table backed by an eager Polars DataFrame,
+        supporting both univariate and multivariate data.
+
+    Long description:
+        The ``"TablePolarsEager"`` :term:`mtype` is a concrete specification
+        that implements the ``Table`` :term:`scitype`, representing a data table
+        with an eager Polars DataFrame.
+        An object ``obj: Polars DataFrame`` follows the specification iff:
+
+        * structure convention: ``obj`` is a Polars DataFrame.
+        * feature: the DataFrame can have multiple features (columns).
+        * instances: rows of the DataFrame represent individual instances.
+        * instance index: The index is implicit, with each row corresponding to
+          a unique instance (zero-indexed by default).
+
+    Capabilities:
+        * supports multivariate data with multiple features.
+        * can handle missing values (NaNs) and empty tables.
+        * includes metadata like feature names, data types, and feature kinds.
+
     Parameters are inferred by check.
 
     Parameters
@@ -718,6 +746,7 @@ class TablePolarsEager(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -783,6 +812,7 @@ class TablePolarsLazy(ScitypeTable):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.LazyFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
