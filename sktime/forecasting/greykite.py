@@ -41,6 +41,18 @@ class GreykiteForecaster(BaseForecaster):
         The forecast result from the Greykite model.
     _X : pandas.DataFrame
         The exogenous variables, if provided.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.greykite import GreykiteForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = load_airline()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> forecaster = GreykiteForecaster()
+    >>> forecaster.fit(y=y, fh=fh)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=fh) # doctest: +SKIP
+
     """
 
     _tags = {
@@ -51,6 +63,7 @@ class GreykiteForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": True,  # Can produce prediction intervals.
+        "python_dependencies": ["greykite"],  # Required Python dependencies.
     }
 
     def __init__(
@@ -79,8 +92,12 @@ class GreykiteForecaster(BaseForecaster):
         if self.forecast_config is not None:
             return self.forecast_config
 
+        # If frequency is not provided, try to infer it from the index.
         if y is not None and self.freq is None:
-            self.freq = pd.infer_freq(y.index)
+            if isinstance(y.index, pd.PeriodIndex):
+                self.freq = y.index.freqstr
+            else:
+                self.freq = pd.infer_freq(y.index)
 
         # Set train_end_date explicitly using the maximum timestamp in y
         train_end_date = y.index.max() if y is not None else None
@@ -132,6 +149,8 @@ class GreykiteForecaster(BaseForecaster):
             )
         self._fh = fh
 
+        if isinstance(y.index, pd.PeriodIndex):
+            y.index = y.index.to_timestamp()
         # Convert y into a DataFrame with columns "ts" and "y".
         df = pd.DataFrame({"ts": y.index, "y": y.values}).reset_index(drop=True)
 
@@ -179,4 +198,35 @@ class GreykiteForecaster(BaseForecaster):
         return {
             "model": self._forecaster.model,
             "forecast_config": self.forecast_config,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the GreykiteForecaster.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the test parameter set to return. This forecaster supports a
+            single default parameter set.
+
+        Returns
+        -------
+        params : dict
+            A dictionary containing parameters to construct a valid test instance of
+            the GreykiteForecaster. The dictionary includes:
+                - forecast_horizon: int
+                    Number of periods to forecast (default is 24).
+                - freq: str
+                    Frequency of the time series data (default is 'D' for daily).
+                - model_template: str
+                    Name of the model template to use (default is 'SILVERKITE').
+                - date_format: str or None
+                    Format of the time column (default is None, allowing inference).
+        """
+        return {
+            "forecast_horizon": 24,
+            "freq": "D",
+            "model_template": "SILVERKITE",
+            "date_format": None,
         }
