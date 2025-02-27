@@ -59,6 +59,7 @@ class ESRNNPredDataset(Dataset):
     def __init__(self, y, window) -> None:
         self.y = y
         self.window = window
+        self._get_data()
 
     def _get_data(self):
         x_pred = self.y[-self.window :]
@@ -71,7 +72,7 @@ class ESRNNPredDataset(Dataset):
 
     def __getitem__(self, idx):
         """Return data point."""
-        return self.x_pred[idx]
+        return self.x_pred[idx], torch.zeros(1)
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
@@ -106,6 +107,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     window : int
         Size of Input window, default=5
+    lr_rate : int
+        Learning rate for training
 
     References
     ----------
@@ -116,12 +119,12 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.es_rnn import ESRNNForecaster
+    >>> from sktime.forecasting.es_rnn import ESRNNForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = ESRNNForecaster(10, 3)
-    >>> forecaster.fit(y, fh=[1,2,3])
-    >>> y_pred = forecaster.predict()
+    >>> forecaster = ESRNNForecaster() # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
     _tags = {
@@ -146,7 +149,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_pred=None,
         optimizer="Adam",
         optimizer_kwargs=None,
-        criterion="pinball",
+        criterion=None,
         criterion_kwargs=None,
         lr_rate=1e-5,
     ) -> None:
@@ -210,8 +213,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def _build_network(self, fh):
         self.pred_len = fh
-        self.input_shape = self._y.shape[1]
-        self.network = ESRNN(
+        self.input_shape = self._y.shape[-1]
+        return ESRNN(
             self.input_shape,
             self.hidden_size,
             self.pred_len,
@@ -268,7 +271,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
                 y=y,
                 window=self.window,
             )
-
         return DataLoader(
             dataset,
             self.batch_size,
@@ -311,7 +313,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "custom_dataset_train": None,
             "custom_dataset_pred": None,
             "optimizer": "Adam",
-            "criterion": "mse",
+            "criterion": "MSE",
             "lr_rate": 1e-3,
         }
         return [params1, params2]

@@ -19,27 +19,16 @@ class ESRNN:
     ----------
     input_shape : int
         Number of features in the input
-
     hidden_size : int
         Number of features in the hidden state
-
     pred_len : int
         Forecasting horizon
-
     num_layer : int
         Number of layers
-
     season1_length : int
         Period of season
-
     seasonality : string
         Type of seasonality
-
-    level_coeff : int
-        Coefficient for smoothing of the level component
-
-    seasonal_coeff_1 : int
-        Coefficient for smoothing of the season component
 
     References
     ----------
@@ -283,18 +272,38 @@ class ESRNN:
                 if self.seasonality == "zero":
                     level, new_x = self._nonseasonal(x)
                     x_input = self.input_layer(new_x.float())
-                    output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.pred_len :, :])
-                    output_leveled = (output) * level.unsqueeze(1)
+                    output, (h, c) = self.lstm(x_input)
+                    last_output = self.output_layer(output[:, -1, :]).unsqueeze(1)
+                    out_list = [last_output]
+                    for t in range(self.pred_len - 1):
+                        next_out = self.input_layer(last_output)
+                        next_out = next_out
+                        lstm_out, (h, c) = self.lstm(next_out, (h, c))
+                        next_output = self.output_layer(lstm_out)
+                        out_list.append(next_output)
+                        last_output = next_output
+                    output_seq = torch.stack(out_list, dim=0)
+                    output_seq = output_seq.squeeze(2).transpose(0, 1)
+                    output_leveled = (output_seq) * level.unsqueeze(1)
                     return output_leveled
 
                 elif self.seasonality == "single":
                     level, seasonality_1, new_x = self._single_seasonal(x)
                     x_input = self.input_layer(new_x.float())
-                    output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.pred_len :, :])
+                    output, (h, c) = self.lstm(x_input)
+                    last_output = self.output_layer(output[:, -1, :]).unsqueeze(1)
+                    out_list = [last_output]
+                    for t in range(self.pred_len - 1):
+                        next_out = self.input_layer(last_output)
+                        next_out = next_out
+                        lstm_out, (h, c) = self.lstm(next_out, (h, c))
+                        next_output = self.output_layer(lstm_out)
+                        out_list.append(next_output)
+                        last_output = next_output
+                    output_seq = torch.stack(out_list, dim=0)
+                    output_seq = output_seq.squeeze(2).transpose(0, 1)
                     output_leveled = (
-                        (output) * level * seasonality_1[:, -self.pred_len :, :]
+                        (output_seq) * level * seasonality_1[:, -self.pred_len :, :]
                     )
                     return output_leveled
                 else:
@@ -302,10 +311,20 @@ class ESRNN:
                         x
                     )
                     x_input = self.input_layer(new_x.float())
-                    output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.pred_len :, :])
+                    output, (h, c) = self.lstm(x_input)
+                    last_output = self.output_layer(output[:, -1, :]).unsqueeze(1)
+                    out_list = [last_output]
+                    for t in range(self.pred_len - 1):
+                        next_out = self.input_layer(last_output)
+                        next_out = next_out
+                        lstm_out, (h, c) = self.lstm(next_out, (h, c))
+                        next_output = self.output_layer(lstm_out)
+                        out_list.append(next_output)
+                        last_output = next_output
+                    output_seq = torch.stack(out_list, dim=0)
+                    output_seq = output_seq.squeeze(2).transpose(0, 1)
                     output_leveled = (
-                        (output)
+                        (output_seq)
                         * level
                         * seasonality_1[:, -self.pred_len :, :]
                         * seasonality_2[:, -self.pred_len :, :]
