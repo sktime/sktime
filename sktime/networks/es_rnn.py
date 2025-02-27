@@ -23,7 +23,7 @@ class ESRNN:
     hidden_size : int
         Number of features in the hidden state
 
-    horizon : int
+    pred_len : int
         Forecasting horizon
 
     num_layer : int
@@ -59,7 +59,7 @@ class ESRNN:
         self,
         input_shape=1,
         hidden_size=1,
-        horizon=1,
+        pred_len=1,
         num_layer=1,
         season1_length=12,
         season2_length=2,
@@ -70,7 +70,7 @@ class ESRNN:
         self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
-        self.horizon = horizon
+        self.pred_len = pred_len
         self.season1_length = season1_length
         self.season2_length = season2_length
         self.seasonality = seasonality
@@ -114,7 +114,7 @@ class ESRNN:
                 self,
                 input_shape,
                 hidden_size,
-                horizon,
+                pred_len,
                 num_layer,
                 season1_length,
                 season2_length,
@@ -123,7 +123,7 @@ class ESRNN:
                 self.input_shape = input_shape
                 self.hidden_size = hidden_size
                 self.num_layer = num_layer
-                self.horizon = horizon
+                self.pred_len = pred_len
                 self.seasonality = seasonality
                 self.season1_length = season1_length
                 self.season2_length = season2_length
@@ -284,7 +284,7 @@ class ESRNN:
                     level, new_x = self._nonseasonal(x)
                     x_input = self.input_layer(new_x.float())
                     output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.horizon :, :])
+                    output = self.output_layer(output[:, -self.pred_len :, :])
                     output_leveled = (output) * level.unsqueeze(1)
                     return output_leveled
 
@@ -292,9 +292,9 @@ class ESRNN:
                     level, seasonality_1, new_x = self._single_seasonal(x)
                     x_input = self.input_layer(new_x.float())
                     output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.horizon :, :])
+                    output = self.output_layer(output[:, -self.pred_len :, :])
                     output_leveled = (
-                        (output) * level * seasonality_1[:, -self.horizon :, :]
+                        (output) * level * seasonality_1[:, -self.pred_len :, :]
                     )
                     return output_leveled
                 else:
@@ -303,12 +303,12 @@ class ESRNN:
                     )
                     x_input = self.input_layer(new_x.float())
                     output, _ = self.lstm(x_input)
-                    output = self.output_layer(output[:, -self.horizon :, :])
+                    output = self.output_layer(output[:, -self.pred_len :, :])
                     output_leveled = (
                         (output)
                         * level
-                        * seasonality_1[:, -self.horizon :, :]
-                        * seasonality_2[:, -self.horizon :, :]
+                        * seasonality_1[:, -self.pred_len :, :]
+                        * seasonality_2[:, -self.pred_len :, :]
                     )
                     return output_leveled
 
@@ -324,7 +324,7 @@ class ESRNN:
         return self._network_class(
             self.input_shape,
             self.hidden_size,
-            self.horizon,
+            self.pred_len,
             self.num_layer,
             self.season1_length,
             self.season2_length,
@@ -357,7 +357,7 @@ class ESRNN:
         params2 = {
             "input_shape": 1,
             "hidden_size": 1,
-            "horizon": 1,
+            "pred_len": 1,
             "num_layer": 1,
             "seasonality": "single",
             "season1_length": 3,
