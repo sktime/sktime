@@ -162,6 +162,7 @@ class ReconcileForecasts(BaseTransformer):
         if X.index.nlevels < 2:
             return self
 
+        self._original_series = X.index.droplevel(-1).unique()
         self.reconciler_ = self._get_reconciler(X)
         self.reconciler_.fit(X)
 
@@ -190,8 +191,6 @@ class ReconcileForecasts(BaseTransformer):
                 obj=self,
             )
             return X
-
-        self._original_series = X.index.droplevel(-1).unique()
 
         # check index for no "__total", if not add totals to X
         if _check_index_no_total(X):
