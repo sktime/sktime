@@ -88,7 +88,6 @@ class THieFForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": False,
         "authors": "satvshr",
     }
@@ -154,7 +153,6 @@ class THieFForecaster(BaseForecaster):
         aggregation_levels = [i for i in range(1, m + 1) if m % i == 0]
         return aggregation_levels
 
-    # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -185,30 +183,37 @@ class THieFForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self._y_cols = (
-            y.columns
-            if isinstance(y, pd.DataFrame)
-            else pd.Index([y.name])
-            if y.name
-            else pd.Index(["c0"])
-        )
-        if isinstance(y, pd.Series):
-            y = pd.DataFrame(y)
-        self.aggregation_levels_ = self._determine_aggregation_levels(y)
-        for level in self.aggregation_levels_:
+        y_agg_lvl = pd.DataFrame(y)
+
+        self._aggregation_levels = self._determine_aggregation_levels(y_agg_lvl)
+        for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
-            y_agg.columns = self._y_cols
-            print("*************")
-            print(y_agg)
-            print("*************")
+
+            if isinstance(y_agg.index, pd.RangeIndex):
+                start_date = y.index[0]
+                original_freq = pd.infer_freq(y.index)
+                freq_multiplier = level
+                y_agg.index = pd.date_range(
+                    start=start_date,
+                    periods=len(y_agg),
+                    freq=f"{freq_multiplier}{original_freq}",
+                )
+
             forecaster = self.base_forecaster.clone()
-            forecaster.fit(y_agg, X, fh)
+            forecaster.fit(y_agg, X)
             self.forecasters[level] = forecaster
 
         return self
 
-    # todo: implement this, mandatory
-    def _predict(self, fh=None, X=None):
+    def _divide_fh(self, fh, level):
+        """Convert fh into aggregated levels."""
+        from sktime.forecasting.base import ForecastingHorizon
+
+        fh_vals = fh.to_numpy()
+        new_vals = np.unique(np.ceil(len(fh_vals) / level).astype(int))
+        return ForecastingHorizon(new_vals, is_relative=True)
+
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -237,19 +242,13 @@ class THieFForecaster(BaseForecaster):
         """
         self._forecast_store = {}
         for level, forecaster in self.forecasters.items():
-            y_pred_agg = forecaster.predict(fh, X)
+            fh_level = self._divide_fh(fh, level)
+            y_pred_agg = forecaster.predict(fh=fh_level, X=X)
             self._forecast_store[level] = y_pred_agg
 
         result = self._reconcile_forecasts(self._forecast_store)
 
-        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
-        self._y_pred = pd.DataFrame(
-            result.reshape(-1, len(self._y_cols)),
-            index=forecast_index,
-            columns=self._y_cols,
-        )
-
-        return self._y_pred
+        return result
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -288,9 +287,9 @@ class THieFForecaster(BaseForecaster):
         self : reference to self
         """
         if isinstance(y, pd.Series):
-            raise AttributeError("THieF requires a DataFrame with an index column.")
+            y = pd.DataFrame(y)
 
-        for level in self.aggregation_levels_:
+        for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
             if level in self.forecasters:
                 self.forecasters[level].update(y_agg, X, update_params=update_params)
@@ -323,10 +322,30 @@ class THieFForecaster(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         params = [
-            {"base_forecaster": NaiveForecaster(strategy="mean")},
+            {
+                "base_forecaster": NaiveForecaster(strategy="mean"),
+                "aggregation_levels": [1, 2, 4, 12],
+                "reconciliation_method": "ols",
+            },
             {
                 "base_forecaster": NaiveForecaster(strategy="last"),
+                "aggregation_levels": [1, 3, 6, 12],
                 "reconciliation_method": "bu",
+            },
+            {
+                "base_forecaster": NaiveForecaster(strategy="drift"),
+                "aggregation_levels": [1, 2, 4, 8, 16],
+                "reconciliation_method": "mse",
+            },
+            {
+                "base_forecaster": NaiveForecaster(strategy="mean"),
+                "aggregation_levels": [1, 2, 4],
+                "reconciliation_method": "shr",
+            },
+            {
+                "base_forecaster": NaiveForecaster(strategy="last"),
+                "aggregation_levels": [1, 2, 3, 6, 12],
+                "reconciliation_method": "sam",
             },
         ]
 
