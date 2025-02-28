@@ -503,13 +503,19 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
+        params1 = {
+            "seq_len": 2,
+            "return_model_to_cpu": True,
+            "train_val_split": 0.0,
+            "criterion": MSELoss(),
+        }
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
             "seq_len": 2,
             "return_model_to_cpu": True,
             "train_val_split": 0.0,
+            "criterion": MSELoss(),
         }
         params_set.append(params2)
 
