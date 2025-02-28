@@ -19,7 +19,7 @@ else:
     class torch:
         """Dummy implementation class if torch is not available."""
 
-        blfloat16 = None
+        bfloat16 = None
 
 
 if _check_soft_dependencies("transformers", severity="none"):
