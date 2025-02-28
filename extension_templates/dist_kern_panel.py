@@ -27,10 +27,12 @@ from sktime.dists_kernels import BasePairwiseTransformerPanel
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTrafoPwPanel(BasePairwiseTransformerPanel):
     """Custom time series distance/kernel. todo: write docstring.
 
@@ -57,22 +59,32 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
     # todo: fill out transformer tags here
     #  delete the tags that you *didn't* change - these defaults are inherited
-    # _tags = {
-    #   currently there are no tags for pairwise transformers
-    # }
+    _tags = {
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # remove maintainer tag if maintained by sktime core team
+    }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

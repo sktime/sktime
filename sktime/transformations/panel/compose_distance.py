@@ -45,6 +45,7 @@ class DistanceFeatures(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "scitype:transform-input": "Series",

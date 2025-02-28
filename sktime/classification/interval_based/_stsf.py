@@ -10,7 +10,6 @@ __all__ = ["SupervisedTimeSeriesForest"]
 import math
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy import signal, stats
 from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
@@ -41,7 +40,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     n_estimators : int, default=200
         Number of estimators to build for the ensemble.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -58,7 +57,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         The classes labels.
     intervals : array-like of shape [n_estimators][3][7][n_intervals][2]
         Stores indexes of all start and end points for all estimators. Each estimator
-        contains indexes for each representaion and feature combination.
+        contains indexes for each representation and feature combination.
     estimators_ : list of shape (n_estimators) of DecisionTreeClassifier
         The collections of estimators trained in fit.
 
@@ -86,6 +85,12 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": ["joblib"],
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
@@ -131,6 +136,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         -------
         self : object
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         self.n_instances_, self.series_length_ = X.shape
@@ -205,9 +212,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         Returns
         -------
-        output : nd.array of shape = (n_instances, n_classes)
+        output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         _, X_p = signal.periodogram(X)
@@ -419,7 +428,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -430,8 +439,9 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}

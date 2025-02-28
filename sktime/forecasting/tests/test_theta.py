@@ -1,22 +1,24 @@
 """Tests for ThetaForecaster."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["big-o", "kejsitake"]
+__author__ = ["big-o", "kejsitake", "ciaran-g"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster, ThetaModularForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation.forecasting import check_fh
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_predictive_performance_on_airline():
     """Check prediction performance on airline dataset.
@@ -39,8 +41,8 @@ def test_predictive_performance_on_airline():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_pred_errors_against_y_test(fh):
@@ -54,7 +56,7 @@ def test_pred_errors_against_y_test(fh):
 
     Raises
     ------
-    AssertionError - if point forecasts do not lie withing the prediction intervals
+    AssertionError - if point forecasts do not lie within the prediction intervals
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -73,8 +75,8 @@ def test_pred_errors_against_y_test(fh):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecaster_with_initial_level():
     """Check prediction performance on airline dataset.
@@ -97,8 +99,8 @@ def test_forecaster_with_initial_level():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class([ThetaForecaster, ThetaModularForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_theta_and_thetamodular():
     """Check predictions ThetaForecaster and ThetaModularForecaster align.
@@ -121,3 +123,24 @@ def test_theta_and_thetamodular():
     y_pred_thetamodular = f1.predict(fh=fh)
 
     np.testing.assert_allclose(y_pred_theta, y_pred_thetamodular, rtol=0.06)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def check_panel_theta_quantiles():
+    """Test predict quantiles with theta on panel data with datetime index."""
+    # make panel with hour of day panel and datetime index
+    y = load_airline()
+    y.index = pd.date_range(start="1960-01-01", periods=len(y.index), freq="H")
+    y.index.names = ["datetime"]
+    y.name = "passengers"
+    y = y.to_frame()
+    y["hour_of_day"] = y.index.hour
+    y = y.reset_index().set_index(["hour_of_day", "datetime"]).sort_index()
+
+    forecaster = ThetaForecaster(sp=1)
+    forecaster.fit(y)
+    forecaster.predict(fh=[1, 3])
+    forecaster.predict_quantiles(fh=[1, 3], alpha=[0.1, 0.5, 0.9])

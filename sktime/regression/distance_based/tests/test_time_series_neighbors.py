@@ -1,12 +1,19 @@
 """Tests for KNeighborsTimeSeriesRegressor."""
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.regression.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesRegressor,
 )
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesRegressor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_knn_kneighbors():
     """Tests kneighbors method and absence of bug #3798."""
     from sktime.utils._testing.hierarchical import _make_hierarchical

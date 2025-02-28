@@ -1,12 +1,6 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
-
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-if _check_soft_dependencies("sklearn<1.0", severity="none"):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 
 import random
 
@@ -21,15 +15,23 @@ from sklearn.ensemble import (
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
+
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+sklearn_zero_x = _check_soft_dependencies("scikit-learn<1.4", severity="none")
+
+if _check_soft_dependencies("scikit-learn<1.0", severity="none"):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
 @pytest.fixture
@@ -73,10 +75,10 @@ def y_dict():
     y_test_grp = pd.concat([y_group1, y_group2])
     y_dict["y_test_grp"] = y_test_grp
 
-    # Get hierachical data
+    # Get hierarchical data
     y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
 
-    # Create unbalanced hierachical data, i.e. not a full tree with all branches.
+    # Create unbalanced hierarchical data, i.e. not a full tree with all branches.
     X = y_train_hier.reset_index().copy()
     X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
     X = X[["foo", "bar"]].drop_duplicates()
@@ -106,6 +108,7 @@ def y_dict():
     # Create integer index data
     y_numeric = y_train.copy()
     y_numeric.index = pd.to_numeric(y_numeric.index)
+    y_numeric.index.names = [None]  # setting None to cover "no index name" case
     y_dict["y_numeric"] = y_numeric
 
     return y_dict
@@ -139,7 +142,7 @@ def check_eval(test_input, expected):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -186,7 +189,7 @@ def test_recursive_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -232,7 +235,7 @@ def test_direct_reduction(y, index_names, y_dict):
         ),
         (
             "y_train",
-            [None],
+            ["Period"],
         ),
         (
             "y_numeric",
@@ -290,9 +293,9 @@ def test_equality_transfo_nontranso(regressor):
         }
     }
 
-    random_int = random.randint(1, 1000)
+    random_int = random.randint(1, 1000)  # noqa: S311
     regressor.random_state = random_int
-    forecaster = make_reduction(regressor, window_length=int(6), strategy="recursive")
+    forecaster = make_reduction(regressor, window_length=6, strategy="recursive")
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     recursive_without = mean_absolute_percentage_error(y_test, y_pred, symmetric=False)
@@ -358,3 +361,44 @@ def test_nofreq_pass():
     np.testing.assert_almost_equal(
         y_pred_global["c0"].values, y_pred_nofreq["c0"].values
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_timezoneaware_index():
+    y = load_solar(api_version=None)
+    y_notz = y.copy().tz_localize(None)
+
+    assert y.index.tz is not None
+    assert y_notz.index.tz is None
+
+    window_trafo = WindowSummarizer(n_jobs=1, **{"lag_feature": {"lag": [1, 2, 48]}})
+    regressor = LinearRegression()
+    forecaster = make_reduction(
+        estimator=regressor,
+        strategy="recursive",
+        transformers=[window_trafo],
+        window_length=None,
+        pooling="global",
+    )
+
+    # check coefficients
+    tzaware = forecaster.clone().fit(y)
+    tznaive = forecaster.clone().fit(y_notz)
+    tzaware_coef = tzaware.get_fitted_params()["estimator__coef"]
+    tznaive_coef = tznaive.get_fitted_params()["estimator__coef"]
+
+    np.testing.assert_almost_equal(tzaware_coef, tznaive_coef)
+
+    fh = np.arange(1, 97)
+    pred_tzaware = tzaware.predict(fh=fh)
+    pred_tznaive = tznaive.predict(fh=fh)
+
+    msg = "Time-zone of predictions not consistent with training data."
+    assert pred_tzaware.index.tz == y.index.tz, msg
+    assert pred_tznaive.index.tz == y_notz.index.tz, msg
+
+    # These should give us identical predictions
+    np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)

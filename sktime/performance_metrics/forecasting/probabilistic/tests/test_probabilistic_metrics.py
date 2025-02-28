@@ -1,4 +1,5 @@
 """Tests for probabilistic performance metrics."""
+
 import warnings
 
 import numpy as np
@@ -8,9 +9,11 @@ import pytest
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
+    IntervalWidth,
     PinballLoss,
 )
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.series import _make_series
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -20,8 +23,9 @@ quantile_metrics = [
 ]
 
 interval_metrics = [
-    EmpiricalCoverage,
     ConstraintViolation,
+    EmpiricalCoverage,
+    IntervalWidth,
 ]
 
 all_metrics = interval_metrics + quantile_metrics
@@ -74,6 +78,10 @@ def sample_data(request):
 
 
 # Test the parametrized fixture
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize(
     "sample_data",
     [
@@ -157,6 +165,10 @@ def helper_check_output(metric, score_average, multioutput, sample_data):
         assert len(eval_loss) == no_vars
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize(
     "sample_data",
     [
@@ -174,6 +186,10 @@ def test_output_quantiles(metric, score_average, multioutput, sample_data):
     helper_check_output(metric, score_average, multioutput, sample_data)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize(
     "sample_data",
     [
@@ -191,6 +207,10 @@ def test_output_intervals(metric, score_average, multioutput, sample_data):
     helper_check_output(metric, score_average, multioutput, sample_data)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric", quantile_metrics)
 @pytest.mark.parametrize(
     "sample_data",
@@ -221,6 +241,10 @@ def test_evaluate_alpha_positive(metric, sample_data):
 
 
 # This test tests quantile data
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize(
     "sample_data",
     [
@@ -238,9 +262,13 @@ def test_evaluate_alpha_negative(metric, sample_data):
     with pytest.raises(ValueError):
         # 0.3 not in test quantile data so raise error.
         Loss = metric.create_test_instance().set_params(alpha=0.3)
-        res = Loss(y_true=y_true, y_pred=y_pred)  # noqa
+        res = Loss(y_true=y_true, y_pred=y_pred)  # noqa: F841
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric", all_metrics)
 @pytest.mark.parametrize("score_average", [True, False])
 def test_multioutput_weighted(metric, score_average):

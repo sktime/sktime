@@ -1,4 +1,5 @@
 """UnobservedComponents Tests."""
+
 __author__ = ["juanitorduz"]
 
 import numpy as np
@@ -10,7 +11,7 @@ from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.split import SlidingWindowSplitter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 class ModelSpec:
@@ -185,8 +186,8 @@ def y_airlines():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(UnobservedComponents),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("level", [m.level for m in MODELS])
 @pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
@@ -211,8 +212,8 @@ def test_results_consistency(level, fh_length, y_airlines):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(UnobservedComponents),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_result_consistency_exog(level_sample_data_split):
     """Check consistency between wrapper and statsmodels original implementation.
@@ -246,8 +247,8 @@ def test_result_consistency_exog(level_sample_data_split):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(UnobservedComponents),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
 @pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
@@ -273,8 +274,8 @@ def test_prediction_intervals_no_exog(alpha, coverage, fh_length, y_airlines):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(UnobservedComponents),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
 @pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
@@ -307,8 +308,8 @@ def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(UnobservedComponents),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_evaluate_exog():
     """Test evaluate works when exogenous regressors are present."""

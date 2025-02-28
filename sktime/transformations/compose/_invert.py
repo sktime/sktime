@@ -1,28 +1,30 @@
 """Invert transform wrapper."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
 __all__ = ["InvertTransform"]
 
-from warnings import warn
-
 from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.utils.warnings import warn
 
 
 class InvertTransform(_DelegatedTransformer):
     """Invert a series-to-series transformation.
 
-    Switches `transform` and `inverse_transform`, leaves `fit` and `update` the same.
+    Switches ``transform`` and ``inverse_transform``, leaves ``fit`` and ``update`` the
+    same.
 
     Parameters
     ----------
     transformer : sktime transformer, must transform Series input to Series output
-        this is a "blueprint" transformer, state does not change when `fit` is called
+        this is a "blueprint" transformer, state does not change when ``fit`` is called
 
     Attributes
     ----------
     transformer_: transformer,
-        this clone is fitted when `fit` is called and provides `transform` and inverse
+        this clone is fitted when ``fit`` is called and provides ``transform`` and
+        inverse
 
     Examples
     --------
@@ -36,6 +38,7 @@ class InvertTransform(_DelegatedTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -75,7 +78,8 @@ class InvertTransform(_DelegatedTransformer):
             warn(
                 "transformer does not have capability to inverse transform, "
                 "according to capability:inverse_transform tag. "
-                "If the tag was correctly set, this transformer will likely crash"
+                "If the tag was correctly set, this transformer will likely crash",
+                obj=self,
             )
         inner_output = transformer.get_tag("scitype:transform-output")
         if transformer.get_tag("scitype:transform-output") != "Series":
@@ -83,7 +87,8 @@ class InvertTransform(_DelegatedTransformer):
                 f"transformer output is not Series but {inner_output}, "
                 "according to scitype:transform-output tag. "
                 "The InvertTransform wrapper supports only Series output, therefore"
-                " this transformer will likely crash on input."
+                " this transformer will likely crash on input.",
+                obj=self,
             )
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -114,12 +119,12 @@ class InvertTransform(_DelegatedTransformer):
         return self.transformer_.inverse_transform(X=X, y=y)
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Returns an inverse-transformed version of X by iterating over specified
         columns and applying the univariate series transformer to them.
 
-        Only works if `self.transformer` has an `inverse_transform` method.
+        Only works if ``self.transformer`` has an ``inverse_transform`` method.
 
         Parameters
         ----------
@@ -143,15 +148,16 @@ class InvertTransform(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer

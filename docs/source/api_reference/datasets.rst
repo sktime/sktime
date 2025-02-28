@@ -5,15 +5,66 @@ Datasets
 
 The ``datasets`` module contains:
 
+* dataset objects, which are in-memory representations of time series datasets
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
+* toy data generators for didactic and illustrative purposes
 * utilities to write to, and load from, time series specific file formats
 
-Loaders from dataset repositories
----------------------------------
+Forecasting datasets
+--------------------
+.. currentmodule:: sktime.datasets.forecasting
 
-These loaders access dataset respositories on the internet and fetch one or multiple
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Airline
+    HierarchicalSalesToyData
+    Longley
+    Lynx
+    M5Dataset
+    Macroeconomic
+    ShampooSales
+    Solar
+    USChange
+
+Classification datasets
+-----------------------
+
+.. currentmodule:: sktime.datasets.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArrowHead
+    BasicMotions
+    GunPoint
+    ItalyPowerDemand
+    JapaneseVowels
+    OSULeaf
+    PLAID
+
+Regression datasets
+-------------------
+
+.. currentmodule:: sktime.datasets.regression
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Tecator
+
+Loaders
+-------
+
+Loaders from dataset repositories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These loaders access dataset repositories on the internet and fetch one or multiple
 datasets from there, individual datasets specifiable as strings.
 
 These loaders can be used to access reference datasets for benchmarking.
@@ -29,11 +80,13 @@ These loaders can be used to access reference datasets for benchmarking.
     :template: function.rst
 
     load_forecastingdata
+    load_fpp3
+    load_m5
     load_UCR_UEA_dataset
 
 
 Individual datasets
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 These loaders fetch a commonly used individual dataset,
 usually for illustration purposes.
@@ -62,7 +115,6 @@ Single time series
 Panels of time series
 ^^^^^^^^^^^^^^^^^^^^^
 
-
 .. automodule:: sktime.datasets
     :no-members:
     :no-inherited-members:
@@ -81,6 +133,26 @@ Panels of time series
     load_japanese_vowels
     load_macroeconomic
     load_osuleaf
+    load_tecator
+
+
+Toy data generators
+~~~~~~~~~~~~~~~~~~~
+
+Hierarchical time series data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: sktime.datasets
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.datasets
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    load_hierarchical_sales_toydata
 
 
 Loading from and writing to files
@@ -105,8 +177,10 @@ use common utilities such as ``pandas.read_csv``
     load_from_tsfile
     load_from_tsfile_to_dataframe
     load_from_ucr_tsv_to_dataframe
+    load_from_long_to_dataframe
     load_tsf_to_dataframe
     write_panel_to_tsfile
     write_dataframe_to_tsfile
     write_ndarray_to_tsfile
     write_tabular_transformation_to_arff
+    write_results_to_uea_format

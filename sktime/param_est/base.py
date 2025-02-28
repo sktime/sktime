@@ -21,8 +21,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["BaseParamFitter"]
 
-from warnings import warn
-
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
@@ -31,8 +29,10 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.warnings import warn
 
 
 def _coerce_to_list(obj):
@@ -54,12 +54,15 @@ class BaseParamFitter(BaseEstimator):
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
+        "object_type": "param_est",  # type of object
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self):
@@ -70,11 +73,46 @@ class BaseParamFitter(BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
 
+    def __mul__(self, other):
+        """Magic * method, for estimators on the right.
+
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being:
+
+        * a forecaster, results in ``PluginParamsForecaster``
+        * a transformer, results in ``PluginParamsTransformer``
+        * otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` estimator, must be one of the types specified above
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        one of the plugin estimator objects,
+        concatenation of `self` (first) with `other` (last).
+        """
+        from sktime.forecasting.base import BaseForecaster
+        from sktime.param_est.plugin import (
+            PluginParamsForecaster,
+            PluginParamsTransformer,
+        )
+        from sktime.transformations.base import BaseTransformer
+
+        if isinstance(other, BaseForecaster):
+            return PluginParamsForecaster(param_est=self, forecaster=other)
+        elif isinstance(other, BaseTransformer):
+            return PluginParamsTransformer(param_est=self, transformer=other)
+        else:
+            return NotImplemented
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for parameter fitters.
+        Implemented for ``other`` being a transformer,
+        otherwise returns `NotImplemented`.
 
         Parameters
         ----------
@@ -196,7 +234,10 @@ class BaseParamFitter(BaseEstimator):
         self.check_is_fitted()
 
         if X is None or (hasattr(X, "__len__") and len(X) == 0):
-            warn("empty y passed to update, no update was carried out")
+            warn(
+                f"empty y passed to update of {self}, no update was carried out",
+                obj=self,
+            )
             return self
 
         # input checks and minor coercions on X, y
@@ -255,7 +296,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checking X
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
+            X, scitype=ALLOWED_SCITYPES, return_metadata=["feature_kind"], var_name="X"
         )
         msg = (
             "X must be in an sktime compatible format, "
@@ -270,6 +311,12 @@ class BaseParamFitter(BaseEstimator):
         )
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                "Parameter estimators do not support categorical features in X."
+            )
+
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
         # end checking X
@@ -369,7 +416,8 @@ class BaseParamFitter(BaseEstimator):
             f"NotImplementedWarning: {self.__class__.__name__} "
             f"does not have a custom `update` method implemented. "
             f"{self.__class__.__name__} will be refit each time "
-            f"`update` is called."
+            f"`update` is called.",
+            obj=self,
         )
         # refit with updated data, not only passed data
         self.fit(X=self._X)
@@ -377,23 +425,3 @@ class BaseParamFitter(BaseEstimator):
         # but looping to self.fit for now to avoid interface break
 
         return self
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict

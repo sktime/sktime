@@ -31,13 +31,25 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
+
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
 from sktime.clustering import BaseClusterer
 
 # todo: add any necessary imports here
 
+# todo: for imports of sktime soft dependencies:
+# make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
+
+# todo: change class name and write docstring
 class MyClusterer(BaseClusterer):
     """Custom clusterer. todo: write docstring.
 
@@ -65,25 +77,50 @@ class MyClusterer(BaseClusterer):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        # remove maintainer tag if maintained by sktime core team
+        #
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # PEP 440 python dependencies specifier,
+        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
+        # delete if no python dependencies or version limitations
+        #
+        # estimator tags
+        # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "capability:predict": True,  # implements _predict for cluster assignment?
+        "capability:predict_proba": False,  # implements non-default _predict_proba?
+        "capability:out_of_sample": True,  # implements _predict for new data?
     }
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()
@@ -116,7 +153,7 @@ class MyClusterer(BaseClusterer):
 
     # todo: implement this, mandatory
     # at least one of _predict and _get_fitted_params should be implemented
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters

@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.utils._estimator_html_repr import _VisualBlock
 
 
 class _HeterogenousMetaEstimator:
@@ -29,6 +30,8 @@ class _HeterogenousMetaEstimator:
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
+
+    _tags = {"visual_block_kind": "serial"}
 
     def get_params(self, deep=True):
         """Get parameters of estimator.
@@ -97,29 +100,31 @@ class _HeterogenousMetaEstimator:
 
     def _get_params(self, attr, deep=True, fitted=False):
         if fitted:
-            method = "_get_fitted_params"
-            methodd = "get_fitted_params"
+            private_method = "_get_fitted_params"
+            public_method = "get_fitted_params"
             deepkw = {}
         else:
-            method = "get_params"
-            methodd = "get_params"
+            private_method = "get_params"
+            public_method = "get_params"
             deepkw = {"deep": deep}
 
-        out = getattr(super(), method)(**deepkw)
+        out = getattr(super(), private_method)(**deepkw)
         if deep and hasattr(self, attr):
             estimators = getattr(self, attr)
             estimators = [(x[0], x[1]) for x in estimators]
             out.update(estimators)
             for name, estimator in estimators:
                 # checks estimator has the method we want to call
-                cond1 = hasattr(estimator, methodd)
+                cond1 = hasattr(estimator, public_method)
                 # checks estimator is fitted if calling get_fitted_params
                 is_fitted = hasattr(estimator, "is_fitted") and estimator.is_fitted
                 # if we call get_params and not get_fitted_params, this is True
                 cond2 = not fitted or is_fitted
                 # check both conditions together
                 if cond1 and cond2:
-                    for key, value in getattr(estimator, methodd)(**deepkw).items():
+                    for key, value in getattr(estimator, public_method)(
+                        **deepkw
+                    ).items():
                         out[f"{name}__{key}"] = value
         return out
 
@@ -159,12 +164,12 @@ class _HeterogenousMetaEstimator:
         if invalid_names:
             raise ValueError(
                 "Estimator names conflict with constructor "
-                "arguments: {!r}".format(sorted(invalid_names))
+                f"arguments: {sorted(invalid_names)!r}"
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got " "{!r}".format(invalid_names)
+                "Estimator names must not contain __: got " f"{invalid_names!r}"
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
@@ -216,7 +221,7 @@ class _HeterogenousMetaEstimator:
 
         Returns
         -------
-        bool : True if obj is (str, cls_type) tuple, False otherise
+        bool : True if obj is (str, cls_type) tuple, False otherwise
         """
         if cls_type is None:
             cls_type = BaseEstimator
@@ -231,7 +236,9 @@ class _HeterogenousMetaEstimator:
         estimators,
         attr_name="steps",
         cls_type=None,
+        allow_dict=False,
         allow_mix=True,
+        allow_empty=False,
         clone_ests=True,
     ):
         """Check that estimators is a list of estimators or list of str/est tuples.
@@ -245,9 +252,13 @@ class _HeterogenousMetaEstimator:
             Name of checked attribute in error messages
         cls_type : class or tuple of class, optional. Default = BaseEstimator.
             class(es) that all estimators are checked to be an instance of
+        allow_dict : bool, default=False
+            Whether `objs` can be a dictionary mapping str names to objects.
         allow_mix : boolean, optional. Default = True.
             whether mix of estimator and (str, estimator) is allowed in `estimators`
-        clone_ests : boolean, optional. Default = True.
+        allow_empty : boolean, optional. Default = False
+            whether empty list of estimators is allowed
+        clone_ests : boolean, optional. Default = True
             whether estimators in return are cloned (True) or references (False).
 
         Returns
@@ -278,8 +289,11 @@ class _HeterogenousMetaEstimator:
 
         if (
             estimators is None
-            or len(estimators) == 0
-            or not isinstance(estimators, list)
+            or (not allow_empty and len(estimators) == 0)
+            or not (
+                isinstance(estimators, list)
+                or (allow_dict and isinstance(estimators, dict))
+            )
         ):
             raise TypeError(msg)
 
@@ -290,7 +304,15 @@ class _HeterogenousMetaEstimator:
 
             return is_est, is_tuple
 
-        if not all(any(is_est_is_tuple(x)) for x in estimators):
+        # We've already guarded against objs being dict when allow_dict is False
+        # So here we can just check dictionary elements
+        if isinstance(estimators, dict) and not all(
+            isinstance(name, str) and isinstance(obj, cls_type)
+            for name, obj in estimators.items()
+        ):
+            raise TypeError(msg)
+
+        elif not all(any(is_est_is_tuple(x)) for x in estimators):
             raise TypeError(msg)
 
         msg_no_mix = (
@@ -711,6 +733,20 @@ class _HeterogenousMetaEstimator:
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
 
+    def _sk_visual_block_(self):
+        steps = getattr(self, self._steps_attr)
+
+        names, estimators = zip(*steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind", tag_value_default="serial"),
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
+
 
 def flatten(obj):
     """Flatten nested list/tuple structure.
@@ -724,8 +760,8 @@ def flatten(obj):
     list or tuple, tuple if obj was tuple, list otherwise
         flat iterable, containing non-list/tuple elements in obj in same order as in obj
 
-    Example
-    -------
+    Examples
+    --------
     >>> flatten([1, 2, [3, (4, 5)], 6])
     [1, 2, 3, 4, 5, 6]
     """
@@ -750,8 +786,8 @@ def unflatten(obj, template):
         has element bracketing exactly as `template`
             and elements in sequence exactly as `obj`
 
-    Example
-    -------
+    Examples
+    --------
     >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
     [1, 2, [3, (4, 5)], 6]
     """

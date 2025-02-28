@@ -6,7 +6,7 @@ __all__ = []
 
 import warnings
 from functools import singledispatch
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ import pandas as pd
 from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
 from sktime.utils.validation.series import check_time_index, is_integer_index
+from sktime.utils.warnings import _suppress_pd22_warning
 
 
 def _coerce_duration_to_int(
@@ -60,7 +61,7 @@ def _coerce_duration_to_int(
         raise TypeError("`duration` type not understood.")
 
 
-def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
+def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     """Extract interval count and unit from frequency string.
 
     Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
@@ -70,7 +71,8 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        offset = pd.tseries.frequencies.to_offset(freq)
+        with _suppress_pd22_warning:
+            offset = pd.tseries.frequencies.to_offset(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 

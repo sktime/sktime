@@ -3,13 +3,13 @@
 import numpy as np
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.signature_based import SignatureTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("esig", severity="none"),
-    reason="skip test if required soft dependency esig not available",
+    not run_test_for_class(SignatureTransformer),
+    reason="skip test if python environment requirements for estimator are not met",
 )
 def test_generalised_signature_method():
     """Check that dimension and dim of output are correct."""
@@ -41,8 +41,8 @@ def test_generalised_signature_method():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("esig", severity="none"),
-    reason="skip test if required soft dependency esig not available",
+    not run_test_for_class(SignatureTransformer),
+    reason="skip test if python environment requirements for estimator are not met",
 )
 def test_window_error():
     """Test that wrong window parameters raise error."""

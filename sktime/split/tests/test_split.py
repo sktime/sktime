@@ -4,12 +4,11 @@
 __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
-from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     array_is_datetime64,
@@ -111,6 +110,12 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [SlidingWindowSplitter, ExpandingWindowSplitter, ForecastingHorizon]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
     """Test WindowSplitter."""
@@ -123,6 +128,12 @@ def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
     np.testing.assert_array_equal(train_windows[0], np.array([0, 1, 2]))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [SlidingWindowSplitter, ExpandingWindowSplitter, ForecastingHorizon]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     """Test WindowSplitter."""
@@ -133,43 +144,3 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([3, 4, 5]))
-
-
-def test_split_series_hier():
-    """Tests that split works with hierarchical data."""
-    hierarchy_levels = (2, 4)
-    n_instances = np.prod(hierarchy_levels)
-    n = 12
-    y = _make_hierarchical(
-        hierarchy_levels=hierarchy_levels, max_timepoints=n, min_timepoints=n
-    )
-    cv = SlidingWindowSplitter()
-
-    for train, test in cv.split(y):
-        assert isinstance(train, np.ndarray)
-        assert train.ndim == 1
-        assert train.dtype == np.int64
-        assert len(train) == 10 * n_instances
-        assert isinstance(test, np.ndarray)
-        assert test.ndim == 1
-        assert pd.api.types.is_integer_dtype(test.dtype)
-        assert len(test) == 1 * n_instances
-
-    for train, test in cv.split_loc(y):
-        assert isinstance(train, pd.MultiIndex)
-        assert len(train) == 10 * n_instances
-        assert train.isin(y.index).all()
-        assert isinstance(test, pd.MultiIndex)
-        assert len(test) == 1 * n_instances
-        assert test.isin(y.index).all()
-
-    def inst_index(y):
-        return set(y.index.droplevel(-1).unique())
-
-    for train, test in cv.split_series(y):
-        assert isinstance(train, pd.DataFrame)
-        assert len(train) == 10 * n_instances
-        assert isinstance(test, pd.DataFrame)
-        assert len(test) == 1 * n_instances
-        assert inst_index(train) == inst_index(y)
-        assert inst_index(test) == inst_index(y)

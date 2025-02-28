@@ -171,11 +171,7 @@ class BaseStrategy(BaseEstimator):
     def __repr__(self):
         strategy_name = self.__class__.__name__
         estimator_name = self.estimator.__class__.__name__
-        return "{}({}({}))".format(
-            strategy_name,
-            estimator_name,
-            repr(self.get_params(deep=False)),
-        )
+        return f"{strategy_name}({estimator_name}({repr(self.get_params(deep=False))}))"
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):

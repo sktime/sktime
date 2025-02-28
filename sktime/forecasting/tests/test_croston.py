@@ -1,11 +1,17 @@
 """Tests for Croston estimator."""
+
 import numpy as np
 import pytest
 
 from sktime.datasets import load_PBS_dataset
 from sktime.forecasting.croston import Croston
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Croston),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "smoothing, fh, r_forecast",
     [

@@ -43,15 +43,16 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyForecaster(BaseForecaster):
     """Custom forecaster. todo: write docstring.
 
@@ -152,17 +153,41 @@ class MyForecaster(BaseForecaster):
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
+        #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
         #
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
@@ -171,13 +196,16 @@ class MyForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
+        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
         # leave this as is
         super().__init__()
@@ -240,7 +268,7 @@ class MyForecaster(BaseForecaster):
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        #  the clones, not the originals should be used or fitted if needed
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (y, X) or forecasting-horizon-like,

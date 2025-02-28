@@ -11,7 +11,7 @@ These include:
 
 * Documenting code using NumPy docstrings and sktime conventions
 * Following ``sktime's`` docstring convention for public code artifacts and modules
-* Adding new public functionality to the :ref:`api_reference` and :ref:`user guide <user_guide>`
+* Adding new public functionality to the :ref:`api_reference` and :ref:`notebook examples <examples>`
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
@@ -39,7 +39,7 @@ sktime Specific Conventions
 Beyond basic NumPy docstring formatting conventions, developers should focus on:
 
 - Ensuring all parameters (classes, functions, methods) and attributes (classes) are documented completely and consistently
-- Including links to the relevant topics in the :ref:`glossary` or :ref:`user_guide` in the extended summary
+- Including links to the relevant topics in the :ref:`glossary` or :ref:`examples` in the extended summary
 - Including an `Examples` section that demonstrates at least basic functionality in all public code artifacts
 - Adding a `See Also` section that references related sktime code artifacts as applicable
 - Including citations to relevant sources in a `References` section
@@ -75,7 +75,7 @@ the extended summary should include a short, user-friendly synopsis of the algor
 using multiple sktime estimators, the synopsis should first provide a high-level summary of the estimator components (e.g. transformer1 is applied then a classifier).
 Additional user-friendly details of the algorithm should follow (e.g. describe how the transformation and classifier work).
 
-The extended summary should also include links to relevant content in the :ref:`glossary` and :ref:`user guide <user_guide>`.
+The extended summary should also include links to relevant content in the :ref:`glossary` and :ref:`notebook examples <examples>`.
 
 If a "term" already exists in the glossary and the developer wants to link it directly they can use:
 
@@ -99,8 +99,8 @@ Again developers are encouraged to add important content to the user guide and l
 See Also
 ~~~~~~~~
 
-This section should reference other ``sktime`` code artifcats related to the code artifact being documented by the docstring. Developers should use
-judgement in determining related code artifcats. For example, rather than listin all other performance metrics, a percentage error based performance metric
+This section should reference other ``sktime`` code artifacts related to the code artifact being documented by the docstring. Developers should use
+judgement in determining related code artifacts. For example, rather than listin all other performance metrics, a percentage error based performance metric
 might only list other percentage error based performance metrics.  Likewise, a distance based classifier might list other distance based classifiers but
 not include other types of time series classifiers.
 
@@ -149,7 +149,7 @@ Examples
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
 The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
-(e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
+(e.g. NumPy, pandas, etc) and wherever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
 Examples of Good sktime Docstrings
@@ -197,15 +197,36 @@ To build the documentation locally, you need to install a few extra
 dependencies listed in
 `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
 
-1. To install extra dependencies from the root directory, run:
+1. To install extra dependencies for building documentation, run:
 
    .. code:: bash
 
-      pip install .[docs]
+      pip install --editable .[docs]
 
-2. To build the website locally, run:
+2. To build the website locally, navigate to ``docs/source`` and execute:
 
    .. code:: bash
 
-      cd docs
       make html
+
+   Please note that the initial build may take up to 20 minutes. Subsequent builds for incremental changes will be significantly faster.
+
+3. For a clean build, run:
+
+   .. code:: bash
+
+      make clean html
+
+4. For live-reloading while editing the documentation, you can use ``sphinx-autobuild``.
+
+   First, install ``sphinx-autobuild`` by running:
+
+   .. code:: bash
+
+      pip install sphinx-autobuild
+
+   Then in ``docs/source``, run:
+
+   .. code:: bash
+
+      make autobuild

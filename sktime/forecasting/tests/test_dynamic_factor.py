@@ -1,10 +1,11 @@
 """Tests the DynamicFactor model."""
+
 import pytest
 from pandas.testing import assert_frame_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.dynamic_factor import DynamicFactor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 __author__ = ["yarnabrina"]
 
@@ -62,8 +63,8 @@ def compare_predictions_against_statsmodels(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(DynamicFactor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_DynamicFactor_without_exogenous_variables():
     """Test ``DynamicFactor`` in absence of exogenous variables."""
@@ -96,8 +97,8 @@ def test_DynamicFactor_without_exogenous_variables():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(DynamicFactor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_DynamicFactor_with_exogenous_variables():
     """Test ``DynamicFactor`` in presence of exogenous variables."""

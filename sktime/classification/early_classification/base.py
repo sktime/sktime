@@ -26,8 +26,7 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from abc import ABC, abstractmethod
-from typing import Tuple
+from abc import abstractmethod
 
 import numpy as np
 
@@ -35,7 +34,7 @@ from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
 
 
-class BaseEarlyClassifier(BaseEstimator, ABC):
+class BaseEarlyClassifier(BaseEstimator):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -53,8 +52,11 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     """
 
     _tags = {
+        "object_type": "early_classifier",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict, support for y?
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "capability:multioutput": False,  # whether classifier supports multioutput
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -68,7 +70,16 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
+
+    # attribute name where vectorized estimators are stored
+    VECTORIZATION_ATTR = "classifiers_"  # e.g., classifiers_, regressors_
+
+    # used in error messages
+    TASK = "early classification"  # e.g., classification, regression
+    EST_TYPE = "early classifier"  # e.g., classifier, regressor
+    EST_TYPE_PLURAL = "early classifiers"  # e.g., classifiers, regressors
 
     def __init__(self):
         self.classes_ = []
@@ -79,7 +90,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """An array containing the state info for each decision in X from update and
         predict methods.
 
-        Contains classifier dependant information for future decisions on the data and
+        Contains classifier dependent information for future decisions on the data and
         information on when a cases decision has been made. Each row contains
         information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the
@@ -87,6 +98,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         update/predict.
         """
         self.state_info = None
+
+        self._converter_store_y = {}
 
         super().__init__()
 
@@ -119,7 +132,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         fit = BaseClassifier.fit
         return fit(self, X, y)
 
-    def predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -157,7 +170,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict(X)
 
-    def update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -202,7 +215,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         else:
             return self._update_predict(X)
 
-    def predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -242,7 +255,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict_proba(X)
 
-    def update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -289,7 +302,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         else:
             return self._update_predict_proba(X)
 
-    def score(self, X, y) -> Tuple[float, float, float]:
+    def score(self, X, y) -> tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
@@ -323,7 +336,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         Returns
         -------
         An array containing the state info for each decision in X from update and
-        predict methods. Contains classifier dependant information for future decisions
+        predict methods. Contains classifier dependent information for future decisions
         on the data and information on when a cases decision has been made. Each row
         contains information for a case from the latest decision on its safety made in
         update/predict. Successive updates are likely to remove rows from the
@@ -391,7 +404,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -423,7 +436,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Abstract method, must be implemented.
@@ -455,7 +468,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """
         ...
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         This method should update state_info with any values necessary to make future
@@ -498,7 +511,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return dists, decisions
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Uses information from previous decisions stored in state_info. This method
@@ -543,7 +556,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         return dists, decisions
 
     @abstractmethod
-    def _score(self, X, y) -> Tuple[float, float, float]:
+    def _score(self, X, y) -> tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
         Abstract method, must be implemented.
@@ -586,42 +599,59 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         _check_convert_X_for_predict = BaseClassifier._check_convert_X_for_predict
         return _check_convert_X_for_predict(self, X)
 
-    def _check_capabilities(self, missing, multivariate, unequal):
+    def _check_capabilities(self, X_metadata):
         """Check whether this classifier can handle the data characteristics.
 
         Parameters
         ----------
-        missing : boolean, does the data passed to fit contain missing values?
-        multivariate : boolean, does the data passed to fit contain missing values?
-        unequal : boolea, do the time series passed to fit have variable lengths?
+        X_metadata : dict with metadata for X returned by datatypes.check_is_scitype
 
         Raises
         ------
         ValueError if the capabilities in self._tags do not handle the data.
         """
         _check_capabilities = BaseClassifier._check_capabilities
-        return _check_capabilities(self, missing, multivariate, unequal)
+        return _check_capabilities(self, X_metadata)
 
-    def _convert_X(self, X):
+    def _convert_X(self, X, X_mtype):
         """Convert equal length series from DataFrame to numpy array or vice versa.
 
         Parameters
         ----------
-        self : this classifier
-        X : pd.DataFrame or np.ndarray. Input attribute data
+        X : input data for the classifier
+        X_mtype : str, a Panel mtype string, e.g., "pd_multiindex", "numpy3D"
 
         Returns
         -------
         X : input X converted to type in "X_inner_mtype" tag
-                usually a pd.DataFrame (nested) or 3D np.ndarray
+            usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
         _convert_X = BaseClassifier._convert_X
-        return _convert_X(self, X)
+        return _convert_X(self, X, X_mtype)
 
-    def _check_classifier_input(
-        self, X, y=None, enforce_min_instances=1, return_metadata=True
-    ):
+    def _check_y(self, y=None, return_to_mtype=False):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series or np.ndarray
+        return_to_mtype : bool
+            whether to return the mtype of y output
+
+        Returns
+        -------
+        y_inner : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        y_metadata : dict
+            metadata of y, returned by check_is_scitype
+        y_mtype : str, only returned if return_to_mtype=True
+            mtype of y_inner, after convert
+        """
+        _check_y = BaseClassifier._check_y
+        return _check_y(self, y, return_to_mtype=return_to_mtype)
+
+    def _check_input(self, X, y=None, enforce_min_instances=1, return_metadata=True):
         """Check whether input X and y are valid formats with minimum data.
 
         Raises a ValueError if the input is not valid.
@@ -644,10 +674,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ValueError
             If y or X is invalid input data type, or there is not enough data
         """
-        _check_classifier_input = BaseClassifier._check_classifier_input
-        return _check_classifier_input(
-            self, X, y, enforce_min_instances, return_metadata
-        )
+        _check_input = BaseClassifier._check_input
+        return _check_input(self, X, y, enforce_min_instances, return_metadata)
 
     def _internal_convert(self, X, y=None):
         """Convert X and y if necessary as a user convenience.

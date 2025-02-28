@@ -46,10 +46,12 @@ from sktime.transformations.base import BaseTransformer
 
 # todo: add any necessary sktime internal imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTransformer(BaseTransformer):
     """Custom transformer. todo: write docstring.
 
@@ -146,13 +148,18 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
+        #
+        # requires_X = does X need to be passed in fit?
+        "requires_X": True,
+        # valid values: False (no), True = exception is raised if no X is seen in _fit
+        #   requires_y setting is independent of requires_X
         #
         # requires_y = does y need to be passed in fit?
         "requires_y": False,
         # valid values: False (no), True = exception is raised if no y is seen in _fit
-        #   y can be passed or not in _transform for either value of requires_y
+        #   requires_X setting is independent of requires_y
         #
         # remember_data = whether all data seen is remembered as self._X
         "remember_data": False,
@@ -210,7 +217,7 @@ class MyTransformer(BaseTransformer):
         #
         # skip-inverse-transform = is inverse-transform skipped when called?
         "skip-inverse-transform": False,
-        # if False, capability:inverse_transform tag behaviour is as per devault
+        # if False, capability:inverse_transform tag behaviour is as per default
         # if True, inverse_transform is the identity transform and raises no exception
         #   this is useful for transformers where inverse_transform
         #   may be called but should behave as the identity, e.g., imputers
@@ -239,6 +246,29 @@ class MyTransformer(BaseTransformer):
         # valid values: boolean True (yes), False (no)
         # used for search index and validity checking, does not raise direct exception
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -246,11 +276,11 @@ class MyTransformer(BaseTransformer):
         # python version requirement
         "python_version": None,
         # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python veresion is incompatible
+        # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     # in case of inheritance, concrete class should typically set tags
@@ -260,13 +290,16 @@ class MyTransformer(BaseTransformer):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
+        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
         # leave this as is
         super().__init__()

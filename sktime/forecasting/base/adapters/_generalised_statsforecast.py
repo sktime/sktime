@@ -1,21 +1,30 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+
 from inspect import signature
-from typing import Dict
 from warnings import warn
 
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.adapters.forward import _clone_fitted_params
 
-__all__ = ["_GeneralisedStatsForecastAdapter"]
-__author__ = ["yarnabrina"]
+__all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
+__author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "arnaujc91"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -23,8 +32,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
@@ -43,30 +50,77 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
     def _get_statsforecast_class(self):
         raise NotImplementedError("abstract method")
 
-    def _get_statsforecast_params(self):
+    def _get_statsforecast_params(self) -> dict:
         return self.get_params()
 
     def _get_init_statsforecast_params(self):
+        """Return parameters in __init__ statsforecast forecaster.
+
+        Return a list of parameters in the __init__ method from
+        the statsforecast forecaster class used in the sktime adapter.
+        """
         statsforecast_class = self._get_statsforecast_class()
         return list(signature(statsforecast_class.__init__).parameters.keys())
 
-    def _get_validated_statsforecast_params(self):
-        sktime_params = self._get_statsforecast_params()
-        sktime_default_params = self.get_param_defaults().keys()
-        statsforecast_params = self._get_init_statsforecast_params()
+    def _get_statsforecast_default_params(self) -> dict:
+        """Get default parameters for the statsforecast forecaster.
 
-        for sktime_param in sktime_params.keys():
-            if sktime_param not in statsforecast_params:
-                sktime_params.pop(sktime_param)
-                if sktime_param not in sktime_default_params:
-                    warn(
-                        f"Keyword argument '{sktime_param}' will be omitted as it is"
-                        f" not found in the __init__ method "
-                        f"from {self._get_statsforecast_class()}. "
-                        f"Check your statsforecast version"
-                        f"to find out the right API parameters."
-                    )
-        return sktime_params
+        This will in general be different from self.get_param_defaults(),
+        as the set or names of inner parameters can differ.
+
+        For parameters without defaults, will use the parameter
+        of self instead.
+        """
+        self_params = self.get_params(deep=False)
+        self_default_params = self.get_param_defaults()
+        self_params.update(self_default_params)
+        cls_with_defaults = type(self)(**self_params)
+        return cls_with_defaults._get_statsforecast_params()
+
+    def _get_validated_statsforecast_params(self) -> dict:
+        """Return parameter dict with only parameters accepted by statsforecast API.
+
+        Checks if the parameters passed to the statsforecast forecaster
+        are valid in the __init__ method of the aforementioned forecaster.
+        If the parameter is not there it will just not be passed. Furthermore
+        if the parameter is modified by the sktime user,
+        he will be notified that the parameter does not exist
+        anymore in the version installed of statsforecast by the user.
+
+        """
+        params_sktime_to_statsforecast: dict = self._get_statsforecast_params()
+        params_sktime_to_statsforecast_default: dict = (
+            self._get_statsforecast_default_params()
+        )
+        statsforecast_init_params = set(self._get_init_statsforecast_params())
+
+        # Filter sktime_params to only include keys in statsforecast_params
+        filtered_sktime_params = {
+            key: value
+            for key, value in params_sktime_to_statsforecast.items()
+            if key in statsforecast_init_params
+        }
+
+        non_default_params = [
+            p
+            for p in params_sktime_to_statsforecast
+            if params_sktime_to_statsforecast[p]
+            != params_sktime_to_statsforecast_default[p]
+        ]
+        # Find parameters not in statsforecast_params or sktime_default_params
+        param_diff = set(non_default_params) - statsforecast_init_params
+
+        if param_diff:
+            params_str = ", ".join([f'"{param}"' for param in param_diff])
+            warning_message = (
+                f"Keyword arguments {params_str} "
+                f"will be omitted as they are not found in the __init__ method from "
+                f"{self._get_statsforecast_class()}. Check your statsforecast version "
+                f"to find out the right API parameters."
+            )
+            warn(warning_message)
+
+        return filtered_sktime_params
 
     def _instantiate_model(self):
         cls = self._get_statsforecast_class()
@@ -114,6 +168,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             X_fit_input = X.to_numpy(copy=False)
 
         self._forecaster.fit(y_fit_input, X=X_fit_input)
+
+        # clone fitted parameters to self
+        _clone_fitted_params(self, self._forecaster, overwrite=False)
 
         return self
 
@@ -180,12 +237,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             if isinstance(upper_interval_predictions, pandas.Series):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
-            interval_predictions[
-                (var_name, level, "lower")
-            ] = lower_interval_predictions[horizon_positions]
-            interval_predictions[
-                (var_name, level, "upper")
-            ] = upper_interval_predictions[horizon_positions]
+            interval_predictions[(var_name, level, "lower")] = (
+                lower_interval_predictions[horizon_positions]
+            )
+            interval_predictions[(var_name, level, "upper")] = (
+                upper_interval_predictions[horizon_positions]
+            )
 
         return interval_predictions
 
@@ -310,7 +367,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self) -> Dict[str, bool]:
+    def _check_supports_pred_int(self) -> dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 
@@ -400,9 +457,17 @@ class StatsForecastBackAdapter:
         super().__init__()
 
         self.estimator = estimator
+        self.prediction_intervals = None
 
     def __repr__(self):
+        """Representation dunder."""
         return "StatsForecastBackAdapter"
+
+    def new(self):
+        """Make new instance of back-adapter."""
+        _self = type(self).__new__(type(self))
+        _self.__dict__.update(self.__dict__)
+        return _self
 
     def fit(self, y, X=None):
         """Fit to training data.
@@ -442,9 +507,15 @@ class StatsForecastBackAdapter:
         mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
+        # if a level is passed, and if prediction_intervals has not been instantiated
+        # yet
+        elif self.prediction_intervals is None:
+            from statsforecast.utils import ConformalIntervals
+
+            self.prediction_intervals = ConformalIntervals(h=h)
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
 
         pred_int = self.estimator.predict_interval(
             fh=range(1, h + 1), X=X, coverage=coverage
@@ -472,13 +543,14 @@ class StatsForecastBackAdapter:
             return {"fitted": fitted}
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
             fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
         )
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        """Convert prediction intervals into a StatsForecast-format dictionary."""
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         pred_int_no_lev = pred_int.droplevel(0, axis=1)
@@ -514,14 +586,14 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.var import VAR
+        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.forecasting.theta import ThetaForecaster
-            from sktime.forecasting.var import VAR
-
+        stm_ests = [ThetaForecaster, VAR]
+        if _check_estimator_deps(stm_ests, severity="none"):
             params = [
                 {
                     "estimator": ThetaForecaster(),

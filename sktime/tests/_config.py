@@ -1,14 +1,12 @@
-__author__ = ["mloning"]
+"""Main configuration file for test excludes.
+
+Also contains some other configs, these should be gradually refactored
+to registry or to individual tags, where applicable.
+"""
+
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-from sktime.base import BaseEstimator, BaseObject
-from sktime.registry import (
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    ESTIMATOR_TAG_LIST,
-    TRANSFORMER_MIXIN_LIST,
-)
-from sktime.transformations.base import BaseTransformer
+from sktime.registry import ESTIMATOR_TAG_LIST
 
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
@@ -22,28 +20,36 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "RandomIntervalClassifier",
-    "MiniRocket",
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
-    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
-    "MACNNClassifier",
-    "SimpleRNNClassifier",
-    "SimpleRNNRegressor",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
-    "InceptionTimeClassifer",
+    "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
+    "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
+    "FCNRegressor",
+    "LSTMFCNRegressor",
+    # splitters excluded with undiagnosed failures, see #6194
+    # these are temporarily skipped to allow merging of the base test framework
+    "SameLocSplitter",
+    "TestPlusTrainSplitter",
+    "Repeat",
+    "CutoffFhSplitter",
+    # sporadic timeouts, see #6344
+    "ShapeletLearningClassifierTslearn",
+    "DartsXGBModel",
+    # Large datasets
+    "M5Dataset",
 ]
 
 
@@ -77,11 +83,15 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_multiprocessing_idempotent",  # see 5658
+        "test_fit_idempotent",  # see 6637
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_fit_idempotent",  # see 6201
+        "test_multiprocessing_idempotent",  # see 6637
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
@@ -113,8 +123,19 @@ EXCLUDED_TESTS = {
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNRegressor": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
         "test_fit_idempotent",
+    ],
+    "MLPRegressor": [
+        "test_fit_idempotent",
+    ],
+    "CNTCClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
     ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",
@@ -123,6 +144,8 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
+        "test_multioutput",  # see 6201
+        "test_classifier_on_unit_test_data",  # see 6201
     ],
     "SimpleRNNRegressor": [
         "test_fit_idempotent",
@@ -135,7 +158,13 @@ EXCLUDED_TESTS = {
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
-    "MACNNClassifier": [
+    "FCNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "InceptionTimeRegressor": [
+        "test_fit_idempotent",
+    ],
+    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -159,15 +188,13 @@ EXCLUDED_TESTS = {
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
     ],
-    # GGS inherits from BaseEstimator which breaks this test
-    "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAX": "test_fit_transform_output",
+    "SAXlegacy": ["test_fit_transform_output"],
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
@@ -178,7 +205,200 @@ EXCLUDED_TESTS = {
         "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
+    # networks do not support negative fh
+    "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
+    "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
+    "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
+    # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
+    "StatsForecastMSTL": ["test_pred_int_tag"],
+    # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
+    "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
+    # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
+    "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
+    "TimeSeriesSVRTslearn": [  # not deterministic, see 6274
+        "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
+    ],
+    # ShapeletLearningClassifier is non-pickleable due to DL dependencies
+    "ShapeletLearningClassifierTslearn": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+        "test_fit_idempotent",
+    ],
+    "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # pickling problem
+    "ChronosForecaster": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "ClusterSegmenter": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+        "test_output_type",
+    ],
+    "GreedyGaussianSegmentation": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_output_type",
+        "test_transform_output_type",
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
 }
+
+# exclude tests but keyed by test name
+EXCLUDED_TESTS_BY_TEST = {
+    "test_get_test_params_coverage": [
+        "BOSSEnsemble",
+        "CAPA",
+        "CNTCClassifier",
+        "CNTCNetwork",
+        "CNTCRegressor",
+        "CanonicalIntervalForest",
+        "CircularBinarySegmentation",
+        "ClaSPTransformer",
+        "ClearSky",
+        "ColumnEnsembleClassifier",
+        "ColumnwiseTransformer",
+        "ContractableBOSS",
+        "DOBIN",
+        "DWTTransformer",
+        "DilationMappingTransformer",
+        "DirRecTabularRegressionForecaster",
+        "DirRecTimeSeriesRegressionForecaster",
+        "DirectTimeSeriesRegressionForecaster",
+        "DistFromAligner",
+        "DistanceFeatures",
+        "DontUpdate",
+        "DummyRegressor",
+        "ElasticEnsemble",
+        "FeatureSelection",
+        "FreshPRINCE",
+        "GreedyGaussianSegmentation",
+        "HCrystalBallAdapter",
+        "HIVECOTEV1",
+        "HIVECOTEV2",
+        "Hidalgo",
+        "HierarchicalProphet",
+        "InceptionTimeNetwork",
+        "IndividualBOSS",
+        "IndividualTDE",
+        "InformationGainSegmentation",
+        "LTSFDLinearForecaster",
+        "LTSFLinearForecaster",
+        "LTSFNLinearForecaster",
+        "LogTransformer",
+        "M5Dataset",
+        "MCDCNNClassifier",
+        "MCDCNNNetwork",
+        "MCDCNNRegressor",
+        "MLPNetwork",
+        "MUSE",
+        "MVCAPA",
+        "MatrixProfile",
+        "MatrixProfileTransformer",
+        "MiniRocketMultivariate",
+        "MiniRocketMultivariateVariable",
+        "MovingWindow",
+        "MultiRocket",
+        "MultioutputTabularRegressionForecaster",
+        "MultioutputTimeSeriesRegressionForecaster",
+        "OnlineEnsembleForecaster",
+        "OptionalPassthrough",
+        "PAA",
+        "PAAlegacy",
+        "PCATransformer",
+        "PELT",
+        "PaddingTransformer",
+        "PlateauFinder",
+        "Prophet",
+        "ProphetPiecewiseLinearTrendForecaster",
+        "Prophetverse",
+        "RandomIntervalClassifier",
+        "RandomIntervalFeatureExtractor",
+        "RandomIntervalSegmenter",
+        "RandomIntervalSpectralEnsemble",
+        "RandomIntervals",
+        "RandomSamplesAugmenter",
+        "RandomShapeletTransform",
+        "RecursiveTabularRegressionForecaster",
+        "RecursiveTimeSeriesRegressionForecaster",
+        "ReducerTransform",
+        "SAX",
+        "SAXlegacy",
+        "SFA",
+        "SFAFast",
+        "SeededBinarySegmentation",
+        "ShapeletTransform",
+        "ShapeletTransformClassifier",
+        "SignatureClassifier",
+        "SignatureTransformer",
+        "SlidingWindowSegmenter",
+        "SlopeTransformer",
+        "StackingForecaster",
+        "StatThresholdAnomaliser",
+        "SummaryClassifier",
+        "SupervisedTimeSeriesForest",
+        "TEASER",
+        "TSFreshClassifier",
+        "TapNetNetwork",
+        "TemporalDictionaryEnsemble",
+        "TimeBinner",
+        "TimeSeriesForestClassifier",
+        "TimeSeriesForestRegressor",
+        "TimeSeriesKMedoids",
+        "TimeSeriesKernelKMeans",
+        "TruncationTransformer",
+        "UnobservedComponents",
+        "WEASEL",
+        "WhiteNoiseAugmenter",
+        # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
+        # too after adding test parameters to them
+        "BaggingForecaster",
+        "ClustererPipeline",
+        "DirectTabularRegressionForecaster",
+        "EnbPIForecaster",
+        "FittedParamExtractor",
+        "ForecastingOptunaSearchCV",
+    "HFTransformersForecaster",
+        "HolidayFeatures",
+        "ParamFitterPipeline",
+        "PluginParamsForecaster",
+        "PluginParamsTransformer",
+        "RegressorPipeline",
+        "SupervisedIntervals",
+        "TSBootstrapAdapter",
+        "ThetaModularForecaster",
+        "WeightedEnsembleClassifier",
+    ]
+}
+
+# estimators that have 2 test params only when their soft dependency is installed
+EXCLUDE_SOFT_DEPS = [
+    "BaggingForecaster",
+    "ClustererPipeline",
+    "DirectTabularRegressionForecaster",
+    "EnbPIForecaster",
+    "FittedParamExtractor",
+    "ForecastingOptunaSearchCV",
+    "HFTransformersForecaster",
+    "HolidayFeatures",
+    "ParamFitterPipeline",
+    "PluginParamsForecaster",
+    "PluginParamsTransformer",
+    "RegressorPipeline",
+    "SupervisedIntervals",
+    "TSBootstrapAdapter",
+    "ThetaModularForecaster",
+    "WeightedEnsembleClassifier",
+]
+
+# add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS
+# the latter is the single source of truth
+for k, v in EXCLUDED_TESTS_BY_TEST.items():
+    for est in v:
+        EXCLUDED_TESTS.setdefault(est, []).extend([k])
 
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
@@ -207,17 +427,3 @@ NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
 NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
     "get_fitted_params",
 )
-
-# The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
-
-BASE_BASE_TYPES = (BaseEstimator, BaseObject)
-VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
-
-VALID_ESTIMATOR_TYPES = (
-    BaseEstimator,
-    *VALID_ESTIMATOR_BASE_TYPES,
-    *VALID_TRANSFORMER_TYPES,
-)
-
-VALID_ESTIMATOR_BASE_TYPE_LOOKUP = BASE_CLASS_LOOKUP

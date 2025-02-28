@@ -1,6 +1,6 @@
 """ETS tests."""
 
-__author__ = ["Hongyi Yang"]
+__author__ = ["HYang1996"]
 
 import numpy as np
 import pandas as pd

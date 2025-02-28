@@ -1,8 +1,16 @@
 """Channel selection test code."""
+
+import pytest
+
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.channel_selection import ElbowClassPairwise
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ElbowClassPairwise),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_cs_basic_motions():
     """Test channel selection on basic motions dataset."""
     X, y = load_basic_motions(split="train", return_X_y=True)

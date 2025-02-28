@@ -19,19 +19,20 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     Applies different forecasters by columns.
 
-    `ColumnEnsembleForecaster` is passed forecaster/index pairs, exact syntax below.
+    ``ColumnEnsembleForecaster`` is passed forecaster/index pairs, exact syntax below.
     Index can be single pandas index element, pd.Index, int, str, or list thereof.
     If iterable (pd.Index, list), refers to multiple columns.
 
-    Behaviour in `fit`, `predict`, `update`:
+    Behaviour in ``fit``, ``predict``, ``update``:
     For index pairs f_i, ix_i passed, applies forecaster f_i to column(s) ix_i.
-    `predict` results are concatenated to one container with same columns as in `fit`.
+    ``predict`` results are concatenated to one container with same columns as in
+    ``fit``.
 
     Parameters
     ----------
     forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
         if tuples, with name = str, estimator is forecaster, index as int or index
-        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is index, it must be int, str, or pd.Index coercible
         if last element is int x, and is not in columns, is interpreted as x-th column
         all columns must be present in an index
 
@@ -88,6 +89,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": PANDAS_MTYPES,
@@ -306,7 +308,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh. Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
@@ -345,9 +347,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh. Entries are variance forecasts, for var in col index.
             If cov=True:
@@ -364,19 +366,19 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
         Checks:
 
-        * `self.forecasters` is single forecaster, or
-        * `self.forecasters` is list of (name, forecaster, index)
-        * all `forecaster` above inherit from `BaseForecaster`
-        * `y.columns` is disjoint union of `index` appearing above
+        * ``self.forecasters`` is single forecaster, or
+        * ``self.forecasters`` is list of (name, forecaster, index)
+        * all ``forecaster`` above inherit from ``BaseForecaster``
+        * ``y.columns`` is disjoint union of ``index`` appearing above
 
         Parameters
         ----------
-        y : `pandas` object with `columns` attribute of `pd.Index` type
+        y : ``pandas`` object with ``columns`` attribute of ``pd.Index`` type
 
         Returns
         -------
-        list of (name, estimator, index) such that union of index is `y.columns`;
-        and estimator is estimator inheriting from `BaseForecaster`
+        list of (name, estimator, index) such that union of index is ``y.columns``;
+        and estimator is estimator inheriting from ``BaseForecaster``
 
         Raises
         ------
@@ -394,7 +396,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -402,8 +404,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster

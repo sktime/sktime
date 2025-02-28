@@ -5,6 +5,8 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
+__author__ = ["ChangWeiTan", "fstinner", "angus924"]
+
 
 class MultiRocketMultivariate(BaseTransformer):
     """Multi RandOm Convolutional KErnel Transform (MultiRocket).
@@ -16,12 +18,22 @@ class MultiRocketMultivariate(BaseTransformer):
     Values (MPV); Mean of Indices of Positive Values (MIPV); and Longest Stretch of
     Positive Values (LSPV). This version is the multivariate version.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=6,250
-       number of random convolutional kernels. The calculated number of features is the
-       nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
-       (2*n_features_per_kernel(default 4)*num_kernels(default 6,250)).
+       number of random convolutional kernels. This should be a multiple of 84.
+       If it is lower than 84, it will be set to 84. If it is higher than 84
+       and not a multiple of 84, the number of kernels used to transform the
+       data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     n_features_per_kernel : int, default =4
@@ -40,7 +52,11 @@ class MultiRocketMultivariate(BaseTransformer):
     parameter1 : tuple
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X1 = np.diff(X, 1)
-
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
+        num_kernels is less than 84. The calculated number of features is given
+        as 2*n_features_per_kernel*num_kernels_.
 
     See Also
     --------
@@ -68,6 +84,13 @@ class MultiRocketMultivariate(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ChangWeiTan", "fstinner", "angus924"],
+        "maintainers": ["ChangWeiTan", "fstinner", "angus924"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -77,7 +100,6 @@ class MultiRocketMultivariate(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -92,6 +114,7 @@ class MultiRocketMultivariate(BaseTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.num_kernels = num_kernels
+        self.num_kernels_ = None
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
@@ -134,6 +157,11 @@ class MultiRocketMultivariate(BaseTransformer):
 
         self.parameter1 = self._get_parameter(_X1)
 
+        if self.num_kernels < 84:
+            self.num_kernels_ = 84
+        else:
+            self.num_kernels_ = (self.num_kernels // 84) * 84
+
         return self
 
     def _transform(self, X, y=None):
@@ -162,7 +190,7 @@ class MultiRocketMultivariate(BaseTransformer):
 
         _X1 = np.diff(X, 1)
 
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
@@ -189,6 +217,9 @@ class MultiRocketMultivariate(BaseTransformer):
             _fit_dilations,
             _quantiles,
         )
+
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
 
         _, num_channels, input_length = X.shape
 
@@ -243,3 +274,19 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter sets for the estimator."""
+        return [
+            {
+                "num_kernels": 10,
+                "max_dilations_per_kernel": 32,
+                "random_state": 42,
+            },  # First parameter set
+            {
+                "num_kernels": 20,
+                "max_dilations_per_kernel": 16,
+                "random_state": 0,
+            },  # Second parameter set
+        ]

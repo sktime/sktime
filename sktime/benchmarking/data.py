@@ -24,7 +24,7 @@ class UEADataset(HDDBaseDataset):
         target_name="target",
     ):
         super().__init__(path, name)
-        # create all the neccesary attributes for UAEDataset object
+        # create all the necessary attributes for UAEDataset object
         # store a dataset
 
         self._target_name = target_name

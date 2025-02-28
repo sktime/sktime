@@ -1,10 +1,17 @@
 """Tests for medoids."""
+
 import numpy as np
+import pytest
 
 from sktime.clustering.metrics.medoids import medoids
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(medoids),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_medoids():
     """Test medoids."""
     X = create_test_distance_numpy(10, 3, 3, random_state=2)

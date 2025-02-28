@@ -15,7 +15,6 @@ __author__ = [
 ]
 
 import math
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -29,6 +28,7 @@ from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class NaiveForecaster(_BaseWindowForecaster):
@@ -87,7 +87,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         Seasonal periodicity to use in the seasonal forecasting. None=1.
 
     window_length : int or None, default=None
-        Window length to use in the `mean` strategy. If None, entire training
+        Window length to use in the ``mean`` strategy. If None, entire training
             series will be used.
 
     References
@@ -108,6 +108,20 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "mloning",
+            "piyush1729",
+            "sri1419",
+            "Flix6x",
+            "aiwalter",
+            "IlyasMoutawwakil",
+            "fkiraly",
+            "bethrice44",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
@@ -167,7 +181,10 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif self.strategy == "drift":
             if sp != 1:
-                warn("For the `drift` strategy, the `sp` value will be ignored.")
+                warn(
+                    "For the `drift` strategy, the `sp` value will be ignored.",
+                    obj=self,
+                )
             # window length we need for forecasts is just the
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
@@ -188,7 +205,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         # check window length
-        if self.window_length_ > len(self._y):
+        if self.window_length_ > len(y):
             param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
@@ -340,12 +357,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
-
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
-            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            y_filled = full_y.ffill().bfill()
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # convert to pd.Series from pd.DataFrame
@@ -358,7 +374,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_new_mask = pd.Series(index=expected_index, dtype="float64")
             y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
-            y_filled = full_y.fillna(method="ffill").fillna(method="bfill")
+            y_filled = full_y.ffill().bfill()
             # subset to rows that contain elements we wanted to fill
             y_pred = y_filled.loc["b"]
             # reformat to wide
@@ -547,14 +563,19 @@ class NaiveForecaster(_BaseWindowForecaster):
         se_res = np.sqrt(mse_res)
 
         window_length = self.window_length or T
+
+        def sqrt_flr(x):
+            """Square root of x, floored at 1 - to deal with in-sample predictions."""
+            return np.sqrt(np.maximum(x, 1))
+
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
         partial_se_formulas = {
-            "last": lambda h: np.sqrt(h)
-            if sp == 1
-            else np.sqrt(np.floor((h - 1) / sp) + 1),
-            "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
-            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
+            "last": (
+                sqrt_flr if sp == 1 else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)
+            ),
+            "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
+            "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))
@@ -581,15 +602,16 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params_list = [
             {},
@@ -605,7 +627,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 class NaiveVariance(BaseForecaster):
     r"""Compute the prediction variance based on a naive strategy.
 
-    NaiveVariance adds to a `forecaster` the ability to compute the
+    NaiveVariance adds to a ``forecaster`` the ability to compute the
     prediction variance based on naive assumptions about the time series.
     The simple strategy is as follows:
     - Let :math:`y_1,\dots,y_T` be the time series we fit the estimator :math:`f` to.
@@ -620,9 +642,10 @@ class NaiveVariance(BaseForecaster):
     :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`.
 
     The resulting forecaster will implement
-        `predict_interval`, `predict_quantiles`, `predict_var`, and `predict_proba`,
-        even if the wrapped forecaster `forecaster` did not have this capability;
-        for point forecasts (`predict`), behaves like the wrapped forecaster.
+        ``predict_interval``, ``predict_quantiles``, ``predict_var``, and
+        ``predict_proba``,
+        even if the wrapped forecaster ``forecaster`` did not have this capability;
+        for point forecasts (``predict``), behaves like the wrapped forecaster.
 
     Parameters
     ----------
@@ -646,6 +669,11 @@ class NaiveVariance(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "bethrice44"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -844,15 +872,17 @@ class NaiveVariance(BaseForecaster):
                 if self.verbose:
                     warn(
                         f"Couldn't fit the model on "
-                        f"time series window length {len(y_train)}.\n"
+                        f"time series window length {len(y_train)}.\n",
+                        obj=self,
                     )
                 continue
             try:
                 residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
             except IndexError:
                 warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(y_train)}.\n"
+                    f"Couldn't predict after fitting on time series of length "
+                    f"{len(y_train)}.\n",
+                    obj=self,
                 )
 
         return residuals_matrix
@@ -865,7 +895,7 @@ class NaiveVariance(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

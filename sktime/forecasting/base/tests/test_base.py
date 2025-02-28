@@ -1,7 +1,8 @@
 """Testing advanced functionality of the base class."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ciaran-g"]
 
 from functools import reduce
 from operator import mul
@@ -13,25 +14,33 @@ from pandas.testing import assert_series_equal
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
-from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
+
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run only if base module has changed or datatypes module has changed",
 )
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
-def test_vectorization_series_to_panel(mtype):
+def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
 
     This test passes Panel data to the ARIMA forecaster which internally has an
@@ -41,13 +50,16 @@ def test_vectorization_series_to_panel(mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    f = ARIMA()
+    f = YfromX.create_test_instance()
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
-        f"of mtype {mtype}, using the ARIMA forecaster"
+        f"of mtype {mtype}, using the YfromX forecaster"
     )
 
     assert valid, msg
@@ -76,14 +88,15 @@ def test_vectorization_series_to_panel(mtype):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
-def test_vectorization_series_to_hier(mtype):
+def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
 
-    This test passes Hierarchical data to the ARIMA forecaster which internally has an
+    This test passes Hierarchical data to the YfromX forecaster which internally has an
     implementation for Series only, so the BaseForecaster has to vectorize.
     """
     hierarchy_levels = (2, 4)
@@ -92,13 +105,18 @@ def test_vectorization_series_to_hier(mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    f = ARIMA()
+    f = YfromX.create_test_instance()
+    assert f.get_tags()["scitype:y"] == "univariate"  # check the assumption
+
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
-        f"of mtype {mtype}, using the ARIMA forecaster"
+        f"of mtype {mtype}, using the YfromX forecaster"
     )
 
     assert valid, msg
@@ -129,8 +147,9 @@ PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
@@ -144,7 +163,8 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    est = ARIMA().fit(y)
+    est = _get_exog_proba_fcst()
+    est.fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
 
     if method in ["predict_interval", "predict_quantiles"]:
@@ -154,7 +174,9 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -165,8 +187,9 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -180,7 +203,8 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    est = ARIMA().fit(y)
+    est = _get_exog_proba_fcst()
+    est.fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
 
     if method in ["predict_interval", "predict_quantiles"]:
@@ -190,7 +214,9 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
-    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+    valid, _, _ = check_is_mtype(
+        y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecaster method {method} does not work for test example "
@@ -201,8 +227,9 @@ def test_vectorization_series_to_hier_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 def test_vectorization_preserves_row_index_names(method):
@@ -210,7 +237,8 @@ def test_vectorization_preserves_row_index_names(method):
     hierarchy_levels = (2, 4)
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
 
-    est = ARIMA().fit(y, fh=[1, 2, 3])
+    est = _get_exog_proba_fcst()
+    est.fit(y, fh=[1, 2, 3])
     y_pred = getattr(est, method)()
 
     msg = (
@@ -222,8 +250,8 @@ def test_vectorization_preserves_row_index_names(method):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency for ARIMA not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 @pytest.mark.parametrize("exogeneous", [True, False])
@@ -245,9 +273,12 @@ def test_vectorization_multivariate(mtype, exogeneous):
         X_fit = None
         X_pred = None
 
-    est = ARIMA().fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
+    est = YfromX.create_test_instance()
+    est.fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
     y_pred = est.predict(X=X_pred)
-    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        y_pred, mtype, return_metadata=True, msg_return_dict="list"
+    )
 
     msg = (
         f"vectorization of forecasters does not work for test example "
@@ -277,6 +308,10 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
 def test_col_vectorization_correct_col_order():
     """Test that forecaster vectorization preserves column index ordering.
 
@@ -300,6 +335,10 @@ def test_col_vectorization_correct_col_order():
     assert (y_pred == y.iloc[4]).all().all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
 def test_row_vectorization_correct_row_order():
     """Test that forecaster vectorization preserves row index ordering.
 
@@ -373,8 +412,8 @@ def test_predict_residuals():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("nullable_type", ["Int64", "Float64", "boolean"])
 def test_nullable_dtypes(nullable_type):
@@ -389,7 +428,7 @@ def test_nullable_dtypes(nullable_type):
     y = pd.Series([1, 0] * 20, dtype=dtype)
     y.index = pd.date_range("1/1/21", periods=40)
 
-    f = ARIMA()
+    f = YfromX.create_test_instance()
 
     fh = list(range(1, len(X_test) + 1))
     f.fit(X=X_train, y=y, fh=fh)
@@ -400,8 +439,9 @@ def test_nullable_dtypes(nullable_type):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(VAR, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_estimator_deps(VAR, severity="none")
+    or not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 def test_range_fh_in_fit():
     """Test using ``range`` in ``fit``."""
@@ -415,8 +455,9 @@ def test_range_fh_in_fit():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(VAR, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_estimator_deps(VAR, severity="none")
+    or not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 def test_range_fh_in_predict():
     """Test using ``range`` in ``predict``."""
@@ -437,3 +478,81 @@ def test_range_fh_in_predict():
 
     assert isinstance(var_predictions, pd.DataFrame)
     assert var_predictions.shape == (10 * 2, 5)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_remember_data():
+    """Test that the ``remember_data`` flag works as expected."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    X = load_airline()
+    f = YfromX.create_test_instance()
+
+    # turn off remembering _X, _y by config
+    f.set_config(**{"remember_data": False})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is None
+    assert f._y is None
+
+    f.set_config(**{"remember_data": True})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is not None
+    assert f._y is not None
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_panel_with_inner_freq():
+    """Test that panel data with inner frequency set returns the correct predictions."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    ind = pd.date_range(
+        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+    )
+    y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
+
+    y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
+    assert y_pan.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
+
+    fh = [1, 2]
+    y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))
+
+    # fit update predict
+    forecaster = NaiveForecaster()
+    forecaster.fit(y_train)
+    forecaster.update(y_test)
+    y_pred_update = forecaster.predict(fh=fh)
+
+    # fit no update
+    forecaster.fit(y_pan)
+    y_pred = forecaster.predict(fh=fh)
+    assert y_pred.equals(y_pred_update), "Expected same predictions after update."
+
+    # test predictions against no panel case (simple here :))
+    forecaster = NaiveForecaster(sp=24)
+    forecaster.fit(y)
+    fh = np.arange(1, 49)
+    y_pred_simple = forecaster.predict(fh=fh)
+
+    msg = "Panel not returning same predictions as simple case."
+    assert y_pred.droplevel("hour").sort_index().equals(y_pred_simple), msg
+
+
+def _get_exog_proba_fcst():
+    """Fast forecaster that can use exogenous data and make proba forecasts."""
+    from sklearn.linear_model import LinearRegression
+    from skpro.regression.residual import ResidualDouble
+
+    lin_reg = LinearRegression()
+    reg_proba = ResidualDouble(lin_reg, lin_reg)
+
+    return YfromX(reg_proba)

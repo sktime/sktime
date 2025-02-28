@@ -18,6 +18,14 @@ class Rocket(BaseTransformer):
     dilation. It transforms the time series with two features per kernel. The first
     feature is global max pooling and the second is proportion of positive values.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
 
     Parameters
     ----------
@@ -26,7 +34,7 @@ class Rocket(BaseTransformer):
     normalise : boolean, default True
        whether or not to normalise the input time series per instance.
     n_jobs : int, default=1
-       The number of jobs to run in parallel for `transform`. ``-1`` means use all
+       The number of jobs to run in parallel for ``transform``. ``-1`` means use all
        processors.
     random_state : None or int, optional, default = None
 
@@ -57,6 +65,13 @@ class Rocket(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -66,7 +81,6 @@ class Rocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(self, num_kernels=10_000, normalise=True, n_jobs=1, random_state=None):
@@ -131,3 +145,28 @@ class Rocket(BaseTransformer):
         t = pd.DataFrame(_apply_kernels(X.astype(np.float32), self.kernels))
         set_num_threads(prev_threads)
         return t
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params0 = {}
+        params1 = {"num_kernels": 500, "normalise": False}
+        params2 = {"num_kernels": 700, "normalise": True}
+
+        return [params0, params1, params2]

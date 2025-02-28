@@ -2,15 +2,17 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for HolidayFeatures functionality."""
 
-__author__ = ["VyomkeshVyas"]
+__author__ = ["VyomkeshVyas", "fnhirwa"]
+
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -22,8 +24,8 @@ def calendar():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_dummies(calendar):
     """Tests return_dummies param."""
@@ -38,8 +40,8 @@ def test_return_dummies(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_categorical(calendar):
     """Tests return_categorical param."""
@@ -63,8 +65,8 @@ def test_return_categorical(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_indicator(calendar):
     """Test return_indicator param."""
@@ -81,8 +83,8 @@ def test_return_indicator(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_keep_original_column(calendar):
     """Tests keep_original_column param."""
@@ -108,8 +110,8 @@ def test_keep_original_column(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_include_weekend(calendar):
     """Tests include_weekend param."""
@@ -126,3 +128,52 @@ def test_include_weekend(calendar):
     X_trafo_iw = trafo_iw.fit_transform(X).astype(np.int32)
     expected_iw = pd.DataFrame({"is_holiday": np.int32([1, 1, 0, 0, 0])}, index=X.index)
     assert_frame_equal(X_trafo_iw, expected_iw)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_holiday_not_in_window():
+    calendar = {
+        date(2024, 12, 25): "Natal",
+        date(2023, 12, 25): "Natal",
+        date(2022, 12, 25): "Natal",
+        date(2021, 12, 25): "Natal",
+        date(2024, 11, 29): "Black Friday",
+        date(2023, 11, 29): "Black Friday",
+        date(2022, 11, 29): "Black Friday",
+        date(2021, 11, 29): "Black Friday",
+        date(2024, 10, 1): "Dia Internacional do Café",
+        date(2023, 10, 1): "Dia Internacional do Café",
+        date(2022, 10, 1): "Dia Internacional do Café",
+        date(2021, 10, 1): "Dia Internacional do Café",
+        date(2024, 5, 12): "Dia das Mães",
+        date(2023, 5, 12): "Dia das Mães",
+        date(2022, 5, 12): "Dia das Mães",
+        date(2021, 5, 12): "Dia das Mães",
+        date(2024, 8, 11): "Dia dos Pais",
+        date(2023, 8, 11): "Dia dos Pais",
+        date(2022, 8, 11): "Dia dos Pais",
+        date(2021, 8, 11): "Dia dos Pais",
+        date(2024, 3, 15): "Semana do Consumidor",
+        date(2023, 3, 15): "Semana do Consumidor",
+        date(2022, 3, 15): "Semana do Consumidor",
+        date(2021, 3, 15): "Semana do Consumidor",
+    }
+    holiday_transformer = HolidayFeatures(
+        calendar=calendar,
+        holiday_windows={
+            "Natal": (5, 2),
+            "Black Friday": (5, 2),
+            "Dia Internacional do Café": (5, 2),
+            "Dia das Mães": (5, 2),
+            "Dia dos Pais": (5, 2),
+            "Semana do Consumidor": (0, 6),
+        },
+    )
+
+    ix = pd.date_range("2022-01-01", end="2022-05-31")
+    X = pd.Series(14, index=ix)
+    X_transformed = holiday_transformer.fit_transform(X)
+    assert X_transformed.shape[0] == X.shape[0]

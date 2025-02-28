@@ -7,7 +7,7 @@ import math
 import numpy as np
 from scipy.stats import distributions, find_repeats, rankdata
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 
@@ -95,7 +95,7 @@ def plot_critical_difference(
             list with names of the strategies
         cliques : lists of bit vectors,
             e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
-            statistically similiar cliques of strategies
+            statistically similar cliques of strategies
             optional (default: None, in this case cliques will be computed)
         is_errors : bool
             indicates whether scores are passed as errors (default) or accuracies
@@ -410,7 +410,7 @@ def plot_critical_difference(
     linesblank = 0  # lines between scale and text
     scalewidth = width - 2 * textspace
 
-    # calculate heigh needed height
+    # calculate height needed height
     minnotsignificant = max(2 * 0.2, linesblank)
     height = cline + ((n_strategies + 1) / 2) * 0.2 + minnotsignificant + 0.2
 

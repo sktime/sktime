@@ -1,4 +1,5 @@
 """Base class and type for numba distances."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = [
     "NumbaDistance",

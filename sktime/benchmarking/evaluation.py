@@ -1,4 +1,5 @@
 """Evaluator class for analyzing results of a machine learning experiment."""
+
 __author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
@@ -11,9 +12,7 @@ from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class Evaluator:
@@ -111,7 +110,7 @@ class Evaluator:
         # aggregate over cv folds
         metrics_by_strategy_dataset = (
             self._metrics.groupby(["dataset", "strategy"], as_index=False)
-            .agg(np.mean)
+            .agg("mean")
             .drop(columns="cv_fold")
         )
         self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(
@@ -123,7 +122,7 @@ class Evaluator:
         )
         metrics_by_strategy = metrics_by_strategy_dataset_wo_ds.groupby(
             ["strategy"], as_index=False
-        ).agg(np.mean)
+        ).agg("mean")
         self._metrics_by_strategy = self._metrics_by_strategy.merge(
             metrics_by_strategy, how="outer"
         )
@@ -452,15 +451,7 @@ class Evaluator:
             )
 
         # load all predictions
-        run_times = pd.DataFrame(
-            columns=[
-                "strategy_name",
-                "dataset_name",
-                "fit_estimator_start_time",
-                "fit_estimator_end_time",
-                "cv_fold",
-            ]
-        )
+        run_times_frames = []
         for cv_fold in cv_folds:
             for result in self.results.load_predictions(
                 cv_fold=cv_fold, train_or_test=train_or_test
@@ -483,7 +474,8 @@ class Evaluator:
                         "cv_fold": [cv_fold],
                     }
                 )
-                run_times = pd.concat([run_times, unwrapped], ignore_index=True)
+                run_times_frames.append(unwrapped)
+        run_times = pd.concat(run_times_frames, ignore_index=True)
 
         # calculate run time difference
         run_times["fit_runtime"] = (
@@ -521,7 +513,7 @@ class Evaluator:
         # # aggregate over cv folds
         # metrics_by_strategy_dataset = (
         #     self._metrics.groupby(["dataset", "strategy"], as_index=False)
-        #     .agg(np.mean)
+        #     .agg("mean")
         #     .drop(columns="cv_fold")
         # )
         # self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(
@@ -530,7 +522,7 @@ class Evaluator:
         # # aggregate over cv folds and datasets
         # metrics_by_strategy = metrics_by_strategy_dataset.groupby(
         #     ["strategy"], as_index=False
-        # ).agg(np.mean)
+        # ).agg("mean")
         # self._metrics_by_strategy = self._metrics_by_strategy.merge(
         #     metrics_by_strategy, how="outer"
         # )

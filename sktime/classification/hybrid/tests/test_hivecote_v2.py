@@ -1,4 +1,5 @@
 """HIVE-COTE v2 test code."""
+
 import pytest
 
 from sktime.classification.hybrid import HIVECOTEV2

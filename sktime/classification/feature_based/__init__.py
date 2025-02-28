@@ -1,4 +1,5 @@
 """Feature based time series classifiers."""
+
 __all__ = [
     "Catch22Classifier",
     "MatrixProfileClassifier",

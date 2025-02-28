@@ -1,4 +1,5 @@
-"""Auto-generate a classifier capabilites summary."""
+"""Auto-generate a classifier capabilities summary."""
+
 import pandas as pd
 
 from sktime.registry import all_estimators
@@ -19,14 +20,14 @@ df = pd.DataFrame([], columns=df_columns)
 for classiName, classiClass in all_estimators(estimator_types="classifier"):
     category = str(classiClass).split(".")[2]
     try:
-        # capabilites of each of the classifier classifier
+        # capabilities of each of the classifier classifier
         cap_dict = classiClass.capabilities
         multivariate = str(cap_dict["multivariate"])
         unequal_length = str(cap_dict["unequal_length"])
         missing_values = str(cap_dict["missing_values"])
         train_estimate = str(cap_dict["train_estimate"])
         contractable = str(cap_dict["contractable"])
-        # Adding capabilites for each classifier in the table
+        # Adding capabilities for each classifier in the table
         record = {
             "Classifier Category": category,
             "Classifier Name": classiName,
