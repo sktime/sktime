@@ -1045,6 +1045,9 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
+        if prediction_intervals is None:
+            self.set_tags(**{"capability:pred_int": False})
+
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
         from statsforecast.models import ADIDA
@@ -1074,8 +1077,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("statsforecast")
+        if _check_soft_dependencies("statsforecast", severity="none"):
             from statsforecast.utils import ConformalIntervals
 
             params = [
@@ -1084,5 +1086,5 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
             ]
 
             return params
-        except ImportError:
-            return [{}]
+        else:
+            return [{}, {}]
