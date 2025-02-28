@@ -97,6 +97,12 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         Period of season 1
     season2_length : int
         Period of season 2
+    stride : int
+        stride for sliding window
+    batch_size : int
+        size of batch during training
+    num_epochs : int
+        number of epochs during training
     criterion : torch.nn Loss Function, default=torch.nn.MSELoss
         loss function to be used for training
     criterion_kwargs : dict, default=None
