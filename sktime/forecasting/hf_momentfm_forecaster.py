@@ -10,7 +10,7 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
+if _check_soft_dependencies(["torch", "accelerate", "transformers"], severity="none"):
     from accelerate import Accelerator
     from torch.cuda import empty_cache
     from torch.nn import MSELoss
