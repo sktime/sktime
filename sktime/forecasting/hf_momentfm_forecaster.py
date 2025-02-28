@@ -11,7 +11,6 @@ from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch", "accelerate", "transformers"], severity="none"):
-    from accelerate import Accelerator
     from torch.cuda import empty_cache
     from torch.utils.data import Dataset
 else:
@@ -219,6 +218,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
+        from accelerate import Accelerator
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
