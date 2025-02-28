@@ -11,7 +11,6 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 
 from sktime.transformations.base import BaseTransformer
 
@@ -114,11 +113,6 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             raise ValueError(
                 f"Subsequence length parameter ({self.subseq_len}) is not less \
                 than or equal to the minimum sequence length of X ({len(X)})."
-            )
-
-        if not (isinstance(self.aggregate_fn, _ArrayFunctionDispatcher)):
-            raise ValueError(
-                f"{self.aggregate_fn} is not supported for parameter aggregate_fn"
             )
 
         if self.selector not in ["max", "min"]:

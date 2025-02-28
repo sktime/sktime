@@ -17,6 +17,30 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.36.0 - 2025-02-03
+---------------------------
+
+Maintenance release with scheduled updates to version bounds.
+
+For the last non-maintenance content update, see 0.35.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.3.0``
+* ``scikit-learn`` (core dependency) bounds have been updated to ``<1.7.0``
+
+Contents
+~~~~~~~~
+
+* [ENH] ``sklearn 1.6.X`` compatibility patch (:pr:`7751`, :pr:`7755`) :user:`fkiraly`
+* [ENH] fix minor typos in error messages (:pr:`7750`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``numpy`` requirement from ``<2.2,>=1.21`` to ``>=1.21,<2.`` (:pr:`7675`, :pr:`7747`) :user:`dependabot[bot]`
+* [MNT] raise ``scikit-learn`` bound to ``<1.7.0`` (:pr:`7742`) :user:`fkiraly`
+* [MNT] fix some faulty instances of dependency handling (:pr:`7760`) :user:`fkiraly`
+* [BUG] fix ``BaseDatatype.__call__`` dispatching to private, not public method (:pr:`7748`) :user:`fkiraly`
+
+
 Version 0.35.1 - 2025-02-02
 ---------------------------
 
