@@ -195,22 +195,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _get_windows(self, y):
-        length = len(y)
-        x_arr = []
-        y_arr = []
-        for i in range(0, length - self.window - self.pred_len + 1, self.stride):
-            inp = y[i : i + self.window]
-            out = y[i + self.window : i + self.window + self.pred_len]
-
-            x_arr.append(inp)
-            y_arr.append(out)
-
-        if not x_arr:
-            raise ValueError("Input size to small")
-
-        return np.array(x_arr), np.array(y_arr)
-
     def _instantiate_criterion(self):
         if self.criterion:
             return super()._instantiate_criterion()
