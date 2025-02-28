@@ -110,7 +110,7 @@ def check_align(align_df, name="align_df", index="iloc", return_metadata=False):
         )
         if not np.all(np.isin(dtypearr, allowedtypes)):
             msg = f"columns of {name} must have dtype intX, uintX, IntX, or UIntX"
-            return False, msg, None
+            return False, msg, {}
     # no additional restrictions apply if loc or either, so no elif
 
     metadata = {}
