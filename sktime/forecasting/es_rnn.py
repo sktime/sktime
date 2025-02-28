@@ -85,8 +85,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     Parameters
     ----------
-    input_shape : int
-        Number of features in the input
     hidden_size : int
         Number of features in the hidden state
     num_layer : int
@@ -113,7 +111,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     window : int
         Size of Input window, default=5
-    lr_rate : int
+    lr : int
         Learning rate for training
 
     References
@@ -128,7 +126,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.forecasting.es_rnn import ESRNNForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = ESRNNForecaster() # doctest: +SKIP
+    >>> forecaster=ESRNNForecaster(9,5,12,6,'double',20,1,32,2000,'MSE')# doctest: +SKIP
     >>> forecaster.fit(y, fh=[1,2,3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -141,26 +139,24 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
 
     def __init__(
         self,
-        input_shape=1,
-        hidden_size=1,
-        num_layer=1,
-        season1_length=3,
-        season2_length=3,
-        seasonality_type="zero",
-        window=5,
+        hidden_size=10,
+        num_layer=5,
+        season1_length=12,
+        season2_length=6,
+        seasonality_type="single",
+        window=10,
         stride=1,
         batch_size=32,
-        num_epochs=10,
+        num_epochs=1000,
+        criterion=None,
+        optimizer="Adam",
+        lr=1e-3,
+        optimizer_kwargs=None,
+        criterion_kwargs=None,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        optimizer="Adam",
-        optimizer_kwargs=None,
-        criterion=None,
-        criterion_kwargs=None,
-        lr_rate=1e-5,
     ) -> None:
         super().__init__()
-        self.input_shape = input_shape
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
@@ -176,7 +172,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.criterion_kwargs = criterion_kwargs
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
-        self.lr_rate = lr_rate
+        self.lr = lr
         if _check_soft_dependencies("torch", severity="none"):
             import torch
 
@@ -290,9 +286,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         """
         params1 = {}
         params2 = {
-            "input_shape": 1,
-            "hidden_size": 1,
-            "num_layer": 1,
+            "hidden_size": 10,
+            "num_layer": 5,
             "season1_length": 2,
             "season2_length": 2,
             "seasonality_type": "single",
@@ -303,7 +298,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "custom_dataset_train": None,
             "custom_dataset_pred": None,
             "optimizer": "Adam",
-            "criterion": "MSE",
-            "lr_rate": 1e-3,
+            "lr": 1e-3,
         }
         return [params1, params2]

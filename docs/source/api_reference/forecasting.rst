@@ -292,14 +292,6 @@ Exponential smoothing based forecasters
 
     StatsForecastAutoTheta
 
-.. currentmodule:: sktime.forecasting.es_rnn
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ESRNNForecaster
-
 AR/MA type forecasters
 ----------------------
 
@@ -533,6 +525,14 @@ Deep learning based forecasters
     :template: class.rst
 
     RBFForecaster
+
+.. currentmodule:: sktime.forecasting.es_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ESRNNForecaster
 
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
