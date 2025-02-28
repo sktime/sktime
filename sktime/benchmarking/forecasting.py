@@ -302,8 +302,6 @@ class ForecastingBenchmark(BaseBenchmark):
         -------
         A dictionary of benchmark results for that forecaster
         """
-        if not (callable(dataset_loader) or isinstance(dataset_loader, tuple)):
-            raise TypeError("dataset_loader must be a callable or a tuple")
         task_kwargs = {
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
@@ -311,10 +309,6 @@ class ForecastingBenchmark(BaseBenchmark):
             "cv_global": cv_global,
         }
         if task_id is None:
-            if isinstance(dataset_loader, tuple):
-                raise ValueError(
-                    "Unable to use default task_id naming. Please insert them manually"
-                )
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
