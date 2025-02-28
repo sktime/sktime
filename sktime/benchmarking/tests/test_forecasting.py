@@ -257,8 +257,8 @@ def test_multiple_estimators(estimators):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_dataset_different_format(tmp_path):
     """Test to check different dataset formats to output identical results."""
