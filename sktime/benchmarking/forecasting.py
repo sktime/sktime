@@ -43,10 +43,13 @@ def forecasting_validation(
 
     cv_splitter : BaseSplitter object
         Splitter used for generating validation folds.
+
     scorers : a list of BaseMetric objects
         Each BaseMetric output will be included in the results.
+
     estimator : BaseForecaster object
         Estimator to benchmark.
+
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate for each task if specified.
 
@@ -103,6 +106,7 @@ def forecasting_validation(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
@@ -125,8 +129,10 @@ def forecasting_validation(
         error_score=error_score,
         strategy=strategy,
         **data,  # y and X
-        )
+    )
 
+    # collect results by scorer
+    results = {}
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
