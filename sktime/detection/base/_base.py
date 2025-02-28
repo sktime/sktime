@@ -28,6 +28,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
+from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -578,8 +579,7 @@ class BaseDetector(BaseEstimator):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
-                y_index = y.index
-                y_index = pd.DataFrame(y_index, columns=columns)
+                y_index = pd.DataFrame(y.index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
@@ -1069,19 +1069,19 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            An empty series with a RangeIndex.
+        pd.DataFrame
+            A empty DataFrame with a RangeIndex.
         """
         return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
-        """Return an empty sparse series in segmentation format.
+        """Return an empty sparse DataFrame in segmentation format.
 
         Returns
         -------
-        pd.Series
-            An empty series with an IntervalIndex.
+        pd.DataFrame
+            A empty DataFrame with an IntervalIndex.
         """
         empty_segs = pd.DataFrame(
             pd.IntervalIndex([]),
@@ -1164,24 +1164,20 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            A series containing the indexes of the start of each segment.
-            Index is RangeIndex, and values are iloc references to the start of each
-            segment.
+        pd.Index
+            An Index array containing the indexes of the start of each segment.
 
         Examples
         --------
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
-        >>> segments = pd.Series(
-        ...     [3, -1, 2],
-        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
-        ... )
+        >>> segments =  pd.DataFrame({
+                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+            })
         >>> BaseDetector.segments_to_change_points(segments)
-        0    2
-        1    5
-        2    7
-        dtype: int64
+        Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
@@ -1202,25 +1198,3 @@ class BaseSeriesAnnotator(BaseDetector):
             "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
             stacklevel=2,
         )
-
-
-# todo 0.37.0: remove this
-def _method_has_arg(method, arg="y"):
-    """Return if transformer.method has a parameter, and whether it has a default.
-
-    Parameters
-    ----------
-    method : callable
-        method to check
-    arg : str, optional, default="y"
-        parameter name to check
-
-    Returns
-    -------
-    has_param : bool
-        whether the method ``method`` has a parameter with name ``arg``
-    """
-    from inspect import signature
-
-    method_params = list(signature(method).parameters.keys())
-    return arg in method_params

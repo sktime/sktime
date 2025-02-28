@@ -5,7 +5,7 @@ Series based transformers, based on Kalman Filter algorithm. Contains Base class
 transformers which are each Adapters for external packages pykalman and FilterPy.
 """
 
-__author__ = ["NoaBenAmi", "lielleravid"]
+__author__ = ["NoaWegerhoff", "lielleravid"]
 __all__ = [
     "BaseKalmanFilter",
     "KalmanFilterTransformerPK",
@@ -261,7 +261,10 @@ class BaseKalmanFilter:
            https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
     """
 
-    _tags = {"authors": ["NoaBenAmi", "lielleravid"], "maintainers": ["NoaBenAmi"]}
+    _tags = {
+        "authors": ["NoaWegerhoff", "lielleravid"],
+        "maintainers": ["NoaWegerhoff"],
+    }
 
     def __init__(
         self,
@@ -536,11 +539,17 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["duckworthd", "NoaBenAmi", "lielleravid", "mbalatsko", "gliptak"],
+        "authors": [
+            "duckworthd",
+            "NoaWegerhoff",
+            "lielleravid",
+            "mbalatsko",
+            "gliptak",
+        ],
         # duckworthd for the original pykalman package (abandoned later)
         # mbalatsko, gliptak for fixes and updates
-        # NoaBenAmi, lielleravid for the sktime adapter
-        "maintainers": ["NoaBenAmi"],
+        # NoaWegerhoff, lielleravid for the sktime adapter
+        "maintainers": ["NoaWegerhoff"],
         # estimator type
         # --------------
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
@@ -1026,8 +1035,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["NoaBenAmi", "lielleravid"],
-        "maintainers": ["NoaBenAmi"],
+        "authors": ["NoaWegerhoff", "lielleravid"],
+        "maintainers": ["NoaWegerhoff"],
         "python_dependencies": "filterpy",
         # estimator type
         # --------------
