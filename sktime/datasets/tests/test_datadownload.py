@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (
+    _load_fpp3,
     load_forecastingdata,
     load_fpp3,
     load_m5,
@@ -20,6 +21,12 @@ from sktime.utils.dependencies import _check_soft_dependencies
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
 TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+TSF_SUBSAMPLE_SMALL = [
+    "wind_4_seconds_dataset",
+    "m4_hourly_dataset",
+    "solar_10_minutes_dataset",
+    "australian_electricity_demand_dataset",
+]
 
 
 @pytest.mark.datadownload
@@ -67,6 +74,23 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
+@pytest.mark.datadownload
+def test_load_forecastingdata_check_freq_for_hier_data():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, _ = load_forecastingdata(
+        name=file, return_type="pd_multiindex_hier"
+    )
+    assert loaded_datasets.index.levels[-1].freq == "YS-JAN"
+
+
+@pytest.mark.datadownload
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE_SMALL)
+def test_load_forecastingdata_hier(name):
+    """Test loading downloaded dataset from forecasting.org."""
+    load_forecastingdata(name=name, return_type="pd_multiindex_hier")
+
+
 @pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
 @pytest.mark.datadownload
 @pytest.mark.parametrize("name", TSF_SUBSAMPLE)
@@ -107,23 +131,21 @@ def test_load_forecasting_data_invalid_name(name):
     reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
-def test_load_fpp3():
+def test_load_fpp3_private():
     """Test loading downloaded dataset from ."""
 
-    import requests
+    for dataset_name in [
+        "aus_accommodation",
+        "pedestrian",
+        "ansett",
+    ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=False)
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=True)
 
-    from sktime.datasets._fpp3_loaders import _get_dataset_url
 
-    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
-        ret, url = _get_dataset_url(dataset_name)
-        assert ret is True
-        try:
-            response = requests.head(url)
-            if response.status_code != 200:
-                ret = False
-        except requests.RequestException:
-            ret = False
-        assert ret is True
+@pytest.mark.datadownload
+def test_load_fpp3_public():
+    """Test loading downloaded dataset from ."""
 
     olympic_running = load_fpp3("olympic_running")
 

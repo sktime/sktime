@@ -20,6 +20,7 @@ def forecasting_validation(
     estimator: BaseForecaster,
     backend=None,
     backend_params=None,
+    cv_global=None,
     strategy="refit",
     error_score=np.nan,
     **kwargs,
@@ -69,6 +70,25 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
+    cv_global:  sklearn splitter, or sktime instance splitter, optional, default=None
+        If ``cv_global`` is passed, then global benchmarking is applied, as follows:
+
+        1. the ``cv_global`` splitter is used to split data at instance level,
+        into a global training set ``y_train``, and a global test set ``y_test_global``.
+        2. The estimator is fitted to the global training set ``y_train``.
+        3. ``cv_splitter`` then splits the global test set ``y_test_global`` temporally,
+        to obtain temporal splits ``y_past``, ``y_true``.
+
+        Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
+        the following evaluation will be applied:
+
+        .. code-block:: python
+
+            forecaster.fit(y=y_train, fh=cv_splitter.fh)
+            y_pred = forecaster.predict(y=y_past)
+            metric(y_true, y_pred)
+
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -84,6 +104,7 @@ def forecasting_validation(
     Dictionary of benchmark results for that forecaster
     """
     y = dataset_loader()
+
     results = {}
     if isinstance(y, tuple):
         y, X = y
@@ -95,6 +116,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            cv_global=cv_global,
             error_score=error_score,
             strategy=strategy,
         )
@@ -106,6 +128,7 @@ def forecasting_validation(
             scoring=scorers,
             backend=backend,
             backend_params=backend_params,
+            cv_global=cv_global,
             error_score=error_score,
             strategy=strategy,
         )
@@ -125,6 +148,7 @@ def _factory_forecasting_validation(
     scorers: list[BaseMetric],
     backend=None,
     backend_params=None,
+    cv_global=None,
     error_score=np.nan,
     strategy="refit",
 ) -> Callable:
@@ -136,6 +160,7 @@ def _factory_forecasting_validation(
         scorers,
         backend=backend,
         backend_params=backend_params,
+        cv_global=cv_global,
         error_score=error_score,
         strategy=strategy,
     )
@@ -204,6 +229,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
+        cv_global=None,
         error_score=np.nan,
         strategy="refit",
     ):
@@ -220,6 +246,26 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+
+        cv_global:  sklearn splitter, or sktime instance splitter, default=None
+            If ``cv_global`` is passed, then global benchmarking is applied, as follows:
+
+            1. the ``cv_global`` splitter is used to split data at instance level,
+            into a global training set ``y_train``,
+            and a global test set ``y_test_global``.
+            2. The estimator is fitted to the global training set ``y_train``.
+            3. ``cv_splitter`` then splits the global test set ``y_test_global``
+            temporally, to obtain temporal splits ``y_past``, ``y_true``.
+
+            Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
+            the following evaluation will be applied:
+
+            .. code-block:: python
+
+                forecaster.fit(y=y_train, fh=cv_splitter.fh)
+                y_pred = forecaster.predict(y=y_past)
+                metric(y_true, y_pred)
+
         error_score : "raise" or numeric, default=np.nan
             Value to assign to the score if an exception occurs in estimator fitting.
             If set to "raise", the exception is raised. If a numeric value is given,
@@ -239,11 +285,16 @@ class ForecastingBenchmark(BaseBenchmark):
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
+            "cv_global": cv_global,
         }
         if task_id is None:
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+            ) + (
+                f"_[cv_global={cv_global.__class__.__name__}]"
+                if cv_global is not None
+                else ""
             )
         self._add_task(
             functools.partial(
