@@ -527,7 +527,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "head_dropout": 0.3,
             },
             "training_args": {
-                "output_dir": "/PatchTST/",
+                "output_dir": "PatchTST",
                 "overwrite_output_dir": True,
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
@@ -547,7 +547,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "head_dropout": 0.3,
             },
             "training_args": {
-                "output_dir": "/PatchTST/",
+                "output_dir": "PatchTST",
                 "overwrite_output_dir": True,
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
