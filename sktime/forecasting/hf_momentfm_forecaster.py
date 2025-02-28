@@ -13,7 +13,6 @@ from sktime.split import temporal_train_test_split
 if _check_soft_dependencies(["torch", "accelerate", "transformers"], severity="none"):
     from accelerate import Accelerator
     from torch.cuda import empty_cache
-    from torch.nn import MSELoss
     from torch.utils.data import Dataset
 else:
 
@@ -193,6 +192,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         return_model_to_cpu=False,
     ):
         super().__init__()
+        from torch.nn import MSELoss
+
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.freeze_encoder = freeze_encoder
         self.freeze_embedder = freeze_embedder
@@ -503,19 +504,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {
-            "seq_len": 2,
-            "return_model_to_cpu": True,
-            "train_val_split": 0.0,
-            "criterion": MSELoss(),
-        }
+        params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
             "seq_len": 2,
             "return_model_to_cpu": True,
             "train_val_split": 0.0,
-            "criterion": MSELoss(),
         }
         params_set.append(params2)
 
