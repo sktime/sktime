@@ -12,13 +12,16 @@ __author__ = ["sanskarmodi8"]
 
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_X, check_y
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
 
 
 class DARNNModule(nn.Module):
