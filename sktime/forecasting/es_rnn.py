@@ -125,10 +125,14 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     --------
     >>> from sktime.forecasting.es_rnn import ESRNNForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.boxcox import LogTransformer
     >>> y = load_airline()
-    >>> forecaster=ESRNNForecaster(9,5,12,6,'double',20,1,32,2000,'MSE')# doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> scaler=LogTransformer()
+    >>> forecaster=ESRNNForecaster(15,6,12,6,'double',20,1,32,100,'MSE')# doctest: +SKIP
+    >>> y_new=scaler.fit_transform(y)
+    >>> forecaster.fit(y_new, fh=[1,2,3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> y_pred=scaler.inverse_transform(y_pred)
     """
 
     _tags = {
@@ -150,7 +154,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         num_epochs=1000,
         criterion=None,
         optimizer="Adam",
-        lr=1e-3,
+        lr=1e-1,
         optimizer_kwargs=None,
         criterion_kwargs=None,
         custom_dataset_train=None,
