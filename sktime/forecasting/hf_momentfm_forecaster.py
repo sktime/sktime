@@ -20,11 +20,14 @@ else:
         pass
 
 
+if _check_soft_dependencies(["accelerate"], severity="none"):
+    pass
+
 if _check_soft_dependencies("transformers", severity="none"):
     from sktime.libs.momentfm import MOMENTPipeline
 else:
 
-    class MomentPipeline:
+    class MOMENTPipeline:
         """Dummy class if transformers is unavailable."""
 
         pass
