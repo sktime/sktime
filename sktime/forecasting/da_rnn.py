@@ -10,21 +10,32 @@ This module implements the DA-RNN as described in:
 
 __author__ = ["sanskarmodi8"]
 
-
 import numpy as np
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_X, check_y
 
+# Handle PyTorch as a soft dependency
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
     import torch.optim as optim
+else:
+    torch = None
+
+    class DummyDARNNModule:
+        """Dummy class to raise an error when PyTorch is missing."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "PyTorch is required to use DualStageAttentionRNN. "
+                "Please install it with `pip install torch`."
+            )
 
 
-class DARNNModule(nn.Module):
+class DARNNModule(nn.Module if torch else DummyDARNNModule):
     """PyTorch module implementing the DA-RNN model with dual-stage attention.
 
     This module consists of:
@@ -40,7 +51,6 @@ class DARNNModule(nn.Module):
         encoder_hidden_size,
         decoder_hidden_size,
         attention_dim,
-        device="cpu",
     ):
         """
         Initialize the DA-RNN module.
@@ -55,15 +65,14 @@ class DARNNModule(nn.Module):
             Hidden state size for the decoder LSTM.
         attention_dim : int
             Dimension of the attention space.
-        device : str, default="cpu"
-            Device for PyTorch ("cpu" or "cuda").
         """
+        if not _check_soft_dependencies("torch", severity="error"):
+            return
         super().__init__()
         self.input_size = input_size
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
         self.attention_dim = attention_dim
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Encoder: LSTMCell processing exogenous inputs
         self.encoder_cell = nn.LSTMCell(input_size, encoder_hidden_size)
@@ -237,6 +246,8 @@ class DualStageAttentionRNN(BaseForecaster):
         super().__init__()
 
     def _build_model(self, input_size):
+        if not _check_soft_dependencies("torch", severity="error"):
+            return
         self.model_ = DARNNModule(
             input_size,
             self.encoder_hidden_size,
@@ -266,6 +277,8 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
+        if not _check_soft_dependencies("torch", severity="error"):
+            return
         y = check_y(y)
         X = check_X(X)
         y = np.asarray(y).reshape(-1, 1)
@@ -334,6 +347,8 @@ class DualStageAttentionRNN(BaseForecaster):
         y_pred : np.ndarray
             Point forecast as a 1D array.
         """
+        if not _check_soft_dependencies("torch", severity="error"):
+            return
         if X is None:
             raise ValueError("Exogenous series X must be provided for prediction.")
         X = check_X(X)
