@@ -29,14 +29,27 @@ def forecasting_validation(
 
     Parameters
     ----------
-    dataset_loader : Callable
-        A function which returns a dataset, like from `sktime.datasets`.
+    dataset_loader : Callable or a tuple of sktime data objects, or sktime data object
+
+        * if sktime dataset object, must return a tuple of (y, X) upon calling ``load``,
+        where ``y`` is the endogenous data container and
+        ``X`` is the exogenous data container.
+        * If Callable, must be a function which returns an endogenous
+        data container ``y``, or a tuple with endogenous ``y`` and exogenous ``X``,
+        like from ``sktime.datasets``
+        * If Tuple, must be in the format of (y, X) where ``y`` is an endogenous
+        data container and ``X`` is an exogenous data container.
+        * if sktime data object, will be interpreted as endogenous ``y`` data container.
+
     cv_splitter : BaseSplitter object
         Splitter used for generating validation folds.
+
     scorers : a list of BaseMetric objects
         Each BaseMetric output will be included in the results.
+
     estimator : BaseForecaster object
         Estimator to benchmark.
+
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate for each task if specified.
 
@@ -93,6 +106,7 @@ def forecasting_validation(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
@@ -103,36 +117,22 @@ def forecasting_validation(
     -------
     Dictionary of benchmark results for that forecaster
     """
-    y = dataset_loader()
+    data = _coerce_data_for_evaluate(dataset_loader)
 
+    scores_df = evaluate(
+        forecaster=estimator,
+        cv=cv_splitter,
+        scoring=scorers,
+        backend=backend,
+        backend_params=backend_params,
+        cv_global=cv_global,
+        error_score=error_score,
+        strategy=strategy,
+        **data,  # y and X
+    )
+
+    # collect results by scorer
     results = {}
-    if isinstance(y, tuple):
-        y, X = y
-        scores_df = evaluate(
-            forecaster=estimator,
-            y=y,
-            X=X,
-            cv=cv_splitter,
-            scoring=scorers,
-            backend=backend,
-            backend_params=backend_params,
-            cv_global=cv_global,
-            error_score=error_score,
-            strategy=strategy,
-        )
-    else:
-        scores_df = evaluate(
-            forecaster=estimator,
-            y=y,
-            cv=cv_splitter,
-            scoring=scorers,
-            backend=backend,
-            backend_params=backend_params,
-            cv_global=cv_global,
-            error_score=error_score,
-            strategy=strategy,
-        )
-
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
@@ -140,6 +140,24 @@ def forecasting_validation(
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
         results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
     return results
+
+
+def _coerce_data_for_evaluate(dataset_loader):
+    """Coerce data input object to a dict to pass to forecasting evaluate."""
+    if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
+        data = dataset_loader()
+    elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
+        data = dataset_loader.load()
+    else:
+        data = dataset_loader
+
+    if isinstance(data, tuple) and len(data) == 2:
+        y, X = data
+        return {"y": y, "X": X}
+    elif isinstance(data, tuple) and len(data) == 1:
+        return {"y": data[0]}
+    else:
+        return {"y": data}
 
 
 def _factory_forecasting_validation(
@@ -237,8 +255,11 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        dataset_loader : Callable
-            A function which returns a dataset, like from `sktime.datasets`.
+        dataset_loader : Callable or a tuple
+            If Callable. a function which returns a dataset, like from `sktime.datasets`
+            If Tuple, must be in the format of (Y, X) where Y is the target variable
+            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE.
+            When tuple is given, task_id argument must be filled.
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
