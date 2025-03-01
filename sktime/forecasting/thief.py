@@ -45,6 +45,7 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
+
 import numpy as np
 import pandas as pd
 
@@ -103,48 +104,21 @@ class THieFForecaster(BaseForecaster):
         super().__init__()
 
     def _reconcile_forecasts(self, forecasts):
+        from warnings import warn
+
         """Reconcile forecasts using the specified reconciliation method."""
-        if self.reconciliation_method == "bu":
-            return forecasts[min(forecasts.keys())]
-        elif self.reconciliation_method == "ols":
-            return np.mean(list(forecasts.values()), axis=0)
-        elif self.reconciliation_method == "mse":
-            weights = [
-                1 / np.var(f) if np.var(f) > 0 else 1 for f in forecasts.values()
-            ]
-            weights = np.array(weights) / np.sum(weights)
-            return np.average(list(forecasts.values()), axis=0, weights=weights)
-        elif self.reconciliation_method == "struc":
-            weights = [1 / (level + 1) for level in forecasts.keys()]
-            weights = np.array(weights) / np.sum(weights)
-            return np.average(list(forecasts.values()), axis=0, weights=weights)
-        elif self.reconciliation_method == "shr":
-            residuals = np.array(list(forecasts.values()))
-            cov_matrix = np.cov(residuals, rowvar=False)
-            shrinkage = np.mean(np.diag(cov_matrix)) * np.eye(cov_matrix.shape[0])
-            shrunk_cov = 0.5 * cov_matrix + 0.5 * shrinkage
-            weights = 1 / np.diag(shrunk_cov)
-            weights /= np.sum(weights)
-            return np.average(list(forecasts.values()), axis=0, weights=weights)
-        elif self.reconciliation_method == "sam":
-            residuals = np.array(list(forecasts.values()))
-            cov_matrix = np.cov(residuals, rowvar=False)
-            inv_cov = np.linalg.pinv(cov_matrix)
-            weights = np.sum(inv_cov, axis=1)
-            weights /= np.sum(weights)
-            return np.average(list(forecasts.values()), axis=0, weights=weights)
-        else:
-            raise NotImplementedError(
-                f"Reconciliation method '{self.reconciliation_method}' not implemented."
-            )
+        warn(f"Reconciliation method '{self.reconciliation_method}' not implemented.")
 
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
-        freq = y.index.freqstr or pd.infer_freq(y.index)
+        if hasattr(y.index, "freqstr") and y.index.freqstr:
+            freq = y.index.freqstr
+        else:
+            freq = pd.infer_freq(y.index)
         if freq is None:
             raise ValueError("Could not determine frequency of time series.")
 
-        freq_map = {"D": 7, "W": 52, "ME": 12, "H": 24, "Q": 4, "Y": 1}
+        freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
         m = freq_map.get(freq, None)
 
         if m is None:
