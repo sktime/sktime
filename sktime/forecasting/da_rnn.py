@@ -28,12 +28,6 @@ else:
     class DummyDARNNModule:
         """Dummy class to raise an error when PyTorch is missing."""
 
-        def __init__(self, *args, **kwargs):
-            raise ImportError(
-                "PyTorch is required to use DualStageAttentionRNN. "
-                "Please install it with `pip install torch`."
-            )
-
 
 class DARNNModule(nn.Module if torch else DummyDARNNModule):
     """PyTorch module implementing the DA-RNN model with dual-stage attention.
