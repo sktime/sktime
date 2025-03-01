@@ -7,6 +7,7 @@ from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
+from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
@@ -19,6 +20,8 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 
+# TODO:
+# Manual test is labor intensive, need to refactor the tests for fast iteration
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
@@ -251,3 +254,31 @@ def test_multiple_estimators(estimators):
     assert len(registered_estimators) == len(
         estimators
     ), "add_estimator does not register all estimators."
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_dataset_different_format(tmp_path):
+    """Test to check different dataset formats to output identical results."""
+    y_1, X_1 = load_longley()
+    y_2 = load_airline()
+    datasets = [[load_longley, load_airline], [(y_1, X_1), (y_2, None)]]
+    scorers = [MeanAbsolutePercentageError(), MeanAbsoluteError()]
+    cv_splitters = [
+        ExpandingWindowSplitter(initial_window=14),
+        ExpandingWindowSplitter(initial_window=142),
+    ]
+
+    outputs = []
+    benchmarks = [ForecastingBenchmark(), ForecastingBenchmark()]
+    for idx, benchmark in enumerate(benchmarks):
+        benchmark.add_estimator(NaiveForecaster(strategy="last"))
+        benchmark.add_task(datasets[idx][0], cv_splitters[0], scorers, f"{idx}-1")
+        benchmark.add_task(datasets[idx][1], cv_splitters[1], scorers, f"{idx}-2")
+        results_file = tmp_path / f"results_{idx}.csv"
+        output_df = benchmark.run(results_file)
+        outputs.append(output_df.drop(columns=["runtime_secs", "validation_id"]))
+
+    pd.testing.assert_frame_equal(outputs[0], outputs[1], check_exact=True)
