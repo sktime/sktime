@@ -76,7 +76,8 @@ class _SuppressWarningPattern:
             self.original_showwarning(message, category, filename, lineno, file, line)
 
 
-_suppress_pd22_warning = _SuppressWarningPattern(
-    FutureWarning,
-    r"'[A-Z]+' is deprecated and will be removed in a future version, please use '[A-Z]+' instead",  # noqa
-)
+def _suppress_pd22_warning():
+    return _SuppressWarningPattern(
+        FutureWarning,
+        r"'[A-Z]+' is deprecated and will be removed in a future version, please use '[A-Z]+' instead",  # noqa
+    )
