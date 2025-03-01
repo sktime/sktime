@@ -60,7 +60,7 @@ class DARNNModule(nn.Module if torch else DummyDARNNModule):
         attention_dim : int
             Dimension of the attention space.
         """
-        if not _check_soft_dependencies("torch", severity="error"):
+        if not _check_soft_dependencies("torch", severity="none"):
             return
         super().__init__()
         self.input_size = input_size
@@ -240,7 +240,7 @@ class DualStageAttentionRNN(BaseForecaster):
         super().__init__()
 
     def _build_model(self, input_size):
-        if not _check_soft_dependencies("torch", severity="error"):
+        if not _check_soft_dependencies("torch", severity="none"):
             return
         self.model_ = DARNNModule(
             input_size,
@@ -273,7 +273,7 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
-        if not _check_soft_dependencies("torch", severity="error"):
+        if not _check_soft_dependencies("torch", severity="none"):
             return
         y = check_y(y)
         X = check_X(X)
@@ -345,7 +345,7 @@ class DualStageAttentionRNN(BaseForecaster):
         y_pred : np.ndarray
             Point forecast as a 1D array.
         """
-        if not _check_soft_dependencies("torch", severity="error"):
+        if not _check_soft_dependencies("torch", severity="none"):
             return
         if X is None:
             raise ValueError("Exogenous series X must be provided for prediction.")
