@@ -262,7 +262,7 @@ class DualStageAttentionRNN(BaseForecaster):
         )
         self.criterion_ = nn.MSELoss()
 
-    def _fit(self, y, X):
+    def _fit(self, y, X, fh=None):
         """
         Fit forecaster to training data.
 
@@ -272,6 +272,8 @@ class DualStageAttentionRNN(BaseForecaster):
             Univariate time series to fit.
         X : pd.DataFrame
             Exogenous time series.
+        fh : ForecastingHorizon, optional (default=None)
+            Not required by this forecaster.
 
         Returns
         -------
@@ -332,7 +334,7 @@ class DualStageAttentionRNN(BaseForecaster):
         self._is_fitted = True
         return self
 
-    def _predict(self, X):
+    def _predict(self, X, fh=None):
         """
         Forecast time series one step ahead. One step ahead prediction is supported.
 
@@ -341,6 +343,8 @@ class DualStageAttentionRNN(BaseForecaster):
         X : pd.DataFrame
             Exogenous time series for the most recent window.
             Must have shape (window_length, n_features).
+        fh : ForecastingHorizon, optional (default=None)
+            Not required by this forecaster. One step ahead prediction is supported.
 
         Returns
         -------
