@@ -9,11 +9,10 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-
 from build.lib.sktime.split.base._base_splitter import BaseSplitter
+
 from sktime.base._base import BaseEstimator
 from sktime.benchmarking.base import BaseMetric
-from sktime.datatypes import SCITYPE_LIST, check_is_scitype
 
 
 @dataclass
@@ -29,7 +28,8 @@ class TaskObject:
         Can be
         - a function which returns a dataset, like from `sktime.datasets`.
         - a tuple contianing two data container that are sktime comptaible.
-        - single data container that is sktime compatible (only endogenous data).    cv_splitter: BaseSplitter object
+        - single data container that is sktime compatible (only endogenous data).
+    cv_splitter: BaseSplitter object
         Splitter used for generating validation folds.
     scorers: list of BaseMetric objects
         Each BaseMetric output will be included in the results.
@@ -44,13 +44,14 @@ class TaskObject:
     cv_X = None
 
     def get_y_X(self):
+        """Get the endogenous and exogenous data."""
         if isinstance(self.data, tuple):
             return self.data
         elif isinstance(self.data, Callable):
             data = self.data()
             if isinstance(data, tuple):
                 return data
-            else :
+            else:
                 return data, None
         else:
             return self.data, None
@@ -212,6 +213,7 @@ class BenchmarkingResults:
                 row[f"std_{std.name}"] = std.score
             results.append(row)
         return pd.DataFrame(results)
+
 
 def asdict(obj, *, dict_factory=dict, pd_orient="list"):
     """Return the fields of a dataclass as a dict.

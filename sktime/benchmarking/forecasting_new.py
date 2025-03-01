@@ -187,9 +187,7 @@ class ForecastingBenchmark(BaseBenchmark):
                     f"[dataset={data.__name__}]"
                     f"_[cv_splitter={cv_splitter.__class__.__name__}]"
                 )
-            task_id = (
-                f"_[cv_splitter={cv_splitter.__class__.__name__}]"
-            )
+            task_id = f"_[cv_splitter={cv_splitter.__class__.__name__}]"
         task_kwargs = {
             "id": task_id,
             "data": data,
@@ -243,12 +241,12 @@ class ForecastingBenchmark(BaseBenchmark):
             scoring=scorers,
             backend=self.backend,
             backend_params=self.backend_params,
-            error_score="raise", # TODO should be configurable
-            return_data=True, # TODO should be configurable
+            error_score="raise",  # TODO should be configurable
+            return_data=True,  # TODO should be configurable
             cv_X=task.cv_X,
             # global_mode = task.global_mode, TODO
             strategy=task.strategy,
-            return_model=False, #  TODO should be configurable
+            return_model=False,  #  TODO should be configurable
         )
 
         folds = {}
