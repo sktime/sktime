@@ -1033,7 +1033,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
-        "capability:pred_int:insample": False,
+        "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
@@ -1047,6 +1047,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
         if prediction_intervals is None:
             self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
 
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
