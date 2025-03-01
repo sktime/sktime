@@ -10,7 +10,7 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch", "accelerate", "transformers"], severity="none"):
+if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from torch.cuda import empty_cache
     from torch.utils.data import Dataset
 else:
@@ -19,6 +19,10 @@ else:
         """Dummy class if torch is unavailable."""
 
         pass
+
+
+if _check_soft_dependencies("transformers", severity="none"):
+    pass
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
