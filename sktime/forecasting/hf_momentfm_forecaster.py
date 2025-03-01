@@ -7,7 +7,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
@@ -22,7 +21,13 @@ else:
 
 
 if _check_soft_dependencies("transformers", severity="none"):
-    pass
+    from sktime.libs.momentfm import MOMENTPipeline
+else:
+
+    class MomentPipeline:
+        """Dummy class if transformers is unavailable."""
+
+        pass
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
