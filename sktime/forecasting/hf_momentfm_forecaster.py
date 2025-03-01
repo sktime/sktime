@@ -166,6 +166,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "huggingface-hub",
             # "momentfm",
             "accelerate",
+            "transformers",
         ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
