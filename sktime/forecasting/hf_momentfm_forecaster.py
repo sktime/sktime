@@ -25,12 +25,6 @@ if _check_soft_dependencies("accelerate", severity="none"):
 
 if _check_soft_dependencies("transformers", severity="none"):
     from sktime.libs.momentfm import MOMENTPipeline
-else:
-
-    class MOMENTPipeline:
-        """Dummy class if transformers is unavailable."""
-
-        pass
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
