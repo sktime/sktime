@@ -208,4 +208,8 @@ class SeasonalDummies(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        pass
+        param0 = {}
+        param1 = {"sp": 12}
+        param2 = {"sp": 12, "drop": False}
+
+        return [param0, param1, param2]
