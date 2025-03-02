@@ -407,7 +407,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
     """
 
-    alias_dict = {"handles-missing-data", "capability:missing_values"}
+    alias_dict = {"handles-missing-data": "capability:missing_values"}
     deprecate_dict = {"handles-missing-data": "1.0.0"}
 
 
