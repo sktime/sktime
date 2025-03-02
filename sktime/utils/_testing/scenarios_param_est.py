@@ -100,7 +100,6 @@ class ParamFitterPairwiseUnivariate(ParamFitterTestScenario):
     default_method_sequence = ["fit", "get_fitted_params"]
 
 
-
 scenarios_param_est = [
     ParamFitterUnivariate,
     ParamFitterMultivariate,
