@@ -337,9 +337,6 @@ class BaseParamFitter(BaseEstimator):
             If X or y is not one of the permissible Series mtypes
             If X or y is of a different scitype as self.get_tag("scitype:X")
             or self.get_tag("scitype:y")
-        ValueError
-            If y is provided for an estimator that does not support target values.
-            If the lengths of X and y do not match.
         """
         X_inner = self._validate_data(X, var_name="X")
         y_inner = self._validate_data(y, var_name="y")
@@ -416,27 +413,34 @@ class BaseParamFitter(BaseEstimator):
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
-            X can be in one of the following formats, must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        X : time series in ``sktime`` compatible data container format.
+            Time series to which to fit the parameter estimator.
 
-        y : time series in sktime compatible data container format, optional
-            (default=None) Target values to update the internal memory.
-            y can be in one of the following formats, must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            Whether the estimator supports panel or hierarchical data is determined
+            by the scitype tags ``scitype:X`` and ``scitype:y``.
+
+            For further details on data format, see glossary on :term:`mtype`.
+
+        y : time series in ``sktime`` compatible data container format.
+            Second time series to which to fit the parameter estimator.
+
+            Only required if the estimator is a pairwise estimator,
+            i.e., if the tag ``capability:pairwise`` is True.
         """
         self._update_data(X, "_X")
         self._update_data(y, "_y")
