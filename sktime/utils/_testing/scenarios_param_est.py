@@ -15,7 +15,7 @@ from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
-RAND_SEED2 = 84
+RAND_SD2 = 84
 
 
 def get_tag(obj, tag_name):
@@ -92,8 +92,8 @@ class ParamFitterPairwiseUnivariate(ParamFitterTestScenario):
     def args(self):
         return {
             "fit": {
-                "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED)
-                "y": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED2)
+                "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
+                "y": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SD2),
             },
         }
 
