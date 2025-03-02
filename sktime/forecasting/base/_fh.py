@@ -891,15 +891,15 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             from pandas.tseries.frequencies import to_offset
 
             if fh.freq is not None:
-                offset = to_offset(fh.freq)
+                freq = fh.freq
             elif cutoff.freq is not None:
-                offset = to_offset(cutoff.freq)
+                freq = cutoff.freq
             elif absolute.freq is not None:
-                offset = to_offset(absolute.freq)
+                freq = absolute.freq
             absolute_ = [cutoff_] * len(absolute)
             for i in range(len(absolute)):
-                absolute_[i] = cutoff_ + (i + 1) * offset
-            absolute = pd.DatetimeIndex(absolute_, freq=fh.freq)
+                absolute_[i] = cutoff_ + (i + 1) * to_offset(freq)
+            absolute = pd.DatetimeIndex(absolute_, freq=freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
