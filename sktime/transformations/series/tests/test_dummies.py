@@ -27,5 +27,6 @@ def test_seasonal_dummies():
         columns=expected_columns,
         index=date_range,
     )
+    X_expected = X_expected.astype(int)
     X_expected = X_expected.iloc[:, 1:]  # drop the first dummy
     assert X.equals(X_expected), "Test failed: X does not match X_expected."
