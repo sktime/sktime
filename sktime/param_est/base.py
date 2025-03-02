@@ -4,7 +4,7 @@
     class name: BaseParamFitter
 
 Scitype defining methods:
-    fitting                - fit(X, y(optional))
+    fitting                - fit(X, y=None)
     updating               - update(X, y=None)
     get fitted parameters  - get_fitted_params() -> dict
 
@@ -20,7 +20,6 @@ State:
 __author__ = ["fkiraly", "satvshr"]
 
 __all__ = ["BaseParamFitter"]
-
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -53,10 +52,6 @@ class BaseParamFitter(BaseEstimator):
 
     Specific implementations of these methods is deferred to concrete instances.
 
-    Parameters
-    ----------
-    None
-
     Attributes
     ----------
     _is_fitted : bool
@@ -71,10 +66,7 @@ class BaseParamFitter(BaseEstimator):
     _tags = {
         "object_type": "param_est",  # type of object
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict support for X?
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd.Series",
-        ],  # which types do _fit/_predict support for y?
+        "y_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict support for y?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "scitype:y": "Series",  # which y scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -249,7 +241,7 @@ class BaseParamFitter(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X to the new X
-        self._update_y_X(y_inner, X_inner)
+        self._update_X_y(X_inner, y_inner)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -398,7 +390,7 @@ class BaseParamFitter(BaseEstimator):
         """
         return self._check_X_y(X=X)[0]
 
-    def _update_y_X(self, y, X):
+    def _update_X_y(self, X, y):
         """Update internal memory of seen training data.
 
         Accesses in self:
@@ -443,30 +435,25 @@ class BaseParamFitter(BaseEstimator):
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         """
-        if y is not None and self.get_config()["remember_data"]:
-            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
-                self._y = y
-            else:
-                self._y = update_data(self._y, y)
+        self._update_data(X, "_X")
+        self._update_data(y, "_y")
 
+    def _update_data(self, data, self_data):
+        """Update internal memory of seen training data.
+
+        Updates attribute in self_data with data.
+        """
+        X = data
         if X is not None:
             # unwrap X if VectorizedDF
             if isinstance(X, VectorizedDF):
                 X = X.X_multiindex
+            # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
-                self._X = X
+                setattr(self, self_data, X)
             else:
-                self._X = update_data(self._X, X)
-
-    def _update_X(self, X):
-        """Update internal memory with new feature data X.
-
-        Parameters
-        ----------
-        X : sktime-compatible container
-            New feature data to be remembered.
-        """
-        self._update_y_X(None, X)
+                self_X = getattr(self, self_data)
+                setattr(self, self_data, update_data(self_X, X))
 
     def _fit(self, X, y=None):
         """Fit estimator and estimate parameters.
