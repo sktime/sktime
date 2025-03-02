@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-import re
 import warnings
 from warnings import warn as _warn
 
