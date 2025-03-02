@@ -112,7 +112,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
 
         super().__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X=None, y=None):
         """Fit transformer to X and y.
 
         Does nothing.
@@ -131,7 +131,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
         """
         return self
 
-    def _transform(self, X, y=None):
+    def _transform(self, X=None, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing core logic, called from transform
