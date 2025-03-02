@@ -236,7 +236,6 @@ class DualStageAttentionRNN(BaseForecaster):
         self.device = device
         self.random_state = random_state
 
-        self._is_fitted = False
         super().__init__()
 
     def _build_model(self, input_size):
@@ -273,8 +272,6 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         y = check_y(y)
         X = check_X(X)
         y = np.asarray(y).reshape(-1, 1)
@@ -325,7 +322,6 @@ class DualStageAttentionRNN(BaseForecaster):
                 self.scheduler_.step()
                 epoch_loss += loss.item() * X_batch.size(0)
             epoch_loss /= len(dataset)
-        self._is_fitted = True
         return self
 
     def _predict(self, X, fh=None):
@@ -345,8 +341,6 @@ class DualStageAttentionRNN(BaseForecaster):
         y_pred : np.ndarray
             Point forecast as a 1D array.
         """
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         if X is None:
             raise ValueError("Exogenous series X must be provided for prediction.")
         X = check_X(X)
@@ -374,17 +368,29 @@ class DualStageAttentionRNN(BaseForecaster):
 
         Returns
         -------
-        params : dict
+        params : list of dict
             Parameters to create testing instances of the class.
         """
-        params = {
-            "window_length": 10,
-            "encoder_hidden_size": 16,
-            "decoder_hidden_size": 16,
-            "attention_dim": 8,
-            "batch_size": 16,
-            "epochs": 5,
-            "lr": 0.01,
-            "device": "cpu",
-        }
+        params = [
+            {
+                "window_length": 10,
+                "encoder_hidden_size": 16,
+                "decoder_hidden_size": 16,
+                "attention_dim": 8,
+                "batch_size": 16,
+                "epochs": 5,
+                "lr": 0.01,
+                "device": "cpu",
+            },
+            {
+                "window_length": 20,
+                "encoder_hidden_size": 32,
+                "decoder_hidden_size": 32,
+                "attention_dim": 16,
+                "batch_size": 32,
+                "epochs": 10,
+                "lr": 0.005,
+                "device": "cpu",
+            },
+        ]
         return params
