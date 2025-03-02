@@ -844,6 +844,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
     else:
         cutoff = cutoff.index
+        cutoff_ = cutoff[0]
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
@@ -883,6 +884,22 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
                     absolute = absolute.to_timestamp()
                 else:
                     raise e
+
+            # restore percision lost in timestamp to period convertion
+            # preserve the format of DatetimeIndex
+            # see #5186
+            from pandas.tseries.frequencies import to_offset
+
+            if fh.freq is not None:
+                offset = to_offset(fh.freq)
+            elif cutoff.freq is not None:
+                offset = to_offset(cutoff.freq)
+            elif absolute.freq is not None:
+                offset = to_offset(absolute.freq)
+            absolute_ = [cutoff_] * len(absolute)
+            for i in range(len(absolute)):
+                absolute_[i] = cutoff_ + (i + 1) * offset
+            absolute = pd.DatetimeIndex(absolute_, freq=fh.freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
