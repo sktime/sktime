@@ -43,7 +43,7 @@ class SeasonalDummies(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["ltsaprounis", "blazingbhavneek"],
+        "authors": ["ericjb"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -61,7 +61,6 @@ class SeasonalDummies(BaseTransformer):
         ],  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": [
-            "None",
             "pd.Series",
         ],  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
