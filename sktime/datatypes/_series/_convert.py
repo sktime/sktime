@@ -65,7 +65,7 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
         store["name"] = obj.name
 
     res = pd.DataFrame(obj)
-
+    res.columns.name = obj.name
     if (
         isinstance(store, dict)
         and "columns" in store.keys()

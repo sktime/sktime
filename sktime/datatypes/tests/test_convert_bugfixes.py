@@ -5,7 +5,10 @@ __author__ = ["fkiraly", "ericjb"]
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
+from sktime.datatypes._series._convert import (
+    convert_MvS_to_UvS_as_Series,
+    convert_UvS_to_MvS_as_Series,
+)
 from sktime.tests.test_switch import run_test_module_changed
 
 
@@ -29,10 +32,10 @@ def test_multiindex_to_df_list_large_level_values():
     convert_to(X1, "df-list")
 
 
-def test_convert_MvS_to_UvS_as_Series():
+def test_convert_MvS_UvS_as_Series():
     """Checks that column name in MvS is preserved as attr name in UvS"""
     y = load_airline()
-    z = y.to_frame()
+    z = convert_UvS_to_MvS_as_Series(y)
+    assert y.name == z.columns.name
     w = convert_MvS_to_UvS_as_Series(z)
-
     assert y.name == w.name
