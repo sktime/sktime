@@ -257,13 +257,16 @@ class BaseParamFitter(BaseEstimator):
 
         If no estimator-specific update method has been implemented,
         default fall-back is fitting to all observed data so far
+
         State required:
             Requires state to be "fitted".
+
         Accesses in self:
             Fitted model attributes ending in "_".
             Pointers to seen data, self._X
             self._is_fitted
             model attributes ending in "_".
+
         Writes to self:
             Update self._X with `X`, by appending rows.
             Updates fitted model attributes ending in "_".
