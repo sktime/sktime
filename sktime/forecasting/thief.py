@@ -113,7 +113,11 @@ class THieFForecaster(BaseForecaster):
         """Determine the aggregation level based on the frequency of the time series."""
         if hasattr(y.index, "freqstr") and y.index.freqstr:
             freq = y.index.freqstr
-        else:
+        elif isinstance(y.index, pd.RangeIndex):
+            m = y.index.stop - y.index.start
+        elif isinstance(y.index, pd.Index):
+            m = y.index[-1]
+        elif isinstance(y.index, pd.DatetimeIndex):
             freq = pd.infer_freq(y.index)
         if freq is None:
             raise ValueError("Could not determine frequency of time series.")
@@ -157,20 +161,20 @@ class THieFForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        y_agg_lvl = pd.DataFrame(y)
+        if isinstance(y, pd.Series):
+            y = y.to_frame()
 
-        self._aggregation_levels = self._determine_aggregation_levels(y_agg_lvl)
+        self._aggregation_levels = self._determine_aggregation_levels(y)
         for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
 
             if isinstance(y_agg.index, pd.RangeIndex):
                 start_date = y.index[0]
                 original_freq = pd.infer_freq(y.index)
-                freq_multiplier = level
                 y_agg.index = pd.date_range(
                     start=start_date,
                     periods=len(y_agg),
-                    freq=f"{freq_multiplier}{original_freq}",
+                    freq=f"{level}{original_freq}",
                 )
 
             forecaster = self.base_forecaster.clone()
@@ -184,7 +188,9 @@ class THieFForecaster(BaseForecaster):
         from sktime.forecasting.base import ForecastingHorizon
 
         fh_vals = fh.to_numpy()
-        new_vals = np.unique(np.ceil(len(fh_vals) / level).astype(int))
+        new_vals = np.unique(
+            [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
+        )
         return ForecastingHorizon(new_vals, is_relative=True)
 
     def _predict(self, fh, X=None):
@@ -261,7 +267,7 @@ class THieFForecaster(BaseForecaster):
         self : reference to self
         """
         if isinstance(y, pd.Series):
-            y = pd.DataFrame(y)
+            y = y.to_frame()
 
         for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
