@@ -56,9 +56,6 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
-import warnings
-from copy import deepcopy
-
 from skbase.base import BaseEstimator as _BaseEstimator
 from skbase.base import BaseObject as _BaseObject
 from skbase.base._base import TagAliaserMixin as _TagAliaserMixin
