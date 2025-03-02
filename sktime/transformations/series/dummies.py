@@ -11,7 +11,7 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 
 
-class SeasonalDummies(BaseTransformer):
+class SeasonalDummiesOneHot(BaseTransformer):
     r"""Seasonal Dummy Features for time series seasonality.
 
     A standard approach to capture seasonal effects is to add dummy exogenous variables,
@@ -23,20 +23,35 @@ class SeasonalDummies(BaseTransformer):
     In the language of machine learning, the use of seasonal dummies is one hot encoding
     for the seasonal categorical variable.
 
+    Currently the following frequencies are supported:
+    - Monthly: 'M'
+    - Quarterly: 'Q'
+    - Weekly: 'W'
+    - Daily: 'D'
+    - Hourly: 'H'
 
     Parameters
     ----------
     sp : int, optional, default = None
+        Only used if the index of X (or y if X is None) passed to _transform()
+        is a DatetimeIndex.
+        The seasonal periodicity of the time series (e.g. 12 for monthly data).
+        Can be omitted even in this case if freq is provided.
+        (e.g. if index.freq is available, or freq='M')
     freq : str, optional, default = None
+        Only used if the index of X (or y if X is None) passed to _transform()
+        is a DatetimeIndex and sp is not provided.
+        The frequency of the time series (e.g. 'M' for monthly data).
+        Can be omitted even in this case if index.freq is available.
     drop : bool, default = True
         Drop the first seasonal dummy? (Should be True if model contains an intercept)
 
     Examples
     --------
-    >>> from sktime.transformations.series.dummies import SeasonalDummies
+    >>> from sktime.transformations.series.dummies import SeasonalDummiesOneHot
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = SeasonalDummies()
+    >>> transformer = SeasonalDummiesOneHot()
     >>> X = transformer.fit_transform(y=y, X=None)
     """
 
@@ -143,6 +158,14 @@ class SeasonalDummies(BaseTransformer):
         -------
         transformed version of X
         """
+
+        def number_to_freq(number):
+            number_map = {1: "A", 4: "Q", 12: "M", 52: "W", 365: "D", 8760: "H"}
+            freq = number_map.get(number, None)
+            if freq is None:
+                raise ValueError(f"Unsupported seasonal periodicity: {number}")
+            return freq
+
         if X is not None:
             index = X.index
         elif y is not None:
@@ -150,26 +173,46 @@ class SeasonalDummies(BaseTransformer):
         else:
             raise ValueError("Both X and y cannot be None")
 
-        if self.sp is not None:
-            sp = self.sp
-        else:
-            sp = self.freq
-            if sp is None:
-                sp = index.freq
-                if sp is None:
-                    raise ValueError("Frequency cannot be determined from the index")
-
-        if isinstance(index, pd.DatetimeIndex):
-            period_index = index.to_period()
-        else:
+        if isinstance(index, pd.PeriodIndex):
             period_index = index
+        else:
+            if self.sp is not None:
+                freq = number_to_freq(self.sp)
+            else:
+                freq = self.freq
+                if freq is None:
+                    freq = index.freq
+                    if freq is None:
+                        raise ValueError("Frequency can't be determined from the index")
 
-        # Extract month from the period index
-        month_index = period_index.month
+            period_index = index.to_period(freq)
 
-        # Create dummy variables for the months
-        dummies = pd.get_dummies(month_index, prefix="", prefix_sep="")
-        dummies.columns = dummies.columns.map(lambda x: calendar.month_abbr[int(x)])
+        # Extract the appropriate attribute based on the frequency of the period index
+        if period_index.freqstr == "M":
+            time_index = period_index.month
+        elif period_index.freqstr == "Q":
+            time_index = period_index.quarter
+        elif period_index.freqstr == "W":
+            time_index = period_index.week
+        elif period_index.freqstr == "D":
+            time_index = period_index.day
+        elif period_index.freqstr == "H":
+            time_index = period_index.hour
+        else:
+            raise ValueError(f"Unsupported frequency: {period_index.freqstr}")
+
+        # Create dummy variables for the time periods
+        dummies = pd.get_dummies(time_index, prefix="", prefix_sep="")
+        if period_index.freqstr == "M":
+            dummies.columns = dummies.columns.map(lambda x: calendar.month_abbr[int(x)])
+        elif period_index.freqstr == "Q":
+            dummies.columns = dummies.columns.map(lambda x: f"Q{int(x)}")
+        elif period_index.freqstr == "W":
+            dummies.columns = dummies.columns.map(lambda x: f"W{int(x)}")
+        elif period_index.freqstr == "D":
+            dummies.columns = dummies.columns.map(lambda x: f"D{int(x)}")
+        elif period_index.freqstr == "H":
+            dummies.columns = dummies.columns.map(lambda x: f"H{int(x)}")
         dummies = dummies.astype(int)  # Convert boolean values to integers
 
         dummies.index = index
