@@ -215,7 +215,7 @@ class BaseParamFitter(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # Check and convert X and y according to estimator requirements
+        # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X to the new X
