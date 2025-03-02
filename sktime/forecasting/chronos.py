@@ -254,29 +254,29 @@ class ChronosForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    Example using the Chronos model:
-        >>> from sktime.datasets import load_airline
-        >>> from sktime.forecasting.chronos import ChronosForecaster
-        >>> from sktime.split import temporal_train_test_split
-        >>> from sktime.forecasting.base import ForecastingHorizon
-        >>> y = load_airline()
-        >>> y_train, y_test = temporal_train_test_split(y)
-        >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-        >>> forecaster = ChronosForecaster("amazon/chronos-t5-tiny")  # doctest: +SKIP
-        >>> forecaster.fit(y_train)  # doctest: +SKIP
-        >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
+    >>> # Example using 'amazon/chronos-t5-tiny' model
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.chronos import ChronosForecaster
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> forecaster = ChronosForecaster("amazon/chronos-t5-tiny")  # doctest: +SKIP
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
 
-    Example using the Chronos-Bolt model:
-        >>> from sktime.datasets import load_airline
-        >>> from sktime.forecasting.chronos import ChronosForecaster
-        >>> from sktime.split import temporal_train_test_split
-        >>> from sktime.forecasting.base import ForecastingHorizon
-        >>> y = load_airline()
-        >>> y_train, y_test = temporal_train_test_split(y)
-        >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-        >>> forecaster = ChronosForecaster("amazon/chronos-bolt-tiny")  # doctest: +SKIP
-        >>> forecaster.fit(y_train)  # doctest: +SKIP
-        >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
+    >>> # Example using 'amazon/chronos-bolt-tiny' model
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.chronos import ChronosForecaster
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> forecaster = ChronosForecaster("amazon/chronos-bolt-tiny")  # doctest: +SKIP
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
     """
 
     # tag values are "safe defaults" which can usually be left as-is
