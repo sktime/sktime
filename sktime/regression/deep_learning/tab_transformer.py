@@ -71,7 +71,8 @@ class Tab_Transformer(NNModule):
         )
         self.feed_forward = nn.Sequential(
             nn.Linear(
-                self.embedding_dim * self.num_cat_feat + self.num_cont_features, 128
+                self.embedding_dim * len(self.num_cat_feat) + self.num_cont_features,
+                128,
             ),
             nn.ReLU(),
             nn.Linear(128, self.output_dim),
@@ -123,15 +124,35 @@ class TabTransformer(BaseDeepNetworkPyTorch):
 
     def __init__(
         self,
+        num_cat_feat,
+        num_cont_features,
+        embedding_dim,
+        n_transformer_layer,
+        n_heads,
+        output_dim,
+        task="classification",
         num_epochs=16,
         batch_size=8,
-        optimizer=None,
         lr=0.001,
+        criterion=None,
+        criterion_kwargs=None,
+        optimizer=None,
+        optimizer_kwargs=None,
     ):
+        self.num_cat_feat = num_cat_feat
+        self.num_cont_features = num_cont_features
+        self.embedding_dim = embedding_dim
+        self.n_transformer_layer = n_transformer_layer
+        self.n_heads = n_heads
+        self.output_dim = output_dim
+        self.task = task
         self.num_epochs = num_epochs
-        self.batch_size = (batch_size,)
-        self.optimizer = (optimizer,)
-        self.lr = (lr,)
+        self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.criterion = criterion
+        self.optimizer_kwargs = optimizer_kwargs
+        self.criterion_kwargs = criterion_kwargs
+        self.lr = lr
         super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
             pass
@@ -155,8 +176,8 @@ class TabTransformer(BaseDeepNetworkPyTorch):
                 x_curr = X[sample_id, i : i + window_size, :].flatten()
                 y_transf.append(y[sample_id])
                 x_transf.append(x_curr)
-        x_transf = torch.tensor(np.array(x_transf), dtype=torch.float32)
-        y_transf = torch.tensor(np.array(y_transf), dtype=torch.int)
+        x_transf = np.array(x_transf)
+        y_transf = np.array(y_transf)
 
         return x_transf, y_transf
 
@@ -175,23 +196,24 @@ class TabTransformer(BaseDeepNetworkPyTorch):
         y_transf = []
         for sample_id in range(len(X)):
             for i in range(X.shape[1] - window_size - 1):
-                x_transf.append(X[sample_id, i : i + window_size, :])
+                x_transf.append(X[sample_id, i : i + window_size, :].flatten())
                 y_transf.append(X[sample_id, i + window_size, :])
-        x_transf = torch.tensor(np.array(x_transf), dtype=torch.float32)
-        y_transf = torch.tensor(np.array(y_transf), dtype=torch.int)
+        x_transf = np.array(x_transf)
+        y_transf = np.array(y_transf)
+
+        return x_transf, y_transf
 
     def _fit(self, X, y):
         r"""Fit the model on input.
 
         Parameters
         ----------
-        X : 3d numpy array
-            shape : (n_instances, series_length, n_dimensions)
-        y : Required for Classification
+        X : 2d numpy array
+            shape : (n_instances, series_length * n_dimensions)
+        y : 1d or 2d numpy array
+            for classification, shape = (n_instances)
+            for regression, shape = (n_instances, n_dimensions)
         """
-        y = self._encode_y(y)
-        x_new, y_new = self._window_classification(X, y)
-
-        dataloader = self._build_dataloader(X, y)
+        dataloader = self._build_network(X, y)
         dataloader
         return
