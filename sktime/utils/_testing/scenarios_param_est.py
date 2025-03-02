@@ -15,6 +15,7 @@ from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
+RAND_SEED2 = 84
 
 
 def get_tag(obj, tag_name):
@@ -53,7 +54,7 @@ class ParamFitterTestScenario(TestScenario, BaseObject):
 class ParamFitterUnivariate(ParamFitterTestScenario):
     """Estimate parameters on a univariate series."""
 
-    _tags = {"X_univariate": False, "is_enabled": True}
+    _tags = {"X_univariate": True, "pairwise": False, "is_enabled": True}
 
     @property
     def args(self):
@@ -69,7 +70,7 @@ class ParamFitterUnivariate(ParamFitterTestScenario):
 class ParamFitterMultivariate(ParamFitterTestScenario):
     """Estimate parameters on a multivariate series."""
 
-    _tags = {"X_univariate": False, "is_enabled": True}
+    _tags = {"X_univariate": False, "pairwise": False, "is_enabled": True}
 
     @property
     def args(self):
@@ -82,7 +83,26 @@ class ParamFitterMultivariate(ParamFitterTestScenario):
     default_method_sequence = ["fit", "get_fitted_params"]
 
 
+class ParamFitterPairwiseUnivariate(ParamFitterTestScenario):
+    """Estimate parameters on two univariate series."""
+
+    _tags = {"X_univariate": True, "pairwise": True, "is_enabled": True}
+
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED)
+                "y": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED2)
+            },
+        }
+
+    default_method_sequence = ["fit", "get_fitted_params"]
+
+
+
 scenarios_param_est = [
     ParamFitterUnivariate,
     ParamFitterMultivariate,
+    ParamFitterPairwiseUnivariate,
 ]
