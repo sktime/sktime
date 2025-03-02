@@ -173,7 +173,7 @@ def _run_test_for_class(cls):
     """
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
-    from sktime.utils.git_diff import(
+    from sktime.utils.git_diff import (
         get_packages_with_changed_specs,
         is_class_changed,
         is_module_changed,
