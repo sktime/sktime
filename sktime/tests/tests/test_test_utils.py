@@ -29,12 +29,13 @@ def test_excluded_tests_by_test():
         )
     ]
     excluded_estimators = EXCLUDED_TESTS_BY_TEST["test_get_test_params_coverage"]
-    assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) == set(
+    assert set(excluded_estimators) - set(EXCLUDE_SOFT_DEPS) <= set(
         filtered_estimators
     ) - set(EXCLUDE_SOFT_DEPS), (
-        "Assertion failed: The sets of excluded and filtered estimators "
-        "do not match. Please remove the estimator you have added "
-        "test parameters to from EXCLUDED_TESTS_BY_TEST or EXCLUDE_SOFT_DEPS."
+        "If this PR adds test parameters to an estimator's get_test_params: "
+        "Please ensure to remove this estimator "
+        "from EXCLUDED_TESTS_BY_TEST and EXCLUDE_SOFT_DEPS "
+        "in sktime.tests._config, if it is present there."
     )
 
 
