@@ -79,9 +79,9 @@ class SeasonalDummies(BaseTransformer):
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
         #   not relevant for transformers that return Primitives in transform-output
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "handles-missing-data": True,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
-        "capability:missing_values:removes": False,
+        "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
     }
 
