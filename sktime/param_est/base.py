@@ -174,16 +174,36 @@ class BaseParamFitter(BaseEstimator):
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
-            y can be in one of the following formats, must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        X : time series in ``sktime`` compatible data container format.
+            Time series to which to fit the parameter estimator.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            Whether the estimator supports panel or hierarchical data is determined
+            by the scitype tags ``scitype:X`` and ``scitype:y``.
+
+            For further details on data format, see glossary on :term:`mtype`.
+
+        y : time series in ``sktime`` compatible data container format.
+            Second time series to which to fit the parameter estimator.
+
+            Only required if the estimator is a pairwise estimator,
+            i.e., if the tag ``capability:pairwise`` is True.
+
+            The input is ignored otherwise, and will not throw an exception.
 
         Returns
         -------
@@ -231,16 +251,36 @@ class BaseParamFitter(BaseEstimator):
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
-            y can be in one of the following formats, must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        X : time series in ``sktime`` compatible data container format.
+            Time series to which to fit the parameter estimator.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            Whether the estimator supports panel or hierarchical data is determined
+            by the scitype tags ``scitype:X`` and ``scitype:y``.
+
+            For further details on data format, see glossary on :term:`mtype`.
+
+        y : time series in ``sktime`` compatible data container format.
+            Second time series to which to fit the parameter estimator.
+
+            Only required if the estimator is a pairwise estimator,
+            i.e., if the tag ``capability:pairwise`` is True.
+
+            The input is ignored otherwise, and will not throw an exception.
 
         Returns
         -------
@@ -255,11 +295,13 @@ class BaseParamFitter(BaseEstimator):
             )
             return self
 
-        # Validate and convert the new X and y data
+        # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # update internal X, y with the new X, y
         self._update_y_X(y_inner, X_inner)
 
-        # Pass the checked and converted data to the estimator-specific _update logic
+        # checks and conversions complete, pass to inner update
         _safe_call(self._update, args=(), kwargs={"X": X_inner, "y": y_inner})
 
         return self
@@ -270,27 +312,10 @@ class BaseParamFitter(BaseEstimator):
         Parameters
         ----------
         X : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
-            X can be in one of the following formats, must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+            Time series to check.
 
         y : time series in sktime compatible data container format, optional
-            (default=None) Target values for parameter estimation to be validated and
-            converted. y can be in one of the following formats,
-            must be same scitype as in fit:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            For further details:
-                on usage, see forecasting tutorial examples/01_forecasting.ipynb
-                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+            Second time series to check.
 
         Returns
         -------
@@ -304,7 +329,7 @@ class BaseParamFitter(BaseEstimator):
                 compatible with self.get_tag("y_inner_mtype") format
             Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
                 converted/coerced version of y, mtype determined by "y_inner_mtype" tag
-            Case 2: None if y was None or if the estimator is pairwise
+            Case 2: None if y was None or if the estimator is not pairwise
 
         Raises
         ------
@@ -315,7 +340,6 @@ class BaseParamFitter(BaseEstimator):
         ValueError
             If y is provided for an estimator that does not support target values.
             If the lengths of X and y do not match.
-            TODO: Throw a ValueError for pairwise estimators, if X is not square.
         """
         X_inner = self._validate_data(X, var_name="X")
         y_inner = self._validate_data(y, var_name="y")
@@ -345,8 +369,12 @@ class BaseParamFitter(BaseEstimator):
         msg = (
             f"{var_name} must be in an sktime compatible format, "
             f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame with "
-            "an sktime compatible time index. See the data format tutorial for "
-            "more details. "
+            "an sktime compatible time index."
+            " See data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
+            "If you think X is already in an sktime supported input format, "
+            "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
+            "where mtype is the string of the type specification you want for X. "
+            "Possible mtype specification strings are as follows. "
         )
 
         if not data_valid:
@@ -358,9 +386,9 @@ class BaseParamFitter(BaseEstimator):
                 f" in {var_name}. "
             )
 
+        data_scitype = data_metadata["scitype"]
         data_mtype = data_metadata["mtype"]
         data_inner_mtype = _coerce_to_list(self.get_tag(f"{var_name}_inner_mtype"))
-        data_scitype = data_metadata["scitype"]
 
         return convert(
             data,
@@ -383,12 +411,8 @@ class BaseParamFitter(BaseEstimator):
         _y : same type as y - new rows from y are added to current _y
             if _y does not exist, stores y as _y
 
-        _X is guaranteed to be one of mtypes:
-            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-            pd_multiindex_hier
-        _y is guaranteed to be one of mtypes:
-            pd.Series, pd.DataFrame, np.ndarray (1D or 2D), pd-multiindex,
-            numpy3D, pd_multiindex_hier
+        _X is guaranteed to be one of mtypes in the tag "X_inner_mtype"
+        _y is guaranteed to be one of mtypes in the tag "y_inner_mtype"
 
         Parameters
         ----------
@@ -446,8 +470,9 @@ class BaseParamFitter(BaseEstimator):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Time series to which to fit the estimator.
-        y : array-like, optional (default=None)
-            Target values in the format specified by the estimators "y_inner_mtype" tag.
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Second time series to which to fit the estimator.
+            None if estimator is not pairwise.
 
         Returns
         -------
@@ -473,8 +498,9 @@ class BaseParamFitter(BaseEstimator):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Time series with which to update the estimator.
-        y : array-like, optional (default=None)
-            New target data in the format specified by "y_inner_mtype".
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Second time series with which to update the estimator.
+            None if estimator is not pairwise.
 
         Returns
         -------
