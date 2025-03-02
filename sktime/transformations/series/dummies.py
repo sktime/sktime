@@ -48,7 +48,7 @@ class SeasonalDummies(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Panel
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-labels": "None",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
@@ -161,7 +161,7 @@ class SeasonalDummies(BaseTransformer):
                     raise ValueError("Frequency cannot be determined from the index")
 
         if isinstance(index, pd.DatetimeIndex):
-            period_index = index.to_period(freq=sp)
+            period_index = index.to_period()
         else:
             period_index = index
 
@@ -187,7 +187,6 @@ class SeasonalDummies(BaseTransformer):
 
         return X_transformed
 
-    # TBD
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
