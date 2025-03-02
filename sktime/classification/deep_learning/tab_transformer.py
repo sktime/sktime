@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -15,6 +15,9 @@ else:
 
     class NNModule:
         """Dummy class if torch is unavailable."""
+
+
+__author__ = ["Ankit-1204"]
 
 
 class Tab_Transformer(NNModule):
@@ -90,7 +93,7 @@ class Tab_Transformer(NNModule):
         return self.activation(feed)
 
 
-class TabTransformer(BaseDeepClassifierPytorch):
+class TabTransformer(BaseDeepNetworkPyTorch):
     r"""
     Tab Transformer for Tabular Data.
 
@@ -156,6 +159,26 @@ class TabTransformer(BaseDeepClassifierPytorch):
         y_transf = torch.tensor(np.array(y_transf), dtype=torch.int)
 
         return x_transf, y_transf
+
+    def _window_regression(self, X, window_size=3):
+        r"""Convert Timeseries into Tabular Format.
+
+        Parameters
+        ----------
+        window_size : int, Optional (default=3)
+            Defines the size of the sliding window
+        X : 3d numpy array
+            shape : (n_instances, series_length, n_dimensions)
+
+        """
+        x_transf = []
+        y_transf = []
+        for sample_id in range(len(X)):
+            for i in range(X.shape[1] - window_size - 1):
+                x_transf.append(X[sample_id, i : i + window_size, :])
+                y_transf.append(X[sample_id, i + window_size, :])
+        x_transf = torch.tensor(np.array(x_transf), dtype=torch.float32)
+        y_transf = torch.tensor(np.array(y_transf), dtype=torch.int)
 
     def _fit(self, X, y):
         r"""Fit the model on input.
