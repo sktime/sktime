@@ -55,29 +55,15 @@ class _SuppressWarningPattern:
 
     def __init__(self, warning_type, message_pattern):
         self.warning_type = warning_type
-        self.message_pattern = re.compile(message_pattern)
+        self.message_pattern = message_pattern
 
     def __enter__(self):
-        self.original_filters = warnings.filters[:]
-        warnings.simplefilter("default", self.warning_type)
-        self.original_showwarning = warnings.showwarning
-        warnings.showwarning = self._custom_showwarning
+        warnings.filterwarnings(
+            "ignore", category=self.warning_type, message=self.message_pattern
+        )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        warnings.filters = self.original_filters
-        warnings.showwarning = self.original_showwarning
-
-    def _custom_showwarning(
-        self, message, category, filename, lineno, file=None, line=None
-    ):
-        if not hasattr(self, "_in_warning"):
-            self._in_warning = True
-            try:
-                self.original_showwarning(
-                    message, category, filename, lineno, file, line
-                )
-            finally:
-                del self._in_warning
+        warnings.filterwarnings("default", category=self.warning_type)
 
 
 _suppress_pd22_warning = _SuppressWarningPattern(
