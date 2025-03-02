@@ -160,48 +160,6 @@ class BaseParamFitter(BaseEstimator):
         else:
             return NotImplemented
 
-    def _validate_data(self, ALLOWED_SCITYPES, FORBIDDEN_MTYPES, data, var_name="data"):
-        """Validate input data (X or y)."""
-        # Prepare a message about allowed mtypes
-        for scitype in ALLOWED_SCITYPES:
-            mtypes = set(scitype_to_mtype(scitype))
-            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
-
-        data_valid, _, data_metadata = check_is_scitype(
-            data,
-            scitype=ALLOWED_SCITYPES,
-            return_metadata=["feature_kind"],
-            var_name=var_name,
-        )
-
-        msg = (
-            f"{var_name} must be in an sktime compatible format, "
-            f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame with "
-            "an sktime compatible time index. See the data format tutorial for "
-            "more details. "
-        )
-
-        if not data_valid:
-            raise TypeError(msg + mtypes_msg)
-
-        if DtypeKind.CATEGORICAL in data_metadata["feature_kind"]:
-            raise TypeError(
-                "Parameter estimators do not support categorical features "
-                f" in {var_name}. "
-            )
-
-        data_mtype = data_metadata["mtype"]
-        data_inner_mtype = _coerce_to_list(self.get_tag(f"{var_name}_inner_mtype"))
-        data_scitype = data_metadata["scitype"]
-
-        return convert(
-            data,
-            from_type=data_mtype,
-            to_type=data_inner_mtype,
-            as_scitype=data_scitype,
-        )
-
     def fit(self, X, y=None):
         """Fit estimator and estimate parameters.
 
@@ -359,39 +317,57 @@ class BaseParamFitter(BaseEstimator):
             If the lengths of X and y do not match.
             TODO: Throw a ValueError for pairwise estimators, if X is not square.
         """
-        X_inner, y_inner = None, None
-        if X is None and y is None:
-            return None, None
-
-        # Process y if provided
-        if y is not None:
-            ALLOWED_SCITYPES = [_coerce_to_list(self.get_tag("scitype:y"))]
-            FORBIDDEN_MTYPES = []
-            y_inner = self._validate_data(ALLOWED_SCITYPES, FORBIDDEN_MTYPES, y, "y")
-
-        if X is not None:
-            ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
-            FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
-            X_inner = self._validate_data(ALLOWED_SCITYPES, FORBIDDEN_MTYPES, X, "X")
-
+        X_inner = self._validate_data(X, var_name="X")
+        y_inner = self._validate_data(y, var_name="y")
         return X_inner, y_inner
 
-    def _check_X(self, X=None):
-        """Validate and coerce feature data X.
+    def _validate_data(self, data, var_name="data"):
+        """Validate input data (X or y)."""
+        if data is None:
+            return None
 
-        This is a convenience method that calls _check_X_y with only X provided.
+        ALLOWED_SCITYPES = _coerce_to_list(self.get_tag(f"scitype:{var_name}"))
+        FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
-        Parameters
-        ----------
-        X : sktime-compatible container, optional (default=None)
-            Feature data to be validated and converted.
+        # Prepare a message about allowed mtypes
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
 
-        Returns
-        -------
-        X_inner : object or None
-            The converted feature data in the format specified by the estimator.
-        """
-        return self._check_X_y(X=X)[0]
+        data_valid, _, data_metadata = check_is_scitype(
+            data,
+            scitype=ALLOWED_SCITYPES,
+            return_metadata=["feature_kind"],
+            var_name=var_name,
+        )
+
+        msg = (
+            f"{var_name} must be in an sktime compatible format, "
+            f"of scitypes {ALLOWED_SCITYPES}, for example a pandas.DataFrame with "
+            "an sktime compatible time index. See the data format tutorial for "
+            "more details. "
+        )
+
+        if not data_valid:
+            raise TypeError(msg + mtypes_msg)
+
+        if DtypeKind.CATEGORICAL in data_metadata["feature_kind"]:
+            raise TypeError(
+                "Parameter estimators do not support categorical features "
+                f" in {var_name}. "
+            )
+
+        data_mtype = data_metadata["mtype"]
+        data_inner_mtype = _coerce_to_list(self.get_tag(f"{var_name}_inner_mtype"))
+        data_scitype = data_metadata["scitype"]
+
+        return convert(
+            data,
+            from_type=data_mtype,
+            to_type=data_inner_mtype,
+            as_scitype=data_scitype,
+        )
 
     def _update_X_y(self, X, y):
         """Update internal memory of seen training data.
