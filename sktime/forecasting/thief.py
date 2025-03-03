@@ -114,18 +114,17 @@ class THieFForecaster(BaseForecaster):
         m = None
         if hasattr(y.index, "freqstr") and y.index.freqstr:
             freq = y.index.freqstr
+        elif isinstance(y.index, pd.PeriodIndex):
+            idx = y.index.to_timestamp()
+            freq = pd.freqstr(idx)
         elif isinstance(y.index, pd.RangeIndex):
             m = y.index.stop - y.index.start
         elif isinstance(y.index, pd.Index):
             m = y.index[-1]
-        elif isinstance(y.index, pd.DatetimeIndex):
-            freq = pd.infer_freq(y.index)
-        if freq is None:
-            raise ValueError("Could not determine frequency of time series.")
 
         freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
         if m is None:
-            m = freq_map.get(freq, None)
+            m = freq_map.get(freq[0].capitalize, None)
 
         if m is None:
             raise ValueError(f"Unsupported frequency '{freq}'.")
