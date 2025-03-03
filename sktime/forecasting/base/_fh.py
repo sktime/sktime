@@ -888,6 +888,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             # restore percision lost in timestamp to period convertion
             # preserve the format of DatetimeIndex
             # see #5186
+            from pandas import Timedelta
             from pandas.tseries.frequencies import to_offset
 
             if fh.freq is not None:
@@ -898,11 +899,20 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
                 freq = absolute.freq
             absolute_ = [cutoff_] * len(absolute)
             for i in range(len(absolute)):
-                absolute_[i] = cutoff_ + (i + 1) * to_offset(freq)
-            absolute = pd.DatetimeIndex(absolute_, freq=freq)
+                if not isinstance(relative[0], Timedelta):
+                    absolute_[i] = cutoff_ + relative[i] * to_offset(freq)
+                else:
+                    absolute_[i] = cutoff_ + relative[i]
+            try:
+                absolute = pd.DatetimeIndex(absolute_, freq=freq)
+            except ValueError as e:  # freq can not be set if missing values exist
+                if "not conform" in str(e):
+                    absolute = pd.DatetimeIndex(absolute_)
+                else:
+                    raise e
 
         if old_tz is not None:
-            absolute = absolute.tz_localize(old_tz)
+            absolute = absolute.tz_convert(old_tz)
 
         return fh._new(absolute, is_relative=False, freq=fh.freq)
 
