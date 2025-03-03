@@ -188,4 +188,12 @@ class ClusterSupportDetection(BaseParamFitter):
             "verbose": 1,
         }
 
-        return [params, params2]
+        params3 = {
+            "estimator": TimeSeriesKvisibility(),
+            "param_range": range(2, 7),
+            "metric": TimeSeriesSilhouetteScore(),
+            "verbose": 1,
+            "random_state": 1,
+        }
+
+        return [params, params2, params3]
