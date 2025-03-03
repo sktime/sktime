@@ -225,6 +225,8 @@ class THieFForecaster(BaseForecaster):
         self._forecast_store = {}
         for level, forecaster in self.forecasters.items():
             fh_level = self._divide_fh(fh, level)
+            if not fh_level:
+                continue
             y_pred_agg = forecaster.predict(fh=fh_level, X=X)
             self._forecast_store[level] = y_pred_agg
 
