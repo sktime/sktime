@@ -53,7 +53,7 @@ class ParamFitterTestScenario(TestScenario, BaseObject):
 class ParamFitterUnivariate(ParamFitterTestScenario):
     """Estimate parameters on a univariate series."""
 
-    _tags = {"X_univariate": False, "is_enabled": True}
+    _tags = {"X_univariate": True, "is_enabled": True}
 
     @property
     def args(self):
