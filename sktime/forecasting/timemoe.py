@@ -274,17 +274,13 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                 )
 
             predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
-            reshaped_predictions = predictions[
-                :, : prediction_length * self._config["input_size"]
-            ]
-            reshaped_predictions = reshaped_predictions.reshape(
-                -1, prediction_length, self._config["input_size"]
+            final_predictions = predictions[-prediction_length:]
+            final_predictions = final_predictions.reshape(
+                prediction_length, self._config["input_size"]
             )
-            final_predictions = reshaped_predictions[-1]
             selected_indices = [h - 1 for h in fh.to_relative(self.cutoff)]
             final_predictions = final_predictions[selected_indices]
             results.append(final_predictions)
-
         if len(results) > 1:
             combined_results = np.concatenate(results, axis=0)
         else:
@@ -310,10 +306,11 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             )
 
             y_pred = pd.DataFrame(
-                combined_results.reshape(-1, self.config["input_size"]),
+                combined_results.reshape(-1, self._config["input_size"]),
                 index=idx,
                 columns=_y_df.columns if isinstance(_y_df, pd.DataFrame) else None,
             )
+            y_pred.index.names = _y_df.index.names
         else:
             # this is for univariate data.
             y_pred = pd.DataFrame(
@@ -321,6 +318,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                 index=forecast_index,
                 columns=_y_df.columns if isinstance(_y_df, pd.DataFrame) else None,
             )
+            y_pred.index.names = _y_df.index.names
 
         return y_pred
 
