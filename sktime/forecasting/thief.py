@@ -123,12 +123,20 @@ class THieFForecaster(BaseForecaster):
             freq = y.index.freqstr
 
         freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
+
         if m is None:
-            m = freq_map.get(freq[0].capitalize(), None)
+            if freq is None:
+                raise ValueError(
+                    "Could not infer frequency. Ensure timestamps are evenly spaced."
+                )
+
+            m = freq_map.get(freq[0].capitalize())
 
         if m is None:
             raise ValueError(f"Unsupported frequency '{freq}'.")
 
+        if isinstance(m, pd.Timedelta):
+            m = m.days
         aggregation_levels = [i for i in range(1, m + 1) if m % i == 0]
         return aggregation_levels
 
@@ -169,9 +177,17 @@ class THieFForecaster(BaseForecaster):
         for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
 
-            if isinstance(y_agg.index, pd.RangeIndex):
-                start_date = y.index[0]
-                original_freq = pd.infer_freq(y.index)
+            if isinstance(y_agg.index, (pd.RangeIndex, pd.Index)):
+                temp_index = pd.date_range(start="2000-01-01", periods=len(y))
+
+                start_date = temp_index[0]
+                original_freq = pd.infer_freq(temp_index)
+
+                if original_freq is None:
+                    raise ValueError(
+                        "Could not infer frequency from generated DatetimeIndex."
+                    )
+
                 y_agg.index = pd.date_range(
                     start=start_date,
                     periods=len(y_agg),
