@@ -160,7 +160,7 @@ class BaseParamFitter(BaseEstimator):
         Parameters
         ----------
         X : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
+                Time series to which to fit the parameter estimator in the update.
             y can be in one of the following formats, must be same scitype as in fit:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Panel scitype: pd.DataFrame with 2-level row MultiIndex,
