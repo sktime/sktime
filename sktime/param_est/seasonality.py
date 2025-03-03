@@ -362,7 +362,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         if candidate_sp is not None:
             if isinstance(candidate_sp, int):
                 candidate_sp = [candidate_sp]
-            csp_ixer = [c-1 for c in candidate_sp]
+            csp_ixer = [c - 1 for c in candidate_sp]
             qstat_cand = qstat[csp_ixer]
             pvalues_cand = pvalues[csp_ixer]
         else:
