@@ -112,19 +112,19 @@ class THieFForecaster(BaseForecaster):
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
         m = None
-        if hasattr(y.index, "freqstr") and y.index.freqstr:
-            freq = y.index.freqstr
-        elif isinstance(y.index, pd.PeriodIndex):
+        if isinstance(y.index, pd.PeriodIndex):
             idx = y.index.to_timestamp()
             freq = pd.freqstr(idx)
         elif isinstance(y.index, pd.RangeIndex):
             m = y.index.stop - y.index.start
         elif isinstance(y.index, pd.Index):
-            m = y.index[-1]
+            m = y.index[-1] - y.index[0]
+        elif hasattr(y.index, "freqstr") and y.index.freqstr:
+            freq = y.index.freqstr
 
         freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
         if m is None:
-            m = freq_map.get(freq[0].capitalize, None)
+            m = freq_map.get(freq[0].capitalize(), None)
 
         if m is None:
             raise ValueError(f"Unsupported frequency '{freq}'.")
