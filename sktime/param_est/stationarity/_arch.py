@@ -759,9 +759,9 @@ class StationarityZivotAndrews(BaseParamFitter):
         params1 = {}
         params2 = {
             "lags": 2,
-            "trend": "ct",
+            "trend": "t",
             "trim": 0.1,
-            "max_lags": 3,
+            "max_lags": 5,
             "method": "t-stat",
             "p_threshold": 0.1,
         }
