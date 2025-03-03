@@ -92,8 +92,8 @@ class ParamFitterPairwiseUnivariate(ParamFitterTestScenario):
     def args(self):
         return {
             "fit": {
-                "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
-                "y": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SD2),
+                "X": _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
+                "y": _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SD2),
             },
         }
 
