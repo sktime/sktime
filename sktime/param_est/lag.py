@@ -25,28 +25,38 @@ class ARLagOrderSelector(BaseParamFitter):
     ----------
     maxlag : int
         Maximum number of lags to consider
+
     ic : str, default="bic"
         Information criterion to use for model selection:
+
         - "aic" : Akaike Information Criterion
         - "bic" : Bayesian Information Criterion (default)
         - "hqic" : Hannan-Quinn Information Criterion
+
     glob : bool, default=False
         If True, searches globally across all lag combinations up to maxlag.
         If False, searches sequentially by adding one lag at a time.
+
     trend : str, default="c"
         Trend to include in the model:
+
         - "n" : No trend
         - "c" : Constant only
         - "t" : Time trend only
         - "ct" : Constant and time trend
+
     seasonal : bool, default=False
         Whether to include seasonal dummies in the model
+
     hold_back : int, optional (default=None)
         Number of initial observations to exclude from the estimation sample
+
     period : int, optional (default=None)
         Period of the data (used only if seasonal=True)
+
     missing : str, default="none"
         How to handle missing values:
+
         - "none" : No handling
         - "drop" : Drop missing observations
         - "raise" : Raise an error
@@ -149,13 +159,6 @@ class ARLagOrderSelector(BaseParamFitter):
         self.ic_value_ = self.results._ics[0][1][key_loc]
 
         return self
-
-    def get_fitted_params(self):
-        """Get fitted parameters."""
-        return {
-            "selected_lags": self.selected_model_,
-            "ic_value": self.ic_value_,
-        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
