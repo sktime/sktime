@@ -360,15 +360,15 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.pvalues_ = pvalues
 
         if candidate_sp is not None:
-            qstat_cand = qstat[candidate_sp]
-            pvalues_cand = pvalues[candidate_sp]
+            qstat_cand = qstat[candidate_sp - 1]
+            pvalues_cand = pvalues[candidate_sp - 1]
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
             candidate_sp = range(2, nlags + 1)
 
         self.qstat_cand_ = qstat_cand
-        self.pvalues_cand = pvalues_cand
+        self.pvalues_cand_ = pvalues_cand
 
         if p_adjust != "none":
             reject_cand, pvals_adj, _, _ = multipletests(
