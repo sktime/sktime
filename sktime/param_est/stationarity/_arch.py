@@ -758,8 +758,7 @@ class StationarityZivotAndrews(BaseParamFitter):
         """
         params1 = {}
         params2 = {
-            "lags": 2,
-            "trend": "t",
+            "trend": "ct",
             "trim": 0.1,
             "max_lags": 5,
             "method": "t-stat",
