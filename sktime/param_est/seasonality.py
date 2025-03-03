@@ -501,12 +501,11 @@ class SeasonalityPeriodogram(BaseParamFitter):
             thresh=self.thresh,
         )
 
-        seasons = [x[0] for x in seasons]
-
         if seasons is None or len(seasons) == 0:
             self.sp_ = 1
             self.sp_significant_ = []
         else:
+            seasons = [x[0] for x in seasons]
             self.sp_significant_ = seasons
             self.sp_ = self.sp_significant_[0]
 
