@@ -533,10 +533,11 @@ class MAPAForecaster(BaseForecaster):
                     else:  # additive
                         forecast = forecast.add(seasonal_adjustments, axis=0)
 
-                if forecast.values.ndim == 1:
-                    forecast.values = forecast.values.reshape(-1, 1)
+                forecast_values = forecast.values
+                if forecast_values.ndim == 1:
+                    forecast_values = forecast_values.reshape(-1, 1)
 
-                forecasts.append(forecast.values.ravel())
+                forecasts.append(forecast_values.ravel())
 
             except Exception as e:
                 warn(f"Failed to generate forecast for level {level}: {str(e)}\n")
