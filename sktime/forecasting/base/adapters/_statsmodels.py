@@ -100,6 +100,11 @@ class _StatsModelsAdapter(BaseForecaster):
                 )
                 if index_diff.isin(y.index).all():
                     y = y.loc[index_diff]
+
+                if isinstance(y, pd.Series):
+                    y = y.copy()
+                    y.name = str(y.name)
+
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
     def _predict(self, fh, X):
