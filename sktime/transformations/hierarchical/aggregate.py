@@ -76,8 +76,9 @@ class Aggregator(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    def __init__(self, flatten_single_levels=True):
+    def __init__(self, flatten_single_levels=True, show_warnings = True):
         self.flatten_single_levels = flatten_single_levels
+        self.show_warnings = show_warnings
 
         super().__init__()
 
@@ -101,6 +102,10 @@ class Aggregator(BaseTransformer):
                 "Returning X unchanged.",
                 obj=self,
             )
+            if self.show_warnings:
+                print("Aggregator is intended for use with X.index.nlevels > 1. ")
+
+
             return X
         # check the tests are ok
         if not _check_index_no_total(X):
@@ -202,7 +207,7 @@ class Aggregator(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         param1 = {"flatten_single_levels": True}
-        param2 = {"flatten_single_levels": False}
+        param2 = {'show_warnings': True}
 
         return [param1, param2]
 
