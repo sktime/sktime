@@ -207,6 +207,11 @@ class THieFForecaster(BaseForecaster):
         if np.issubdtype(fh_vals.dtype, np.datetime64):
             reference_date = fh_vals.min()
             fh_vals = (fh_vals - reference_date).astype("timedelta64[D]").astype(int)
+        if isinstance(fh_vals[0], pd.Period):
+            reference_date = fh_vals[0]
+            fh_vals = np.array(
+                [p.ordinal - reference_date.ordinal + 1 for p in fh_vals]
+            )
 
         new_vals = np.unique(
             [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
@@ -247,7 +252,7 @@ class THieFForecaster(BaseForecaster):
                 continue
             y_pred_agg = forecaster.predict(fh=fh_level, X=X)
             self._forecast_store[level] = y_pred_agg
-        print(self._forecast_store)
+
         result = self._reconcile_forecasts(self._forecast_store)
 
         return result
