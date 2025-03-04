@@ -104,17 +104,16 @@ class THieFForecaster(BaseForecaster):
         super().__init__()
 
     def _reconcile_forecasts(self, forecasts):
-        from warnings import warn
-
         """Reconcile forecasts using the specified reconciliation method."""
-        warn(f"Reconciliation method '{self.reconciliation_method}' not implemented.")
+        # TRFORM_LIST = Reconciler().METHOD_LIST - ["td_fcst"]
+        # METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
         m = None
         if isinstance(y.index, pd.PeriodIndex):
             idx = y.index.to_timestamp()
-            freq = pd.freqstr(idx)
+            freq = idx.freqstr
         elif isinstance(y.index, pd.RangeIndex):
             m = y.index.stop - y.index.start
         elif isinstance(y.index, pd.Index):
@@ -205,6 +204,10 @@ class THieFForecaster(BaseForecaster):
         from sktime.forecasting.base import ForecastingHorizon
 
         fh_vals = fh.to_numpy()
+        if np.issubdtype(fh_vals.dtype, np.datetime64):
+            reference_date = fh_vals.min()
+            fh_vals = (fh_vals - reference_date).astype("timedelta64[D]").astype(int)
+
         new_vals = np.unique(
             [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
         )
@@ -244,7 +247,7 @@ class THieFForecaster(BaseForecaster):
                 continue
             y_pred_agg = forecaster.predict(fh=fh_level, X=X)
             self._forecast_store[level] = y_pred_agg
-
+        print(self._forecast_store)
         result = self._reconcile_forecasts(self._forecast_store)
 
         return result
