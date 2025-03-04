@@ -7,13 +7,10 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
-    from accelerate import Accelerator
+if _check_soft_dependencies("torch", severity="none"):
     from torch.cuda import empty_cache
-    from torch.nn import MSELoss
     from torch.utils.data import Dataset
 else:
 
@@ -21,6 +18,13 @@ else:
         """Dummy class if torch is unavailable."""
 
         pass
+
+
+if _check_soft_dependencies("accelerate", severity="none"):
+    pass
+
+if _check_soft_dependencies("transformers", severity="none"):
+    from sktime.libs.momentfm import MOMENTPipeline
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
@@ -162,6 +166,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "huggingface-hub",
             # "momentfm",
             "accelerate",
+            "transformers",
         ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
@@ -193,6 +198,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         return_model_to_cpu=False,
     ):
         super().__init__()
+        from torch.nn import MSELoss
+
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.freeze_encoder = freeze_encoder
         self.freeze_embedder = freeze_embedder
@@ -218,6 +225,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
+        from accelerate import Accelerator
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
