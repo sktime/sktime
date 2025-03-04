@@ -460,12 +460,20 @@ class BOSSEnsemble(BaseClassifier):
                 "alphabet_size": 4,
             }
         else:
-            return {
-                "max_ensemble_size": 2,
-                "save_train_predictions": True,
-                "feature_selection": "none",
-                "use_boss_distance": False,
-            }
+            params = [
+                {"threshold": 0.92},
+                {"max_ensemble_size": 500},
+                {"max_win_len_prop": 1},
+                {"min_window": 10},
+                {"save_train_predictions": False},
+                {"feature_selection": "none"},
+                {"use_boss_distance": True},
+                {"alphabet_size": 2},
+                {"n_jobs": 1},
+                {"random_state": None},
+            ]
+
+            return params
 
 
 class IndividualBOSS(BaseClassifier):
