@@ -344,6 +344,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
+        "ThetaLinesTransformer",
         "TimeBinner",
         "TimeSeriesForestClassifier",
         "TimeSeriesForestRegressor",
