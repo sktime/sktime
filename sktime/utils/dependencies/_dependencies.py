@@ -170,6 +170,7 @@ def _check_soft_dependencies(
 
         pkg_version_reqs = []
         pkg_env_versions = []
+
         for package in package_req:
             pkg_version_req, pkg_env_version = _get_pkg_version_and_req(package)
             pkg_version_reqs.append(pkg_version_req)
@@ -208,6 +209,8 @@ def _check_soft_dependencies(
 
         # now we check compatibility with the version specifier if non-empty
         def _is_version_req_satisfied(pkg_env_version, pkg_version_req):
+            if pkg_env_version is None:
+                return False
             if pkg_version_req != SpecifierSet(""):
                 return pkg_env_version in pkg_version_req
             else:
