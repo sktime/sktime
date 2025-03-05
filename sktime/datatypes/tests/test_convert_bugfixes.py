@@ -36,6 +36,6 @@ def test_convert_MvS_UvS_as_Series():
     """Checks that column name in MvS is preserved as attr name in UvS"""
     y = load_airline()
     z = convert_UvS_to_MvS_as_Series(y)
-    assert y.name == z.columns.name
+    assert y.name == z.columns.names[0]
     w = convert_MvS_to_UvS_as_Series(z)
     assert y.name == w.name
