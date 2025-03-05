@@ -23,16 +23,30 @@ def _check_soft_dependencies(
 
     Parameters
     ----------
-    packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
+    packages : str or list/tuple of str nested up to two levels
         str should be package names and/or package version specifications to check.
         Each str must be a PEP 440 compatible specifier string, for a single package.
         For instance, the PEP 440 compatible package name such as ``"pandas"``;
         or a package requirement specifier string such as ``"pandas>1.2.3"``.
         arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
-        ``_check_soft_dependencies("package1")``
+
+        * ``_check_soft_dependencies("package1")``
+        * ``_check_soft_dependencies("package1", "package2")``
+        * ``_check_soft_dependencies(("package1", "package2"))``
+        * ``_check_soft_dependencies(["package1", "package2"])``
+        * ``_check_soft_dependencies(("package1", "package2"), "package3")``
+        * ``_check_soft_dependencies(["package1", "package2"], "package3")``
+        * ``_check_soft_dependencies((["package1", "package2"], "package3"))``
+
+        The first level is interpreted as conjunction, the second level as disjunction,
+        that is, conjunction = "and", disjunction = "or".
+
+        In case of more than a single arg, an outer level of "and" (brackets)
+        is added, that is,
+
         ``_check_soft_dependencies("package1", "package2")``
-        ``_check_soft_dependencies(("package1", "package2"))``
-        ``_check_soft_dependencies(["package1", "package2"])``
+
+        is the same as ``_check_soft_dependencies(("package1", "package2"))``
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
