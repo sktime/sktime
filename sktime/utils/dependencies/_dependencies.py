@@ -182,20 +182,37 @@ def _check_soft_dependencies(
         else:
             package_req = tuple(package_req)
 
+        def _is_version_req_satisfied(pkg_env_version, pkg_version_req):
+            if pkg_env_version is None:
+                return False
+            if pkg_version_req != SpecifierSet(""):
+                return pkg_env_version in pkg_version_req
+            else:
+                return True
+
         pkg_version_reqs = []
         pkg_env_versions = []
+        nontrivital_bound = []
+        req_sat = []
 
         for package in package_req:
             pkg_version_req, pkg_env_version = _get_pkg_version_and_req(package)
             pkg_version_reqs.append(pkg_version_req)
             pkg_env_versions.append(pkg_env_version)
+            nontrivital_bound.append(pkg_version_req != SpecifierSet(""))
+            req_sat.append(_is_version_req_satisfied(pkg_env_version, pkg_version_req))
 
         def _quote(x):
             return f"'{x}'"
 
         package_req_strs = [_quote(x) for x in package_req]
+        # example: ["'scipy<1.7.0'"] or ["'scipy<1.7.0'", "'numpy'"]
+
         package_str_q = " or ".join(package_req_strs)
+        # example: "'scipy<1.7.0'"" or "'scipy<1.7.0' or 'numpy'""
+
         package_str = " or ".join(f"`pip install {r}`" for r in package_req)
+        # example: "pip install scipy<1.7.0 or pip install numpy"
 
         # if package not present, make the user aware of installation reqs
         if all(pkg_env_version is None for pkg_env_version in pkg_env_versions):
@@ -222,31 +239,18 @@ def _check_soft_dependencies(
             return False
 
         # now we check compatibility with the version specifier if non-empty
-        def _is_version_req_satisfied(pkg_env_version, pkg_version_req):
-            if pkg_env_version is None:
-                return False
-            if pkg_version_req != SpecifierSet(""):
-                return pkg_env_version in pkg_version_req
-            else:
-                return True
-
-        req_sat = [
-            _is_version_req_satisfied(env, req)
-            for env, req in zip(pkg_env_versions, pkg_version_reqs)
-        ]
-
         if not any(req_sat):
             reqs_not_satisfied = [
                 x
-                for x in zip(pkg_env_versions, pkg_version_reqs)
-                if not _is_version_req_satisfied(x[0], x[1])
+                for x in zip(package_req, pkg_env_versions, req_sat)
+                if x[2] is False
             ]
-            req_not_sat_str = " or ".join([x[1] for x in reqs_not_satisfied])
-            pkg_env_version_str = " or ".join([x[0] for x in reqs_not_satisfied])
+            actual_vers = [f"{x[0]} {x[1]}" for x in reqs_not_satisfied]
+            pkg_env_version_str = ", ".join(actual_vers)
 
             msg = (
                 f"{class_name} requires package {package_str_q} to be present "
-                f"in the python environment, with version {req_not_sat_str}, "
+                f"in the python environment, with versions as specified, "
                 f"but incompatible version {pkg_env_version_str} was found. "
             )
             if obj is not None:
