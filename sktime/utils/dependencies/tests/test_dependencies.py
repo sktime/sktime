@@ -44,9 +44,9 @@ def test_check_soft_dependencies():
     _check_soft_dependencies([[ALWAYS_INSTALLED, NEVER_INSTALLED]])
     _check_soft_dependencies(
          [
-                [ALWAYS_INSTALLED, NEVER_INSTALLED],
-                [ALWAYS_INSTALLED_W_V, NEVER_INSTALLED_W_V],
-                ALWAYS_INSTALLED2
+            [ALWAYS_INSTALLED, NEVER_INSTALLED],
+            [ALWAYS_INSTALLED_W_V, NEVER_INSTALLED_W_V],
+            ALWAYS_INSTALLED2
          ]
     )
 
