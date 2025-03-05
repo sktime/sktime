@@ -79,7 +79,14 @@ def _check_soft_dependencies(
         packages = packages[0]
 
     def _is_str_or_tuple_of_strs(obj):
+        """Check that obj is a str or list/tuple nesting up to 1st level of str.
 
+        Valid examples:
+
+        * "pandas"
+        * ("pandas", "scikit-learn")
+        * ["pandas", "scikit-learn"]
+        """
         if isinstance(obj, (tuple, list)):
             return all(isinstance(x, str) for x in obj)
 
