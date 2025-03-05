@@ -311,7 +311,10 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
             "or `pip install sktime[mlflow]` to install the package."
         )
 
-    return _check_soft_dependencies("mlflow", msg=msg, severity=severity)
+    # we allow mlflow and mlflow-skinny, at least one must be present
+    MLFLOW_DEPS = [["mlflow", "mlflow-skinny"]]
+
+    return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
 
 
 @lru_cache
