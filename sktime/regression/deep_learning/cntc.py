@@ -267,4 +267,4 @@ class CNTCRegressor(BaseDeepRegressor):
                 {"metrics": None},
                 {"random_state": 0},
             ]
-        return params
+        return paramsgit add sktime/regression/deep_learning/cntc.py
