@@ -151,7 +151,6 @@ def _check_soft_dependencies(
 
     # each element of the list "package" must be satisfied
     for package_req in packages:
-
         # for elemehts, two cases can happen:
         #
         # 1. package is a string, e.g., "pandas". Then this must be present.
@@ -214,7 +213,9 @@ def _check_soft_dependencies(
 
         if not any(req_sat):
             reqs_not_satisfied = [
-                x for x in zip(pkg_env_versions, pkg_version_reqs) if not _is_version_req_satisfied(x[0], x[1])  # noqa: E501
+                x
+                for x in zip(pkg_env_versions, pkg_version_reqs)
+                if not _is_version_req_satisfied(x[0], x[1])
             ]
             req_not_sat_str = " or ".join([x[1] for x in reqs_not_satisfied])
             pkg_env_version_str = " or ".join([x[0] for x in reqs_not_satisfied])
