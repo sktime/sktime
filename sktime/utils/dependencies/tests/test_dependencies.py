@@ -17,7 +17,7 @@ def test_check_soft_dependencies():
     ALWAYS_INSTALLED2 = "numpy"
     ALWAYS_INSTALLED_W_V = "sktime>=0.5.0"
     ALWAYS_INSTALLED_W_V2 = "numpy>=0.1.0"
-    NEVER_INSTALLED = "____nonexistent_package_foo_bar"
+    NEVER_INSTALLED = "nonexistent__package_foo_bar"
     NEVER_INSTALLED_W_V = "sktime<0.1.0"
 
     # Test that the function does not raise an error when all dependencies are installed
