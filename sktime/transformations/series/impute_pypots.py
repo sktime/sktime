@@ -16,7 +16,40 @@ check_soft_dependencies("pypots", severity="warning")
 
 
 class PyPOTSImputer(BaseTransformer):
-    """Imputer for partially observed time series using PyPOTS models."""
+    """Imputer for partially observed time series using PyPOTS models.
+
+    The PyPOTSImputer transforms input series by replacing missing values according 
+    to an imputation strategy specified by ``model``.
+
+    Parameters
+    ----------
+    model : str, default="SAITS"
+        The PyPOTS model to use for imputation. Available models are:
+        "SAITS", "BRITS", "MRNN", "GPVAE", "Transformer".
+    model_params : dict, optional
+        Additional parameters to pass to the PyPOTS model. Default is None.
+    n_epochs : int, default=100
+        Number of epochs to train the PyPOTS model.
+    batch_size : int, default=32
+        Batch size for training the PyPOTS model.
+    patience : int, default=10
+        Number of epochs with no improvement after which training will be stopped.
+    random_state : int, optional
+        Seed for the random number generator. Default is None.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.impute_pypots import PyPOTSImputer
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> transformer = PyPOTSImputer(model="SAITS")
+    >>> transformer.fit(y_train)
+    PyPOTSImputer(...)
+    >>> y_test.iloc[3] = np.nan
+    >>> y_hat = transformer.transform(y_test)
+    """
 
     _tags = {
         "scitype:transform-input": "Series",
