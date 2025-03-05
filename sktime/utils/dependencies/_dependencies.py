@@ -241,9 +241,7 @@ def _check_soft_dependencies(
         # now we check compatibility with the version specifier if non-empty
         if not any(req_sat):
             reqs_not_satisfied = [
-                x
-                for x in zip(package_req, pkg_env_versions, req_sat)
-                if x[2] is False
+                x for x in zip(package_req, pkg_env_versions, req_sat) if x[2] is False
             ]
             actual_vers = [f"{x[0]} {x[1]}" for x in reqs_not_satisfied]
             pkg_env_version_str = ", ".join(actual_vers)
