@@ -382,7 +382,7 @@ class BaggingForecaster(BaseForecaster):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set = 'default'):
         """Return testing parameter settings for the estimator.
 
         Returns
@@ -400,13 +400,20 @@ class BaggingForecaster(BaseForecaster):
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
-        params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+        params = [{"bootstrap_transformer": mbb},
+                  {"forecaster": fcst},
+                  {'sp': 2},
+                  {'random_state': None}]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
         if _check_soft_dependencies("statsmodels", severity="none"):
             params += [{}]
-
+        if parameter_set == 'default':
+            params = [{'bootstrap_transformation': None},
+                      {'forcaster': None},
+                      {'sp': 2},
+                      {'random_state': None}]
         return params
 
     def _calculate_data_quantiles(self, df: pd.DataFrame, alpha: list[float]):
