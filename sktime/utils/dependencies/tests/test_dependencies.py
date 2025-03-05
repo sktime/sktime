@@ -53,6 +53,7 @@ def test_check_soft_dependencies():
     # disjunction cases, "or" - negative cases
     with pytest.raises(ModuleNotFoundError):
         _check_soft_dependencies([[NEVER_INSTALLED, NEVER_INSTALLED_W_V]])
+    with pytest.raises(ModuleNotFoundError):
         _check_soft_dependencies(
             [
                 [NEVER_INSTALLED, NEVER_INSTALLED_W_V],
