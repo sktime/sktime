@@ -195,7 +195,7 @@ def _check_soft_dependencies(
 
         package_req_strs = [_quote(x) for x in package_req]
         package_str_q = " or ".join(package_req_strs)
-        package_str = " or ".join(f"pip install {r}" for r in package_req)
+        package_str = " or ".join(f"`pip install {r}`" for r in package_req)
 
         # if package not present, make the user aware of installation reqs
         if all(pkg_env_version is None for pkg_env_version in pkg_env_versions):
@@ -213,7 +213,7 @@ def _check_soft_dependencies(
                 )
             msg = msg + (
                 f"To install the requirement {package_str_q}, please run: "
-                f"`pip install {package_str}` "
+                f"{package_str} "
             )
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
