@@ -23,7 +23,7 @@ else:
 __author__ = ["Ankit-1204"]
 
 
-class TabDataset(DataSet):
+class TabTrainDataset(DataSet):
     """Implements Pytorch Dataset class for Training TabTransformer."""
 
     def __init__(self, X, y, cat_idx) -> None:
@@ -48,6 +48,29 @@ class TabDataset(DataSet):
     def __getitem__(self, index):
         """Return data point."""
         return self.x_cat[index], self.x_con[index], self.y[index]
+
+
+class TabPredDataset(DataSet):
+    """Implements Pytorch Dataset class for Predicting with TabTransformer."""
+
+    def __init__(self, X, cat_idx) -> None:
+        self.X = X
+        self.cat_idx = cat_idx
+        self._prepare_data()
+
+    def _prepare_data(self):
+        self.x_cat = self.X[:, self.cat_idx].long()
+        self.x_con = self.X[
+            :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
+        ]
+
+    def __len__(self):
+        """Get length of the dataset."""
+        return len(self.X)
+
+    def __getitem__(self, index):
+        """Return data point."""
+        return self.x_cat[index], self.x_con[index]
 
 
 class Tab_Transformer(NNModule):
@@ -124,8 +147,8 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
     ----------
     num_cat_class : list,
         array of unique classes for each categorical feature
-    num_cont_features : int,
-        number of continuos features
+    cat_idx : list,
+        Indices for the categorcal features
     embedding dim : int,
         value of embedding dimension
     n_transformer_layer : int,
@@ -144,12 +167,11 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
 
     def __init__(
         self,
-        num_cat_class,
-        cat_idx,
-        num_cont_features,
-        embedding_dim,
-        n_transformer_layer,
-        n_heads,
+        num_cat_class=[],
+        cat_idx=0,
+        embedding_dim=5,
+        n_transformer_layer=5,
+        n_heads=1,
         num_epochs=16,
         batch_size=8,
         lr=0.001,
@@ -160,7 +182,6 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
     ):
         self.num_cat_class = num_cat_class
         self.cat_idx = cat_idx
-        self.num_cont_features = num_cont_features
         self.embedding_dim = embedding_dim
         self.n_transformer_layer = n_transformer_layer
         self.n_heads = n_heads
@@ -190,9 +211,10 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _build_network(self, y):
+    def _build_network(self, X, y):
         self.output_dim = y.shape[0]
-        self.network = Tab_Transformer(
+        self.num_cont_features = X.shape[1] - len(self.cat_idx)
+        return Tab_Transformer(
             self.num_cat_class,
             self.num_cont_features,
             self.embedding_dim,
@@ -209,7 +231,7 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_train, "build_dataset") and callable(
                 self.custom_dataset_train.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
+                self.custom_dataset_train.build_dataset(X, self.cat_idx)
                 dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
@@ -218,19 +240,111 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
                     "documentation."
                 )
         else:
-            dataset = TabDataset(X=X, y=y, cat_idx=self.cat_idx)
+            dataset = TabTrainDataset(X=X, y=y, cat_idx=self.cat_idx)
         return DataLoader(dataset=dataset, batch_size=self.batch_size)
+
+    def build_pytorch_pred_dataloader(self, X):
+        """Build PyTorch DataLoader for prediction."""
+        from torch.utils.data import DataLoader
+
+        if self.custom_dataset_pred:
+            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
+                self.custom_dataset_pred.build_dataset
+            ):
+                self.custom_dataset_train.build_dataset(X, self.cat_idx)
+                dataset = self.custom_dataset_train
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please"
+                    f"refer to the {self.__class__.__name__}.build_dataset"
+                    "documentation."
+                )
+        else:
+            dataset = TabPredDataset(X=X, cat_idx=self.cat_idx)
+
+        return DataLoader(
+            dataset,
+            self.batch_size,
+        )
+
+    def _run_epoch(self, epoch, dataloader):
+        for x_cat, x_con, y in dataloader:
+            y_pred = self.network(x_cat, x_con)
+            loss = self._criterion(y_pred, y)
+            self._optimizer.zero_grad()
+            loss.backward()
+            self._optimizer.step()
 
     def _fit(self, X, y):
         r"""Fit the model on input.
 
         Parameters
         ----------
-        X :
+        X : 2d numpy array, shape = (n_instances,n_features)
         y : 1d or 2d numpy array
-            for classification, shape = (n_instances)
             for regression, shape = (n_instances, n_dimensions)
         """
-        dataloader = self._build_network(X, y)
-        dataloader
-        return
+        self.network = self._build_network(X, y)
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+        dataloader = self.build_pytorch_train_dataloader(X, y)
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+    def _predict(self, X):
+        r"""Predict with fitted model.
+
+        Parameters
+        ----------
+        X : 2d numpy array, shape = (n_instances,n_features)
+        """
+        from torch import cat
+
+        dataloader = self.build_pytorch_pred_dataloader(X)
+        self.network.eval()
+        y_pred = []
+        for x, _ in dataloader:
+            y_pred.append(self.network(x).detach())
+        y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
+        """
+        params = [
+            {},
+            {
+                "num_cat_class": [],
+                "cat_idx": 0,
+                "embedding_dim": 9,
+                "n_transformer_layer": 3,
+                "n_heads": 3,
+                "num_epochs": 50,
+                "batch_size": 16,
+                "lr": 0.1,
+                "criterion": None,
+                "criterion_kwargs": None,
+                "optimizer": None,
+                "optimizer_kwargs": None,
+            },
+        ]
+
+        return params
