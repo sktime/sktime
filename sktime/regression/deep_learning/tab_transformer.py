@@ -1,6 +1,6 @@
 """TabTransformer : Modeling Tabular Data using Contextual Embedding."""
 
-from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
+from sktime.regression.base import BaseRegressor
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -36,9 +36,9 @@ class TabTrainDataset(DataSet):
         self._prepare_data()
 
     def _prepare_data(self):
-        self.x_cat = self.X[:, self.cat_idx].long()
+        self.x_cat = self.X[:, :, self.cat_idx].long()
         self.x_con = self.X[
-            :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
+            :, :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
         ]
 
     def __len__(self):
@@ -59,9 +59,9 @@ class TabPredDataset(DataSet):
         self._prepare_data()
 
     def _prepare_data(self):
-        self.x_cat = self.X[:, self.cat_idx].long()
+        self.x_cat = self.X[:, :, self.cat_idx].long()
         self.x_con = self.X[
-            :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
+            :, :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
         ]
 
     def __len__(self):
@@ -139,7 +139,7 @@ class Tab_Transformer(NNModule):
         return feed
 
 
-class TabTransformerRegressor(BaseDeepNetworkPyTorch):
+class TabTransformerRegressor(BaseRegressor):
     r"""
     Tab Transformer for Tabular Data.
 
@@ -164,6 +164,11 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
     Xin Huang, Ashish Khetan, Milan Cvitkovic, Zohar Karnin
     https://arxiv.org/pdf/2012.06678
     """
+
+    _tags = {
+        "X_inner_mtype": "numpy3D",
+        "capability:multivariate": True,
+    }
 
     def __init__(
         self,
@@ -280,10 +285,11 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
 
         Parameters
         ----------
-        X : 2d numpy array, shape = (n_instances,n_features)
+        X : 3d numpy array, shape = (n_instances,n_features,seq_length)
         y : 1d or 2d numpy array
             for regression, shape = (n_instances, n_dimensions)
         """
+        X = X.transpose(0, 2, 1)
         self.network = self._build_network(X, y)
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -297,10 +303,11 @@ class TabTransformerRegressor(BaseDeepNetworkPyTorch):
 
         Parameters
         ----------
-        X : 2d numpy array, shape = (n_instances,n_features)
+        X : 3d numpy array, shape = (n_instances,n_features,seq_length)
         """
         from torch import cat
 
+        X = X.transpose(0, 2, 1)
         dataloader = self.build_pytorch_pred_dataloader(X)
         self.network.eval()
         y_pred = []
