@@ -13,7 +13,7 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1][2]_.
+    """Fully Connected Neural Network (FCN), as described in [1]_ and [2]_.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
@@ -44,11 +44,11 @@ class FCNClassifier(BaseDeepClassifier):
 
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    .. [1] Zhao et al, Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics, 28(1):2017.
 
-    .. [2] Wang et. al, Time series classification from scratch with 
-    deep neural networks: A strong baseline. 
+    .. [2] Wang et al, Time series classification from scratch with
+    deep neural networks: A strong baseline.
     2017 International Joint Conference on Neural Networks (IJCNN)
 
     Examples
