@@ -9,6 +9,7 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
+
 # todo: add any necessary sktime internal imports here
 
 
@@ -76,9 +77,8 @@ class Aggregator(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    def __init__(self, flatten_single_levels=True, show_warnings = True):
+    def __init__(self, flatten_single_levels=True):
         self.flatten_single_levels = flatten_single_levels
-        self.show_warnings = show_warnings
 
         super().__init__()
 
@@ -102,9 +102,6 @@ class Aggregator(BaseTransformer):
                 "Returning X unchanged.",
                 obj=self,
             )
-            if self.show_warnings:
-                print("Aggregator is intended for use with X.index.nlevels > 1. ")
-
 
             return X
         # check the tests are ok
@@ -194,7 +191,7 @@ class Aggregator(BaseTransformer):
         return X
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set = 'default'):
         """Return testing parameter settings for the estimator.
 
         Returns
@@ -263,7 +260,7 @@ def _flatten_single_indexes(X):
             # or at the second most aggregate level and there is 1 agg to add,
             #   but the top level has more than one unique index
             add_indicator2 = (len(agg_ids) > 1) | (
-                (len(agg_ids) == 1) & (ind_df.iloc[:, 0].nunique() > 1)
+                    (len(agg_ids) == 1) & (ind_df.iloc[:, 0].nunique() > 1)
             )
 
             if add_indicator1 | add_indicator2:
