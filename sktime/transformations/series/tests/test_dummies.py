@@ -15,7 +15,8 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 @pytest.mark.skipif(
     not run_test_for_class([SeasonalDummiesOneHot])
-    or _check_soft_dependencies("pandas<2.0.0"),  # pandas 2.0.0 does not accept ME freq
+    or _check_soft_dependencies("pandas<2.0.0", severity="none"),
+    # pandas 2.0.0 does not accept ME freq
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_seasonal_dummies():
