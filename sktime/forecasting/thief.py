@@ -51,6 +51,9 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.mapa import MAPAForecaster
+from sktime.transformations.hierarchical.reconcile import (
+    _get_g_matrix_ols,
+)
 
 # todo: add any necessary imports here
 
@@ -103,10 +106,27 @@ class THieFForecaster(BaseForecaster):
         self.forecasters = {}
         super().__init__()
 
-    def _reconcile_forecasts(self, forecasts):
-        """Reconcile forecasts using the specified reconciliation method."""
-        # TRFORM_LIST = Reconciler().METHOD_LIST - ["td_fcst"]
-        # METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
+        TRFORM_LIST = ["bu", "ols", "wls_str", "mint_cov", "mint_shrink", "wls_var"]
+        if self.reconciliation_method not in TRFORM_LIST:
+            raise ValueError(
+                f"{self.reconciliation_method} has not been implemented for THieF."
+            )
+
+    def _convert_forecasts_to_multiindex(self, forecasts):
+        levels = []
+        dates = []
+        values = []
+
+        for level, forecast_values in forecasts.items():
+            levels.extend([level] * len(forecast_values.index))
+            dates.extend(forecast_values.index)
+            values.extend(forecast_values.values.tolist())
+
+        multi_index = pd.MultiIndex.from_tuples(list(zip(levels, dates)))
+        values = np.array(values).flatten()
+        df = pd.DataFrame(values, index=multi_index)
+
+        return df
 
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
@@ -131,13 +151,64 @@ class THieFForecaster(BaseForecaster):
 
             m = freq_map.get(freq[0].capitalize())
 
+        if isinstance(m, pd.Timedelta):
+            m = m.days
+
         if m is None:
             raise ValueError(f"Unsupported frequency '{freq}'.")
 
-        if isinstance(m, pd.Timedelta):
-            m = m.days
         aggregation_levels = [i for i in range(1, m + 1) if m % i == 0]
+
         return aggregation_levels
+
+    def _divide_fh(self, fh, level):
+        """Convert fh into aggregated levels."""
+        from sktime.forecasting.base import ForecastingHorizon
+
+        fh_vals = fh.to_numpy()
+        if np.issubdtype(fh_vals.dtype, np.datetime64):
+            reference_date = fh_vals.min()
+            fh_vals = (fh_vals - reference_date).astype("timedelta64[D]").astype(int)
+        if isinstance(fh_vals[0], pd.Period):
+            reference_date = fh_vals[0]
+            fh_vals = np.array(
+                [p.ordinal - reference_date.ordinal + 1 for p in fh_vals]
+            )
+
+        new_vals = np.unique(
+            [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
+        )
+        return ForecastingHorizon(new_vals, is_relative=True)
+
+    def _reconcile_forecasts(self, forecasts):
+        """Reconcile forecasts using the specified reconciliation method."""
+        if self.reconciliation_method == "bu":
+            reconciled_forecast = {}
+            levels = sorted(forecasts.keys())
+
+            reconciled_forecast[levels[0]] = forecasts[levels[0]].copy()
+
+            for level in levels[1:]:
+                reconciled_forecast[level] = (
+                    reconciled_forecast[levels[0]]
+                    .rolling(window=level, min_periods=1)
+                    .sum()
+                )
+
+            return pd.DataFrame(
+                reconciled_forecast[levels[0]].values.flatten(),
+                index=reconciled_forecast[levels[0]].index,
+            )
+
+        elif self.reconciliation_method == "ols":
+            hier = self._convert_forecasts_to_multiindex(forecasts)
+            hier = hier.unstack(level=0)
+            g_ols = _get_g_matrix_ols(hier)
+            print(g_ols)
+            reconciled_values = g_ols @ hier.values
+            dates = hier.index.get_level_values(1).unique()
+
+            return pd.DataFrame(reconciled_values, index=dates)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -199,25 +270,6 @@ class THieFForecaster(BaseForecaster):
 
         return self
 
-    def _divide_fh(self, fh, level):
-        """Convert fh into aggregated levels."""
-        from sktime.forecasting.base import ForecastingHorizon
-
-        fh_vals = fh.to_numpy()
-        if np.issubdtype(fh_vals.dtype, np.datetime64):
-            reference_date = fh_vals.min()
-            fh_vals = (fh_vals - reference_date).astype("timedelta64[D]").astype(int)
-        if isinstance(fh_vals[0], pd.Period):
-            reference_date = fh_vals[0]
-            fh_vals = np.array(
-                [p.ordinal - reference_date.ordinal + 1 for p in fh_vals]
-            )
-
-        new_vals = np.unique(
-            [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
-        )
-        return ForecastingHorizon(new_vals, is_relative=True)
-
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -248,10 +300,10 @@ class THieFForecaster(BaseForecaster):
         self._forecast_store = {}
         for level, forecaster in self.forecasters.items():
             fh_level = self._divide_fh(fh, level)
-            if not fh_level:
-                continue
-            y_pred_agg = forecaster.predict(fh=fh_level, X=X)
-            self._forecast_store[level] = y_pred_agg
+            if fh_level:
+                y_pred_agg = forecaster.predict(fh=fh_level, X=X)
+                if not y_pred_agg.isna().values.any():
+                    self._forecast_store[level] = y_pred_agg
 
         result = self._reconcile_forecasts(self._forecast_store)
 
