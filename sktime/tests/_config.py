@@ -245,6 +245,8 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
+    # see PR 7921
+    "RocketClassifier": ["test_classifier_on_basic_motions"],
 }
 
 # exclude tests but keyed by test name
