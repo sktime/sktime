@@ -98,6 +98,7 @@ class ARLagOrderSelector(BaseParamFitter):
         "scitype:X": "Series",
         "capability:missing_values": False,
         "capability:multivariate": False,
+        "capability:pairwise": True,
         "authors": "satvshr",
         "python_dependencies": "statsmodels",
     }
@@ -124,10 +125,10 @@ class ARLagOrderSelector(BaseParamFitter):
         self.missing = missing
         super().__init__()
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
         """Fit estimator and estimate parameters.
 
-        private _fit containing the core logic, called from fit
+        Private _fit containing the core logic, called from fit.
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -137,6 +138,9 @@ class ARLagOrderSelector(BaseParamFitter):
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Time series to which to fit the estimator.
             If exog is passed in fit, X is the endogenous variable.
+        y : array-like, optional (default=None)
+            Exogenous variables used for fitting the estimator.
+            Acts as the exog parameter in the underlying model.
 
         Returns
         -------
@@ -146,6 +150,7 @@ class ARLagOrderSelector(BaseParamFitter):
 
         self.results = ar_select_order(
             X,
+            exog=y,
             maxlag=self.maxlag,
             ic=self.ic,
             trend=self.trend,
