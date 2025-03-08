@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.utils._testing.forecasting import _make_series
 
 
 class ParamFitterFixtureGenerator(BaseFixtureGenerator):
@@ -37,3 +38,25 @@ class TestAllParamFitters(ParamFitterFixtureGenerator, QuickTester):
 
         # there should be at least one parameter fitted
         assert len(gfp_ret) > 0
+
+    def test_update(self, estimator_instance):
+        """Test that update works as expected."""
+        X = _make_series(n_timepoints=50, return_mtype="pd.DataFrame")
+        X1 = X.iloc[:25]
+        X2 = X.iloc[25:40]
+        X3 = X.iloc[40:]
+
+        estimator_instance.fit(X1)
+
+        gfp_ret = estimator_instance.get_fitted_params()
+        assert isinstance(gfp_ret, dict)
+
+        estimator_instance.update(X2)
+
+        gfp_ret = estimator_instance.get_fitted_params()
+        assert isinstance(gfp_ret, dict)
+
+        estimator_instance.update(X3)
+
+        gfp_ret = estimator_instance.get_fitted_params()
+        assert isinstance(gfp_ret, dict)
