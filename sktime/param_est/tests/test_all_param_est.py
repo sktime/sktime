@@ -41,10 +41,10 @@ class TestAllParamFitters(ParamFitterFixtureGenerator, QuickTester):
 
     def test_update(self, estimator_instance):
         """Test that update works as expected."""
-        X = _make_series(n_timepoints=60, return_mtype="pd.DataFrame")
-        X1 = X.iloc[:50]
-        X2 = X.iloc[50:55]
-        X3 = X.iloc[55:]
+        X = _make_series(n_timepoints=100, return_mtype="pd.DataFrame")
+        X1 = X.iloc[:80]
+        X2 = X.iloc[80:90]
+        X3 = X.iloc[90:]
 
         estimator_instance.fit(X1)
 
