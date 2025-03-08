@@ -6,12 +6,12 @@ __all__ = ["HierarchyEnsembleForecaster"]
 
 
 import pandas as pd
-from parallel_with_ray import parallelize
 
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
 
