@@ -2,6 +2,7 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCRegressor"]
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
@@ -72,19 +73,19 @@ class CNTCRegressor(BaseDeepRegressor):
     }
 
     def __init__(
-        self,
-        n_epochs=2000,
-        batch_size=16,
-        filter_sizes=(16, 8),
-        kernel_sizes=(1, 1),
-        rnn_size=64,
-        lstm_size=8,
-        dense_size=64,
-        callbacks=None,
-        verbose=False,
-        loss="mean_squared_error",
-        metrics=None,
-        random_state=0,
+            self,
+            n_epochs=2000,
+            batch_size=16,
+            filter_sizes=(16, 8),
+            kernel_sizes=(1, 1),
+            rnn_size=64,
+            lstm_size=8,
+            dense_size=64,
+            callbacks=None,
+            verbose=False,
+            loss="mean_squared_error",
+            metrics=None,
+            random_state=0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -248,3 +249,22 @@ class CNTCRegressor(BaseDeepRegressor):
         X2 = self.prepare_input(X)
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
         return preds
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        if parameter_set == 'default':
+            params = [
+                {"n_epochs": 2000},
+                {"batch_size": 16},
+                {"filter_sizes": (16, 8)},
+                {"kernel_sizes": (1, 1)},
+                {"rnn_size": 64},
+                {"lstm_size": 8},
+                {"dense_size": 64},
+                {"callbacks": None},
+                {"verbose": False},
+                {"loss": "mean_squared_error"},
+                {"metrics": None},
+                {"random_state": 0},
+            ]
+            return params
