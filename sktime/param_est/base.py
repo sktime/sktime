@@ -299,7 +299,7 @@ class BaseParamFitter(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal X, y with the new X, y
-        self._update_y_X(y_inner, X_inner)
+        self._update_X_y(X_inner, y_inner)
 
         # checks and conversions complete, pass to inner update
         _safe_call(self._update, args=(), kwargs={"X": X_inner, "y": y_inner})
