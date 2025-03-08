@@ -193,11 +193,14 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             """Get package name from requirement string."""
             return Requirement(req).name
 
-        noncomp = False
-        for softdep in softdeps:
-            # variable: does any softdep string start with one of the non-compatibles
-            noncomp_sd = any([_pkg_name(softdep) == pkg for pkg in NOT_NP2_COMPATIBLE])
-            noncomp = noncomp or noncomp_sd
+        def _is_notcomp(deps):
+            """Check if softdep is in NOT_NP2_COMPATIBLE."""
+            if isinstance(deps, str):
+                deps = [deps]
+            return any([_pkg_name(dep) in NOT_NP2_COMPATIBLE for dep in deps])
+
+        # variable: does any softdep string start with one of the non-compatibles
+        noncomp = any([_is_notcomp(softdep) for softdep in softdeps])
 
         if noncomp:
             softdeps = softdeps + ["numpy<2.0"]
