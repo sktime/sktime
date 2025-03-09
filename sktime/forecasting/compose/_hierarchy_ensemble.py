@@ -15,101 +15,6 @@ from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
 
-def level_fit(params, meta):
-    """Fit a single forecaster.
-
-    Called from _fit if by=level was set to allow for parallelization.
-
-    Parameters
-    ----------
-    params: tuples
-        (str, estimator, int or list of tuple/s)
-        If called from the _fit function this will contain the self.forecasters_ list
-    meta: dict
-        Meta dictionary for parallelization. Needs to contain (at least)
-        the following keys:
-        z: pd.Series
-            The aggregated target time series
-        X: pd.DataFrame, None
-            The aggregated input data
-        hier_dict: dict
-            The level dictionary as created by the get_hier_dict function
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-    """
-    _, forecaster, level = params
-    z = meta["z"]
-    X = meta["X"]
-    hier_dict = meta["hier_dict"]
-    if level in hier_dict.keys():
-        frcstr = forecaster
-        df = z[z.index.droplevel(-1).isin(hier_dict[level])]
-        if X is not None:
-            X = X.loc[df.index]
-        frcstr.fit(df, fh=meta["fh"], X=X)
-    return frcstr, df
-
-
-def node_fit(params, meta):
-    """Fit a single forecaster.
-
-    Called from _fit if by=node was set to allow for parallelization.
-
-    Parameters
-    ----------
-    params: tuples
-        (str, estimator, int or list of tuple/s)
-        If called from the _fit function this will contain the node_dict from the
-        get_node_dict function
-    meta: dict
-        Meta dictionary for parallelization. Needs to contain (at least) the
-        following keys:
-        z: pd.Series
-            The aggregated target time series
-        X: pd.DataFrame, None
-            The aggregated input data
-        fcstr_dict: dict
-            The forecaster dictionary as created by the get_node_dict function
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-    """
-    key, node = params
-    z = meta["z"]
-    X = meta["X"]
-    frcstr = meta["fcstr_dict"][key]
-    df = z[z.index.droplevel(-1).isin(node)]
-    if X is not None:
-        X = X.loc[df.index]
-    frcstr.fit(df, fh=meta["fh"], X=X)
-    return frcstr, df
-
-
-def predict(params, meta):
-    """Predict a single forecaster.
-
-    Called from _predict to allow for parallelization.
-
-    Parameters
-    ----------
-    params: tuples
-        (estimator, str)
-        If called from the _predict function this will contain the self.fitted list
-    meta: dict
-        Meta dictionary for parallelization. Needs to contain (at least)
-        the following keys:
-        X: pd.DataFrame, None
-            The aggregated input data
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-    """
-    X = meta["x"]
-    fh = meta["fh"]
-    if X is not None and X.index.nlevels > 1:
-        X = X[X.index.droplevel(-1).isin(params[1])]
-    pred = params[0].predict(fh=fh, X=X)
-    return pred
-
-
 class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Aggregates hierarchical data, fit forecasters and make predictions.
 
@@ -784,3 +689,98 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params3 = {"forecasters": NaiveForecaster()}
 
         return [params1, params2, params3]
+
+
+def level_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=level was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the self.forecasters_ list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        hier_dict: dict
+            The level dictionary as created by the get_hier_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    _, forecaster, level = params
+    z = meta["z"]
+    X = meta["X"]
+    hier_dict = meta["hier_dict"]
+    if level in hier_dict.keys():
+        frcstr = forecaster
+        df = z[z.index.droplevel(-1).isin(hier_dict[level])]
+        if X is not None:
+            X = X.loc[df.index]
+        frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def node_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=node was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the node_dict from the
+        get_node_dict function
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least) the
+        following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        fcstr_dict: dict
+            The forecaster dictionary as created by the get_node_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    key, node = params
+    z = meta["z"]
+    X = meta["X"]
+    frcstr = meta["fcstr_dict"][key]
+    df = z[z.index.droplevel(-1).isin(node)]
+    if X is not None:
+        X = X.loc[df.index]
+    frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def predict(params, meta):
+    """Predict a single forecaster.
+
+    Called from _predict to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (estimator, str)
+        If called from the _predict function this will contain the self.fitted list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        X: pd.DataFrame, None
+            The aggregated input data
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    X = meta["x"]
+    fh = meta["fh"]
+    if X is not None and X.index.nlevels > 1:
+        X = X[X.index.droplevel(-1).isin(params[1])]
+    pred = params[0].predict(fh=fh, X=X)
+    return pred
