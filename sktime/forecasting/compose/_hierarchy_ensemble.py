@@ -11,6 +11,7 @@ from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
 
@@ -219,31 +220,42 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.fitted_list_.append([frcstr, y.index])
             return self
 
+        meta = {"X": x, "z": z, "fh": fh}
+        backend = self.get_config()["backend:parallel"]
+        backend_params = self.get_config()["backend:parallel:params"]
+
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
-            for _, forecaster, level in self.forecasters_:
-                if level in hier_dict.keys():
-                    frcstr = forecaster
-                    df = z[z.index.droplevel(-1).isin(hier_dict[level])]
-                    if X is not None:
-                        x = X.loc[df.index]
-                    frcstr.fit(df, fh=fh, X=x)
-                    self.fitted_list_.append([frcstr, df.index.droplevel(-1).unique()])
-                    self.forecasters_ = [
-                        (name, frcstr if f == forecaster else f, level)
-                        for name, f, level in self.forecasters_
-                    ]
+            meta["hier_dict"] = hier_dict
 
+            fcstr_list = parallelize(
+                level_fit,
+                iter=self.forecasters_,
+                meta=meta,
+                backend=backend,
+                backend_params=backend_params,
+            )
+
+            for i in range(len(fcstr_list)):
+                self.fitted_list_.append(
+                    [fcstr_list[i][0], fcstr_list[i][1].index.droplevel(-1).unique()]
+                )
+                name, _, level = self.forecasters_[i]
+                self.forecasters_[i] = (name, fcstr_list[i][0], level)
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
-            for key, nodes in node_dict.items():
-                frcstr = frcstr_dict[key]
-                df = z[z.index.droplevel(-1).isin(nodes)]
-                if X is not None:
-                    x = X.loc[df.index]
-                frcstr.fit(df, fh=fh, X=x)
-                self.fitted_list_.append([frcstr, df.index.droplevel(-1).unique()])
+            meta["fcstr_dict"] = frcstr_dict
 
+            fcstr_list = parallelize(
+                node_fit,
+                node_dict.items(),
+                meta=meta,
+                backend=backend,
+                backend_params=backend_params,
+            )
+
+            for fcstr, df in fcstr_list:
+                self.fitted_list_.append([fcstr, df.index.droplevel(-1).unique()])
         return self
 
     def _get_hier_dict(self, z):
@@ -404,18 +416,22 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        preds = []
-
         if X is not None:
             if _check_index_no_total(X):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
-            if X is not None and X.index.nlevels > 1:
-                x = X[X.index.droplevel(-1).isin(ind)]
-            pred = forecaster.predict(fh=fh, X=x)
-            preds.append(pred)
+        meta = {"x": x, "fh": fh}
+        backend = self.get_config()["backend:parallel"]
+        backend_params = self.get_config()["backend:parallel:params"]
+
+        preds = parallelize(
+            predict,
+            self.fitted_list,
+            meta,
+            backend=backend,
+            backend_params=backend_params,
+        )
 
         preds = pd.concat(preds, axis=0)
         preds.sort_index(inplace=True)
@@ -673,3 +689,98 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params3 = {"forecasters": NaiveForecaster()}
 
         return [params1, params2, params3]
+
+
+def level_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=level was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the self.forecasters_ list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        hier_dict: dict
+            The level dictionary as created by the get_hier_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    _, forecaster, level = params
+    z = meta["z"]
+    X = meta["X"]
+    hier_dict = meta["hier_dict"]
+    if level in hier_dict.keys():
+        frcstr = forecaster
+        df = z[z.index.droplevel(-1).isin(hier_dict[level])]
+        if X is not None:
+            X = X.loc[df.index]
+        frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def node_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=node was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the node_dict from the
+        get_node_dict function
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least) the
+        following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        fcstr_dict: dict
+            The forecaster dictionary as created by the get_node_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    key, node = params
+    z = meta["z"]
+    X = meta["X"]
+    frcstr = meta["fcstr_dict"][key]
+    df = z[z.index.droplevel(-1).isin(node)]
+    if X is not None:
+        X = X.loc[df.index]
+    frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def predict(params, meta):
+    """Predict a single forecaster.
+
+    Called from _predict to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (estimator, str)
+        If called from the _predict function this will contain the self.fitted list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        X: pd.DataFrame, None
+            The aggregated input data
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    X = meta["x"]
+    fh = meta["fh"]
+    if X is not None and X.index.nlevels > 1:
+        X = X[X.index.droplevel(-1).isin(params[1])]
+    pred = params[0].predict(fh=fh, X=X)
+    return pred
