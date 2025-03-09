@@ -3321,10 +3321,12 @@
     {
       "login": "jgyasu",
       "name": "Jigyasu",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94278611",
       "profile": "https://jgyasu.github.io",
       "contributions": [
         "code",
+        "bug",
+        "test",
         "doc"
       ]
     },
