@@ -34,6 +34,7 @@ def load_from_tsfile_to_dataframe(
     return_separate_X_and_y=True,
     replace_missing_vals_with="NaN",
     encoding="utf-8",
+    y_dtype="str",
 ):
     """Load data from a .ts file into a Pandas DataFrame.
 
@@ -623,6 +624,7 @@ def load_from_tsfile(
     return_y=True,
     return_data_type="nested_univ",
     encoding="utf-8",
+    y_dtype="str",
 ):
     """Load time series .ts file into X and (optionally) y.
 
@@ -652,6 +654,9 @@ def load_from_tsfile(
         Exception is raised if the data cannot be stored in the requested type.
     encoding: str
         encoding is the name of the encoding used to read file using the open function.
+    y_dtype : str, optional, default 'float'
+        cast y to this dtype before returning, accepted arguments are
+        'str', 'int', and 'float'.
 
     Returns
     -------
@@ -690,8 +695,18 @@ def load_from_tsfile(
         return_separate_X_and_y=True,
         replace_missing_vals_with=replace_missing_vals_with,
         encoding=encoding,
+        y_dtype=y_dtype,
     )
-
+    if isinstance(y_dtype, np.dtype):
+        y = y.astype(y_dtype)
+    elif y_dtype == "str":
+        y = y.astype(str)
+    elif y_dtype == "int":
+        y = y.astype(np.int8)
+    elif y_dtype == "float":
+        y = y.astype(np.float32)
+    else:
+        raise ValueError(f"Invalid y_dtype: {y_dtype}")
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
     if return_y:
