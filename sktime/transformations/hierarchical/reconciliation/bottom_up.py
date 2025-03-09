@@ -1,7 +1,6 @@
-"""Single-level reconciliation."""
+"""Bottomup reconciliation."""
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _get_bottom_level_idxs,
     _loc_series_idxs,
@@ -33,51 +32,40 @@ class BottomUpReconciler(_ReconcilerTransformer):
         The index of the bottom level series.
     """
 
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": "felipeangelimvieira",
-        "maintainers": "felipeangelimvieira",
-        # estimator type
-        # --------------
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
-        "scitype:transform-labels": "None",
-        # todo instance wise?
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": [
-            "pd.Series",
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        "capability:hierarchical_reconciliation": True,
-    }
+    def _fit_reconciler(self, X, y=None):
+        """
+        Fit the reconciler.
 
-    def _fit_reconciler(self, X, y):
-        self._aggregator = Aggregator()
-        self._aggregator.fit(X)
-        X = self._aggregator.transform(X)
+        Sets the bottom level series index.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The target timeseries
+        y : pd.Series
+            Exogenous variables, ignored.
+        """
         self._bottom_series = _get_bottom_level_idxs(X)
 
         return self
 
     def _transform_reconciler(self, X, y=None):
-        X = self._aggregator.transform(X)
+        """
+        Filter the bottom level series.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The target timeseries
+        y : pd.Series
+            Exogenous variables, ignored.
+        """
         X_bottom = _loc_series_idxs(X, self._bottom_series)
 
         return X_bottom
 
     def _inverse_transform_reconciler(self, X, y=None):
-        X = Aggregator(flatten_single_levels=False).fit_transform(X)
-        X = _loc_series_idxs(X, self._original_series).sort_index()
+        # Do not need to do anything
+        # Since the base reconciler already aggregates and filters the
+        # timeseries
         return X

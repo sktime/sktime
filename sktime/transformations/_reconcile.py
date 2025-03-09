@@ -73,6 +73,9 @@ class _ReconcilerTransformer(BaseTransformer):
         if self._no_hierarchy:
             return self
         self._original_series = X.index.droplevel(-1).unique()
+        self.aggregator_ = Aggregator()
+        self.aggregator_.fit(X)
+        X = self.aggregator_.transform(X)
         return self._fit_reconciler(X, y)
 
     def _transform(self, X, y=None):
@@ -96,6 +99,7 @@ class _ReconcilerTransformer(BaseTransformer):
         """
         if self._no_hierarchy:
             return X
+        X = self.aggregator_.transform(X)
         return self._transform_reconciler(X, y)
 
     def _inverse_transform(self, X, y):

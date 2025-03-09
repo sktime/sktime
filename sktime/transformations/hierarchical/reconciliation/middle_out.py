@@ -1,4 +1,4 @@
-"""Single-level reconciliation."""
+"""Middle-out reconciler reconciliation."""
 
 import warnings
 
@@ -25,6 +25,48 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     """
     Reconciliation using a middle-out approach.
 
+    This reconciliation strategy splits the hierarchy at a given level and
+    applies a bottom-up strategy to the top part of the hierarchy and a
+    topdown strategy to the bottom part of the hierarchy.
+
+    The parameter middle-level is determined by the level according to
+    the hierarchy tree. For example, consider the following structure with four
+    levels:
+
+    ```
+    __total
+    ├── B1
+    │   ├── C1
+    │   │   ├── D1
+    │   │   └── D2
+    │   └── C2
+    │       ├── D3
+    │       └── D4
+    └── B2
+        ├── C3
+        │   ├── D5
+        │   └── D6
+    ```
+
+    If `middle_level` is set to 0, then the hierarchy is split at the root node.
+    If `middle_level` is set to 1, then the hierarchy is split at the first level
+    below the root node, in this example, the nodes [B1, B2].
+
+    It is important to note that the height of this hierarchy tree don't
+    necessarily coincides with the number of levels in the pd.DataFrame index.
+    For example, the following index has 3 levels, but the tree has 4 levels:
+
+    ```
+    __total, __total, __total
+    B1, __total, __total
+    B1, C1, __total
+    ...
+    B2, __total, __total
+    B2, C3, __total
+    ...
+    ```
+
+
     Parameters
     ----------
     middle_level : int
@@ -40,28 +82,6 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         # --------------
         "authors": "felipeangelimvieira",
         "maintainers": "felipeangelimvieira",
-        # estimator type
-        # --------------
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
-        "scitype:transform-labels": "None",
-        # todo instance wise?
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": [
-            "pd.Series",
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        "capability:hierarchical_reconciliation": True,
     }
 
     def __init__(
@@ -80,6 +100,31 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         self._delegate = None
 
     def _fit_reconciler(self, X, y):
+        """
+        Fit the reconciler.
+
+        This method does the following:
+
+        - If this is the last level of the hierarchy, it delegates
+        to bottom-up reconciliation
+        - If this is the first level of the hierarchy, it delegates
+        to top-down reconciliation
+        - Otherwise, it splits the hierarchy at the middle level and detects,
+        for each middle-level nodes, its descendants and to apply the
+        reconciliation to them.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data.
+        y : pd.Series
+            Exogenous data.
+
+        Returns
+        -------
+        self : MiddleOutReconciler
+            The fitted reconciler.
+        """
         self._hierarchical_level_nodes = _get_series_for_each_hierarchical_level(
             self._original_series
         )
@@ -109,6 +154,8 @@ class MiddleOutReconciler(_ReconcilerTransformer):
 
         self.middle_level_series_ = self._hierarchical_level_nodes[self.middle_level]
 
+        # Notice that the topdown strategy needs to be fitted for each
+        # middle-level note, separately.
         self.middle_bottom_subtrees_ = self._get_middle_bottom_subtrees(X)
         self.middle_botttom_reconcilers_ = {}
         self.middle_bottom_drop_redundant_levels_ = {}
@@ -133,6 +180,20 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         return self
 
     def _get_middle_bottom_subtrees(self, X):
+        """
+        Get the subtrees below the middle-level nodes.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data.
+
+        Returns
+        -------
+        bottom_subtrees : dict
+            A dictionary with the middle-level nodes as keys and the
+            corresponding subtrees as values.
+        """
         # 2) For each middle-level aggregator node, get the subtree below it
         #    and apply the bottom approach
         bottom_subtrees = {}
@@ -144,6 +205,11 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         return bottom_subtrees
 
     def _transform_reconciler(self, X, y=None):
+        """
+        Apply the Topdown from middle to bottom.
+
+        Keeps the bottom levels according to the top-down strategy chosen.
+        """
         if self._delegate is not None:
             return self._delegate.transform(X, y)
 
@@ -188,6 +254,11 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         return Xt
 
     def _inverse_transform_reconciler(self, X, y=None):
+        """
+        Apply top-down and obtain reconciled middle-bottom forecasts.
+
+        The bottom-up is later applied in the parent reconciler class.
+        """
         if self._delegate is not None:
             return self._delegate.inverse_transform(X, y)
 

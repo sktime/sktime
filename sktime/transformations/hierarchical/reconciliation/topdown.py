@@ -3,7 +3,6 @@
 import pandas as pd
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.drop_redundant_hierarchical_levels import (  # noqa: E501
     DropRedundantHierarchicalLevels,
 )
@@ -55,10 +54,6 @@ class TopdownReconciler(_ReconcilerTransformer):
             )
 
     def _fit_reconciler(self, X, y=None):
-        self._aggregator = Aggregator()
-        self._aggregator.fit(X)
-        X = self._aggregator.transform(X)
-
         self._drop_redundant_levels = DropRedundantHierarchicalLevels()
         self._drop_redundant_levels.fit(X)
         X = self._drop_redundant_levels.transform(X)
@@ -90,8 +85,6 @@ class TopdownReconciler(_ReconcilerTransformer):
         X : pd.DataFrame
             The transformed series.
         """
-        X = Aggregator(flatten_single_levels=True).fit_transform(X)
-
         X = self._drop_redundant_levels.transform(X)
         if self.method == "td_share":
             X = self._transform_non_total_to_ratios(X)
