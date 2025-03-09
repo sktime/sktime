@@ -108,6 +108,8 @@ class Tab_Transformer(NNModule):
         self.n_transformer_layer = n_transformer_layer
         self.n_heads = n_heads
         self.output_dim = output_dim
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch.nn as nn
         self.embedding = nn.ModuleList(
             [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
         )
@@ -200,10 +202,6 @@ class TabTransformerRegressor(BaseRegressor):
         self.custom_dataset_pred = custom_dataset_pred
         self.custom_dataset_train = custom_dataset_train
         self.lr = lr
-        if self.num_cat_class is None:
-            self.num_cat_class = []
-        if self.cat_idx is None:
-            self.cat_idx = []
         super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
             import torch
@@ -229,6 +227,10 @@ class TabTransformerRegressor(BaseRegressor):
         else:
             self.output_dim = y.shape[1]
         self.num_cont_features = X.shape[2] - len(self.cat_idx)
+        if self.num_cat_class is None:
+            self.num_cat_class = []
+        if self.cat_idx is None:
+            self.cat_idx = []
         return Tab_Transformer(
             self.num_cat_class,
             self.num_cont_features,
