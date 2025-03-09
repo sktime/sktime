@@ -171,9 +171,9 @@ class TabTransformerRegressor(BaseRegressor):
 
     def __init__(
         self,
-        num_cat_class=[],
-        cat_idx=[],
-        embedding_dim=5,
+        num_cat_class=None,
+        cat_idx=None,
+        embedding_dim=6,
         n_transformer_layer=4,
         n_heads=2,
         num_epochs=16,
@@ -200,6 +200,10 @@ class TabTransformerRegressor(BaseRegressor):
         self.custom_dataset_pred = custom_dataset_pred
         self.custom_dataset_train = custom_dataset_train
         self.lr = lr
+        if self.num_cat_class is None:
+            self.num_cat_class = []
+        if self.cat_idx is None:
+            self.cat_idx = []
         super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
             import torch
@@ -379,11 +383,11 @@ class TabTransformerRegressor(BaseRegressor):
         params = [
             {},
             {
-                "num_cat_class": [],
-                "cat_idx": [],
-                "embedding_dim": 9,
+                "num_cat_class": None,
+                "cat_idx": None,
+                "embedding_dim": 8,
                 "n_transformer_layer": 3,
-                "n_heads": 4,
+                "n_heads": 2,
                 "num_epochs": 50,
                 "batch_size": 16,
                 "lr": 0.1,
