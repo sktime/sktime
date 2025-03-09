@@ -350,7 +350,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             )
 
             for fcstr, df in fcstr_list:
-                self.fitted_list_.append([fcstr, df])
+                self.fitted_list_.append([fcstr, df.index.droplevel(-1).unique()])
         return self
 
     def _get_hier_dict(self, z):
