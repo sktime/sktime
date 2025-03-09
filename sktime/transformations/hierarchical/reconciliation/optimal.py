@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconciliation._utils import (
     _is_ancestor,
 )
@@ -52,8 +51,19 @@ class OptimalReconciler(_ReconcilerTransformer):
         super().__init__()
 
     def _fit_reconciler(self, X, y):
-        self.aggregator_ = Aggregator(flatten_single_levels=True)
-        X = self.aggregator_.fit_transform(X)
+        """
+        Fit optimal reconciler.
+
+        Here, some important components are determined:
+
+        - The summation matrix S, which maps bottom levels to all levels
+        - The A and I sub-matrices of S, which map bottom levels to aggregated
+        levels, and bottom levels to themselves, respectively.
+        - The permutation matrix, that orders the series in the with aggregated
+        first, and bottom levels last.
+        - The error covariance matrix, which is used to weight the error in the
+        reconciliation.
+        """
         self.unique_series_ = _get_unique_series_from_df(X)
         self.S_ = _create_summing_matrix_from_index(self.unique_series_)
         self.A_, self.I_ = _split_summing_matrix(self.S_)
@@ -67,7 +77,6 @@ class OptimalReconciler(_ReconcilerTransformer):
         self._permutation_matrix = _get_permutation_matrix(self.S_)
 
     def _transform_reconciler(self, X, y):
-        X = self.aggregator_.transform(X)
         return X
 
     @property
@@ -83,7 +92,20 @@ class OptimalReconciler(_ReconcilerTransformer):
         return self.S_.shape[0]
 
     def _inverse_transform_reconciler(self, X, y=None):
-        X_arr, M, _, _, _, Pt = self._get_arrays(X)
+        """
+        Apply the optimal reconciliation to the forecasts.
+
+        Uses the constraint matrix approach to reconcile the forecasts.
+        """
+        X_arr, C, _, E, Pt = self._get_arrays(X)
+
+        # Inverse term
+        inv = np.linalg.inv(C @ E @ C.T)
+        # The matrix that reconciles the base forecasts
+        M = np.eye(self._n_series) - E @ C.T @ inv @ C
+
+        # Expand level 0 with X_arr.shape[0] (timepoints)
+        M = np.repeat(M[np.newaxis, :, :], X_arr.shape[0], axis=0)
 
         # Reconciled forecasts
         Y = Pt @ M @ X_arr
@@ -115,6 +137,28 @@ class OptimalReconciler(_ReconcilerTransformer):
         )
 
     def _get_arrays(self, X):
+        """
+        Get the arrays needed for the reconciliation.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data.
+
+        Returns
+        -------
+        X_arr : np.ndarray
+            The input data as an ndarray (T, N_SERIES, 1), reordered
+            so that aggregated levels come first.
+        M : np.ndarray
+            The matrix that reconciles the base forecasts
+        S : np.ndarray
+            The summing matrix, reordered
+        E : np.ndarray
+            The error covariance matrix, reordered
+        Pt : np.ndarray
+            The inverse of the permutation matrix
+        """
         X = X.sort_index()
 
         # Convert to ndarray (T, N_SERIES, 1)
@@ -149,17 +193,10 @@ class OptimalReconciler(_ReconcilerTransformer):
         # reordering both columns and rows of the covariance matrix
         E = P[0] @ self._sigma.values @ Pt[0]
 
+        # The constrain matrix
         # Concat C =  [A, I_na]
         C = np.concatenate([I_na, -A], axis=1)
-
-        # Inverse term
-        inv = np.linalg.inv(C @ E @ C.T)
-        # The matrix that reconciles the base forecasts
-        M = np.eye(self._n_series) - E @ C.T @ inv @ C
-
-        # Expand level 0 with X_arr.shape[0] (timepoints)
-        M = np.repeat(M[np.newaxis, :, :], X_arr.shape[0], axis=0)
-        return X_arr, M, S, E, P, Pt
+        return X_arr, C, S, E, Pt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -210,7 +247,7 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     def _inverse_transform_reconciler(self, X, y=None):
         import cvxpy as cp
 
-        X_arr, M, S, E, P, Pt = self._get_arrays(X)
+        X_arr, _, S, E, Pt = self._get_arrays(X)
 
         X_opt = np.zeros_like(X_arr)
 
