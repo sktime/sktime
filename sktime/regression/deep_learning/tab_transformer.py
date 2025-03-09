@@ -31,14 +31,13 @@ class TabTrainDataset(DataSet):
         self.y = torch.tensor(y)
         if self.y.dim() == 1:
             self.y = self.y.unsqueeze(1)
-
         self.cat_idx = cat_idx
         self._prepare_data()
 
     def _prepare_data(self):
         self.x_cat = self.X[:, :, self.cat_idx].long()
         self.x_con = self.X[
-            :, :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
+            :, :, [i for i in range(self.X.shape[2]) if i not in self.cat_idx]
         ]
 
     def __len__(self):
@@ -47,21 +46,21 @@ class TabTrainDataset(DataSet):
 
     def __getitem__(self, index):
         """Return data point."""
-        return self.x_cat[index], self.x_con[index], self.y[index]
+        return self.x_cat[index], self.x_con[index].float(), self.y[index].float()
 
 
 class TabPredDataset(DataSet):
     """Implements Pytorch Dataset class for Predicting with TabTransformer."""
 
     def __init__(self, X, cat_idx) -> None:
-        self.X = X
+        self.X = torch.tensor(X)
         self.cat_idx = cat_idx
         self._prepare_data()
 
     def _prepare_data(self):
         self.x_cat = self.X[:, :, self.cat_idx].long()
         self.x_con = self.X[
-            :, :, [i for i in range(self.X.shape[1]) if i not in self.cat_idx]
+            :, :, [i for i in range(self.X.shape[2]) if i not in self.cat_idx]
         ]
 
     def __len__(self):
@@ -70,7 +69,7 @@ class TabPredDataset(DataSet):
 
     def __getitem__(self, index):
         """Return data point."""
-        return self.x_cat[index], self.x_con[index]
+        return self.x_cat[index], self.x_con[index].float()
 
 
 class Tab_Transformer(NNModule):
@@ -113,7 +112,9 @@ class Tab_Transformer(NNModule):
             [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
         )
         self.transformer_layer = TransformerEncoderLayer(
-            d_model=self.embedding_dim, nhead=self.n_heads, batch_first=True
+            d_model=self.embedding_dim * len(self.num_cat_class),
+            nhead=self.n_heads,
+            batch_first=True,
         )
         self.transformer = TransformerEncoder(
             self.transformer_layer, num_layers=self.n_transformer_layer
@@ -129,14 +130,12 @@ class Tab_Transformer(NNModule):
 
     def forward(self, x_cat, x_cont):
         """Implement forward for Tab Transformer."""
-        embedded = [emb(x_cat[:, i]) for i, emb in enumerate(self.embedding)]
-        embedded = torch.stack(dim=1)
-
+        embedded = [emb(x_cat[:, :, i]) for i, emb in enumerate(self.embedding)]
+        embedded = torch.cat(embedded, dim=2)
         context = self.transformer(embedded)
-        context = context.view(context.size(0), -1)
-        combined = torch.concat([context, x_cont], dim=1)
+        combined = torch.concat([context, x_cont], dim=2)
         feed = self.feed_forward(combined)
-        return feed
+        return feed[:, -1, :]
 
 
 class TabTransformerRegressor(BaseRegressor):
@@ -173,10 +172,10 @@ class TabTransformerRegressor(BaseRegressor):
     def __init__(
         self,
         num_cat_class=[],
-        cat_idx=0,
+        cat_idx=[],
         embedding_dim=5,
-        n_transformer_layer=5,
-        n_heads=1,
+        n_transformer_layer=4,
+        n_heads=2,
         num_epochs=16,
         batch_size=8,
         lr=0.001,
@@ -184,6 +183,8 @@ class TabTransformerRegressor(BaseRegressor):
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
+        custom_dataset_pred=None,
+        custom_dataset_train=None,
     ):
         self.num_cat_class = num_cat_class
         self.cat_idx = cat_idx
@@ -196,6 +197,8 @@ class TabTransformerRegressor(BaseRegressor):
         self.criterion = criterion
         self.optimizer_kwargs = optimizer_kwargs
         self.criterion_kwargs = criterion_kwargs
+        self.custom_dataset_pred = custom_dataset_pred
+        self.custom_dataset_train = custom_dataset_train
         self.lr = lr
         super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
@@ -217,8 +220,11 @@ class TabTransformerRegressor(BaseRegressor):
             }
 
     def _build_network(self, X, y):
-        self.output_dim = y.shape[0]
-        self.num_cont_features = X.shape[1] - len(self.cat_idx)
+        if y.ndim == 1:
+            self.output_dim = 1
+        else:
+            self.output_dim = y.shape[1]
+        self.num_cont_features = X.shape[2] - len(self.cat_idx)
         return Tab_Transformer(
             self.num_cat_class,
             self.num_cont_features,
@@ -272,6 +278,40 @@ class TabTransformerRegressor(BaseRegressor):
             self.batch_size,
         )
 
+    def _instantiate_optimizer(self):
+        if self.optimizer:
+            if self.optimizer in self.optimizers.keys():
+                if self.optimizer_kwargs:
+                    return self.optimizers[self.optimizer](
+                        self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
+                    )
+                else:
+                    return self.optimizers[self.optimizer](
+                        self.network.parameters(), lr=self.lr
+                    )
+            else:
+                raise TypeError(
+                    f"Please pass one of {self.optimizers.keys()} for `optimizer`."
+                )
+        else:
+            # default optimizer
+            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+
+    def _instantiate_criterion(self):
+        if self.criterion:
+            if self.criterion in self.criterions.keys():
+                if self.criterion_kwargs:
+                    return self.criterions[self.criterion](**self.criterion_kwargs)
+                else:
+                    return self.criterions[self.criterion]()
+            else:
+                raise TypeError(
+                    f"Please pass one of {self.criterions.keys()} for `criterion`."
+                )
+        else:
+            # default criterion
+            return torch.nn.MSELoss()
+
     def _run_epoch(self, epoch, dataloader):
         for x_cat, x_con, y in dataloader:
             y_pred = self.network(x_cat, x_con)
@@ -311,8 +351,8 @@ class TabTransformerRegressor(BaseRegressor):
         dataloader = self.build_pytorch_pred_dataloader(X)
         self.network.eval()
         y_pred = []
-        for x, _ in dataloader:
-            y_pred.append(self.network(x).detach())
+        for x_cat, x_cont in dataloader:
+            y_pred.append(self.network(x_cat, x_cont).detach())
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         return y_pred
 
@@ -340,10 +380,10 @@ class TabTransformerRegressor(BaseRegressor):
             {},
             {
                 "num_cat_class": [],
-                "cat_idx": 0,
+                "cat_idx": [],
                 "embedding_dim": 9,
                 "n_transformer_layer": 3,
-                "n_heads": 3,
+                "n_heads": 4,
                 "num_epochs": 50,
                 "batch_size": 16,
                 "lr": 0.1,
