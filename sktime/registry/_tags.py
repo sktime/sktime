@@ -1534,7 +1534,7 @@ class transform_returns_same_time_index(_BaseTag):
 class capability__hierarchical_reconciliation(_BaseTag):
     """Property: transformer reconciles hierarchical series.
 
-    - String name: ``"hierarchical:reconciliation"``
+    - String name: ``"capability:hierarchical_reconciliation"``
     - Public property tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
