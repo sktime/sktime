@@ -317,14 +317,65 @@ class ForecastingBenchmark(BaseBenchmark):
                 if cv_global is not None
                 else ""
             )
-        self._add_task(
-            functools.partial(
-                _factory_forecasting_validation,
-                backend=self.backend,
-                backend_params=self.backend_params,
-                error_score=error_score,
-                strategy=strategy,
-            ),
-            task_kwargs,
-            task_id=task_id,
+
+        validator = _ForecastingEvaluator(
+            backend=self.backend,
+            backend_params=self.backend_params,
+            error_score=error_score,
+            strategy=strategy,
+            **task_kwargs,
+        )
+
+        self._add_task(validator, task_id=task_id)
+
+
+class _ForecastingEvaluator:
+    """Evaluate forecasting models. Wraps forecasting evaluate."""
+
+    def __init__(
+        self,
+        dataset_loader,
+        cv,
+        strategy: str = "refit",
+        scoring: Optional[Union[callable, list[callable]]] = None,
+        return_data: bool = False,
+        error_score: Union[str, int, float] = np.nan,
+        backend: Optional[str] = None,
+        cv_X=None,
+        backend_params: Optional[dict] = None,
+        return_model: bool = False,
+        cv_global=None,
+    ):
+
+        self.cv = cv
+        self.dataset_loader = dataset_loader
+        self.strategy = strategy
+        self.scoring = scoring
+        self.return_data = return_data
+        self.error_score = error_score
+        self.backend = backend
+        self.cv_X = cv_X
+        self.backend_params = backend_params
+        self.return_model = return_model
+        self.cv_global = cv_global
+
+    def __call__(self, estimator):
+        return self.run(estimator)
+
+    def run(self, estimator):
+        data = _coerce_data_for_evaluate(self.dataset_loader)
+
+        return evaluate(
+            forecaster=estimator,
+            cv=self.cv,
+            strategy=self.strategy,
+            scoring=self.scoring,
+            return_data=self.return_data,
+            error_score=self.error_score,
+            backend=self.backend,
+            cv_X=self.cv_X,
+            backend_params=self.backend_params,
+            return_model=self.return_model,
+            cv_global=self.cv_global,
+            **data,
         )
