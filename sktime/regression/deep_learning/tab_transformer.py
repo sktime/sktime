@@ -6,7 +6,6 @@ from sktime.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
-    from torch.nn import TransformerEncoder, TransformerEncoderLayer
     from torch.utils.data import Dataset
 
     DataSet = Dataset
@@ -110,25 +109,28 @@ class Tab_Transformer(NNModule):
         self.output_dim = output_dim
         if _check_soft_dependencies("torch", severity="none"):
             import torch.nn as nn
-        self.embedding = nn.ModuleList(
-            [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
-        )
-        self.transformer_layer = TransformerEncoderLayer(
-            d_model=self.embedding_dim * len(self.num_cat_class),
-            nhead=self.n_heads,
-            batch_first=True,
-        )
-        self.transformer = TransformerEncoder(
-            self.transformer_layer, num_layers=self.n_transformer_layer
-        )
-        self.feed_forward = nn.Sequential(
-            nn.Linear(
-                self.embedding_dim * len(self.num_cat_class) + self.num_cont_features,
-                128,
-            ),
-            nn.ReLU(),
-            nn.Linear(128, self.output_dim),
-        )
+            from torch.nn import TransformerEncoder, TransformerEncoderLayer
+
+            self.embedding = nn.ModuleList(
+                [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
+            )
+            self.transformer_layer = TransformerEncoderLayer(
+                d_model=self.embedding_dim * len(self.num_cat_class),
+                nhead=self.n_heads,
+                batch_first=True,
+            )
+            self.transformer = TransformerEncoder(
+                self.transformer_layer, num_layers=self.n_transformer_layer
+            )
+            self.feed_forward = nn.Sequential(
+                nn.Linear(
+                    self.embedding_dim * len(self.num_cat_class)
+                    + self.num_cont_features,
+                    128,
+                ),
+                nn.ReLU(),
+                nn.Linear(128, self.output_dim),
+            )
 
     def forward(self, x_cat, x_cont):
         """Implement forward for Tab Transformer."""
@@ -226,11 +228,11 @@ class TabTransformerRegressor(BaseRegressor):
             self.output_dim = 1
         else:
             self.output_dim = y.shape[1]
-        self.num_cont_features = X.shape[2] - len(self.cat_idx)
         if self.num_cat_class is None:
             self.num_cat_class = []
         if self.cat_idx is None:
             self.cat_idx = []
+        self.num_cont_features = X.shape[2] - len(self.cat_idx)
         return Tab_Transformer(
             self.num_cat_class,
             self.num_cont_features,
