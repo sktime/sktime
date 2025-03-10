@@ -40,7 +40,7 @@ def _coerce_df_dtypes(obj):
     return obj
 
 
-def _coerce_variable_name(obj: pd.Series | pd.DataFrame, prefix=""):
+def _coerce_variable_name(obj, prefix=""):
     if isinstance(obj, pd.Series):
         old_names = [obj.name]
         obj.name = prefix + "var0"
@@ -54,9 +54,7 @@ def _coerce_variable_name(obj: pd.Series | pd.DataFrame, prefix=""):
     return obj, old_names, new_names
 
 
-def _restore_variable_name(
-    obj: pd.Series | pd.DataFrame, old_names: list, new_names: list
-):
+def _restore_variable_name(obj, old_names: list, new_names: list):
     if isinstance(obj, pd.Series):
         assert (
             obj.name == new_names[0]
