@@ -292,6 +292,8 @@ class TabTransformerRegressor(BaseRegressor):
         )
 
     def _instantiate_optimizer(self):
+        import torch
+
         if self.optimizer:
             if self.optimizer in self.optimizers.keys():
                 if self.optimizer_kwargs:
@@ -311,6 +313,8 @@ class TabTransformerRegressor(BaseRegressor):
             return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
     def _instantiate_criterion(self):
+        import torch
+
         if self.criterion:
             if self.criterion in self.criterions.keys():
                 if self.criterion_kwargs:
