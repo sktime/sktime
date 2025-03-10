@@ -114,8 +114,9 @@ class Tab_Transformer(NNModule):
             self.embedding = nn.ModuleList(
                 [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
             )
+            self.cat_embed = max(self.embedding_dim * len(self.num_cat_class), 2)
             self.transformer_layer = TransformerEncoderLayer(
-                d_model=self.embedding_dim * len(self.num_cat_class),
+                d_model=self.cat_embed,
                 nhead=self.n_heads,
                 batch_first=True,
             )
@@ -134,10 +135,14 @@ class Tab_Transformer(NNModule):
 
     def forward(self, x_cat, x_cont):
         """Implement forward for Tab Transformer."""
-        embedded = [emb(x_cat[:, :, i]) for i, emb in enumerate(self.embedding)]
-        embedded = torch.cat(embedded, dim=2)
-        context = self.transformer(embedded)
-        combined = torch.concat([context, x_cont], dim=2)
+        if x_cat.shape[2] == 0:
+            combined = x_cont
+        else:
+            embedded = [emb(x_cat[:, :, i]) for i, emb in enumerate(self.embedding)]
+            embedded = torch.cat(embedded, dim=2)
+            context = self.transformer(embedded)
+            combined = torch.concat([context, x_cont], dim=2)
+
         feed = self.feed_forward(combined)
         return feed[:, -1, :]
 
@@ -179,7 +184,7 @@ class TabTransformerRegressor(BaseRegressor):
         cat_idx=None,
         embedding_dim=6,
         n_transformer_layer=4,
-        n_heads=2,
+        n_heads=1,
         num_epochs=16,
         batch_size=8,
         lr=0.001,
