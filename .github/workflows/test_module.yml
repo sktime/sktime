@@ -66,6 +66,7 @@ jobs:
         operating-system:
           - macos-13
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
         sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
     runs-on: ${{ matrix.operating-system }}
