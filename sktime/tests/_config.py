@@ -247,6 +247,11 @@ EXCLUDED_TESTS = {
     ],
     # see PR 7921
     "RocketClassifier": ["test_classifier_on_basic_motions"],
+    # see bug report #6465 and #7958
+    "MACNNClassifier": [
+        "test_multioutput",
+        "test_classifier_on_unit_test_data",
+    ],
 }
 
 # exclude tests but keyed by test name
