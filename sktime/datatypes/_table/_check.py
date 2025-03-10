@@ -781,6 +781,33 @@ class TablePolarsEager(ScitypeTable):
 class TablePolarsLazy(ScitypeTable):
     """Data type: lazy polars DataFrame based specification of data frame table.
 
+    Name: ``"TablePolarsLazy"``
+
+    Short description:
+
+        A specification for a data table backed by a lazy Polars DataFrame,
+        supporting both univariate and multivariate data with deferred execution.
+
+    Long description:
+
+        The ``"TablePolarsLazy"`` :term:`mtype` is a concrete specification
+        that implements the ``Table`` :term:`scitype`, representing a data table
+        with a lazy Polars DataFrame.
+        An object ``obj: Polars LazyFrame`` follows the specification iff:
+
+        * structure convention: ``obj`` is a Polars LazyFrame.
+        * feature: the LazyFrame can have multiple features (columns).
+        * instances: rows of the LazyFrame represent individual instances.
+        * instance index: The index is implicit, with each row corresponding to
+          a unique instance (zero-indexed by default).
+        * execution: The table is evaluated lazily, meaning computations are deferred
+          until explicitly executed.
+
+    Capabilities:
+
+        * supports multivariate data with multiple features.
+        * can handle missing values (NaNs) and empty tables.
+
     Parameters are inferred by check.
 
     Parameters
