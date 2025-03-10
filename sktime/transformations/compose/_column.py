@@ -6,9 +6,15 @@ __author__ = ["fkiraly", "mloning"]
 
 __all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
+from copy import deepcopy
+
 import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
@@ -271,6 +277,15 @@ class ColumnEnsembleTransformer(
 
         return transformers
 
+    def fit(self, X, y=None):
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y"
+        )
+        return super().fit(X, y)
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -300,6 +315,17 @@ class ColumnEnsembleTransformer(
             self.transformers_.append((name, transformer_, index))
 
         return self
+
+    def transform(self, X, y=None):
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y"
+        )
+        X_out = super().transform(X, y)
+        X_out = _restore_variable_name(X_out, self._Xoldnames, self._Xnewnames)
+        return X_out
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
