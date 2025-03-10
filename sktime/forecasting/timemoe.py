@@ -44,6 +44,36 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware utilization.
+        - input_size: int, default=1
+            The size of the input time series.
+        - hidden_size: int, default=4096
+            The size of the hidden layers in the TimeMOE model.
+        - intermediate_size: int, default=22016
+            The size of the intermediate layers in the TimeMOE model.
+        - horizon_lengths: list[int], default=[1]
+            The prediction horizon length.
+        - num_hidden_layers: int, default=32
+            The number of hidden layers in the TimeMOE model.
+        - num_attention_heads: int, default=32
+            The number of attention heads in the TimeMOE model.
+        - num_experts_per_tok: int, default=2
+            The number of experts per token in the TimeMOE model.
+        - num_experts: int, default=1
+            The number of experts in the TimeMOE model.
+        - max_position_embeddings: int, default=32768
+            The maximum position embeddings in the TimeMOE model.
+        - rms_norm_eps: float, default=1e-6
+            The epsilon value for RMS normalization in the TimeMOE model.
+        - rope_theta: int, default=10000
+            Initialise theta for RoPE (Rotational Positional Embeddings).
+        - attention_dropout: float, default=0.1
+            The dropout rate for attention layers in the TimeMOE model.
+        - apply_aux_loss: bool, default=True
+            Whether to apply auxiliary loss in the TimeMOE model.
+        - router_aux_loss_factor: float, default=0.02
+            The auxiliary loss factor for the router in the TimeMOE model.
+        - tie_word_embeddings: bool, default=False
+            Whether to tie word embeddings in the TimeMOE model.
 
     seed: int, optional (default=None)
         Seed for reproducibility.
