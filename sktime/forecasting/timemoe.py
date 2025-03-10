@@ -12,19 +12,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import _BaseGlobalForecaster
 from sktime.utils.singleton import _multiton
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy implementation class if torch is not available."""
-
-        bfloat16 = None
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-
 
 class TimeMoEForecaster(_BaseGlobalForecaster):
     """
@@ -39,7 +26,14 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     Parameters
     ----------
     model_path: str
-        Path to the TimeMOE HuggingFace model.
+        Path to the TimeMOE model. This can be:
+
+        - A model ID from the HuggingFace Hub, e.g., "Maple728/TimeMoE-50M"
+        - A local directory containing the model files, specified as an absolute or
+        relative path to the current working directory
+        The path should point to a directory containing the model weights and
+        configuration files in the format expected by the HuggingFace Transformers
+        library.
     config: dict, optional
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
@@ -135,31 +129,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:global_forecasting": True,
     }
 
-    _default_config = {
-        "input_size": 1,
-        "hidden_size": 4096,
-        "intermediate_size": 22016,
-        "horizon_lengths": [1],
-        "num_hidden_layers": 32,
-        "num_attention_heads": 32,
-        "num_key_value_heads": None,
-        "hidden_act": "silu",
-        "num_experts_per_tok": 2,
-        "num_experts": 1,
-        "max_position_embeddings": 32768,
-        "initializer_range": 0.02,
-        "rms_norm_eps": 1e-6,
-        "use_cache": True,
-        "use_dense": False,
-        "rope_theta": 10000,
-        "attention_dropout": 0.0,
-        "apply_aux_loss": True,
-        "router_aux_loss_factor": 0.02,
-        "tie_word_embeddings": False,
-        "torch_dtype": torch.bfloat16,
-        "device_map": "cpu",
-    }
-
     def __init__(
         self,
         model_path: str,
@@ -168,11 +137,14 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
+        if not ignore_deps:
+            _check_soft_dependencies("torch", severity="error")
+            _check_soft_dependencies("transformers", severity="error")
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
 
         self.config = config
-        _config = self._default_config.copy()
+        _config = self._get_default_config()
         _config.update(config if config is not None else {})
         self._config = _config
 
@@ -211,6 +183,12 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         -------
         self : returns an instance of self.
         """
+        config = self._config
+        if isinstance(y, pd.DataFrame) and y.shape[1] > 1:
+            config["input_size"] = y.shape[1]
+        else:
+            config["input_size"] = 1
+        self._config = config
         self.model = _CachedTimeMoE(
             key=self._get_unique_timemoe_key(),
             timemoe_kwargs=self._get_timemoe_kwargs(),
@@ -243,6 +221,42 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
 
         return str(sorted(kwargs_plus_model_path.items()))
 
+    def _get_default_config(self):
+        """Return the default configuration for TimeMoE model.
+
+        Returns
+        -------
+        dict
+            The default configuration for TimeMoE model.
+        """
+        import torch
+
+        default_config = {
+            "input_size": 1,
+            "hidden_size": 4096,
+            "intermediate_size": 22016,
+            "horizon_lengths": [1],
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": None,
+            "hidden_act": "silu",
+            "num_experts_per_tok": 2,
+            "num_experts": 1,
+            "max_position_embeddings": 32768,
+            "initializer_range": 0.02,
+            "rms_norm_eps": 1e-6,
+            "use_cache": True,
+            "use_dense": False,
+            "rope_theta": 10000,
+            "attention_dropout": 0.0,
+            "apply_aux_loss": True,
+            "router_aux_loss_factor": 0.02,
+            "tie_word_embeddings": False,
+            "torch_dtype": torch.bfloat16,
+            "device_map": "cpu",
+        }
+        return default_config
+
     def _predict(
         self,
         fh,
@@ -267,6 +281,9 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        import torch
+        import transformers
+
         transformers.set_seed(self._seed)
         if fh is not None:
             prediction_length = int(max(fh.to_relative(self.cutoff)))
@@ -282,35 +299,43 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         if isinstance(_y.index, pd.MultiIndex):
             _y = _frame2numpy(_y)
         else:
-            _y = _y.values.reshape(1, -1, 1)
+            if isinstance(_y, pd.DataFrame):
+                _y = _y.values.reshape(1, -1, _y.shape[1])
+            else:
+                _y = _y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
-            _y_i = _y[i, :, 0]
+            current_results = []
+            for j in range(_y.shape[2]):
+                _y_i = _y[i, :, j]
 
-            input_tensor = torch.tensor(
-                _y_i, dtype=self._config["torch_dtype"]
-            ).unsqueeze(0)
+                input_tensor = torch.tensor(
+                    _y_i, dtype=self._config["torch_dtype"]
+                ).unsqueeze(0)
 
-            attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
+                attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
-            with torch.no_grad():
-                output = self.model(
-                    input_tensor,
-                    attention_mask,
-                    max_horizon_length=prediction_length,
-                    use_cache=True,
-                    return_dict=True,
+                with torch.no_grad():
+                    output = self.model(
+                        input_tensor,
+                        attention_mask,
+                        max_horizon_length=prediction_length,
+                        use_cache=True,
+                        return_dict=True,
+                    )
+
+                predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
+                final_predictions = predictions[-prediction_length:]
+                final_predictions = final_predictions.reshape(
+                    prediction_length, self._config["input_size"]
                 )
+                selected_indices = [h - 1 for h in fh.to_relative(self.cutoff)]
+                final_predictions = final_predictions[selected_indices]
+                current_results.append(final_predictions)
+            combined_results = np.concatenate(current_results, axis=1)
+            results.append(combined_results)
 
-            predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
-            final_predictions = predictions[-prediction_length:]
-            final_predictions = final_predictions.reshape(
-                prediction_length, self._config["input_size"]
-            )
-            selected_indices = [h - 1 for h in fh.to_relative(self.cutoff)]
-            final_predictions = final_predictions[selected_indices]
-            results.append(final_predictions)
         if len(results) > 1:
             combined_results = np.concatenate(results, axis=0)
         else:
@@ -403,6 +428,9 @@ class _CachedTimeMoE:
 
     TimeMoE is a zero-shot model and immutable, hence there will not be
     any side effects of sharing the same instance across multiple uses.
+    This caching mechanism uses the _multiton decorator to ensure
+    that models with the same configuration are reused, preventing
+    duplicate models in memory when handling multivariate data.
     """
 
     def __init__(self, key, timemoe_kwargs, use_source_package):
@@ -414,6 +442,12 @@ class _CachedTimeMoE:
     def load_from_checkpoint(self):
         """Load the model from checkpoint."""
         if self.use_source_package:
+            if not _check_soft_dependencies("timemoe", severity="none"):
+                raise ImportError(
+                    "To use TimeMoE with use_source_package=True, "
+                    "you must install the TimeMoE package from "
+                    "https://github.com/Time-MoE/Time-MoE"
+                )
             from timemoe.models.modeling_timemoe import TimeMoeForPrediction
 
             model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
