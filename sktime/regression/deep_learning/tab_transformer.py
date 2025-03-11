@@ -19,9 +19,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-__author__ = ["Ankit-1204"]
-
-
 class TabTrainDataset(DataSet):
     """Implements Pytorch Dataset class for Training TabTransformer."""
 
@@ -174,6 +171,12 @@ class TabTransformerRegressor(BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["Ankit-1204"],
+        "python_dependencies": "torch",
+        # estimator type
+        # --------------
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
     }
