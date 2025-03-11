@@ -277,15 +277,6 @@ class ColumnEnsembleTransformer(
 
         return transformers
 
-    def fit(self, X, y=None):
-        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
-            deepcopy(X), prefix="X"
-        )
-        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
-            deepcopy(y), prefix="y"
-        )
-        return super().fit(X, y)
-
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -303,6 +294,12 @@ class ColumnEnsembleTransformer(
         -------
         self: reference to self
         """
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y"
+        )
         transformers = self._check_transformers(X)
 
         self.transformers_ = []
@@ -315,15 +312,6 @@ class ColumnEnsembleTransformer(
             self.transformers_.append((name, transformer_, index))
 
         return self
-
-    def transform(self, X, y=None):
-        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
-            deepcopy(X), prefix="X"
-        )
-        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
-            deepcopy(y), prefix="y"
-        )
-        return super().transform(X, y)
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -342,6 +330,12 @@ class ColumnEnsembleTransformer(
         -------
         transformed version of X
         """
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y"
+        )
         Xts = []
         keys = []
         for name, est, index in getattr(self, self._steps_fitted_attr):
