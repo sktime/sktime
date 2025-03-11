@@ -2449,6 +2449,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is aligner capable of aligning multiple series (True) or only two (False)?",
     ),
     (
+        "capability:pairwise",
+        "param_est",
+        "bool",
+        "Indicates whether the estimator supports pairwise parameter estimation.",
+    ),
+    (
         "capability:distance",
         "aligner",
         "bool",

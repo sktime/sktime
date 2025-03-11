@@ -586,6 +586,14 @@ Intermittent time series forecasters
 
     Croston
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastADIDA
+
 Ensembles and stacking
 ----------------------
 
