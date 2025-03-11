@@ -323,9 +323,7 @@ class ColumnEnsembleTransformer(
         y, self._yoldnames, self._ynewnames = _coerce_variable_name(
             deepcopy(y), prefix="y"
         )
-        X_out = super().transform(X, y)
-        X_out = _restore_variable_name(X_out, self._Xoldnames, self._Xnewnames)
-        return X_out
+        return super().transform(X, y)
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -349,6 +347,12 @@ class ColumnEnsembleTransformer(
         for name, est, index in getattr(self, self._steps_fitted_attr):
             Xts += [est.transform(X.loc[:, index], y)]
             keys += [name]
+
+        for i in range(len(Xts)):
+            if len(Xts[i].columns) > 0:
+                Xts[i] = _restore_variable_name(
+                    Xts[i], self._Xoldnames, self._Xnewnames
+                )
 
         Xt = pd.concat(Xts, axis=1, keys=keys)
 
