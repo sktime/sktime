@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Composition functionality for reduction approaches to forecasting."""
+"""Reduction approaches to forecasting."""
 
 __author__ = [
     "mloning",
