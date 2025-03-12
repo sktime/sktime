@@ -67,6 +67,7 @@ class DARNNModule(nn.Module if torch else DummyDARNNModule):
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
         self.attention_dim = attention_dim
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Encoder: LSTMCell processing exogenous inputs
         self.encoder_cell = nn.LSTMCell(input_size, encoder_hidden_size)
@@ -110,8 +111,8 @@ class DARNNModule(nn.Module if torch else DummyDARNNModule):
         encoder_hidden_states = []
 
         # Initialize encoder LSTM state
-        h_enc = torch.zeros(batch_size, self.encoder_hidden_size, device=self.device)
-        c_enc = torch.zeros(batch_size, self.encoder_hidden_size, device=self.device)
+        h_enc = torch.zeros(batch_size, self.encoder_hidden_size, device=X.device)
+        c_enc = torch.zeros(batch_size, self.encoder_hidden_size, device=X.device)
 
         # Encoder with Input Attention
         for t in range(T):
@@ -139,8 +140,8 @@ class DARNNModule(nn.Module if torch else DummyDARNNModule):
 
         # Decoder with Temporal Attention
         decoder_steps = y_history.size(1)  # T-1 steps
-        d_dec = torch.zeros(batch_size, self.decoder_hidden_size, device=self.device)
-        c_dec = torch.zeros(batch_size, self.decoder_hidden_size, device=self.device)
+        d_dec = torch.zeros(batch_size, self.decoder_hidden_size, device=X.device)
+        c_dec = torch.zeros(batch_size, self.decoder_hidden_size, device=X.device)
         context_vector = None
 
         for t in range(decoder_steps):
@@ -211,6 +212,11 @@ class DualStageAttentionRNN(BaseForecaster):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
+        "capability:pred_int": False,
+        "capability:pred_var": False,
+        "capability:pred_proba": False,
+        "capability:multivariate": False,
+        "capability:pred_int:insample": False,
         "authors": ["sanskarmodi8"],
     }
 
@@ -226,6 +232,9 @@ class DualStageAttentionRNN(BaseForecaster):
         device="cpu",
         random_state=None,
     ):
+        if not _check_soft_dependencies("torch", severity="error"):
+            raise ImportError("PyTorch is required for DualStageAttentionRNN")
+
         self.window_length = window_length
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
@@ -233,20 +242,20 @@ class DualStageAttentionRNN(BaseForecaster):
         self.batch_size = batch_size
         self.epochs = epochs
         self.lr = lr
-        self.device = device
+        self.device = torch.device(
+            device if torch.cuda.is_available() and device == "cuda" else "cpu"
+        )
         self.random_state = random_state
 
         super().__init__()
 
     def _build_model(self, input_size):
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
+        """Build and initialize the DA-RNN model."""
         self.model_ = DARNNModule(
             input_size,
             self.encoder_hidden_size,
             self.decoder_hidden_size,
             self.attention_dim,
-            device=self.device,
         )
         self.model_.to(self.device)
         self.optimizer_ = optim.Adam(self.model_.parameters(), lr=self.lr)
@@ -272,10 +281,30 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
+        # Set random seed for reproducibility
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
+            np.random.seed(self.random_state)
+
         y = check_y(y)
         X = check_X(X)
+
+        # Store the target variable name for later use
+        self._y_name = y.name if hasattr(y, "name") else None
+
+        # Get number of target variables
+        self._n_y_columns = 1
+
+        # Convert to numpy arrays
         y = np.asarray(y).reshape(-1, 1)
         X = np.asarray(X)
+
+        # Check if there's enough data
+        if len(y) <= self.window_length:
+            raise ValueError(
+                f"Training data length must be greater \
+                    than window_length={self.window_length}"
+            )
 
         n_samples = y.shape[0] - self.window_length
         X_windows = []
@@ -322,6 +351,11 @@ class DualStageAttentionRNN(BaseForecaster):
                 self.scheduler_.step()
                 epoch_loss += loss.item() * X_batch.size(0)
             epoch_loss /= len(dataset)
+
+        # Store the most recent data for prediction
+        self._X_recent = X[-self.window_length :, :]
+        self._y_recent = y[-self.window_length + 1 :, :]
+
         return self
 
     def _predict(self, X, fh=None):
@@ -331,31 +365,58 @@ class DualStageAttentionRNN(BaseForecaster):
         Parameters
         ----------
         X : pd.DataFrame
-            Exogenous time series for the most recent window.
-            Must have shape (window_length, n_features).
+            Exogenous time series for the time period to predict
         fh : ForecastingHorizon, optional (default=None)
-            Not required by this forecaster. One step ahead prediction is supported.
+            The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
         y_pred : np.ndarray
-            Point forecast as a 1D array.
+            Point forecast values as a 1D array.
         """
         if X is None:
             raise ValueError("Exogenous series X must be provided for prediction.")
+
         X = check_X(X)
         X = np.asarray(X)
-        if X.shape[0] != self.window_length:
-            raise ValueError(f"X must have {self.window_length} time steps.")
 
-        # Use a dummy y_history (zeros) as no past target values are available
-        y_history = torch.zeros(1, self.window_length - 1, 1, device=self.device)
-        X_window = torch.tensor(X, dtype=torch.float32).unsqueeze(0).to(self.device)
+        # Basic check for prediction horizon
+        n_pred_steps = len(fh) if fh is not None else 1
 
+        # Create container for predictions
+        predictions = np.zeros((n_pred_steps, 1))
+
+        # Get the latest data window
+        X_window = self._X_recent
+        y_history = self._y_recent
+
+        # Convert to torch tensors
+        X_tensor = (
+            torch.tensor(X_window, dtype=torch.float32).unsqueeze(0).to(self.device)
+        )
+        y_history_tensor = (
+            torch.tensor(y_history, dtype=torch.float32).unsqueeze(0).to(self.device)
+        )
+
+        # Make prediction
         self.model_.eval()
         with torch.no_grad():
-            y_pred = self.model_(X_window, y_history)
-        return y_pred.cpu().numpy().flatten()
+            predictions[0] = self.model_(X_tensor, y_history_tensor).cpu().numpy()
+
+        # If more than one step is requested, warn that we can only predict one step
+        if n_pred_steps > 1:
+            import warnings
+
+            warnings.warn(
+                "DualStageAttentionRNN currently only supports \
+                one-step-ahead forecasting. "
+                "Returning the same forecast for all requested horizons."
+            )
+            # Replicate the first prediction for all requested steps
+            predictions = np.repeat(predictions[0:1], n_pred_steps, axis=0)
+
+        # Return predictions in the correct format expected by sktime
+        return predictions.reshape(-1)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
