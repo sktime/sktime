@@ -338,6 +338,9 @@ class AutoTS(BaseForecaster):
         self._y = y
 
         self._fh = fh
+        if y.shape[1] > 1:
+            self.model_list = "multivariate"
+
         self._instantiate_model()
         try:
             self.forecaster_.fit(df=self._y)
