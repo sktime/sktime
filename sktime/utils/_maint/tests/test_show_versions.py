@@ -57,22 +57,25 @@ def test_deps_info_for_estimator_tag():
     """Test that _get_deps_info returns package/version dict as per contract."""
     deptag = [
         ("pandas>2.2.1", "numpy==1.23.4"),
-        ["scikit-learn", ("matplotlib>=3.5", ["seaborn", "numpy<=1.24"])]
+        ["scikit-learn", ("matplotlib>=3.5", ["seaborn", "numpy<=1.24"])],
     ]
     pkgnames = _get_pkgnames_from_deptag(deptag)
     assert set(pkgnames) == {"pandas", "numpy", "scikit-learn", "matplotlib", "seaborn"}
 
 
 def test_get_depstrs_from_estimator():
-    """Test that _get_depstrs_from_estimator returns package/version dict as per contract."""
+    """Test that _get_depstrs_from_estimator returns pkg/vers dict as per contract."""
     from sktime.forecasting.fbprophet import Prophet
+
     depstrs = _get_depstrs_from_estimator(Prophet)
     assert isinstance(depstrs, list)
     assert len(depstrs) > 0
     assert depstrs == ["prophet"]
 
+
 def test_show_versions_for_estimator():
     """Test that show_versions runs without exceptions, with estimator arg."""
     from sktime.forecasting.fbprophet import Prophet
+
     # only prints, should return None
     assert show_versions(Prophet) is None
