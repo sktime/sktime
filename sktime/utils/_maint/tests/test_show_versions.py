@@ -68,9 +68,9 @@ def test_get_depstrs_from_estimator():
     from sktime.forecasting.fbprophet import Prophet
 
     depstrs = _get_depstrs_from_estimator(Prophet)
-    assert isinstance(depstrs, list)
+    assert isinstance(depstrs, set)
     assert len(depstrs) > 0
-    assert depstrs == ["prophet"]
+    assert depstrs == {"prophet"}
 
 
 def test_show_versions_for_estimator():

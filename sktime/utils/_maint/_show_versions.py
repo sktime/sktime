@@ -145,7 +145,7 @@ def _get_pkgnames_from_deptag(deptag):
             package_names.add(package_name)
         elif isinstance(item, (list, tuple)):
             for sub_item in item:
-                extract_names(sub_item)
+                extract_names(sub_item, package_names)
 
     package_names = set()
     extract_names(deptag, package_names)  # mutates package_names
