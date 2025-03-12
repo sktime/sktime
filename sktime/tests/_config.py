@@ -50,8 +50,6 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
-    # Large models with many weights
-    "MomentFMForecaster",
 ]
 
 
