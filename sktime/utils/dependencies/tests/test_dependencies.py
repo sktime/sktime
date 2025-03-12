@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for singleton and multiton decorators."""
+"""Tests for dependency checking utilities."""
 
 import pytest
 
