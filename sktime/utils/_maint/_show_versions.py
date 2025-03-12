@@ -54,6 +54,9 @@ DEFAULT_DEPS_TO_SHOW = [
     "tensorflow",
 ]
 
+# core dependencies of sktime
+CORE_DEPS = ["pip", "sktime", "sklearn", "skbase", "numpy", "scipy", "pandas"]
+
 
 def _get_deps_info(deps=None, source="distributions"):
     """Overview of the installed version of main dependencies.
@@ -119,7 +122,43 @@ def _get_deps_info(deps=None, source="distributions"):
     return deps_info
 
 
-def show_versions():
+def _get_pkgnames_from_deptag(deptag):
+    """Extract package names from dependency tag python_dependencies.
+
+    Parameters
+    ----------
+    deptag : list, tuple, str
+        dependency tag as used in sktime estimators.
+        Nested lists and tuples of str, in PEP 440 format, are allowed.
+
+    Returns
+    -------
+    package_names : set of str
+        set of all package names occurring in deptag.
+        Version bounds are removed.
+    """
+    from packaging.requirements import Requirement
+
+    def extract_names(item, package_names):
+        if isinstance(item, str):
+            package_name = Requirement(item).name
+            package_names.add(package_name)
+        elif isinstance(item, (list, tuple)):
+            for sub_item in item:
+                extract_names(sub_item)
+
+    package_names = set()
+    extract_names(deptag, package_names)  # mutates package_names
+    return package_names
+
+
+def _get_depstrs_from_estimator(estimator):
+    """Extract package names from estimator class tags."""
+    deps = estimator.get_class_tags()["python_dependencies"]
+    return _get_pkgnames_from_deptag(deps)
+
+
+def show_versions(estimator=None):
     """Print python version, OS version, sktime version, selected dependency versions.
 
     Pretty prints:
@@ -129,13 +168,30 @@ def show_versions():
     * OS version
     * list of import name and version number for selected python dependencies
 
-    Developer note:
-    Python version/executable and OS version are from `_get_sys_info`
-    Package versions are retrieved by `_get_deps_info`
-    Selected dependencies are as in the DEFAULT_DEPS_TO_SHOW variable
+    If no estimator is passed, a list of default dependencies is shown.
+
+    If an estimator is passed, the dependencies of the estimator are shown,
+    plus core dependencies of ``sktime``.
+
+    Parameters
+    ----------
+    estimator : sktime estimator object, optional
+        estimator object to show dependencies for
+
+    Notes
+    -----
+    Python version/executable and OS version are from ``_get_sys_info``
+    Package versions are retrieved by ``_get_deps_info``
+    Default dependencies are as in the ``DEFAULT_DEPS_TO_SHOW`` variable
     """
+    if estimator is None:
+        deps = DEFAULT_DEPS_TO_SHOW
+    else:
+        deps = _get_depstrs_from_estimator(estimator)
+        deps = CORE_DEPS + list(deps)
+
     sys_info = _get_sys_info()
-    deps_info = _get_deps_info(deps=DEFAULT_DEPS_TO_SHOW)
+    deps_info = _get_deps_info(deps=deps)
 
     print("\nSystem:")  # noqa: T001, T201
     for k, stat in sys_info.items():
