@@ -88,7 +88,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         self.random_state = random_state
         super().__init__()
 
-    def _transform(self, X, y=None):
+    def _transform(self, X: pd.DataFrame, y=None):
         from scipy.stats import norm
 
         if self.scale in self._allowed_statistics:
@@ -99,7 +99,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             raise TypeError(
                 "Type of parameter 'scale' must be a non-negative float value."
             )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+
+        out = X.iloc[:, 0]
+        out = out + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        out.name = X.columns[0]
+        return out
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
