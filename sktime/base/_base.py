@@ -151,62 +151,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    def __init__(self):
-        super().__init__()
-
-        # handle numpy 2 incompatible soft dependencies
-        # for rationale, see _handle_numpy2_softdeps
-        self._handle_numpy2_softdeps()
-
-    # TODO 0.36.0: check list of numpy 2 incompatible soft deps
-    # remove any from NOT_NP2_COMPATIBLE that become compatible
-    def _handle_numpy2_softdeps(self):
-        """Handle tags for soft deps that are not numpy 2 compatible.
-
-        A number of soft dependencies are not numpy 2 compatible yet,
-        but do not set the bound in their setup.py. This method is a patch over
-        those packages' missing bound setting to provide informative
-        errors to users.
-
-        This method does the following:
-
-        * checks if any soft dependencies in the python_dependencies tag
-          are in NOT_NP2_COMPATIBLE, this is a hard-coded
-          list of soft dependencies that are not numpy 2 compatible
-        * if any are found, adds a numpy<2.0 soft dependency to the list,
-          and sets it as a dynamic override of the python_dependencies tag
-        """
-        from packaging.requirements import Requirement
-
-        # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["pmdarima"]
-
-        softdeps = self.get_class_tag("python_dependencies", [])
-        if softdeps is None:
-            return None
-        if not isinstance(softdeps, list):
-            softdeps = [softdeps]
-        # make copy of list to avoid side effects
-        softdeps = softdeps.copy()
-
-        def _pkg_name(req):
-            """Get package name from requirement string."""
-            return Requirement(req).name
-
-        def _is_notcomp(deps):
-            """Check if softdep is in NOT_NP2_COMPATIBLE."""
-            if isinstance(deps, str):
-                deps = [deps]
-            return any([_pkg_name(dep) in NOT_NP2_COMPATIBLE for dep in deps])
-
-        # variable: does any softdep string start with one of the non-compatibles
-        noncomp = any([_is_notcomp(softdep) for softdep in softdeps])
-
-        if noncomp:
-            softdeps = softdeps + ["numpy<2.0"]
-            self.set_tags(python_dependencies=softdeps)
-        return None
-
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
