@@ -295,10 +295,10 @@ class ColumnEnsembleTransformer(
         self: reference to self
         """
         X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
-            deepcopy(X), prefix="X"
+            deepcopy(X), prefix="X", strategy="none"
         )
         y, self._yoldnames, self._ynewnames = _coerce_variable_name(
-            deepcopy(y), prefix="y"
+            deepcopy(y), prefix="y", strategy="none"
         )
         transformers = self._check_transformers(X)
 
@@ -330,11 +330,11 @@ class ColumnEnsembleTransformer(
         -------
         transformed version of X
         """
-        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
-            deepcopy(X), prefix="X"
+        X, Xoldnames, Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X", strategy="none"
         )
-        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
-            deepcopy(y), prefix="y"
+        y, yoldnames, ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y", strategy="none"
         )
         Xts = []
         keys = []
@@ -344,9 +344,11 @@ class ColumnEnsembleTransformer(
 
         for i in range(len(Xts)):
             if len(Xts[i].columns) > 0:
-                Xts[i] = _restore_variable_name(
-                    Xts[i], self._Xoldnames, self._Xnewnames
-                )
+                Xoldnames_ = [
+                    c if c not in Xnewnames else Xoldnames[Xnewnames.index(c)]
+                    for c in Xts[i].columns
+                ]
+                Xts[i] = _restore_variable_name(Xts[i], Xoldnames_, Xts[i].columns)
 
         Xt = pd.concat(Xts, axis=1, keys=keys)
 

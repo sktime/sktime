@@ -2,6 +2,8 @@
 
 __author__ = ["fkiraly"]
 
+import numbers
+
 import pandas as pd
 
 
@@ -40,14 +42,37 @@ def _coerce_df_dtypes(obj):
     return obj
 
 
-def _coerce_variable_name(obj, prefix=""):
+def _convert_variable_name(name, i: int, prefix: str, strategy: str):
+    if strategy == "all":
+        return prefix + "var" + str(i)
+    elif strategy == "none":
+        return (prefix + "var" + str(i)) if name is None else name
+    elif strategy == "integer":
+        return (prefix + "var" + str(i)) if isinstance(name, numbers.Integral) else name
+    elif strategy == "none_integer":
+        return (
+            (prefix + "var" + str(i))
+            if (name is None or isinstance(name, numbers.Integral))
+            else name
+        )
+    else:
+        raise ValueError(
+            "strategy should be one of [all, none, integer, none_integer]"
+            f" but found {strategy}"
+        )
+
+
+def _coerce_variable_name(obj, prefix="", strategy: str = "all"):
     if isinstance(obj, pd.Series):
         old_names = [obj.name]
-        obj.name = prefix + "var0"
+        obj.name = _convert_variable_name(obj.name, 0, prefix, strategy)
         new_names = [obj.name]
     elif isinstance(obj, pd.DataFrame):
         old_names = list(obj.columns)
-        obj.columns = [prefix + "var" + str(i) for i in range(len(obj.columns))]
+        obj.columns = [
+            _convert_variable_name(obj.columns[i], i, prefix, strategy)
+            for i in range(len(obj.columns))
+        ]
         new_names = list(obj.columns)
     else:
         return obj, [], []
