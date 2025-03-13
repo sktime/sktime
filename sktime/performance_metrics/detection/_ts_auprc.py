@@ -53,18 +53,19 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
 
     .. math::
 
-    Trapezoidal Rule (Default):
+        Trapezoidal Rule (Default):
 
         \text{AUPRC} \approx \sum_{i=1}^{N}
         \frac{(R_i - R_{i-1}) \cdot (P_i + P_{i-1})}{2}
 
 
-    Left Riemann Sum (Alternative):
+        Left Riemann Sum (Alternative):
 
         \text{AUPRC} \approx \sum_{i=1}^{N} (R_i - R_{i-1}) \cdot P_{i-1}
 
 
-    TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection, TMLR, 2023.
+        TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection,
+        TMLR, 2023 :
 
         \left(\frac{\text{gt\_length}-1}{\text{gt\_length}}\right)^{\text{cardinality}-1}
 
