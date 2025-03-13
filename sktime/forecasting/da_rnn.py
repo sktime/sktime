@@ -232,6 +232,8 @@ class DualStageAttentionRNN(BaseForecaster):
         device="cpu",
         random_state=None,
     ):
+        if not _check_soft_dependencies("torch", severity="none"):
+            return
         self.window_length = window_length
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
