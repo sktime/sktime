@@ -58,11 +58,13 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         \text{AUPRC} \approx \sum_{i=1}^{N}
         \frac{(R_i - R_{i-1}) \cdot (P_i + P_{i-1})}{2}
 
+
     2. Left Riemann Sum (Alternative):
 
     .. math::
 
         \text{AUPRC} \approx \sum_{i=1}^{N} (R_i - R_{i-1}) \cdot P_{i-1}
+
 
     TimeSeAD: Benchmarking Deep Multivariate Time-Series Anomaly Detection, TMLR, 2023.
 
