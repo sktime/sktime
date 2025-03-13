@@ -232,9 +232,6 @@ class DualStageAttentionRNN(BaseForecaster):
         device="cpu",
         random_state=None,
     ):
-        if not _check_soft_dependencies("torch", severity="error"):
-            raise ImportError("PyTorch is required for DualStageAttentionRNN")
-
         self.window_length = window_length
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
@@ -251,6 +248,8 @@ class DualStageAttentionRNN(BaseForecaster):
 
     def _build_model(self, input_size):
         """Build and initialize the DA-RNN model."""
+        if not _check_soft_dependencies("torch", severity="none"):
+            return
         self.model_ = DARNNModule(
             input_size,
             self.encoder_hidden_size,
@@ -281,6 +280,8 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
+        if not _check_soft_dependencies("torch", severity="none"):
+            return
         # Set random seed for reproducibility
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
@@ -374,6 +375,8 @@ class DualStageAttentionRNN(BaseForecaster):
         y_pred : np.ndarray
             Point forecast values as a 1D array.
         """
+        if not _check_soft_dependencies("torch", severity="none"):
+            return
         if X is None:
             raise ValueError("Exogenous series X must be provided for prediction.")
 
