@@ -492,9 +492,23 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             self._new_X_columns = [
                 "_X_column_" + str(i) for i in range(len(self._X_columns))
             ]
+            self._column_name_mapping = dict(zip(self._X_columns, self._new_X_columns))
             X.columns = self._new_X_columns
         self._new_target_name = "_target_column"
         y.columns = [self._new_target_name]
+        # Map the categorical columns using the stored mapping
+        if dataset_params and "static_categoricals" in dataset_params:
+            self._new_static_categoricals = [
+                self._column_name_mapping[col]
+                for col in dataset_params["static_categoricals"]
+            ]
+            dataset_params["static_categoricals"] = self._new_static_categoricals
+        # Map the group_ids using the stored mapping
+        if dataset_params and "group_ids" in dataset_params:
+            self._new_group_ids = [
+                self._column_name_mapping[col] for col in dataset_params["group_ids"]
+            ]
+            dataset_params["group_ids"] = self._new_group_ids
         # combine X and y
         if X is not None:
             # only numeric columns
