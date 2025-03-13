@@ -663,6 +663,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
+            # Sort indices
+            y_true = y_true.sort_index(ascending=True)
+            assert y_true.index.equals(
+                y_pred.index
+            ), "y_pred and y_true do not have the same row index."
             if isinstance(y_pred_orig, VectorizedDF):
                 y_pred_orig = deepcopy(y_pred_orig)
                 y_pred_orig.X.index = y_true.index
