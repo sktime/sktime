@@ -275,7 +275,6 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
 
-
     Returns
     -------
     X: sktime data container, following mtype specification ``return_type``
@@ -343,7 +342,6 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-
 
     Returns
     -------
@@ -521,7 +519,6 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
 
-
     Returns
     -------
     X: pd.DataFrame with m rows and c columns
@@ -587,7 +584,6 @@ def load_arrow_head(split=None, return_X_y=True, return_type=None):
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
 
-
     Returns
     -------
     X: sktime data container, following mtype specification ``return_type``
@@ -652,7 +648,6 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
-
 
     Returns
     -------
