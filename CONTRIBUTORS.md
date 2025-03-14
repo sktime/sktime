@@ -6,7 +6,7 @@ Contributors
 <!-- Please add your badges to .all-contibutorsrc -->
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-334-orange.svg)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-336-orange.svg)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
