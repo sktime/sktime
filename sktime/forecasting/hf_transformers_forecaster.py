@@ -8,6 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+    import torch.nn as nn
     from torch.utils.data import Dataset
 else:
 
@@ -220,10 +221,12 @@ class HFTransformersForecaster(BaseForecaster):
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
-        if isinstance(self.model_path, PreTrainedModel):
+        if isinstance(self.model_path, PreTrainedModel) or (
+            isinstance(self.model_path, nn.Module)
+            and isinstance(self.model_path.base_model.base_model, PreTrainedModel)
+        ):
             self.model = self.model_path
             config = self.model.config
-
         else:
             # Load model and extract config
             config = AutoConfig.from_pretrained(self.model_path)
