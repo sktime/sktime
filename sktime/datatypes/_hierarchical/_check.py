@@ -184,6 +184,47 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
 class HierarchicalDask(ScitypeHierarchical):
     """Data type: dask frame based specification of hierarchical series.
 
+    Name: ``"dask_hierarchical"``
+
+    Short description:
+    A ``dask.DataFrame`` where hierarchy is represented using explicit columns
+    instead of a traditional index, and time is recorded in a dedicated column.
+
+    Long description:
+    The ``"dask_hierarchical"`` :term:`mtype` is a concrete specification of the
+    ``Hierarchical`` :term:`scitype`, which represents a hierarchically structured
+    collection of time series.
+
+    An object ``obj: dask.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj`` must have at least three index columns, where:
+
+      - The first ``n-1`` index columns define the hierarchy.
+      - The last index column represents time.
+      - All index columns must be explicitly named following the pattern ``__index__*``,
+        such as ``__index__0``, ``__index__1``, ..., ``__index__N-1``.
+
+    * hierarchy level: rows with the same values in the hierarchy columns belong
+      to the same hierarchy unit, while different hierarchy values correspond to
+      different hierarchy units.
+    * hierarchy: the hierarchy structure is explicitly encoded in columns rather
+      than an index.
+    * time index: the last column in the index set is interpreted as a time column.
+      It must be one of ``Int64``, ``RangeIndex``, ``DatetimeIndex`` or ``PeriodIndex``,
+      and must be monotonically increasing.
+    * time points: rows with the same value in the time column correspond to
+      the same time point.
+    * variables: columns excluding the hierarchy and time columns correspond
+      to variables.
+    * variable names: column names are taken from ``obj.columns``.
+
+    Capabilities:
+    * can represent multivariate hierarchical series.
+    * can represent unequally spaced hierarchical series.
+    * can represent unequally supported hierarchical series.
+    * cannot represent hierarchical series with different sets of variables.
+    * can represent missing values.
+
     Parameters
     ----------
     is_univariate: bool

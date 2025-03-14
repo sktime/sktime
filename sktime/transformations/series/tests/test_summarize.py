@@ -115,3 +115,15 @@ def test_summary_transformer_incorrect_quantile_raises_error(quantile_arg):
             summary_function="mean", quantiles=quantile_arg
         )
         transformer.fit_transform(_make_test_data(0))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SummaryTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_summarize_no_lossy_setitem():
+    """Test that SummaryTransformer.fit does not raise LossySetitemError."""
+    data = pd.Series(range(12, 0, -1))
+    transformer = SummaryTransformer()
+    transformer.fit(data)
+    assert True  # Reaching here means no LossySetitemError was raised
