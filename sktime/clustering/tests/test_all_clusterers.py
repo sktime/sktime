@@ -67,11 +67,14 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         X_new_instances = X_new_metadata["n_instances"]
 
         # run fit
-        y_pred = scenario.run(estimator_instance, method_sequence=["fit"])
+        scenario.run(estimator_instance, method_sequence=["fit"])
 
         # only clusterers with capability:predict have predict
         if not estimator_instance.get_tag("capability:predict"):
             return None
+
+        # run predict
+        y_pred = scenario.run(estimator_instance, method_sequence=["predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
