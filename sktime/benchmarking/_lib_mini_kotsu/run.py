@@ -142,11 +142,12 @@ def run(
     )
     results_df = results_df.sort_values(by=["validation_id", "model_id"])
     results_df = results_df.reset_index(drop=True)
-    _write(
-        results_df,
-        results_path,
-        to_front_cols=["validation_id", "model_id", "runtime_secs"],
-    )
+    if results_path is not None:
+        _write(
+            results_df,
+            results_path,
+            to_front_cols=["validation_id", "model_id", "runtime_secs"],
+        )
     return results_df
 
 
