@@ -40,6 +40,21 @@ class GrangerCausalityFitter(BaseParamFitter):
     .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.grangercausalitytests.html
     """
 
+    _check_soft_dependencies("statsmodels", severity="warning")
+    try:
+        from statsmodels.tsa.stattools import (
+            adfuller,
+            coint,
+            grangercausalitytests,
+            kpss,
+            pacf,
+            range_unit_root_test,
+        )
+
+        _stats_models_imported = True
+    except ImportError:
+        _stats_models_imported = False
+
     __tags = {
         "X_inner_mtype": "pd.DataFrame",
         "scitype:transform-input": "Series",
@@ -59,21 +74,6 @@ class GrangerCausalityFitter(BaseParamFitter):
         self.addconst = addconst
         self._is_fitted = False
         super().__init__()
-
-    _check_soft_dependencies("statsmodels", severity="warning")
-    try:
-        from statsmodels.tsa.stattools import (
-            adfuller,
-            coint,
-            grangercausalitytests,
-            kpss,
-            pacf,
-            range_unit_root_test,
-        )
-
-        _stats_models_imported = True
-    except ImportError:
-        _stats_models_imported = False
 
     def _fit(self, X):
         """
@@ -109,7 +109,14 @@ class GrangerCausalityFitter(BaseParamFitter):
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input X must be a pandas DataFrame.")
 
-        if X.shape[1] != 2:
+        if X.shape[1] == 1:  # the number of columns in the input data
+            X_bivariate = X.copy()
+            col_name = X.columns[0]
+            X_bivariate[f"{col_name}_lagged"] = X_bivariate[col_name].shift(1)
+            X_bivariate = X.bivariate.dropna()
+            X = X_bivariate
+
+        elif X.shape[1] != 2:
             raise ValueError("Input X must have exactly two columns.")
 
         if not all(pd.api.types.is_numeric_dtype(X[col]) for col in X.columns):
