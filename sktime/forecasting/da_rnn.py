@@ -25,7 +25,7 @@ else:
     torch = None
 
     class DummyDARNNModule:
-        """Dummy class to raise an error when PyTorch is missing."""
+        """Dummy class when PyTorch is missing."""
 
 
 class DARNNModule(nn.Module if torch else DummyDARNNModule):
@@ -212,6 +212,7 @@ class DualStageAttentionRNN(BaseForecaster):
         "capability:pred_int": False,
         "capability:multivariate": False,
         "capability:pred_int:insample": False,
+        "python_dependencies": ["torch"],
         "authors": ["sanskarmodi8"],
     }
 
@@ -309,10 +310,20 @@ class DualStageAttentionRNN(BaseForecaster):
 
         # Check if there's enough data
         if len(y) <= self.window_length:
-            raise ValueError(
-                f"Training data length must be greater \
-                    than window_length={self.window_length}"
+            import warnings
+
+            warnings.warn(
+                f"Training data length is too short (length={len(y)}). "
+                f"At least window_length+1={self.window_length + 1} is required. "
+                "Adding dummy data (zeros) to meet the minimum length, but results \
+                    may be inaccurate. "
+                "Consider providing a longer time series or redcucing the window_length\
+                     for better performance.",
+                UserWarning,
             )
+            extra_needed = (self.window_length + 1) - len(y)
+            y = np.vstack([y, np.zeros((extra_needed, 1))])
+            X = np.vstack([X, np.zeros((extra_needed, X.shape[1]))])
 
         n_samples = y.shape[0] - self.window_length
         X_windows = []
@@ -463,7 +474,13 @@ class DualStageAttentionRNN(BaseForecaster):
         else:
             predictions[0] = one_step_pred
 
-        return predictions
+        # index corresponding to the forecast horizon
+        import pandas as pd
+
+        index = fh.to_absolute(self.cutoff)
+        return pd.Series(
+            predictions, index=pd.Index(index.to_numpy()), name=self._y_name
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
