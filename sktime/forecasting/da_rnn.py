@@ -14,7 +14,6 @@ import numpy as np
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_X, check_y
 
 # Handle PyTorch as a soft dependency
 if _check_soft_dependencies("torch", severity="none"):
@@ -60,14 +59,12 @@ class DARNNModule(nn.Module if torch else DummyDARNNModule):
         attention_dim : int
             Dimension of the attention space.
         """
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         super().__init__()
         self.input_size = input_size
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
         self.attention_dim = attention_dim
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Encoder: LSTMCell processing exogenous inputs
         self.encoder_cell = nn.LSTMCell(input_size, encoder_hidden_size)
@@ -213,8 +210,6 @@ class DualStageAttentionRNN(BaseForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
-        "capability:pred_var": False,
-        "capability:pred_proba": False,
         "capability:multivariate": False,
         "capability:pred_int:insample": False,
         "authors": ["sanskarmodi8"],
@@ -232,8 +227,6 @@ class DualStageAttentionRNN(BaseForecaster):
         device="cpu",
         random_state=None,
     ):
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         self.window_length = window_length
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
@@ -241,7 +234,8 @@ class DualStageAttentionRNN(BaseForecaster):
         self.batch_size = batch_size
         self.epochs = epochs
         self.lr = lr
-        self.device = torch.device(
+        self.device = device
+        self._device = torch.device(
             device if torch.cuda.is_available() and device == "cuda" else "cpu"
         )
         self.random_state = random_state
@@ -250,15 +244,13 @@ class DualStageAttentionRNN(BaseForecaster):
 
     def _build_model(self, input_size):
         """Build and initialize the DA-RNN model."""
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         self.model_ = DARNNModule(
             input_size,
             self.encoder_hidden_size,
             self.decoder_hidden_size,
             self.attention_dim,
         )
-        self.model_.to(self.device)
+        self.model_.to(self._device)
         self.optimizer_ = optim.Adam(self.model_.parameters(), lr=self.lr)
         self.scheduler_ = torch.optim.lr_scheduler.StepLR(
             self.optimizer_, step_size=10000, gamma=0.9
@@ -282,15 +274,10 @@ class DualStageAttentionRNN(BaseForecaster):
         -------
         self : reference to self
         """
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
         # Set random seed for reproducibility
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
             np.random.seed(self.random_state)
-
-        y = check_y(y)
-        X = check_X(X)
 
         # Store the target variable name for later use
         self._y_name = y.name if hasattr(y, "name") else None
@@ -300,7 +287,25 @@ class DualStageAttentionRNN(BaseForecaster):
 
         # Convert to numpy arrays
         y = np.asarray(y).reshape(-1, 1)
-        X = np.asarray(X)
+
+        # Handle empty or scalar X
+        if X is None or (hasattr(X, "shape") and X.shape == ()):
+            import warnings
+
+            warnings.warn(
+                "X is either empty or scalar. This model requires exogenous variables. "
+                "Using dummy values for X, but results may be inaccurate.",
+                UserWarning,
+            )
+            # If X is empty or scalar, create a dummy array with same length as y
+            # and a single feature of zeros
+            X = np.zeros((len(y), 1))
+            X = np.asarray(X)
+        else:
+            # Ensure X is 2D
+            X = np.asarray(X)
+            if X.ndim == 1:
+                X = X.reshape(-1, 1)
 
         # Check if there's enough data
         if len(y) <= self.window_length:
@@ -342,9 +347,9 @@ class DualStageAttentionRNN(BaseForecaster):
         for epoch in range(self.epochs):
             epoch_loss = 0.0
             for X_batch, y_hist_batch, target_batch in dataloader:
-                X_batch = X_batch.to(self.device)
-                y_hist_batch = y_hist_batch.to(self.device)
-                target_batch = target_batch.to(self.device)
+                X_batch = X_batch.to(self._device)
+                y_hist_batch = y_hist_batch.to(self._device)
+                target_batch = target_batch.to(self._device)
 
                 self.optimizer_.zero_grad()
                 y_pred = self.model_(X_batch, y_hist_batch)
@@ -361,14 +366,19 @@ class DualStageAttentionRNN(BaseForecaster):
 
         return self
 
-    def _predict(self, X, fh=None):
+    def _predict(self, X=None, fh=None):
         """
-        Forecast time series one step ahead. One step ahead prediction is supported.
+        Forecast time series one step ahead.
+
+        The DA-RNN model uses past target values (y) and both past and current exogenous
+        variables X to predict the current target value. For forecasts beyond one step,
+        this implementation returns the same one-step forecast for all horizons.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Exogenous time series for the time period to predict
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series for the forecast horizon.
+            If None, a warning is raised as the model is designed to use X.
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to predict.
 
@@ -377,51 +387,83 @@ class DualStageAttentionRNN(BaseForecaster):
         y_pred : np.ndarray
             Point forecast values as a 1D array.
         """
-        if not _check_soft_dependencies("torch", severity="none"):
-            return
-        if X is None:
-            raise ValueError("Exogenous series X must be provided for prediction.")
-
-        X = check_X(X)
-        X = np.asarray(X)
-
-        # Basic check for prediction horizon
-        n_pred_steps = len(fh) if fh is not None else 1
+        # Handle forecast horizon
+        if fh is None:
+            n_pred_steps = 1
+        else:
+            n_pred_steps = len(fh)
 
         # Create container for predictions
-        predictions = np.zeros((n_pred_steps, 1))
+        predictions = np.zeros(n_pred_steps)
 
-        # Get the latest data window
-        X_window = self._X_recent
+        # Check model state variables
+        if not hasattr(self, "_X_recent") or not hasattr(self, "_y_recent"):
+            raise ValueError(
+                "Model state variables (_X_recent, _y_recent) not found. "
+                "Ensure the model has been properly fitted."
+            )
+
+        # Get the correct X data for prediction
+        if X is None:
+            import warnings
+
+            warnings.warn(
+                "Exogenous series X not provided for prediction. \
+                    DA-RNN is designed to use "
+                "exogenous variables. Using stored window X_recent\
+                     for prediction, but results may be inaccurate.",
+                UserWarning,
+            )
+            # Use stored X_recent for prediction
+            X_window = self._X_recent
+        else:
+            # Process provided X data
+            X = np.asarray(X)
+            if X.ndim == 1:
+                X = X.reshape(-1, 1)
+
+            # Check if X has the correct number of features
+            if X.shape[1] != self._X_recent.shape[1]:
+                raise ValueError(
+                    f"X has {X.shape[1]} features, but the model was trained with "
+                    f"{self._X_recent.shape[1]} features."
+                )
+
+            # Use provided X data for prediction
+            # For the first prediction, we use the last window_length-1 from X_recent
+            # plus the first row from the new X
+            X_window = np.vstack((self._X_recent[1:], X[0:1]))
+
+        # Get stored recent y history
         y_history = self._y_recent
 
-        # Convert to torch tensors
+        # Convert to PyTorch tensors
         X_tensor = (
-            torch.tensor(X_window, dtype=torch.float32).unsqueeze(0).to(self.device)
+            torch.tensor(X_window, dtype=torch.float32).unsqueeze(0).to(self._device)
         )
         y_history_tensor = (
-            torch.tensor(y_history, dtype=torch.float32).unsqueeze(0).to(self.device)
+            torch.tensor(y_history, dtype=torch.float32).unsqueeze(0).to(self._device)
         )
 
         # Make prediction
         self.model_.eval()
         with torch.no_grad():
-            predictions[0] = self.model_(X_tensor, y_history_tensor).cpu().numpy()
+            one_step_pred = self.model_(X_tensor, y_history_tensor).cpu().numpy().item()
 
-        # If more than one step is requested, warn that we can only predict one step
+        # If more than one step is requested, warn and fill with the same prediction
         if n_pred_steps > 1:
             import warnings
 
             warnings.warn(
-                "DualStageAttentionRNN currently only supports \
-                one-step-ahead forecasting. "
-                "Returning the same forecast for all requested horizons."
+                "DA-RNN currently only supports one-step-ahead forecasting. "
+                "Returning the same forecast for all requested horizons.",
+                UserWarning,
             )
-            # Replicate the first prediction for all requested steps
-            predictions = np.repeat(predictions[0:1], n_pred_steps, axis=0)
+            predictions.fill(one_step_pred)
+        else:
+            predictions[0] = one_step_pred
 
-        # Return predictions in the correct format expected by sktime
-        return predictions.reshape(-1)
+        return predictions
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
