@@ -1334,6 +1334,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 scenario.run(estimator, method_sequence=[method_nsc])
             except NotImplementedError:
                 return None
+            except ImportError as e:
+                if "skpro" in str(e):
+                    return None
+                else:
+                    raise e
 
         # dict_after = dictionary of estimator after predict and fit
         output = scenario.run(estimator, method_sequence=[method_nsc])
@@ -1393,6 +1398,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 scenario.run(estimator, method_sequence=[method_nsc])
             except NotImplementedError:
                 return None
+            except ImportError as e:
+                if "skpro" in str(e):
+                    return None
+                else:
+                    raise e
 
         # Fit the model, get args before and after
         _, args_after = scenario.run(

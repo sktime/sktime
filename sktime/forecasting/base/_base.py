@@ -911,6 +911,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
+        self.check_is_fitted()
 
         if hasattr(self, "_is_vectorized") and self._is_vectorized:
             raise NotImplementedError(
@@ -936,8 +937,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         if non_default_pred_proba and not skpro_present:
             raise ImportError(msg)
-
-        self.check_is_fitted()
 
         # input checks and conversions
 
