@@ -61,9 +61,8 @@ class PeftForecaster(BaseForecaster):
     ...    },
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
-
+    >>> #fit using a Peft Model
+    >>> from sktime.forecasting.base.adapters._peftadapter import PeftForecaster
     >>> from peft import LoraConfig
     >>> config = LoraConfig(
     ...     r = 8,
