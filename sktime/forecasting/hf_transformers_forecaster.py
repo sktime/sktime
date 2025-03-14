@@ -342,7 +342,6 @@ class HFTransformersForecaster(BaseForecaster):
         else:
             raise ValueError("Unknown fit strategy")
 
-        # Train the model
         trainer = Trainer(
             model=self.model,
             args=training_args,
