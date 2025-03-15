@@ -112,7 +112,8 @@ class _HeterogenousMetaEstimator:
         if deep and hasattr(self, attr):
             estimators = getattr(self, attr)
             estimators = [(x[0], x[1]) for x in estimators]
-            out.update(estimators)
+            estimator_dict = {name: estimator for name, estimator in estimators}
+            out.update(estimator_dict)
             for name, estimator in estimators:
                 # checks estimator has the method we want to call
                 cond1 = hasattr(estimator, public_method)
