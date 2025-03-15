@@ -27,12 +27,24 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
-        self._forecasters = self._check_forecasters(forecasters)
-        self.forecasters_ = [(name, f.clone()) for name, f in self._forecasters]
+        if not isinstance(forecasters, (list, tuple)):
+            forecasters = [forecasters]
+        self.forecasters_ = self._check_forecasters_init(forecasters)
         self.n_jobs = n_jobs
         super().__init__()
 
-    def _check_forecasters(self, estimators):
+    @property
+    def _forecasters(self):
+        """Make internal list of forecasters.
+
+        The list only contains the name and forecasters. This is for the implementation
+        of get_params via _HeterogenousMetaEstimator._get_params which expects lists of
+        tuples of len 2.
+        """
+        forecasters = self.forecasters_
+        return [(name, forecaster) for name, forecaster in forecasters]
+
+    def _check_forecasters_init(self, estimators):
         """Check Steps.
 
         Parameters
