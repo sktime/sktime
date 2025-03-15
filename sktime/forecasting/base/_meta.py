@@ -68,19 +68,16 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         # validate names
         self._check_names(names)
         if not all([is_scitype(x, "forecaster") for x in estimators]):
-            raise TypeError(
-                f"estimators passed to {self_name} "
-                f"must be forecasters"
-            )
+            raise TypeError(f"estimators passed to {self_name} must be forecasters")
 
-        has_estimator = any(est not in (None, "drop") for est in estimatorss)
+        has_estimator = any(est not in (None, "drop") for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
-        return estimator_tuples 
+        return estimator_tuples
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
