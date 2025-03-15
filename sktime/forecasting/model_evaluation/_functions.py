@@ -429,7 +429,6 @@ def evaluate(
     6. Set ``i = i + 1``
     8. Go to 2
 
-
     Results returned in this function's return are:
 
     * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
