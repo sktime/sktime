@@ -35,7 +35,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         else:
             fc = forecasters
 
-        self._initialize_forecaster_tuples(fc)
+        if forecasters is not None:
+            self._initialize_forecaster_tuples(fc)
 
     def _initialize_forecaster_tuples(self, forecasters):
         """Initialize estimator tuple attributes, default.
