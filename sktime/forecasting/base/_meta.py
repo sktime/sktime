@@ -27,8 +27,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
-        if not isinstance(forecasters, (list, tuple)):
-            forecasters = [forecasters]
         self.forecasters_ = self._check_forecasters_init(forecasters)
         self.n_jobs = n_jobs
         super().__init__()
@@ -67,13 +65,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         TypeError if not allow_postproc and forecaster is not last estimator
         """
         self_name = type(self).__name__
-        if not isinstance(estimators, list) or len(self.forecasters) == 0:
-            msg = (
-                f"steps in {self_name} must be list of estimators, "
-                f"or (string, estimator) pairs, "
-                f"the two can be mixed; but, found steps of type {type(estimators)}"
-            )
-            raise TypeError(msg)
+        if not isinstance(estimators, (list, tuple)):
+            estimators = [estimators]
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
