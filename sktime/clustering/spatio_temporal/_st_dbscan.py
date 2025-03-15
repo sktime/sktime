@@ -34,8 +34,13 @@ class STDBSCAN(BaseClusterer):
     min_samples : int, default=5
         Minimum number of samples to form a core point.
     metric : str, default='euclidean'
-        Distance metric to use; options include 'euclidean', 'manhattan',
+        Distance metric to use; options include 'euclidean', 'cityblock',
         'chebyshev', etc.
+        See the documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
     sparse_matrix_threshold : int, default=20_000
         Sets the limit on the number of samples for which the algorithm can
         efficiently compute distances with a full matrix approach. Datasets
@@ -359,7 +364,7 @@ class STDBSCAN(BaseClusterer):
             "eps1": 0.5,
             "eps2": 10,
             "min_samples": 2,
-            "metric": "manhattan",
+            "metric": "cityblock",
             "n_jobs": 2,
         }
 
