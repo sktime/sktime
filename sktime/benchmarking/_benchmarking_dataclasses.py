@@ -135,7 +135,7 @@ class ResultObject:
             result[f"{metric}_mean"] = [mean]
         for metric, std in self.stds.items():
             result[f"{metric}_std"] = [std]
-        
+
         return pd.DataFrame(result)
 
 
