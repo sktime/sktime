@@ -1,25 +1,29 @@
 """Tests for probabilistic metrics for distribution predictions."""
+
 import warnings
 
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.forecasting.probabilistic._classes import CRPS, LogLoss
+from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    CRPS,
+    AUCalibration,
+    LogLoss,
+)
 from sktime.proba.normal import Normal
-from sktime.proba.tfp import TFNormal
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-DISTR_METRICS = [CRPS, LogLoss]
+DISTR_METRICS = [CRPS, AUCalibration, LogLoss]
+
+normal_dists = [Normal]
 
 
-if _check_soft_dependencies("tensorflow_probability", severity="none"):
-    normal_dists = [Normal, TFNormal]
-else:
-    normal_dists = [Normal]
-
-
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("normal", normal_dists)
 @pytest.mark.parametrize("metric", DISTR_METRICS)
 @pytest.mark.parametrize("multivariate", [True, False])

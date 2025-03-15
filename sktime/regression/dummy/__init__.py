@@ -1,4 +1,5 @@
 """Dummy regressor."""
+
 __all__ = [
     "DummyRegressor",
 ]

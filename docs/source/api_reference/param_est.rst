@@ -14,6 +14,11 @@ All parameter estimators in ``sktime`` can be listed using the
 using ``estimator_types="param_est"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "parameter estimator" in the "Estimator type" dropdown).
+
+
 Parameter estimators
 --------------------
 
@@ -41,6 +46,7 @@ Composition
     :template: class.rst
 
     PluginParamsForecaster
+    PluginParamsTransformer
 
 Naive
 ~~~~~
@@ -83,3 +89,14 @@ Stationarity estimators
     StationarityKPSSArch
     StationarityZivotAndrews
     StationarityVarianceRatio
+
+Lag estimators
+~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARLagOrderSelector

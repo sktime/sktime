@@ -1,20 +1,11 @@
 """Test the move from (m,d) to (d,m)."""
+
 import numpy as np
 from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
-from sktime.distances import (
-    ddtw_distance,
-    dtw_distance,
-    edr_distance,
-    erp_distance,
-    euclidean_distance,
-    lcss_distance,
-    msm_distance,
-    wddtw_distance,
-    wdtw_distance,
-)
+from sktime.distances import dtw_distance, erp_distance, lcss_distance
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 # Clustering With num custers set to 2 and transpose
@@ -98,7 +89,7 @@ def debug_clusterers():
         # print(" Rand score on with 2D unit test = ",train_rand)
 
 
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import StandardScaler
 
 
 def generate_test_results_clusterers():

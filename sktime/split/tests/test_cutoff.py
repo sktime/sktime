@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_CUTOFFS,
     TEST_FHS,
@@ -15,8 +16,13 @@ from sktime.forecasting.tests._config import (
 from sktime.split import CutoffFhSplitter, CutoffSplitter
 from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([CutoffSplitter, ForecastingHorizon]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("cutoffs", TEST_CUTOFFS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
@@ -33,9 +39,12 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
             CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([CutoffFhSplitter, ForecastingHorizon]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_cutoff_fh_splitter():
     """Test CutoffFhSplitter."""
-    from sktime.forecasting.base import ForecastingHorizon
     from sktime.utils._testing.series import _make_series
 
     y = _make_series()

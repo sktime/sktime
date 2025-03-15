@@ -1,4 +1,5 @@
 """Transformers for index and column subsetting."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["fkiraly"]
@@ -11,17 +12,17 @@ from sktime.transformations.base import BaseTransformer
 class IndexSubset(BaseTransformer):
     r"""Index subsetting transformer.
 
-    In transform, subsets `X` to the indices in `y.index`.
-    If `y` is None, returns `X` without subsetting.
-    numpy-based `X` are interpreted as having a RangeIndex starting at n,
-    where n is the number of numpy rows seen so far through `fit` and `update`.
+    In transform, subsets ``X`` to the indices in ``y.index``.
+    If ``y`` is None, returns ``X`` without subsetting.
+    numpy-based ``X`` are interpreted as having a RangeIndex starting at n,
+    where n is the number of numpy rows seen so far through ``fit`` and ``update``.
     Non-pandas types are interpreted as having index as after conversion to pandas,
-    via `datatypes.convert_to`, to the `"pd.DataFrame"` sktime type.
+    via ``datatypes.convert_to``, to the ``"pd.DataFrame"`` sktime type.
 
     Parameters
     ----------
     index_treatment : str, optional, one of "keep" (default) or "remove"
-        determines which indices are kept in `Xt = transform(X, y)`
+        determines which indices are kept in ``Xt = transform(X, y)``
         "keep" = all indices in y also appear in Xt. If not present in X, NA is filled.
         "remove" = only indices that appear in both X and y are present in Xt.
 
@@ -101,7 +102,7 @@ class IndexSubset(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -109,8 +110,9 @@ class IndexSubset(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"index_treatment": "remove"}
         params2 = {"index_treatment": "keep"}
@@ -121,11 +123,11 @@ class IndexSubset(BaseTransformer):
 class ColumnSelect(BaseTransformer):
     r"""Column selection transformer.
 
-    In transform, subsets `X` to `columns` provided as hyper-parameters.
+    In transform, subsets ``X`` to ``columns`` provided as hyper-parameters.
 
-    Sequence of columns in `Xt=transform(X)` is as in `columns` hyper-parameter.
-    Caveat: this means that `transform` may change sequence of columns,
-        even if no columns are removed from `X` in `transform(X)`.
+    Sequence of columns in ``Xt=transform(X)`` is as in ``columns`` hyper-parameter.
+    Caveat: this means that ``transform`` may change sequence of columns,
+        even if no columns are removed from ``X`` in ``transform(X)``.
 
     Parameters
     ----------
@@ -136,7 +138,7 @@ class ColumnSelect(BaseTransformer):
         "col" = subsets by column iloc index, even if columns is not in X.columns
         "coerce" = coerces to integer pandas.Index and attempts to subset
     index_treatment : str, optional, one of "remove" (default) or "keep"
-        determines which column are kept in `Xt = transform(X, y)`
+        determines which column are kept in ``Xt = transform(X, y)``
         "remove" = only indices that appear in both X and columns are present in Xt.
         "keep" = all indices in columns appear in Xt. If not present in X, NA is filled.
 
@@ -162,6 +164,7 @@ class ColumnSelect(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):
@@ -224,7 +227,7 @@ class ColumnSelect(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -232,8 +235,9 @@ class ColumnSelect(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"columns": None}
         params2 = {"columns": [0, 2, 3]}

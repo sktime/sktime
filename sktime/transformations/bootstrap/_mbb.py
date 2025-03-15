@@ -4,7 +4,7 @@
 __author__ = ["ltsaprounis"]
 
 from copy import copy
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -148,7 +148,7 @@ class STLBootstrapTransformer(BaseTransformer):
     >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     >>> series_list = []  # doctest: +SKIP
     >>> names = []  # doctest: +SKIP
-    >>> for group, series in y_hat.groupby(level=[0], as_index=False):
+    >>> for group, series in y_hat.groupby(level=0, as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)  # doctest: +SKIP
@@ -165,7 +165,12 @@ class STLBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "ltsaprounis",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
@@ -184,7 +189,6 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -194,7 +198,7 @@ class STLBootstrapTransformer(BaseTransformer):
         block_length: int = None,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        lambda_bounds: Tuple = None,
+        lambda_bounds: tuple = None,
         lambda_method: str = "guerrero",
         seasonal: int = 7,
         trend: int = None,
@@ -384,7 +388,7 @@ class STLBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -392,8 +396,9 @@ class STLBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"sp": 3},
@@ -597,7 +602,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -605,8 +610,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"block_length": 5},

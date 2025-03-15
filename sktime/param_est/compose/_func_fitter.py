@@ -1,4 +1,5 @@
 """Implements FunctionParamFitter, a class to create custom parameter fitters."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.param_est.base import BaseParamFitter
@@ -146,7 +147,7 @@ class FunctionParamFitter(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -154,11 +155,20 @@ class FunctionParamFitter(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {"param": "param", "func": lambda X: "foo"},
-            {"param": "param", "func": lambda X, kwarg: "foo", "kw_args": {"kwarg": 1}},
+            {"param": "param", "func": _lambda_test_simple},
+            {"param": "param", "func": _lambda_test_kwarg, "kw_args": {"kwarg": 1}},
         ]
         return params
+
+
+def _lambda_test_simple(X):
+    return "foo"
+
+
+def _lambda_test_kwarg(X, kwarg):
+    return "foo"

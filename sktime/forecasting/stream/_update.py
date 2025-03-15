@@ -1,4 +1,5 @@
 """Compositors that control stream and refitting behaviour of update."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -8,13 +9,6 @@ import pandas as pd
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-
-# prepare tags to clone - exceptions are TAGS_TO_KEEP
-TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
-# fit must be executed to fit the wrapped estimator and remember the cutoff
-# mtype tags are set so X/y is passed through, conversions happen in wrapped estimator
-TAGS_TO_CLONE = _DelegatedForecaster().get_tags().keys()
-TAGS_TO_CLONE = list(set(TAGS_TO_CLONE).difference(TAGS_TO_KEEP))
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
@@ -69,7 +63,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_CLONE)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -195,8 +190,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 
@@ -216,7 +212,7 @@ class UpdateEvery(_DelegatedForecaster):
         update_window controls the lookback window on which refitting is done
             refit data is cutoff (inclusive) to cutoff minus refit_window (exclusive)
 
-    Caution: default value of update_interval means *no updates* after `fit`.
+    Caution: default value of update_interval means *no updates* after ``fit``.
 
     Parameters
     ----------
@@ -251,7 +247,8 @@ class UpdateEvery(_DelegatedForecaster):
 
         super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_KEEP)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -357,8 +354,9 @@ class UpdateEvery(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 
@@ -374,7 +372,7 @@ class DontUpdate(_DelegatedForecaster):
     """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
 
     This is useful when comparing forecasters that update with forecasters that don't,
-    in a set-up where all forecasters' `update` has `update_params=True` set.
+    in a set-up where all forecasters' ``update`` has ``update_params=True`` set.
 
     Shorthand for UpdateEvery with default values.
 
@@ -415,7 +413,8 @@ class DontUpdate(_DelegatedForecaster):
 
         super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_CLONE)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -465,8 +464,9 @@ class DontUpdate(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 

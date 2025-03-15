@@ -2,13 +2,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests of Imputer functionality."""
 
-__author__ = ["aiwalter"]
-__all__ = []
-
 import numpy as np
 import pytest
 
+from sktime.datatypes import get_examples
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.compose import TransformByLevel
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -31,6 +31,10 @@ z.iloc[0] = np.nan
 z.iloc[-1] = np.nan
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
 @pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
@@ -58,6 +62,51 @@ def test_imputer(method, Z, value, forecaster):
     assert not y_hat.isnull().to_numpy().any()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "method",
+    [
+        "linear",
+        "nearest",
+        "mean",
+        "median",
+        "backfill",
+        "pad",
+    ],
+)
+def test_impute_multiindex(method):
+    """Test for data leakage in case of pd-multiindex data.
+
+    Failure case in bug #6224
+    """
+    df = get_examples(mtype="pd-multiindex")[0].copy()
+    df.iloc[:3, :] = np.nan  # instance 0 entirely missing
+    df.iloc[3:4, :] = np.nan  # instance 1 first timepoint missing
+    df.iloc[8:, :] = np.nan  # instance 2 last timepoint missing
+
+    imp = Imputer(method=method)
+    df_imp = imp.fit_transform(df)
+
+    # instance 0 entirely missing, so it should remain missing
+    assert np.array_equal(df.iloc[:3, :], df_imp.iloc[:3, :], equal_nan=True)
+
+    # instance 1 and 2 should not have any missing values
+    assert not df_imp.iloc[3:, :].isna().any().any()
+
+    # test consistency between applying the imputer to every instance separately,
+    # vs applying them to the panel
+    imp_tbl = TransformByLevel(Imputer(method=method))
+    df_imp_tbl = imp_tbl.fit_transform(df)
+    assert np.array_equal(df_imp, df_imp_tbl, equal_nan=True)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_imputer_forecaster_y():
     """Test that forecaster imputer works with y.
 

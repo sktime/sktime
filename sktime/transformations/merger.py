@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a merger for panel data."""
+
 import numpy as np
 
 __author__ = ["benHeid"]
@@ -25,12 +26,12 @@ class Merger(BaseTransformer):
     .........xxxx
     The merger aggregates the data by aligning the time series windows as shown above
     and applying a aggregation function to the overlapping data points.
-    The aggregation function can be one of "mean" or "median". I.e., the `mean` or
-    `median` of each column is calculated, resulting in a univariate time series.
+    The aggregation function can be one of "mean" or "median". I.e., the ``mean`` or
+    ``median`` of each column is calculated, resulting in a univariate time series.
 
     Parameters
     ----------
-    method : {`median`, `mean`}, default="median"
+    method : {``median``, ``mean``}, default="median"
         The method to use for aggregation. Can be one of "mean" or "median".
     stride : int, default=0
         The stride to use for the aggregation. The stride determines the number of
@@ -126,7 +127,7 @@ class Merger(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -134,7 +135,8 @@ class Merger(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{"method": "mean"}, {"method": "median"}]

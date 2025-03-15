@@ -7,7 +7,7 @@ import math
 import numpy as np
 from scipy.stats import distributions, find_repeats, rankdata
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 

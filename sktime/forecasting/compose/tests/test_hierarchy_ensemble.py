@@ -12,14 +12,14 @@ from sktime.datatypes._utilities import get_window
 from sktime.forecasting.compose import HierarchyEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(HierarchyEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "forecasters",
@@ -63,6 +63,10 @@ def test_hierarchy_ensemble_level_predict(forecasters):
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HierarchyEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -108,6 +112,10 @@ def test_hierarchy_ensemble_node_predict(forecasters):
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HierarchyEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -148,6 +156,10 @@ def test_hierarchy_ensemble_exog(forecasters):
     estimator_instance.update(y=y_test, X=X_test)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HierarchyEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -167,7 +179,7 @@ def test_hierarchy_ensemble_exog(forecasters):
 )
 @pytest.mark.parametrize("default", [NaiveForecaster(), None])
 def test_level_one_data(forecasters, default):
-    "Check for data with one level of hierarchy (excluding timepoints level)."
+    """Check for data with one level of hierarchy (excluding timepoints level)."""
     agg = Aggregator()
 
     y = _bottom_hier_datagen(
@@ -200,3 +212,34 @@ def test_level_one_data(forecasters, default):
         def_pred = def_frcstr.predict()
         msg = "Node default predictions do not match"
         assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HierarchyEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_get_fitted_params():
+    """Tests that get_fitted_params works as expected.
+
+    Checks absence of bug #7418.
+    """
+    from sktime.forecasting.compose import HierarchyEnsembleForecaster
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+    from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+
+    y = _bottom_hier_datagen(no_bottom_nodes=7, no_levels=2, random_seed=123)
+
+    forecasters = [
+        ("naive", NaiveForecaster(), 0),
+        ("trend", TrendForecaster(), 1),
+    ]
+    forecaster = HierarchyEnsembleForecaster(
+        forecasters=forecasters,
+        by="level",
+        default=PolynomialTrendForecaster(degree=2),
+    )
+    forecaster.fit(y, fh=[1, 2, 3])
+
+    assert forecaster.get_fitted_params()["naive"].is_fitted
+    assert forecaster.get_fitted_params()["trend"].is_fitted

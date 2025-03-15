@@ -3,7 +3,7 @@
 __author__ = ["jnrusson1"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNNetwork(BaseDeepNetwork):
@@ -77,28 +77,30 @@ class MACNNNetwork(BaseDeepNetwork):
         block_output: An instance of keras.layers.Layer
             Represents the last layer of a MACNN Block, to be used by the next block.
         """
-        from tensorflow import keras, reduce_mean, reshape
+        from tensorflow import keras
 
         conv_layers = []
-        for i in range(len(self.kernel_size)):
-            conv_layers.append(
-                keras.layers.Conv1D(kernels, self.kernel_size[i], padding=self.padding)(
-                    x
-                )
-            )
+        for kernel_size in self.kernel_size:
+            conv_layer = keras.layers.Conv1D(
+                filters=kernels, kernel_size=kernel_size, padding=self.padding
+            )(x)
+
+            conv_layers.append(conv_layer)
 
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
         x1 = keras.layers.Activation("relu")(x1)
 
-        x2 = reduce_mean(x1, 1)
+        x2 = keras.layers.Lambda(lambda y: keras.backend.mean(y, axis=1))(x1)
         x2 = keras.layers.Dense(
-            int(kernels * 3 / reduce), use_bias=False, activation="relu"
+            units=int(kernels * 3 / reduce), use_bias=False, activation="relu"
         )(x2)
-        x2 = keras.layers.Dense(int(kernels * 3), use_bias=False, activation="relu")(x2)
-        x2 = reshape(x2, [-1, 1, kernels * 3])
+        x2 = keras.layers.Dense(
+            units=int(kernels * 3), use_bias=False, activation="relu"
+        )(x2)
+        x2 = keras.layers.RepeatVector(x1.shape[1])(x2)
 
-        return x1 * x2
+        return keras.layers.Multiply()([x1, x2])
 
     def _stack(self, x, repeats, kernels, reduce):
         """Build MACNN Blocks and stack them.
@@ -130,7 +132,7 @@ class MACNNNetwork(BaseDeepNetwork):
         Parameters
         ----------
         input_shape : tuple
-            The shape of the data(without batch) fed into the input layer
+            The shape of the data (without batch) fed into the input layer
 
         Returns
         -------
@@ -139,22 +141,76 @@ class MACNNNetwork(BaseDeepNetwork):
         output_layer: An instance of keras.layers.Layer
             The output layer of this Network.
         """
-        from tensorflow import keras, reduce_mean
+        from tensorflow import keras
 
         input_layer = keras.layers.Input(shape=input_shape)
 
-        x = self._stack(input_layer, self.repeats, self.filter_sizes[0], self.reduction)
+        x = self._stack(
+            x=input_layer,
+            repeats=self.repeats,
+            kernels=self.filter_sizes[0],
+            reduce=self.reduction,
+        )
         x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
+            pool_size=self.pool_size,
+            strides=self.strides,
+            padding=self.padding,
         )(x)
 
-        x = self._stack(x, self.repeats, self.filter_sizes[1], self.reduction)
+        x = self._stack(
+            x=x,
+            repeats=self.repeats,
+            kernels=self.filter_sizes[1],
+            reduce=self.reduction,
+        )
         x = keras.layers.MaxPooling1D(
-            self.pool_size, self.strides, padding=self.padding
+            pool_size=self.pool_size,
+            strides=self.strides,
+            padding=self.padding,
         )(x)
 
-        x = self._stack(x, self.repeats, self.filter_sizes[2], self.reduction)
+        x = self._stack(
+            x=x,
+            repeats=self.repeats,
+            kernels=self.filter_sizes[2],
+            reduce=self.reduction,
+        )
 
-        output_layer = reduce_mean(x, 1)
+        output_layer = keras.layers.GlobalAveragePooling1D()(x)
 
         return input_layer, output_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "padding": "valid",
+            "pool_size": 2,
+            "strides": 1,
+            "repeats": 2,
+            "filter_sizes": (64, 128, 256),
+            "kernel_size": (3, 6, 12),
+            "reduction": 16,
+            "random_state": 0,
+        }
+        return [params1, params2]

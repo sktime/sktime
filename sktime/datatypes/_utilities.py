@@ -279,7 +279,13 @@ def get_cutoff(
         res = idx[[ix]]
         if hasattr(idx, "freq"):
             if idx.freq is None:
-                res.freq = pd.infer_freq(idx)
+                try:
+                    res.freq = pd.infer_freq(idx)
+                except ValueError:
+                    # This can happen when there are fewer
+                    # than three values in the index
+                    # (see pd.infer_freq for details)
+                    pass
             else:
                 if res.freq != idx.freq:
                     res.freq = idx.freq
@@ -392,7 +398,16 @@ def update_data(X, X_new=None):
             return np.concatenate([X, X_new], axis=2)
     #  if y is pandas, we use combine_first to update
     elif isinstance(X_new, (pd.Series, pd.DataFrame)) and len(X_new) > 0:
-        return X_new.combine_first(X)
+        # using .combine_first() can mess with pd.Series frequencies, e.g. change 24H
+        # to 1D, which can cause issues when converting fh.to_absolute() at the
+        # predict stage because to_absolute(self.cutoff) converts timestamps to
+        # period internally
+        X_new = X_new.combine_first(X)
+        if hasattr(X.index, "freq") and hasattr(X_new.index, "freq"):
+            if X.index.freq == X_new.index.freq:
+                if X.index.freqstr != X_new.index.freqstr:
+                    X_new.index.freq = X.index.freq
+        return X_new
 
 
 GET_WINDOW_SUPPORTED_MTYPES = [

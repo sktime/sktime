@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.feature_based import SummaryClassifier
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
 
 CORRECT_SCITYPES = {
@@ -23,6 +24,10 @@ sklearn_estimators = list(CORRECT_SCITYPES.keys())
 sktime_estimators = [SummaryClassifier, NaiveForecaster]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(is_sklearn_estimator),
+    reason="Run if utilities have changed.",
+)
 @pytest.mark.parametrize("estimator", sklearn_estimators)
 def test_is_sklearn_estimator_positive(estimator):
     """Test that is_sklearn_estimator recognizes positive examples correctly."""
@@ -33,6 +38,10 @@ def test_is_sklearn_estimator_positive(estimator):
     assert is_sklearn_estimator(estimator), msg
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(is_sklearn_estimator),
+    reason="Run if utilities have changed.",
+)
 @pytest.mark.parametrize("estimator", sktime_estimators)
 def test_is_sklearn_estimator_negative(estimator):
     """Test that is_sklearn_estimator recognizes negative examples correctly."""
@@ -43,6 +52,10 @@ def test_is_sklearn_estimator_negative(estimator):
     assert not is_sklearn_estimator(estimator), msg
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(sklearn_scitype),
+    reason="Run if utilities have changed.",
+)
 @pytest.mark.parametrize("estimator", sklearn_estimators)
 def test_sklearn_scitype(estimator):
     """Test that sklearn_scitype returns the correct scitype string."""

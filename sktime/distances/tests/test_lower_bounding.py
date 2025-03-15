@@ -1,10 +1,12 @@
 """Test suite for lower bounding techniques."""
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.distances.lower_bounding import LowerBounding
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_module_changed
 
 
 def _validate_bounding_result(
@@ -145,6 +147,10 @@ def _validate_bounding(
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.distances"),
+    reason="Run test only if distances module has changed",
+)
 def test_lower_bounding() -> None:
     """Test for various lower bounding methods."""
     no_bounding = LowerBounding.NO_BOUNDING
@@ -172,6 +178,10 @@ def test_lower_bounding() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.distances"),
+    reason="Run test only if distances module has changed",
+)
 def test_incorrect_parameters() -> None:
     """Test to check correct errors raised."""
     numpy_x = create_test_distance_numpy(10, 10)

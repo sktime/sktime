@@ -1,5 +1,5 @@
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from sktime.datatypes import convert_to
 from sktime.utils._testing.panel import _make_panel_X

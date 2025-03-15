@@ -9,7 +9,8 @@ from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric
 from sktime.benchmarking.results import RAMResults
 from sktime.series_as_features.model_selection import PresplitFilesCV
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def dummy_results():
@@ -114,6 +115,10 @@ def evaluator_setup(score_function):
     return evaluator, metrics_by_strategy
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_rank():
     """Test rank."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -127,6 +132,10 @@ def test_rank():
     assert expected_ranks.equals(generated_ranks)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_accuracy_score():
     """Test accuracy score."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -142,6 +151,10 @@ def test_accuracy_score():
     assert metrics_by_strategy.equals(expected_accuracy)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_sign_test():
     """Test sign_test."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -150,6 +163,10 @@ def test_sign_test():
     assert np.array_equal(expected, results)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_ranksum_test():
     """Test ranksum_test."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -165,6 +182,10 @@ def test_ranksum_test():
     assert np.array_equal(results, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_t_test_bonfer():
     """Test t_test_bonfer."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -174,7 +195,8 @@ def test_t_test_bonfer():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("scikit_posthocs", severity="none"),
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("scikit_posthocs", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_nemenyi():
@@ -194,7 +216,8 @@ def test_nemenyi():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("matplotlib", severity="none"),
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #2368")
@@ -205,6 +228,11 @@ def test_plots():
     evaluator.t_test()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("scikit_posthocs", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_wilcoxon():
     """Test wilcoxon."""
     expected = pd.DataFrame(
@@ -215,6 +243,11 @@ def test_wilcoxon():
     assert results[expected.columns].equals(expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("scikit_posthocs", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_run_times():
     """Test run_times."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)

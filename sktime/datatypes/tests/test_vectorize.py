@@ -10,6 +10,7 @@ from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
 from sktime.utils.pandas import df_map
 from sktime.utils.parallel import _get_parallel_test_fixtures
@@ -154,6 +155,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("iterate_cols", [False, True])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
 def test_construct_vectorizeddf(
     scitype, mtype, fixture_index, iterate_cols, iterate_as
 ):
@@ -183,6 +188,10 @@ def test_construct_vectorizeddf(
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
 def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
     """Test VectorizedDF raises appropriate errors with invalid arguments.
 
@@ -209,6 +218,10 @@ def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
     # we may have to change this if we introduce a "Pumuckl" scitype, but seems unlikely
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
 def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     """Tests __len__ returns correct length.
 
@@ -265,6 +278,10 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     """Tests __getitem__ returns pd-multiindex mtype if iterate_as="Series".
 
@@ -305,6 +322,10 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     assert deep_equals(X_iter2, X_iter3)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     """Tests __getitem__ returns correct pd-multiindex mtype.
 
@@ -353,6 +374,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
     ), f"iteration elements do not conform with expected mtype {correct_mtype}"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     """Tests that reconstruct recreates the original input X.
 
@@ -398,6 +423,10 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     assert eq, msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
 @pytest.mark.parametrize(
     "item, freq",
     [
@@ -436,6 +465,10 @@ def test_enforce_index_freq(item, freq):
     assert item.index.freq == freq
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("varname_used", [True, False])
 def test_vectorize_est(

@@ -6,6 +6,7 @@ Objects compared can have one of the following valid types:
     lists, tuples, or dicts of a valid type (recursive)
     polars.DataFrame, polars.LazyFrame
 """
+
 from skbase.utils.deep_equals._common import _make_ret
 from skbase.utils.deep_equals._deep_equals import deep_equals as _deep_equals
 
@@ -61,6 +62,8 @@ def deep_equals(x, y, return_msg=False, plugins=None):
         _csr_matrix_equals_plugin,
         _dask_dataframe_equals_plugin,
         _fh_equals_plugin,
+        _polars_equals_plugin,
+        _gluonts_PandasDataset_equals_plugin,
     ]
 
     if plugins is not None:
@@ -79,8 +82,8 @@ def _fh_equals_plugin(x, y, return_msg=False, deep_equals=None):
 
     Parameters
     ----------
-    x: ForcastingHorizon
-    y: ForcastingHorizon
+    x: ForecastingHorizon
+    y: ForecastingHorizon
     return_msg : bool, optional, default=False
         whether to return informative message about what is not equal
 
@@ -134,15 +137,15 @@ def _csr_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if type(x).__name__ != "csr_matrix":  # isinstance(x, csr_matrix):
         return None
 
-    import numpy as np
-
     ret = _make_ret(return_msg)
 
-    # csr-matrix must not be compared using np.any(x!=y)
-    if not np.allclose(x.A, y.A):
+    if x.shape != y.shape:
         return ret(False, " !=, {} != {}", [x, y])
 
-    return ret(True, "")
+    if (x != y).nnz == 0:
+        return ret(True, "")
+
+    return ret(False, " !=, {} != {}", [x, y])
 
 
 def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
@@ -169,7 +172,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if not hasattr(x, "compute"):
         return None
 
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
@@ -185,3 +188,94 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     y = y.compute()
 
     return deep_equals(x, y, return_msg=return_msg)
+
+
+def _gluonts_PandasDataset_equals_plugin(x, y, return_msg=False, deep_equals=None):
+    """Test 2 gluonTS PandasDataset for equality in value.
+
+    Parameters
+    ----------
+    x : gluonts.dataset.pandas.PandasDataset
+        The first pandasDataset to compare
+
+    y : gluonts.dataset.pandas.PandasDataset
+        The second pandasDataset to compare
+
+    return_msg : bool, optional
+        Whether or not to return a message by default False
+
+    deep_equals : function, optional
+        The deep equals function to run
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+        if unequal, returns string
+
+    returns None if this function does not apply, i.e., x is not polars
+    """
+    if not hasattr(x, "_data_entries"):
+        return None
+
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    gluonts_available = _check_soft_dependencies("gluonts", severity="none")
+
+    if not gluonts_available:
+        return None
+
+    return deep_equals(
+        x._data_entries.iterable.iterable,
+        y._data_entries.iterable.iterable,
+        return_msg=return_msg,
+    )
+
+
+def _polars_equals_plugin(x, y, return_msg=False):
+    """Test two polars dataframes for equality.
+
+    Correct if both x and y are polars.DataFrame or polars.LazyFrame.
+
+    Parameters
+    ----------
+    x: polars.DataFrame or polars.LazyFrame
+    y: polars.DataFrame or polars.LazyFrame
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+        if unequal, returns string
+    returns None if this function does not apply, i.e., x is not polars
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    polars_available = _check_soft_dependencies("polars", severity="none")
+
+    if not polars_available:
+        return None
+
+    import polars as pl
+
+    if not isinstance(x, (pl.DataFrame, pl.LazyFrame)):
+        return None
+
+    ret = _make_ret(return_msg)
+
+    # compare pl.DataFrame
+    if isinstance(x, pl.DataFrame):
+        return ret(x.equals(y), ".polars_equals")
+
+    # compare pl.LazyFrame
+    if isinstance(x, pl.LazyFrame):
+        return ret(x.collect().equals(y.collect()), ".polars_equals")
+
+    return None

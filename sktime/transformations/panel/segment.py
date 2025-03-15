@@ -1,4 +1,5 @@
 """Interval and window segmenter transformers."""
+
 import math
 
 import numpy as np
@@ -99,7 +100,7 @@ class IntervalSegmenter(BaseTransformer):
 
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
-        during `fit`.
+        during ``fit``.
 
         Parameters
         ----------
@@ -139,7 +140,7 @@ class IntervalSegmenter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -147,8 +148,9 @@ class IntervalSegmenter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small number of intervals for testing
         params = {"intervals": 2}
@@ -185,7 +187,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     """
 
     _tags = {
@@ -296,7 +298,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -304,8 +306,9 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # we need to override this, or it inherits from IntervalSegmenter
         #   but this estimator does not have an "intervals" parameter

@@ -1,7 +1,8 @@
 """Interface to Christiano Fitzgerald asymmetric, random walk filter from `statsmodels`.
 
-Interfaces `cf_filter` from `statsmodels.tsa.filters`.
+Interfaces ``cf_filter`` from ``statsmodels.tsa.filters``.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["ken-maeda"]
@@ -16,8 +17,8 @@ from sktime.transformations.base import BaseTransformer
 class CFFilter(BaseTransformer):
     """Filter a times series using the Christiano Fitzgerald filter.
 
-    This is a wrapper around the `cffilter` function from `statsmodels`.
-    (see `statsmodels.tsa.filters.cf_filter.cffilter`).
+    This is a wrapper around the ``cffilter`` function from ``statsmodels``.
+    (see ``statsmodels.tsa.filters.cf_filter.cffilter``).
 
     Parameters
     ----------
@@ -118,7 +119,7 @@ class CFFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -126,8 +127,9 @@ class CFFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"low": 8, "high": 26, "drift": False}
         params2 = {}

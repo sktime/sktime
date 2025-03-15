@@ -13,17 +13,18 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Distances combined via arithmetic operation, e.g., addition, multiplication.
 
-    `CombinedDistance` creates a pairwise trafo from multiple other pairwise trafos,
+    ``CombinedDistance`` creates a pairwise trafo from multiple other pairwise trafos,
     by performing an arithmetic operation (np.ufunc) on the multiple distance matrices.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`, ufunc `operation`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN``, ufunc
+    ``operation``,
     this compositor behaves as follows:
-    `transform(X, X2)` - computes `dist1 = trafo1.transform(X, X2)`,
-        `dist2 = trafo2.transform(X, X2)`, ..., distN =  trafoN.transform(X, X2)`,
-        all of shape `(len(X), len(X2)`, then applies `operation` entry-wise,
-        to obtain a single matrix `dist` of shape `(len(X), len(X2)`
-        Example: if `operation = np.sum`, then `dist` is
-        the entry-wise sum of `dist1`, `dist2`, ..., `distN`
+    ``transform(X, X2)`` - computes ``dist1 = trafo1.transform(X, X2)``,
+        ``dist2 = trafo2.transform(X, X2)``, ..., distN =  trafoN.transform(X, X2)`,
+        all of shape ``(len(X), len(X2)``, then applies ``operation`` entry-wise,
+        to obtain a single matrix ``dist`` of shape ``(len(X), len(X2)``
+        Example: if ``operation = np.sum``, then ``dist`` is
+        the entry-wise sum of ``dist1``, ``dist2``, ..., ``distN``
 
     Parameters
     ----------
@@ -119,19 +120,22 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     def _algebra_dunder_concat(self, other, operation):
         """Return (right) concat CombinedDistance, common boilerplate for dunders.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` pairwise transformer, must inherit
+        BasePairwiseTransformerPanel
+            otherwise, ``NotImplemented`` is returned
         operation: operation string used in CombinedDistance for the dunder.
             Must be equal to the operation of the dunder, not of self.
 
         Returns
         -------
-        CombinedDistance object, concat of `self` (first) with `other` (last).
-            does not contain CombinedDistance `sktime` transformers with same operation
+        CombinedDistance object, concat of ``self`` (first) with ``other`` (last).
+            does not contain CombinedDistance ``sktime`` transformers with same
+            operation
             (but may nest CombinedDistance with different operations)
         """
         if self.operation == operation:
@@ -155,17 +159,20 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     def __mul__(self, other):
         """Magic * method, return (right) multiplied CombinedDistance.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` pairwise transformer, must inherit
+        BasePairwiseTransformerPanel
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        CombinedDistance object, algebraic * of `self` (first) with `other` (last).
-            does not contain CombinedDistance `sktime` transformers with same operation
+        CombinedDistance object, algebraic * of ``self`` (first) with ``other`` (last).
+            does not contain CombinedDistance ``sktime`` transformers with same
+            operation
             (but may nest CombinedDistance with different operations)
         """
         return self._algebra_dunder_concat(other=other, operation="*")
@@ -173,17 +180,19 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     def __add__(self, other):
         """Magic + method, return (right) multiplied CombinedDistance.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` pairwise transformer, must inherit
+        BasePairwiseTransformerPanel
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        CombinedDistance object, algebraic + of `self` (first) with `other` (last).
-            not nested, contains only non-CombinedDistance `sktime` transformers
+        CombinedDistance object, algebraic + of ``self`` (first) with ``other`` (last).
+            not nested, contains only non-CombinedDistance ``sktime`` transformers
         """
         return self._algebra_dunder_concat(other=other, operation="+")
 
@@ -224,15 +233,16 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.dists_kernels.compose_tab_to_panel import AggrDist
         from sktime.dists_kernels.dtw import DtwDist

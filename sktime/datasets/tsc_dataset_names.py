@@ -8,7 +8,7 @@ Array multivariate_equal_length lists the 26 UEA archive problems used in [4].
 
 [1] H.Dau, A. Bagnall, K. Kamgar, C. Yeh, Y. Zhu, S. Gharghabi, C. Ratanamahatana and
 E. Keogh.
-The  UCR  time  series  archive. IEEE/CAA J. Autom. Sinica, 6(6):1293–1305, 2019
+The  UCR  time  series  archive. IEEE/CAA J. Autom. Sinica, 6(6):1293-1305, 2019
 [2] A. Bagnall, H. Dau, J. Lines, M. Flynn, J. Large, A. Bostrom, P. Southam,and
 E.  Keogh.
 The UEA  multivariate  time  series  classification  archive, 2018. ArXiv e-prints,

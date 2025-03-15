@@ -21,8 +21,8 @@ class DtwDist(BasePairwiseTransformerPanel):
     * WDDTW - weighted derivative dynamic time
       warping - ``weighted=True, derivative=True``
 
-    `sktime` interface to the efficient `numba` implementations
-    provided by ``pairwise_distance`` in `sktime.distances`.
+    ``sktime`` interface to the efficient ``numba`` implementations
+    provided by ``pairwise_distance`` in ``sktime.distances``.
 
     This estimator provides performant implementation of time warping distances for:
     * time series of equal length
@@ -36,7 +36,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     Note that the more flexible options above may be less performant.
 
     The algorithms are also available as alignment estimators
-    ``sktime.alignmnent.dtw_numba``, producing alignments aka alignment paths.
+    ``sktime.alignment.dtw_numba``, producing alignments aka alignment paths.
 
     DTW was originally proposed in [1]_, DTW computes the distance between two
     time series by considering their alignments during the calculation.
@@ -131,6 +131,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "capability:unequal_length": False,  # can dist handle unequal length panels?
     }
 
     def __init__(
@@ -211,7 +212,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for distance/kernel transformers.
 
         Returns
@@ -219,8 +220,9 @@ class DtwDist(BasePairwiseTransformerPanel):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params0 = {}
         params1 = {"weighted": True}

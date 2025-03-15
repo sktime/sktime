@@ -9,7 +9,6 @@ __all__ = ["CanonicalIntervalForest"]
 import math
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
@@ -59,7 +58,7 @@ class CanonicalIntervalForest(BaseClassifier):
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
         tree used with embedded attribute processing for faster predictions.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -120,7 +119,7 @@ class CanonicalIntervalForest(BaseClassifier):
         # packaging info
         # --------------
         "authors": "MatthewMiddlehurst",
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -168,6 +167,8 @@ class CanonicalIntervalForest(BaseClassifier):
         super().__init__()
 
     def _fit(self, X, y):
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         if self.base_estimator.lower() == "dtc":
@@ -222,6 +223,8 @@ class CanonicalIntervalForest(BaseClassifier):
         )
 
     def _predict_proba(self, X) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -383,7 +386,7 @@ class CanonicalIntervalForest(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -394,8 +397,9 @@ class CanonicalIntervalForest(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}

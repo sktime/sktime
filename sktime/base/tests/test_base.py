@@ -40,7 +40,7 @@ from copy import deepcopy
 import pytest
 
 from sktime.base import BaseEstimator, BaseObject
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 # Fixture class for testing tag system
@@ -63,6 +63,9 @@ FIXTURE_OBJECT._tags_dynamic = {"A": 42424241, "B": 3}
 
 FIXTURE_OBJECT_TAGS = {"A": 42424241, "B": 3, "C": 1234, 3: "E"}
 
+# default tags in BaseObject
+DEFAULT_TAGS = BaseObject._tags
+
 
 def test_get_class_tags():
     """Tests get_class_tags class method of BaseObject for correctness.
@@ -75,7 +78,9 @@ def test_get_class_tags():
 
     msg = "Inheritance logic in BaseObject.get_class_tags is incorrect"
 
-    assert child_tags == FIXTURE_CLASSCHILD_TAGS, msg
+    expected_tags = FIXTURE_CLASSCHILD_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
+    assert child_tags == expected_tags, msg
 
 
 def test_get_class_tag():
@@ -117,7 +122,9 @@ def test_get_tags():
 
     msg = "Inheritance logic in BaseObject.get_tags is incorrect"
 
-    assert object_tags == FIXTURE_OBJECT_TAGS, msg
+    expected_tags = FIXTURE_OBJECT_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
+    assert object_tags == expected_tags, msg
 
 
 def test_get_tag():
@@ -175,7 +182,10 @@ def test_set_tags():
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
-    assert FIXTURE_OBJECT_SET.get_tags() == FIXTURE_OBJECT_SET_TAGS, msg
+
+    expected_tags = FIXTURE_OBJECT_SET_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
+    assert FIXTURE_OBJECT_SET.get_tags() == expected_tags, msg
 
 
 class CompositionDummy(BaseObject):

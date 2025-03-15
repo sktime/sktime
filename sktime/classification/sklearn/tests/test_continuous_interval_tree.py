@@ -1,10 +1,16 @@
 """ContinuousIntervalTree test code."""
+
 import numpy as np
 import pytest
 
 from sktime.classification.sklearn import ContinuousIntervalTree
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ContinuousIntervalTree),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_nan_values():
     """Test that ContinuousIntervalTree can handle NaN values."""
     rng = np.random.RandomState(0)

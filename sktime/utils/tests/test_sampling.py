@@ -5,12 +5,17 @@ import pytest
 
 from sktime.datasets import load_unit_test
 from sktime.datatypes import check_is_scitype
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.sampling import random_partition, stratified_resample
 
 NK_FIXTURES = [(10, 3), (15, 5), (19, 6), (3, 1), (1, 2)]
 SEED_FIXTURES = [42, 0, 100, -5]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.sampling", "sktime.datatypes"]),
+    reason="Run if multiindex module has changed.",
+)
 @pytest.mark.parametrize("n, k", NK_FIXTURES)
 def test_partition(n, k):
     """Test that random_partition returns a disjoint partition."""
@@ -35,6 +40,10 @@ def test_partition(n, k):
                 assert len(set(x).intersection(y)) == 0
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.sampling", "sktime.datatypes"]),
+    reason="Run if multiindex module has changed.",
+)
 @pytest.mark.parametrize("seed", SEED_FIXTURES)
 @pytest.mark.parametrize("n, k", NK_FIXTURES)
 def test_seed(n, k, seed):
@@ -47,6 +56,10 @@ def test_seed(n, k, seed):
     assert deep_equals(part, part2)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.sampling", "sktime.datatypes"]),
+    reason="Run if multiindex module has changed.",
+)
 def test_stratified_resample():
     """Test resampling returns valid data structure and maintains class distribution."""
     trainX, trainy = load_unit_test(split="TRAIN")

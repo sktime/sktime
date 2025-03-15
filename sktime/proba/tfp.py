@@ -6,8 +6,8 @@ __author__ = ["fkiraly"]
 import numpy as np
 import pandas as pd
 
-from sktime.proba.base import _BaseTFDistribution
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.proba._base import _BaseTFDistribution
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class TFNormal(_BaseTFDistribution):
@@ -22,8 +22,8 @@ class TFNormal(_BaseTFDistribution):
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.proba.tfp import TFNormal  # doctest: +SKIP
 
     >>> n = TFNormal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP

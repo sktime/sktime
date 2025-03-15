@@ -38,7 +38,7 @@ class ShapeDTW(BaseClassifier):
 
     Parameters
     ----------
-    n_neighbours                : int, int, set k for knn (default =1).
+    n_neighbors                : int, int, set k for knn (default =1).
     subsequence_length          : int, defines the length of the
                                   subsequences(default=sqrt(n_timepoints)).
 
@@ -108,6 +108,22 @@ class ShapeDTW(BaseClassifier):
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ShapeDTW
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = ShapeDTW(n_neighbors=1,
+    ...     subsequence_length=30,
+    ...     shape_descriptor_function="raw",
+    ...     shape_descriptor_functions=None,
+    ...     metric_params=None,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ShapeDTW(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -165,6 +181,8 @@ class ShapeDTW(BaseClassifier):
         if self.metric_params is None:
             self.metric_params = {}
             _reset = True
+        else:
+            _reset = False
 
         # If the shape descriptor is 'compound',
         # calculate the appropriate weighting_factor
@@ -238,7 +256,7 @@ class ShapeDTW(BaseClassifier):
 
             grid = GridSearchCV(
                 estimator=ShapeDTW(
-                    n_neighbours=n,
+                    n_neighbors=n,
                     subsequence_length=sl,
                     shape_descriptor_function=sdf,
                     shape_descriptor_functions=sdfs,
@@ -502,3 +520,31 @@ class ShapeDTW(BaseClassifier):
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
         return df
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "n_neighbors": 3,
+            "shape_descriptor_function": "compound",
+            "shape_descriptor_functions": ["paa", "dwt"],
+        }
+        return [params1, params2]

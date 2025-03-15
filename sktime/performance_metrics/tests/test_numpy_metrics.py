@@ -1,4 +1,5 @@
 """Tests for numpy metrics in _functions module."""
+
 from inspect import getmembers, isfunction
 
 import numpy as np
@@ -6,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.performance_metrics.forecasting import _functions
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.series import _make_series
 
 numpy_metrics = getmembers(_functions, isfunction)
@@ -18,6 +20,10 @@ names, metrics = zip(*numpy_metrics)
 MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)

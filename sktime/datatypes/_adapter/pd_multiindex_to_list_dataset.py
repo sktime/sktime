@@ -15,6 +15,7 @@ def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
         Only fixed frequency is supported at the moment.
     startdate: str, default = "1750-01-01"
         Custom startdate for ListDataset
+
     Returns
     -------
     A ListDataset mtype type to be used as input for gluonts models/estimators

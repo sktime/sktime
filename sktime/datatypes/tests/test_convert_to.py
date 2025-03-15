@@ -2,8 +2,11 @@
 
 __author__ = ["fkiraly"]
 
+import pytest
+
 from sktime.datatypes._convert import convert_to
 from sktime.datatypes._examples import get_examples
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
 
 # hard-coded scitypes/mtypes to use in test_convert_to
@@ -13,6 +16,10 @@ MTYPES_SERIES = ["pd.Series", "np.ndarray", "pd.DataFrame"]
 MTYPES_PANEL = ["pd-multiindex", "df-list", "numpy3D"]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
 def test_convert_to_simple():
     """Testing convert_to basic call works."""
     scitype = SCITYPES[0]
@@ -29,6 +36,10 @@ def test_convert_to_simple():
     assert deep_equals(converted, exp_fixt), msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
 def test_convert_to_without_scitype():
     """Testing convert_to call without scitype specification."""
     scitype = SCITYPES[0]
@@ -45,6 +56,10 @@ def test_convert_to_without_scitype():
     assert deep_equals(converted, exp_fixt), msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
 def test_convert_to_mtype_list():
     """Testing convert_to call to_type being a list, of same scitype."""
     # convert_to list
@@ -71,6 +86,10 @@ def test_convert_to_mtype_list():
     assert deep_equals(converted_off, exp_fixt_off), msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
 def test_convert_to_mtype_list_different_scitype():
     """Testing convert_to call to_type being a list, of different scitypes."""
     # convert_to list

@@ -10,6 +10,7 @@ jobs:
     outputs:
       base: ${{ steps.filter.outputs.base }}
     steps:
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -25,13 +26,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -45,8 +46,3 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
-
-      - name: upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,incomplete

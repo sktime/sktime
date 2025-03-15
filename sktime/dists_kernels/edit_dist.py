@@ -59,7 +59,7 @@ class EditDist(BasePairwiseTransformerPanel):
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding)
     bounding_matrix: 2D np.ndarray, optional, default = None
-        if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
+        if passed, must be of shape (len(X), len(X2)) for X, X2 in ``transform``
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
@@ -91,14 +91,14 @@ class EditDist(BasePairwiseTransformerPanel):
     .. [2] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
         search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
         international conference on Management of data (SIGMOD '05). Association for
-        Computing Machinery, New York, NY, USA, 491–502.
+        Computing Machinery, New York, NY, USA, 491-502.
         DOI:https://doi.org/10.1145/1066157.1066213
     .. [3] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
         In Proceedings of the Thirtieth international conference on Very large data
-        bases - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+        bases - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     .. [4] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
         for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-        Intelligence. 31 (2): 306–318.
+        Intelligence. 31 (2): 306-318.
 
     Examples
     --------
@@ -123,6 +123,7 @@ class EditDist(BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "capability:unequal_length": False,  # can dist handle unequal length panels?
     }
 
     ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]

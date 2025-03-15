@@ -9,11 +9,14 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetClassifier(BaseDeepClassifier):
     """Residual Neural Network as described in [1].
+
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
     Parameters
     ----------
@@ -38,15 +41,9 @@ class ResNetClassifier(BaseDeepClassifier):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-
-    Notes
-    -----
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
-
     References
     ----------
-        .. [1] Wang et. al, Time series classification from
+        .. [1] Wang et al, Time series classification from
     scratch with deep neural networks: A strong baseline,
     International joint conference on neural networks (IJCNN), 2017.
 
@@ -55,15 +52,16 @@ class ResNetClassifier(BaseDeepClassifier):
     >>> from sktime.classification.deep_learning.resnet import ResNetClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetClassifier(n_epochs=20, bacth_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    >>> clf = ResNetClassifier(n_epochs=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ResNetClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr"],
+        # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
         # estimator type handled by parent class
@@ -83,7 +81,7 @@ class ResNetClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
@@ -94,6 +92,9 @@ class ResNetClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = ResNetNetwork(random_state=random_state)
 
@@ -161,7 +162,7 @@ class ResNetClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -188,7 +189,7 @@ class ResNetClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -199,10 +200,11 @@ class ResNetClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

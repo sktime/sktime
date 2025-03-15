@@ -1,10 +1,17 @@
 """Test the Padder transformer."""
 
+import pytest
+
 from sktime.datasets import load_basic_motions
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.padder import PaddingTransformer
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PaddingTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_padding_transformer():
     """Test the dimensions after padding."""
     # load data
@@ -19,6 +26,10 @@ def test_padding_transformer():
     assert len(data.columns) == 100 * 6
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PaddingTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_padding_parameterised_transformer():
     """Test padding to user determined length."""
     # load data
@@ -33,6 +44,10 @@ def test_padding_parameterised_transformer():
     assert len(data.columns) == 120 * 6
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PaddingTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_padding_fill_value_transformer():
     """Test full fill padding."""
     # load data

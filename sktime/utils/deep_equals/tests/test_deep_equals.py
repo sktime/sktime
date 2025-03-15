@@ -1,4 +1,5 @@
 """Tests for deep_equals utility."""
+
 from copy import deepcopy
 
 import numpy as np
@@ -17,6 +18,7 @@ EXAMPLES = [
     [([([([()])])])],
     np.array([2, 3, 4]),
     np.array([2, 4, 5]),
+    np.array([2, 4, 5, 4]),
     3.5,
     4.2,
     np.nan,
@@ -30,8 +32,10 @@ EXAMPLES = [
     csr_matrix((3, 4), dtype=np.int8),
     pd.Index([1, 2, 3]),
     pd.Index([2, 3, 4]),
+    pd.Index([2, 3, 4, 6]),
     np.array([0.1, 1], dtype="object"),
     np.array([0.2, 1], dtype="object"),
+    np.array([0.2, 1, 4], dtype="object"),
 ]
 
 

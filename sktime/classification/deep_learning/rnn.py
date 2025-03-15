@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class SimpleRNNClassifier(BaseDeepClassifier):
@@ -47,6 +47,15 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ResNetClassifier(...)
     """
 
     _tags = {
@@ -73,9 +82,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ):
         _check_dl_dependencies(severity="error")
 
-        super().__init__()
-
         self.batch_size = batch_size
+        self.n_epochs = n_epochs
         self.verbose = verbose
         self.units = units
         self.callbacks = callbacks
@@ -86,9 +94,11 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -121,7 +131,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -147,7 +157,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         """
         from tensorflow import keras
 
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
@@ -212,7 +222,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             Reserved values for classifiers:
                 "results_comparison" - used for identity testing in some classifiers
                     should contain parameter settings comparable to "TSC bakeoff"
@@ -222,8 +232,9 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {

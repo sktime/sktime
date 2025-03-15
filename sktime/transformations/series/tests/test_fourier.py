@@ -8,6 +8,7 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_index_equal
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.fourier import FourierFeatures
 
 Y = load_airline()
@@ -15,6 +16,10 @@ Y_datetime = deepcopy(Y)
 Y_datetime.index = Y_datetime.index.to_timestamp(freq="M")
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fourier_list_length_mismatch():
     """Tests exception raised when sp_list & fourier_terms_list lengths don't match."""
     with pytest.raises(ValueError) as ex:
@@ -25,6 +30,10 @@ def test_fourier_list_length_mismatch():
         )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fourier_k_larger_than_sp():
     """Tests exception raised when fourier_terms_list elements larger than sp_list."""
     with pytest.raises(ValueError) as ex:
@@ -35,6 +44,10 @@ def test_fourier_k_larger_than_sp():
         )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fourier_redundant_terms_dropped():
     """Tests redundant sp and k pairs are dropped if their equivalents exist."""
     transformer = FourierFeatures(sp_list=[12, 9, 3], fourier_terms_list=[4, 3, 1])
@@ -49,6 +62,10 @@ def test_fourier_redundant_terms_dropped():
     ]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_outputs():
     """Tests that we get the expected outputs."""
     y = Y.iloc[:3]
@@ -65,6 +82,10 @@ def test_fit_transform_outputs():
     assert_frame_equal(y_transformed, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_keep_original_columns_false():
     """Tests that we get the expected outputs when `keep_original_columns` is False."""
     y = Y.iloc[:3]
@@ -81,6 +102,10 @@ def test_fit_transform_keep_original_columns_false():
     assert_frame_equal(y_transformed, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_outputs():
     """Tests that we get expected outputs when the input has a pd.DatetimeIndex."""
     y = Y_datetime.iloc[:3]
@@ -98,6 +123,10 @@ def test_fit_transform_datetime_outputs():
     assert_index_equal(y_transformed.index, y.index)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_behaviour():
     """Tests that the transform method evaluates time steps passed based on X in fit."""
     transformer = FourierFeatures(

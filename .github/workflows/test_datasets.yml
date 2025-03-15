@@ -11,13 +11,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -40,23 +40,20 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
-      - name: upload coverage step
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
+
   test_external_data:
     name: downloads
     strategy:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -74,12 +71,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: dependencies installation step
-        run: python3 -m pip install .[tests]
+        run: python3 -m pip install .[tests,datasets]
         shell: bash
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
-      - name: upload coverage step
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets

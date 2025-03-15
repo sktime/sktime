@@ -6,12 +6,10 @@ __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.warnings import warn
 
 
 class WindowSummarizer(BaseTransformer):
@@ -31,12 +29,14 @@ class WindowSummarizer(BaseTransformer):
         ``None`` will target the first column
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
-        the argument `window`.
-        For the function `lag`, the argument `window` is an integer or a list of
-        integers giving the `lag` values to be used.
-        For all other functions, the argument `window` is a list with the arguments
-        `lag` and `window length`. `lag` defines how far back in the past the window
-        starts, `window length` gives the length of the window across which to apply the
+        the argument ``window``.
+        For the function ``lag``, the argument ``window`` is an integer or a list of
+        integers giving the ``lag`` values to be used.
+        For all other functions, the argument ``window`` is a list with the arguments
+        ``lag`` and ``window length``. ``lag`` defines how far back in the past the
+        window
+        starts, ``window length`` gives the length of the window across which to apply
+        the
         function. For multiple different windows, provide a list of lists.
 
         Please see below a graphical representation of the logic using the following
@@ -44,7 +44,7 @@ class WindowSummarizer(BaseTransformer):
 
         ``z`` = time stamp that the window is summarized *to*.
 
-        Part of the window if `lag` is between 0 and `1-window_length`, otherwise
+        Part of the window if ``lag`` is between 0 and ``1-window_length``, otherwise
         not part of the window.
 
         ``x`` = (other) time stamps in the window which is summarized
@@ -54,16 +54,16 @@ class WindowSummarizer(BaseTransformer):
         The summarization function is applied to the window consisting of x and
         potentially z.
 
-        For `window = [1, 3]`, we have a `lag` of 1 and
-        `window_length` of 3 to target the three last days (exclusive z) that were
+        For ``window = [1, 3]``, we have a ``lag`` of 1 and
+        ``window_length`` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this::
 
         |---------------------------|
         | * * * * * * * * x x x z * |
         |---------------------------|
 
-        For `window = [0, 3]`, we have a `lag` of 0 and
-        `window_length` of 3 to target the three last days (inclusive z) that
+        For ``window = [0, 3]``, we have a ``lag`` of 0 and
+        ``window_length`` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this::
 
         |---------------------------|
@@ -72,14 +72,14 @@ class WindowSummarizer(BaseTransformer):
 
 
         Special case ``lag``: Since lags are frequently used and window length is
-        redundant, you only need to provide a list of `lag` values.
-        So `window = [1]` will result in the first lag::
+        redundant, you only need to provide a list of ``lag`` values.
+        So ``window = [1]`` will result in the first lag::
 
         |---------------------------|
         | * * * * * * * * * * x z * |
         |---------------------------|
 
-        And `window = [1, 4]` will result in the first and fourth lag::
+        And ``window = [1, 4]`` will result in the first and fourth lag::
 
         |---------------------------|
         | * * * * * * * x * * x z * |
@@ -194,6 +194,7 @@ class WindowSummarizer(BaseTransformer):
         # --------------
         "authors": ["danbartl", "grzegorzrut", "ltsaprounis"],
         "maintainers": ["danbartl"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -295,7 +296,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
+        func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -312,6 +313,8 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        from joblib import Parallel, delayed
+
         idx = X.index
         X = X.combine_first(self._X)
 
@@ -354,15 +357,16 @@ class WindowSummarizer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "lag_feature": {
@@ -427,7 +431,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     Z: pandas Dataframe with a single column.
     name : str, base string of the derived features, will be appended by
-        `lag` and window length parameters defined in window.
+        ``lag`` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
             * "sum",
             * "mean",
@@ -449,61 +453,26 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """
     lag = window[0]
     window_length = window[1]
-
+    feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
-        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
-            if bfill is False:
-                feat = getattr(
-                    Z.shift(lag).rolling(
-                        window=window_length, min_periods=window_length
-                    ),
-                    summarizer,
-                )()
-            else:
-                feat = getattr(
-                    Z.shift(lag)
-                    .bfill()
-                    .rolling(window=window_length, min_periods=window_length),
-                    summarizer,
-                )()
-            feat = pd.DataFrame(feat)
-        else:
-            if bfill is False:
-                feat = Z.apply(
-                    lambda x: getattr(
-                        x.shift(lag).rolling(
-                            window=window_length, min_periods=window_length
-                        ),
-                        summarizer,
-                    )()
-                )
-            else:
-                feat = Z.apply(
-                    lambda x: getattr(
-                        x.shift(lag)
-                        .bfill()
-                        .rolling(window=window_length, min_periods=window_length),
-                        summarizer,
-                    )()
-                )
+        feat = Z.transform(
+            lambda x: getattr(
+                x.rolling(window=window_length, min_periods=window_length), summarizer
+            )().shift(lag)
+        )
+    elif summarizer == "lag":
+        feat = Z.transform(lambda x: x.shift(lag))
+    elif callable(summarizer):
+        feat = Z.transform(
+            lambda x: x.rolling(window=window_length, min_periods=window_length)
+            .apply(summarizer, raw=True)
+            .shift(lag)
+        )
     else:
-        if bfill is False:
-            feat = Z.shift(lag)
-        else:
-            feat = Z.shift(lag).bfill()
-        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
-        ):
-            feat = feat.rolling(window_length).apply(summarizer, raw=True)
-        elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
-        ):
-            feat = feat.apply(
-                lambda x: x.rolling(
-                    window=window_length, min_periods=window_length
-                ).apply(summarizer, raw=True)
-            )
-        feat = pd.DataFrame(feat)
+        raise ValueError("The provided summarizer is not callable.")
+    feat = pd.DataFrame(feat)
+
+    # Handle backfill
     if bfill is True:
         feat = feat.bfill()
 
@@ -560,7 +529,7 @@ def _check_summary_function(summary_function):
     summary_function : list or tuple
         The summary functions that will be used to summarize the dataset.
     """
-    msg = f"""`summary_function` must be None, or str or a list or tuple made up of
+    msg = f"""summary_function must be None, or str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
     if isinstance(summary_function, str):
@@ -591,7 +560,7 @@ def _check_quantiles(quantiles):
     quantiles : list or tuple
         The validated quantiles that will be used to summarize the dataset.
     """
-    msg = """`quantiles` must be None, int, float or a list or tuple made up of
+    msg = """quantiles must be None, int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
     if isinstance(quantiles, (int, float)):
@@ -695,7 +664,7 @@ class SummaryTransformer(BaseTransformer):
         Returns
         -------
         summary_value : scalar or pd.Series
-            If `series_or_df` is univariate then a scalar is returned. Otherwise,
+            If ``series_or_df`` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
         if self.summary_function is None and self.quantiles is None:
@@ -757,15 +726,16 @@ class SummaryTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"summary_function": ["mean", "mad", "skew"], "quantiles": None}
@@ -775,7 +745,6 @@ class SummaryTransformer(BaseTransformer):
         return [params1, params2, params3, params4]
 
 
-# TODO 0.27.0: remove remember_data from docstring and __init__
 class SplitterSummarizer(BaseTransformer):
     """Create summary values of a time series' splits.
 
@@ -783,21 +752,22 @@ class SplitterSummarizer(BaseTransformer):
     ``transformer`` to each train split created using the splitter ``splitter``.
 
     The i-th row of the resulting series is equivalent to
-    ``transformer.fit_transform(splitter.split_series(X)[i][0])``,
-    where ``X`` is the data seen in ``transform``, if ``remember_data=False``; or
-    where ``X`` is all data seen in ``fit``, ``transform``, if ``remember_data=True``
+    ``transformer.fit(X_fit).transform(X_trafo)``,
+    where ``X_fit`` and ``X_transform`` are obtained from the ``i-th`` split of
+    ``splitter``, as determined by the ``fit_on`` and ``transform_on`` parameters.
 
     The output series aims to provide a summarization of the input series based on the
     given transformer and splitter.
 
     Parameters
     ----------
-    transformer : `sktime` transformer inheriting from `BaseTransformer`
+    transformer : ``sktime`` transformer inheriting from ``BaseTransformer``
         series-to-primitives transformer used to convert series to primitives.
 
-    splitter : `sktime` splitter inheriting from `BaseSplitter`, optional (default=None)
+    splitter : ``sktime`` splitter inheriting from ``BaseSplitter``, optional
+    (default=None)
         splitter used to divide the series.
-        If None, it takes `ExpandingWindowSplitter` with `start_with_window=False`
+        If None, it takes ``ExpandingWindowSplitter`` with ``start_with_window=False``
         and otherwise default parameters.
 
     index : str, optional (default="last")
@@ -826,13 +796,6 @@ class SplitterSummarizer(BaseTransformer):
         What data to transform with ``transformer``, for the ``i``-th row
         of the resulting series.
         Values and meaning same as for ``fit_on``.
-
-    remember_data : bool, optional (default=False)
-        deprecated, will be removed in 0.27.0.
-        If set, overrides ``fit_on`` and ``transform_on``:
-
-        * True: ``fit_on="all_train"``, ``transform_on="all_train"``
-        * False: ``fit_on="transform_train"``, ``transform_on="transform_train"``
 
     Methods
     -------
@@ -878,14 +841,12 @@ class SplitterSummarizer(BaseTransformer):
         transformer,
         splitter=None,
         index="last",
-        remember_data=None,
         fit_on="transform_train",
         transform_on="transform_train",
     ):
         self.transformer = transformer
         self.index = index
         self.splitter = splitter
-        self.remember_data = remember_data
         self.fit_on = fit_on
         self.transform_on = transform_on
 
@@ -907,30 +868,12 @@ class SplitterSummarizer(BaseTransformer):
                 "should be an BaseSplitter descendant with a split_series method"
             )
 
-        # TODO 0.27.0: remove remember_data and related logic
-        # remove next lie
-        need_to_remember_data = remember_data is not None and remember_data
-        # replace next two lines by
-        # need_to_remember_data = fit_on.startswith("all")
-        # or transform_on.startswith("all")
-        need_to_remember_data = need_to_remember_data or fit_on.startswith("all")
-        need_to_remember_data = need_to_remember_data or transform_on.startswith("all")
+        need_to_remember_data = fit_on.startswith("all") or transform_on.startswith(
+            "all"
+        )
 
         if need_to_remember_data:
             self.set_tags(**{"remember_data": True, "fit_is_empty": False})
-
-        # TODO 0.27.0: remove remember_data and related logic
-        if remember_data is not None:
-            warn(
-                "remember_data is deprecated and will be removed in 0.27.0. "
-                "Use fit_on and transform_on instead. "
-                "Replace remember_data=True with fit_on='all_train' and "
-                "transform_on='all_train'. Replace remember_data=False with "
-                "fit_on='transform_train' and transform_on='transform_train'.",
-                DeprecationWarning,
-                obj=self,
-                stacklevel=2,
-            )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -951,14 +894,6 @@ class SplitterSummarizer(BaseTransformer):
         """
         fit_on = self.fit_on
         transform_on = self.transform_on
-
-        if self.remember_data is not None:
-            if self.remember_data:
-                fit_on = "all_train"
-                transform_on = "all_train"
-            else:
-                fit_on = "transform_train"
-                transform_on = "transform_train"
 
         X_dict = {"transform": X}
 
@@ -998,15 +933,16 @@ class SplitterSummarizer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "transformer": SummaryTransformer(),

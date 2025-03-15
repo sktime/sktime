@@ -1,4 +1,5 @@
 """Implemenents Box-Cox and Log Transformations."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["mloning", "aiwalter", "fkiraly"]
@@ -7,8 +8,8 @@ __all__ = ["BoxCoxTransformer", "LogTransformer"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import is_int
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
@@ -94,7 +95,7 @@ class BoxCoxTransformer(BaseTransformer):
     * ``"fixed"`` - fixed, pre-specified :math:`\lambda`,
       which is passed as ``lambda_fixed``.
 
-    If non-positive `:math:y` are present, they are by default replaced with their
+    If non-positive ``:math:y`` are present, they are by default replaced with their
     absolute values in ``fit``.
     In ``transform``, the signed Box-Cox-transform is applied, i.e., the sign is kept
     while the transform is applied to the value.
@@ -127,7 +128,7 @@ class BoxCoxTransformer(BaseTransformer):
     ----------
     lambda_ : float
         The Box-Cox lambda parameter that was fitted, based on the supplied
-        `method` and data provided in `fit`.
+        ``method`` and data provided in ``fit``.
 
     See Also
     --------
@@ -314,7 +315,7 @@ class BoxCoxTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -322,8 +323,9 @@ class BoxCoxTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"method": "mle"}
         params2 = {"method": "pearsonr"}
@@ -569,8 +571,8 @@ def _boxcox(x, lmbda=None, bounds=None):
     x : ndarray
         Input array.  Must be positive 1-dimensional.  Must not be constant.
     lmbda : {None, scalar}, optional
-        If `lmbda` is not None, do the transformation for that value.
-        If `lmbda` is None, find the lambda that maximizes the log-likelihood
+        If ``lmbda`` is not None, do the transformation for that value.
+        If ``lmbda`` is None, find the lambda that maximizes the log-likelihood
         function and return it as the second output argument.
 
     Returns
@@ -578,7 +580,7 @@ def _boxcox(x, lmbda=None, bounds=None):
     boxcox : ndarray
         Box-Cox power transformed array.
     maxlog : float, optional
-        If the `lmbda` parameter is None, the second returned argument is
+        If the ``lmbda`` parameter is None, the second returned argument is
         the lambda that maximizes the log-likelihood function.
 
     See Also
@@ -590,10 +592,10 @@ def _boxcox(x, lmbda=None, bounds=None):
     The Box-Cox transform is given by::
         y = (x**lmbda - 1) / lmbda,  for lmbda > 0
             log(x),                  for lmbda = 0
-    `boxcox` requires the input data to be positive.  Sometimes a Box-Cox
-    transformation provides a shift parameter to achieve this; `boxcox` does
+    ``boxcox`` requires the input data to be positive.  Sometimes a Box-Cox
+    transformation provides a shift parameter to achieve this; ``boxcox`` does
     not.  Such a shift parameter is equivalent to adding a positive constant to
-    `x` before calling `boxcox`.
+    ``x`` before calling ``boxcox``.
     The confidence limits returned when ``alpha`` is provided give the interval
     where:
 

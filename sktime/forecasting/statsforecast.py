@@ -1,23 +1,25 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["AzulGarza", "yarnabrina"]
 
 __all__ = [
     "StatsForecastAutoARIMA",
     "StatsForecastAutoCES",
     "StatsForecastAutoETS",
+    "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
+    "StatsForecastADIDA",
 ]
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -40,7 +42,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         Starting value of p in stepwise procedure.
     d: int optional (default None)
         Order of first-differencing.
-        If missing, will choose a value based on `test`.
+        If missing, will choose a value based on ``test``.
     start_q: int (default 2)
         Starting value of q in stepwise procedure.
     max_p: int (default 5)
@@ -53,7 +55,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         Starting value of P in stepwise procedure.
     D: int optional (default None)
         Order of seasonal-differencing.
-        If missing, will choose a value based on `season_test`.
+        If missing, will choose a value based on ``season_test``.
     start_Q: int (default 1)
         Starting value of Q in stepwise procedure.
     max_P: int (default 2)
@@ -178,8 +180,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["FedericoGarza", "yarnabrina"],
-        "maintainers": ["FedericoGarza"],
+        "authors": ["AzulGarza", "yarnabrina"],
+        "maintainers": ["AzulGarza"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
@@ -187,6 +189,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.0.0"],
     }
 
     def __init__(
@@ -215,7 +218,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         trend: bool = True,
         method: Optional[str] = None,
         offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[Dict] = None,
+        seasonal_test_args: Optional[dict] = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
@@ -312,7 +315,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -320,8 +323,9 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
@@ -356,7 +360,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autotheta
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotheta
 
     See Also
     --------
@@ -366,7 +370,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez for statsforecast theta
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -375,6 +386,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.3.0"],
     }
 
     def __init__(
@@ -410,7 +422,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -418,8 +430,9 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
@@ -439,7 +452,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space
     equations can be determined based on their $M$ multiplicative, $A$ additive, $Z$
-    optimized or $N$ omitted components. The `model` string parameter defines the ETS
+    optimized or $N$ omitted components. The ``model`` string parameter defines the ETS
     equations: E in [$M, A, Z$], T in [$N, A, M, Z$], and S in [$N, A, M, Z$].
 
     For example when model='ANN' (additive error, no trend, and no seasonality), ETS
@@ -456,10 +469,12 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         Controlling state-space-equations.
     damped : bool
         A parameter that 'dampens' the trend.
+    phi : float, optional (default=None)
+        Smoothing parameter for trend damping. Only used when ``damped=True``.
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoets
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoets
     .. [2] https://github.com/robjhyndman/forecast
 
     See Also
@@ -470,7 +485,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza and jmoralez for statsforecast AutoETS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -479,14 +501,20 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.3.2"],
     }
 
     def __init__(
-        self, season_length: int = 1, model: str = "ZZZ", damped: Optional[bool] = None
+        self,
+        season_length: int = 1,
+        model: str = "ZZZ",
+        damped: Optional[bool] = None,
+        phi: Optional[float] = None,
     ):
         self.season_length = season_length
         self.model = model
         self.damped = damped
+        self.phi = phi
 
         super().__init__()
 
@@ -501,6 +529,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "season_length": self.season_length,
             "model": self.model,
             "damped": self.damped,
+            "phi": self.phi,
         }
 
     @classmethod
@@ -511,7 +540,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -519,8 +548,9 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
@@ -539,7 +569,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     information criterion. Default is Akaike Information Criterion (AICc), while
     particular models are estimated using maximum likelihood. The state-space equations
     can be determined based on their $S$ simple, $P$ partial, $Z$ optimized or $N$
-    omitted components. The `model` string parameter defines the kind of CES model:
+    omitted components. The ``model`` string parameter defines the kind of CES model:
     $N$ for simple CES (without seasonality), $S$ for simple seasonality (lagged CES),
     $P$ for partial seasonality (without complex part), $F$ for full seasonality
     (lagged CES with real and complex seasonal parts).
@@ -556,13 +586,21 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     References
     ----------
-    .. [1] https://nixtla.github.io/statsforecast/models.html#autoces
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
     """
 
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "MMenchero",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez, MMenchero for statsforecast AutoCES
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -571,6 +609,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.1.0"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -599,7 +638,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -607,12 +646,156 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         params = [{}, {"season_length": 4, "model": "Z"}]
+
+        return params
+
+
+class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
+    """StatsForecast TBATS model.
+
+    Direct interface to ``statsforecast.models.AutoTBATS``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Automatically selects the best TBATS model from all feasible combinations of the
+    parameters ``use_boxcox``, ``use_trend``, ``use_damped_trend``, and
+    ``use_arma_errors``.
+    Selection is made using the AIC.
+
+    Default value for ``use_arma_errors`` is ``True`` since this enables the evaluation
+    of
+    models with and without ARMA errors.
+
+    Parameters
+    ----------
+    seasonal_periods : int or list of int.
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    use_boxcox : bool (default=None)
+        Whether or not to use a Box-Cox transformation. By default tries both.
+    use_trend : bool (default=None)
+        Whether or not to use a trend component. By default tries both.
+    use_damped_trend : bool (default=None)
+        Whether or not to dampen the trend component. By default tries both.
+    use_arma_errors : bool (default=True)
+        Whether or not to use a ARMA errors.
+        Default is True and this evaluates both models.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.0)
+        Upper bound for the Box-Cox transformation.
+
+    See Also
+    --------
+    BATS
+    TBATS
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "MMenchero",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero and jmoralez for statsforecast AutoTBATS
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.7.2"],
+    }
+
+    def __init__(
+        self,
+        seasonal_periods: Union[int, list[int]],
+        use_boxcox: Optional[bool] = None,
+        use_trend: Optional[bool] = None,
+        use_damped_trend: Optional[bool] = None,
+        use_arma_errors: bool = True,
+        bc_lower_bound: float = 0.0,
+        bc_upper_bound: float = 1.0,
+    ):
+        self.seasonal_periods = seasonal_periods
+        self.use_boxcox = use_boxcox
+        self.use_trend = use_trend
+        self.use_damped_trend = use_damped_trend
+        self.use_arma_errors = use_arma_errors
+        self.bc_lower_bound = bc_lower_bound
+        self.bc_upper_bound = bc_upper_bound
+
+        super().__init__()
+
+    def _get_statsforecast_class(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoTBATS
+
+        return AutoTBATS
+
+    def _get_statsforecast_params(self) -> dict:
+        return {
+            "season_length": self.seasonal_periods,
+            "use_boxcox": self.use_boxcox,
+            "use_trend": self.use_trend,
+            "use_damped_trend": self.use_damped_trend,
+            "use_arma_errors": self.use_arma_errors,
+            "bc_lower_bound": self.bc_lower_bound,
+            "bc_upper_bound": self.bc_upper_bound,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by `vulture` etc.
+
+        params = [
+            {
+                "seasonal_periods": 3,
+                "use_boxcox": True,
+                "bc_lower_bound": 0.25,
+                "bc_upper_bound": 0.75,
+            },
+            {
+                "seasonal_periods": [3, 12],
+                "use_boxcox": False,
+                "use_trend": True,
+                "use_damped_trend": True,
+                "use_arma_errors": False,
+            },
+        ]
 
         return params
 
@@ -626,7 +809,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     The MSTL (Multiple Seasonal-Trend decomposition using LOESS) decomposes the time
     series in multiple seasonalities using LOESS. Then forecasts the trend using
-    a custom non-seasonal model (`trend_forecaster`) and each seasonality using a
+    a custom non-seasonal model (``trend_forecaster``) and each seasonality using a
     SeasonalNaive model. MSTL requires the input time series data to be univariate.
 
     Parameters
@@ -638,11 +821,12 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Sktime estimator used to make univariate forecasts. Multivariate estimators are
         not supported.
     stl_kwargs : dict, optional
-        Extra arguments to pass to [`statsmodels.tsa.seasonal.STL`]
+        Extra arguments to pass to [``statsmodels.tsa.seasonal.STL``]
+
         (https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html#statsmodels.tsa.seasonal.STL).
-        The `period` and `seasonal` arguments are reserved.
+        The ``period`` and ``seasonal`` arguments are reserved.
     pred_int_kwargs : dict, optional
-        Extra arguments to pass to [`statsforecast.utils.ConformalIntervals`].
+        Extra arguments to pass to [``statsforecast.utils.ConformalIntervals``].
 
     References
     ----------
@@ -663,36 +847,53 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "luca-miniati",
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "luca-miniati",
+            "yarnabrina",
+            "arnaujc91",
+        ],
+        # AzulGarza and jmoralez for statsforecast MSTL
         "maintainers": "luca-miniati",
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
-        "capability:pred_int": True,
-        "capability:pred_int:insample": True,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
+        "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
     def __init__(
         self,
-        season_length: Union[int, List[int]],
+        season_length: Union[int, list[int]],
         trend_forecaster=None,
-        stl_kwargs: Optional[Dict] = None,
-        pred_int_kwargs: Optional[Dict] = None,
+        stl_kwargs: Optional[dict] = None,
+        pred_int_kwargs: Optional[dict] = None,
     ):
+        self.season_length = season_length
+        self.trend_forecaster = trend_forecaster
+        self.stl_kwargs = stl_kwargs
+        self.pred_int_kwargs = pred_int_kwargs
+
         super().__init__()
+
+        # adapter class sets probabilistic capability as true
+        # because level is present in statsforecast signature
+        # happens in _check_supports_pred_int method
+        # manually overriding this temporarily
+        self.set_tags(
+            **{"capability:pred_int": False, "capability:pred_int:insample": False}
+        )
 
         from sklearn.base import clone
 
-        self.trend_forecaster = trend_forecaster
-        self.season_length = season_length
         if trend_forecaster:
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
-        self.stl_kwargs = stl_kwargs
-        self.pred_int_kwargs = pred_int_kwargs
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter
@@ -736,7 +937,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -744,9 +945,9 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance,
-            i.e., `MyClass(**params)` or `MyClass(**params[i])` creates a valid
-            test instance. `create_test_instance` uses the first (or only)
-            dictionary in `params`
+            i.e., ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid
+            test instance. ``create_test_instance`` uses the first (or only)
+            dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
@@ -783,3 +984,108 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             ]
 
         return params
+
+
+class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
+    """StatsForecast ADIDA (Aggregate-Disaggregate Intermittent Demand Approach) model.
+
+    Direct interface to ``statsforecast.models.ADIDA`` by Nixtla.
+
+    This estimator directly interfaces ``ADIDA``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Aggregate-Disagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been aggregated, it uses
+    the optimized SES to generate the forecasts at the new level. It then breaks down
+    the forecast to the original level using equal weights.
+
+    ADIDA specializes on sparse or intermittent series are series with very few
+    non-zero observations.They are notoriously hard to forecast, and so, different
+    methods have been developed specifically for them.
+
+    Parameters
+    ----------
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/docs/models/adida.html#introduction
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
+    >>> y = load_airline()
+    >>> model = StatsForecastADIDA()
+    >>> fitted_model = model.fit(y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AzulGarza", "yarnabrina", "vedantag17"],
+        "maintainers": ["vedantag17"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.4.0"],
+    }
+
+    def __init__(
+        self,
+        prediction_intervals: Optional[object] = None,
+    ):
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
+        if prediction_intervals is None:
+            self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import ADIDA
+
+        return ADIDA
+
+    def _get_statsforecast_params(self):
+        """Get the parameters for the statsforecast model."""
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        if _check_soft_dependencies("statsforecast", severity="none"):
+            from statsforecast.utils import ConformalIntervals
+
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        else:
+            return [{}, {}]

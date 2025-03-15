@@ -13,11 +13,16 @@ from sktime.forecasting.tests._config import (
 from sktime.split import SingleWindowSplitter
 from sktime.split.base._common import _inputs_are_supported
 from sktime.split.tests.test_split import _check_cv
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import array_is_int
 from sktime.utils.validation.forecasting import check_fh
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SingleWindowSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -48,6 +53,10 @@ def test_single_window_splitter(y, fh, window_length):
             SingleWindowSplitter(fh=fh, window_length=window_length)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SingleWindowSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, fh):

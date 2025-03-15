@@ -16,6 +16,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 from sktime.datasets._readers_writers.ts import load_from_tsfile
 from sktime.datasets._readers_writers.utils import _alias_mtype_check
@@ -420,3 +421,63 @@ def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
     mi_df = long_df.set_index(["case_id", "reading_id"]).pivot(columns="dim_id")
     mi_df.columns = _make_column_names(n_columns)
     return mi_df
+
+
+def _reduce_memory_usage(df, category=True, n_jobs=1):
+    """
+    Iterate through all columns of a DataFrame and modify the datatype.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame whose memory usage needs to be optimized.
+    category : bool, optional
+        If True, convert object types to category. Default is True.
+    n_jobs : int, optional
+        The number of parallel jobs to run for optimizing columns. Default is 1.
+
+    Returns
+    -------
+    df : pd.DataFrame
+        The optimized DataFrame with reduced memory usage.
+    """
+
+    def optimize_column(col):
+        if pd.api.types.is_numeric_dtype(col):
+            c_min = col.min()
+            c_max = col.max()
+            if pd.api.types.is_integer_dtype(col):
+                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                    return col.astype(np.int8)
+                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                    return col.astype(np.int16)
+                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                    return col.astype(np.int32)
+                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
+                    return col.astype(np.int64)
+            else:
+                if (
+                    c_min > np.finfo(np.float16).min
+                    and c_max < np.finfo(np.float16).max
+                ):
+                    return col.astype(np.float16)
+                elif (
+                    c_min > np.finfo(np.float32).min
+                    and c_max < np.finfo(np.float32).max
+                ):
+                    return col.astype(np.float32)
+                else:
+                    return col.astype(np.float64)
+        elif pd.api.types.is_object_dtype(col):
+            if category:
+                return col.astype("category")
+        return col
+
+    optimized_columns = Parallel(n_jobs=n_jobs)(
+        delayed(optimize_column)(df[col]) for col in df.columns
+    )
+
+    for col, optimized_col in zip(df.columns, optimized_columns):
+        df[col] = optimized_col
+
+    return df

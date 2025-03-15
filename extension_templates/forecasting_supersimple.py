@@ -41,7 +41,6 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
@@ -76,7 +75,10 @@ class MyForecaster(BaseForecaster):
         "authors": ["author1", "author2"],  # authors, GitHub handles
         "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
-        # maintainer = algorithm maintainer role, "owner"
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
         # remove maintainer tag if maintained by sktime core team
         #
         # do not change these:
@@ -93,6 +95,8 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

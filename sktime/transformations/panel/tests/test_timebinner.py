@@ -1,4 +1,5 @@
 """Tests for TimeBinner."""
+
 import numpy as np
 import pandas as pd
 import pytest

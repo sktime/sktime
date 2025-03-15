@@ -26,11 +26,11 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     ``sktime.forecasting.fbprophet.Prophet`` directly.
 
     Data can be passed in one of the sktime compatible formats,
-    naming a column `ds` such as in the prophet package is not necessary.
+    naming a column ``ds`` such as in the prophet package is not necessary.
 
-    Unlike vanilla `prophet`, also supports integer/range and period index:
+    Unlike vanilla ``prophet``, also supports integer/range and period index:
     * integer/range index is interpreted as days since Jan 1, 2000
-    * `PeriodIndex` is converted using the `pandas` method `to_timestamp`
+    * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
     Parameters
     ----------
@@ -39,18 +39,30 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         not specified, potential changepoints are selected automatically.
     n_changepoints: int, default=25
         Number of potential changepoints to include. Not used
-        if input `changepoints` is supplied. If `changepoints` is not supplied,
+        if input ``changepoints`` is supplied. If ``changepoints`` is not supplied,
         then n_changepoints potential changepoints are selected uniformly from
-        the first `changepoint_range` proportion of the history.
+        the first ``changepoint_range`` proportion of the history.
     changepoint_range: float, default=0.8
         Proportion of history in which trend changepoints will
         be estimated. Defaults to 0.8 for the first 80%. Not used if
-        `changepoints` is specified.
+        ``changepoints`` is specified.
     changepoint_prior_scale: float, default=0.05
         Parameter modulating the flexibility of the
         automatic changepoint selection. Large values will allow many
         changepoints, small values will allow few changepoints.
         Recommended to take values within [0.001,0.5].
+    yearly_seasonality: str or bool or int, default=False
+        Include yearly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
+    weekly_seasonality: str or bool or int, default=False
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
+    daily_seasonality: str or bool or int, default=False
+        Include weekly seasonality in the model. "auto" for automatic determination,
+        True to enable, False to disable, or an integer specifying the number of terms
+        to include in the Fourier series.
 
     References
     ----------
@@ -72,7 +84,8 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
 
     _tags = {
-        "authors": ["sbuse"],
+        "authors": ["sbuse", "bletham", "tcuongd"],
+        # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.DataFrame",
@@ -89,6 +102,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         changepoint_range=0.8,
         changepoint_prior_scale=0.05,
         verbose=0,
+        yearly_seasonality=False,
+        weekly_seasonality=False,
+        daily_seasonality=False,
     ):
         self.freq = None
         self.add_seasonality = None
@@ -99,9 +115,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
-        self.yearly_seasonality = "auto"
-        self.weekly_seasonality = "auto"
-        self.daily_seasonality = "auto"
+        self.yearly_seasonality = yearly_seasonality
+        self.weekly_seasonality = weekly_seasonality
+        self.daily_seasonality = daily_seasonality
         self.holidays = None
         self.seasonality_mode = "additive"
         self.seasonality_prior_scale = 10.0
@@ -194,7 +210,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

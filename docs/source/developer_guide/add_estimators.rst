@@ -39,7 +39,7 @@ directory of ``sktime``.
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
-it makeas sense to consider the "forecaster" template.
+it makes sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
 If not, another template might be more appropriate.
 
@@ -176,7 +176,7 @@ A useful workflow for using ``check_estimator`` to debug an estimator is as foll
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
 2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
-3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspecet the traceback.
+3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspect the traceback.
 4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
 
 Running the test suite in a repository clone
@@ -204,13 +204,30 @@ Testing within a third party extension package
 
 For third party extension packages to ``sktime`` (open or closed),
 or third party modules that aim for interface compliance with ``sktime``,
-the ``sktime`` test suite can be imported and extended in two ways:
+the ``sktime`` test suite can be imported and extended in the following ways:
 
-*   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+* importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+  in a single go. ``check_estimator`` can be run within any test framework, including
+  ``unittest`` and ``pytest``.
+
+* importing ``parametrize_with_checks`` from ``sktime.utils.estimator_checks``.
+  When used in a ``pytest`` test suite, this will parametrize a test function with
+  all tests defined in ``sktime`` for a list of estimator classes or instances,
+  running each estimator-test combination as a separate test case.
+  This pattern requires adding the following test function to the test suite:
+
+    .. code-block:: python
+
+        from sktime.utils.estimator_checks import parametrize_with_checks
+
+        @parametrize_with_checks(OBJS_TO_TEST)
+        def test_sktime_api_compliance(obj, test_name):
+            check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
 
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
     ``test_all_forecasters.TestAllForecasters``. The imports will be discovered directly
     by ``pytest``. The test suite also be extended by inheriting from the test classes.
+
 
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
@@ -221,7 +238,7 @@ additional things need to be done:
 *   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
 *   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
     correct ``rst`` file inside ``docs/source/api_reference``.
-*   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
+*   authors of the estimator should add themselves to the ``"authors"`` and ``"maintainers"`` tag of the estimator, as owners of the contributed estimator.
 *   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the :ref:`"dependencies"
     developer guide <dependencies>` should be followed
 *   ensure that the estimator passes the entire local test suite of ``sktime``, with the estimator in its target location.

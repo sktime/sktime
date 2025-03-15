@@ -17,11 +17,11 @@ class Prophet(_ProphetAdapter):
     All hyper-parameters are exposed via the constructor.
 
     Data can be passed in one of the sktime compatible formats,
-    naming a column `ds` such as in the prophet package is not necessary.
+    naming a column ``ds`` such as in the prophet package is not necessary.
 
-    Unlike vanilla `prophet`, also supports integer/range and period index:
+    Unlike vanilla ``prophet``, also supports integer/range and period index:
     * integer/range index is interpreted as days since Jan 1, 2000
-    * `PeriodIndex` is converted using the `pandas` method `to_timestamp`
+    * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
     Parameters
     ----------
@@ -46,24 +46,24 @@ class Prophet(_ProphetAdapter):
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
-        Used only if `growth="logistic"`, has no effect otherwise
-        (if `growth` is not `"logistic"`).
+        Used only if ``growth="logistic"``, has no effect otherwise
+        (if ``growth`` is not ``"logistic"``).
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
-        Mandatory (float) iff `growth="logistic"`, has no effect and is optional,
-        otherwise (if `growth` is not `"logistic"`).
+        Mandatory (float) iff ``growth="logistic"``, has no effect and is optional,
+        otherwise (if ``growth`` is not ``"logistic"``).
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
     n_changepoints: int, default=25
         Number of potential changepoints to include. Not used
-        if input `changepoints` is supplied. If `changepoints` is not supplied,
+        if input ``changepoints`` is supplied. If ``changepoints`` is not supplied,
         then n_changepoints potential changepoints are selected uniformly from
-        the first `changepoint_range` proportion of the history.
+        the first ``changepoint_range`` proportion of the history.
     changepoint_range: float, default=0.8
         Proportion of history in which trend changepoints will
         be estimated. Defaults to 0.8 for the first 80%. Not used if
-        `changepoints` is specified.
+        ``changepoints`` is specified.
     yearly_seasonality: str or bool or int, default="auto"
         Fit yearly seasonality.
         Can be 'auto', True, False, or a number of Fourier terms to generate.
@@ -225,7 +225,7 @@ class Prophet(_ProphetAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

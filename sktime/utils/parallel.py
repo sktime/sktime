@@ -20,19 +20,23 @@ __author__ = ["fkiraly"]
 def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
     """Parallelize loop over iter via backend.
 
-    Executes ``fun(x, meta)`` in parallel for ``x`` in ``iter``,
+    Executes ``fun(x, meta=meta)`` in parallel for ``x`` in ``iter``,
     and returns the results as a list in the same order as ``iter``.
 
     Uses the iteration or parallelization backend specified by ``backend``.
 
     Parameters
     ----------
-    fun : callable
+    fun : callable, must have exactly two arguments, second argument of name "meta"
         function to be executed in parallel
+
     iter : iterable
-        iterable over which to parallelize
+        iterable over which to parallelize, elements are passed to fun in order,
+        to the first argument
+
     meta : dict, optional
-        variables to be passed to fun
+        variables to be passed to fun, as the second argument, under the key ``meta``
+
     backend : str, optional
         backend to use for parallelization, one of
 
@@ -175,7 +179,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
         values are backend strings and backend parameter dicts
         only backends that are available in the environment are included
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     fixtures = []
 

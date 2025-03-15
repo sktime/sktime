@@ -59,7 +59,7 @@ class BaggingClassifier(BaseClassifier):
     Attributes
     ----------
     estimators_ : list of of sktime classifiers
-        clones of classifier in `estimator` fitted in the ensemble
+        clones of classifier in ``estimator`` fitted in the ensemble
 
     Examples
     --------
@@ -163,6 +163,7 @@ class BaggingClassifier(BaseClassifier):
             n_features_ = n_features
 
         self.estimators_ = []
+        self._col_ixis = []
         for _i in range(n_estimators):
             esti = estimator.clone()
             row_iloc = pd.RangeIndex(n)
@@ -183,6 +184,7 @@ class BaggingClassifier(BaseClassifier):
 
             yi = y[row_ss]
             self.estimators_ += [esti.fit(Xi, yi)]
+            self._col_ixis += [col_ix_i]
 
         return self
 
@@ -200,7 +202,14 @@ class BaggingClassifier(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         classes = pd.Index(self.classes_)
-        y_probas = [est.predict_proba(X) for est in self.estimators_]
+
+        y_probas = []
+        for esti, col_ix_i in zip(self.estimators_, self._col_ixis):
+            Xi = X.loc[:, col_ix_i]
+            if self.bootstrap_features:
+                Xi.columns = pd.RangeIndex(len(col_ix_i))
+
+            y_probas += [esti.predict_proba(Xi)]
 
         est_shape = (len(y_probas[0]), len(classes))
         y_proba_np = np.zeros((len(y_probas), est_shape[0], est_shape[1]))
@@ -223,7 +232,7 @@ class BaggingClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -234,19 +243,20 @@ class BaggingClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.classification.dummy import DummyClassifier
+        from sktime.classification.feature_based import SummaryClassifier
 
-        params1 = {"estimator": DummyClassifier()}
+        params1 = {"estimator": SummaryClassifier()}
         params2 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 0.5,
             "n_features": 0.5,
         }
         params3 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 7,
             "n_features": 2,
             "bootstrap": False,
@@ -254,7 +264,7 @@ class BaggingClassifier(BaseClassifier):
         }
 
         # force-create a classifier that cannot handle multivariate
-        univariate_dummy = DummyClassifier()
+        univariate_dummy = SummaryClassifier()
         univariate_dummy.set_tags(**{"capability:multivariate": False})
         # this should still result in a multivariate classifier
         params4 = {

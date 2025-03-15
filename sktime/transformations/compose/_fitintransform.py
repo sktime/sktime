@@ -1,4 +1,5 @@
 """Fit-in-transform wrapper."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["aiwalter", "fkiraly"]
@@ -14,11 +15,14 @@ class FitInTransform(BaseTransformer):
 
     In panel settings, e.g., time series classification, it can be preferable
     (or, necessary) to fit and transform on the test set, e.g., interpolate within the
-    same series that interpolation parameters are being fitted on. `FitInTransform` can
-    be used to wrap any transformer to ensure that `fit` and `transform` happen always
-    on the same series, by delaying the `fit` to the `transform` batch.
+    same series that interpolation parameters are being fitted on. ``FitInTransform``
+    can
+    be used to wrap any transformer to ensure that ``fit`` and ``transform`` happen
+    always
+    on the same series, by delaying the ``fit`` to the ``transform`` batch.
 
-    Warning: The use of `FitInTransform` will typically not be useful, or can constitute
+    Warning: The use of ``FitInTransform`` will typically not be useful, or can
+    constitute
     a mistake (data leakage) when naively used in a forecasting setting.
 
     Parameters
@@ -127,7 +131,7 @@ class FitInTransform(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -135,8 +139,9 @@ class FitInTransform(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
 

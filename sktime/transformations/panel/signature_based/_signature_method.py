@@ -9,7 +9,7 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -61,7 +61,7 @@ class SignatureTransformer(BaseTransformer):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": "esig",
+        "python_dependencies": ["esig", "numpy<2.0"],
         "python_version": "<3.10",
         # estimator type
         # --------------
@@ -155,7 +155,7 @@ class SignatureTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -163,8 +163,9 @@ class SignatureTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
             "augmentation_list": ("basepoint", "addtime"),

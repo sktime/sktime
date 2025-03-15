@@ -1,6 +1,5 @@
 """Isolated numba imports for clasp."""
 
-
 __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np

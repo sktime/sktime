@@ -34,6 +34,7 @@ __author__ = ["fkiraly"]
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 
 
@@ -237,20 +238,21 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def __mul__(self, other):
         """Magic * method, return (right) multiplied CombinedDistance.
 
-        Implemented for `other` being:
-        * a pairwise panel transformer, then `CombinedDistance([other, self], "*")`
+        Implemented for ``other`` being:
+        * a pairwise panel transformer, then ``CombinedDistance([other, self], "*")``
 
         Parameters
         ----------
         other: one of:
-            * `sktime` transformer, must inherit from BaseTransformer,
-            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+            * ``sktime`` transformer, must inherit from BaseTransformer,
+            otherwise, ``NotImplemented`` is returned (leads to further dispatch by
+            rmul)
 
         Returns
         -------
         CombinedDistance object,
-            algebraic multiplication of `self` (first) with `other` (last).
-            not nested, contains only non-CombinedDistance `sktime` transformers
+            algebraic multiplication of ``self`` (first) with ``other`` (last).
+            not nested, contains only non-CombinedDistance ``sktime`` transformers
         """
         from sktime.dists_kernels.algebra import CombinedDistance
         from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
@@ -274,20 +276,20 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def __rmul__(self, other):
         """Magic * method, return (right) PwTrafoPanelPipeline or CombinedDistance.
 
-        Implemented for `other` being:
-        * a transformer, then `PwTrafoPanelPipeline([other, self])` is returned
+        Implemented for ``other`` being:
+        * a transformer, then ``PwTrafoPanelPipeline([other, self])`` is returned
         * sklearn transformers are coerced via TabularToSeriesAdaptor
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         PwTrafoPanelPipeline object,
-            concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+            concatenation of ``other`` (first) with ``self`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.dists_kernels.compose import PwTrafoPanelPipeline
         from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
@@ -321,20 +323,21 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def __add__(self, other):
         """Magic + method, return (right) added CombinedDistance.
 
-        Implemented for `other` being:
-        * a pairwise panel transformer, then `CombinedDistance([other, self], "+")`
+        Implemented for ``other`` being:
+        * a pairwise panel transformer, then ``CombinedDistance([other, self], "+")``
 
         Parameters
         ----------
         other: one of:
-            * `sktime` transformer, must inherit from BaseTransformer,
-            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+            * ``sktime`` transformer, must inherit from BaseTransformer,
+            otherwise, ``NotImplemented`` is returned (leads to further dispatch by
+            rmul)
 
         Returns
         -------
         CombinedDistance object,
-            algebraic addition of `self` (first) with `other` (last).
-            not nested, contains only non-CombinedDistance `sktime` transformers
+            algebraic addition of ``self`` (first) with ``other`` (last).
+            not nested, contains only non-CombinedDistance ``sktime`` transformers
         """
         from sktime.dists_kernels.algebra import CombinedDistance
         from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
@@ -360,18 +363,18 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Pairwise transformer (e.g., distance kernel) subsetted to the index.
 
-        Keys must be valid inputs for `columns` in `ColumnSelect`.
+        Keys must be valid inputs for ``columns`` in ``ColumnSelect``.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSelect`, or pair thereof
+        key: valid input for ``columns`` in ``ColumnSelect``, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following TransformerPipeline object:
             ColumnSelect(columns) * self
-            where `columns` only item in `key`
+            where ``columns`` only item in ``key``
         """
         from sktime.transformations.series.subset import ColumnSelect
 
@@ -501,7 +504,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             usually df-list, list of pd.DataFrame, unless overridden
         """
         check_res = check_is_scitype(
-            X, ["Series", "Panel"], return_metadata=[], var_name=var_name
+            X, ["Series", "Panel"], return_metadata=["feature_kind"], var_name=var_name
         )
         X_valid = check_res[0]
         metadata = check_res[2]
@@ -515,6 +518,12 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
+
+        if DtypeKind.CATEGORICAL in metadata["feature_kind"]:
+            raise TypeError(
+                "Pairwise transformers do not support categorical features in "
+                f"{var_name}."
+            )
 
         X_scitype = metadata["scitype"]
 

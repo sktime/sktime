@@ -40,6 +40,19 @@ class DropNA(BaseTransformer):
         If True, drops the same rows/columns in transform as in fit. If false,
         drops rows/columns according to the NAs seen in transform (equivalent
         to PandasTransformAdaptor(method="dropna")).
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.dropna import DropNA
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> X = pd.DataFrame({'a': [1, 2, np.nan, 4], 'b': [5, np.nan, 7, 8]})
+    >>> transformer = DropNA(axis=0, how='any')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> print(X_transformed)
+       a    b
+    0  1.0  5.0
+    3  4.0  8.0
     """
 
     _tags = {
@@ -223,7 +236,7 @@ class DropNA(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -231,8 +244,9 @@ class DropNA(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"axis": 0, "how": "any", "thresh": None},

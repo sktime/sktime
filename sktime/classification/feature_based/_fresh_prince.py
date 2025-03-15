@@ -32,7 +32,7 @@ class FreshPRINCE(BaseClassifier):
     verbose : int, default=0
         Level of output printed to the console (for information only)
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     chunksize : int or None, default=None
         Number of series processed in each parallel TSFresh job, should be optimised
@@ -54,9 +54,26 @@ class FreshPRINCE(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
+
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import FreshPRINCE
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = FreshPRINCE(
+    ...     default_fc_parameters="comprehensive",
+    ...     n_estimators=200,
+    ...     save_transformed_data=False,
+    ...     verbose=0,
+    ...     n_jobs=1,
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    FreshPRINCE(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -178,7 +195,11 @@ class FreshPRINCE(BaseClassifier):
         return self._rotf.predict_proba(self._tsfresh.transform(X))
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape
@@ -207,7 +228,7 @@ class FreshPRINCE(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -218,8 +239,9 @@ class FreshPRINCE(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {

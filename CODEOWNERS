@@ -6,9 +6,9 @@
 # specified directly in the estimator,
 # in the "maintainers" tag of the respective scikit-base object.
 #
-# Algorithm maintainers are programmatically queriable
+# Algorithm maintainers are programmatically queryable
 # via Estimator.get_class_tag("maintainers").
 # Further lookup such as "which algorithms does M maintain"
 # can be carried out using registry.all_estimators
 
-* @achieveordie @benheid @fkiraly @yarnabrina
+* @benheid @felipeangelimvieira @fkiraly @fnhirwa @geetu040 @pranavvp16 @SaiRevanth25 @XinyuWuu @yarnabrina

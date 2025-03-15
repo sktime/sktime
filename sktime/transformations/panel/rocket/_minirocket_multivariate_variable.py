@@ -5,7 +5,7 @@ __all__ = ["MiniRocketMultivariateVariable"]
 
 import multiprocessing
 import warnings
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -36,21 +36,29 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels : int, default=10,000
-       number of random convolutional kernels. The calculated number of features is the
-       nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
-       (2*n_features_per_kernel(default 4)*num_kernels(default 10,000)).
+    num_kernels : int, default=10_000
+       number of random convolutional kernels. This should be a multiple of 84.
+       If it is lower than 84, it will be set to 84. If it is higher than 84
+       and not a multiple of 84, the number of kernels used to transform the
+       data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    reference_length : int or str, default = `'max'`
+    reference_length : int or str, default = ``'max'``
         series-length of reference, str defines how to infer from X during 'fit'.
-        options are `'max'`, `'mean'`, `'median'`, `'min'`.
+        options are ``'max'``, ``'mean'``, ``'median'``, ``'min'``.
     pad_value_short_series : float or None, default=None
         if padding series with len<9 to value. if None, not padding is performed.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
+
+    Attributes
+    ----------
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
+        num_kernels is less than 84.
 
     Examples
     --------
@@ -106,7 +114,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     def __init__(
         self,
-        num_kernels=10000,
+        num_kernels=10_000,
         max_dilations_per_kernel=32,
         reference_length="max",
         pad_value_short_series=None,
@@ -118,7 +126,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         self.reference_length = reference_length
         self._fitted_reference_length = None
         self.pad_value_short_series = pad_value_short_series
-
+        self.num_kernels_ = None
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -145,7 +153,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         super().__init__()
 
-    def _fit(self, X: List[pd.DataFrame], y=None):
+    def _fit(self, X: list[pd.DataFrame], y=None):
         """Fits dilations and biases to input time series.
 
         Parameters
@@ -153,7 +161,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X : pd.DataFrame
             Dataframe with n_instances-rows and n_dimensions-columns,
             each cell containing a series_length-long array.
-            n_dimensions is equal across all instances in `X`, and
+            n_dimensions is equal across all instances in ``X``, and
             series_length is constant within each instance.
         y : ignored argument for interface compatibility
 
@@ -217,6 +225,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             max_dilations_per_kernel=self.max_dilations_per_kernel,
             seed=self.random_state_,
         )
+        if self.num_kernels < 84:
+            self.num_kernels_ = 84
+        else:
+            self.num_kernels_ = (self.num_kernels // 84) * 84
+
         return self
 
     def _transform(self, X, y=None):
@@ -262,7 +275,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
-    X: List[pd.DataFrame], pad: Union[int, float, None] = 0
+    X: list[pd.DataFrame], pad: Union[int, float, None] = 0
 ):
     """Convert a nested dataframe to a 2D array and a list of lengths.
 

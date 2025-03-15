@@ -28,6 +28,7 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
         test data class labels as np array.
     random_state : int
         seed to enable reproducible resamples
+
     Returns
     -------
     new train and test attributes and class labels.

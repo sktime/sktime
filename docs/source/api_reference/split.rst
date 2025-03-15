@@ -10,6 +10,10 @@ All splitters in ``sktime`` can be listed using the ``sktime.registry.all_estima
 using ``estimator_types="splitter"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "splitter" in the "Estimator type" dropdown).
+
 
 Splitting utilities
 -------------------
@@ -35,6 +39,7 @@ Time index splitters
 
 Time index splitters split one or multiple time series by temporal order.
 They are typically used in both evaluation and tuning of forecasters.
+They have tag ``"split_type"="temporal"``.
 
 .. currentmodule:: sktime.split
 
@@ -46,7 +51,9 @@ They are typically used in both evaluation and tuning of forecasters.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingCutoffSplitter
     ExpandingGreedySplitter
+    ExpandingSlidingWindowSplitter
     TemporalTrainTestSplitter
 
 
@@ -72,3 +79,20 @@ more complex time index based splitting strategies.
 
     SameLocSplitter
     TestPlusTrainSplitter
+
+
+Instance splitters
+------------------
+
+Instance splitters split panels or hierarchical time series by
+the instance index, i.e., identifiers for entire series.
+Train and test sets contain entire series from the original panel.
+Instance splitters have tag ``"split_type"="instance"``.
+
+.. currentmodule:: sktime.split
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InstanceSplitter

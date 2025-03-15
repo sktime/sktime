@@ -40,7 +40,6 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
@@ -117,10 +116,13 @@ class MyForecaster(BaseForecaster):
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
         # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
         #
         # maintainer = current maintainer(s) of the estimator
         # per algorithm maintainer role, see governance document
         # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
         "maintainers": ["maintainer1", "maintainer2"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
@@ -132,6 +134,8 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()
@@ -199,7 +203,7 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series

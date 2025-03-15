@@ -7,8 +7,9 @@ by a resampling algorithm on the observed time series.
 __all__ = [
     "STLBootstrapTransformer",
     "MovingBlockBootstrapTransformer",
-    "SplitterBootstrapTransformer",
     "RepeatBootstrapTransformer",
+    "SplitterBootstrapTransformer",
+    "TSBootstrapAdapter",
 ]
 
 from sktime.transformations.bootstrap._mbb import (
@@ -17,3 +18,4 @@ from sktime.transformations.bootstrap._mbb import (
 )
 from sktime.transformations.bootstrap._repeat import RepeatBootstrapTransformer
 from sktime.transformations.bootstrap._splitterboot import SplitterBootstrapTransformer
+from sktime.transformations.bootstrap._tsbootstrap import TSBootstrapAdapter

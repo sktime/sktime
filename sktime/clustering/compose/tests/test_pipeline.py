@@ -4,11 +4,13 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
+import pytest
 from sklearn.preprocessing import StandardScaler
 
 from sktime.clustering.compose import ClustererPipeline
 from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.dists_kernels import FlatDist
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
@@ -16,6 +18,10 @@ from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_panel_X
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.clustering", "sktime.distances"]),
+    reason="run test only if clustering or distances code has changed",
+)
 def test_dunder_mul():
     """Test the mul dunder method."""
     RAND_SEED = 42
@@ -41,6 +47,10 @@ def test_dunder_mul():
     _assert_array_almost_equal(y_pred, t12c_3.fit(X).predict(X_test))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.clustering", "sktime.distances"]),
+    reason="run test only if clustering or distances code has changed",
+)
 def test_mul_sklearn_autoadapt():
     """Test auto-adapter for sklearn in mul."""
     RAND_SEED = 42
@@ -65,6 +75,10 @@ def test_mul_sklearn_autoadapt():
     _assert_array_almost_equal(y_pred, t12c_3.fit(X).predict(X_test))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.clustering", "sktime.distances"]),
+    reason="run test only if clustering or distances code has changed",
+)
 def test_missing_unequal_tag_inference():
     """Test that ClustererPipeline infers missing/unequal tags correctly."""
     c = TimeSeriesDBSCAN(FlatDist.create_test_instance())

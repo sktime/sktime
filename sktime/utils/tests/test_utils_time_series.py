@@ -1,12 +1,18 @@
 """Tests for time series utilities."""
+
 import numpy as np
 import pytest
 from scipy.stats import linregress
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.forecasting import _generate_polynomial_series
 from sktime.utils.slope_and_trend import _fit_trend, _slope
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("trend_order", [0, 3])
 def test_time_series_slope_against_scipy_linregress(trend_order):
     """Test time series slope against scipy lingress."""
@@ -21,6 +27,10 @@ def test_time_series_slope_against_scipy_linregress(trend_order):
 
 
 # Check linear and constant cases
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("slope", [-1, 0, 1])
 def test_time_series_slope_against_simple_cases(slope):
     """Test time series slope against simple cases."""
@@ -29,6 +39,10 @@ def test_time_series_slope_against_simple_cases(slope):
     np.testing.assert_almost_equal(_slope(y), slope, decimal=10)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("order", [0, 1, 2])  # polynomial order
 @pytest.mark.parametrize("n_timepoints", [1, 10])  # number of time series observations
 @pytest.mark.parametrize("n_instances", [1, 10])  # number of samples

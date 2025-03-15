@@ -1,4 +1,5 @@
 """Sklearn PCA applied after flattening series."""
+
 __author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 
@@ -32,7 +33,7 @@ class PCATransformer(BaseTransformer):
         use fit_transform(X) instead.
 
     whiten : bool, default=False
-        When True (False by default) the `components_` vectors are multiplied
+        When True (False by default) the ``components_`` vectors are multiplied
         by the square root of n_samples and then divided by the singular values
         to ensure uncorrelated outputs with unit component-wise variances.
 
@@ -43,18 +44,18 @@ class PCATransformer(BaseTransformer):
 
     svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
         If auto :
-            The solver is selected by a default policy based on `X.shape` and
-            `n_components`: if the input data is larger than 500x500 and the
+            The solver is selected by a default policy based on ``X.shape`` and
+            ``n_components``: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
             dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
         If full :
             run exact full SVD calling the standard LAPACK solver via
-            `scipy.linalg.svd` and select the components by postprocessing
+            ``scipy.linalg.svd`` and select the components by postprocessing
         If arpack :
             run SVD truncated to n_components calling ARPACK solver via
-            `scipy.sparse.linalg.svds`. It requires strictly
+            ``scipy.sparse.linalg.svds``. It requires strictly
             0 < n_components < min(X.shape)
         If randomized :
             run randomized SVD by the method of Halko et al.

@@ -3,9 +3,10 @@ on:
   schedule:
     - cron: 0 0 * * 0
   workflow_dispatch:
+
 jobs:
   code_quality:
-    name: code quality
+    name: code-quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
@@ -13,14 +14,11 @@ jobs:
       - name: python environment step
         uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
-      - name: install pre-commit
-        run: python3 -m pip install pre-commit
-      - name: run pre-commit hooks on all files
-        run: pre-commit run --color always --all-files --show-diff-on-failure
+          python-version: "3.11"
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
+
   test_base:
     needs: code_quality
     name: base
@@ -28,13 +26,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -47,10 +45,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
+
   test_module:
     needs: code_quality
     name: module
@@ -58,20 +53,20 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
         sktime-component:
           - alignment
-          - annotation
           - classification
           - clustering
+          - detection
           - forecasting
           - networks
           - param_est
@@ -88,10 +83,7 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
+
   test_other:
     needs: code_quality
     name: other
@@ -99,13 +91,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -120,6 +112,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
@@ -133,6 +128,7 @@ jobs:
           --ignore sktime/annotation
           --ignore sktime/classification
           --ignore sktime/clustering
+          --ignore sktime/detection
           --ignore sktime/forecasting
           --ignore sktime/networks
           --ignore sktime/param_est
@@ -140,7 +136,3 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign False
           --only_changed_modules False
-      - name: upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

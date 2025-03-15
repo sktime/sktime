@@ -6,9 +6,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.sklearn._adapt_df import prep_skl_df
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.sklearn"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("copy_df", [True, False])
 def test_prep_skl_df_coercion(copy_df):
     """Test that prep_skl_df behaves correctly on the coercion case."""
@@ -22,6 +27,10 @@ def test_prep_skl_df_coercion(copy_df):
         assert res is mixed_example
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.sklearn"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("copy_df", [True, False])
 def test_prep_skl_df_non_coercion(copy_df):
     """Test that prep_skl_df behaves correctly on the non-coercion case."""

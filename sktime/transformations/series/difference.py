@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
+
 __author__ = ["RNKuhns", "fkiraly", "benheid"]
 __all__ = ["Differencer"]
 
@@ -18,7 +19,7 @@ from sktime.utils.validation import is_int
 def _check_lags(lags):
     msg = " ".join(
         [
-            "`lags` should be provided as a positive integer scaler, or",
+            "`lags` should be provided as a positive integer scaler, or ",
             "a list, tuple or np.ndarray of positive integers,"
             f"but found {type(lags)}.",
         ]
@@ -50,11 +51,11 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
 
     Returns
     -------
-    `X` differenced at lags `lags`, always a copy (no reference)
-    if `lags` is int, applies diff to X at period `lags`
+    ``X`` differenced at lags ``lags``, always a copy (no reference)
+    if ``lags`` is int, applies diff to X at period ``lags``
         returns X.diff(periods=lag)
-    if `lags` is list of int, loops over elements from start to end
-        and applies diff to X at period lags[value], for value in the list `lags`
+    if ``lags`` is list of int, loops over elements from start to end
+        and applies diff to X at period lags[value], for value in the list ``lags``
     """
     if isinstance(lags, int):
         lags = [lags]
@@ -116,12 +117,13 @@ def _inverse_diff(X, lags, X_diff_seq=None):
 
     Returns
     -------
-    `X` inverse differenced at lags `lags`, always a copy (no reference)
-    if `lags` is int, applies cumsum to X at period `lag`
+    ``X`` inverse differenced at lags ``lags``, always a copy (no reference)
+    if ``lags`` is int, applies cumsum to X at period ``lag``
         for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
-    if `lags` is list of int, loops over elements from start to end
-        and applies cumsum to X at period lag[value], for value in the list `lag`
-    if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
+    if ``lags`` is list of int, loops over elements from start to end
+        and applies cumsum to X at period lag[value], for value in the list ``lag``
+    if ``X_diff_seq`` is provided, uses values stored for indices outside ``X`` to
+    invert
     """
     if isinstance(lags, int):
         lags = [lags]
@@ -155,12 +157,12 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         # shifted original time series that are available in the differenced time
         # series (intersection). These are the indices for which no valid differenced
         # values exist.
-        X.loc[
-            X_diff_orig.index.difference(
-                _shift(X_diff_orig.index, sum(lags) + lag_last)
-            ).intersection(X.index)
-        ] = np.nan
-        X = X.combine_first(X_update)
+        mask = X_diff_orig.index.difference(
+            _shift(X_diff_orig.index, sum(lags) + lag_last)
+        ).intersection(X.index)
+        X_ = X.copy()
+        X_.loc[mask] = np.nan
+        X = X_.combine_first(X_update)
 
     X_diff_last = X.copy()
 
@@ -204,7 +206,7 @@ class Differencer(BaseTransformer):
     ----------
     lags : int or array-like, default = 1
         The lags used to difference the data.
-        If a single `int` value is
+        If a single ``int`` value is
 
     na_handling : str, optional, default = "fill_zero"
         How to handle the NaNs that appear at the start of the series from differencing
@@ -336,12 +338,11 @@ class Differencer(BaseTransformer):
         X_orig_index = X.index
 
         X = update_data(X=self._X, X_new=X)
+        X = X.sort_index()
 
         X = self._check_freq(X)
 
         Xt = _diff_transform(X, self._lags)
-
-        Xt = Xt.loc[X_orig_index]
 
         na_handling = self.na_handling
         if na_handling == "drop_na":
@@ -356,10 +357,16 @@ class Differencer(BaseTransformer):
                 f"{na_handling}"
             )
 
+        if na_handling != "drop_na":
+            Xt = Xt.loc[X_orig_index]
+        else:
+            new_index = Xt.index.intersection(X_orig_index)
+            Xt = Xt.loc[new_index]
+
         return Xt
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Parameters
         ----------
@@ -396,8 +403,9 @@ class Differencer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [{"na_handling": x} for x in cls.VALID_NA_HANDLING_STR]
         # we're testing that inverse_transform is inverse to transform
