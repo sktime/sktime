@@ -12,6 +12,7 @@ __all__ = [
     "ResNetRegressor",
     "SimpleRNNRegressor",
     "TapNetRegressor",
+    "TabTransformerRegressor",
 ]
 
 from sktime.regression.deep_learning.cnn import CNNRegressor
@@ -24,4 +25,5 @@ from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressor
 from sktime.regression.deep_learning.mlp import MLPRegressor
 from sktime.regression.deep_learning.resnet import ResNetRegressor
 from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+from sktime.regression.deep_learning.tab_transformer import TabTransformerRegressor
 from sktime.regression.deep_learning.tapnet import TapNetRegressor

@@ -74,7 +74,7 @@ class Tab_Transformer(NNModule):
     Parameters
     ----------
     num_cat_class : list,
-        array of unique classes for each categorical feature
+        array of number unique classes for each categorical feature
     num_cont_features : int,
         number of continuos features
     embedding dim : int,
@@ -156,18 +156,37 @@ class TabTransformerRegressor(BaseRegressor):
         Indices for the categorcal features
     embedding dim : int,
         value of embedding dimension
-    n_transformer_layer : int,
+    n_transformer_layer : int, default = 6
         number of transformer layers
     n_heads : int,
         number of attention heads
-    task : string,
-        classification or regression task.
+    num_epochs : int, default = 100
+        the number of epochs to train the model
+    batch_size : int, default = 8
+        the number of samples per gradient update.
+    lr : int
+        Learning rate for training
+    criterion : torch.nn Loss Function, default=torch.nn.MSELoss
+        loss function to be used for training
+    criterion_kwargs : dict, default=None
+        keyword arguments to pass to criterion
+    optimizer : torch.optim.Optimizer, default=torch.optim.Adam
+        optimizer to be used for training
+    optimizer_kwargs : dict, default=None
+        keyword arguments to pass to optimizer
 
     References
     ----------
     TabTransformer: Tabular Data Modeling Using Contextual Embeddings.
     Xin Huang, Ashish Khetan, Milan Cvitkovic, Zohar Karnin
     https://arxiv.org/pdf/2012.06678
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning import TabTransformerRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, Y_train = load_unit_test(split="train")
+    >>> clf =TabTransformerRegressor(num_epochs=50, batch_size=4)# doctest: +SKIP
     """
 
     _tags = {
@@ -188,9 +207,9 @@ class TabTransformerRegressor(BaseRegressor):
         embedding_dim=6,
         n_transformer_layer=4,
         n_heads=1,
-        num_epochs=16,
+        num_epochs=100,
         batch_size=8,
-        lr=0.001,
+        lr=0.01,
         criterion=None,
         criterion_kwargs=None,
         optimizer=None,
