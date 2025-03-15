@@ -169,13 +169,12 @@ class StationarityKPSS(BaseParamFitter):
     ----------
     p_threshold : float, optional, default=0.05
         significance threshold to apply in testing for stationarity
+
     regression : str, one of {"c","ct","ctt","n"}, optional, default="c"
         Constant and trend order to include in regression.
 
         * "c" : constant only (default).
         * "ct" : constant and trend.
-        * "ctt" : constant, and linear and quadratic trend.
-        * "n" : no constant, no trend.
 
     nlags : str or int, optional, default="auto". If int, must be positive.
         Indicates the number of lags to be used internally in ``kpss``.
@@ -286,6 +285,6 @@ class StationarityKPSS(BaseParamFitter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
-        params2 = {"p_threshold": 0.1, "regression": "ctt", "nlags": 5}
+        params2 = {"p_threshold": 0.1, "regression": "ct", "nlags": 5}
 
         return [params1, params2]
