@@ -1,0 +1,181 @@
+"""Dataclasses for benchmarking."""
+
+import copy
+from collections.abc import Callable
+from dataclasses import dataclass, field, fields
+from typing import Optional, Union
+
+import numpy as np
+import pandas as pd
+
+from sktime.benchmarking.base import BaseMetric
+from sktime.split.base._base_splitter import BaseSplitter
+
+
+@dataclass
+class TaskObject:
+    """
+    A forecasting task.
+
+    Parameters
+    ----------
+    data: Union[Callable, tuple]
+        Can be
+        - a function which returns a dataset, like from `sktime.datasets`.
+        - a tuple contianing two data container that are sktime comptaible.
+        - single data container that is sktime compatible (only endogenous data).
+    cv_splitter: BaseSplitter object
+        Splitter used for generating validation folds.
+    scorers: list of BaseMetric objects
+        Each BaseMetric output will be included in the results.
+    """
+
+    data: Union[Callable, tuple]
+    cv_splitter: BaseSplitter
+    scorers: list[BaseMetric]
+    strategy: str = "refit"
+    global_mode: bool = False
+    cv_X = None
+    cv_global: Optional[BaseSplitter] = None  # TODO needs to be fixed
+
+    def get_y_X(self):
+        """Get the endogenous and exogenous data."""
+        if isinstance(self.data, tuple):
+            return self.data
+        elif isinstance(self.data, Callable):
+            data = self.data()
+            if isinstance(data, tuple):
+                return data
+            else:
+                return data, None
+        else:
+            return self.data, None
+
+
+@dataclass
+class FoldResults:
+    """
+    Results for a single fold.
+
+    Parameters
+    ----------
+    scores: list of dicts with scorer name and score
+        The scores for this fold for each scorer.
+    ground_truth: pd.DataFrame, optional (default=None)
+        The ground truth series for this fold.
+    predictions: pd.DataFrame, optional (default=None)
+        The predictions for this fold.
+    train_data: pd.DataFrame, optional (default=None)
+        The training data for this fold.
+    """
+
+    scores: list[dict[str, float]]
+    ground_truth: Optional[pd.DataFrame] = None
+    predictions: Optional[pd.DataFrame] = None
+    train_data: Optional[pd.DataFrame] = None
+
+
+@dataclass
+class ResultObject:
+    """
+    Model results for a single task.
+
+    Parameters
+    ----------
+    model_id : str
+        The ID of the model.
+    validation_id : str
+        The ID of the task.
+    folds : list of FoldResults
+        The results for each fold.
+    means : list of dict with scorer name and mean score
+        The mean scores across all folds for each scorer.
+    stds : list of dict with scorer name and standard deviation of the score
+        The standard deviation of scores across all folds for
+        each scorer.
+    """
+
+    model_id: str
+    validation_id: str
+    folds: dict[int, FoldResults]
+    means: dict[str, float] = field(init=False)
+    stds: dict[str, float] = field(init=False)
+
+    def __post_init__(self):
+        """Calculate mean and std for each score."""
+        self.means = {}
+        self.stds = {}
+        scores = {}
+        for fold_idx, fold in self.folds.items():
+            for score_name, score_value in fold.scores.items():
+                if score_name not in scores:
+                    scores[score_name] = []
+                scores[score_name].append(score_value)
+        for name, score in scores.items():
+            # TODO mean wrongly calculated over all axis.
+            self.means[name] = np.mean(score, axis=0)
+            self.stds[name] = np.std(score, axis=0, ddof=1)
+
+
+def asdict(obj, *, dict_factory=dict, pd_orient="list"):
+    """Return the fields of a dataclass as a dict.
+
+    # Copied from dataclasses.asdict
+
+    """
+    if not hasattr(type(obj), "__dataclass_fields__"):
+        raise TypeError("asdict() should be called on dataclass instances")
+    return _asdict_inner(obj, dict_factory, pd_orient)
+
+
+def _asdict_inner(obj, dict_factory, pd_orient):
+    # Copied from dataclasses._asdict_inner and slightly modified
+    if hasattr(type(obj), "__dataclass_fields__"):
+        result = []
+        for f in fields(obj):
+            value = _asdict_inner(getattr(obj, f.name), dict_factory, pd_orient)
+            result.append((f.name, value))
+        return dict_factory(result)
+    elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
+        # obj is a namedtuple.  Recurse into it, but the returned
+        # object is another namedtuple of the same type.  This is
+        # similar to how other list- or tuple-derived classes are
+        # treated (see below), but we just need to create them
+        # differently because a namedtuple's __init__ needs to be
+        # called differently (see bpo-34363).
+
+        # I'm not using namedtuple's _asdict()
+        # method, because:
+        # - it does not recurse in to the namedtuple fields and
+        #   convert them to dicts (using dict_factory).
+        # - I don't actually want to return a dict here.  The main
+        #   use case here is json.dumps, and it handles converting
+        #   namedtuples to lists.  Admittedly we're losing some
+        #   information here when we produce a json list instead of a
+        #   dict.  Note that if we returned dicts here instead of
+        #   namedtuples, we could no longer call asdict() on a data
+        #   structure where a namedtuple was used as a dict key.
+
+        return type(obj)(*[_asdict_inner(v, dict_factory, pd_orient) for v in obj])
+    elif isinstance(obj, (list, tuple)):
+        # Assume we can create an object of this type by passing in a
+        # generator (which is not true for namedtuples, handled
+        # above).
+        return type(obj)(_asdict_inner(v, dict_factory, pd_orient) for v in obj)
+    elif isinstance(obj, dict):
+        return type(obj)(
+            (
+                _asdict_inner(k, dict_factory, pd_orient),
+                _asdict_inner(v, dict_factory, pd_orient),
+            )
+            for k, v in obj.items()
+        )
+    elif isinstance(obj, pd.Series):
+        # With a frame, we have more control over the orientation.
+        return obj.to_frame().to_dict(orient=pd_orient)
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict(orient=pd_orient)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return copy.deepcopy(obj)
