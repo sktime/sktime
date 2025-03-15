@@ -3,23 +3,96 @@
 import logging
 import warnings
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Optional, Union
 
+import pandas as pd
+
 from sktime.base import BaseEstimator
-from sktime.benchmarking.benchmarking_dataclasses import (
-    BenchmarkingResults,
+from sktime.benchmarking._benchmarking_dataclasses import (
     FoldResults,
     ResultObject,
     TaskObject,
 )
+from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
+from sktime.utils.unique_str import _make_strings_unique
 
 
-class SktimeRegistry:
+@dataclass
+class _BenchmarkingResults:
+    """Results of a benchmarking run.
+
+    Parameters
+    ----------
+    results : list of ResultObject
+        The results of the benchmarking run.
+    """
+
+    path: str
+    results: list[ResultObject] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Save the results to a file."""
+        self.storage_backend = get_storage_backend(self.path)
+        self.results = self.storage_backend(self.path).load()
+
+    def save(self):
+        """Save the results to a file."""
+        self.storage_backend(self.path).save(self.results)
+
+    def contains(self, validation_id: str, model_id: str):
+        """
+        Check if the results contain a specific task and model.
+
+        Parameters
+        ----------
+        validation_id : str
+            The task ID.
+        model_id : str
+            The model ID.
+        """
+        return any(
+            [
+                result.validation_id == validation_id and result.model_id == model_id
+                for result in self.results
+            ]
+        )
+
+    def to_dataframe(self):
+        """Convert the results to a pandas DataFrame."""
+        # TODO seems to be completely wrong!
+        results = []
+        for result in self.results:
+            row = {
+                "validation_id": result.validation_id,
+                "model_id": result.model_id,
+            }
+            for fold_idx, fold in result.folds.items():
+                row.update(
+                    dict(
+                        map(
+                            lambda x: (x[0] + f"_fold_{fold_idx}_test", x[1]),
+                            fold.scores.items(),
+                        )
+                    )
+                )
+            row.update(
+                dict(map(lambda x: (x[0] + "_mean", x[1]), result.means.items()))
+            )
+            row.update(dict(map(lambda x: (x[0] + "_std", x[1]), result.stds.items())))
+            results.append(row)
+        df = pd.DataFrame(results)
+        df["validation_id"] = df["validation_id"]
+        df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
+        return df
+
+
+class _SktimeRegistry:
     """Register an entity by ID.
 
     IDs should remain stable over time and should be guaranteed to resolve to
@@ -50,14 +123,15 @@ class SktimeRegistry:
         kwargs: Dict, optional (default=None)
             kwargs to pass to the entity entry point when instantiating the entity.
         """
-        if entity_id in self.entities.keys():
-            # TODO implement that stuff
+        entity_id_unique = _make_strings_unique(list(self.entities.keys()), entity_id)
+        if entity_id != entity_id_unique:
             warnings.warn(
-                message=f"Entity with ID [id={id}] already registered, new id is: ...",
+                message=f"Entity with ID [id={entity_id}] already registered, "
+                + "new id is {entity_id_unique}",
                 category=UserWarning,
                 stacklevel=2,
             )
-        self.entities[entity_id] = entity
+        self.entities[entity_id_unique] = entity
 
 
 class ForecastingBenchmark(BaseBenchmark):
@@ -116,8 +190,8 @@ class ForecastingBenchmark(BaseBenchmark):
         super().__init__(id_format)
         self.backend = backend
         self.backend_params = backend_params
-        self.estimators = SktimeRegistry()
-        self.tasks = SktimeRegistry()
+        self.estimators = _SktimeRegistry()
+        self.tasks = _SktimeRegistry()
 
     def add_estimator(
         self,
@@ -252,7 +326,7 @@ class ForecastingBenchmark(BaseBenchmark):
             If a list of estimator ids, rerun only those estimators.
             If "none", skip tasks and estimators that have already been run.
         """
-        results = BenchmarkingResults(path=results_path)
+        results = _BenchmarkingResults(path=results_path)
 
         for validation_id, task in self.tasks.entities.items():
             for estimator_id, estimator in self.estimators.entities.items():

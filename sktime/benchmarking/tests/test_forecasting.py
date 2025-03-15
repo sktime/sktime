@@ -326,3 +326,30 @@ def test_dataset_different_format(tmp_path):
         )
 
     pd.testing.assert_frame_equal(outputs[0], outputs[1], check_exact=True)
+
+
+def test_add_estimator_twice(tmp_path):
+    """Test adding the same estimator twice."""
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+    scorers = [MeanAbsolutePercentageError()]
+
+    cv_splitter = ExpandingWindowSplitter(
+        initial_window=1,
+        step_length=1,
+        fh=1,
+    )
+    benchmark.add_task(data_loader_simple, cv_splitter, scorers)
+
+    results_file = tmp_path / "results.csv"
+    results_df = benchmark.run(results_file)
+
+    pd.testing.assert_series_equal(
+        pd.Series(["NaiveForecaster", "NaiveForecaster_2"], name="model_id"),
+        results_df["model_id"],
+    )
+
+    assert (
+        len(benchmark.estimators.entities) == 2
+    ), "add_estimator does not register all estimators."
