@@ -175,7 +175,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         -------
         self : returns an instance of self.
         """
-        forecasters = self._check_forecasters(y)
+        forecasters = [x[1] for x in self._forecasters]
 
         self.forecasters_ = []
         self.y_columns = list(y.columns)

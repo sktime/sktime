@@ -147,7 +147,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
         if X is not None:
