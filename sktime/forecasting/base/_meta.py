@@ -26,7 +26,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters, n_jobs=None, fc_alt=None):
-
         if forecasters is not None:
             self.forecasters = forecasters
         self.n_jobs = n_jobs
