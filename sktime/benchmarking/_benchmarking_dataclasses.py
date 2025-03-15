@@ -116,6 +116,28 @@ class ResultObject:
             self.means[name] = np.mean(score, axis=0)
             self.stds[name] = np.std(score, axis=0, ddof=1)
 
+    def to_dataframe(self):
+        """Return results as a pandas DataFrame."""
+        result = {
+            "validation_id": self.validation_id,
+            "model_id": self.model_id,
+        }
+        for fold_idx, fold in self.folds.items():
+            for score_name, score_value in fold.scores.items():
+                result[f"{score_name}_fold_{fold_idx}_test"] = [score_value]
+            if fold.ground_truth is not None:
+                result[f"ground_truth_fold_{fold_idx}"] = [fold.ground_truth]
+            if fold.predictions is not None:
+                result[f"predictions_fold_{fold_idx}"] = [fold.predictions]
+            if fold.train_data is not None:
+                result[f"train_data_fold_{fold_idx}"] = [fold.train_data]
+        for metric, mean in self.means.items():
+            result[f"{metric}_mean"] = [mean]
+        for metric, std in self.stds.items():
+            result[f"{metric}_std"] = [std]
+        
+        return pd.DataFrame(result)
+
 
 def asdict(obj, *, dict_factory=dict, pd_orient="list"):
     """Return the fields of a dataclass as a dict.

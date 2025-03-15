@@ -99,12 +99,10 @@ class JSONStorageHandler(BaseStorageHandler):
                 folds = {}
                 for fold_id, fold in row["folds"].items():
                     scores = {}
-                    for score in fold["scores"]:
-                        if isinstance(score["score"], dict):
-                            score_val = pd.DataFrame(score["score"])
-                        else:
-                            score_val = score["score"]
-                        scores[score["name"]] = score_val
+                    for score_name, score_val in fold["scores"].items():
+                        if isinstance(score_val, dict):
+                            score_val = pd.DataFrame(score_val)
+                        scores[score_name] = score_val
                     if "ground_truth" in fold:
                         ground_truth = pd.Series(fold["ground_truth"])
                     else:

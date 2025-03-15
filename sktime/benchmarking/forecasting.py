@@ -65,29 +65,11 @@ class _BenchmarkingResults:
 
     def to_dataframe(self):
         """Convert the results to a pandas DataFrame."""
-        # TODO seems to be completely wrong!
         results = []
         for result in self.results:
-            row = {
-                "validation_id": result.validation_id,
-                "model_id": result.model_id,
-            }
-            for fold_idx, fold in result.folds.items():
-                row.update(
-                    dict(
-                        map(
-                            lambda x: (x[0] + f"_fold_{fold_idx}_test", x[1]),
-                            fold.scores.items(),
-                        )
-                    )
-                )
-            row.update(
-                dict(map(lambda x: (x[0] + "_mean", x[1]), result.means.items()))
-            )
-            row.update(dict(map(lambda x: (x[0] + "_std", x[1]), result.stds.items())))
-            results.append(row)
-        df = pd.DataFrame(results)
-        df["validation_id"] = df["validation_id"]
+            results.append(result.to_dataframe())
+
+        df = pd.concat(results, axis=0, ignore_index=True)
         df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
         return df
 
@@ -179,6 +161,8 @@ class ForecastingBenchmark(BaseBenchmark):
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+    return_data : bool, optional (default=False)
+        Whether to return the prediction and the ground truth data in the results.
     """
 
     def __init__(
@@ -186,12 +170,14 @@ class ForecastingBenchmark(BaseBenchmark):
         id_format: Optional[str] = None,
         backend=None,
         backend_params=None,
+        return_data=False,
     ):
         super().__init__(id_format)
         self.backend = backend
         self.backend_params = backend_params
         self.estimators = _SktimeRegistry()
         self.tasks = _SktimeRegistry()
+        self.return_data = return_data
 
     def add_estimator(
         self,
@@ -322,9 +308,7 @@ class ForecastingBenchmark(BaseBenchmark):
         results_path : str
             Path to save the results to.
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "all", rerun all tasks and estimators.
-            If a list of estimator ids, rerun only those estimators.
-            If "none", skip tasks and estimators that have already been run.
+            Currently not implemented.
         """
         results = _BenchmarkingResults(path=results_path)
 
@@ -366,7 +350,7 @@ class ForecastingBenchmark(BaseBenchmark):
             backend=self.backend,
             backend_params=self.backend_params,
             error_score="raise",  # TODO should be configurable
-            return_data=True,  # TODO should be configurable
+            return_data=self.return_data,
             cv_X=task.cv_X,
             cv_global=task.cv_global,
             strategy=task.strategy,
@@ -380,7 +364,10 @@ class ForecastingBenchmark(BaseBenchmark):
                 scores[scorer.name] = row["test_" + scorer.name]
             scores["fit_time"] = row["fit_time"]
             scores["pred_time"] = row["pred_time"]
-            folds[ix] = FoldResults(
-                scores, row["y_test"], row["y_pred"], row["y_train"]
-            )
+            if self.return_data:
+                folds[ix] = FoldResults(
+                    scores, row["y_test"], row["y_pred"], row["y_train"]
+                )
+            else:
+                folds[ix] = FoldResults(scores)
         return folds
