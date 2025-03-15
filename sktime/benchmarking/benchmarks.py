@@ -79,7 +79,6 @@ class BaseBenchmark:
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
         if None, no format is enforced on task/estimator ID
-
     """
 
     def __init__(self, id_format: Optional[str] = None):
@@ -87,11 +86,9 @@ class BaseBenchmark:
             SktimeModelRegistry,
             SktimeValidationRegistry,
         )
-        from sktime.benchmarking._lib_mini_kotsu.run import run
 
         self.estimators = SktimeModelRegistry(id_format)
         self.validations = SktimeValidationRegistry(id_format)
-        self.kotsu_run = run
 
     def add_estimator(
         self,
@@ -132,17 +129,21 @@ class BaseBenchmark:
             id=validation_id, entry_point=task_entrypoint, kwargs=task_kwargs
         )
 
-    def run(self, output_file: str) -> pd.DataFrame:
+    def run(self, output_file=None) -> pd.DataFrame:
         """Run the benchmark.
 
         Parameters
         ----------
-        output_file : str
-            Path to write results output file to.
+        output_file : str or None
+            If not provided, will not write results to file.
+            If provided, will write the output in csv format to the given path.
+            Paths are relative to the current working directory.
 
         Returns
         -------
         pandas DataFrame of results
         """
-        results_df = self.kotsu_run(self.estimators, self.validations, output_file)
+        from sktime.benchmarking._lib_mini_kotsu.run import run
+
+        results_df = run(self.estimators, self.validations, output_file)
         return results_df
