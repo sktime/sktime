@@ -16,7 +16,8 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # Handle PyTorch as a soft dependency
-if _check_soft_dependencies("torch", severity="none"):
+_check_pytorch = _check_soft_dependencies("torch", severity="none")
+if _check_pytorch:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
@@ -28,7 +29,7 @@ else:
         """Dummy class when PyTorch is missing."""
 
 
-class DARNNModule(nn.Module if torch else DummyDARNNModule):
+class DARNNModule(nn.Module if _check_pytorch else DummyDARNNModule):
     """PyTorch module implementing the DA-RNN model with dual-stage attention.
 
     This module consists of:
@@ -228,6 +229,17 @@ class DualStageAttentionRNN(BaseForecaster):
         device="cpu",
         random_state=None,
     ):
+        # Check if PyTorch is available
+        if not _check_pytorch:
+            import warnings
+
+            warnings.warn(
+                "torch is not installed, DualStageAttentionRNN will not be available"
+            )
+            super().__init__()
+            return
+
+        # Initialize parameters if PyTorch is available
         self.window_length = window_length
         self.encoder_hidden_size = encoder_hidden_size
         self.decoder_hidden_size = decoder_hidden_size
