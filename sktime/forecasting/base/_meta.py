@@ -80,9 +80,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         if not isinstance(estimators, (list, tuple)):
             estimators = [estimators]
 
-        estimator_tuples = self._get_estimator_tuples(
-            estimators, clone_ests=False, allow_empty=True
-        )
+        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=False)
 
         estimators = [x[1] for x in estimator_tuples]
 
