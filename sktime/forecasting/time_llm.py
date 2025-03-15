@@ -7,6 +7,8 @@ __author__ = ["KimMeen", "jgyasu"]
 from types import SimpleNamespace
 from typing import Optional
 
+import pandas as pd
+
 from sktime.forecasting.base import _BaseGlobalForecaster
 from sktime.utils.dependencies import _safe_import
 
@@ -65,7 +67,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     >>> forecaster = TimeLLMForecaster(
     ...     pred_len=36,
     ...     seq_len=96,
-    ...     llm_model='GPT2'
+    ...     llm_model='BERT'
     ... )
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(X=y, fh=[1])
@@ -186,6 +188,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         from sktime.libs.time_llm.TimeLLM import Model
 
         self.model_ = Model(configs).to(self.device_)
+        self.model_ = self.model_.to(torch.bfloat16)
 
     def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
@@ -222,7 +225,12 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        return self.model_.forward(X)
+        X_tensor = torch.tensor(X.values).reshape(1, -1, 1).to(self.device_)
+        X_tensor = X_tensor.to(torch.float32)
+        res = self.model_.forward(
+            X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
+        )
+        return pd.Series(res.detach().cpu().numpy().flatten())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
