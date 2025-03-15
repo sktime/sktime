@@ -39,6 +39,10 @@ jobs:
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tr '\n' ' ')
           echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
 
+      - name: Print changed files
+        run: |
+          echo "Changed files: $CHANGED_FILES"
+
       - name: Run pre-commit on changed files
         run: |
           if [ -n "$CHANGED_FILES" ]; then
