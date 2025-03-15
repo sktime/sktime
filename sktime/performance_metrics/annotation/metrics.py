@@ -6,6 +6,7 @@ points and quantify the error.
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from scipy.spatial.distance import directed_hausdorff
 from sklearn.utils import check_array
 
@@ -91,3 +92,56 @@ def prediction_ratio(
     true_change_points = check_array(true_change_points, ensure_2d=False)
     pred_change_points = check_array(pred_change_points, ensure_2d=False)
     return pred_change_points.size / true_change_points.size
+
+
+def padded_f1(true_change_points, pred_change_points, pad):
+    """Calculate padded F1 score for change point detection.
+
+    Parameters
+    ----------
+    true_change_points: pd.Series
+        True change point positions. Can be integers, floats or datetimes.
+    precicted_change_points: pd.Series
+        Precicted change point positions. Can be integers, floats or datetimes.
+    pad: int, float, timdelta
+        Used to pad the true change points. If a predicted change point falls within
+        the range of the padded change then then change point has been correctly
+        identified.
+
+    Returns
+    -------
+    float
+        Padded f1 score
+
+    References
+    ----------
+    .. [1] Gerrit J. J. van den Burg and Christopher K. I. Williams, An Evaluation of
+           Change Point Detection Algorithms, 2022, https://arxiv.org/abs/2003.06222
+    """
+    true_change_points = pd.Series(true_change_points)
+    pred_change_points = pd.Series(pred_change_points)
+
+    boundary_left = true_change_points - pad
+    boundary_right = true_change_points + pad
+    true_cp_intervals = pd.IntervalIndex.from_arrays(boundary_left, boundary_right)
+
+    false_positives = 0
+    tp_and_fn = pd.Series(False, index=true_cp_intervals)
+
+    for cp in pred_change_points:
+        boolean_mask = tp_and_fn.index.contains(cp)
+        if not boolean_mask.any():
+            false_positives += 1
+        else:
+            tp_and_fn = tp_and_fn | boolean_mask
+
+    true_positives = tp_and_fn.sum()
+    false_negatives = (~tp_and_fn).sum()
+
+    # Avoid division by zero to mimic sklearn behaviour
+    denom = 2 * true_positives + false_positives + false_negatives
+    if denom == 0:
+        return 0.0
+
+    padded_f1 = 2 * true_positives / denom
+    return padded_f1

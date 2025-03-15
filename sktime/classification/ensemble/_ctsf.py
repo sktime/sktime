@@ -166,6 +166,11 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         ``oob_decision_function_`` might contain NaN.
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     References
     ----------
@@ -193,6 +198,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # --------------
         "authors": ["mloning", "AyushmaanSeth"],
         "maintainers": ["AyushmaanSeth"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
@@ -220,6 +226,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        criterion="gini",
     ):
         self.estimator = estimator
 
@@ -233,6 +240,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.max_samples = max_samples
+        self.criterion = criterion
 
         # Pass on params.
         super().__init__(
@@ -270,6 +278,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseClassifier.predict_proba."""
         return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseClassifier._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseClassifier._repr_mimebundle_(self, **kwargs)
 
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
@@ -315,6 +336,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
+            "criterion": self.criterion,
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,

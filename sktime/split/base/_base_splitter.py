@@ -73,7 +73,7 @@ class BaseSplitter(BaseObject):
     by the timedelta `window_length`,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
     we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
     and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
     which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
@@ -371,7 +371,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
@@ -384,7 +384,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "

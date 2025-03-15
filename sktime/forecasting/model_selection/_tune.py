@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
@@ -85,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.32.0: check if this is still necessary
+        # todo 0.37.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -1813,7 +1812,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results[f"mean_{scoring_name}"].idxmin()
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
@@ -1899,7 +1898,15 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        scorer_with_lower_is_better_false = MeanAbsolutePercentageError(symmetric=True)
+        scorer_with_lower_is_better_false.set_tags(**{"lower_is_better": False})
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": scorer_with_lower_is_better_false,
+        }
+        return [params, params2, params3, params4]
 
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
@@ -1912,7 +1919,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize", sampler=sampler)
+            scoring_direction = (
+                "minimize" if scoring.get_tag("lower_is_better") else "maximize"
+            )
+            study = optuna.create_study(direction=scoring_direction, sampler=sampler)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y

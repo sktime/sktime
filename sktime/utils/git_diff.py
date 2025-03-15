@@ -152,7 +152,7 @@ def _get_packages_with_changed_specs():
     -------
     tuple of str : names of packages with changed or added specs
     """
-    from packaging.requirements import Requirement
+    from packaging.requirements import InvalidRequirement, Requirement
 
     changed_lines = get_changed_lines("pyproject.toml")
 
@@ -175,8 +175,12 @@ def _get_packages_with_changed_specs():
         if ";" in req:
             req = req.split(";")[0]
 
-        pkg = Requirement(req).name
-        packages.append(pkg)
+        try:  # deal with lines that are not package requirement strings
+            pkg = Requirement(req).name
+        except InvalidRequirement:
+            continue
+        else:
+            packages.append(pkg)
 
     # make unique
     packages = tuple(set(packages))

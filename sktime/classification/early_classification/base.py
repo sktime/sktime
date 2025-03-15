@@ -70,6 +70,7 @@ class BaseEarlyClassifier(BaseEstimator):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored

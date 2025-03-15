@@ -5,8 +5,6 @@
 __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
-from joblib import Parallel, delayed
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 
@@ -19,6 +17,12 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "forecasters"
+
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
@@ -59,6 +63,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
+        from joblib import Parallel, delayed
 
         def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""

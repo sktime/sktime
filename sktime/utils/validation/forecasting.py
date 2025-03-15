@@ -521,6 +521,6 @@ def check_interval_df(interval_df, index_to_match):
     df_idx = interval_df.index
     if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
         raise ValueError("Prediction interval index must match the final Series index.")
-    levels = interval_df.columns.levels
+    levels = interval_df.columns.remove_unused_levels().levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")

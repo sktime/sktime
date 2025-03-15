@@ -21,6 +21,7 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_acsf1",
     "load_macroeconomic",
+    "load_hierarchical_sales_toydata",
     "generate_example_long_table",
     "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
@@ -41,14 +42,24 @@ __all__ = [
     "write_tabular_transformation_to_arff",
     "load_tecator",
     "load_fpp3",
+    "_load_fpp3",
     "DATASET_NAMES_FPP3",
+    "BaseDataset",
+    "Airline",
+    "Longley",
+    "Lynx",
+    "Macroeconomic",
+    "ShampooSales",
+    "Solar",
+    "USChange",
 ]
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
 )
-from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, load_fpp3
+from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, _load_fpp3, load_fpp3
+from sktime.datasets._hierarchical_demo import load_hierarchical_sales_toydata
 from sktime.datasets._readers_writers.arff import (
     load_from_arff_to_dataframe,
     write_tabular_transformation_to_arff,
@@ -90,4 +101,14 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
+)
+from sktime.datasets.base import BaseDataset
+from sktime.datasets.forecasting import (
+    Airline,
+    Longley,
+    Lynx,
+    Macroeconomic,
+    ShampooSales,
+    Solar,
+    USChange,
 )

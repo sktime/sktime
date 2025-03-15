@@ -6,7 +6,6 @@ __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
@@ -195,6 +194,7 @@ class WindowSummarizer(BaseTransformer):
         # --------------
         "authors": ["danbartl", "grzegorzrut", "ltsaprounis"],
         "maintainers": ["danbartl"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -296,7 +296,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
+        func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -313,6 +313,8 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        from joblib import Parallel, delayed
+
         idx = X.index
         X = X.combine_first(self._X)
 

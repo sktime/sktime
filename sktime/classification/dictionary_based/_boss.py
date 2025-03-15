@@ -11,7 +11,6 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -134,7 +133,7 @@ class BOSSEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:train_estimate": True,
@@ -547,7 +546,7 @@ class IndividualBOSS(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -707,6 +706,8 @@ def _dist_wrapper(dist_matrix, X, Y, s, XX_all=None, XY_all=None):
 
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
     """Find the euclidean distance between all pairs of bop-models."""
+    from joblib import Parallel, effective_n_jobs
+
     if use_boss_distance:
         if Y is None:
             Y = X

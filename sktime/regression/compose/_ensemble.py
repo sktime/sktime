@@ -8,7 +8,6 @@ __all__ = ["ComposableTimeSeriesForestRegressor"]
 import numbers
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import (
     _generate_unsampled_indices,
@@ -167,6 +166,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """
 
     _tags = {
+        "python_dependencies": ["joblib"],
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
     }
 
@@ -238,6 +238,19 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseRegressor.predict_proba."""
         return BaseRegressor.predict_proba(self, X=X, **kwargs)
+
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseRegressor._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseRegressor._repr_mimebundle_(self, **kwargs)
 
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
@@ -322,6 +335,8 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
+        from joblib import Parallel, delayed
+
         X = check_X(X, enforce_univariate=True)
 
         X = self._validate_X_predict(X)
@@ -410,4 +425,16 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"n_estimators": 3}
+        param1 = {"n_estimators": 3}
+        param2 = {
+            "n_estimators": 5,
+            "max_depth": 5,
+            "min_samples_split": 4,
+            "random_state": 42,
+        }
+        param3 = {
+            "n_estimators": 10,
+            "max_depth": 7,
+            "min_samples_split": 0.2,
+        }
+        return [param1, param2, param3]

@@ -5,13 +5,13 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
 
-from inspect import signature
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.adapters._safe_call import _method_has_param_and_default
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 
 
@@ -174,14 +174,26 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
+        if hasattr(transformer, "_get_tags"):
+            categorical_list = ["categorical", "1dlabels", "2dlabels"]
+            tag_values = transformer._get_tags()["X_types"]
+            if any(val in tag_values for val in categorical_list):
+                self.set_tags(**{"capability:categorical_in_X": True})
+
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        if hasattr(transformer, "_get_tags"):
-            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
+        if sklearn_ge_16:
+            from sklearn.utils import get_tags
+
+            trafo_fit_in_transform = not get_tags(transformer).requires_fit
         else:
-            trafo_fit_in_transform = False
+            if hasattr(transformer, "_get_tags"):
+                trafo_fit_in_transform = transformer._get_tags()["stateless"]
+            else:
+                trafo_fit_in_transform = False
 
         self._skip_fit = fit_in_transform or trafo_fit_in_transform
 
@@ -200,7 +212,13 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
             if input_type == "numpy":
-                self.set_tags(**{"X_inner_mtype": "np.ndarray"})
+                self.set_tags(
+                    **{
+                        "X_inner_mtype": "np.ndarray",
+                        # categorical is not supported in numpy yet.
+                        "capability:categorical_in_X": False,
+                    }
+                )
             elif input_type == "pandas":
                 self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
             else:
@@ -237,14 +255,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             whether the parameter ``arg`` of method ``method`` has a default value
         """
         method_fun = getattr(self.transformer, method)
-        method_params = list(signature(method_fun).parameters.keys())
-        if arg in method_params:
-            param = signature(self.transformer.fit).parameters[arg]
-            default = param.default
-            has_default = default is not param.empty
-            return True, has_default
-        else:
-            return False, False
+        return _method_has_param_and_default(method_fun, arg)
 
     def _get_args(self, X, y, method="fit"):
         """Get kwargs for method, depending on pass_y and method.
@@ -342,6 +353,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         else:
             Xt = self.transformer_.transform(**trafo_args)
 
+        # converting to dense if the transformer output was in sparse format
+        # Example: sklearn OneHotEncoder's default output is sparse
+        if str(type(Xt)) == "<class 'scipy.sparse._csr.csr_matrix'>":
+            Xt = Xt.todense()
         # coerce sensibly to 2D np.ndarray
         if isinstance(Xt, (int, float, str)):
             Xt = np.array([[Xt]])
@@ -416,7 +431,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
         params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
-
         params6 = {
             "transformer": StandardScaler(),
             "pooling": "global",

@@ -2,7 +2,7 @@
 
 import pytest
 
-from sktime.registry._scitype import scitype
+from sktime.registry._scitype import is_scitype, scitype
 
 
 @pytest.mark.parametrize("coerce_to_list", [True, False])
@@ -92,3 +92,15 @@ def test_scitype_generic(force_single_scitype, coerce_to_list):
         expected = "foo"
 
     assert scitype_inferred == expected
+
+
+def test_is_scitype():
+    """Test that is_scitype is correctly checking the scitypes."""
+    from sktime.base import BaseObject
+
+    class _DummyClass(BaseObject):
+        _tags = {"object_type": ["foo", "bar"]}
+
+    assert is_scitype(_DummyClass, "foo")
+    assert is_scitype(_DummyClass, "bar")
+    assert not is_scitype(_DummyClass, "baz")

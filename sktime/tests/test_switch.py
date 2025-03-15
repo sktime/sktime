@@ -11,6 +11,8 @@ from inspect import getmro, isclass
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 
+LOCAL_PACKAGE = "sktime"
+
 
 def run_test_for_class(cls, return_reason=False):
     """Check if test should run for a class or function.
@@ -22,12 +24,12 @@ def run_test_for_class(cls, return_reason=False):
        If yes, behaviour depends on ONLY_CHANGED_MODULES setting:
        if off (False), always runs the test (return True);
        if on (True), runs test if and only if
-       at least one of conditions 2, 3, 4 below are met.
+       at least one of conditions 2, 3, 4, 5 below are met.
 
     2. Condition 2:
 
       If the module containing the class/func has changed according to is_class_changed,
-      or one of the modules containing any parent classes in sktime,
+      or one of the modules containing any parent classes  in the local package,
       then condition 2 is met.
 
     3. Condition 3:
@@ -41,13 +43,19 @@ def run_test_for_class(cls, return_reason=False):
       for any of its dependencies have changed in ``pyproject.toml``,
       condition 4 is met.
 
+    5. Condition 5:
+
+      If the object is an sktime ``BaseObject``,
+      and one of the core framework modules ``datatypes``, ``tests``, ``utils``
+      have changed, then condition 5 is met.
+
     cls can also be a list of classes or functions,
     in this case the test is run if and only if both of the following are True:
 
     * all required soft dependencies are present
     * if ``ONLY_CHANGED_MODULES`` is True, additionally,
       if any of the estimators in the list should be tested by
-      at least one of criteria 2-4 above.
+      at least one of criteria 2-5 above.
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Also checks whether the class or function is on the exclude override list,
@@ -74,6 +82,7 @@ def run_test_for_class(cls, return_reason=False):
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
+        * "True_changed_framework" - run reason, core framework modules changed
 
         If multiple reasons are present, the first one in the above list is returned.
 
@@ -116,6 +125,7 @@ def run_test_for_class(cls, return_reason=False):
             "True_pyproject_change",
             "True_changed_tests",
             "True_changed_class",
+            "True_changed_framework",
         ]
         for pos_reason in POS_REASONS:
             if any(reason == pos_reason for reason in reasons):
@@ -157,12 +167,17 @@ def _run_test_for_class(cls):
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
+        * "True_changed_framework" - run reason, core framework modules changed
 
         If multiple reasons are present, the first one in the above list is returned.
     """
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
-    from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
+    from sktime.utils.git_diff import (
+        get_packages_with_changed_specs,
+        is_class_changed,
+        is_module_changed,
+    )
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -173,18 +188,18 @@ def _run_test_for_class(cls):
         else:
             return True
 
-    def _is_class_changed_or_sktime_parents(cls):
-        """Check if class or any of its sktime parents have changed, return bool."""
+    def _is_class_changed_or_local_parents(cls):
+        """Check if class or any of its local parents have changed, return bool."""
         # if cls is a function, not a class, default to is_class_changed
         if not isclass(cls):
             return is_class_changed(cls)
 
         # now we know cls is a class, so has an mro
         cls_and_parents = getmro(cls)
-        cls_and_sktime_parents = [
-            x for x in cls_and_parents if x.__module__.startswith("sktime")
+        cls_and_local_parents = [
+            x for x in cls_and_parents if x.__module__.startswith(LOCAL_PACKAGE)
         ]
-        return any(is_class_changed(x) for x in cls_and_sktime_parents)
+        return any(is_class_changed(x) for x in cls_and_local_parents)
 
     def _tests_covering_class_changed(cls):
         """Check if any of the tests covering cls have changed, return bool."""
@@ -238,10 +253,19 @@ def _run_test_for_class(cls):
 
     # Condition 2:
     # any of the modules containing any of the classes in the list have changed
-    # or any of the modules containing any parent classes in sktime have changed
-    cond2 = _is_class_changed_or_sktime_parents(cls)
+    # or any of the modules containing any parent classes in local package have changed
+    cond2 = _is_class_changed_or_local_parents(cls)
     if cond2:
         return True, "True_changed_class"
+
+    # Condition 5:
+    # if the object is an sktime BaseObject, and one of the core framework modules
+    # datatypes, tests, utils have changed, then run the test
+    datatypes_changed = is_module_changed("sktime.datatypes")
+    tests_changed = is_module_changed("sktime.tests")
+    utils_changed = is_module_changed("sktime.utils")
+    if any([datatypes_changed, tests_changed, utils_changed]):
+        return True, "True_changed_framework"
 
     # if none of the conditions are met, do not run the test
     # reason is that there was no change

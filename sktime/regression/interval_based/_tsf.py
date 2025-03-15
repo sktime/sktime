@@ -11,7 +11,6 @@ __author__ = [
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
@@ -92,6 +91,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             "ksharma6",
         ],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -146,6 +146,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         np.ndarray
             Predictions.
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         _, series_length = X.shape

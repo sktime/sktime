@@ -100,8 +100,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
-        # this is either "numpy3D", "pd-multiindex" or "nested_univ" (nested df). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,  # ability to handle multivariate X
         "capability:multioutput": False,  # ability to predict multiple columns in y
         "capability:unequal_length": False,

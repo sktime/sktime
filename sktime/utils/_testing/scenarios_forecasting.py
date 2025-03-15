@@ -18,7 +18,7 @@ import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
@@ -49,7 +49,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
                 return obj.get_tag(tag_name)
 
         # applicable only if obj inherits from BaseForecaster
-        if scitype(obj) != "forecaster":
+        if is_scitype(obj, "forecaster"):
             return False
 
         # applicable only if number of variables in y complies with scitype:y

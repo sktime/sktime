@@ -1,4 +1,4 @@
-"""Test functions for loose loaers."""
+"""Test functions for loose loaders."""
 
 __author__ = ["fkiraly"]
 

@@ -135,6 +135,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         else:
             dataloader = self.build_pytorch_pred_dataloader(X, fh)
 
+        self.network.eval()
         y_pred = []
         for x, _ in dataloader:
             y_pred.append(self.network(x).detach())

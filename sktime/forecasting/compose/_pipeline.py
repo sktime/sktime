@@ -12,8 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.registry import scitype
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.registry import is_scitype
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -32,13 +31,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
 
-    def _get_pipeline_scitypes(self, estimators):
-        """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x[1], raise_on_unknown=False) for x in estimators]
-
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
-        return self._get_pipeline_scitypes(estimators).index("forecaster")
+        for i, est in enumerate(estimators):
+            if is_scitype(est[1], "forecaster"):
+                return i
 
     def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
@@ -85,14 +82,13 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         # validate names
         self._check_names(names)
-
-        scitypes = self._get_pipeline_scitypes(estimator_tuples)
-        if not set(scitypes).issubset(["forecaster", "transformer"]):
+        if not all([is_scitype(x, ["forecaster", "transformer"]) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        if scitypes.count("forecaster") != 1:
+        scitypes = [is_scitype(x, ["forecaster"]) for x in estimators]
+        if sum(scitypes) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {scitypes.count('forecaster')}"
@@ -163,7 +159,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.32.0 - check why this cannot be easily removed
+                        # todo 0.37.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -398,6 +394,7 @@ class ForecastingPipeline(_Pipeline):
         "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, steps):
@@ -747,12 +744,13 @@ class TransformedTargetForecaster(_Pipeline):
         sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
 
     ``predict(X, fh)`` - result is of executing ``f.predict``, with ``X=X``, ``fh=fh``,
-        then running ``tp1.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
+        then running ``tN.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
         then ``t2.inverse_transform`` on ``X=`` the output of ``t1.inverse_transform``,
-        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
-        then running ``tp1.fit_transform`` with ``X=`` the output of ``t[N]s``, ``y=X``,
-        then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc,
-        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
+        etc, sequentially, with ``t[i-1]`` receiving the output of ``t[i]`` as ``X``,
+        then running ``tp1.transform`` with ``X=`` the output of ``t1``, ``y=X``,
+        then ``tp2.transform`` on ``X=`` the output of ``tp1.transform``, etc,
+        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``.
+        The output of ``tpM`` is returned, or of ``t1.inverse_transform`` if ``M=0``.
 
     ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
         with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``
@@ -795,7 +793,7 @@ class TransformedTargetForecaster(_Pipeline):
     forecaster_ : estimator, reference to the unique forecaster in ``steps_``
     transformers_pre_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that precede ``forecaster_``
-    transformers_ost_ : list of tuples (str, transformer) of sktime transformers
+    transformers_post_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that succeed ``forecaster_``
 
     Examples
@@ -1629,7 +1627,10 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.update(
+                y=self._get_Xcols(X), X=X_for_fcX, update_params=update_params
+            )
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
@@ -1787,8 +1788,10 @@ class ForecastX(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
@@ -1797,9 +1800,8 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        if _check_soft_dependencies("pmdarima", severity="none"):
-            from sktime.forecasting.arima import ARIMA
-
+        # todo 0.37.0: check if numpy<2 is still needed
+        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()
@@ -1900,6 +1902,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
+        "visual_block_kind": "serial",
     }
 
     _delegate_name = "estimator_"
@@ -1914,6 +1917,14 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
+
+    @property
+    def _steps(self):
+        return getattr(self.estimator_, self.steps_arg)
+
+    @property
+    def steps_(self):
+        return getattr(self.estimator_, self.steps_arg)
 
     def _set_permuted_estimator(self):
         """Set self.estimator_ based on permutation arg."""
