@@ -25,22 +25,34 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None):
+    def __init__(self, forecasters, n_jobs=None, fc_alt=None):
         self.forecasters = forecasters
-        self.forecasters_ = self._check_forecasters_init(forecasters)
         self.n_jobs = n_jobs
         super().__init__()
 
-    @property
-    def _forecasters(self):
-        """Make internal list of forecasters.
+        if fc_alt is not None:
+            fc = fc_alt
+        else:
+            fc = forecasters
 
-        The list only contains the name and forecasters. This is for the implementation
-        of get_params via _HeterogenousMetaEstimator._get_params which expects lists of
-        tuples of len 2.
+        self._initialize_forecaster_tuples(fc)
+
+    def _initialize_forecaster_tuples(self, forecasters):
+        """Initialize estimator tuple attributes, default.
+
+        Initializes:
+
+        - self.forecasters_ from self.forecasters, this is coerced to a list of tuples
+        - self._forecasters from self.forecasters, same as above but also cloned
+
+        Parameters
+        ----------
+        forecasters : list of estimators, or list of (name, estimator) pairs
         """
-        forecasters = self.forecasters_
-        return [(name, forecaster) for name, forecaster in forecasters]
+        self.forecasters_ = self._check_forecasters_init(forecasters)
+        self._forecasters = self._check_estimators(
+            forecasters, clone_ests=True, allow_empty=True
+        )
 
     def _check_forecasters_init(self, estimators):
         """Check Steps.
@@ -68,20 +80,13 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         if not isinstance(estimators, (list, tuple)):
             estimators = [estimators]
 
-        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
-        names, estimators = zip(*estimator_tuples)
+        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=False)
+
+        estimators = [x[1] for x in estimator_tuples]
 
         # validate names
-        self._check_names(names)
         if not all([is_scitype(x, "forecaster") for x in estimators]):
             raise TypeError(f"estimators passed to {self_name} must be forecasters")
-
-        has_estimator = any(est not in (None, "drop") for est in estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
 
         return estimator_tuples
 
