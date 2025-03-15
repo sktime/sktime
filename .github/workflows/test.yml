@@ -19,15 +19,31 @@ jobs:
     steps:
       - name: repository checkout step
         uses: actions/checkout@v4
+
       - name: python environment step
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: install pre-commit
         run: python3 -m pip install pre-commit
-      - name: run pre-commit hooks on modified files
-        run: pre-commit run --color always --files --show-diff-on-failure
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tr '\n' ' ')
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+
+      - name: Run pre-commit on changed files
+        run: |
+          if [ -n "$CHANGED_FILES" ]; then
+            pre-commit run --color always --files $CHANGED_FILES --show-diff-on-failure
+          else
+            echo "No changed files to check."
+          fi
+
       - name: check missing __init__ files
+
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
