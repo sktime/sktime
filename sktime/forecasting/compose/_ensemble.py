@@ -122,14 +122,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super().__init__(
-            forecasters=forecasters,
-            n_jobs=n_jobs,
-        )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
+
+        super().__init__(
+            forecasters=forecasters,
+            n_jobs=n_jobs,
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -342,8 +343,20 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         self.aggfunc = aggfunc
         self.weights = weights
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
+        fc = self._parse_fc_multiplicities(forecasters)
+
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs, fc_alt=fc)
+
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _parse_fc_multiplicities(self, forecasters):
+        """Parse forecasters with multiplicities.
+
+        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
+        """
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -360,17 +373,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                     "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
                 raise ValueError(msg)
-
-        self._forecasters = self._check_estimators(
-            fc, clone_ests=False, allow_empty=True
-        )
-        self.forecasters_ = self._check_estimators(
-            fc, clone_ests=True, allow_empty=True
-        )
-
-        # the ensemble requires fh in fit
-        # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        return fc
 
     def _fit(self, y, X, fh):
         """Fit to training data.
