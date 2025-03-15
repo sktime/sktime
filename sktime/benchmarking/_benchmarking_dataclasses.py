@@ -112,9 +112,13 @@ class ResultObject:
                     scores[score_name] = []
                 scores[score_name].append(score_value)
         for name, score in scores.items():
-            # TODO mean wrongly calculated over all axis.
-            self.means[name] = np.mean(score, axis=0)
-            self.stds[name] = np.std(score, axis=0, ddof=1)
+            if all(isinstance(s, (pd.DataFrame, pd.Series)) for s in score):
+                score = pd.concat(score, axis=1)
+                self.means[name] = np.mean(score)
+                self.stds[name] = np.std(score, ddof=1)
+            else:
+                self.means[name] = np.mean(score, axis=0)
+                self.stds[name] = np.std(score, axis=0, ddof=1)
 
     def to_dataframe(self):
         """Return results as a pandas DataFrame."""
