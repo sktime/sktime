@@ -8,7 +8,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import coerce_scitype
 
 
-class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Choosing a forecaster based on category or cluster of time series.
 
     Programmatic generalization of "cluster then apply forecaster" approach,

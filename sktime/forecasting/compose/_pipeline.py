@@ -1820,7 +1820,7 @@ class ForecastX(BaseForecaster):
         return [params1, params2, params3, params4]
 
 
-class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
+class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator, BaseForecaster):
     """Permutation compositor for permuting forecasting pipeline steps.
 
     The compositor can be used to permute the sequence of any meta-forecaster,

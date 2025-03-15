@@ -135,7 +135,7 @@ class ForecastByLevel(_DelegatedForecaster):
         return params
 
 
-class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Choosing a global forecaster based on category or cluster of time series.
 
     Programmatic generalization of "cluster then apply forecaster" approach,
