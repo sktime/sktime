@@ -25,11 +25,8 @@ jobs:
           python-version: "3.11"
       - name: install pre-commit
         run: python3 -m pip install pre-commit
-      - id: changed-files
-        name: identify modified files
-        uses: tj-actions/changed-files@v45
       - name: run pre-commit hooks on modified files
-        run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
+        run: pre-commit run --color always --files --show-diff-on-failure
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
