@@ -66,7 +66,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
         return self

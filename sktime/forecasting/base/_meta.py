@@ -28,6 +28,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self._forecasters = self._check_forecasters(forecasters)
+        self.forecasters_ = [(name, f.clone()) for name, f in self._forecasters]
         self.n_jobs = n_jobs
         super().__init__()
 
