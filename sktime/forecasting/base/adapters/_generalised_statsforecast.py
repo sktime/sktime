@@ -168,6 +168,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if X_fit_input is not None:
             X_fit_input = X.to_numpy(copy=False)
 
+        # StatsForecast occasionally switch to a different model when fitting based on
+        # the data. This means that the model is not guaranteed to be the same as the
+        # one that was instantiated, and that one will be marked as un-fitted, making it
+        # unsuitable for further processing. Hence, we keep track of the fitted model as
+        # well, and use that exclusively from now onwards.
+        # Refer to issue #7969 and PR #7983 for more details.
         self._fitted_forecaster = self._forecaster.fit(y_fit_input, X=X_fit_input)
 
         # clone fitted parameters to self
