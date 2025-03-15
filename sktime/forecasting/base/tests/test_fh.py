@@ -1066,3 +1066,10 @@ def test_pandas22_freq_roundtrip(ts):
     fh = ForecastingHorizon([0], is_relative=True)
     fh.to_absolute(f.cutoff)
     fh.to_absolute(f.cutoff).to_relative(f.cutoff)
+
+
+def test_timestamp_format_to_absolute():
+    cutoff = pd.Timestamp("2025-03-02 12:00:00")
+    fh = ForecastingHorizon([1, 2, 3], freq="D")
+    y_pred_idx = fh.to_absolute_index(cutoff)
+    assert "12:00:00" in str(y_pred_idx)
