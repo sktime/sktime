@@ -5,14 +5,14 @@ import copy
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from build.lib.sktime.split.base._base_splitter import BaseSplitter
 
-from sktime.base._base import BaseEstimator
 from sktime.benchmarking.base import BaseMetric
+from sktime.split.base._base_splitter import BaseSplitter
 
 
 @dataclass
@@ -22,8 +22,6 @@ class TaskObject:
 
     Parameters
     ----------
-    id: str
-        The ID of the task.
     data: Union[Callable, tuple]
         Can be
         - a function which returns a dataset, like from `sktime.datasets`.
@@ -35,13 +33,13 @@ class TaskObject:
         Each BaseMetric output will be included in the results.
     """
 
-    id: str
     data: Union[Callable, tuple]
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
     strategy: str = "refit"
     global_mode: bool = False
     cv_X = None
+    cv_global: Optional[BaseSplitter] = None  # TODO needs to be fixed
 
     def get_y_X(self):
         """Get the endogenous and exogenous data."""
@@ -58,40 +56,6 @@ class TaskObject:
 
 
 @dataclass
-class ModelToTest:
-    """
-    A model to test.
-
-    Parameters
-    ----------
-    id: str
-        The ID of the model.
-    model: BaseEstimator
-        The model to test.
-    """
-
-    id: str
-    model: BaseEstimator
-
-
-@dataclass
-class ScoreResult:
-    """
-    The result of a single scorer.
-
-    Parameters
-    ----------
-    name: str
-        The name of the scorer.
-    score: float
-        The score.
-    """
-
-    name: str
-    score: float
-
-
-@dataclass
 class FoldResults:
     """
     Results for a single fold.
@@ -100,7 +64,7 @@ class FoldResults:
     ----------
     fold: int
         The fold number.
-    scores: list of ScoreResult
+    scores: list of dicts with scorer name and score
         The scores for this fold for each scorer.
     ground_truth: pd.Series, optional (default=None)
         The ground truth series for this fold.
@@ -108,7 +72,7 @@ class FoldResults:
         The predictions for this fold.
     """
 
-    scores: list[ScoreResult]
+    scores: list[dict[str, float]]
     ground_truth: Optional[pd.Series] = None
     predictions: Optional[pd.Series] = None
     train_data: Optional[pd.Series] = None
@@ -123,37 +87,37 @@ class ResultObject:
     ----------
     model_id : str
         The ID of the model.
-    task_id : str
+    validation_id : str
         The ID of the task.
     folds : list of FoldResults
         The results for each fold.
-    means : list of ScoreResult
+    means : list of dict with scorer name and mean score
         The mean scores across all folds for each scorer.
-    stds : list of ScoreResult
+    stds : list of dict with scorer name and standard deviation of the score
         The standard deviation of scores across all folds for
         each scorer.
     """
 
     model_id: str
-    task_id: str
+    validation_id: str
     folds: dict[int, FoldResults]
-    means: list[ScoreResult] = field(init=False)
-    stds: list[ScoreResult] = field(init=False)
+    means: dict[str, float] = field(init=False)
+    stds: dict[str, float] = field(init=False)
 
     def __post_init__(self):
         """Calculate mean and std for each score."""
-        self.means = []
-        self.stds = []
+        self.means = {}
+        self.stds = {}
         scores = {}
         for fold_idx, fold in self.folds.items():
-            for score in fold.scores:
-                if score.name not in scores:
-                    scores[score.name] = []
-                scores[score.name].append(score.score)
+            for score_name, score_value in fold.scores.items():
+                if score_name not in scores:
+                    scores[score_name] = []
+                scores[score_name].append(score_value)
         for name, score in scores.items():
             # TODO mean wrongly calculated over all axis.
-            self.means.append(ScoreResult(name, np.mean(score, axis=0)))
-            self.stds.append(ScoreResult(name, np.std(score, axis=0)))
+            self.means[name] = np.mean(score, axis=0)
+            self.stds[name] = np.std(score, axis=0, ddof=1)
 
 
 @dataclass
@@ -178,41 +142,51 @@ class BenchmarkingResults:
         """Save the results to a file."""
         self.storage_backend(self.path).save(self.results)
 
-    def contains(self, task_id: str, model_id: str):
+    def contains(self, validation_id: str, model_id: str):
         """
         Check if the results contain a specific task and model.
 
         Parameters
         ----------
-        task_id : str
+        validation_id : str
             The task ID.
         model_id : str
             The model ID.
         """
         return any(
             [
-                result.task_id == task_id and result.model_id == model_id
+                result.validation_id == validation_id and result.model_id == model_id
                 for result in self.results
             ]
         )
 
     def to_dataframe(self):
         """Convert the results to a pandas DataFrame."""
+        # TODO seems to be completely wrong!
         results = []
         for result in self.results:
             row = {
-                "task_id": result.task_id,
+                "validation_id": result.validation_id,
                 "model_id": result.model_id,
             }
             for fold_idx, fold in result.folds.items():
-                for score in fold.scores:
-                    row[f"{fold_idx}_{score.name}"] = score.score
-            for mean in result.means:
-                row[f"mean_{mean.name}"] = mean.score
-            for std in result.stds:
-                row[f"std_{std.name}"] = std.score
+                row.update(
+                    dict(
+                        map(
+                            lambda x: (x[0] + f"_fold_{fold_idx}_test", x[1]),
+                            fold.scores.items(),
+                        )
+                    )
+                )
+            row.update(
+                dict(map(lambda x: (x[0] + "_mean", x[1]), result.means.items()))
+            )
+            row.update(dict(map(lambda x: (x[0] + "_std", x[1]), result.stds.items())))
             results.append(row)
-        return pd.DataFrame(results)
+        df = pd.DataFrame(results)
+        df["validation_id"] = df["validation_id"]
+        df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
+        return df
 
 
 def asdict(obj, *, dict_factory=dict, pd_orient="list"):
@@ -346,13 +320,13 @@ class JSONStorageHandler(BaseStorageHandler):
             for row in results_json:
                 folds = {}
                 for fold_id, fold in row["folds"].items():
-                    scores = []
+                    scores = {}
                     for score in fold["scores"]:
                         if isinstance(score["score"], dict):
                             score_val = pd.DataFrame(score["score"])
                         else:
                             score_val = score["score"]
-                        scores.append(ScoreResult(score["name"], score_val))
+                        scores[score["name"]] = score_val
                     if "ground_truth" in fold:
                         ground_truth = pd.Series(fold["ground_truth"])
                     else:
@@ -370,7 +344,7 @@ class JSONStorageHandler(BaseStorageHandler):
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
-                        task_id=row["task_id"],
+                        validation_id=row["validation_id"],
                         folds=folds,
                     )
                 )
@@ -396,7 +370,7 @@ class ParquetStorageHandler(BaseStorageHandler):
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
 
-        results_df = results_df.sort_values(by=["task_id", "model_id"])
+        results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
         # TODO store fails in hierachical case with level report
         results_df = results_df.reset_index(drop=True)
@@ -419,7 +393,7 @@ class ParquetStorageHandler(BaseStorageHandler):
                 for fold in row["folds"]:
                     scores = []
                     for score in fold["scores"]:
-                        scores.append(ScoreResult(score["name"], score["score"]))
+                        scores.append({score["name"]: score["score"]})
                     if "ground_truth" in fold:
                         ground_truth = pd.Series(fold["ground_truth"])
                     else:
@@ -437,7 +411,7 @@ class ParquetStorageHandler(BaseStorageHandler):
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
-                        task_id=row["task_id"],
+                        validation_id=row["validation_id"],
                         folds=folds,
                     )
                 )
@@ -446,7 +420,72 @@ class ParquetStorageHandler(BaseStorageHandler):
             return []
 
 
-def get_storage_backend(path: str) -> BaseStorageHandler:
+class CSVStorageHandler(BaseStorageHandler):
+    """Storage handler for JSON files."""
+
+    # TODO this probably needs to be fixed!
+
+    def save(self, results: list[ResultObject]):
+        """Save the results to a JSON file.
+
+        Parameters
+        ----------
+        results : ResultObject
+            The results to save.
+        """
+        results_df = pd.json_normalize(
+            list(map(lambda x: asdict(x, pd_orient="tight"), results))
+        )
+
+        results_df = results_df.sort_values(by=["validation_id", "model_id"])
+
+        # TODO store fails in hierachical case with level report
+        results_df = results_df.reset_index(drop=True)
+        results_df.to_csv(self.path, index=False)
+
+    def _get_folds(self, row):
+        fold_infos = list(filter(lambda x: x.startswith("folds."), row.index))
+        fold_ids = set(map(lambda x: x.split(".")[1], fold_infos))
+        folds = {}
+        for fold_id in fold_ids:
+            fold_scores = row.filter(regex=f"folds.{fold_id}.scores.*")
+
+            scores = {}
+            for score_name, value in fold_scores.items():
+                scores[score_name.split(".")[-1]] = value
+
+            folds[fold_id] = FoldResults(
+                scores=scores,
+            )
+        return folds
+
+    def load(self) -> list[ResultObject]:
+        """Load the results from a JSON file.
+
+        Returns
+        -------
+        ResultObject
+            The loaded results.
+
+        """
+        try:
+            results_df = pd.read_csv(self.path)
+            results = []
+            for ix, row in results_df.iterrows():
+                folds = self._get_folds(row)
+                results.append(
+                    ResultObject(
+                        model_id=row["model_id"],
+                        validation_id=row["validation_id"],
+                        folds=folds,
+                    )
+                )
+            return results
+        except FileNotFoundError:
+            return []
+
+
+def get_storage_backend(path: Union[str, Path]) -> BaseStorageHandler:
     """Get the appropriate storage backend for a given path.
 
     Parameters
@@ -459,9 +498,14 @@ def get_storage_backend(path: str) -> BaseStorageHandler:
     BaseStorageHandler
         The storage backend
     """
-    if path.endswith(".parquet"):
+    if isinstance(path, str):
+        path = Path(path)
+    filetype = path.suffix
+    if filetype == ".parquet":
         return ParquetStorageHandler
-    elif path.endswith(".json"):
+    elif filetype == ".json":
         return JSONStorageHandler
+    elif filetype == ".csv":
+        return CSVStorageHandler
     else:
         raise ValueError(f"Unsupported file format: {path}")
