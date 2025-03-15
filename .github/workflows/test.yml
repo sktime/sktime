@@ -41,7 +41,7 @@ jobs:
 
       - name: Print changed files
         run: |
-          echo "Changed files: $CHANGED_FILES"
+          echo "Changed files:" && echo "$CHANGED_FILES" | tr ' ' '\n'
 
       - name: Run pre-commit on changed files
         run: |
