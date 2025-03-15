@@ -26,6 +26,8 @@ ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
 """
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
@@ -33,7 +35,11 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_df_dtypes,
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -730,9 +736,13 @@ def from_multi_index_to_nested(
     x_nested : pd.DataFrame
         The nested version of the DataFrame
     """
+    multi_ind_dataframe, oldnames, newnames = _coerce_variable_name(
+        deepcopy(multi_ind_dataframe)
+    )
     if instance_index is None:
         instance_index = 0
-
+    elif isinstance(instance_index, str):
+        instance_index = newnames[oldnames.index(instance_index)]
     # get number of distinct cases (note: a case may have 1 or many dimensions)
     instance_idxs = multi_ind_dataframe.index.get_level_values(instance_index).unique()
 
@@ -756,12 +766,18 @@ def from_multi_index_to_nested(
                 _series.xs(instance_idx, level=instance_index).rename_axis(None)
                 for instance_idx in instance_idxs
             ]
-
+        for i in range(len(dim_list)):
+            dim_list[i] = _restore_variable_name(
+                dim_list[i],
+                [oldnames[newnames.index(dim_list[i].name)]],
+                [dim_list[i].name],
+            )
         x_nested[_label] = pd.Series(dim_list)
     x_nested = pd.DataFrame(x_nested).set_axis(instance_idxs)
-
+    x_nested = _restore_variable_name(x_nested, oldnames, newnames)
     col_msg = "Multi-index and nested DataFrames should have same columns names"
-    assert (x_nested.columns == multi_ind_dataframe.columns).all(), col_msg
+
+    assert list(x_nested.columns) == oldnames, col_msg
 
     return x_nested
 
