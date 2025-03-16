@@ -10,7 +10,7 @@ __all__ = ["PaddingTransformer"]
 __author__ = ["abostrom"]
 
 
-class PaddingTransformer(BaseTransformer):
+class PaddingTransformer(BaseTransformer):  # foo
     """Padding panel of unequal length time series to equal, fixed length.
 
     Pads the input dataset to either a optional fixed length
