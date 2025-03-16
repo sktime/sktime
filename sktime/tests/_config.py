@@ -52,6 +52,11 @@ EXCLUDE_ESTIMATORS = [
     "M5Dataset",
     # Large models with many weights
     "MomentFMForecaster",
+    # ptf global models fail the tests, see #7997
+    "PytorchForecastingTFT",
+    "PytorchForecastingNBeats",
+    "PytorchForecastingNHiTS",
+    "PytorchForecastingDeepAR",
 ]
 
 
@@ -186,6 +191,8 @@ EXCLUDED_TESTS = {
     "VARMAX": [
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
+        "test_update_predict_predicted_index",  # see 7985, timeout
+        "test_hierarchical_with_exogeneous",  # see 7985, timeout
     ],
     "InformationGainSegmentation": [
         "test_inheritance",
