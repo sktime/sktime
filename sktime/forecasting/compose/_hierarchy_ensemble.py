@@ -465,7 +465,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         meta = {"x": x, "fh": fh}
 
         preds = parallelize(
-            predict,
+            _predict_one_forecaster,
             self.fitted_list,
             meta,
             backend=self.get_config()["backend:parallel"],
@@ -799,7 +799,7 @@ def _node_fit(params, meta):
     return frcstr, df
 
 
-def predict(params, meta):
+def _predict_one_forecaster(params, meta):
     """Predict a single forecaster.
 
     Called from _predict to allow for parallelization.
