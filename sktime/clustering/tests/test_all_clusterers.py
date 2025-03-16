@@ -60,7 +60,6 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         Test predict produces a np.array or pd.Series with only values seen in the train
         data, and that predict_proba probability estimates add up to one.
         """
-        n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         # we use check_is_scitype to get the number instances in X_new
         #   this is more robust against different scitypes in X_new
@@ -68,11 +67,14 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         X_new_instances = X_new_metadata["n_instances"]
 
         # run fit
-        y_pred = scenario.run(estimator_instance, method_sequence=["fit"])
+        scenario.run(estimator_instance, method_sequence=["fit"])
 
         # only clusterers with capability:predict have predict
         if not estimator_instance.get_tag("capability:predict"):
             return None
+
+        # run predict
+        y_pred = scenario.run(estimator_instance, method_sequence=["predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
@@ -81,5 +83,9 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         # check predict proba (all clusterers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new_instances, n_classes)
+        assert y_proba.shape[0] == X_new_instances
+
+        if hasattr(estimator_instance, "n_clusters") and estimator_instance.n_clusters:
+            assert y_proba.shape[1] == estimator_instance.n_clusters
+
         np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)

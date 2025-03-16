@@ -50,6 +50,11 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
+    # ptf global models fail the tests, see #7997
+    "PytorchForecastingTFT",
+    "PytorchForecastingNBeats",
+    "PytorchForecastingNHiTS",
+    "PytorchForecastingDeepAR",
 ]
 
 

@@ -13,7 +13,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -630,23 +630,28 @@ def evaluate(
     else:
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
-    y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
+    y_valid, _, y_metadata = check_is_scitype(
+        y, scitype=ALLOWED_SCITYPES, return_metadata=[]
+    )
     if not y_valid:
         raise TypeError(
             f"Expected y dtype {ALLOWED_SCITYPES!r}. Got {type(y)} instead."
         )
+    y_mtype = y_metadata["mtype"]
 
-    y = convert_to(y, to_type=PANDAS_MTYPES)
+    y = convert(y, from_type=y_mtype, to_type=PANDAS_MTYPES)
 
     if X is not None:
-        X_valid, _, _ = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True
+        X_valid, _, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
         )
         if not X_valid:
             raise TypeError(
                 f"Expected X dtype {ALLOWED_SCITYPES!r}. Got {type(X)} instead."
             )
-        X = convert_to(X, to_type=PANDAS_MTYPES)
+        X_mtype = X_metadata["mtype"]
+
+        X = convert(X, from_type=X_mtype, to_type=PANDAS_MTYPES)
 
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
