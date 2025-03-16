@@ -84,14 +84,13 @@ def test_hierarchy_ensemble_level_predict_parallel(forecasters):
         random_seed=123,
     )
 
-    parallel_config = {
-        "backend:parallel": "joblib",
-        "backend:parallel:params": {"backend": "loky", "n_jobs": -1},
-    }
-
     forecaster = HierarchyEnsembleForecaster(
-        forecasters, default=forecasters[0][1].clone()
-    ).set_config(**parallel_config)
+        forecasters,
+        default=forecasters[0][1].clone(),
+        by="level",
+        backend="joblib",
+        backend_params={"backend": "loky", "n_jobs": -1},
+    )
 
     forecaster.fit(y, fh=[1, 2, 3])
     actual_pred = forecaster.predict()
@@ -137,14 +136,14 @@ def test_hierarchy_ensemble_node_predict_parallel(forecasters):
         no_levels=2,
         random_seed=123,
     )
-    parallel_config = {
-        "backend:parallel": "joblib",
-        "backend:parallel:params": {"backend": "loky", "n_jobs": -1},
-    }
 
     forecaster = HierarchyEnsembleForecaster(
-        forecasters, by="node", default=forecasters[0][1].clone()
-    ).set_config(**parallel_config)
+        forecasters,
+        by="node",
+        default=forecasters[0][1].clone(),
+        backend="joblib",
+        backend_params={"backend": "loky", "n_jobs": -1},
+    )
 
     forecaster.fit(y, fh=[1, 2, 3])
     actual_pred = forecaster.predict()
