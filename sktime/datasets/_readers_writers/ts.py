@@ -114,7 +114,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len != 2:
                         raise OSError(
-                            "timestamps tag requires an associated Boolean " "value"
+                            "timestamps tag requires an associated Boolean value"
                         )
                     elif tokens[1] == "true":
                         timestamps = True
@@ -133,7 +133,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len != 2:
                         raise OSError(
-                            "univariate tag requires an associated Boolean  " "value"
+                            "univariate tag requires an associated Boolean  value"
                         )
                     elif tokens[1] == "true":
                         # univariate = True
@@ -154,7 +154,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len == 1:
                         raise OSError(
-                            "classlabel tag requires an associated Boolean  " "value"
+                            "classlabel tag requires an associated Boolean  value"
                         )
                     if tokens[1] == "true":
                         class_labels = True
@@ -811,7 +811,7 @@ def write_dataframe_to_tsfile(
                 series = data.iloc[i, j]
                 for k in range(0, series.size - 1):
                     file.write(f"{series[k]},")
-                file.write(f"{series[series.size-1]}:")
+                file.write(f"{series[series.size - 1]}:")
             file.write(f"{class_value_list[i]}\n")
 
 
