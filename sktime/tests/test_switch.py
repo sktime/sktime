@@ -173,11 +173,7 @@ def _run_test_for_class(cls):
     """
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
-    from sktime.utils.git_diff import (
-        get_packages_with_changed_specs,
-        is_class_changed,
-        is_module_changed,
-    )
+    from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -257,14 +253,6 @@ def _run_test_for_class(cls):
     cond2 = _is_class_changed_or_local_parents(cls)
     if cond2:
         return True, "True_changed_class"
-
-    # Condition 5:
-    # if the object is an sktime BaseObject, and one of the core framework modules
-    # datatypes, tests, utils have changed, then run the test
-    datatypes_changed = is_module_changed("sktime.datatypes")
-    utils_changed = is_module_changed("sktime.utils")
-    if any([datatypes_changed, utils_changed]):
-        return True, "True_changed_framework"
 
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
