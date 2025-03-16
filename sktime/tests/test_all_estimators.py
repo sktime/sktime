@@ -29,8 +29,10 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
+    CYTHON_ESTIMATORS,
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
+    MATRIXDESIGN,
     NON_STATE_CHANGING_METHODS,
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_TAGS,
@@ -51,18 +53,6 @@ from sktime.utils.deep_equals import deep_equals
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-
-# whether to subsample estimators per os/version partition matrix design
-# default is False, can be set to True by pytest --matrixdesign True flag
-MATRIXDESIGN = False
-
-# whether to test only estimators that require cython, C compiler such as gcc
-# default is False, can be set to True by pytest --only_cython_estimators True flag
-CYTHON_ESTIMATORS = False
-
-# whether to test only estimators from modules that are changed w.r.t. main
-# default is False, can be set to True by pytest --only_changed_modules True flag
-ONLY_CHANGED_MODULES = False
 
 
 def subsample_by_version_os(x):
