@@ -262,9 +262,8 @@ def _run_test_for_class(cls):
     # if the object is an sktime BaseObject, and one of the core framework modules
     # datatypes, tests, utils have changed, then run the test
     datatypes_changed = is_module_changed("sktime.datatypes")
-    tests_changed = is_module_changed("sktime.tests")
     utils_changed = is_module_changed("sktime.utils")
-    if any([datatypes_changed, tests_changed, utils_changed]):
+    if any([datatypes_changed, utils_changed]):
         return True, "True_changed_framework"
 
     # if none of the conditions are met, do not run the test
