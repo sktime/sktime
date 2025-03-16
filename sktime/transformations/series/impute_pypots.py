@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 # Check for PyPOTS at import time with a warning
-check_soft_dependencies("pypots", severity="warning")
+_check_soft_dependencies("pypots", severity="warning")
 
 
 class PyPOTSImputer(BaseTransformer):
@@ -85,7 +85,7 @@ class PyPOTSImputer(BaseTransformer):
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
         # Check at runtime to raise proper error
-        check_soft_dependencies("pypots", severity="error")
+        _check_soft_dependencies("pypots", severity="error")
 
         # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
@@ -165,7 +165,7 @@ class PyPOTSImputer(BaseTransformer):
         if not self._is_fitted:
             raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
 
-        check_soft_dependencies("pypots", severity="error")
+        _check_soft_dependencies("pypots", severity="error")
 
         # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
