@@ -38,6 +38,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         super().__init__()
 
         self._forecaster = None
+        self._fitted_forecaster = None
         pred_supported = self._check_supports_pred_int()
         self._support_pred_int_in_sample = pred_supported["int_in_sample"]
         self._support_pred_int = pred_supported["int"]
@@ -167,10 +168,16 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if X_fit_input is not None:
             X_fit_input = X.to_numpy(copy=False)
 
-        self._forecaster.fit(y_fit_input, X=X_fit_input)
+        # StatsForecast occasionally switch to a different model when fitting based on
+        # the data. This means that the model is not guaranteed to be the same as the
+        # one that was instantiated, and that one will be marked as un-fitted, making it
+        # unsuitable for further processing. Hence, we keep track of the fitted model as
+        # well, and use that exclusively from now onwards.
+        # Refer to issue #7969 and PR #7983 for more details.
+        self._fitted_forecaster = self._forecaster.fit(y_fit_input, X=X_fit_input)
 
         # clone fitted parameters to self
-        _clone_fitted_params(self, self._forecaster, overwrite=False)
+        _clone_fitted_params(self, self._fitted_forecaster, overwrite=False)
 
         return self
 
@@ -183,7 +190,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         level_arguments = None if levels is None else [100 * level for level in levels]
 
         if fh_type == "in-sample":
-            predict_method = self._forecaster.predict_in_sample
+            predict_method = self._fitted_forecaster.predict_in_sample
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict_in_sample`
             level_kw = (
@@ -192,7 +199,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
         elif fh_type == "out-of-sample":
-            predict_method = self._forecaster.predict
+            predict_method = self._fitted_forecaster.predict
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict`
             level_kw = {"level": level_arguments} if self._support_pred_int else {}
