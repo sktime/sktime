@@ -269,7 +269,7 @@ def _run_test_for_class(cls):
         "sktime.tests.test_doctest",
         "sktime.tests.test_softdeps",
         "sktime.tests.test_switch",
-        "sktime.tests.utils",
+        "sktime.utils",
     ]
     if any([is_module_changed(x) for x in FRAMEWORK_MODULES]):
         return True, "True_changed_framework"
