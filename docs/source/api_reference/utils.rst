@@ -115,6 +115,7 @@ Plotting
     plot_series
     plot_lags
     plot_correlations
+    plot_windows
 
 Estimator Validity Checking
 ---------------------------
