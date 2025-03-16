@@ -7,11 +7,28 @@ Objects compared can have one of the following valid types:
     polars.DataFrame, polars.LazyFrame
 """
 
+import pandas
 from skbase.utils.deep_equals._common import _make_ret
 from skbase.utils.deep_equals._deep_equals import deep_equals as _deep_equals
 
 __author__ = ["fkiraly"]
 __all__ = ["deep_equals"]
+
+
+# temporary fix for https://github.com/sktime/skbase/issues/406
+def _pandas_index_equals_plugin(x, y, return_msg=False, deep_equals=None):
+    if not isinstance(x, pandas.Index):
+        return None
+    ret = _make_ret(return_msg)
+    if hasattr(x, "dtype") and hasattr(y, "dtype"):
+        if not x.dtype == y.dtype:
+            return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
+    if hasattr(x, "dtypes") and hasattr(y, "dtypes"):
+        if not x.dtypes.equals(y.dtypes):
+            return ret(
+                False, f".dtypes, x.dtypes = {x.dtypes} != y.dtypes = {y.dtypes}"
+            )
+    return ret(x.equals(y), "index.equals, x = {} != y = {}", [x, y])
 
 
 def deep_equals(x, y, return_msg=False, plugins=None):
@@ -64,6 +81,7 @@ def deep_equals(x, y, return_msg=False, plugins=None):
         _fh_equals_plugin,
         _polars_equals_plugin,
         _gluonts_PandasDataset_equals_plugin,
+        _pandas_index_equals_plugin,
     ]
 
     if plugins is not None:
