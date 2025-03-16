@@ -741,8 +741,7 @@ def from_multi_index_to_nested(
     )
     if instance_index is None:
         instance_index = 0
-    elif isinstance(instance_index, str):
-        instance_index = newnames[oldnames.index(instance_index)]
+
     # get number of distinct cases (note: a case may have 1 or many dimensions)
     instance_idxs = multi_ind_dataframe.index.get_level_values(instance_index).unique()
 
