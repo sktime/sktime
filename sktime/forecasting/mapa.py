@@ -693,6 +693,7 @@ class MAPAForecaster(BaseForecaster):
         params : dict or list of dict
         """
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
 
         params = [
             {
@@ -702,7 +703,14 @@ class MAPAForecaster(BaseForecaster):
                 "decompose_type": "multiplicative",
                 "forecast_combine": "mean",
             },
-            {},
+            {
+                "aggregation_levels": [1, 3, 6],
+                "base_forecaster": PolynomialTrendForecaster(degree=2),
+                "imputation_method": "ffill",
+                "decompose_type": "multiplicative",
+                "forecast_combine": "weighted_mean",
+                "weights": [0.5, 0.3, 0.2],
+            },
         ]
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.forecasting.exp_smoothing import ExponentialSmoothing
