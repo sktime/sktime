@@ -31,7 +31,7 @@ from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
 
 
-class NaiveForecaster(_BaseWindowForecaster):
+class NaiveForecaster(_BaseWindowForecaster):  # foo
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
