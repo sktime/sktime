@@ -55,6 +55,39 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if passed, applies ``default`` forecaster on the nodes/levels
         not mentioned in the ``forecaster`` argument.
 
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
+
     Examples
     --------
     >>> from sktime.forecasting.compose import HierarchyEnsembleForecaster
@@ -110,10 +143,20 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _steps_attr = "_forecasters"
 
-    def __init__(self, forecasters, by="level", default=None):
+    def __init__(
+        self, forecasters, by="level", default=None, backend=None, backend_params=None
+    ):
         self.forecasters = forecasters
         self.by = by
         self.default = default
+        self.backend = backend
+        self.backend_params = backend_params
+        self.set_config(
+            **{
+                "backend:parallel": self.backend,
+                "backend:parallel:params": self.backend_params,
+            }
+        )
         super().__init__(forecasters=forecasters)
 
         if isinstance(forecasters, BaseForecaster):
@@ -221,19 +264,17 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             return self
 
         meta = {"X": x, "z": z, "fh": fh}
-        backend = self.get_config()["backend:parallel"]
-        backend_params = self.get_config()["backend:parallel:params"]
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
             meta["hier_dict"] = hier_dict
 
             fcstr_list = parallelize(
-                level_fit,
+                _level_fit,
                 iter=self.forecasters_,
                 meta=meta,
-                backend=backend,
-                backend_params=backend_params,
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
             )
 
             for i in range(len(fcstr_list)):
@@ -247,11 +288,11 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             meta["fcstr_dict"] = frcstr_dict
 
             fcstr_list = parallelize(
-                node_fit,
+                _node_fit,
                 node_dict.items(),
                 meta=meta,
-                backend=backend,
-                backend_params=backend_params,
+                backend=self.get_config()["backend:parallel"],
+                backend_params=self.get_config()["backend:parallel:params"],
             )
 
             for fcstr, df in fcstr_list:
@@ -422,15 +463,13 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         x = X
 
         meta = {"x": x, "fh": fh}
-        backend = self.get_config()["backend:parallel"]
-        backend_params = self.get_config()["backend:parallel:params"]
 
         preds = parallelize(
             predict,
             self.fitted_list,
             meta,
-            backend=backend,
-            backend_params=backend_params,
+            backend=self.get_config()["backend:parallel"],
+            backend_params=self.get_config()["backend:parallel:params"],
         )
 
         preds = pd.concat(preds, axis=0)
@@ -691,7 +730,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return [params1, params2, params3]
 
 
-def level_fit(params, meta):
+def _level_fit(params, meta):
     """Fit a single forecaster.
 
     Called from _fit if by=level was set to allow for parallelization.
@@ -726,7 +765,7 @@ def level_fit(params, meta):
     return frcstr, df
 
 
-def node_fit(params, meta):
+def _node_fit(params, meta):
     """Fit a single forecaster.
 
     Called from _fit if by=node was set to allow for parallelization.
