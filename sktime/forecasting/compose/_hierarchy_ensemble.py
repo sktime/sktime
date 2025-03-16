@@ -151,12 +151,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.default = default
         self.backend = backend
         self.backend_params = backend_params
-        self.set_config(
-            **{
-                "backend:parallel": self.backend,
-                "backend:parallel:params": self.backend_params,
-            }
-        )
         super().__init__(forecasters=forecasters)
 
         if isinstance(forecasters, BaseForecaster):
@@ -273,8 +267,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 _level_fit,
                 iter=self.forecasters_,
                 meta=meta,
-                backend=self.get_config()["backend:parallel"],
-                backend_params=self.get_config()["backend:parallel:params"],
+                backend=self.backend,
+                backend_params=self.backend_params,
             )
 
             for i in range(len(fcstr_list)):
@@ -291,8 +285,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 _node_fit,
                 node_dict.items(),
                 meta=meta,
-                backend=self.get_config()["backend:parallel"],
-                backend_params=self.get_config()["backend:parallel:params"],
+                backend=self.backend,
+                backend_params=self.backend_params,
             )
 
             for fcstr, df in fcstr_list:
@@ -468,8 +462,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             _predict_one_forecaster,
             self.fitted_list,
             meta,
-            backend=self.get_config()["backend:parallel"],
-            backend_params=self.get_config()["backend:parallel:params"],
+            backend=self.backend,
+            backend_params=self.backend_params,
         )
 
         preds = pd.concat(preds, axis=0)
