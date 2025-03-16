@@ -428,8 +428,11 @@ def plot_windows(cv, y, title="", ax=None):
     subject to an sktime time series splitter.
 
     x-axis: time, ranging from start to end of ``y``
+
     y-axis: window number, starting at 0
+
     plot elements: training split (orange) and test split (blue)
+        
         dots indicate index in the training or test split
         will be plotted on top of each other if train/test split is not disjoint
 
