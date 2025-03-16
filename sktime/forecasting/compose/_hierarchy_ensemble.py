@@ -114,9 +114,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.by = by
         self.default = default
 
-        super().__init__(forecasters=forecasters)
-
-        self._initialize_forecaster_tuples(forecasters)
+        super().__init__(forecasters=None)
 
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
