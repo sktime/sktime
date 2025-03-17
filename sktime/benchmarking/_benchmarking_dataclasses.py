@@ -69,10 +69,16 @@ class FoldResults:
         The training data for this fold.
     """
 
-    scores: list[dict[str, float]]
+    scores: list[dict[str, Union[float, pd.DataFrame]]]
     ground_truth: Optional[pd.DataFrame] = None
     predictions: Optional[pd.DataFrame] = None
     train_data: Optional[pd.DataFrame] = None
+
+    def __post_init__(self):
+        """Check that scores are in the correct format."""
+        for score_name, score_value in self.scores.items():
+            if isinstance(score_value, pd.Series):
+                self.scores[score_name] = score_value.to_frame()
 
 
 @dataclass

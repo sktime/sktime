@@ -1,6 +1,7 @@
 """Storage handlers for benchmarking results."""
 
 import abc
+import ast
 import json
 from pathlib import Path
 from typing import Union
@@ -101,18 +102,18 @@ class JSONStorageHandler(BaseStorageHandler):
                     scores = {}
                     for score_name, score_val in fold["scores"].items():
                         if isinstance(score_val, dict):
-                            score_val = pd.DataFrame(score_val)
+                            score_val = pd.DataFrame.from_records(score_val)
                         scores[score_name] = score_val
                     if "ground_truth" in fold:
-                        ground_truth = pd.Series(fold["ground_truth"])
+                        ground_truth = pd.DataFrame(fold["ground_truth"])
                     else:
                         ground_truth = None
                     if "predictions" in fold:
-                        predictions = pd.Series(fold["predictions"])
+                        predictions = pd.DataFrame(fold["predictions"])
                     else:
                         predictions = None
                     if "train_data" in fold:
-                        train_data = pd.Series(fold["train_data"])
+                        train_data = pd.DataFrame(fold["train_data"])
                     folds[int(fold_id)] = FoldResults(
                         scores, ground_truth, predictions, train_data
                     )
@@ -150,7 +151,6 @@ class ParquetStorageHandler(BaseStorageHandler):
 
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
-        # TODO store fails in hierachical case with level report
         results_df = results_df.reset_index(drop=True)
         results_df.to_parquet(self.path, index=False)
 
@@ -167,24 +167,7 @@ class ParquetStorageHandler(BaseStorageHandler):
             results_df = pd.read_parquet(self.path)
             results = []
             for ix, row in results_df.iterrows():
-                folds = {}
-                for fold in row["folds"]:
-                    scores = []
-                    for score in fold["scores"]:
-                        scores.append({score["name"]: score["score"]})
-                    if "ground_truth" in fold:
-                        ground_truth = pd.Series(fold["ground_truth"])
-                    else:
-                        ground_truth = None
-                    if "predictions" in fold:
-                        predictions = pd.Series(fold["predictions"])
-                    else:
-                        predictions = None
-                    if "train_data" in fold:
-                        train_data = pd.Series(fold["train_data"])
-                    folds[fold["fold"]] = FoldResults(
-                        scores, ground_truth, predictions, train_data
-                    )
+                folds = _get_folds(row)
 
                 results.append(
                     ResultObject(
@@ -219,25 +202,8 @@ class CSVStorageHandler(BaseStorageHandler):
 
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
-        # TODO store fails in hierachical case with level report
         results_df = results_df.reset_index(drop=True)
         results_df.to_csv(self.path, index=False)
-
-    def _get_folds(self, row):
-        fold_infos = list(filter(lambda x: x.startswith("folds."), row.index))
-        fold_ids = set(map(lambda x: x.split(".")[1], fold_infos))
-        folds = {}
-        for fold_id in fold_ids:
-            fold_scores = row.filter(regex=f"folds.{fold_id}.scores.*")
-
-            scores = {}
-            for score_name, value in fold_scores.items():
-                scores[score_name.split(".")[-1]] = value
-
-            folds[fold_id] = FoldResults(
-                scores=scores,
-            )
-        return folds
 
     def load(self) -> list[ResultObject]:
         """Load the results from a JSON file.
@@ -252,7 +218,7 @@ class CSVStorageHandler(BaseStorageHandler):
             results_df = pd.read_csv(self.path)
             results = []
             for ix, row in results_df.iterrows():
-                folds = self._get_folds(row)
+                folds = _get_folds(row)
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
@@ -293,3 +259,60 @@ def get_storage_backend(path: Union[str, Path]) -> BaseStorageHandler:
         if handler.is_applicable(Path(path)):
             return handler
     raise ValueError(f"No storage handler found for {path}")
+
+
+def _get_folds(row, extract_data=True):
+    fold_infos = list(filter(lambda x: x.startswith("folds."), row.index))
+    fold_ids = set(map(lambda x: x.split(".")[1], fold_infos))
+    folds = {}
+    for fold_id in fold_ids:
+        fold_scores = row.filter(regex=f"folds.{fold_id}.scores.*")
+        fold_gts = row.filter(regex=f"folds.{fold_id}.ground_truth")
+        fold_predictions = row.filter(regex=f"folds.{fold_id}.predictions")
+        fold_train_data = row.filter(regex=f"folds.{fold_id}.train_data")
+
+        scores = {}
+
+        unique_score = set(list(map(lambda x: x.split(".")[3], fold_scores.keys())))
+
+        for score_name in unique_score:
+            score_vals = row.filter(regex=f"folds.{fold_id}.scores.{score_name}.*")
+            if len(score_vals) > 1:
+                value = _create_df(score_vals)
+            else:
+                value = row[f"folds.{fold_id}.scores.{score_name}"]
+            scores[score_name.split(".")[-1]] = value
+
+        if len(fold_gts) > 0:
+            gt = _create_df(fold_gts)
+        else:
+            gt = None
+        if len(fold_predictions) > 0:
+            predictions = _create_df(fold_predictions)
+        else:
+            predictions = None
+
+        if len(fold_train_data) > 0:
+            train_data = _create_df(fold_train_data)
+        else:
+            train_data = None
+
+        folds[int(fold_id)] = FoldResults(
+            scores=scores,
+            ground_truth=gt,
+            predictions=predictions,
+            train_data=train_data,
+        )
+
+    return folds
+
+
+def _create_df(fold_gts):
+    df_params = {}
+    for name, value in fold_gts.items():
+        if isinstance(value, str):
+            df_params[name.split(".")[-1]] = ast.literal_eval(value)
+        else:
+            df_params[name.split(".")[-1]] = value
+    df = pd.DataFrame.from_dict(df_params, orient="tight")
+    return df.astype("float64")
