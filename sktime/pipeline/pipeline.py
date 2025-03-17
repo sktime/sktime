@@ -184,6 +184,7 @@ class Pipeline(BaseEstimator):
         self._steps = steps if steps is not None else []
 
         object_types = [step["skobject"].get_tag("object_type") for step in self._steps]
+        object_types = [o[0] if isinstance(o, list) else o for o in object_types]
         if len(set(object_types)) == 1:
             self.set_tags(**{"object_type": object_types[0]})
         elif len(set(object_types) - {"transformer"}) == 1:
