@@ -599,6 +599,14 @@ Seasonality and Date-Time Features
 
     FourierTransform
 
+.. currentmodule:: sktime.transformations.series.dummies
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SeasonalDummiesOneHot
+
 .. currentmodule:: sktime.transformations.series.basisfunction
 
 .. autosummary::
@@ -790,6 +798,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    RepeatBootstrapTransformer
 
 Panel-to-Series transformers
 ----------------------------
