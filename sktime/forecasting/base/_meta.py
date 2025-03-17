@@ -36,7 +36,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         else:
             fc = forecasters
 
-        if forecasters is not None:
+        if fc is not None:
             self._initialize_forecaster_tuples(fc)
 
     def _initialize_forecaster_tuples(self, forecasters):
@@ -51,8 +51,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         ----------
         forecasters : list of estimators, or list of (name, estimator) pairs
         """
-        self.forecasters_ = self._check_forecasters_init(forecasters)
-        self._forecasters = self._check_estimators(
+        self._forecasters = self._check_forecasters_init(forecasters)
+        self.forecasters_ = self._check_estimators(
             forecasters, clone_ests=True, allow_empty=True
         )
 
