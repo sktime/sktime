@@ -137,7 +137,7 @@ class MAPAForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "authors": ["phoeenniixx", "trnnick", "satvshr"],
+        "authors": ["trnnick", "phoeenniixx", "satvshr"],
         "python_dependencies": "statsmodels",
     }
 
