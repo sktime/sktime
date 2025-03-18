@@ -127,3 +127,41 @@ def apply_split(y, iloc_ix):
     y_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in y_loc]
     y_iloc = np.concatenate(y_np)
     return y_iloc
+
+
+def apply_method_per_series(y, method_name, *args, **kwargs):
+    """
+    Apply a method to each series in a multiindex pandas object.
+
+    Parameters
+    ----------
+    y : pd.DataFrame or pd.Series
+        Data to apply method to
+    method_name : str
+        Name of method to apply
+    args : list
+        Positional arguments to pass to method
+    kwargs : dict
+        Keyword arguments to pass to method
+
+    Returns
+    -------
+    pd.DataFrame or pd.Series
+        Data after applying method to each series
+    """
+    if y.index.nlevels == 1:
+        # Apply method directly
+        return getattr(y, method_name)(*args, **kwargs)
+
+    series_idx_tuples = y.index.droplevel(-1).unique().to_list()
+    series_list = []
+    for group_keys in series_idx_tuples:
+        y_series = y.loc[group_keys]
+        y_series = getattr(y_series, method_name)(*args, **kwargs)
+        # Add multiindex
+        y_series.index = pd.MultiIndex.from_tuples(
+            [(*group_keys, idx) for idx in y_series.index], names=y.index.names
+        )
+        series_list.append(y_series)
+    y = pd.concat(series_list).sort_index()
+    return y
