@@ -806,28 +806,37 @@ def test_direct_reduction_with_X(x_treatment):
     reason="run test only if reduce module has changed",
 )
 def test_recursive_reduction_with_X():
-    """Test RecursiveReduction with exogenous inputs."""
-    X = np.array([[10, 20], [30, 40], [50, 60], [70, 80]])
-    y = np.array([1, 2, 3, 4]).reshape(-1, 1)
+    """Test RecursiveReductionForecaster with exogenous variables"""
 
-    X_manual = np.hstack([y[:2], X[0:2]])
+    y = pd.Series([1, 2, 3, 4], index=[0, 1, 2, 3])
+    X = pd.DataFrame(
+        {"x1": [10, 30, 50, 70], "x2": [20, 40, 60, 80]}, index=[0, 1, 2, 3]
+    )
+    window_length = 2
 
-    y_manual = np.array([3, 4])
-    lr = LinearRegression()
+    # Construct rolling window manually
+    y_rolled = np.column_stack(
+        [y.shift(i).values[window_length:] for i in range(window_length, 0, -1)]
+    )
+    X_manual = np.hstack([y_rolled, X.iloc[window_length:].values])
+    y_manual = y.iloc[window_length:].values
+
+    manual_lr = LinearRegression().fit(X_manual, y_manual)
 
     forecaster = RecursiveReductionForecaster(
-        LinearRegression(),
-        window_length=2,
+        estimator=LinearRegression(), window_length=window_length
     )
+    forecaster.fit(y, X=X, fh=ForecastingHorizon([1], is_relative=True))
 
-    fh = ForecastingHorizon([1], is_relative=True)
-    forecaster.fit(y, X=X, fh=fh)
-    lr.fit(X_manual, y_manual)
+    # Future Exogenous Data
+    X_new = pd.DataFrame([[90, 100]], index=[y.index[-1] + 1], columns=["x1", "x2"])
 
-    y_pred = forecaster.predict(X=X)
-    lr_pred = lr.predict([np.hstack([y[2:4], X[3:4]]).flatten()])
+    y_pred = forecaster.predict(X=X_new)
+    last_window = y.iloc[-window_length:].values.reshape(1, -1)
+    manual_input = np.hstack([last_window, X_new.values])
+    manual_pred = manual_lr.predict(manual_input)
 
-    assert np.allclose(y_pred, lr_pred)
+    np.allclose(y_pred, manual_pred)
 
 
 @pytest.mark.skipif(
