@@ -1,35 +1,30 @@
-"""Extension template for clusterers.
+"""Extension for template of detection metrics.
 
 Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
+    Quick implementation of new estimators following the template
+    This is not a concrete class or Base class to import!
+    Use this as a starting template to build on.
 
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, fit_time_,
-        _class_dictionary, _threads_to_use, n_clusters, _tags, _tags_dynamic
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by testing clustering/tests
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
+    How to use:
+    - Copy the template in the suitable folder and give a descriptive name
+    - Work through all the todo comments given
+    - Ensure to implement the mandatory methods
+    - Do not write in reserved variables: _tags
+    - you can add more private methods, but do not override BaseEstimator's
+    private methods an easy way to be safe is to prefix your methods with "_custom"
+    - change docstrings for functions and the file
+    - ensure interface compatibility by testing performance_metrics/detection/tests
+    - once complete: use as a local library, or contribute to sktime via PR
+    - more details:
+      https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
-    fitting            - _fit(self, X)
+    Mandatory implements:
+        evaluating            - _evaluate(self, X)
 
-Optional implements:
-    cluster assignment          -  _predict(self, X)
-    fitted parameter inspection -  _get_fitted_params()
+    Testing - required for sktime test framework and check_estimator usage:
+        get default parameters for test instance(s) - get_test_params()
 
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+    copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 # todo: write an informative docstring for the file or module, remove the above
@@ -40,7 +35,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-from sktime.clustering import BaseClusterer
+from sktime.performance_metrics.detection._base import BaseDetectionMetric
 
 # todo: add any necessary imports here
 
@@ -50,10 +45,10 @@ from sktime.clustering import BaseClusterer
 
 
 # todo: change class name and write docstring
-class MyClusterer(BaseClusterer):
-    """Custom clusterer. todo: write docstring.
+class MyMetric(BaseDetectionMetric):
+    """Custom metric. todo: write docstring.
 
-    todo: describe your custom clusterer here
+    todo: describe your custom metric here
 
     Parameters
     ----------
@@ -83,28 +78,15 @@ class MyClusterer(BaseClusterer):
         #     for 3rd party interfaces, the scope is the sktime class only
         # specify one or multiple authors and maintainers, only for sktime contribution
         # remove maintainer tag if maintained by sktime core team
-        #
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None,  # PEP 440 python dependencies specifier,
-        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
-        # delete if no python dependencies or version limitations
-        #
         # estimator tags
         # --------------
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is one of "numpy3D" (instance, variable, time point),
-        # "pd-multiindex" (row index: instance, time; column index: variable) or other
-        # machine types, see datatypes/panel/_registry.py for options.
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:multithreading": False,
-        "capability:predict": True,  # implements _predict for cluster assignment?
-        "capability:predict_proba": False,  # implements non-default _predict_proba?
-        "capability:out_of_sample": True,  # implements _predict for new data?
+        "object_type": ["metric_detection", "metric"],
+        "scitype:y": "points",  # or segments
+        "requires_X": False,
+        "requires_y_true": True,  # if False, is unsupervised metric
+        "lower_is_better": True,
     }
 
-    # todo: add any hyper-parameters and components to constructor
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
@@ -113,9 +95,9 @@ class MyClusterer(BaseClusterer):
         # todo: write any hyper-parameters and components to self
         self.parama = parama
         self.paramb = paramb
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()
@@ -132,73 +114,46 @@ class MyClusterer(BaseClusterer):
             # estimators should be cloned to avoid side effects
             self._paramc = paramc.clone()
 
-    # todo: implement this abstract class, mandatory
-    def _fit(self, X):
-        """Fit time series clusterer to training data.
+    def _evaluate(self, y_true, y_pred, X):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate.
 
         Parameters
         ----------
-        X : Data to cluster, of type self.get_tag("X_inner_mtype")
+        y_true :pd.DataFrame
+                time series in ``sktime`` compatible data container format.
+                Ground truth (correct) event locations, in ``X``\
+                Should only be ``pd.DataFrame``.
+                Expected format:
+                    Index: time indices or event identifiers
+                    Columns: depending on scitype (`points` or `segments`).
+                    `points` assumes single column, `segments` require ["start","end"].
+            For further details on data format, see glossary on :term:`mtype`.
+
+        y_pred :pd.DataFrame
+                time series in ``sktime`` compatible data container format \
+                Detected events to evaluate against ground truth. \
+                Must be same format as ``y_true``, same indices and columns if indexed.
+
+        X : optional, pd.DataFrame
+            Time series that is being labelled.
+            If not provided, assumes ``RangeIndex`` for ``X``, and that \
+            values in ``X`` do not matter.
 
         Returns
         -------
-        self:
-            Fitted estimator.
+        loss : float
+            Calculated metric.
         """
+        raise NotImplementedError("Abstract method.")
         # implement here
-        # IMPORTANT: avoid side effects to X
-
-    # todo: implement this, mandatory
-    # at least one of _predict and _get_fitted_params should be implemented
-    def _predict(self, X):
-        """Predict the closest cluster each sample in X belongs to.
-
-        Parameters
-        ----------
-        X : data to cluster based on model formed in _fit, of type self.get_tag(
-        "X_inner_mtype")
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        np.ndarray (1d array of shape (n_instances,))
-            Index of the cluster each time series in X belongs to.
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to X
-
-    # todo: consider implementing this, optional
-    # implement only if different from default:
-    #   default retrieves all self attributes ending in "_"
-    #   and returns them with keys that have the "_" removed
-    # if not implementing, delete the method
-    #   avoid overriding get_fitted_params
-    # this is typically important for clustering
-    #   at least one of _predict and _get_fitted_params should be functional
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        # implement here
-        #
-        # when this function is reached, it is already guaranteed that self is fitted
-        #   this does not need to be checked separately
-        #
-        # parameters of components should follow the sklearn convention:
-        #   separate component name from parameter name by double-underscore
-        #   e.g., componentname__paramname
+        # IMPORTANT: avoid side effects to y_pred and y_true
+        # You can change the definition of y_pred and y_true based on requirement,
+        # but always mention it in the docstring
 
     # todo: return default parameters, so that a test instance can be created
-    #   required for automated unit and integration testing of estimator
+    # required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
