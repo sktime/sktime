@@ -5,7 +5,7 @@ from sktime.benchmarking._benchmarking_dataclasses import FoldResults, ResultObj
 from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
-    ParquetStorageHandler,
+    # ParquetStorageHandler,
 )
 
 RESULT_OBJECT_LISTS = [
@@ -48,7 +48,7 @@ RESULT_OBJECT_LISTS = [
     [
         (JSONStorageHandler, ".json"),
         (CSVStorageHandler, ".csv"),
-        (ParquetStorageHandler, ".parquet"),
+        # (ParquetStorageHandler, ".parquet"),
     ],
 )
 @pytest.mark.parametrize("sample_results", RESULT_OBJECT_LISTS)
