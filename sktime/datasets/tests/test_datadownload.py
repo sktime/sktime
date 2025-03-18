@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import (
+    _load_fpp3,
     load_forecastingdata,
     load_fpp3,
     load_m5,
@@ -130,23 +131,21 @@ def test_load_forecasting_data_invalid_name(name):
     reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
-def test_load_fpp3():
+def test_load_fpp3_private():
     """Test loading downloaded dataset from ."""
 
-    import requests
+    for dataset_name in [
+        "aus_accommodation",
+        "pedestrian",
+        "ansett",
+    ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=False)
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=True)
 
-    from sktime.datasets._fpp3_loaders import _get_dataset_url
 
-    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
-        ret, url = _get_dataset_url(dataset_name)
-        assert ret is True
-        try:
-            response = requests.head(url)
-            if response.status_code != 200:
-                ret = False
-        except requests.RequestException:
-            ret = False
-        assert ret is True
+@pytest.mark.datadownload
+def test_load_fpp3_public():
+    """Test loading downloaded dataset from ."""
 
     olympic_running = load_fpp3("olympic_running")
 

@@ -45,19 +45,20 @@ def _safe_import(import_path, pkg_name=None):
     Examples
     --------
     >>> # Import a top-level module
-    >>> torch = safe_import("torch")
+    >>> torch = _safe_import("torch")
 
     >>> # Import a submodule
-    >>> nn = safe_import("torch.nn")
+    >>> nn = _safe_import("torch.nn")
 
     >>> # Import a specific class
-    >>> Linear = safe_import("torch.nn.Linear")
+    >>> Linear = _safe_import("torch.nn.Linear")
 
     >>> # Import with different package name
-    >>> cv2 = safe_import("cv2", pkg_name="opencv-python")
+    >>> cv2 = _safe_import("cv2", pkg_name="opencv-python")
     """
+    path_list = import_path.split(".")
+
     if pkg_name is None:
-        path_list = import_path.split(".")
         pkg_name = path_list[0]
 
     if _check_soft_dependencies(pkg_name, severity="none"):
@@ -71,7 +72,7 @@ def _safe_import(import_path, pkg_name=None):
             return importlib.import_module(import_path)
     else:
         mock_obj = MagicMock()
-        mock_obj.__call__ = MagicMock(
-            return_value=f"Please install {pkg_name} to use this functionality."
+        mock_obj.__str__.return_value = (
+            f"Please install {pkg_name} to use this functionality."
         )
         return mock_obj
