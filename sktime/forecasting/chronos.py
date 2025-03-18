@@ -174,7 +174,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
             prediction_length,
             limit_prediction_length=config["limit_prediction_length"],
         )
-        return np.median(prediction_results[0].numpy(), axis=1)
+        return np.median(prediction_results[0].numpy(), axis=0)
 
 
 class ChronosForecaster(_BaseGlobalForecaster):
