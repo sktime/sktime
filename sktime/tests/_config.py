@@ -50,6 +50,8 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
+    # Test estimators
+    "TransformChangeNInstances",
 ]
 
 
@@ -361,7 +363,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
-    "HFTransformersForecaster",
+        "HFTransformersForecaster",
         "HolidayFeatures",
         "ParamFitterPipeline",
         "PluginParamsForecaster",

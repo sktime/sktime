@@ -87,5 +87,7 @@ class TransformChangeNInstances(BaseTransformer):
 
 @parametrize_with_checks([TransformChangeNInstances])
 def test_transformation_can_return_new_instances(obj, test_name):
-    """"""
+    """
+    Test if transformation can change the number of instances.
+    """
     check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
