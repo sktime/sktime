@@ -69,9 +69,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.random_state = random_state
+
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
         self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
@@ -93,7 +94,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
         )

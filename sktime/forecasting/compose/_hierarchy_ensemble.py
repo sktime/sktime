@@ -114,7 +114,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters = forecasters
         self.by = by
         self.default = default
-        super().__init__(forecasters=forecasters)
+
+        super().__init__(forecasters=None)
 
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
@@ -354,7 +355,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         diff_nodes = z.index.droplevel(-1).unique().difference(nodes)
         if self.default and len(diff_nodes) > 0:
-            frcstr_dict[counter] = self.default
+            frcstr_dict[counter] = self.default.clone()
             node_dict[counter] = diff_nodes
 
         return node_dict, frcstr_dict
