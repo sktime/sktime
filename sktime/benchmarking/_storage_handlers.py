@@ -104,15 +104,15 @@ class JSONStorageHandler(BaseStorageHandler):
                         if isinstance(score_val, dict):
                             score_val = pd.DataFrame.from_records(score_val)
                         scores[score_name] = score_val
-                    if "ground_truth" in fold:
+                    if "ground_truth" in fold and fold["ground_truth"]:
                         ground_truth = pd.DataFrame(fold["ground_truth"])
                     else:
                         ground_truth = None
-                    if "predictions" in fold:
+                    if "predictions" in fold and fold["predictions"]:
                         predictions = pd.DataFrame(fold["predictions"])
                     else:
                         predictions = None
-                    if "train_data" in fold:
+                    if "train_data" in fold and fold["train_data"]:
                         train_data = pd.DataFrame(fold["train_data"])
                     folds[int(fold_id)] = FoldResults(
                         scores, ground_truth, predictions, train_data
@@ -283,16 +283,16 @@ def _get_folds(row, extract_data=True):
                 value = row[f"folds.{fold_id}.scores.{score_name}"]
             scores[score_name.split(".")[-1]] = value
 
-        if len(fold_gts) > 0:
+        if len(fold_gts) > 0 and not fold_gts.isna().any():
             gt = _create_df(fold_gts)
         else:
             gt = None
-        if len(fold_predictions) > 0:
+        if len(fold_predictions) > 0 and not fold_predictions.isna().any():
             predictions = _create_df(fold_predictions)
         else:
             predictions = None
 
-        if len(fold_train_data) > 0:
+        if len(fold_train_data) > 0 and not fold_train_data.isna().any():
             train_data = _create_df(fold_train_data)
         else:
             train_data = None
