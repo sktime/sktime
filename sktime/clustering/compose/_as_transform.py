@@ -114,11 +114,13 @@ class ClustererAsTransformer(BaseTransformer):
         self: reference to self
         """
         self._idx_names = X.index.names
-        X, _ = self._map_hier_to_panel(X)
+        if X.index.nlevels > 2:
+            X, _ = self._map_hier_to_panel(X)
         self.clusterer_.fit(X)
         return self
 
     def _map_hier_to_panel(self, X):
+        """Map hierarchical index to panel format."""
         X = X.copy()
         unique_series = X.index.droplevel(-1).unique()
         new_index = np.arange(len(unique_series))
@@ -134,6 +136,7 @@ class ClustererAsTransformer(BaseTransformer):
         return X, mapping
 
     def _map_primitive_to_hier_idx(self, X, mapping):
+        """Convert primitive index to hierarchical index."""
         X = X.copy()
         mapping_inv = {v: k for k, v in mapping.items()}
         new_index = pd.MultiIndex.from_tuples(
@@ -160,12 +163,16 @@ class ClustererAsTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        X, mapping = self._map_hier_to_panel(X)
-        y_pred = self.clusterer_.predict(X)
-        y_pred = pd.DataFrame(
-            y_pred, index=X.index.droplevel(-1).unique(), columns=["class"]
-        )
-        return self._map_primitive_to_hier_idx(y_pred, mapping)
+        if X.index.nlevels > 2:
+            X, mapping = self._map_hier_to_panel(X)
+
+            y_pred = self.clusterer_.predict(X)
+            y_pred = pd.DataFrame(
+                y_pred, index=X.index.droplevel(-1).unique(), columns=["cluster"]
+            )
+            return self._map_primitive_to_hier_idx(y_pred, mapping)
+
+        return self.clusterer_.predict(X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
