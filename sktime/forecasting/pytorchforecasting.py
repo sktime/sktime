@@ -120,6 +120,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
         "capability:pred_int": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(
