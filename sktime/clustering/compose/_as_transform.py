@@ -1,7 +1,9 @@
 """Using a clusterer as transformation."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-from sktime.datatypes import MTYPE_LIST_PANEL
+import numpy as np
+import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
@@ -42,6 +44,8 @@ class ClustererAsTransformer(BaseTransformer):
     >>> cluster_assignment = cluster_assign_trafo.transform(X)
     """
 
+    _config = {"output_conversion": "off"}
+
     _tags = {
         # packaging info
         # --------------
@@ -54,7 +58,7 @@ class ClustererAsTransformer(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": MTYPE_LIST_PANEL,
+        "X_inner_mtype": ["pd.DataFrame", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -109,8 +113,35 @@ class ClustererAsTransformer(BaseTransformer):
         -------
         self: reference to self
         """
+        self._idx_names = X.index.names
+        X, _ = self._map_hier_to_panel(X)
         self.clusterer_.fit(X)
         return self
+
+    def _map_hier_to_panel(self, X):
+        X = X.copy()
+        unique_series = X.index.droplevel(-1).unique()
+        new_index = np.arange(len(unique_series))
+        # Create a mapping
+        mapping = dict(zip(unique_series, new_index))
+        # Replace levels 0 up to -2 with new index
+        new_index = pd.MultiIndex.from_tuples(
+            [(mapping[x[:-1]], x[-1]) for x in X.index.to_list()],
+            names=["temp_index", X.index.names[-1]],
+        )
+        X.set_index(new_index, inplace=True)
+
+        return X, mapping
+
+    def _map_primitive_to_hier_idx(self, X, mapping):
+        X = X.copy()
+        mapping_inv = {v: k for k, v in mapping.items()}
+        new_index = pd.MultiIndex.from_tuples(
+            [mapping_inv[x] for x in X.index.to_list()],
+            names=self._idx_names[:-1],
+        )
+        X.set_index(new_index, inplace=True)
+        return X
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -129,7 +160,12 @@ class ClustererAsTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        return self.clusterer_.predict(X)
+        X, mapping = self._map_hier_to_panel(X)
+        y_pred = self.clusterer_.predict(X)
+        y_pred = pd.DataFrame(
+            y_pred, index=X.index.droplevel(-1).unique(), columns=["class"]
+        )
+        return self._map_primitive_to_hier_idx(y_pred, mapping)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
