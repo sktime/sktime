@@ -1,10 +1,15 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Adapter for using the huggingface PatchTST for forecasting."""
 
-# documentation for PatchTST:
-# https://huggingface.co/docs/transformers/main/en/model_doc/patchtst#transformers.PatchTSTConfig
+__author__ = [
+    "julian-fong",
+    "Yuqi Nie",
+    "Nam H. Nguyen",
+    "Phanwadee Sinthong",
+    "Jayant Kalagnanam",
+]
 
 import warnings
-from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -121,7 +126,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    >>> #Example with a new model initialized from config
+    >>> #Example with a new model initialized from config only
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -258,7 +263,13 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["julian-fong"],
+        "authors": [
+            "julian-fong",
+            "Yuqi Nie",
+            "Nam H. Nguyen",
+            "Phanwadee Sinthong",
+            "Jayant Kalagnanam",
+        ],
         "maintainers": ["julian-fong"],
         "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
@@ -281,11 +292,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.validation_split = validation_split
         self.config = config
         self.training_args = training_args
-        self._training_args = training_args if training_args is not None else {}
+        self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
 
-        self._config = deepcopy(self.config)
+        self._config = self.config if self.config else {}
         super().__init__()
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
@@ -578,6 +589,7 @@ def _frame2numpy(data):
     return arr
 
 
+# copied from the PytorchDataset module from hf_transformers_forecaster.py
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
