@@ -170,7 +170,7 @@ class _HeterogenousMetaEstimator:
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got " f"{invalid_names!r}"
+                f"Estimator names must not contain __: got {invalid_names!r}"
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
@@ -282,8 +282,7 @@ class _HeterogenousMetaEstimator:
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
             msg += (
-                f"All estimators in {attr_name!r} must be of type "
-                f"{cls_type.__name__}."
+                f"All estimators in {attr_name!r} must be of type {cls_type.__name__}."
             )
         else:
             raise TypeError("cls_type must be a class or tuple of classes")
@@ -974,8 +973,7 @@ class _ColumnEstimator:
         for est in ests:
             if not isinstance(est, cls):
                 raise ValueError(
-                    f"The estimator {est.__class__.__name__} should be of type "
-                    f"{cls}."
+                    f"The estimator {est.__class__.__name__} should be of type {cls}."
                 )
 
         index_flat = flatten(indices)
