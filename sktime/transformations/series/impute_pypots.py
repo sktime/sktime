@@ -61,6 +61,7 @@ class PyPOTSImputer(BaseTransformer):
         "y_inner_mtype": "None",
         "univariate-only": False,
         "requires_y": False,
+        "fit_is_empty": False,
     }
 
     def __init__(
@@ -219,6 +220,31 @@ class PyPOTSImputer(BaseTransformer):
             X_mask = np.expand_dims(X_mask, axis=0)
 
         return X_array, X_mask
+    
+    def _restore_output(self, X, imputed_data):
+        """Restore the output to the original format.
+
+        Parameters
+        ----------
+        X : pd.Series, pd.DataFrame or np.ndarray
+            Original input data.
+        imputed_data : np.ndarray
+            Imputed data.
+
+        Returns
+        -------
+        pd.Series or pd.DataFrame
+            Imputed data in the same format as the original input.
+        """
+        if isinstance(X, pd.Series):
+            # Flatten the imputed data and convert it back to a pd.Series
+            return pd.Series(imputed_data.flatten(), index=X.index)
+        elif isinstance(X, pd.DataFrame):
+            # Remove the extra dimension and convert it back to a pd.DataFrame
+            return pd.DataFrame(imputed_data[0], index=X.index, columns=X.columns)
+        else:
+            # Return the imputed data as is for np.ndarray
+            return imputed_data
 
     def get_fitted_params(self):
         """Get fitted parameters.
