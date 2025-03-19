@@ -23,12 +23,22 @@ class TabTrainDataset(DataSet):
     """Implements Pytorch Dataset class for Training TabTransformer."""
 
     def __init__(self, X, y, cat_idx) -> None:
-        self.X = torch.tensor(X)
+        self.X = X
+        self.X = self._to_numpy()
+        self.X = torch.tensor(self.X)
         self.y = torch.tensor(y)
         if self.y.dim() == 1:
             self.y = self.y.unsqueeze(1)
         self.cat_idx = cat_idx
         self._prepare_data()
+
+    def _to_numpy(self):
+        X_sort = self.X.sort_index(level=[0, 1])
+        n_instace = X_sort.index.get_level_values(0).nunique()
+        seq_len = X_sort.index.get_level_values(1).nunique()
+        n_feat = X_sort.shape[1]
+
+        return X_sort.to_numpy().reshape(n_instace, seq_len, n_feat)
 
     def _prepare_data(self):
         self.x_cat = self.X[:, :, self.cat_idx].long()
@@ -49,7 +59,9 @@ class TabPredDataset(DataSet):
     """Implements Pytorch Dataset class for Predicting with TabTransformer."""
 
     def __init__(self, X, cat_idx) -> None:
-        self.X = torch.tensor(X)
+        self.X = X
+        self.X = self._to_numpy()
+        self.X = torch.tensor(self.X)
         self.cat_idx = cat_idx
         self._prepare_data()
 
@@ -58,6 +70,13 @@ class TabPredDataset(DataSet):
         self.x_con = self.X[
             :, :, [i for i in range(self.X.shape[2]) if i not in self.cat_idx]
         ]
+
+    def _to_numpy(self):
+        X_sort = self.X.sort_index(level=[0, 1])
+        n_instace = X_sort.index.get_level_values(0).nunique()
+        seq_len = X_sort.index.get_level_values(1).nunique()
+        n_feat = X_sort.shape[1]
+        return X_sort.to_numpy().reshape(n_instace, seq_len, n_feat)
 
     def __len__(self):
         """Get length of the dataset."""
@@ -196,7 +215,7 @@ class TabTransformerRegressor(BaseRegressor):
         "python_dependencies": "torch",
         # estimator type
         # --------------
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": "pd-multiindex",
         "capability:multivariate": True,
     }
 
@@ -256,10 +275,8 @@ class TabTransformerRegressor(BaseRegressor):
         else:
             self.output_dim = y.shape[1]
         if self.num_cat_class is None:
-            self.num_cat_class = []
-        if self.cat_idx is None:
-            self.cat_idx = []
-        self.num_cont_features = X.shape[2] - len(self.cat_idx)
+            self.num_cat_class, self.cat_idx = self._get_cat_columns(X)
+        self.num_cont_features = len(X.columns) - len(self.cat_idx)
         return Tab_Transformer(
             self.num_cat_class,
             self.num_cont_features,
@@ -351,6 +368,12 @@ class TabTransformerRegressor(BaseRegressor):
             # default criterion
             return torch.nn.MSELoss()
 
+    def _get_cat_columns(self, x):
+        cat_cols = x.select_dtypes(include=["category", "bool", "int"]).columns
+        cat_idx = [x.columns.get_loc(col) for col in cat_cols]
+        unique_labels = [len(x[col].unique()) for col in cat_cols.tolist()]
+        return unique_labels, cat_idx
+
     def _run_epoch(self, epoch, dataloader):
         for x_cat, x_con, y in dataloader:
             y_pred = self.network(x_cat, x_con)
@@ -364,11 +387,11 @@ class TabTransformerRegressor(BaseRegressor):
 
         Parameters
         ----------
-        X : 3d numpy array, shape = (n_instances,n_features,seq_length)
+        X : a nested pd.Dataframe, or (if input_checks=False) array-like of
+        shape = (n_instances, series_length, n_dimensions)
         y : 1d or 2d numpy array
             for regression, shape = (n_instances, n_dimensions)
         """
-        X = X.transpose(0, 2, 1)
         self.network = self._build_network(X, y)
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -386,7 +409,6 @@ class TabTransformerRegressor(BaseRegressor):
         """
         from torch import cat
 
-        X = X.transpose(0, 2, 1)
         dataloader = self.build_pytorch_pred_dataloader(X)
         self.network.eval()
         y_pred = []
