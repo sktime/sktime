@@ -518,10 +518,7 @@ class ThetaModularForecaster(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         params0 = {
-            "forecasters": [
-                ("naive", NaiveForecaster(), 0),
-                ("naive1", NaiveForecaster(), 1),
-            ]
+            "forecasters": [("naive", NaiveForecaster()), ("naive1", NaiveForecaster())]
         }
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
