@@ -377,6 +377,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             y_train, y_test = temporal_train_test_split(
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
             )
+
             train_dataset = PyTorchDataset(
                 y_train,
                 context_length=self.model.config.context_length,
@@ -522,6 +523,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "num_attention_heads": 1,
                 "ffn_dim": 16,
                 "head_dropout": 0.3,
+                "prediction_length": 2,
             },
             "training_args": {
                 "output_dir": "PatchTST",
@@ -542,6 +544,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "num_attention_heads": 2,
                 "ffn_dim": 32,
                 "head_dropout": 0.3,
+                "prediction_length": 2,
             },
             "training_args": {
                 "output_dir": "PatchTST",
