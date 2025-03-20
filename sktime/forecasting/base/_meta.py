@@ -74,12 +74,20 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             """Fit single forecaster with meta containing y, X, fh."""
             return forecaster.clone().fit(y, X, fh)
 
-        self.forecasters_ = parallelize(
+        fitted_forecasters = parallelize(
             fun=_fit_single_forecaster,
             iter=forecasters,
             backend=self.backend,
             backend_params=self.backend_params,
         )
+
+        if fitted_forecasters is None:
+            raise RuntimeError("parallelize returned None, check implementation")
+
+        if self.forecasters_ is None:
+            raise ValueError("Forecasters are not fitted yet. Call `fit` first.")
+
+        self.forecasters_ = fitted_forecasters
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
