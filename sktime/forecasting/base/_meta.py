@@ -13,70 +13,61 @@ from sktime.utils.parallel import parallelize
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
 
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # *steps*attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    # Attributes for handling heterogeneous sets of estimators
     _steps_attr = "forecasters"
-
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, *steps*fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
+        if not forecasters or not isinstance(forecasters, list):
+            raise ValueError(
+                "'forecasters' must be a non-empty list of (name, estimator) tuples."
+            )
+
         self.forecasters = forecasters
-        # Initialize with an empty list instead of None
-        self.forecasters_ = []
-        self.n_jobs = None
+        self.forecasters_ = []  # Ensures it is always iterable
+        self.n_jobs = n_jobs
         self.backend = backend
-        self.backend_params = backend_params if backend_params != {} else {}
-        self.n_jobs = n_jobs  # Retained for backward compatibility
+        self.backend_params = backend_params if backend_params else {}
+
         super().__init__()
 
     def _check_forecasters(self):
-        if (
-            self.forecasters is None
-            or len(self.forecasters) == 0
-            or not isinstance(self.forecasters, list)
-        ):
+        """Validate forecasters attribute."""
+        if not self.forecasters or not isinstance(self.forecasters, list):
             raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
+                "'forecasters' must be a non-empty list of (name, estimator) tuples."
             )
 
-        names, forecasters = zip(*self.forecasters)
-        # defined by MetaEstimatorMixin
+        try:
+            names, forecasters = zip(*self.forecasters)
+        except ValueError as e:
+            raise ValueError(f"Invalid forecasters format: {e}")
+
         self._check_names(names)
 
-        has_estimator = any(est not in (None, "drop") for est in forecasters)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
+        if all(est in (None, "drop") for est in forecasters):
+            raise ValueError("At least one forecaster must be a valid estimator.")
 
         for forecaster in forecasters:
             if forecaster not in (None, "drop") and not isinstance(
                 forecaster, BaseForecaster
             ):
                 raise ValueError(
-                    f"The estimator {forecaster.__class__.__name__} should be a "
-                    f"Forecaster."
+                    f"Invalid forecaster: {forecaster} is not a BaseForecaster."
                 )
 
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters using parallel processing."""
-        # Validate forecasters
-        if forecasters is None:
-            raise ValueError("forecasters cannot be None")
+        if not forecasters:
+            raise ValueError("forecasters cannot be None or empty")
 
         def _fit_single_forecaster(forecaster, meta):
             """Fit single forecaster with meta containing y, X, fh."""
             return forecaster.clone().fit(y, X, fh)
+
+        print(f"Fitting forecasters: {forecasters}")  # Debugging print
 
         fitted_forecasters = parallelize(
             fun=_fit_single_forecaster,
@@ -85,14 +76,15 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             backend_params=self.backend_params,
         )
 
-        if fitted_forecasters is None:
-            raise RuntimeError("parallelize returned None, check implementation")
+        if fitted_forecasters is None or not isinstance(fitted_forecasters, list):
+            raise RuntimeError("Parallelized fitting returned None or an invalid type.")
 
-        # Simply assign without checking
         self.forecasters_ = fitted_forecasters
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
+        if not self.forecasters_:
+            raise RuntimeError("forecasters_ is empty; cannot predict.")
 
         def _predict_single_forecaster(forecaster, meta):
             """Predict with single forecaster."""
@@ -118,6 +110,10 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         -------
         self : an instance of self.
         """
+        if not self.forecasters_:
+            raise RuntimeError("forecasters_ is empty; cannot update.")
+
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
+
         return self
