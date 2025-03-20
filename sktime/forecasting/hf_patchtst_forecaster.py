@@ -291,6 +291,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         # dataset and training parameters
         self.validation_split = validation_split
         self.config = config
+        self._config = self.config if self.config else {}
         self.training_args = training_args
         self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
@@ -301,8 +302,10 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if not self.config and not self.model_path:
-            self.model_path = "namctin/patchtst_etth1_pretrain"
+        if self.fit_strategy == "minimal" and not self.model_path:
+            raise ValueError(
+                "Minimal fine-tuning requires a pre-trained model to be passed in"
+            )
 
     def _fit(self, y, fh, X=None):
         """Fits the model.
@@ -322,7 +325,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self._y = y
         self.fh_ = int(max(fh.to_relative(self.cutoff)))
         self.y_columns = y.columns
-        # if no model_path was given, initialize new full model from config
+
+        if self.model_path:
+            config = PatchTSTConfig.from_pretrained(self.model_path)
 
         if self._config:
             self._config["num_input_channels"] = len(self.y_columns)
@@ -347,20 +352,33 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             # and pass back into the model config arguments due to some bug
             context_length = self._config["context_length"]
             del self._config["context_length"]
-            config = PatchTSTConfig(
-                context_length=context_length,
-                **self._config,
-            )
+
+            if config:
+                # if model_path was passed, update the model config with
+                # the passed config
+                _config = config.to_dict()
+                _config.update(self._config)
+                _config = PatchTSTConfig(
+                    context_length=context_length,
+                    **_config,
+                )
+            else:
+                # if no model_path was passed, initialize a new model using
+                # the passed config
+                _config = PatchTSTConfig(
+                    context_length=context_length,
+                    **self._config,
+                )
         else:
-            config = None
+            _config = None
 
         if not self.model_path:
-            self.model = PatchTSTForPrediction(config=config)
+            self.model = PatchTSTForPrediction(config=_config)
         else:
             # Load model with the passed config if it is given
             self.model, info = PatchTSTForPrediction.from_pretrained(
                 self.model_path,
-                config=config,
+                config=_config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
             )
