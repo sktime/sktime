@@ -350,10 +350,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             else:
                 # if `prediction_length` isn't in the config, use the passed fh
                 self._config["prediction_length"] = int(self.fh_)
-            # extract the context_length from the config
-            # and pass back into the model config arguments due to some bug
-            context_length = self._config["context_length"]
-            del self._config["context_length"]
 
             if config:
                 # if model_path was passed, update the model config with
@@ -361,14 +357,12 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 _config = config.to_dict()
                 _config.update(self._config)
                 _config = PatchTSTConfig(
-                    context_length=context_length,
                     **_config,
                 )
             else:
                 # if no model_path was passed, initialize a new model using
                 # the passed config
                 _config = PatchTSTConfig(
-                    context_length=context_length,
                     **self._config,
                 )
         else:
