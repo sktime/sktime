@@ -256,7 +256,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         ],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "handles-missing-data": False,
@@ -322,59 +322,32 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         -------
         self : a reference to the object
         """
-        self._y = y
-        self.fh_ = int(max(fh.to_relative(self.cutoff)))
-        self.y_columns = y.columns
-
         if self.model_path:
             config = PatchTSTConfig.from_pretrained(self.model_path)
         else:
-            config = None
+            config = PatchTSTConfig()
 
-        if self._config:
-            self._config["num_input_channels"] = len(self.y_columns)
-            if "prediction_length" in self._config.keys():
-                if self._config["prediction_length"] > self.fh_:
-                    warnings.warn(
-                        "Found `prediction_length` inside config larger"
-                        " than passed fh, will use larger of the two to"
-                        " initalize the model"
-                    )
-                elif self._config["prediction_length"] <= self.fh_:
-                    warnings.warn(
-                        "Found `fh` argument length larger"
-                        " than passed prediction_length inside config"
-                        " ,will use larger of the two to initialize the model"
-                    )
-                    self._config["prediction_length"] = int(self.fh_)
-            else:
-                # if `prediction_length` isn't in the config, use the passed fh
-                self._config["prediction_length"] = int(self.fh_)
+        # Update config with user provided config
+        _config = config.to_dict()
+        _config.update(self._config)
 
-            if config:
-                # if model_path was passed, update the model config with
-                # the passed config
-                _config = config.to_dict()
-                _config.update(self._config)
-                _config = PatchTSTConfig(
-                    **_config,
-                )
-            else:
-                # if no model_path was passed, initialize a new model using
-                # the passed config
-                _config = PatchTSTConfig(
-                    **self._config,
-                )
-        else:
-            _config = None
+        # Update config with model specific parameters
+        _config["num_input_channels"] = len(y.columns)
+        if fh is not None:
+            _config["prediction_length"] = max(
+                *(fh.to_relative(self._cutoff)._values + 1),
+                _config["prediction_length"],
+            )
+
+        config = config.from_dict(_config)
 
         if not self.model_path:
-            self.model = PatchTSTForPrediction(config=_config)
+            self.model = PatchTSTForPrediction(config=config)
         else:
             # Load model with the passed config if it is given
             self.model, info = PatchTSTForPrediction.from_pretrained(
                 self.model_path,
-                config=_config,
+                config=config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
             )
