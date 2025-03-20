@@ -328,6 +328,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
         if self.model_path:
             config = PatchTSTConfig.from_pretrained(self.model_path)
+        else:
+            config = None
 
         if self._config:
             self._config["num_input_channels"] = len(self.y_columns)
