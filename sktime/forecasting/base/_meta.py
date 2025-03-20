@@ -27,7 +27,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
         self.forecasters = forecasters
-        self.forecasters_ = None
+        # Initialize with an empty list instead of None
+        self.forecasters_ = []
         self.n_jobs = None
         self.backend = backend
         self.backend_params = backend_params if backend_params != {} else {}
@@ -69,9 +70,9 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters using parallel processing."""
-        # If this is intended to check that we've called fit before
-        if self.forecasters_ is None and not self._is_initial_fit:
-            raise ValueError("Forecasters are not fitted yet. Call `fit` first.")
+        # Validate forecasters
+        if forecasters is None:
+            raise ValueError("forecasters cannot be None")
 
         def _fit_single_forecaster(forecaster, meta):
             """Fit single forecaster with meta containing y, X, fh."""
@@ -87,10 +88,8 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         if fitted_forecasters is None:
             raise RuntimeError("parallelize returned None, check implementation")
 
+        # Simply assign without checking
         self.forecasters_ = fitted_forecasters
-
-        if self.forecasters_ is None:
-            raise ValueError("Forecasters are not fitted yet. Call `fit` first.")
 
     def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
