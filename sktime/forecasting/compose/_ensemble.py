@@ -485,7 +485,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
         # test with multiplicities
-        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+        params2 = {"forecasters": [("f", FORECASTER)]}
 
         return [params0, params1, params2]
 
