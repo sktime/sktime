@@ -33,6 +33,7 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
         PatchTSTConfig,
         PatchTSTForPrediction,
+        PatchTSTModel,
         Trainer,
         TrainingArguments,
     )
@@ -60,7 +61,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    model_path : str, optional
+    model_path : str or PatchTSTModel, optional
         Path to the Huggingface model to use for global forecasting. If
         model_path is passed, the remaining model config parameters will be
         ignored except for specific training or dataset parameters.
@@ -322,72 +323,77 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         -------
         self : a reference to the object
         """
-        if self.model_path:
-            config = PatchTSTConfig.from_pretrained(self.model_path)
+        if isinstance(self.model_path, PatchTSTModel):
+            self.model = self.model_path
+            config = self.model.config
         else:
-            config = PatchTSTConfig()
+            if self.model_path:
+                config = PatchTSTConfig.from_pretrained(self.model_path)
+            else:
+                config = PatchTSTConfig()
 
-        # Update config with user provided config
-        _config = config.to_dict()
-        _config.update(self._config)
+            # Update config with user provided config
+            _config = config.to_dict()
+            _config.update(self._config)
 
-        # Update config with model specific parameters
-        _config["num_input_channels"] = len(y.columns)
-        if fh is not None:
-            _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
-                _config["prediction_length"],
-            )
-
-        config = config.from_dict(_config)
-
-        if not self.model_path:
-            self.model = PatchTSTForPrediction(config=config)
-        else:
-            # Load model with the passed config if it is given
-            self.model, info = PatchTSTForPrediction.from_pretrained(
-                self.model_path,
-                config=config,
-                output_loading_info=True,
-                ignore_mismatched_sizes=True,
-            )
-
-        if self.fit_strategy == "zero-shot":
-            if len(info["mismatched_keys"]) > 0 or len(info["missing_keys"]) > 0:
-                raise ValueError(
-                    "Fit strategy is 'zero-shot', but the model weights in the"
-                    "configuration are mismatched or missing compared to the pre-"
-                    "trained model. This happens because of a changed configuration."
+            # Update config with model specific parameters
+            _config["num_input_channels"] = len(y.columns)
+            if fh is not None:
+                _config["prediction_length"] = max(
+                    *(fh.to_relative(self._cutoff)._values + 1),
+                    _config["prediction_length"],
                 )
-            return
 
-        elif self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0 and len(info["missing_keys"]) == 0:
-                return  # No need to fit
+            config = config.from_dict(_config)
 
-            # Freeze all loaded parameters
-            for param in self.model.parameters():
-                param.requires_grad = False
+            if not self.model_path:
+                self.model = PatchTSTForPrediction(config=config)
+            else:
+                # Load model with the passed config if it is given
+                self.model, info = PatchTSTForPrediction.from_pretrained(
+                    self.model_path,
+                    config=config,
+                    output_loading_info=True,
+                    ignore_mismatched_sizes=True,
+                )
 
-            # Adjust requires_grad for layers with mismatched sizes
-            for key, _, _ in info["mismatched_keys"]:
-                _model = self.model
-                for attr_name in key.split(".")[:-1]:
-                    _model = getattr(_model, attr_name)
-                _model.weight.requires_grad = True
+            if self.fit_strategy == "zero-shot":
+                if len(info["mismatched_keys"]) > 0 or len(info["missing_keys"]) > 0:
+                    raise ValueError(
+                        "Fit strategy is 'zero-shot', but the model weights in the"
+                        "configuration are mismatched or missing compared to the "
+                        "pre-trained model. This happens because of a changed "
+                        "configuration."
+                    )
+                return
 
-            # Adjust requires_grad for layers with missing keys
-            for key in info["missing_keys"]:
-                _model = self.model
-                for attr_name in key.split(".")[:-1]:
-                    _model = getattr(_model, attr_name)
-                _model.weight.requires_grad = True
+            elif self.fit_strategy == "minimal":
+                if len(info["mismatched_keys"]) == 0 and len(info["missing_keys"]) == 0:
+                    return  # No need to fit
 
-        elif self.fit_strategy == "full":
-            for param in self.model.parameters():
-                param.requires_grad = True
-        else:
-            raise ValueError("Unknown fit strategy")
+                # Freeze all loaded parameters
+                for param in self.model.parameters():
+                    param.requires_grad = False
+
+                # Adjust requires_grad for layers with mismatched sizes
+                for key, _, _ in info["mismatched_keys"]:
+                    _model = self.model
+                    for attr_name in key.split(".")[:-1]:
+                        _model = getattr(_model, attr_name)
+                    _model.weight.requires_grad = True
+
+                # Adjust requires_grad for layers with missing keys
+                for key in info["missing_keys"]:
+                    _model = self.model
+                    for attr_name in key.split(".")[:-1]:
+                        _model = getattr(_model, attr_name)
+                    _model.weight.requires_grad = True
+
+            elif self.fit_strategy == "full":
+                for param in self.model.parameters():
+                    param.requires_grad = True
+            else:
+                raise ValueError("Unknown fit strategy")
 
         if self.validation_split is not None:
             y_train, y_eval = temporal_train_test_split(
