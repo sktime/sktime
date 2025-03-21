@@ -127,10 +127,10 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     Examples
     --------
     >>> #Example with a new model initialized from config only
-    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = HFPatchTSTForecaster(
+    >>> forecaster = PatchTSTForecaster(
     ... config = {
     ...     "patch_length": 1,
     ...      "context_length": 2,
@@ -152,7 +152,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example full fine-tuning with a pre-trained model
-    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
     ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
@@ -164,7 +164,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
     >>> df = scaler.transform(dataset_path) # doctest: +SKIP
     >>> df.columns = dataset_path.columns
-    >>> forecaster = HFPatchTSTForecaster(
+    >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "full",
     ...     training_args = {
@@ -179,7 +179,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example of minimal fine-tuning with a pre-trained model and an altered config
-    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
     ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
@@ -191,7 +191,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
     >>> df = scaler.transform(dataset_path) # doctest: +SKIP
     >>> df.columns = dataset_path.columns
-    >>> forecaster = HFPatchTSTForecaster(
+    >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     config = {
     ...         "patch_length": 8,
@@ -216,7 +216,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example with a pre-trained model to do zero-shot forecasting
-    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
     ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
@@ -228,7 +228,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
     >>> df = scaler.transform(dataset_path) # doctest: +SKIP
     >>> df.columns = dataset_path.columns
-    >>> forecaster = HFPatchTSTForecaster(
+    >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "zero-shot",
     ...     training_args = {
@@ -395,27 +395,22 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             else:
                 raise ValueError("Unknown fit strategy")
 
-        if self.validation_split is not None:
-            y_train, y_eval = temporal_train_test_split(
-                y, test_size=self.validation_split
-            )
-        else:
-            y_train = y
-            y_eval = None
-
-        train = PyTorchDataset(
-            y=y_train,
+        y_train, y_test = temporal_train_test_split(
+            y, train_size=1 - self.validation_split, test_size=self.validation_split
+        )
+        train_dataset = PyTorchDataset(
+            y_train,
             context_length=self.model.config.context_length,
             prediction_length=self.model.config.prediction_length,
         )
-
-        eval = None
-        if self.validation_split is not None:
-            eval = PyTorchDataset(
-                y=y_eval,
+        if self.validation_split > 0.0:
+            eval_dataset = PyTorchDataset(
+                y_test,
                 context_length=self.model.config.context_length,
                 prediction_length=self.model.config.prediction_length,
             )
+        else:
+            eval_dataset = None
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
@@ -423,8 +418,8 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         trainer = Trainer(
             model=self.model,
             args=training_args,
-            train_dataset=train,
-            eval_dataset=eval,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
             compute_metrics=self.compute_metrics,
             callbacks=self.callbacks,
         )
