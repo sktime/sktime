@@ -250,6 +250,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             deepcopy(X), prefix="X", strategy="none"
         )
         y_pred = self._by_column("predict", fh=fh, X=X)
+        # reset the order of columns
+        y_pred = y_pred[self._ynewnames]
         y_pred = _restore_variable_name(y_pred, self._yoldnames, self._ynewnames)
         return y_pred
 
