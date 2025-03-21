@@ -37,10 +37,7 @@ class STDBSCAN(BaseClusterer):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
-        its metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
-        case only "nonzero" elements may be considered neighbors.
+        its metric parameter. However, metric "precomputed" is not allowed.
     sparse_matrix_threshold : int, default=20_000
         Sets the limit on the number of samples for which the algorithm can
         efficiently compute distances with a full matrix approach. Datasets
