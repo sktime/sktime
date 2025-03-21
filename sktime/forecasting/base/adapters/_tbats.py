@@ -24,7 +24,7 @@ class _TbatsAdapter(BaseForecaster):
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "tbats",
+        "python_dependencies": ["tbats", "numpy<2"],
     }
 
     def __init__(
