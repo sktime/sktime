@@ -81,15 +81,15 @@ def _coerce_variable_name(obj, prefix="", strategy: str = "all"):
 
 def _restore_variable_name(obj, old_names: list, new_names: list):
     if isinstance(obj, pd.Series):
-        assert (
-            obj.name == new_names[0]
-        ), f"Series name: {obj.name} not match with new_names: {new_names}"
+        assert obj.name == new_names[0], (
+            f"Series name: {obj.name} not match with new_names: {new_names}"
+        )
         assert len(old_names) == 1, "len(old_names) must equal to 1 for series"
         obj.name = old_names[0]
     elif isinstance(obj, pd.DataFrame):
-        assert (
-            list(obj.columns) == new_names
-        ), f"DataFrame name(s): {obj.columns} not match with new_names: {new_names}"
+        assert list(obj.columns) == new_names, (
+            f"DataFrame name(s): {obj.columns} not match with new_names: {new_names}"
+        )
         obj.columns = old_names
 
     return obj
