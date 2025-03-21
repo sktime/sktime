@@ -6,8 +6,8 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
-from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import DBSCAN
+from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 
 from sktime.clustering import BaseClusterer
@@ -33,14 +33,14 @@ class STDBSCAN(BaseClusterer):
         Maximum temporal distance for points to be considered related [1].
     min_samples : int, default=5
         Minimum number of samples to form a core point.
-    metric : str, default='euclidean'
-        Distance metric to use; options include 'euclidean', 'cityblock',
-        'chebyshev', etc.
-        See the documentation of `scipy.spatial.distance
-        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
-        the metrics listed in
-        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
-        values.
+    metric : str, or callable, default='euclidean'
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string or callable, it must be one of
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        case only "nonzero" elements may be considered neighbors.
     sparse_matrix_threshold : int, default=20_000
         Sets the limit on the number of samples for which the algorithm can
         efficiently compute distances with a full matrix approach. Datasets
@@ -188,8 +188,8 @@ class STDBSCAN(BaseClusterer):
         time_index = X.index.get_level_values(1).to_numpy()
 
         # Compute squared form Distance Matrix
-        time_dist = pdist(time_index.reshape(n, 1), metric=self.metric)
-        spatial_dist = pdist(X.values, metric=self.metric)
+        time_dist = pairwise_distances(time_index.reshape(n, 1), metric=self.metric)
+        spatial_dist = pairwise_distances(X.values, metric=self.metric)
 
         # filter the spatial_dist matrix using the time_dist
         dist = np.where(time_dist <= self.eps2, spatial_dist, 2 * self.eps1)
@@ -197,7 +197,7 @@ class STDBSCAN(BaseClusterer):
         self.dbscan_ = DBSCAN(
             eps=self.eps1, min_samples=self.min_samples, metric="precomputed"
         )
-        self.dbscan_.fit(squareform(dist))
+        self.dbscan_.fit(dist)
 
     def _fit_sparse(self, X):
         """Fit the sparse distance matrix version of the ST-DBSCAN algorithm."""
@@ -364,7 +364,7 @@ class STDBSCAN(BaseClusterer):
             "eps1": 0.5,
             "eps2": 10,
             "min_samples": 2,
-            "metric": "cityblock",
+            "metric": "manhattan",
             "n_jobs": 2,
         }
 
