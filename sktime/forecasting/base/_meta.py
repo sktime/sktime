@@ -112,7 +112,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         )
         self.forecasters_ = list(zip([x[0] for x in self.forecasters_], fitted_fcst))
 
-    def _predict_forecasters(self, forecasters=None, fh=None, X=None):
+    def _predict_forecasters(self, fh=None, X=None, forecasters=None):
         """Collect results from forecaster.predict() calls."""
         if forecasters is None:
             forecasters = [x[1] for x in self.forecasters_]
