@@ -93,14 +93,20 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         return estimator_tuples
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel."""
+        """Fit all forecasters in parallel.
+
+        Returns
+        -------
+        list of references to fitted forecasters
+            in same order as forecasters
+        """
         from joblib import Parallel, delayed
 
         def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
-        self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
+        return Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
