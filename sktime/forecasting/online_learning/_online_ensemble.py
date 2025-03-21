@@ -107,7 +107,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)
 
-        for forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
 
         return self
