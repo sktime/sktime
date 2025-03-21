@@ -303,9 +303,9 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if self.fit_strategy == "minimal" and not self.model_path:
+        if self.model_path is None and self.fit_strategy != "full":
             raise ValueError(
-                "Minimal fine-tuning requires a pre-trained model to be passed in"
+                f"model_path={model_path} requires fit_strategy=='full'"
             )
 
     def _fit(self, y, fh, X=None):
