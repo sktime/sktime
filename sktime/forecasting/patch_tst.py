@@ -304,9 +304,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             raise ValueError("unexpected fit_strategy passed in argument")
 
         if self.model_path is None and self.fit_strategy != "full":
-            raise ValueError(
-                f"model_path={model_path} requires fit_strategy=='full'"
-            )
+            raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
     def _fit(self, y, fh, X=None):
         """Fits the model.
