@@ -351,62 +351,79 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 ignore_mismatched_sizes=True,
             )
 
-            if not isinstance(self.model.model, PatchTSTModel):
+        if self.fit_strategy == "zero-shot":
+            if len(info["mismatched_keys"]) > 0 or len(info["missing_keys"]) > 0:
                 raise ValueError(
-                    "This estimator requires a `PatchTSTModel`, but "
-                    f"found {self.model.model.__class__.__name__}"
+                    "Fit strategy is 'zero-shot', but the model weights in the"
+                    "configuration are mismatched or missing compared to the pre-"
+                    "trained model. This happens because of a changed configuration."
                 )
+            return
 
-            if info["mismatched_keys"]:
-                # Freeze all loaded parameters
-                for param in self.model.parameters():
-                    param.requires_grad = False
+        elif self.fit_strategy == "minimal":
+            if len(info["mismatched_keys"]) == 0 and len(info["missing_keys"]) == 0:
+                return  # No need to fit
 
-                # Reininit the weights of the positional encoder if it is mismatched
-                for key, _, _ in info["mismatched_keys"]:
-                    _model = self.model
-                    for attr_name in key.split(".")[:-1]:
-                        _model = getattr(_model, attr_name)
-                    if hasattr(_model, "position_enc"):
-                        torch.nn.init.normal_(_model.position_enc, mean=0.0, std=0.1)
-                        _model.position_enc.requires_grad = True
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # only train the model if the fit_strategy is full or minimal
-        if self.fit_strategy == "full" or self.fit_strategy == "minimal":
-            # initialize dataset
-            y_train, y_test = temporal_train_test_split(
-                y, train_size=1 - self.validation_split, test_size=self.validation_split
+            # Adjust requires_grad for layers with mismatched sizes
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+
+            # Adjust requires_grad for layers with missing keys
+            for key in info["missing_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+
+        elif self.fit_strategy == "full":
+            for param in self.model.parameters():
+                param.requires_grad = True
+        else:
+            raise ValueError("Unknown fit strategy")
+
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
             )
+        else:
+            y_train = y
+            y_eval = None
 
-            train_dataset = PyTorchDataset(
-                y_train,
+        train = PyTorchDataset(
+            y=y_train,
+            context_length=self.model.config.context_length,
+            prediction_length=self.model.config.prediction_length,
+        )
+
+        eval = None
+        if self.validation_split is not None:
+            eval = PyTorchDataset(
+                y=y_eval,
                 context_length=self.model.config.context_length,
                 prediction_length=self.model.config.prediction_length,
             )
-            if self.validation_split > 0.0:
-                eval_dataset = PyTorchDataset(
-                    y_test,
-                    context_length=self.model.config.context_length,
-                    prediction_length=self.model.config.prediction_length,
-                )
-            else:
-                eval_dataset = None
 
-            # initialize training_args
-            training_args = TrainingArguments(**self._training_args)
+        # Get Training Configuration
+        training_args = TrainingArguments(**self._training_args)
+        # Get the Trainer
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=train,
+            eval_dataset=eval,
+            compute_metrics=self.compute_metrics,
+            callbacks=self.callbacks,
+        )
 
-            trainer = Trainer(
-                model=self.model,
-                args=training_args,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
-                callbacks=self.callbacks,
-                compute_metrics=self.compute_metrics,
-            )
-
-            trainer.train()
-
-        return self
+        # Train the model
+        trainer.train()
 
     def _predict(self, y, X=None, fh=None):
         """Forecast time series at future horizon.
