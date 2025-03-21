@@ -5,7 +5,13 @@
 __author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
+from copy import deepcopy
+
 from sktime.base._meta import _ColumnEstimator
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
@@ -176,6 +182,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         -------
         self : returns an instance of self.
         """
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X", strategy="none"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y", strategy="none"
+        )
         forecasters = self._check_forecasters(y)
 
         self.forecasters_ = []
@@ -184,7 +196,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         for name, forecaster, index in forecasters:
             forecaster_ = forecaster.clone()
 
-            pd_index = self._coerce_to_pd_index(index, self._y.columns)
+            pd_index = self._coerce_to_pd_index(index, self._ynewnames)
 
             forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
@@ -234,7 +246,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         y_pred : pd.Series
             Point predictions
         """
-        return self._by_column("predict", fh=fh, X=X)
+        X, Xoldnames, Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X", strategy="none"
+        )
+        y_pred = self._by_column("predict", fh=fh, X=X)
+        y_pred = _restore_variable_name(y_pred, self._yoldnames, self._ynewnames)
+        return y_pred
 
     def _predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
