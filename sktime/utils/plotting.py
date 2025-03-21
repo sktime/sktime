@@ -179,6 +179,23 @@ def plot_series(
 
 
 def plot_interval(ax, interval_df):
+    """Plot prediction intervals on an existing matplotlib axes.
+
+    This function overlays prediction intervals on an existing plot to visualize 
+    forecast uncertainty.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to add the prediction intervals to.
+    interval_df : pd.DataFrame
+        A multi-index DataFrame containing prediction intervals.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The matplotlib axes with the prediction intervals added.
+    """
     import seaborn as sns
 
     var_name = interval_df.columns.levels[0][0]
@@ -535,12 +552,12 @@ def plot_calibration(y_true, y_pred, ax=None):
     e.g., via ``alpha`` in ``predict_quantiles``.
 
     Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
-    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dots k`
+    and let :math:`\widehat{y}_{i,j}`, for :math:`i = 1, \dots, N, j = 1, \dots, k`
     be quantile predictions at quantile point :math:`p_j`,
     of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
 
     We compute the calibration indicators :math:`c_{i, j},`
-    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
+    as :math:`c_{i, j} = 1, \text{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
     and calibration fractions as
 
     .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
@@ -549,10 +566,13 @@ def plot_calibration(y_true, y_pred, ax=None):
     to be close to :math:`p_j`.
 
     x-axis: interval from 0 to 1, quantile points
+
     y-axis: interval from 0 to 1, calibration fractions
+    
     plot elements: calibration curve of the quantile predictions (blue) and the ideal
-        calibration curve (orange), the curve with equation y = x.
+    calibration curve (orange), the curve with equation y = x.
         Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
+
         Ideal curve is the curve with equation y = x,
         containing points :math:`(p_i, p_i)`.
 
