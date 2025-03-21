@@ -545,13 +545,13 @@ Pre-trained and foundation models
 
     HFTransformersForecaster
 
-.. currentmodule:: sktime.forecasting.hf_patchtst_forecaster
+.. currentmodule:: sktime.forecasting.patch_tst
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    HFPatchTSTForecaster
+    PatchTSTForecaster
 
 .. currentmodule:: sktime.forecasting.chronos
 

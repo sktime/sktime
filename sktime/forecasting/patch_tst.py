@@ -3,6 +3,7 @@
 
 __author__ = [
     "julian-fong",
+    "geetu040",
     "Yuqi Nie",
     "Nam H. Nguyen",
     "Phanwadee Sinthong",
@@ -32,13 +33,12 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
         PatchTSTConfig,
         PatchTSTForPrediction,
-        PatchTSTModel,
         Trainer,
         TrainingArguments,
     )
 
 
-class HFPatchTSTForecaster(_BaseGlobalForecaster):
+class PatchTSTForecaster(_BaseGlobalForecaster):
     """Interface for the PatchTST forecaster.
 
     This forecaster interfaces the Huggingface library's PatchTST model for
@@ -140,7 +140,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...      "head_dropout": 0.3,
     ...    },
     ...    training_args = {
-    ...         "output_dir":"/PatchTST/",
+    ...         "output_dir":"test_output",
     ...         "overwrite_output_dir":True,
     ...         "learning_rate":1e-4,
     ...         "num_train_epochs":1,
@@ -167,7 +167,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "full",
     ...     training_args = {
-    ...         "output_dir":"/PatchTST/",
+    ...         "output_dir":"test_output",
     ...         "overwrite_output_dir":True,
     ...         "learning_rate":1e-4,
     ...         "num_train_epochs":1,
@@ -204,7 +204,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...     },
     ...     fit_strategy = "minimal",
     ...     training_args = {
-    ...         "output_dir":"/PatchTST/",
+    ...         "output_dir":"test_output",
     ...         "overwrite_output_dir":True,
     ...         "learning_rate":1e-4,
     ...         "num_train_epochs":1,
@@ -231,7 +231,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "zero-shot",
     ...     training_args = {
-    ...         "output_dir":"/PatchTST/",
+    ...         "output_dir":"test_output",
     ...         "overwrite_output_dir":True,
     ...         "learning_rate":1e-4,
     ...         "num_train_epochs":1,
@@ -264,6 +264,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "authors": [
             "julian-fong",
+            "geetu040",
             "Yuqi Nie",
             "Nam H. Nguyen",
             "Phanwadee Sinthong",
@@ -425,6 +426,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         # Train the model
         trainer.train()
 
+        return self
+
     def _predict(self, y, X=None, fh=None):
         """Forecast time series at future horizon.
 
@@ -543,7 +546,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "prediction_length": 2,
             },
             "training_args": {
-                "output_dir": "PatchTST",
+                "output_dir": "test_output",
                 "overwrite_output_dir": True,
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
@@ -564,7 +567,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 "prediction_length": 2,
             },
             "training_args": {
-                "output_dir": "PatchTST",
+                "output_dir": "test_output",
                 "overwrite_output_dir": True,
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
