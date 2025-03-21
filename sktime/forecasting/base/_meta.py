@@ -96,6 +96,10 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         """Return list of forecasters."""
         return [x[1] for x in self.forecasters_]
 
+    def _get_forecaster_names(self):
+        """Return list of forecaster names."""
+        return [x[0] for x in self.forecasters_]
+
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel.
 
@@ -110,11 +114,15 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
+        if forecasters is None:
+            forecasters = self._get_forecaster_list()
+
         fitted_fcst = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
-        self.forecasters_ = list(zip(self._get_forecaster_list(), fitted_fcst))
+        fcst_names = self._get_forecaster_names()
+        self.forecasters_ = list(zip(fcst_names, fitted_fcst))
 
     def _predict_forecasters(self, fh=None, X=None, forecasters=None):
         """Collect results from forecaster.predict() calls."""
