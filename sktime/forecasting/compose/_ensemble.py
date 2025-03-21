@@ -8,12 +8,17 @@ forecasts.
 
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
@@ -391,6 +396,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y"
+        )
         forecasters = [f[1] for f in self._forecasters]
         self._fit_forecasters(forecasters, y, X, fh)
         return self
@@ -410,6 +421,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             will be of same mtype as y in _fit
             Ensembled predictions
         """
+        X, Xoldnames, Xnewnames = _coerce_variable_name(deepcopy(X), prefix="X")
         names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
         y_pred = (
@@ -421,6 +433,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             )
             .T
         )
+        y_pred = _restore_variable_name(y_pred, self._yoldnames, self._ynewnames)
         return y_pred
 
     @classmethod
