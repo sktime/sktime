@@ -106,14 +106,17 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
-        return Parallel(n_jobs=self.n_jobs)(
+        fitted_fcst = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
+        self.forecasters_ = list(zip([x[0] for x in self.forecasters_], fitted_fcst))
 
-    def _predict_forecasters(self, fh=None, X=None):
+    def _predict_forecasters(self, forecasters=None, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
+        if forecasters is None:
+            forecasters = [x[1] for x in self.forecasters_]
+        return [forecaster.predict(fh=fh, X=X) for forecaster in forecasters]
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
