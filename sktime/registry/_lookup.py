@@ -15,13 +15,16 @@ __author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
 
 
 from copy import deepcopy
+from inspect import isclass
 from operator import itemgetter
 from pathlib import Path
 
 import pandas as pd
 from skbase.lookup import all_objects
 
+from sktime.base import BaseObject
 from sktime.registry._base_classes import (
+    _get_all_descendants,
     get_base_class_for_str,
     get_obj_scitype_list,
 )
@@ -120,10 +123,14 @@ def all_estimators(
     Returns
     -------
     all_estimators will return one of the following:
-        1. list of estimators, if return_names=False, and return_tags is None
-        2. list of tuples (optional estimator name, class, ~optional estimator
-          tags), if return_names=True or return_tags is not None.
-        3. pandas.DataFrame if as_dataframe = True
+
+        1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
+
+        2. list of tuples (optional estimator name, class, ~ptional estimator
+        tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
+
+        3. ``pandas.DataFrame`` if ``as_dataframe = True``
+
         if list of estimators:
             entries are estimators matching the query,
             in alphabetical order of estimator name
@@ -136,8 +143,7 @@ def all_estimators(
             ``estimator`` is the actual estimator
             ``tags`` are the estimator's values for each tag in return_tags
             and is an optional return.
-        if dataframe:
-            all_estimators will return a pandas.DataFrame.
+        if ``DataFrame``:
             column names represent the attributes contained in each column.
             "estimators" will be the name of the column of estimators, "names"
             will be the name of the column of estimator class names and the string(s)
@@ -169,20 +175,49 @@ def all_estimators(
         "_split",
         "test_split",
         "registry",
+        "normal",
+        "_normal",
     )
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
-    if estimator_types:
-        clsses = _check_estimator_types(estimator_types)
-        if not isinstance(estimator_types, list):
-            estimator_types = [estimator_types]
-        CLASS_LOOKUP = {x: y for x, y in zip(estimator_types, clsses)}
-    else:
-        CLASS_LOOKUP = None
+    def _coerce_to_str(obj):
+        if isinstance(obj, (list, tuple)):
+            return [_coerce_to_str(o) for o in obj]
+        if isclass(obj):
+            obj = obj.get_tag("object_type")
+        return obj
+
+    def _coerce_to_list_of_str(obj):
+        obj = _coerce_to_str(obj)
+        if isinstance(obj, str):
+            return [obj]
+        return obj
+
+    if estimator_types is not None:
+        estimator_types = _coerce_to_list_of_str(estimator_types)
+        estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
+        estimator_types = list(set(estimator_types))
+
+    if estimator_types is not None:
+        if filter_tags is None:
+            filter_tags = {}
+        elif isinstance(filter_tags, str):
+            filter_tags = {filter_tags: True}
+        else:
+            filter_tags = filter_tags.copy()
+
+        if "object_type" in filter_tags:
+            obj_field = filter_tags["object_type"]
+            obj_field = _coerce_to_list_of_str(obj_field)
+            obj_field = obj_field + estimator_types
+        else:
+            obj_field = estimator_types
+
+        filter_tags["object_type"] = obj_field
 
     result = all_objects(
-        object_types=estimator_types,
+        object_types=BaseObject,
         filter_tags=filter_tags,
         exclude_objects=exclude_estimators,
         return_names=return_names,
@@ -192,7 +227,6 @@ def all_estimators(
         package_name="sktime",
         path=ROOT,
         modules_to_ignore=MODULES_TO_IGNORE,
-        class_lookup=CLASS_LOOKUP,
     )
 
     return result
@@ -392,7 +426,7 @@ def _check_estimator_types(estimator_types):
     for i, estimator_type in enumerate(estimator_types):
         if not isinstance(estimator_type, (type, str)):
             raise ValueError(
-                "Please specify `estimator_types` as a list of str or " "types."
+                "Please specify `estimator_types` as a list of str or types."
             )
         if isinstance(estimator_type, str):
             if estimator_type not in get_obj_scitype_list():

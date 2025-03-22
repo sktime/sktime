@@ -324,7 +324,7 @@ def _make_estimator_overview(app):
         with the final name always preceded by "&".
         """
         if isinstance(author_info, str) and author_info.lower() == "sktime developers":
-            link = '<a href="about/team">' "sktime developers</a>"
+            link = '<a href="about/team.html">sktime developers</a>'
             return link
 
         if not isinstance(author_info, list):

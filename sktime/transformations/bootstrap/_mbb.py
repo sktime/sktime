@@ -677,8 +677,7 @@ def _moving_block_bootstrap(
 
     if ts_length <= block_length:
         raise ValueError(
-            "X length in moving block bootstrapping should be greater"
-            " than block_length"
+            "X length in moving block bootstrapping should be greater than block_length"
         )
 
     if block_length == 1 and not replacement:

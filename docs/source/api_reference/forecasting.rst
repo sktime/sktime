@@ -53,10 +53,10 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
     ForecastByLevel
-    GroupbyCategoryForecaster
-    Permute
-    HierarchyEnsembleForecaster
     TransformSelectForecaster
+    GroupbyCategoryForecaster
+    HierarchyEnsembleForecaster
+    Permute
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -134,6 +134,7 @@ Direct and recursive - 3rd party
     :template: class.rst
 
     SkforecastAutoreg
+    SkforecastRecursive
 
 .. currentmodule:: sktime.forecasting.darts
 
@@ -517,7 +518,21 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.rbf_forecaster
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFForecaster
+
+.. currentmodule:: sktime.forecasting.es_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ESRNNForecaster
 
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -572,6 +587,14 @@ Intermittent time series forecasters
     :template: class.rst
 
     Croston
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastADIDA
 
 Ensembles and stacking
 ----------------------

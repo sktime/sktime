@@ -9,6 +9,7 @@ tested with various configurations for correct output.
 __author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = [
     "test_evaluate_common_configs",
+    "test_evaluate_global_mode",
     "test_evaluate_initial_window",
     "test_evaluate_no_exog_against_with_exog",
 ]
@@ -17,12 +18,15 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold
 
 from sktime.datasets import load_airline, load_longley
 
 # from sktime.exceptions import FitFailedWarning
 # commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -36,6 +40,8 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
+    MeanSquaredPercentageError,
+    MedianSquaredPercentageError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import (
     CRPS,
@@ -45,7 +51,12 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
-from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
+from sktime.split import (
+    ExpandingWindowSplitter,
+    InstanceSplitter,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+)
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -55,6 +66,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
+METRICS_GLOBAL = [MeanSquaredPercentageError(), MedianSquaredPercentageError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
 INTERVAL_METRICS_WITH_PARAMS = [
     EmpiricalCoverage(coverage=0.95),
@@ -64,26 +76,49 @@ INTERVAL_METRICS_WITH_PARAMS = [
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
+STRATEGY = ["refit", "update", "no-update_params"]
 
 
-def _check_evaluate_output(out, cv, y, scoring, return_data):
+def _check_evaluate_output(
+    out,
+    cv,
+    y,
+    scoring,
+    return_data,
+    return_model,
+    cv_global=None,
+):
     assert isinstance(out, pd.DataFrame)
     # Check column names.
     scoring = _check_scores(scoring)
-    columns = _get_column_order_and_datatype(scoring, return_data)
+    columns = _get_column_order_and_datatype(
+        metric_types=scoring, return_data=return_data, return_model=return_model
+    )
     assert set(out.columns) == columns.keys(), "Columns are not identical"
 
     # Check number of rows against number of splits.
-    n_splits = cv.get_n_splits(y)
+    if cv_global is not None:
+        n_splits = cv_global.get_n_splits(y)
+    else:
+        n_splits = cv.get_n_splits(y)
     assert out.shape[0] == n_splits
 
     # Check if all timings are positive.
     assert np.all(out.filter(like="_time") >= 0)
 
     # Check cutoffs.
-    np.testing.assert_array_equal(
-        out["cutoff"].to_numpy(), y.iloc[cv.get_cutoffs(y)].index.to_numpy()
-    )
+    if cv_global is None:
+        cutoff = cv.get_cutoffs(y)
+        cutoff = y.iloc[cutoff].index.to_numpy()
+        np.testing.assert_array_equal(out["cutoff"].to_numpy(), cutoff)
+    else:
+        cutoff = cv.get_cutoffs(y)
+        cutoff = y.iloc[cutoff, :].index.get_level_values(-1).to_numpy()
+
+        np.testing.assert_array_equal(
+            out["cutoff"].map(lambda x: x.to_numpy()).to_numpy(),
+            cutoff.repeat(len(out["cutoff"])),
+        )
 
     # Check training window lengths.
     if isinstance(cv, SlidingWindowSplitter) and cv.initial_window is not None:
@@ -100,8 +135,23 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
         np.testing.assert_array_equal(expected, actual)
         assert np.all(out.loc[0, "len_train_window"] == cv.window_length)
 
+    elif cv_global is not None:
+        if isinstance(cv.fh, ForecastingHorizon):
+            window_length = cv.window_length + np.max(cv.fh.to_relative(cutoff))
+        else:
+            window_length = cv.window_length + np.max(cv.fh)
+        assert np.all(out.loc[:, "len_train_window"] == window_length)
+
     else:
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
+
+    # Check fitted models
+    if return_model:
+        assert "fitted_forecaster" in out.columns
+        assert all(
+            isinstance(f, (BaseForecaster, type(None)))
+            for f in out["fitted_forecaster"].values
+        )
 
 
 @pytest.mark.skipif(
@@ -114,7 +164,7 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_common_configs(
@@ -137,7 +187,9 @@ def test_evaluate_common_configs(
         scoring=scoring,
         **backend,
     )
-    _check_evaluate_output(out, cv, y, scoring, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
 
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
@@ -153,13 +205,91 @@ def test_evaluate_common_configs(
 
 
 @pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("scoring", METRICS_GLOBAL)
+@pytest.mark.parametrize("strategy", STRATEGY)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_evaluate_global_mode(scoring, strategy, backend):
+    """Check that evaluate works with hierarchical data."""
+    if backend["backend"] == "multiprocessing":
+        # multiprocessing will block the test due to unknown reason
+        if strategy not in ["update", "no-update_params"]:
+            # if strategy in ["update","no-update_params"], it won't run parallelly
+            return None
+
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
+    hierarchy_levels = (4, 4)
+    timepoints = 5
+    data = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels,
+        max_timepoints=timepoints,
+        min_timepoints=timepoints,
+        n_columns=2,
+    )
+    for col in data.columns:
+        data[col] = np.ones(timepoints * np.prod(hierarchy_levels))
+    X = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+
+    params = {
+        "trainer_params": {
+            # the training process is not deterministic
+            # train 10 epoches to make sure loss is low enough
+            "max_epochs": 1,
+        },
+        "model_params": {
+            "cell_type": "GRU",
+            "rnn_layers": 1,
+            "hidden_size": 2,
+            "log_interval": -1,
+        },
+        "dataset_params": {
+            "max_encoder_length": 3,
+        },
+        "random_log_path": True,  # fix parallel file access error in CI
+    }
+    forecaster = PytorchForecastingDeepAR(**params)
+    cv_global = InstanceSplitter(KFold(2))
+    cv = SingleWindowSplitter(fh=[1], window_length=4)
+    out = evaluate(
+        forecaster,
+        cv,
+        y,
+        X=X,
+        scoring=scoring,
+        strategy=strategy,
+        error_score="raise",
+        cv_global=cv_global,
+        **backend,
+    )
+    _check_evaluate_output(
+        out, cv, y, scoring, False, cv_global=cv_global, return_model=False
+    )
+    # check scoring
+    actual = out.loc[:, f"test_{scoring.name}"]
+    assert np.all(np.abs(actual) < 1e-3)
+
+
+@pytest.mark.skipif(
     not run_test_for_class([evaluate] + PROBA_METRICS)
     or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("return_data", [True, False])
+@pytest.mark.parametrize("return_model", [True, False])
 @pytest.mark.parametrize("scores", [METRICS, PROBA_METRICS, METRICS + PROBA_METRICS])
-def test_scoring_list(return_data, scores):
+def test_scoring_list(return_data, return_model, scores):
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = SlidingWindowSplitter(fh=[1, 2, 3], initial_window=15, step_length=5)
@@ -170,8 +300,16 @@ def test_scoring_list(return_data, scores):
         cv=cv,
         scoring=scores,
         return_data=return_data,
+        return_model=return_model,
     )
-    _check_evaluate_output(out, cv, y, scores, return_data)
+    _check_evaluate_output(
+        out=out,
+        cv=cv,
+        y=y,
+        scoring=scores,
+        return_data=return_data,
+        return_model=return_model,
+    )
 
 
 @pytest.mark.skipif(
@@ -189,7 +327,9 @@ def test_evaluate_initial_window():
     out = evaluate(
         forecaster=forecaster, y=y, cv=cv, strategy="update", scoring=scoring
     )
-    _check_evaluate_output(out, cv, y, scoring, False)
+    _check_evaluate_output(
+        out=out, cv=cv, y=y, scoring=scoring, return_data=False, return_model=False
+    )
     assert out.loc[0, "len_train_window"] == initial_window
 
     # check scoring
@@ -229,10 +369,13 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
+@pytest.mark.parametrize("return_model", [True, False])
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], METRICS])
-def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
+def test_evaluate_error_score(
+    error_score, return_data, return_model, strategy, backend, scores
+):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
@@ -248,6 +391,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
         "cv": cv,
         "scoring": scores,
         "return_data": return_data,
+        "return_model": return_model,
         "error_score": error_score,
         "strategy": strategy,
     }

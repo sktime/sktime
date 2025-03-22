@@ -170,7 +170,7 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning:
+        with _suppress_pd22_warning():
             offset = to_offset(obj)
         return offset
     else:
@@ -400,7 +400,7 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            with _suppress_pd22_warning:
+            with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
             if freqs_unequal:
                 raise ValueError(
@@ -964,7 +964,7 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.36.0:
+    # TODO: 0.37.0:
     # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #
