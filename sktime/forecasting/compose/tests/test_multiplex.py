@@ -68,6 +68,10 @@ def test_multiplex_forecaster_alone():
         assert_array_equal(y_pred_indiv, y_pred_multi)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(MultiplexForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_multiplex_with_grid_search():
     """Test MultiplexForecaster perfromas as expected with ForecastingGridSearchCV.
 

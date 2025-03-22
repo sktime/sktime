@@ -369,9 +369,9 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         for X in X_list
     ]
 
-    assert np.all(
-        X_list_valid
-    ), f"iteration elements do not conform with expected mtype {correct_mtype}"
+    assert np.all(X_list_valid), (
+        f"iteration elements do not conform with expected mtype {correct_mtype}"
+    )
 
 
 @pytest.mark.skipif(

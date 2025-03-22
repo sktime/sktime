@@ -373,7 +373,7 @@ class PeakTimeFeature(BaseTransformer):
                 ]["frequency"].tolist()
             ):
                 for i, (start, end) in enumerate(zip(start_values, end_values)):
-                    peaktime_data[f"{is_peak_col}_{i+1}"] = (
+                    peaktime_data[f"{is_peak_col}_{i + 1}"] = (
                         (peaktime_data[f"{freq_name}"] >= start)
                         & (peaktime_data[f"{freq_name}"] <= end)
                     ).astype(bool)
@@ -417,7 +417,7 @@ class PeakTimeFeature(BaseTransformer):
                 ]["frequency"].tolist()
             ):
                 for i, (start, end) in enumerate(zip(start_values, end_values)):
-                    peaktime_data[f"{is_working_col}_{i+1}"] = (
+                    peaktime_data[f"{is_working_col}_{i + 1}"] = (
                         (peaktime_data[f"{freq_name}"] >= start)
                         & (peaktime_data[f"{freq_name}"] <= end)
                     ).astype(bool)

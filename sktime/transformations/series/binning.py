@@ -88,7 +88,7 @@ class TimeBinAggregate(BaseTransformer):
             self._aggfunc = np.mean
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(

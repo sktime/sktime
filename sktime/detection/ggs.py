@@ -273,12 +273,12 @@ class GGS:
         # Keep track of what change_points have changed,
         # so that we don't have to adjust ones which we know are constant
         last_pass = {}
-        this_pass = {b: 0 for b in bp}
+        this_pass = dict.fromkeys(bp, 0)
         for i in new_index:
             this_pass[i] = 1
         for _ in range(self.max_shuffles):
             last_pass = dict(this_pass)
-            this_pass = {b: 0 for b in bp}
+            this_pass = dict.fromkeys(bp, 0)
             switch_any = False
             ordering = list(range(1, len(bp) - 1))
             rng.shuffle(ordering)

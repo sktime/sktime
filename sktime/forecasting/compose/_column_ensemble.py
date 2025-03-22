@@ -113,7 +113,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
-        super().__init__(forecasters=forecasters)
+
+        super().__init__(forecasters=None)
 
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):

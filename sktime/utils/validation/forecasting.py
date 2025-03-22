@@ -201,7 +201,7 @@ def check_step_length(step_length) -> Optional[int]:
     elif is_int(step_length):
         if step_length < 1:
             raise ValueError(
-                f"`step_length` must be a integer >= 1, " f"but found: {step_length}"
+                f"`step_length` must be a integer >= 1, but found: {step_length}"
             )
         else:
             return step_length
@@ -209,8 +209,7 @@ def check_step_length(step_length) -> Optional[int]:
     elif is_timedelta(step_length):
         if step_length <= timedelta(0):
             raise ValueError(
-                f"`step_length` must be a positive timedelta, "
-                f"but found: {step_length}"
+                f"`step_length` must be a positive timedelta, but found: {step_length}"
             )
         else:
             return step_length

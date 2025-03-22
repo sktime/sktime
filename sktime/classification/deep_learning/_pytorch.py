@@ -100,7 +100,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             self._optimizer.step()
             losses.append(loss.item())
         if self.verbose:
-            print(f"Epoch {epoch+1}: Loss: {np.average(losses)}")
+            print(f"Epoch {epoch + 1}: Loss: {np.average(losses)}")
 
     def _instantiate_optimizer(self):
         if self.optimizer:
