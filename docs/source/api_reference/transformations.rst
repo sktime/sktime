@@ -798,6 +798,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    RepeatBootstrapTransformer
 
 Panel-to-Series transformers
 ----------------------------
