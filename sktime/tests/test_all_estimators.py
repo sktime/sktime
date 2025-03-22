@@ -96,21 +96,20 @@ def subsample_by_version_os(x):
     return res
 
 
-@contextmanager
-def valid_proba_errors():
-    """Context manager, returns None on valid predict_proba or skpro exception.
+class ValidProbaErrors:
+    """Context manager, returns None on valid predict_proba or skpro exception."""
+    def __enter__(self):
+        self.skipped = False
+        return self
 
-    Otherwise raises exceptions.
-    """
-    try:
-        yield
-    except NotImplementedError:
-        yield None
-    except ImportError as e:
-        if "skpro" in str(e):
-            yield None
-        else:
-            raise e
+    def __exit__(self, exc_type, exc_value, traceback):
+        if isinstance(exc_value, NotImplementedError):
+            self.skipped = True
+            return True
+        if isinstance(exc_value, ImportError) and "skpro" in str(exc_value):
+            self.skipped = True
+            return True
+        return False  # Propagate any other exceptions
 
 
 class BaseFixtureGenerator:
@@ -1348,9 +1347,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
         if method_nsc in ["predict_proba", "predict_var"]:
-            with valid_proba_errors():
-                res = scenario.run(estimator, method_sequence=[method_nsc])
-            if res is None:
+            with ValidProbaErrors() as handler:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            if handler.skipped:
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
@@ -1407,9 +1406,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
         if method_nsc in ["predict_proba", "predict_var"]:
-            with valid_proba_errors():
-                res = scenario.run(estimator, method_sequence=[method_nsc])
-            if res is None:
+            with ValidProbaErrors() as handler:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            if handler.skipped:
                 return None
 
         # Fit the model, get args before and after
