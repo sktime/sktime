@@ -569,6 +569,12 @@ Pre-trained and foundation models
 
     TimesFMForecaster
 
+.. currentmodule:: sktime.forecasting.timemoe
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeMoEForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
