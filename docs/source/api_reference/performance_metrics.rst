@@ -144,6 +144,7 @@ Event detection - anomalies, outliers
     DirectedHausdorff
     DetectionCount
     WindowedF1Score
+    TimeSeriesAUPRC
 
 Segment detection
 -----------------
