@@ -120,8 +120,8 @@ class ResultObject:
         for name, score in scores.items():
             if all(isinstance(s, (pd.DataFrame, pd.Series)) for s in score):
                 score = pd.concat(score, axis=1)
-                self.means[name] = np.mean(score)
-                self.stds[name] = np.std(score, ddof=1)
+                self.means[name] = np.mean(score, axis=1)
+                self.stds[name] = np.std(score, ddof=1, axis=1)
             else:
                 self.means[name] = np.mean(score, axis=0)
                 self.stds[name] = np.std(score, axis=0, ddof=1)
