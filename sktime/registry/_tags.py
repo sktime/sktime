@@ -2669,6 +2669,12 @@ ESTIMATOR_TAG_REGISTER = [
         "dict",
         "deprecated tag for dependency import aliases",
     ),
+    (
+        "can_return_indices",
+        ["transformer"],
+        "bool",
+        "The bootstrapper can return indices of the bootstrapped samples",
+    ),
 ]
 
 # construct the tag register from all classes in this module
