@@ -270,10 +270,10 @@ class python_dependencies(_BaseTag):
     * ``"numba"``: ``numba`` must be present
     * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
     * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
-    higher, and ``pandas`` must be version 1.3.0 or higher
+        higher, and ``pandas`` must be version 1.3.0 or higher
     * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
-    ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
-    version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+        ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
+        version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
 
     Developers should note that package names in the PEP 440 specifier strings
     that should be provided
