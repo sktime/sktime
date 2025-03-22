@@ -67,53 +67,22 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
         return names, forecasters
 
-    def _get_forecaster_list(self):
-        """Return list of forecasters."""
-        return [x[1] for x in self.forecasters_]
-
-    def _get_forecaster_names(self):
-        """Return list of forecaster names."""
-        return [x[0] for x in self.forecasters_]
-
     def _fit_forecasters(self, forecasters, y, X, fh):
-<<<<<<< HEAD
         """Fit all forecasters using parallel processing."""
-=======
-        """Fit all forecasters in parallel.
-
-        Returns
-        -------
-        list of references to fitted forecasters
-            in same order as forecasters
-        """
-        from joblib import Parallel, delayed
->>>>>>> main
 
         def _fit_single_forecaster(forecaster, meta):
             """Fit single forecaster with meta containing y, X, fh."""
             return forecaster.clone().fit(y, X, fh)
 
-<<<<<<< HEAD
         self.forecasters_ = parallelize(
             fun=_fit_single_forecaster,
             iter=forecasters,
             backend=self.backend,
             backend_params=self.backend_params,
-=======
-        if forecasters is None:
-            forecasters = self._get_forecaster_list()
-
-        fitted_fcst = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
-            for forecaster in forecasters
->>>>>>> main
         )
-        fcst_names = self._get_forecaster_names()
-        self.forecasters_ = list(zip(fcst_names, fitted_fcst))
 
-    def _predict_forecasters(self, fh=None, X=None, forecasters=None):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-<<<<<<< HEAD
 
         def _predict_single_forecaster(forecaster, meta):
             """Predict with single forecaster."""
@@ -125,11 +94,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             backend=self.backend,
             backend_params=self.backend_params,
         )
-=======
-        if forecasters is None:
-            forecasters = self._get_forecaster_list()
-        return [forecaster.predict(fh=fh, X=X) for forecaster in forecasters]
->>>>>>> main
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -144,6 +108,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         -------
         self : an instance of self.
         """
-        for forecaster in self._get_forecaster_list():
+        for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
