@@ -78,6 +78,8 @@ EXCLUDE_ESTIMATORS = [
     "PytorchForecastingNBeats",
     "PytorchForecastingNHiTS",
     "PytorchForecastingDeepAR",
+    # STDBSCAN is not API compliant, see #7994
+    "STDBSCAN",
 ]
 
 
