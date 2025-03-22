@@ -9,7 +9,6 @@ __author__ = ["mloning", "fkiraly", "achieveordie"]
 import numbers
 import os
 import types
-from contextlib import contextmanager
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
@@ -98,6 +97,7 @@ def subsample_by_version_os(x):
 
 class ValidProbaErrors:
     """Context manager, returns None on valid predict_proba or skpro exception."""
+
     def __enter__(self):
         self.skipped = False
         return self
