@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Composition functionality for reduction approaches to forecasting."""
+"""Reduction approaches to forecasting."""
 
 __author__ = [
     "mloning",
@@ -42,6 +42,7 @@ from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
+from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
@@ -2516,8 +2517,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
-
+                y_plus_preds = apply_method_per_series(
+                    y_plus_preds, "asfreq", self.fh.freq
+                )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
@@ -2545,16 +2547,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # otherwise proceed as per direct reduction algorithm
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
-            # 2D numpy array with col index = (var) and 1 row
-            y_pred_list.append(y_pred_i)
 
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+            y_pred_list.append(y_pred_new)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
-        y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
-        y_pred = slice_at_ix(y_pred, fh_idx)
+        y_pred = pd.concat(y_pred_list).sort_index()
+        y_pred = y_pred.loc[fh_idx]
 
         return y_pred
 
