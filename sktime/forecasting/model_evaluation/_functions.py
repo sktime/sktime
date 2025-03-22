@@ -720,12 +720,12 @@ def evaluate(
             cv_global = InstanceSplitter(cv_global)
 
         if cv_X is not None:
-            assert isinstance(
-                cv_X, SingleWindowSplitter
-            ), "cv_X must be an instance of sktime.split.SingleWindowSplitter"
-        assert isinstance(
-            cv, SingleWindowSplitter
-        ), "cv must be an instance of sktime.split.SingleWindowSplitter"
+            assert isinstance(cv_X, SingleWindowSplitter), (
+                "cv_X must be an instance of sktime.split.SingleWindowSplitter"
+            )
+        assert isinstance(cv, SingleWindowSplitter), (
+            "cv must be an instance of sktime.split.SingleWindowSplitter"
+        )
 
         geny = cv_global.split_series(y)
         if X is None:

@@ -80,7 +80,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                        f"invalid classLabel value in file {full_file_path_and_name}"
                     )
                 if token_len == 2 and meta_data["class_labels"]:
                     raise OSError(
@@ -94,8 +94,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid targetlabel value in file "
-                        f"{full_file_path_and_name}"
+                        f"invalid targetlabel value in file {full_file_path_and_name}"
                     )
                 if token_len > 2:
                     raise OSError(
