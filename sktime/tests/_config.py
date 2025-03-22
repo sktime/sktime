@@ -51,7 +51,7 @@ EXCLUDE_ESTIMATORS = [
     # Large datasets
     "M5Dataset",
     # Test estimators
-    "TransformChangeNInstances",
+    "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
     "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
