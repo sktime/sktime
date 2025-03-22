@@ -342,6 +342,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
+<<<<<<< HEAD
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
@@ -376,6 +377,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             backend = backend or "loky"
             backend_params = backend_params or {"n_jobs": n_jobs}
 
+=======
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
+>>>>>>> main
         self.aggfunc = aggfunc
         self.weights = weights
         super().__init__(
@@ -426,8 +430,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        forecasters = [f[1] for f in self._forecasters]
-        self._fit_forecasters(forecasters, y, X, fh)
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):
