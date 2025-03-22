@@ -114,7 +114,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts>=0.29"],
+        "python_dependencies": [["u8darts>=0.29", "darts>=0.29"]],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
@@ -464,7 +464,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts>=0.29"],
+        "python_dependencies": [["u8darts>=0.29", "darts>=0.29"]],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
