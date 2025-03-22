@@ -530,6 +530,6 @@ class ThetaModularForecaster(BaseForecaster):
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             params = [params0, params1, params2]
         else:
-            params = params0
+            params = [params0]
 
         return params
