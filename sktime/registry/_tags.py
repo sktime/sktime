@@ -258,14 +258,29 @@ class python_dependencies(_BaseTag):
     each string a PEP 440 compliant version specifier,
     specifying python dependency requirements of the object.
 
+    If passed as a list, conditions are combined with logical AND.
+    Optionally, lists within a list can be used to combine conditions with logical OR.
+
     The tag is used in packaging metadata for the object,
     and is used internally to check compatibility of the object with
     the build environment, to raise informative error messages.
 
-    Developers should note that package names in PEP 440 specifier strings
-    are identical with the package names used in ``pip install`` commands,
+    Valid dependency specifications with plain English descriptions:
+
+    * ``"numba"``: ``numba`` must be present
+    * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
+    * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
+    higher, and ``pandas`` must be version 1.3.0 or higher
+    * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
+    ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
+    version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+
+    Developers should note that package names in the PEP 440 specifier strings
+    that should be provided
+    are identical with the package names used in ``pip install`` commands or on PyPI,
     which in general is not the same as the import name of the package,
-    e.g., ``"scikit-learn"`` and not ``"sklearn"``.
+    e.g., ``"scikit-learn"`` as in ``pip install scikit-learn``,
+    and not ``"sklearn"``, as in ``import sklearn``.
 
     Developers can use ``_check_soft_dependencies`` from ``skbase.utils.dependencies``
     to check compatibility of the python constraint of the object
