@@ -229,9 +229,9 @@ def test_forecastingbenchmark_global_mode(
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
 def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     """Test coerce_estimator_and_id return expected output."""
-    assert (
-        coerce_estimator_and_id(estimator, estimator_id) == expected_output
-    ), "coerce_estimator_and_id does not return the expected output."
+    assert coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
+        "coerce_estimator_and_id does not return the expected output."
+    )
 
 
 @pytest.mark.skipif(
@@ -251,9 +251,9 @@ def test_multiple_estimators(estimators):
     benchmark = ForecastingBenchmark()
     benchmark.add_estimator(estimators)
     registered_estimators = benchmark.estimators.entity_specs.keys()
-    assert len(registered_estimators) == len(
-        estimators
-    ), "add_estimator does not register all estimators."
+    assert len(registered_estimators) == len(estimators), (
+        "add_estimator does not register all estimators."
+    )
 
 
 @pytest.mark.skipif(

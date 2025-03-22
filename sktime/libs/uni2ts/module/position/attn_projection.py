@@ -61,9 +61,9 @@ class RotaryProjection(Projection):
         base: int = 10000,
     ):
         super().__init__(proj_width, num_heads, num_groups)
-        assert (
-            self.proj_width % 2 == 0
-        ), f"proj_width must be even, got {self.proj_width}"
+        assert self.proj_width % 2 == 0, (
+            f"proj_width must be even, got {self.proj_width}"
+        )
         self.register_buffer(
             "theta",
             1.0
@@ -118,9 +118,9 @@ class QueryKeyProjection(nn.Module):
     ):
         super().__init__()
         if partial_factor is not None:
-            assert (
-                0.0 <= partial_factor[0] < partial_factor[1] <= 1.0
-            ), f"got {partial_factor[0]}, {partial_factor[1]}"
+            assert 0.0 <= partial_factor[0] < partial_factor[1] <= 1.0, (
+                f"got {partial_factor[0]}, {partial_factor[1]}"
+            )
         assert num_heads > 0 and dim % num_heads == 0
         assert (num_heads % num_groups == 0) and (num_heads >= num_groups)
 

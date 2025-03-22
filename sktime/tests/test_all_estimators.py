@@ -908,9 +908,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_inheritance(self, estimator_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
-        assert issubclass(
-            estimator_class, BaseObject
-        ), f"object {estimator_class} is not a sub-class of BaseObject."
+        assert issubclass(estimator_class, BaseObject), (
+            f"object {estimator_class} is not a sub-class of BaseObject."
+        )
 
         if hasattr(estimator_class, "fit"):
             assert issubclass(estimator_class, BaseEstimator), (
@@ -948,9 +948,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         required_methods = _list_required_methods(est_scitype, is_est=is_est)
 
         for attr in required_methods:
-            assert hasattr(
-                estimator, attr
-            ), f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
+            assert hasattr(estimator, attr), (
+                f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
+            )
 
         if hasattr(estimator, "inverse_transform"):
             assert hasattr(estimator, "transform")
@@ -1190,24 +1190,24 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
-            assert not getattr(
-                estimator, attr
-            ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
+            assert not getattr(estimator, attr), (
+                f"Estimator: {estimator} does not initiate attribute: {attr} to False"
+            )
 
         fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
         # Check is_fitted attributes are updated correctly to True after calling fit
         for attr in attrs:
-            assert getattr(
-                fitted_estimator, attr
-            ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
+            assert getattr(fitted_estimator, attr), (
+                f"Estimator: {estimator} does not update attribute: {attr} during fit"
+            )
 
     def test_fit_returns_self(self, estimator_instance, scenario):
         """Check that fit returns self."""
         fit_return = scenario.run(estimator_instance, method_sequence=["fit"])
-        assert (
-            fit_return is estimator_instance
-        ), f"Estimator: {estimator_instance} does not return self when calling fit"
+        assert fit_return is estimator_instance, (
+            f"Estimator: {estimator_instance} does not return self when calling fit"
+        )
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario, method_nsc):
         """Check exception raised for non-fit method calls to unfitted estimators.
@@ -1334,6 +1334,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 scenario.run(estimator, method_sequence=[method_nsc])
             except NotImplementedError:
                 return None
+            except ImportError as e:
+                if "skpro" in str(e):
+                    return None
+                else:
+                    raise e
 
         # dict_after = dictionary of estimator after predict and fit
         output = scenario.run(estimator, method_sequence=[method_nsc])
@@ -1382,9 +1387,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         fit_args_after = args_after[0]
         fit_args_before = scenario.args["fit"]
 
-        assert deep_equals(
-            fit_args_before, fit_args_after
-        ), f"Estimator: {estimator} has side effects on arguments of fit"
+        assert deep_equals(fit_args_before, fit_args_after), (
+            f"Estimator: {estimator} has side effects on arguments of fit"
+        )
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
@@ -1393,6 +1398,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 scenario.run(estimator, method_sequence=[method_nsc])
             except NotImplementedError:
                 return None
+            except ImportError as e:
+                if "skpro" in str(e):
+                    return None
+                else:
+                    raise e
 
         # Fit the model, get args before and after
         _, args_after = scenario.run(
@@ -1401,9 +1411,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_args_after = args_after[0]
         method_args_before = scenario.get_args(method_nsc, estimator)
 
-        assert deep_equals(
-            method_args_after, method_args_before
-        ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
+        assert deep_equals(method_args_after, method_args_before), (
+            f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
+        )
 
     def test_persistence_via_pickle(
         self, estimator_instance, scenario, method_nsc_arraylike

@@ -97,7 +97,12 @@ def test_run_test_for_class():
     assert isinstance(run_nodep, bool)
     assert isinstance(reason_nodep, str)
 
-    POS_REASONS = ["True_pyproject_change", "True_changed_class", "True_changed_tests"]
+    POS_REASONS = [
+        "True_pyproject_change",
+        "True_changed_class",
+        "True_changed_tests",
+        "True_changed_framework",
+    ]
 
     if not ONLY_CHANGED_MODULES:
         assert run_nodep

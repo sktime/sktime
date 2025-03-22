@@ -44,7 +44,7 @@ class MLPClassifier(BaseDeepClassifier):
 
     References
     ----------
-    .. [1] Wang et. al, Time series classification from
+    .. [1] Wang et al, Time series classification from
     scratch with deep neural networks: A strong baseline,
     International joint conference on neural networks (IJCNN), 2017.
 

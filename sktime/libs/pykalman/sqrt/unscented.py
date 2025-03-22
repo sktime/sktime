@@ -335,9 +335,9 @@ def unscented_filter_predict(
         mean and covariance corresponding to time step t+1 given observations
         from time steps 0...t
     """
-    assert (
-        points_transition is not None or sigma2_transition is not None
-    ), "Your system is noiseless? really?"
+    assert points_transition is not None or sigma2_transition is not None, (
+        "Your system is noiseless? really?"
+    )
     (points_pred, moments_pred) = _unscented_transform(
         points_state,
         transition_function,

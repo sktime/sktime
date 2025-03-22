@@ -360,15 +360,18 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.pvalues_ = pvalues
 
         if candidate_sp is not None:
-            qstat_cand = qstat[candidate_sp]
-            pvalues_cand = pvalues[candidate_sp]
+            if isinstance(candidate_sp, int):
+                candidate_sp = [candidate_sp]
+            csp_ixer = [c - 1 for c in candidate_sp]
+            qstat_cand = qstat[csp_ixer]
+            pvalues_cand = pvalues[csp_ixer]
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
             candidate_sp = range(2, nlags + 1)
 
         self.qstat_cand_ = qstat_cand
-        self.pvalues_cand = pvalues_cand
+        self.pvalues_cand_ = pvalues_cand
 
         if p_adjust != "none":
             reject_cand, pvals_adj, _, _ = multipletests(
@@ -498,12 +501,11 @@ class SeasonalityPeriodogram(BaseParamFitter):
             thresh=self.thresh,
         )
 
-        seasons = [x[0] for x in seasons]
-
         if seasons is None or len(seasons) == 0:
             self.sp_ = 1
             self.sp_significant_ = []
         else:
+            seasons = [x[0] for x in seasons]
             self.sp_significant_ = seasons
             self.sp_ = self.sp_significant_[0]
 

@@ -77,7 +77,7 @@ class RAMDataset(BaseDataset):
         """Container for storing a dataset in memory."""
         if not isinstance(dataset, pd.DataFrame):
             raise ValueError(
-                f"Dataset must be pandas DataFrame, but found: " f"{type(dataset)}"
+                f"Dataset must be pandas DataFrame, but found: {type(dataset)}"
             )
         self._dataset = dataset
         super().__init__(name=name)
