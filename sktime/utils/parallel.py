@@ -63,8 +63,9 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "logger_name": allows for setting up a custom logger when using ray as backend
-        - "mute_warnings": mutes sktime warnings when using ray as backend
+        - "ray": any valid keys for ray_init can be passed here, e.g. ''num_cpus'' or
+          ''runtime_env''. Also allows a "logger_name" and "mute_warnings" key for
+          configuration.
     """
     if meta is None:
         meta = {}
@@ -160,19 +161,18 @@ para_dict["dask"] = _parallelize_dask
 def _parallelize_ray(fun, iter, meta, backend, backend_params):
     """Parallelize loop via ray."""
     import logging
-    import os
     import warnings
 
     import ray
 
     logger = logging.getLogger(backend_params.pop("logger_name", None))
 
-    def _ray_init_locally(n_jobs) -> None:
+    def _ray_init_locally(ray_remote_args) -> None:
         if not ray.is_initialized():
             logger.info("Starting Ray Parallel")
-            context = ray.init(num_cpus=n_jobs)
+            context = ray.init(**ray_remote_args)
             logger.info(
-                f"Ray initialized locally with {n_jobs} CPUs. Open dashboard at http://{context.dashboard_url}"
+                f"Ray initialized locally. Open dashboard at http://{context.dashboard_url}"
             )
 
     @ray.remote  # pragma: no cover
@@ -188,10 +188,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = False
     if not ray.is_initialized():
         shutdown_ray = True
-        n_jobs = backend_params.pop("n_jobs", None)
-        if n_jobs is None or n_jobs == -1:
-            n_jobs = os.cpu_count() - 1
-        _ray_init_locally(n_jobs)
+        _ray_init_locally(backend_params)
 
     mute_warnings = backend_params.pop("mute_warnings", False)
     res = ray.get(
@@ -255,6 +252,16 @@ def _get_parallel_test_fixtures(naming="estimator"):
 
     # test ray backend
     if _check_soft_dependencies("ray", severity="none"):
-        fixtures.append({"backend": "ray", "backend_params": {"mute_warnings": True}})
+        import os
+
+        fixtures.append(
+            {
+                "backend": "ray",
+                "backend_params": {
+                    "mute_warnings": True,
+                    "num_cpus": os.cpu_count() - 1,
+                },
+            }
+        )
 
     return fixtures
