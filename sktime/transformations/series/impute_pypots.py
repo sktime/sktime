@@ -18,7 +18,7 @@ _check_soft_dependencies("pypots", severity="warning")
 class PyPOTSImputer(BaseTransformer):
     """Imputer for partially observed time series using PyPOTS models.
 
-    The PyPOTSImputer transforms input series by replacing missing values according 
+    The PyPOTSImputer transforms input series by replacing missing values according
     to an imputation strategy specified by ``model``.
 
     Parameters
@@ -220,7 +220,7 @@ class PyPOTSImputer(BaseTransformer):
             X_mask = np.expand_dims(X_mask, axis=0)
 
         return X_array, X_mask
-    
+
     def _restore_output(self, X, imputed_data):
         """Restore the output to the original format.
 
