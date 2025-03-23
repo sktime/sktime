@@ -64,7 +64,6 @@ class PyPOTSImputer(BaseTransformer):
         "univariate-only": False,
         "requires_y": False,
         "fit_is_empty": False,
-        "python_dependencies": ["pypots"],
     }
 
     def __init__(
