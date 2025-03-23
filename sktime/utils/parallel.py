@@ -87,6 +87,7 @@ backend_dict = {
     "joblib": "joblib",
     "dask": "dask",
     "dask_lazy": "dask",
+    "ray": "ray",
 }
 para_dict = {}
 
@@ -153,6 +154,55 @@ def _parallelize_dask(fun, iter, meta, backend, backend_params):
 para_dict["dask"] = _parallelize_dask
 
 
+def _parallelize_ray(fun, iter, meta, backend, backend_params):
+    import logging
+    import os
+    import warnings
+
+    import ray
+
+    logger = logging.getLogger(backend_params.pop("logger_name", None))
+
+    def ray_init_locally() -> None:
+        if not ray.is_initialized():
+            logger.info("Starting Ray Parallel")
+            ray_cpu_count = os.cpu_count() - 1
+            context = ray.init(num_cpus=ray_cpu_count)
+            logger.info(
+                f"Ray initialized locally with {ray_cpu_count} CPUs. Open dashboard at http://{context.dashboard_url}"
+            )
+
+    @ray.remote  # pragma: no cover
+    def ray_execute_function(
+        fun, params: dict, meta: dict, mute_warnings: bool = False
+    ):
+        if mute_warnings:
+            warnings.filterwarnings("ignore")  # silence sktime warnings
+        assert ray.is_initialized()
+        result = fun(params, meta)
+        return result
+
+    shutdown_ray = False
+    if not ray.is_initialized():
+        shutdown_ray = True
+        ray_init_locally()
+
+    mute_warnings = backend_params.pop("mute_warnings", False)
+    res = ray.get(
+        [
+            ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
+            for x in iter
+        ]
+    )
+
+    if shutdown_ray:
+        ray.shutdown()
+    return res
+
+
+para_dict["ray"] = _parallelize_ray
+
+
 def _get_parallel_test_fixtures(naming="estimator"):
     """Return fixtures for parallelization tests.
 
@@ -196,5 +246,8 @@ def _get_parallel_test_fixtures(naming="estimator"):
     if _check_soft_dependencies("dask", severity="none"):
         fixtures.append({"backend": "dask", "backend_params": {}})
         fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
+
+    # test ray backend
+    fixtures.append({"backend": "ray", "backend_params": {"mute_warnings": True}})
 
     return fixtures
