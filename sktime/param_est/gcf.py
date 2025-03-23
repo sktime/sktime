@@ -40,21 +40,6 @@ class GrangerCausalityFitter(BaseParamFitter):
     .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.grangercausalitytests.html
     """
 
-    _check_soft_dependencies("statsmodels", severity="warning")
-    try:
-        from statsmodels.tsa.stattools import (
-            adfuller,
-            coint,
-            grangercausalitytests,
-            kpss,
-            pacf,
-            range_unit_root_test,
-        )
-
-        _stats_models_imported = True
-    except ImportError:
-        _stats_models_imported = False
-
     __tags = {
         "X_inner_mtype": "pd.DataFrame",
         "scitype:transform-input": "Series",
@@ -106,6 +91,19 @@ class GrangerCausalityFitter(BaseParamFitter):
         - Partial autocorrelation analysis
         - Granger causality tests to determine the optimal lag
         """
+        # Check for statsmodels dependency
+        _check_soft_dependencies("statsmodels", severity="error")
+
+        # Import statsmodels functions only when needed
+        from statsmodels.tsa.stattools import (
+            adfuller,
+            coint,
+            grangercausalitytests,
+            kpss,
+            pacf,
+            range_unit_root_test,
+        )
+
         if not isinstance(X, pd.DataFrame):
             raise TypeError("Input X must be a pandas DataFrame.")
 
@@ -113,7 +111,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             X_bivariate = X.copy()
             col_name = X.columns[0]
             X_bivariate[f"{col_name}_lagged"] = X_bivariate[col_name].shift(1)
-            X_bivariate = X.bivariate.dropna()
+            X_bivariate = X_bivariate.dropna()  # Fixed typo: was X.bivariate
             X = X_bivariate
 
         elif X.shape[1] != 2:
@@ -125,22 +123,22 @@ class GrangerCausalityFitter(BaseParamFitter):
         # Perform tests
         self.stationarity_ = {
             col: {
-                "ADF": self.adf_test(X[col]),
-                "KPSS": self.kpss_test(X[col]),
-                "RUR": self.range_unit_root(X[col]),
+                "ADF": self.adf_test(X[col], adfuller),
+                "KPSS": self.kpss_test(X[col], kpss),
+                "RUR": self.range_unit_root(X[col], range_unit_root_test),
             }
             for col in X.columns
         }
-        self.cointegration_ = self.cointegration_test(X.iloc[:, 0], X.iloc[:, 1])
-        self.pacf_ = {col: self.pacf_analysis(X[col]) for col in X.columns}
-        granger_result = self.run_granger_test(X)
+        self.cointegration_ = self.cointegration_test(X.iloc[:, 0], X.iloc[:, 1], coint)
+        self.pacf_ = {col: self.pacf_analysis(X[col], pacf) for col in X.columns}
+        granger_result = self.run_granger_test(X, grangercausalitytests)
         self.best_lag_ = granger_result["best_lag"]
         self.best_pvalue_ = granger_result["best_pvalue"]
 
         self._is_fitted = True
         return self
 
-    def adf_test(self, series):
+    def adf_test(self, series, adfuller_func):
         """
         Perform Augmented Dickey-Fuller test for stationarity.
 
@@ -148,6 +146,8 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         series : pd.Series
             The time series to test for stationarity.
+        adfuller_func : function
+            The adfuller function from statsmodels.
 
         Returns
         -------
@@ -167,7 +167,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
         """
-        result = self.__class__.adfuller(
+        result = adfuller_func(
             series, maxlag=self.maxlag, regression="c", autolag="AIC", regresults=False
         )
         return {
@@ -176,7 +176,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             "critical values": result[4],
         }
 
-    def kpss_test(self, series):
+    def kpss_test(self, series, kpss_func):
         """
         Perform KPSS test for stationarity.
 
@@ -184,6 +184,8 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         series : pd.Series
             The time series to test for stationarity.
+        kpss_func : function
+            The kpss function from statsmodels.
 
         Returns
         -------
@@ -206,7 +208,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
         """
-        statistic, p_value, lags, critical_values = self.__class__.kpss(
+        statistic, p_value, lags, critical_values = kpss_func(
             series, regression="c", nlags="auto", store=False
         )
         return {
@@ -216,7 +218,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             "critical values": critical_values,
         }
 
-    def range_unit_root(self, series):
+    def range_unit_root(self, series, range_unit_root_func):
         """
         Perform Range Unit Root Test for stationarity.
 
@@ -224,6 +226,8 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         series : pd.Series
             The time series to test for stationarity.
+        range_unit_root_func : function
+            The range_unit_root_test function from statsmodels.
 
         Returns
         -------
@@ -244,9 +248,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.range_unit_root_test.html
         """
-        stat, p_value, crit, rstore = self.__class__.range_unit_root_test(
-            series, store=False
-        )
+        stat, p_value, crit, rstore = range_unit_root_func(series, store=False)
         return {
             "RUR Statistic": stat,
             "p-value": p_value,
@@ -254,7 +256,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             "rstore": rstore,
         }
 
-    def cointegration_test(self, y0, y1):
+    def cointegration_test(self, y0, y1, coint_func):
         """
         Test for cointegration between two time series.
 
@@ -264,6 +266,8 @@ class GrangerCausalityFitter(BaseParamFitter):
             First time series.
         y1 : pd.Series
             Second time series.
+        coint_func : function
+            The coint function from statsmodels.
 
         Returns
         -------
@@ -287,7 +291,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.coint.html
         """
-        stat, p_value, crit = self.__class__.coint(
+        stat, p_value, crit = coint_func(
             y0, y1, trend="c", method="aeg", maxlag=self.maxlag, autolag="AIC"
         )
         return {
@@ -296,7 +300,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             "critical values": crit,
         }
 
-    def pacf_analysis(self, series, nlags=30, method="ywadjusted"):
+    def pacf_analysis(self, series, pacf_func, nlags=30, method="ywadjusted"):
         """
         Calculate partial autocorrelation function (PACF) for a time series.
 
@@ -304,6 +308,8 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         series : pd.Series
             The time series to analyze.
+        pacf_func : function
+            The pacf function from statsmodels.
         nlags : int, default=30
             Number of lags to include in the analysis.
         method : str, default='ywadjusted'
@@ -328,12 +334,10 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.pacf.html
         """
-        pacf_vals, confint = self.__class__.pacf(
-            series, nlags=nlags, method=method, alpha=0.05
-        )
+        pacf_vals, confint = pacf_func(series, nlags=nlags, method=method, alpha=0.05)
         return {"PACF": pacf_vals, "Confidence Interval": confint}
 
-    def run_granger_test(self, data):
+    def run_granger_test(self, data, grangercausalitytests_func):
         """
         Run Granger causality tests and find the optimal lag order.
 
@@ -341,6 +345,8 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         data : pd.DataFrame
             DataFrame with two time series columns.
+        grangercausalitytests_func : function
+            The grangercausalitytests function from statsmodels.
 
         Returns
         -------
@@ -363,11 +369,12 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.grangercausalitytests.html
         """
-        result = self.__class__.grangercausalitytests(
+        result = grangercausalitytests_func(
             data, maxlag=self.maxlag, verbose=self.verbose, addconst=self.addconst
         )
         best_ic = float("inf")
         best_lag = None
+        best_pvalue = None
 
         for lag, res in result.items():
             ic_value = res[0][f"ssr_{self.ic}"][0]
