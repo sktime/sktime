@@ -974,6 +974,36 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
 
+    def test_predict_series_index_name_preserved(self, estimator_instance):
+        """Test that fit/predict preserves name attribute of index of pd.Series."""
+        # Ref. https://github.com/sktime/sktime/issues/8021
+
+        # skip this test if estimator needs multivariate data
+        # because then it does not take pd.Series at all
+        if estimator_instance.get_tag("scitype:y") == "multivariate":
+            return None
+
+        # generate sample series with random values
+        y_train = pd.Series(
+            data=np.random.rand(15),
+            index=pd.date_range(
+                start="2001-01-01", end="2001-01-15", freq="D", name="dates"
+            ),
+            name="values",
+        )
+
+        # train and predict using the estimator
+        _ = estimator_instance.fit(y_train, fh=[1, 2, 3, 4, 5])
+        y_pred = estimator_instance.predict()
+
+        # basic checks
+        assert isinstance(y_pred, pd.Series)
+        assert y_pred.shape[0] == 5
+        assert y_pred.name == "values"
+
+        # check that the index name is preserved
+        assert y_pred.index.name == "dates"
+
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
