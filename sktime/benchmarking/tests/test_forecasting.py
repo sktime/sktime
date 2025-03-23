@@ -263,7 +263,6 @@ def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     )
 
 
-
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
