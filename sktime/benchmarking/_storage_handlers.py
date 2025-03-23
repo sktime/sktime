@@ -121,7 +121,7 @@ class JSONStorageHandler(BaseStorageHandler):
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
-                        validation_id=row["validation_id"],
+                        task_id=row["validation_id"],
                         folds=folds,
                     )
                 )
@@ -172,7 +172,7 @@ class ParquetStorageHandler(BaseStorageHandler):
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
-                        validation_id=row["validation_id"],
+                        task_id=row["validation_id"],
                         folds=folds,
                     )
                 )
@@ -222,7 +222,7 @@ class CSVStorageHandler(BaseStorageHandler):
                 results.append(
                     ResultObject(
                         model_id=row["model_id"],
-                        validation_id=row["validation_id"],
+                        task_id=row["validation_id"],
                         folds=folds,
                     )
                 )

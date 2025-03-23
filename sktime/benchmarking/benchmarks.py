@@ -117,16 +117,16 @@ class BaseBenchmark:
         self,
         task_entrypoint: Union[Callable, str],
         task_kwargs: Optional[dict] = None,
-        validation_id: Optional[str] = None,
+        task_id: Optional[str] = None,
     ):
         """Register a task to the benchmark."""
-        validation_id = validation_id or (
+        task_id = task_id or (
             f"{task_entrypoint}"
             if isinstance(task_entrypoint, str)
             else f"{task_entrypoint.__name__}"
         )
         self.validations.register(
-            id=validation_id, entry_point=task_entrypoint, kwargs=task_kwargs
+            id=task_id, entry_point=task_entrypoint, kwargs=task_kwargs
         )
 
     def run(self, output_file=None) -> pd.DataFrame:

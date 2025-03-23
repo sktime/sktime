@@ -45,20 +45,20 @@ class _BenchmarkingResults:
         """Save the results to a file."""
         self.storage_backend(self.path).save(self.results)
 
-    def contains(self, validation_id: str, model_id: str):
+    def contains(self, task_id: str, model_id: str):
         """
         Check if the results contain a specific task and model.
 
         Parameters
         ----------
-        validation_id : str
+        task_id : str
             The task ID.
         model_id : str
             The model ID.
         """
         return any(
             [
-                result.validation_id == validation_id and result.model_id == model_id
+                result.task_id == task_id and result.model_id == model_id
                 for result in self.results
             ]
         )
@@ -231,12 +231,12 @@ class ForecastingBenchmark(BaseBenchmark):
 
     def _add_task(
         self,
-        validation_id: str,
+        task_id: str,
         task: TaskObject,
     ):
         """Register a task to the benchmark."""
         self.tasks.register(
-            entity_id=validation_id,
+            entity_id=task_id,
             entity=task,
         )
 
@@ -245,7 +245,7 @@ class ForecastingBenchmark(BaseBenchmark):
         dataset_loader: Union[Callable, tuple],
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
-        validation_id: Optional[str] = None,
+        task_id: Optional[str] = None,
         cv_global: Optional[BaseSplitter] = None,
         error_score: str = "raise",  # TODO check the default value
     ):
@@ -262,7 +262,7 @@ class ForecastingBenchmark(BaseBenchmark):
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
             Each BaseMetric output will be included in the results.
-        validation_id : str, optional (default=None)
+        task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
 
@@ -271,9 +271,9 @@ class ForecastingBenchmark(BaseBenchmark):
         A dictionary of benchmark results for that forecaster
         """
         # TODO error score handling
-        if validation_id is None:
+        if task_id is None:
             if hasattr(dataset_loader, "__name__"):
-                validation_id = (
+                task_id = (
                     f"[dataset={dataset_loader.__name__}]"
                     + f"_[cv_splitter={cv_splitter.__class__.__name__}]"
                     + (
@@ -283,7 +283,7 @@ class ForecastingBenchmark(BaseBenchmark):
                     )
                 )
             else:
-                validation_id = f"_[cv_splitter={cv_splitter.__class__.__name__}]" + (
+                task_id = f"_[cv_splitter={cv_splitter.__class__.__name__}]" + (
                     f"_[cv_global={cv_global.__class__.__name__}]"
                     if cv_global is not None
                     else ""
@@ -295,7 +295,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "cv_global": cv_global,
         }
         self._add_task(
-            validation_id,
+            task_id,
             TaskObject(**task_kwargs),
         )
 
@@ -312,23 +312,21 @@ class ForecastingBenchmark(BaseBenchmark):
         """
         results = _BenchmarkingResults(path=results_path)
 
-        for validation_id, task in self.tasks.entities.items():
+        for task_id, task in self.tasks.entities.items():
             for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(validation_id, estimator_id):
+                if results.contains(task_id, estimator_id):
                     logging.info(
                         f"Skipping validation - model: "
-                        f"{validation_id} - {estimator_id}"
+                        f"{task_id} - {estimator_id}"
                         ", as found prior result in results."
                     )
                     continue
 
-                logging.info(
-                    f"Running validation - model: {validation_id} - {estimator_id}"
-                )
+                logging.info(f"Running validation - model: {task_id} - {estimator_id}")
                 folds = self._run_validation(task, estimator)
                 results.results.append(
                     ResultObject(
-                        validation_id=validation_id,
+                        task_id=task_id,
                         model_id=estimator_id,
                         folds=folds,
                     )

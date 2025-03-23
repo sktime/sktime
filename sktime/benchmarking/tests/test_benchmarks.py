@@ -89,7 +89,7 @@ def test_add_task_args(tmp_path):
     benchmark._add_task(
         task_entrypoint=factory_estimator_class_task,
         task_kwargs={"some_kwarg": "some_value"},
-        validation_id="test_id-v1",
+        task_id="test_id-v1",
     )
 
     results_file = tmp_path / "results.csv"

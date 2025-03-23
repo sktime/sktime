@@ -90,7 +90,7 @@ class ResultObject:
     ----------
     model_id : str
         The ID of the model.
-    validation_id : str
+    task_id : str
         The ID of the task.
     folds : list of FoldResults
         The results for each fold.
@@ -102,7 +102,7 @@ class ResultObject:
     """
 
     model_id: str
-    validation_id: str
+    task_id: str
     folds: dict[int, FoldResults]
     means: dict[str, float] = field(init=False)
     stds: dict[str, float] = field(init=False)
@@ -128,25 +128,38 @@ class ResultObject:
 
     def to_dataframe(self):
         """Return results as a pandas DataFrame."""
-        result = {
-            "validation_id": self.validation_id,
-            "model_id": self.model_id,
-        }
+        result_per_metric = {}
+        gts = {}
+        preds = {}
+        train_data = {}
         for fold_idx, fold in self.folds.items():
             for score_name, score_value in fold.scores.items():
-                result[f"{score_name}_fold_{fold_idx}_test"] = [score_value]
+                if score_name not in result_per_metric:
+                    result_per_metric[score_name] = {}
+                result_per_metric[score_name][f"fold_{fold_idx}_test"] = score_value
             if fold.ground_truth is not None:
-                result[f"ground_truth_fold_{fold_idx}"] = [fold.ground_truth]
+                gts[f"ground_truth_fold_{fold_idx}"] = [fold.ground_truth]
             if fold.predictions is not None:
-                result[f"predictions_fold_{fold_idx}"] = [fold.predictions]
+                preds[f"predictions_fold_{fold_idx}"] = [fold.predictions]
             if fold.train_data is not None:
-                result[f"train_data_fold_{fold_idx}"] = [fold.train_data]
+                train_data[f"train_data_fold_{fold_idx}"] = [fold.train_data]
         for metric, mean in self.means.items():
-            result[f"{metric}_mean"] = [mean]
+            result_per_metric[metric]["mean"] = mean
         for metric, std in self.stds.items():
-            result[f"{metric}_std"] = [std]
+            result_per_metric[metric]["std"] = std
 
-        return pd.DataFrame(result)
+        return pd.concat(
+            [
+                pd.DataFrame(
+                    {"validation_id": [self.task_id], "model_id": [self.model_id]}
+                ),
+                pd.json_normalize(result_per_metric, sep="_"),
+                pd.DataFrame(gts),
+                pd.DataFrame(preds),
+                pd.DataFrame(train_data),
+            ],
+            axis=1,
+        )
 
 
 def asdict(obj, *, dict_factory=dict, pd_orient="list"):
@@ -166,7 +179,10 @@ def _asdict_inner(obj, dict_factory, pd_orient):
         result = []
         for f in fields(obj):
             value = _asdict_inner(getattr(obj, f.name), dict_factory, pd_orient)
-            result.append((f.name, value))
+            if f.name == "task_id":
+                result.append(("validation_id", value))
+            else:
+                result.append((f.name, value))
         return dict_factory(result)
     elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
         # obj is a namedtuple.  Recurse into it, but the returned

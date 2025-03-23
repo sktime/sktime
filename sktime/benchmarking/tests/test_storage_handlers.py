@@ -12,7 +12,7 @@ RESULT_OBJECT_LISTS = [
     [
         ResultObject(
             model_id="model_1",
-            validation_id="val_1",
+            task_id="val_1",
             folds={
                 0: FoldResults(
                     scores={"accuracy": 0.9, "f1": 0.8},
@@ -26,7 +26,7 @@ RESULT_OBJECT_LISTS = [
     [
         ResultObject(
             model_id="model_1",
-            validation_id="val_1",
+            task_id="val_1",
             folds={
                 0: FoldResults(
                     scores={
@@ -60,7 +60,7 @@ def test_store_load_results(tmp_path, storage_handler, file_extension, sample_re
 
     assert len(results) == 1
     assert results[0].model_id == sample_results[0].model_id
-    assert results[0].validation_id == sample_results[0].validation_id
+    assert results[0].task_id == sample_results[0].task_id
     if isinstance(sample_results[0].folds[0].scores["accuracy"], pd.DataFrame):
         pd.testing.assert_frame_equal(
             results[0].folds[0].scores["accuracy"],
