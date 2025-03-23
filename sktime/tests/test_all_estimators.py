@@ -1531,11 +1531,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         if "n_jobs" not in params:
             return None
 
-        # escape predict_proba etc for forecasters if skpro is not available
+        # skip test for predict_proba
+        # this produces a BaseDistribution object, for which no ready
+        # equality check is implemented
         is_forecaster = scitype(estimator_instance) == "forecaster"
-        proba_methods = ["predict_proba", "predict_var"]
+        if is_forecaster and method_nsc == "predict_proba":
+            return None
+        # escape predict_proba etc for forecasters if skpro is not available
         skpro_available = _check_soft_dependencies("skpro", severity="none")
-        if is_forecaster and method_nsc in proba_methods and not skpro_available:
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
             return None
 
         # run on a single process
