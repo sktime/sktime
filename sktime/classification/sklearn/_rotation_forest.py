@@ -98,13 +98,13 @@ class RotationForest(ClassifierMixin, BaseEstimator):
 
     Examples
     --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
     >>> from sktime.classification.sklearn import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> X_train = from_nested_to_3d_numpy(X_train)
-    >>> X_test = from_nested_to_3d_numpy(X_test)
+    >>>
+    >>> X, y = load_iris(return_X_y=True, as_frame=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>>
     >>> clf = RotationForest(n_estimators=10)
     >>> clf.fit(X_train, y_train)
     RotationForest(...)
