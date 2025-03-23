@@ -165,7 +165,9 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     import ray
 
+    # remove the possible excess keys
     logger = logging.getLogger(backend_params.pop("logger_name", None))
+    mute_warnings = backend_params.pop("mute_warnings", False)
 
     def _ray_init_locally(ray_remote_args) -> None:
         if not ray.is_initialized():
@@ -190,7 +192,6 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
         shutdown_ray = True
         _ray_init_locally(backend_params)
 
-    mute_warnings = backend_params.pop("mute_warnings", False)
     res = ray.get(
         [
             _ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
