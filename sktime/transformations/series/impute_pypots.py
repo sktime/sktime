@@ -15,7 +15,7 @@ from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 _check_soft_dependencies("pypots", raise_errors=True)
 
 # Import the module
-
+import pypots as pypots
 
 class PyPOTSImputer(BaseTransformer):
     """Imputer for partially observed time series using PyPOTS models.
@@ -101,7 +101,6 @@ class PyPOTSImputer(BaseTransformer):
         for mod in models_list:
             if self.model == mod:
                 from pypots.imputation import mod
-
                 model_cls = mod
                 break
 
