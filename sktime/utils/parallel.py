@@ -63,9 +63,9 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "ray": any valid keys for ray_init can be passed here, e.g. ''num_cpus'' or
-          ''runtime_env''. Also allows a "logger_name" and "mute_warnings" key for
-          configuration.
+        - "ray": a dictionary that contains valid keys for ray_init can be passed here
+           as "ray_remote_args", e.g. ''num_cpus'' or ''runtime_env''.
+           Also allows a "logger_name" and "mute_warnings" key for configuration.
     """
     if meta is None:
         meta = {}
@@ -169,6 +169,9 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     logger = logging.getLogger(backend_params.pop("logger_name", None))
     mute_warnings = backend_params.pop("mute_warnings", False)
 
+    if "ray_remote_args" not in backend_params.keys():
+        backend_params["ray_remote_args"] = {}
+
     def _ray_init_locally(ray_remote_args) -> None:
         if not ray.is_initialized():
             logger.info("Starting Ray Parallel")
@@ -190,7 +193,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = False
     if not ray.is_initialized():
         shutdown_ray = True
-        _ray_init_locally(backend_params)
+        _ray_init_locally(backend_params["ray_remote_args"])
 
     res = ray.get(
         [
@@ -260,7 +263,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
                 "backend": "ray",
                 "backend_params": {
                     "mute_warnings": True,
-                    "num_cpus": os.cpu_count() - 1,
+                    "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
                 },
             }
         )
