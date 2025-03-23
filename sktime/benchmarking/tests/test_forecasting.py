@@ -350,6 +350,5 @@ def test_add_estimator_twice(tmp_path):
         results_df["model_id"],
     )
 
-    assert (
-        len(benchmark.estimators.entities) == 2
-    ), "add_estimator does not register all estimators."
+    msg = "add_estimator does not register all estimators."
+    assert len(benchmark.estimators.entities) == 2, msg
