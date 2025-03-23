@@ -3442,6 +3442,17 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "oseiskar",
+      "name": "Otto Seiskari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1812432?v=4",
+      "profile": "https://github.com/oseiskar",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }
