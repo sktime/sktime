@@ -174,6 +174,9 @@ def test_evaluate_common_configs(
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
         return None
+    # also skip for ray backend if ray is not installed
+    if backend == "ray" and not _check_soft_dependencies("ray", severity="none"):
+        return None
 
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
@@ -225,6 +228,9 @@ def test_evaluate_global_mode(scoring, strategy, backend):
 
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+    # also skip for ray backend if ray is not installed
+    if backend == "ray" and not _check_soft_dependencies("ray", severity="ray"):
         return None
 
     hierarchy_levels = (4, 4)
@@ -428,6 +434,9 @@ def test_evaluate_hierarchical(backend):
     """Check that evaluate works with hierarchical data."""
     # skip test for dask backend if dask is not installed
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+    # also skip for ray backend if ray is not installed
+    if backend == "ray" and not _check_soft_dependencies("ray", severity="none"):
         return None
 
     y = _make_hierarchical(
