@@ -45,6 +45,7 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
+        - "ray": uses a ray remote to execute jobs in parallel
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -62,6 +63,8 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+        - "logger_name": allows for setting up a custom logger when using ray as backend
+        - "mute_warnings": mutes sktime warnings when using ray as backend
     """
     if meta is None:
         meta = {}
@@ -155,6 +158,7 @@ para_dict["dask"] = _parallelize_dask
 
 
 def _parallelize_ray(fun, iter, meta, backend, backend_params):
+    """Parallelize loop via ray."""
     import logging
     import os
     import warnings
@@ -163,7 +167,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     logger = logging.getLogger(backend_params.pop("logger_name", None))
 
-    def ray_init_locally() -> None:
+    def _ray_init_locally() -> None:
         if not ray.is_initialized():
             logger.info("Starting Ray Parallel")
             ray_cpu_count = os.cpu_count() - 1
@@ -173,7 +177,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
             )
 
     @ray.remote  # pragma: no cover
-    def ray_execute_function(
+    def _ray_execute_function(
         fun, params: dict, meta: dict, mute_warnings: bool = False
     ):
         if mute_warnings:
@@ -185,12 +189,12 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = False
     if not ray.is_initialized():
         shutdown_ray = True
-        ray_init_locally()
+        _ray_init_locally()
 
     mute_warnings = backend_params.pop("mute_warnings", False)
     res = ray.get(
         [
-            ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
+            _ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
             for x in iter
         ]
     )
