@@ -11,8 +11,10 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
-# Check for PyPOTS at import time with a warning
-_check_soft_dependencies("pypots", severity="warning")
+# Check if PyPOTS is installed
+_check_soft_dependencies("pypots", raise_errors=True)
+
+# Import the module
 
 
 class PyPOTSImputer(BaseTransformer):
@@ -62,6 +64,7 @@ class PyPOTSImputer(BaseTransformer):
         "univariate-only": False,
         "requires_y": False,
         "fit_is_empty": False,
+        "python_dependencies": ["pypots"],
     }
 
     def __init__(
@@ -85,38 +88,22 @@ class PyPOTSImputer(BaseTransformer):
 
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
-        # Check at runtime to raise proper error
-        _check_soft_dependencies("pypots", severity="error")
-
         # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
 
-        # Initialize the selected PyPOTS model
-        if self.model == "SAITS":
-            from pypots.imputation import SAITS
-
-            model_cls = SAITS
-        elif self.model == "BRITS":
-            from pypots.imputation import BRITS
-
-            model_cls = BRITS
-        elif self.model == "MRNN":
-            from pypots.imputation import MRNN
-
-            model_cls = MRNN
-        elif self.model == "GPVAE":
-            from pypots.imputation import GPVAE
-
-            model_cls = GPVAE
-        elif self.model == "Transformer":
-            from pypots.imputation import Transformer
-
-            model_cls = Transformer
-        else:
+        models_list = ["SAITS", "BRITS", "MRNN", "GPVAE", "Transformer"]
+        if self.model not in models_list:
             raise ValueError(
-                f"Unknown model: {self.model}. Available models: "
-                "SAITS, BRITS, MRNN, GPVAE, Transformer"
+                f"Unknown model: {self.model}. " f"Available models are: {models_list}"
             )
+
+        # Initialize the selected PyPOTS model
+        for mod in models_list:
+            if self.model == mod:
+                from pypots.imputation import mod
+
+                model_cls = mod
+                break
 
         # Get the dimension/feature size from input data
         n_features = X_array.shape[2] if X_array.ndim == 3 else X_array.shape[1]
