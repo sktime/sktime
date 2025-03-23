@@ -11,6 +11,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.kalman_filter import (
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
+    KalmanFilterTransformerSIMD,
 )
 
 # ts stands for time steps
@@ -122,6 +123,19 @@ params_3_1_lists = {
     "measurement_function": rand_list(
         (1, 3), length=ts
     ),  # [`ts` random ndarrays of shape (1,3)],
+}
+
+params_2_1_static = {
+    "state_transition": create_data((2, 2)),  # random ndarray of shape (2, 2)
+    "process_noise": create_data((2, 2)),  # random covariance matrix of shape (2, 2)
+    "measurement_function": create_data((1, 2)),  # random ndarray of shape (1, 2),
+    "measurement_noise": create_data(
+        (1, 1), covariance=True
+    ),  # random covariance matrix of shape (1, 1)
+    "initial_state": create_data(2),  # random ndarray of shape (2,)
+    "initial_state_covariance": create_data(
+        (2, 2), covariance=True
+    ),  # random covariance matrix of shape (2, 2)
 }
 
 
@@ -892,3 +906,53 @@ def test_transform_and_smooth_fp(params, measurements, y):
         Xs=means, Ps=covs, Fs=matrices["Fs"], Qs=matrices["Qs"]
     )[0]
     assert_array_almost_equal(xt_smoother_adapter, xt_smoother_filterpy)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([KalmanFilterTransformerPK, KalmanFilterTransformerSIMD]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("hidden", [True, False])
+@pytest.mark.parametrize("denoising", [True, False])
+@pytest.mark.parametrize(
+    "params, measurements",
+    [
+        # test case 1 -
+        #   state_dim = 2, measurement_dim = 1, params - params_2_1_static
+        (dict(params_2_1_static, state_dim=2), create_data((ts, 1))),
+        # test case 2 -
+        #   state_dim = 3, measurement_dim = 3, params - params_3_3_static
+        (dict(params_3_3_static, state_dim=3), create_data((ts, 3))),
+    ],
+)
+def test_transform_and_smooth_simd(hidden, denoising, params, measurements):
+    """Test KalmanFilterTransformerSIMD `fit` and `transform`.
+
+    Compare the result with `pykalman`'s `filter` or `smooth`.
+    """
+    mask_measurements = np.ma.masked_invalid(np.copy(measurements))
+
+    extended_params = dict(params, hidden=hidden, denoising=denoising)
+
+    # adapter transformer
+    adapter_transformer = KalmanFilterTransformerSIMD(**extended_params)
+    xt_adapter_transformer = adapter_transformer.fit_transform(measurements)
+
+    # pykalman
+    kf_pykalman = init_kf_pykalman(measurement_dim=measurements.shape[1], **params)
+    if "estimate_matrices" in params.keys():
+        kf_pykalman = kf_pykalman.em(mask_measurements)
+
+    if denoising:
+        xt_pykalman, _ = kf_pykalman.smooth(mask_measurements)
+    else:
+        xt_pykalman, _ = kf_pykalman.filter(mask_measurements)
+
+    if not hidden:
+        meas_dim = measurements.shape[1]
+        state_dim = extended_params["state_dim"]
+        H = extended_params.get("measurement_function", np.eye(meas_dim, state_dim))
+        xt_pykalman = np.dot(xt_pykalman, H.T)
+
+    # test filter()
+    assert_array_almost_equal(xt_adapter_transformer, xt_pykalman)

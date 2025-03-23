@@ -430,6 +430,15 @@ Filtering and denoising
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+    KalmanFilterTransformerSIMD
+
+.. currentmodule:: sktime.transformations.panel.simdkalman_smoother
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SIMDKalmanSmoother
 
 .. currentmodule:: sktime.transformations.series.theta
 
