@@ -167,13 +167,12 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     logger = logging.getLogger(backend_params.pop("logger_name", None))
 
-    def _ray_init_locally() -> None:
+    def _ray_init_locally(n_jobs) -> None:
         if not ray.is_initialized():
             logger.info("Starting Ray Parallel")
-            ray_cpu_count = os.cpu_count() - 1
-            context = ray.init(num_cpus=ray_cpu_count)
+            context = ray.init(num_cpus=n_jobs)
             logger.info(
-                f"Ray initialized locally with {ray_cpu_count} CPUs. Open dashboard at http://{context.dashboard_url}"
+                f"Ray initialized locally with {n_jobs} CPUs. Open dashboard at http://{context.dashboard_url}"
             )
 
     @ray.remote  # pragma: no cover
@@ -189,7 +188,10 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = False
     if not ray.is_initialized():
         shutdown_ray = True
-        _ray_init_locally()
+        n_jobs = backend_params.pop("n_jobs", None)
+        if n_jobs is None or n_jobs == -1:
+            n_jobs = os.cpu_count() - 1
+        _ray_init_locally(n_jobs)
 
     mute_warnings = backend_params.pop("mute_warnings", False)
     res = ray.get(
@@ -252,6 +254,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
         fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
 
     # test ray backend
-    fixtures.append({"backend": "ray", "backend_params": {"mute_warnings": True}})
+    if _check_soft_dependencies("ray", severity="none"):
+        fixtures.append({"backend": "ray", "backend_params": {"mute_warnings": True}})
 
     return fixtures
