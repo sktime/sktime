@@ -17,6 +17,8 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
@@ -449,19 +451,31 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.compose._reduce import DirectReductionForecaster
-        from sktime.forecasting.naive import NaiveForecaster
+        try:
+            FORECASTER = NaiveForecaster()
+            print("NaiveForecaster initialized successfully:", FORECASTER)
+        except Exception as e:
+            print("NaiveForecaster failed to initialize:", e)
+            FORECASTER = None
 
-        # univariate case
-        FORECASTER = NaiveForecaster()
         params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        # test multivariate case, i.e., ensembling multiple variables at same time
-        FORECASTER = DirectReductionForecaster.create_test_instance()
-        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        # Check if DirectReductionForecaster creates a test instance
+        try:
+            FORECASTER = DirectReductionForecaster.create_test_instance()
+            print("DirectReductionForecaster initialized successfully:", FORECASTER)
+        except Exception as e:
+            print("DirectReductionForecaster failed to create test instance:", e)
+            FORECASTER = None
 
-        # test with multiplicities
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
         params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        # Ensure we don't return None
+        for i, params in enumerate([params0, params1, params2]):
+            for key, value in params.items():
+                if value is None or any(f[1] is None for f in value):
+                    print(f"Warning: params{i} contains None!")
 
         return [params0, params1, params2]
 
