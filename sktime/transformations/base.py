@@ -1394,15 +1394,26 @@ class BaseTransformer(BaseEstimator):
                 store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
+            # vectorization causes a superfluous zero level
+            # if we have a Series input that is vectorized,
+            # as in that case the index should be "0-level" (no levels)
+            # but this is not possible in pandas, so it will have a level
+            # which always has the entry 0.
+            # in this case, we need to strip this level
+            Xt_has_superfluous_zero_level = (
+                X_input_scitype == "Series"
+                and self._is_vectorized
+                and isinstance(Xt, (pd.DataFrame, pd.Series))
+            )
             # we ensure the output is pd_DataFrame_Table
             # & ensure the returned index is sensible
             # for return index, we need to deal with last level, constant 0
-            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+            if Xt_has_superfluous_zero_level:
                 # if index is multiindex, last level is constant 0
                 # and other levels are hierarchy
                 if isinstance(Xt.index, pd.MultiIndex):
                     Xt.index = Xt.index.droplevel(-1)
-                # else this is only zeros and should be reset to RangeIndex
+                # we have an index with only zeroes, and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
             return convert_to(
