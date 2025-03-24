@@ -17,9 +17,9 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
