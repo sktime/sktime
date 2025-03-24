@@ -848,7 +848,7 @@ def test_series_to_primitives_hierarchical():
     from sktime.clustering.dbscan import TimeSeriesDBSCAN
     from sktime.registry import coerce_scitype
 
-    X = _make_hierarchical()
+    # example of Series-to-Primitives supporting Hierarchical
     clust = TimeSeriesDBSCAN.create_test_instance()
     est = coerce_scitype(clust, "transformer")
 
@@ -859,7 +859,9 @@ def test_series_to_primitives_hierarchical():
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
 
+    X = _make_hierarchical()
     Xt = est.fit_transform(X)
+    ix = Xt.index
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == ix).all()
