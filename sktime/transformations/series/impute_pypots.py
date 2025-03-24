@@ -79,15 +79,15 @@ class PyPOTSImputer(BaseTransformer):
 
     def _check_dependencies(self):
         """Check if pypots is installed."""
-        return _check_soft_dependencies("pypots", severity="error")
+        _check_soft_dependencies("pypots", severity="error")
+        import pypots
+
+        return pypots
 
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
         # Check dependencies
         self._check_dependencies()
-
-        # Import pypots here to avoid import at module level
-        import pypots
 
         # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
@@ -97,6 +97,8 @@ class PyPOTSImputer(BaseTransformer):
             raise ValueError(
                 f"Unknown model: {self.model}. Available models are: {models_list}"
             )
+
+        pypots = self._check_dependencies()
 
         # Dynamically get model class from PyPOTS
         model_cls = getattr(pypots.imputation, self.model)
@@ -133,9 +135,6 @@ class PyPOTSImputer(BaseTransformer):
 
         # Check dependencies
         self._check_dependencies()
-
-        # Import pypots here to avoid import at module level
-        import pypots
 
         X_array, X_mask = self._prepare_input(X)
 
