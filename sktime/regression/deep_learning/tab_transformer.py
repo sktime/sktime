@@ -115,6 +115,7 @@ class Tab_Transformer(NNModule):
         n_transformer_layer,
         n_heads,
         output_dim,
+        random_state,
     ) -> None:
         super().__init__()
         self.num_cat_class = num_cat_class
@@ -123,9 +124,13 @@ class Tab_Transformer(NNModule):
         self.n_transformer_layer = n_transformer_layer
         self.n_heads = n_heads
         self.output_dim = output_dim
+        self.random_state = random_state
         if _check_soft_dependencies("torch", severity="none"):
             import torch.nn as nn
             from torch.nn import TransformerEncoder, TransformerEncoderLayer
+
+            if self.random_state is not None:
+                torch.manual_seed(self.random_state)
 
             self.embedding = nn.ModuleList(
                 [nn.Embedding(cat, self.embedding_dim) for cat in self.num_cat_class]
@@ -226,7 +231,7 @@ class TabTransformerRegressor(BaseRegressor):
         embedding_dim=6,
         n_transformer_layer=4,
         n_heads=1,
-        num_epochs=100,
+        num_epochs=400,
         batch_size=8,
         lr=0.01,
         criterion=None,
@@ -235,6 +240,7 @@ class TabTransformerRegressor(BaseRegressor):
         optimizer_kwargs=None,
         custom_dataset_pred=None,
         custom_dataset_train=None,
+        random_state=42,
     ):
         self.num_cat_class = num_cat_class
         self.cat_idx = cat_idx
@@ -250,9 +256,15 @@ class TabTransformerRegressor(BaseRegressor):
         self.custom_dataset_pred = custom_dataset_pred
         self.custom_dataset_train = custom_dataset_train
         self.lr = lr
+        self.random_state = random_state
+        self._num_cat_class = None
+        self._cat_idx = None
         super().__init__()
         if _check_soft_dependencies("torch", severity="none"):
             import torch
+
+            if self.random_state is not None:
+                torch.manual_seed(self.random_state)
 
             self.criterions = {
                 "MSE": torch.nn.MSELoss,
@@ -270,20 +282,23 @@ class TabTransformerRegressor(BaseRegressor):
             }
 
     def _build_network(self, X, y):
-        if y.ndim == 1:
-            self.output_dim = 1
-        else:
+        if y.ndim != 1:
             self.output_dim = y.shape[1]
-        if self.num_cat_class is None:
-            self.num_cat_class, self.cat_idx = self._get_cat_columns(X)
-        self.num_cont_features = len(X.columns) - len(self.cat_idx)
+        else:
+            self.output_dim = 1
+        if self.num_cat_class is None or self.cat_idx is None:
+            self._num_cat_class, self._cat_idx = self._get_cat_columns(X)
+        else:
+            self._num_cat_class, self._cat_idx = self.num_cat_class, self.cat_idx
+        self.num_cont_features = len(X.columns) - len(self._cat_idx)
         return Tab_Transformer(
-            self.num_cat_class,
+            self._num_cat_class,
             self.num_cont_features,
             self.embedding_dim,
             self.n_transformer_layer,
             self.n_heads,
             self.output_dim,
+            self.random_state,
         )
 
     def build_pytorch_train_dataloader(self, X, y):
@@ -294,7 +309,7 @@ class TabTransformerRegressor(BaseRegressor):
             if hasattr(self.custom_dataset_train, "build_dataset") and callable(
                 self.custom_dataset_train.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(X, self.cat_idx)
+                self.custom_dataset_train.build_dataset(X, self._cat_idx)
                 dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
@@ -303,8 +318,8 @@ class TabTransformerRegressor(BaseRegressor):
                     "documentation."
                 )
         else:
-            dataset = TabTrainDataset(X=X, y=y, cat_idx=self.cat_idx)
-        return DataLoader(dataset=dataset, batch_size=self.batch_size)
+            dataset = TabTrainDataset(X=X, y=y, cat_idx=self._cat_idx)
+        return DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
     def build_pytorch_pred_dataloader(self, X):
         """Build PyTorch DataLoader for prediction."""
@@ -314,7 +329,7 @@ class TabTransformerRegressor(BaseRegressor):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(X, self.cat_idx)
+                self.custom_dataset_train.build_dataset(X, self._cat_idx)
                 dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
@@ -323,7 +338,7 @@ class TabTransformerRegressor(BaseRegressor):
                     "documentation."
                 )
         else:
-            dataset = TabPredDataset(X=X, cat_idx=self.cat_idx)
+            dataset = TabPredDataset(X=X, cat_idx=self._cat_idx)
 
         return DataLoader(
             dataset,
@@ -370,6 +385,8 @@ class TabTransformerRegressor(BaseRegressor):
 
     def _get_cat_columns(self, x):
         cat_cols = x.select_dtypes(include=["category", "bool", "int"]).columns
+        if len(cat_cols) == 0:
+            return [], []
         cat_idx = [x.columns.get_loc(col) for col in cat_cols]
         unique_labels = [len(x[col].unique()) for col in cat_cols.tolist()]
         return unique_labels, cat_idx
@@ -409,12 +426,15 @@ class TabTransformerRegressor(BaseRegressor):
         """
         from torch import cat
 
-        dataloader = self.build_pytorch_pred_dataloader(X)
         self.network.eval()
+        dataloader = self.build_pytorch_pred_dataloader(X)
+
         y_pred = []
         for x_cat, x_cont in dataloader:
             y_pred.append(self.network(x_cat, x_cont).detach())
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
+        if y_pred.shape[1] == 1:
+            y_pred = y_pred.reshape(-1)
         return y_pred
 
     @classmethod
@@ -445,7 +465,7 @@ class TabTransformerRegressor(BaseRegressor):
                 "embedding_dim": 8,
                 "n_transformer_layer": 3,
                 "n_heads": 2,
-                "num_epochs": 50,
+                "num_epochs": 500,
                 "batch_size": 16,
                 "lr": 0.1,
                 "criterion": None,
