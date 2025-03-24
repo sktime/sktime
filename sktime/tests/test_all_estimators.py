@@ -26,7 +26,12 @@ from sktime.dists_kernels.base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.registry import all_estimators, get_base_class_lookup, scitype
+from sktime.registry import (
+    all_estimators,
+    get_base_class_list,
+    get_base_class_lookup,
+    scitype,
+)
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
@@ -1575,3 +1580,17 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
+
+    def test_baseclasses_last_in_mro_order(self, estimator_class):
+        """Base classes should always appear last in the  mro"""
+        base_classes = get_base_class_list()
+        base_classes = [cls for cls in base_classes if issubclass(estimator_class, cls)]
+
+        msg = "Base classes inheriting should always appear last in the MRO"
+        for base_class in base_classes:
+            last_class = [
+                cls
+                for cls in estimator_class.mro()
+                if not issubclass(base_class, cls) or cls is base_class
+            ][-1]
+            assert last_class is base_class, msg + f" ({base_class})"
