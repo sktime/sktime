@@ -328,11 +328,38 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
     @property
     def _steps(self):
-        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+        """Return the unfitted steps."""
+        return [("transformer", self.transformer)] + self._forecasters
+
+    @_steps.setter
+    def _steps(self, new_steps):
+        """Provide new values for the steps.
+
+        Parameters
+        ----------
+        new_steps : list[tuple[str, sktime_estimator]]
+            The list of new estimators to update the object's steps with
+        """
+        transformer = None
+        fallback_forecaster = None
+        forecasters = dict()
+        for category, estimator in new_steps:
+            estimator = estimator.clone() if estimator is not None else None
+            # We assign this in a different way
+            if category == "fallback_forecaster":
+                fallback_forecaster = estimator
+            elif category == "transformer":
+                transformer = estimator
+            else:
+                forecasters[category] = estimator
+        self.forecasters = forecasters
+        self.transformer = transformer
+        self.fallback_forecaster = fallback_forecaster
 
     @property
     def steps_(self):
-        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
+        """Return the fitted steps."""
+        return [("transformer", self.transformer_)] + list(self.forecasters_.items())
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -376,6 +403,9 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         # passing time series through the provided transformer!
 
         self.category_ = self.transformer_.fit_transform(X=y, y=X).iloc[:, 0]
+        # If self.transformer_ is a clusterer, the groups are likely integers.
+        # We later assume they are strings, so we need to convert them.
+        self.category_ = self.category_.astype(str)
         self.forecasters_ = {}
 
         if y.index.nlevels == 1:
@@ -390,7 +420,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                 if self.fallback_forecaster is None:
                     raise ValueError(
                         "Forecaster not provided for given"
-                        + f"time series of type {self.category_}"
+                        + f"time series of type {category}"
                         + "and no fallback forecaster provided to use for this case."
                     )
 

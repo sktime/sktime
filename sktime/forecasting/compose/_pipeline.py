@@ -1922,6 +1922,10 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator, BaseForecaster):
     def _steps(self):
         return getattr(self.estimator_, self.steps_arg)
 
+    @_steps.setter
+    def _steps(self, val):
+        setattr(self.estimator_, self.steps_arg, val)
+
     @property
     def steps_(self):
         return getattr(self.estimator_, self.steps_arg)

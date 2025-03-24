@@ -134,8 +134,6 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         for forecaster in forecasters.values():
             assert isinstance(forecaster, BaseForecaster)
 
-        self.forecasters_ = {k: f.clone() for k, f in forecasters.items()}
-
         # All checks OK!
 
         # Assigning all capabilities on the basis of the capabilities
@@ -202,11 +200,39 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
     @property
     def _steps(self):
-        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+        return [("transformer", self.transformer)] + self._forecasters
+
+    @_steps.setter
+    def _steps(self, new_steps):
+        """Provide new values for the steps.
+
+        Parameters
+        ----------
+        new_steps : list[tuple[str, sktime_estimator]]
+            The list of new estimator to update the object's steps with
+        """
+        transformer = None
+        fallback_forecaster = None
+        forecasters = dict()
+        for category, estimator in new_steps:
+            estimator = estimator.clone() if estimator is not None else None
+            # We assign this in a different way
+            if category == "fallback_forecaster":
+                fallback_forecaster = estimator
+            elif category == "transformer":
+                transformer = estimator
+            else:
+                forecasters[category] = estimator
+        self.forecasters = forecasters
+        self.transformer = transformer
+        self.fallback_forecaster = fallback_forecaster
 
     @property
     def steps_(self):
-        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
+        """Return the fitted steps."""
+        return [("transformer", self.transformer_)] + [
+            self._coerce_estimator_tuple(self.chosen_forecaster_)
+        ]
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -265,7 +291,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                 self.chosen_forecaster_ = self.fallback_forecaster.clone()
 
         else:
-            self.chosen_forecaster_ = self.forecasters_[self.category_].clone()
+            self.chosen_forecaster_ = self.forecasters[self.category_].clone()
 
         # fitting the forecaster!
         self.chosen_forecaster_.fit(y=y, X=X, fh=fh)
