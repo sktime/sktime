@@ -15,32 +15,30 @@ from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 _check_soft_dependencies("pypots", raise_errors=True)
 
 # Import the module
-import pypots as pypots
+import pypots
+
 
 class PyPOTSImputer(BaseTransformer):
     """Imputer for partially observed time series using PyPOTS models.
 
-    The PyPOTSImputer transforms input series by replacing missing values according
-    to an imputation strategy specified by ``model``.
-
     Parameters
     ----------
     model : str, default="SAITS"
-        The PyPOTS model to use for imputation. Available models are:
-        "SAITS", "BRITS", "MRNN", "GPVAE", "Transformer".
+        The PyPOTS model to use for imputation. Available models: "SAITS", "BRITS",
+        "MRNN", "GPVAE", "Transformer".
     model_params : dict, optional
-        Additional parameters to pass to the PyPOTS model. Default is None.
+        Additional parameters for the PyPOTS model.
     n_epochs : int, default=100
-        Number of epochs to train the PyPOTS model.
+        Number of training epochs.
     batch_size : int, default=32
-        Batch size for training the PyPOTS model.
+        Batch size for training.
     patience : int, default=10
-        Number of epochs with no improvement after which training will be stopped.
+        Early stopping patience.
     random_state : int, optional
-        Seed for the random number generator. Default is None.
+        Random seed.
 
-    Examples
-    --------
+    Example
+    -------
     >>> from sktime.transformations.series.impute_pypots import PyPOTSImputer
     >>> from sktime.datasets import load_airline
     >>> from sktime.split import temporal_train_test_split
@@ -93,20 +91,16 @@ class PyPOTSImputer(BaseTransformer):
         models_list = ["SAITS", "BRITS", "MRNN", "GPVAE", "Transformer"]
         if self.model not in models_list:
             raise ValueError(
-                f"Unknown model: {self.model}. " f"Available models are: {models_list}"
+                f"Unknown model: {self.model}. Available models are: {models_list}"
             )
 
-        # Initialize the selected PyPOTS model
-        for mod in models_list:
-            if self.model == mod:
-                from pypots.imputation import mod
-                model_cls = mod
-                break
+        # Dynamically get model class from PyPOTS
+        model_cls = getattr(pypots.imputation, self.model)
 
         # Get the dimension/feature size from input data
         n_features = X_array.shape[2] if X_array.ndim == 3 else X_array.shape[1]
 
-        # Set up common model parameters
+        # Set up model parameters
         params = {
             "n_features": n_features,
             "batch_size": self.batch_size,
@@ -114,131 +108,72 @@ class PyPOTSImputer(BaseTransformer):
             "patience": self.patience,
         }
 
-        # Add random state if provided
         if self.random_state is not None:
             params["random_state"] = self.random_state
 
-        # Update with user-provided parameters
+        # Update with user-defined parameters
         params.update(self.model_params)
 
-        # Initialize model
+        # Initialize and train the model
         self._imputer = model_cls(**params)
-
-        # Prepare training data dictionary as expected by PyPOTS
         train_data = {"X": X_array, "missing_mask": X_mask}
-
-        # Train the model - PyPOTS models expect a dictionary with X and missing_mask
         self._imputer.fit(train_data)
 
         self._is_fitted = True
         return self
 
     def _transform(self, X, y=None):
-        """Transform X by imputing missing values.
-
-        Parameters
-        ----------
-        X : pd.Series or pd.DataFrame
-            Time series data to impute.
-        y : None
-            Ignored.
-
-        Returns
-        -------
-        X_imputed : pd.Series or pd.DataFrame
-            Imputed time series, same type as input.
-        """
+        """Transform X by imputing missing values."""
         if not self._is_fitted:
             raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
 
         _check_soft_dependencies("pypots", severity="error")
 
-        # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
 
-        # Prepare test data dictionary as expected by PyPOTS
         test_data = {"X": X_array, "missing_mask": X_mask}
-
-        # Perform imputation - PyPOTS models return a dictionary with imputation key
         imputation_results = self._imputer.impute(test_data)
 
-        # Extract imputed data from the results
         imputed_data = imputation_results["imputation"]
 
-        # Convert back to original format
-        X_imputed = self._restore_output(X, imputed_data)
-
-        return X_imputed
+        return self._restore_output(X, imputed_data)
 
     def _prepare_input(self, X):
-        """Prepare input data for PyPOTS models.
-
-        Parameters
-        ----------
-        X : pd.Series, pd.DataFrame or np.ndarray
-            Input data.
-
-        Returns
-        -------
-        Tuple[np.ndarray, np.ndarray]
-            Tuple of (data_array, missing_mask)
-        """
+        """Prepare input data for PyPOTS models."""
         if isinstance(X, pd.Series):
             X_array = X.to_numpy().reshape(-1, 1)
         elif isinstance(X, pd.DataFrame):
             X_array = X.to_numpy()
-        else:  # numpy array
+        elif isinstance(X, np.ndarray):
             X_array = X.copy()
-            # Ensure 2D array
             if X_array.ndim == 1:
                 X_array = X_array.reshape(-1, 1)
+        else:
+            raise TypeError(
+                "Unsupported input type. Use pd.Series, pd.DataFrame, or np.ndarray."
+            )
 
         # Create missing mask (True where values are missing)
         X_mask = np.isnan(X_array)
 
-        # Prepare data in the format PyPOTS expects
-        # PyPOTS models typically expect data in shape [batch_size, seq_len, n_features]
-        # For a single time series, batch_size=1
+        # PyPOTS expects shape [batch_size, seq_len, n_features]
         if X_array.ndim == 2:
-            # [seq_len, n_features] -> [1, seq_len, n_features]
             X_array = np.expand_dims(X_array, axis=0)
             X_mask = np.expand_dims(X_mask, axis=0)
 
         return X_array, X_mask
 
     def _restore_output(self, X, imputed_data):
-        """Restore the output to the original format.
-
-        Parameters
-        ----------
-        X : pd.Series, pd.DataFrame or np.ndarray
-            Original input data.
-        imputed_data : np.ndarray
-            Imputed data.
-
-        Returns
-        -------
-        pd.Series or pd.DataFrame
-            Imputed data in the same format as the original input.
-        """
+        """Restore output to the original format."""
         if isinstance(X, pd.Series):
-            # Flatten the imputed data and convert it back to a pd.Series
             return pd.Series(imputed_data.flatten(), index=X.index)
         elif isinstance(X, pd.DataFrame):
-            # Remove the extra dimension and convert it back to a pd.DataFrame
             return pd.DataFrame(imputed_data[0], index=X.index, columns=X.columns)
         else:
-            # Return the imputed data as is for np.ndarray
             return imputed_data
 
     def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        dict
-            Dictionary of fitted parameters.
-        """
+        """Get fitted parameters."""
         if not self._is_fitted:
             raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
 
