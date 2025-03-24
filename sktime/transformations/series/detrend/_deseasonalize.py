@@ -90,7 +90,7 @@ class Deseasonalizer(BaseTransformer):
         allowed_models = ("additive", "multiplicative")
         if model not in allowed_models:
             raise ValueError(
-                f"`model` must be one of {allowed_models}, " f"but found: {model}"
+                f"`model` must be one of {allowed_models}, but found: {model}"
             )
         self.model = model
         self._X = None
@@ -316,8 +316,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         is_seasonal = self.seasonality_test_(y, sp=self.sp)
         if not isinstance(is_seasonal, (bool, np.bool_)):
             raise ValueError(
-                f"Return type of `func` must be boolean, "
-                f"but found: {type(is_seasonal)}"
+                f"Return type of `func` must be boolean, but found: {type(is_seasonal)}"
             )
         return is_seasonal
 
