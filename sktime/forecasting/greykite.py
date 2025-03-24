@@ -62,7 +62,8 @@ class GreykiteForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
-        "capability:pred_int": True,  # Can produce prediction intervals.
+        "capability:pred_int": False,  # Can produce prediction intervals.
+        "capability:pickle": False,
         "python_dependencies": ["greykite"],  # Required Python dependencies.
     }
 
@@ -224,9 +225,17 @@ class GreykiteForecaster(BaseForecaster):
                 - date_format: str or None
                     Format of the time column (default is None, allowing inference).
         """
-        return {
-            "forecast_horizon": 24,
-            "freq": "D",
-            "model_template": "SILVERKITE",
-            "date_format": None,
-        }
+        return [
+            {
+                "forecast_horizon": 24,
+                "freq": "D",
+                "model_template": "SILVERKITE",
+                "date_format": None,
+            },
+            {
+                "forecast_horizon": 12,
+                "freq": "MS",
+                "model_template": "SILVERKITE",
+                "date_format": None,
+            },
+        ]
