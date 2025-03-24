@@ -1401,8 +1401,8 @@ class BaseTransformer(BaseEstimator):
             # which always has the entry 0.
             # in this case, we need to strip this level
             Xt_has_superfluous_zero_level = (
-                X_input_scitype == "Series"
-                and self._is_vectorized
+                X_input_scitype != "Series"
+                and case == "case 3: requires vectorization"
                 and isinstance(Xt, (pd.DataFrame, pd.Series))
             )
             # we ensure the output is pd_DataFrame_Table
