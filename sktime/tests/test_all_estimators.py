@@ -1586,7 +1586,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         base_classes = get_base_class_list()
         base_classes = [cls for cls in base_classes if issubclass(estimator_class, cls)]
 
-        msg = "Base classes inheriting should always appear last in the MRO"
+        msg = "Base classes should always appear last in the MRO"
         for base_class in base_classes:
             last_class = [
                 cls
