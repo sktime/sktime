@@ -44,12 +44,10 @@ class ClustererAsTransformer(BaseTransformer):
     >>> cluster_assignment = cluster_assign_trafo.transform(X)
     """
 
-    _config = {"output_conversion": "off"}
-
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "felipeangelimvieira"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -170,9 +168,14 @@ class ClustererAsTransformer(BaseTransformer):
             y_pred = pd.DataFrame(
                 y_pred, index=X.index.droplevel(-1).unique(), columns=["cluster"]
             )
-            return self._map_primitive_to_hier_idx(y_pred, mapping)
+            y_pred = self._map_primitive_to_hier_idx(y_pred, mapping)
 
-        return self.clusterer_.predict(X)
+        y_pred = self.clusterer_.predict(X)
+
+        # y_pred is a np.ndarray, we need to convert it to a pd.DataFrame
+        # which also has correct indices and column names
+        y_pred = pd.DataFrame(y_pred, index=X.index, columns=["cluster"])
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
