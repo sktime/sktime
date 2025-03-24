@@ -161,20 +161,21 @@ class ClustererAsTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        if X.index.nlevels > 2:
-            X, mapping = self._map_hier_to_panel(X)
+        requires_index_mapping = X.index.nlevels > 2
 
-            y_pred = self.clusterer_.predict(X)
-            y_pred = pd.DataFrame(
-                y_pred, index=X.index.droplevel(-1).unique(), columns=["cluster"]
-            )
-            y_pred = self._map_primitive_to_hier_idx(y_pred, mapping)
+        if requires_index_mapping:  # map indices to flat index
+            X, mapping = self._map_hier_to_panel(X)
 
         y_pred = self.clusterer_.predict(X)
 
         # y_pred is a np.ndarray, we need to convert it to a pd.DataFrame
         # which also has correct indices and column names
-        y_pred = pd.DataFrame(y_pred, index=X.index, columns=["cluster"])
+        expected_index = X.index.droplevel(-1).unique()
+        y_pred = pd.DataFrame(y_pred, expected_index, columns=["cluster"])
+
+        if requires_index_mapping:  # map flat index back to hierarchical index
+            y_pred = self._map_primitive_to_hier_idx(y_pred, mapping)
+
         return y_pred
 
     @classmethod
