@@ -30,9 +30,14 @@ class HFTransformersForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str
+    model_path : str or PreTrainedModel
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
+        This can be one of the following:
+        - A string specifying the Hugging Face model name or path
+          (e.g., `"huggingface/autoformer-tourism-monthly"`).
+        - An instance of a `PreTrainedModel`, allowing manual initialization
+          and configuration.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
@@ -43,10 +48,10 @@ class HFTransformersForecaster(BaseForecaster):
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
           the model with fewer trainable parameters, saving computational resources.
+
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
-
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -71,6 +76,8 @@ class HFTransformersForecaster(BaseForecaster):
 
     Examples
     --------
+    **Using a Pretrained Model from Hugging Face**
+
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
     ... )
@@ -94,6 +101,8 @@ class HFTransformersForecaster(BaseForecaster):
     >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+
+    **Using PEFT for Fine-Tuning**
 
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
@@ -126,6 +135,44 @@ class HFTransformersForecaster(BaseForecaster):
     >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+
+    **Using an Initialized Model**
+
+    >>> from sktime.datasets import load_airline
+    >>> from transformers import AutoformerConfig, AutoformerForPrediction
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster
+    ... )
+    >>> y = load_airline()
+
+    >>> # Define model configuration
+    >>> config = AutoformerConfig(
+    ...     num_dynamic_real_features=0,
+    ...     num_static_real_features=0,
+    ...     num_static_categorical_features=0,
+    ...     num_time_features=0,
+    ...     context_length=32,
+    ...     prediction_length=8,
+    ...     lags_sequence=[1, 2, 3],
+    ... )
+
+    >>> # Initialize the model
+    >>> model = AutoformerForPrediction(config)
+
+    >>> # Initialize the forecaster with the model
+    >>> forecaster = HFTransformersForecaster(
+    ...     model_path=model,
+    ...     fit_strategy="minimal",
+    ...     training_args={
+    ...         "num_train_epochs": 10,
+    ...         "output_dir": "output",
+    ...         "per_device_train_batch_size": 4
+    ...     },
+    ... )
+
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
@@ -144,7 +191,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path: str,
+        model_path: str = None,
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
@@ -171,83 +218,79 @@ class HFTransformersForecaster(BaseForecaster):
         self.peft_config = peft_config
 
     def _fit(self, y, X, fh):
-        from transformers import AutoConfig, Trainer, TrainingArguments
+        from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
-        # Load model and extract config
-        config = AutoConfig.from_pretrained(self.model_path)
+        if isinstance(self.model_path, PreTrainedModel):
+            self.model = self.model_path
+            config = self.model.config
 
-        # Update config with user provided config
-        _config = config.to_dict()
-        _config.update(self._config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
-        _config["num_static_real_features"] = 0
-        _config["num_dynamic_real_features"] = 0
-        _config["num_static_categorical_features"] = 0
-        _config["num_time_features"] = 0 if X is None else X.shape[-1]
-
-        if hasattr(config, "feature_size"):
-            del _config["feature_size"]
-
-        if fh is not None:
-            _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
-                _config["prediction_length"],
-            )
-
-        config = config.from_dict(_config)
-        import transformers
-
-        prediction_model_class = None
-        if hasattr(config, "architectures") and config.architectures is not None:
-            prediction_model_class = config.architectures[0]
-        elif hasattr(config, "model_type"):
-            prediction_model_class = (
-                "".join(x.capitalize() for x in config.model_type.lower().split("_"))
-                + "ForPrediction"
-            )
         else:
-            raise ValueError(
-                "The model type is not inferable from the config."
-                "Thus, the model cannot be loaded."
+            # Load model and extract config
+            config = AutoConfig.from_pretrained(self.model_path)
+
+            # Update config with user-provided config
+            _config = config.to_dict()
+            _config.update(self._config)
+            _config["num_dynamic_real_features"] = 0
+            _config["num_static_real_features"] = 0
+            _config["num_static_categorical_features"] = 0
+            _config["num_time_features"] = 0 if X is None else X.shape[-1]
+
+            if hasattr(config, "feature_size"):
+                del _config["feature_size"]
+
+            if fh is not None:
+                _config["prediction_length"] = max(
+                    *(fh.to_relative(self._cutoff)._values + 1),
+                    _config.get("prediction_length", 0),
+                )
+
+            config = config.from_dict(_config)
+
+            # Load model and info
+            import transformers
+
+            prediction_model_class = None
+            if hasattr(config, "architectures") and config.architectures:
+                prediction_model_class = config.architectures[0]
+            elif hasattr(config, "model_type"):
+                prediction_model_class = (
+                    "".join(x.capitalize() for x in config.model_type.split("_"))
+                    + "ForPrediction"
+                )
+            else:
+                raise ValueError("The model type cannot be inferred from the config.")
+
+            self.model, self.info = getattr(
+                transformers, prediction_model_class
+            ).from_pretrained(
+                self.model_path,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
             )
-        # Load model with the updated config
-        self.model, info = getattr(
-            transformers, prediction_model_class
-        ).from_pretrained(
-            self.model_path,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
+            # Freeze loaded parameters and reinitialize mismatched layers
+            for param in self.model.parameters():
+                param.requires_grad = False
+            for key, _, _ in self.info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight = torch.nn.Parameter(
+                    _model.weight.masked_fill(_model.weight.isnan(), 0.001),
+                    requires_grad=True,
+                )
 
-        # Clamp all loaded parameters to avoid NaNs due to large values
-        for param in self.model.model.parameters():
-            param.clamp_(-1000, 1000)
-
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight = torch.nn.Parameter(
-                _model.weight.masked_fill(_model.weight.isnan(), 0.001),
-                requires_grad=True,
-            )
-
+        # Dataset preparation
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
-
             train_dataset = PyTorchDataset(
                 y[:split],
                 config.context_length + max(config.lags_sequence),
                 X=X[:split] if X is not None else None,
                 fh=config.prediction_length,
             )
-
             eval_dataset = PyTorchDataset(
                 y[split:],
                 config.context_length + max(config.lags_sequence),
@@ -261,16 +304,17 @@ class HFTransformersForecaster(BaseForecaster):
                 X=X if X is not None else None,
                 fh=config.prediction_length,
             )
-
             eval_dataset = None
 
+        # Prepare training arguments
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
         training_args = TrainingArguments(**training_args)
 
+        # Handle fine-tuning strategy
         if self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0:
-                return  # No need to fit
+            if self.model is None and len(self.info["mismatched_keys"]) == 0:
+                return
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
@@ -289,11 +333,13 @@ class HFTransformersForecaster(BaseForecaster):
                 ),
             ):
                 from peft import get_peft_model
+
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
+        # Train the model
         trainer = Trainer(
             model=self.model,
             args=training_args,
@@ -381,73 +427,53 @@ class HFTransformersForecaster(BaseForecaster):
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+        params : list of dict
+            Parameters to create testing instances of the class.
+            Each dict contains parameters to construct an "interesting" test instance,
+            i.e., `MyClass(**params)` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        base_training_args = {
+            "num_train_epochs": 1,
+            "output_dir": "test_output",
+            "per_device_train_batch_size": 32,
+        }
+
+        base_config = {
+            "lags_sequence": [1, 2, 3],
+            "context_length": 2,
+            "prediction_length": 4,
+        }
+
         test_params = [
+            # General transformer-based test cases
             {
                 "model_path": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                },
+                "training_args": base_training_args,
+                "config": base_config,
                 "deterministic": True,
-            },
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
-                "deterministic": True,
-            },
+            }
         ]
 
+        # Add PEFT-specific test case if PEFT is available
         if _check_soft_dependencies("peft", severity="none"):
             from peft import LoraConfig
 
-            test_params.append(
-                {
-                    "model_path": "huggingface/autoformer-tourism-monthly",
-                    "fit_strategy": "peft",
-                    "training_args": {
-                        "num_train_epochs": 1,
-                        "output_dir": "test_output",
-                        "per_device_train_batch_size": 32,
-                    },
-                    "config": {
-                        "lags_sequence": [1, 2, 3],
-                        "context_length": 2,
-                        "prediction_length": 4,
-                        "label_length": 2,
-                    },
-                    "peft_config": LoraConfig(
-                        r=2,
-                        lora_alpha=8,
-                        target_modules=["q_proj"],
-                        lora_dropout=0.01,
-                    ),
-                    "deterministic": True,
-                }
-            )
+            peft_test_case = {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "peft",
+                "training_args": base_training_args,
+                "config": {**base_config, "label_length": 2},
+                "peft_config": LoraConfig(
+                    r=2,
+                    lora_alpha=8,
+                    target_modules=["q_proj"],
+                    lora_dropout=0.01,
+                ),
+                "deterministic": True,
+            }
+            test_params.append(peft_test_case)
 
         return test_params
 
