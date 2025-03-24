@@ -11,11 +11,8 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
-# Check if PyPOTS is installed
-_check_soft_dependencies("pypots", severity="error")
-
-# Import the module
-import pypots
+# check if pypots is present
+pypots_present = _check_soft_dependencies("pypots", severity="error")
 
 
 class PyPOTSImputer(BaseTransformer):
@@ -66,7 +63,7 @@ class PyPOTSImputer(BaseTransformer):
 
     def __init__(
         self,
-        model: str = "SAITS",
+        model: str = "SAITS",  # default model
         model_params: Optional[dict] = None,
         n_epochs: int = 100,
         batch_size: int = 32,
@@ -87,6 +84,13 @@ class PyPOTSImputer(BaseTransformer):
         """Fit the imputer to the training data."""
         # Convert input to required format
         X_array, X_mask = self._prepare_input(X)
+
+        if pypots_present:
+            import pypots as pypots
+        else:
+            raise ImportError(
+                "PyPOTS is not installed. Please install using `pip install pypots`."
+            )
 
         models_list = ["SAITS", "BRITS", "MRNN", "GPVAE", "Transformer"]
         if self.model not in models_list:
@@ -127,7 +131,12 @@ class PyPOTSImputer(BaseTransformer):
         if not self._is_fitted:
             raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
 
-        _check_soft_dependencies("pypots", severity="error")
+        if pypots_present:
+            import pypots as pypots
+        else:
+            raise ImportError(
+                "PyPOTS is not installed. Please install using `pip install pypots."
+            )
 
         X_array, X_mask = self._prepare_input(X)
 
