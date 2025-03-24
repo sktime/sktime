@@ -143,7 +143,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         if update_params:
             warn("Updating `final regressor is not implemented", obj=self)
-        for forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
         return self
 

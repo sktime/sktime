@@ -328,18 +328,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_forecasters"
-
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "forecasters_"
-
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         self.aggfunc = aggfunc
         self.weights = weights
@@ -391,8 +379,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        forecasters = [f[1] for f in self._forecasters]
-        self._fit_forecasters(forecasters, y, X, fh)
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):
