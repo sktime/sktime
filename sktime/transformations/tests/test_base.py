@@ -837,7 +837,7 @@ def test_series_to_primitives_hierarchical():
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
 
-    X =_make_hierarchical()
+    X = _make_hierarchical()
     Xt = est.fit_transform(X)
     ix = Xt.index
 
@@ -848,10 +848,18 @@ def test_series_to_primitives_hierarchical():
     from sktime.clustering.dbscan import TimeSeriesDBSCAN
     from sktime.registry import coerce_scitype
 
-    X =_make_hierarchical()
-    transformer = TimeSeriesDBSCAN.create_test_instance()
-    transformer = coerce_scitype(transformer, "transformer")
-    Xt = transformer.fit_transform(X)
+    X = _make_hierarchical()
+    clust = TimeSeriesDBSCAN.create_test_instance()
+    est = coerce_scitype(clust, "transformer")
+
+    # ensure est is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of est, but we need to choose another example)
+    assert "Hierarchical" in inner_X_scitypes(est)
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Primitives"
+
+    Xt = est.fit_transform(X)
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == ix).all()
