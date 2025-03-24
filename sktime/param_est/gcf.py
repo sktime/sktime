@@ -40,7 +40,7 @@ class GrangerCausalityFitter(BaseParamFitter):
     .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.grangercausalitytests.html
     """
 
-    __tags = {
+    _tags = {
         "X_inner_mtype": "pd.DataFrame",
         "scitype:transform-input": "Series",
         "capability:missing_values": False,
@@ -94,7 +94,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         # Check for statsmodels dependency
         _check_soft_dependencies("statsmodels", severity="error")
 
-        # Import statsmodels functions only when needed
+        # Import statsmodels functions only after dependency check
         from statsmodels.tsa.stattools import (
             adfuller,
             coint,
@@ -111,7 +111,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             X_bivariate = X.copy()
             col_name = X.columns[0]
             X_bivariate[f"{col_name}_lagged"] = X_bivariate[col_name].shift(1)
-            X_bivariate = X_bivariate.dropna()  # Fixed typo: was X.bivariate
+            X_bivariate = X_bivariate.dropna()
             X = X_bivariate
 
         elif X.shape[1] != 2:
