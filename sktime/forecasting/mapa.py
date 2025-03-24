@@ -138,7 +138,7 @@ class MAPAForecaster(BaseForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "authors": ["trnnick", "phoeenniixx", "satvshr"],
-        "python_dependencies": "statsmodels",
+        "python_dependencies": ["statsmodels", "pandas>1"],
     }
 
     def __init__(
