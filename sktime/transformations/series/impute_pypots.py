@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 # Check if PyPOTS is installed
-_check_soft_dependencies("pypots", raise_errors=True)
+_check_soft_dependencies("pypots", severity="error")
 
 # Import the module
 import pypots
