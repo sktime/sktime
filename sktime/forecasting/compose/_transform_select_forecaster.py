@@ -122,12 +122,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         super().__init__()
 
         # saving arguments to object storage
-        if transformer is not None:
-            self.transformer = transformer
-        else:
-            from sktime.transformations.series.adi_cv import ADICVTransformer
-
-            self.transformer = ADICVTransformer(features=["class"])
+        self.transformer = self._get_transformer_or_default(transformer)
 
         self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
@@ -216,7 +211,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         forecasters = dict()
         for category, estimator in new_steps:
             estimator = estimator.clone() if estimator is not None else None
-            # We assign this in a different way
+            # We assign two categories directly
             if category == "fallback_forecaster":
                 fallback_forecaster = estimator
             elif category == "transformer":
@@ -224,7 +219,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             else:
                 forecasters[category] = estimator
         self.forecasters = forecasters
-        self.transformer = transformer
+        self.transformer = self._get_transformer_or_default(transformer)
         self.fallback_forecaster = fallback_forecaster
 
     @property
@@ -275,6 +270,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         """
         # passing time series through the provided transformer!
 
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
         self.category_ = self.transformer_.fit_transform(X=y, y=X).iloc[0, 0]
 
         # check if we have an available forecaster
@@ -433,7 +429,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         Returns
         -------
-        forecasters : list[tuple[str, strsktime forecasters]]
+        forecasters : list[tuple[str, sktime forecasters]]
             The list of forecasters which is returned. Also includes the
             fallback forecaster with the category: "fallback_forecaster"
         """
@@ -447,7 +443,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         Parameters
         ----------
-        new_forecasters : list[tuple[str, strsktime forecasters]]
+        new_forecasters : list[tuple[str, sktime forecasters]]
             The list of new forecasters to update the object's forecasters with
         """
         # Accepting in possible new forecasters
@@ -458,6 +454,25 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
             else:
                 self.fallback_forecaster = forecaster
+
+    def _get_transformer_or_default(self, transformer=None):
+        """Return the transformer is provided, or a default.
+
+        Parameters
+        ----------
+        transformer, optional: sktime transformer or clusterer
+
+        Returns
+        -------
+        sktime transformer or clusterer
+        """
+        if transformer is not None:
+            return transformer
+
+        from sktime.transformations.series.adi_cv import ADICVTransformer
+
+        transformer = ADICVTransformer(features=["class"])
+        return transformer
 
 
 # Function implementations that will be added dynamically
