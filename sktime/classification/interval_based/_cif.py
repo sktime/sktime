@@ -401,7 +401,20 @@ class CanonicalIntervalForest(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+
         if parameter_set == "results_comparison":
-            return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
+            params_list = [
+                {"n_estimators": 10},
+                {"n_intervals": 2},
+                {"att_subsample_size": 4},
+            ]
+            return params_list
+
         else:
-            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+            params_list = [
+                {"n_estimators": 2},
+                {"n_intervals": 2},
+                {"att_subsample_size": 2},
+            ]
+            return params_list
+

@@ -284,3 +284,23 @@ class CNTCClassifier(BaseDeepClassifier):
             probs = np.hstack([1 - probs, probs])
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
+
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        if parameter_set == 'default':
+            params = [
+                {"n_epochs": 2000},
+                {"batch_size": 16},
+                {"filter_sizes": (16, 8)},
+                {"kernel_sizes": (1, 1)},
+                {"rnn_size": 64},
+                {"lstm_size": 8},
+                {"dense_size": 64},
+                {"callbacks": None},
+                {"verbose": False},
+                {"loss": "categorical_crossentropy"},
+                {"metrics": None},
+                {"random_state": 0},
+            ]
+            return params
