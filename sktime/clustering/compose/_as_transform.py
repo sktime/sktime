@@ -163,6 +163,7 @@ class ClustererAsTransformer(BaseTransformer):
         transformed version of X
         """
         requires_index_mapping = isinstance(X, pd.DataFrame) and X.index.nlevels > 2
+        expected_index = X.index.droplevel(-1).unique()
 
         if requires_index_mapping:  # map indices to flat index
             X, mapping = self._map_hier_to_panel(X)
@@ -171,7 +172,6 @@ class ClustererAsTransformer(BaseTransformer):
 
         # y_pred is a np.ndarray, we need to convert it to a pd.DataFrame
         # which also has correct indices and column names
-        expected_index = X.index.droplevel(-1).unique()
         y_pred = pd.DataFrame(y_pred, expected_index, columns=["cluster"])
 
         if requires_index_mapping:  # map flat index back to hierarchical index
