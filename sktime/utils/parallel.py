@@ -63,7 +63,7 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "ray": Prevents ray from shutting down afterward parallelization when setting
+        - "ray": Prevents ray from shutting down after parallelization when setting
            the "shutdown_ray" key with value "False". Takes a "logger_name" and
            a"mute_warnings" key for configuration.
            Additionally takes a "ray_remote_args" dictionary that contains valid keys
