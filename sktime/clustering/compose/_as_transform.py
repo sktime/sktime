@@ -112,8 +112,8 @@ class ClustererAsTransformer(BaseTransformer):
         -------
         self: reference to self
         """
-        self._idx_names = X.index.names
         if isinstance(X, pd.DataFrame) and X.index.nlevels > 2:
+            self._idx_names = X.index.names
             X, _ = self._map_hier_to_panel(X)
         self.clusterer_.fit(X)
         return self
