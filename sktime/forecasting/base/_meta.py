@@ -25,11 +25,11 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, backend="loky", backend_params=None, n_jobs=None):
+    def __init__(self, forecasters, backend="loop", backend_params=None, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None
-        self.n_jobs = None
-        self.backend = backend
+        self.n_jobs = n_jobs  # Retained for backward compatibility
+        self.backend = "loop" if backend is None else backend
         self.backend_params = backend_params if backend_params != {} else {}
         self.n_jobs = n_jobs  # Retained for backward compatibility
         super().__init__()

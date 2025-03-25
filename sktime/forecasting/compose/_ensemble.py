@@ -405,7 +405,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        self._fit_forecasters(None, y, X, fh)
+        self._check_forecasters()
+        self._fit_forecasters(self.forecasters, y, X, fh)
         return self
 
     def _predict(self, fh, X):
