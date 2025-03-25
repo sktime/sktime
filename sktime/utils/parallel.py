@@ -64,8 +64,10 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
         - "ray": a dictionary that contains valid keys for ray_init can be passed here
-           as "ray_remote_args", e.g. ''num_cpus'' or ''runtime_env''.
-           Also allows a "logger_name" and "mute_warnings" key for configuration.
+           as "ray_remote_args", e.g. ''num_cpus'' or ''runtime_env''. Prevents
+           ray from shutting down afterwards when setting the "shutdown_ray" key
+           with value "False". Also allows a "logger_name" and "mute_warnings"
+           key for configuration.
     """
     if meta is None:
         meta = {}
@@ -168,17 +170,10 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     # remove the possible excess keys
     logger = logging.getLogger(backend_params.pop("logger_name", None))
     mute_warnings = backend_params.pop("mute_warnings", False)
+    shutdown_ray = backend_params.pop("shutdown_ray", True)
 
     if "ray_remote_args" not in backend_params.keys():
         backend_params["ray_remote_args"] = {}
-
-    def _ray_init_locally(ray_remote_args) -> None:
-        if not ray.is_initialized():
-            logger.info("Starting Ray Parallel")
-            context = ray.init(**ray_remote_args)
-            logger.info(
-                f"Ray initialized locally. Open dashboard at http://{context.dashboard_url}"
-            )
 
     @ray.remote  # pragma: no cover
     def _ray_execute_function(
@@ -190,10 +185,12 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
         result = fun(params, meta)
         return result
 
-    shutdown_ray = False
     if not ray.is_initialized():
-        shutdown_ray = True
-        _ray_init_locally(backend_params["ray_remote_args"])
+        logger.info("Starting Ray Parallel")
+        context = ray.init(**backend_params["ray_remote_args"])
+        logger.info(
+            f"Ray initialized locally. Open dashboard at http://{context.dashboard_url}"
+        )
 
     res = ray.get(
         [
