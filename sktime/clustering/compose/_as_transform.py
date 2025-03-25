@@ -4,7 +4,6 @@
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import MTYPE_LIST_PANEL
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
@@ -57,7 +56,7 @@ class ClustererAsTransformer(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": MTYPE_LIST_PANEL + ["pd_multiindex_hier"],
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
