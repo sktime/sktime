@@ -220,8 +220,16 @@ def plot_interval(ax, interval_df):
     >>> interval_df.index = interval_df.index.to_timestamp()
 
     >>> fig, ax = plt.subplots(figsize=(10, 5))
-    >>> ax.plot(y_train.index, y_train, label='Training Data', color='blue')  # doctest: +SKIP
-    >>> ax.plot(y_test.index, y_test, label='Actual Test Data', color='orange')  # doctest: +SKIP
+    >>> ax.plot(
+            y_train.index,
+            y_train,
+            label='Training Data',
+            color='blue')  # doctest: +SKIP
+    >>> ax.plot(
+            y_test.index,
+            y_test,
+            label='Actual Test Data',
+            color='orange')  # doctest: +SKIP
 
     >>> plot_interval(ax, interval_df)  # doctest: +SKIP
 
@@ -484,7 +492,7 @@ def plot_windows(cv, y, title="", ax=None):
     y-axis: window number, starting at 0
 
     plot elements: training split (orange) and test split (blue)
-        
+
         dots indicate index in the training or test split
         will be plotted on top of each other if train/test split is not disjoint
 
@@ -611,7 +619,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     x-axis: interval from 0 to 1, quantile points
 
     y-axis: interval from 0 to 1, calibration fractions
-    
+
     plot elements: calibration curve of the quantile predictions (blue) and the ideal
     calibration curve (orange), the curve with equation y = x.
         Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
