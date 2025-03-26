@@ -71,6 +71,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     ...     llm_model='BERT'
     ... )
     >>> forecaster.fit(y)
+    TimeLLMForecaster(llm_model='BERT', pred_len=36)
     >>> y_pred = forecaster.predict(fh=[1])
     """
 
@@ -176,6 +177,8 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         self.model_ = self.model_.to(self.device_)
         self.model_ = self.model_.to(torch.bfloat16)
 
+        self.last_values = y
+
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
         config_dict = {
@@ -232,7 +235,9 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        X_tensor = torch.tensor(X.values).reshape(1, -1, 1).to(self.device_)
+        X_tensor = (
+            torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
+        )
         X_tensor = X_tensor.to(torch.float32)
         res = self.model_.forward(
             X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
