@@ -410,6 +410,7 @@ class QuickTester:
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
+        verbose=False,
     ):
         """Run all tests on one single estimator.
 
@@ -425,6 +426,7 @@ class QuickTester:
         Parameters
         ----------
         estimator : estimator class or estimator instance
+
         raise_exceptions : bool, optional, default=False
             whether to return exceptions/failures in the results dict, or raise them
 
@@ -433,17 +435,23 @@ class QuickTester:
 
         tests_to_run : str or list of str, names of tests to run. default = all tests
             sub-sets tests that are run to the tests given here.
+
         fixtures_to_run : str or list of str, pytest test-fixture combination codes.
             which test-fixture combinations to run. Default = run all of them.
             sub-sets tests and fixtures to run to the list given here.
             If both tests_to_run and fixtures_to_run are provided, runs the *union*,
             i.e., all test-fixture combinations for tests in tests_to_run,
-                plus all test-fixture combinations in fixtures_to_run.
+            plus all test-fixture combinations in fixtures_to_run.
+
         tests_to_exclude : str or list of str, names of tests to exclude. default = None
             removes tests that should not be run, after subsetting via tests_to_run.
+
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
+
+        verbose : bool, optional, default=False
+            whether to print the results of the tests as they are run
 
         Returns
         -------
@@ -576,6 +584,10 @@ class QuickTester:
                         pytest_fixture_names,
                     )
 
+            def print_if_verbose(msg):
+                if verbose:
+                    print(msg)  # noqa: T001, T201
+
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
                 # this is needed because pytest unwraps 1-tuples automatically
@@ -592,17 +604,20 @@ class QuickTester:
                 if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
-                if not raise_exceptions:
-                    try:
-                        test_fun(**deepcopy(args))
-                        results[key] = "PASSED"
-                    except Skipped as err:
-                        results[key] = f"SKIPPED: {err.msg}"
-                    except Exception as err:
-                        results[key] = err
-                else:
+                print_if_verbose(f"Running test {key}")
+
+                try:
                     test_fun(**deepcopy(args))
                     results[key] = "PASSED"
+                    print_if_verbose("PASSED")
+                except Skipped as err:
+                    results[key] = f"SKIPPED: {err.msg}"
+                    print_if_verbose(f"SKIPPED: {err.msg}")
+                except Exception as err:
+                    results[key] = err
+                    print_if_verbose(f"FAILED: {err}")
+                    if raise_exceptions:
+                        raise err
 
         return results
 
