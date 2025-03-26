@@ -604,7 +604,7 @@ class QuickTester:
                 if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
-                print_if_verbose(f"Running test {key}")
+                print_if_verbose(f"{key}")
 
                 try:
                     test_fun(**deepcopy(args))
