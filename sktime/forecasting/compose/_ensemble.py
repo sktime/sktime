@@ -390,8 +390,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y, self._yoldnames, self._ynewnames = _coerce_variable_name(
             deepcopy(y), prefix="y"
         )
-        forecasters = [f[1] for f in self._forecasters]
-        self._fit_forecasters(forecasters, y, X, fh)
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):
