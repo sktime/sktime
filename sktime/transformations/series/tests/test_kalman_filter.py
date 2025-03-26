@@ -13,6 +13,7 @@ from sktime.transformations.series.kalman_filter import (
     KalmanFilterTransformerPK,
     KalmanFilterTransformerSIMD,
 )
+from sktime.utils._testing.panel import make_transformer_problem
 
 # ts stands for time steps
 ts = 10
@@ -956,3 +957,60 @@ def test_transform_and_smooth_simd(hidden, denoising, params, measurements):
 
     # test filter()
     assert_array_almost_equal(xt_adapter_transformer, xt_pykalman)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(KalmanFilterTransformerSIMD),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("smooth", [True, False])
+@pytest.mark.parametrize(
+    "params, n_columns",
+    [
+        (
+            dict(
+                state_dim=2,
+                state_transition=np.array([[1, 1], [0, 1]]),
+                process_noise=np.diag([1e-6, 0.01]),
+                measurement_function=np.array([[1, 0]]),
+                measurement_noise=10,
+                # NOTE: currently fails without these definitions
+                # TODO: document this in simdkalman
+                initial_state=np.array([0, -1]),
+                initial_state_covariance=np.diag([1, 1]),
+                hidden=False,
+            ),
+            1,
+        ),
+        (
+            dict(
+                state_dim=2,
+                state_transition=np.array([[1, 1], [0, 1]]),
+                process_noise=np.diag([1e-6, 0.01]),
+                measurement_function=np.array([[1, 0], [0, 1]]),
+                measurement_noise=np.diag([10, 10]),
+                initial_state=np.array([0, -1]),
+                initial_state_covariance=np.diag([1, 1]),
+                hidden=True,
+            ),
+            2,
+        ),
+    ],
+)
+def test_panel_transform_simd(smooth, params, n_columns):
+    """Check that panel smoothing gives the same results as the series version"""
+    X = make_transformer_problem(n_columns=n_columns, n_timepoints=15)
+
+    all_params = dict(params, denoising=smooth)
+    panel_smoother = KalmanFilterTransformerSIMD(**all_params)
+    panel_Xt = panel_smoother.fit_transform(X)
+
+    series_results = []
+    for i in range(X.shape[0]):
+        as_series = X[i, ...].transpose()
+        series_smoother = KalmanFilterTransformerSIMD(**all_params)
+        series_out = series_smoother.fit_transform(as_series).transpose()
+        series_results.append(series_out)
+
+    series_Xt = np.stack(series_results, axis=0)
+    assert_array_almost_equal(panel_Xt, series_Xt)

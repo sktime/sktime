@@ -1461,9 +1461,6 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     KalmanFilterTransformerFP :
         Kalman Filter transformer, adapter for the ``filterpy`` package
         into ``sktime``.
-    sktime.transformations.panel.SIMDKalmanSmoother :
-        ``simdkalman``-based Kalman Filter transformer for Panel data.
-        Prefer this for fast smoothing of multiple time series.
 
     Notes
     -----
@@ -1473,7 +1470,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
 
     Examples
     --------
-        Basic example:
+        Timing example:
 
     >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
@@ -1489,6 +1486,41 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     ...     )
     >>> Xt = transformer.fit_transform(X=X)  # doctest: +SKIP
 
+    >>> import numpy as np  # doctest: +SKIP
+    >>> import time  # doctest: +SKIP
+    >>> from sktime.utils._testing.panel import make_transformer_problem
+    >>> from sktime.transformations.series.kalman_filter import KalmanFilterTransformerPK
+    >>> from sktime.transformations.series.kalman_filter import KalmanFilterTransformerSIMD
+    >>>
+    >>> # Test data
+    >>> X = make_transformer_problem(n_instances=200, n_columns=2, n_timepoints=500)
+    >>>
+    >>> kf_params = dict(
+    ...     state_dim=2,
+    ...     state_transition=np.array([[1, 1], [0, 1]]),
+    ...     process_noise=np.diag([1e-6, 0.01]),
+    ...     measurement_function=np.array([[1, 0], [0, 1]]),
+    ...     measurement_noise=np.diag([10, 10]),
+    ...     initial_state=np.array([0, -1]),
+    ...     initial_state_covariance=np.diag([1, 1]),
+    ... )
+    >>>
+    >>> t0 = time.time()  # doctest: +SKIP
+    >>> X_SIMD = KalmanFilterTransformerSIMD(**kf_params).fit_transform(X)  # doctest: +SKIP
+    >>> T_SIMD = time.time() - t0  # doctest: +SKIP
+    >>>
+    >>> t0 = time.time()  # doctest: +SKIP
+    >>> X_PK = KalmanFilterTransformerPK(**kf_params).fit_transform(X)  # doctest: +SKIP
+    >>> T_PK = time.time() - t0  # doctest: +SKIP
+    >>>
+    >>> print(f"SIMDKalman:\t%.03f s\nPyKalman:\t%.03f s" % (T_SIMD, T_PK))  # doctest: +SKIP
+    SIMDKalman:	0.254 s
+    PyKalman:	14.254 s
+    >>>
+    >>> from numpy.testing import assert_array_almost_equal  # doctest: +SKIP
+    >>> assert_array_almost_equal(X_SIMD, X_PK)  # doctest: +SKIP
+    >>>
+
     """
 
     _tags = {
@@ -1501,7 +1533,10 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         # --------------
         "scitype:transform-labels": "Series",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": [
+            "np.ndarray",
+            "numpy3D",
+        ],  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -1608,7 +1643,19 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
             X_transformed : np.ndarray
                 transformed version of X
         """
-        return self._adapter.compute(X, multiple_instances=False)
+        multiple_instances = len(X.shape) == 3  # (instance, variable, time point)
+        if multiple_instances:
+            X_transposed = X.transpose(0, 2, 1)  # (instance, time point, variable)
+        else:
+            X_transposed = X
+
+        X_transformed = self._adapter.compute(
+            X_transposed, multiple_instances=multiple_instances
+        )
+        if multiple_instances:
+            return X_transformed.transpose(0, 2, 1)
+        else:
+            return X_transformed
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
