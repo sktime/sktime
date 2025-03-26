@@ -1592,7 +1592,6 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-        from sktime.transformations.panel._simdkalman_adapter import _SIMDKalmanAdapter
 
         measurement_dim = X.shape[1]
         mat_tup = self._get_init_values(measurement_dim, self.state_dim)
@@ -1604,18 +1603,18 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
                     "Dynamic inputs (list of matrices per time-step) are not supported by simdkalman"
                 )
 
-        self._adapter = _SIMDKalmanAdapter(
+        from simdkalman import KalmanFilter as simdkalman_KalmanFilter
+
+        self._X0 = X0_[:, np.newaxis]
+        self._P0 = P0_
+        self._kalman_filter = simdkalman_KalmanFilter(
             state_transition=F_,
             process_noise=Q_,
-            measurement_noise=R_,
-            measurement_function=H_,
-            initial_state=X0_[:, np.newaxis],
-            initial_state_covariance=P0_,
-            hidden=self.hidden,
-            denoising=self.denoising,
+            observation_model=H_,
+            observation_noise=R_,
         )
 
-        # TODO: EM algorithm self._adapter.em()
+        # TODO: EM algorithm
         # which requires changes in the simdkalman package for full support
 
         return self
@@ -1647,15 +1646,46 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         if multiple_instances:
             X_transposed = X.transpose(0, 2, 1)  # (instance, time point, variable)
         else:
-            X_transposed = X
+            X_transposed = X[np.newaxis, ...]
 
-        X_transformed = self._adapter.compute(
-            X_transposed, multiple_instances=multiple_instances
+        smooth = self.denoising
+        r = self._kalman_filter.compute(
+            X_transposed,
+            n_test=0,
+            initial_value=self._X0,
+            initial_covariance=self._P0,
+            observations=not self.hidden,
+            states=self.hidden,
+            covariances=False,
+            filtered=not smooth,
+            smoothed=smooth,
         )
-        if multiple_instances:
-            return X_transformed.transpose(0, 2, 1)
+
+        if smooth:
+            result = r.smoothed
         else:
-            return X_transformed
+            result = r.filtered
+
+        if self.hidden:
+            result = result.states
+        else:
+            result = result.observations
+
+        result = result.mean
+
+        # undo auto-flatten in simdkalman
+        if len(result.shape) < 3:
+            result = result[..., np.newaxis]
+
+        assert len(result.shape) == 3
+
+        if multiple_instances:
+            result = result.transpose(0, 2, 1)
+        else:
+            assert result.shape[0] == 1
+            result = result[0, ...]
+
+        return result
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
