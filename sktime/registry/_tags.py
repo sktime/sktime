@@ -1360,7 +1360,7 @@ class scitype__transform_labels(_BaseTag):
     * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars,
       in ``Table`` :term:`scitype`. In this case, the number of rows (=instances)
       in ``y`` must always equal the number of instances in ``X``, which typically
-      will be of :mtype:`scitype` ``Panel`` in this case.
+      will be of :term:`scitype` ``Panel`` in this case.
     * ``"Panel"``: a panel of time series, in ``Panel`` :term:`scitype`.
 
     The tag ``scitype:transform-labels`` is used in conjunction with the tag
@@ -1717,10 +1717,10 @@ class x_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
@@ -1788,10 +1788,10 @@ class y_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
