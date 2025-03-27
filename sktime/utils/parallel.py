@@ -190,7 +190,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
         logger.info("Starting Ray Parallel")
         context = ray.init(**backend_params["ray_remote_args"])
         logger.info(
-            f"Ray initialized locally. Open dashboard at http://{context.dashboard_url}"
+            f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
         )
 
     res = ray.get(
