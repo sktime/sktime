@@ -50,6 +50,13 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
+    # ptf global models fail the tests, see #7997
+    "PytorchForecastingTFT",
+    "PytorchForecastingNBeats",
+    "PytorchForecastingNHiTS",
+    "PytorchForecastingDeepAR",
+    # STDBSCAN is not API compliant, see #7994
+    "STDBSCAN",
 ]
 
 
@@ -152,9 +159,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "MCDCNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
@@ -187,6 +191,8 @@ EXCLUDED_TESTS = {
     "VARMAX": [
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
+        "test_update_predict_predicted_index",  # see 7985, timeout
+        "test_hierarchical_with_exogeneous",  # see 7985, timeout
     ],
     "InformationGainSegmentation": [
         "test_inheritance",
@@ -247,6 +253,16 @@ EXCLUDED_TESTS = {
     ],
     # see PR 7921
     "RocketClassifier": ["test_classifier_on_basic_motions"],
+    # see bug report #6465 and #7958
+    "MACNNClassifier": [
+        "test_multioutput",
+        "test_classifier_on_unit_test_data",
+    ],
+    "MCDCNNClassifier": [
+        "test_multioutput",
+        "test_classifier_on_unit_test_data",
+        "test_fit_idempotent",  # not part of bug reports but due to randomness
+    ],
 }
 
 # exclude tests but keyed by test name
