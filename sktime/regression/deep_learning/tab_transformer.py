@@ -222,6 +222,7 @@ class TabTransformerRegressor(BaseRegressor):
         # --------------
         "X_inner_mtype": "pd-multiindex",
         "capability:multivariate": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(
