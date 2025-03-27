@@ -10,6 +10,10 @@ from sktime.utils.validation.forecasting import check_X
 __all__ = [
     "plot_time_series_with_change_points",
     "plot_time_series_with_profiles",
+    "plot_time_series_with_anomalies",
+    "plot_time_series_with_predicted_anomalies",
+    "plot_time_series_with_detrender",
+    "plot_time_series_with_detrender_pipeline",
 ]
 
 __author__ = ["patrickzib"]
@@ -170,4 +174,318 @@ def plot_time_series_with_profiles(
 
     ax[0].legend(prop={"size": font_size})
 
+    return fig, ax
+
+
+def plot_time_series_with_anomalies(
+    ts,
+    X,
+    y,
+    ax=None,
+    title=None,
+    X_label=None,
+    Y_label=None,
+):
+    """Plot the time series with actual anomalies.
+
+    Parameters
+    ----------
+    ts: array-like, shape=[n]
+        the univariate time series of length n to be annotated.
+    X: array-like, shape=[n]
+        the x-coordinates (indices) of the timeseries.
+    y: array-like, shape=[n]
+        the y-coordinates (values)  of anomaly points.
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+    title: str
+        Title of the plot
+    X_label: str
+        X-axis label
+    Y_label: str
+        Y-axis label
+    y_hat: pandas.Series
+        Actual anotations of anomalies
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
+
+    ax.plot(ts, label="Not Anomalous")
+
+    ax.scatter(X, y, label="Anomalous", color="tab:orange")
+
+    if X_label is not None:
+        ax.set_xlabel(X_label)
+    if Y_label is not None:
+        ax.set_ylabel(Y_label)
+    if title is not None:
+        ax.set_title(title)
+
+    return fig, ax
+
+
+def plot_time_series_with_predicted_anomalies(
+    df,
+    y_hat,
+    ax=None,
+):
+    """Create subplots comparing actual anomalies vs. predicted anomalies.
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        dataframe consisting of time series and labels
+    y_hat: pandas.Series
+        Actual anotations of anomalies
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    # Plot the actual anomalies in the first figure
+    plot_time_series_with_anomalies(
+        ts=df.iloc[:, 0],
+        X=df.loc[df.iloc[:, 1] == 1.0].index,
+        y=df.loc[df.iloc[:, 1] == 1.0, df.columns[0]],
+        ax=ax[0],
+        title="Actual Anomalies",
+    )
+
+    # Plot the predicted anomalies in the second figure
+    plot_time_series_with_anomalies(
+        ts=df.iloc[:, 0],
+        X=df.loc[y_hat].index,
+        y=df.loc[y_hat, df.columns[0]],
+        ax=ax[1],
+        title="Predicted Anomalies",
+    )
+
+    return fig, ax
+
+
+def plot_time_series_with_detrender(
+    df,
+    detrended,
+    y_hat,
+    ax=None,
+):
+    """Plot the time series with actual anomalies using a detrender.
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        dataframe consisting of time series and labels
+    detrended: array-like, shape=[n]
+        the detrended univariate time series of length n to be annotated.
+    y_hat: pandas.Series
+        Actual anotations of anomalies
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    plot_time_series_with_anomalies(
+        ts=detrended,
+        X=detrended.loc[df.iloc[:, 1] == 1.0].index,
+        y=detrended.loc[df.iloc[:, 1] == 1.0],
+        ax=ax[0],
+        title="Actual Anomalies",
+    )
+
+    plot_time_series_with_anomalies(
+        ts=detrended,
+        X=detrended.loc[y_hat].index,
+        y=detrended.loc[y_hat],
+        ax=ax[1],
+        title="Actual Anomalies",
+    )
+
+    return fig, ax
+
+
+def plot_time_series_with_detrender_pipeline(
+    df,
+    y_hat,
+    ax=None,
+):
+    """Plot the time series with actual anomalies using detrender pipeline.
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        dataframe consisting of time series and labels
+    y_hat: pandas.Series
+        Actual anotations of anomalies
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    plot_time_series_with_anomalies(
+        ts=df.iloc[:, 0],
+        X=df.loc[df.iloc[:, 1] == 1.0, df.columns[0]].index,
+        y=df.loc[df.iloc[:, 1] == 1.0, df.columns[0]],
+        ax=ax[0],
+        title="Actual Anomalies",
+    )
+
+    plot_time_series_with_anomalies(
+        ts=df.iloc[:, 0],
+        X=df.loc[y_hat, df.columns[0]].index,
+        y=df.loc[y_hat, df.columns[0]],
+        ax=ax[1],
+        title="Predicted Anomalies",
+    )
+
+    return fig, ax
+
+
+def plot_time_series_with_subsequent_outliers(
+    df,
+    intervals=None,
+    ax=None,
+):
+    """Plot the time series with subsequent outliers.
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        dataframe consisting of time series and labels
+    intervals: array-like, shape=[n_intervals]
+        the intervals of the outliers
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    ax.plot(df.iloc[:, 0], label="Not Anomalous")
+    ax.plot(df.loc[df.iloc[:, 1] == 1.0, df.columns[0]], label="Anomalous")
+
+    if intervals is not None:
+        for interval in intervals:
+            left = interval.left
+            right = interval.right
+            ax.axvspan(
+                left, right, color="tab:green", alpha=0.3, label="Predicted Anomalies"
+            )
+
+    ax.legend()
+
+    return fig, ax
+
+
+def plot_time_series_with_change_point_detection(
+    df,
+    actual_cp,
+    predicted_change_points=None,
+    ax=None,
+):
+    """Plot the time series with subsequent outliers.
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        dataframe consisting of time series and labels
+    actual_cp: datatime.Datetime
+        The actual change point time.
+    predicted_change_points: pandas.DataFrame
+        predicted values for change points
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    ax.plot(df.iloc[:, 0])
+    ax.axvline(
+        actual_cp,
+        label="Wearing Seatbelts made Compulsory",
+        color="tab:orange",
+        linestyle="--",
+    )
+
+    if predicted_change_points is not None:
+        for i, cp in enumerate(predicted_change_points.values.flatten()):
+            label = "Predicted Change Points" if i == 0 else None
+            ax.axvline(cp, color="tab:green", linestyle="--", label=label)
+
+    ax.set_xlabel("Date")
+    ax.set_ylabel(df.columns[0])
+    ax.legend()
     return fig, ax
