@@ -422,7 +422,7 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
     _tags = {
         "X_scitype": "Hierarchical",
         "X_univariate": True,
-        "is_enabled": False,
+        "is_enabled": True,
         "has_y": False,
     }
 
@@ -442,7 +442,7 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
     _tags = {
         "X_scitype": "Hierarchical",
         "X_univariate": False,
-        "is_enabled": False,
+        "is_enabled": True,
         "has_y": False,
     }
 
