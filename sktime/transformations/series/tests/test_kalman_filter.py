@@ -16,6 +16,7 @@ from sktime.transformations.series.kalman_filter import (
 # ts stands for time steps
 ts = 10
 
+
 def create_data(shape, missing_values=False, p=0.15, mult=10, covariance=False):
     """Create random ndarray of shape `shape`.
 
@@ -56,7 +57,8 @@ params_3_3_dynamic = {
         (3, 3), length=ts
     ),  # [`ts` random ndarrays of shape (3, 3)],
     "measurement_function": create_data((3, 3)),  # random ndarray of shape (3, 3),
-    "initial_state_covariance": create_data((3, 3), covariance=True),  # random covariance matrix of shape (3, 3),
+    "initial_state_covariance": create_data((3, 3), covariance=True),
+    # random covariance matrix of shape (3, 3),
 }
 
 # state_dim = 3, measurement_dim = 3, time_steps = ts (10)
@@ -65,7 +67,8 @@ params_3_3_static = {
     "process_noise": create_data((3, 3)),  # random ndarray of shape (3,3),
     "measurement_noise": create_data((3, 3)),  # random ndarray of shape (3,3),
     "initial_state": create_data(3),  # random ndarray of shape (3,),
-    "initial_state_covariance": create_data((3, 3), covariance=True),  # random covariance matrix of shape (3,3)
+    "initial_state_covariance": create_data((3, 3), covariance=True),
+    # random covariance matrix of shape (3,3)
 }
 
 # state_dim = 2, measurement_dim = 3, time_steps = ts (10)
@@ -78,7 +81,8 @@ params_2_3_ = {
         (3, 2), length=ts
     ),  # [`ts` random ndarrays of shape (3,2)],
     "initial_state": create_data(2),  # random ndarray of shape (2,),
-    "initial_state_covariance": create_data((2, 2), covariance=True),  # random covariance matrix of shape (2,2)
+    "initial_state_covariance": create_data((2, 2), covariance=True),
+    # random covariance matrix of shape (2,2)
 }
 
 # state_dim = 1, measurement_dim = 1, time_steps = ts (10)
@@ -86,7 +90,8 @@ params_1_1_arrays = {
     "state_transition": create_data((ts, 1, 1)),  # random ndarray of shape (ts, 1, 1)
     "process_noise": create_data((ts, 1, 1)),  # random ndarray of shape (ts, 1, 1)
     "initial_state": create_data(1),  # random ndarray of shape (1,)
-    "initial_state_covariance": create_data((1, 1), covariance=True),  # random covariance matrix of shape (1, 1)
+    "initial_state_covariance": create_data((1, 1), covariance=True),
+    # random covariance matrix of shape (1, 1)
 }
 
 # state_dim = 1, measurement_dim = 1, time_steps = ts (10)
