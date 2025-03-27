@@ -114,6 +114,8 @@ class JSONStorageHandler(BaseStorageHandler):
                         predictions = None
                     if "train_data" in fold and fold["train_data"]:
                         train_data = pd.DataFrame(fold["train_data"])
+                    else:
+                        train_data = None
                     folds[int(fold_id)] = FoldResults(
                         scores, ground_truth, predictions, train_data
                     )

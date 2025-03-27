@@ -75,12 +75,54 @@ def test_store_load_results(tmp_path, storage_handler, file_extension, sample_re
     if file_extension in [".csv"]:
         # CSV does not support storing ground_truth, predictions, and train_data
         return
+
     pd.testing.assert_frame_equal(
-        results[0].folds[0].ground_truth, pd.DataFrame({"data": [1.0, 0.0, 1.0]})
+        results[0].folds[0].ground_truth, sample_results[0].folds[0].ground_truth
     )
     pd.testing.assert_frame_equal(
-        results[0].folds[0].predictions, pd.DataFrame({"data": [1.0, 0.0, 1.0]})
+        results[0].folds[0].predictions, sample_results[0].folds[0].predictions
     )
     pd.testing.assert_frame_equal(
-        results[0].folds[0].train_data, pd.DataFrame({"data": [0.0, 1.0, 0.0]})
+        results[0].folds[0].train_data, sample_results[0].folds[0].train_data
     )
+
+
+@pytest.mark.parametrize(
+    "storage_handler,file_extension",
+    [
+        (JSONStorageHandler, ".json"),
+        (CSVStorageHandler, ".csv"),
+        # (ParquetStorageHandler, ".parquet"),
+    ],
+)
+def test_store_load_results_empty_training(tmp_path, storage_handler, file_extension):
+    handler = storage_handler(tmp_path / f"results{file_extension}")
+
+    handler.save(
+        [
+            ResultObject(
+                model_id="model_1",
+                task_id="val_1",
+                folds={
+                    0: FoldResults(
+                        scores={"f1": 0.8},
+                        ground_truth=None,
+                        predictions=None,
+                        train_data=None,
+                    )
+                },
+            )
+        ]
+    )
+
+    results = handler.load()
+
+    assert len(results) == 1
+    assert results[0].model_id == "model_1"
+    assert results[0].task_id == "val_1"
+
+    assert results[0].folds[0].scores["f1"] == 0.8
+
+    assert results[0].folds[0].ground_truth is None
+    assert results[0].folds[0].predictions is None
+    assert results[0].folds[0].train_data is None

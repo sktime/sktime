@@ -308,13 +308,21 @@ class ForecastingBenchmark(BaseBenchmark):
         results_path : str
             Path to save the results to.
         force_rerun : Union[str, list[str]], optional (default="none")
-            Currently not implemented.
+            If "none", will skip validation if results already exist.
+            If "all", will run validation for all tasks and models.
+            If list of str, will run validation for tasks and models in list.
         """
         results = _BenchmarkingResults(path=results_path)
 
         for task_id, task in self.tasks.entities.items():
             for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(task_id, estimator_id):
+                if results.contains(task_id, estimator_id) and (
+                    force_rerun == "none"
+                    or (
+                        isinstance(force_rerun, list)
+                        and estimator_id not in force_rerun
+                    )
+                ):
                     logging.info(
                         f"Skipping validation - model: "
                         f"{task_id} - {estimator_id}"
