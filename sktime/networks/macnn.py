@@ -4,6 +4,11 @@ __author__ = ["jnrusson1"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+if _check_dl_dependencies(severity=None):
+    from tensorflow import keras
+else:
+    keras = None
+
 
 
 class MACNNNetwork(BaseDeepNetwork):
@@ -77,7 +82,6 @@ class MACNNNetwork(BaseDeepNetwork):
         block_output: An instance of keras.layers.Layer
             Represents the last layer of a MACNN Block, to be used by the next block.
         """
-        from tensorflow import keras
 
         conv_layers = []
         for kernel_size in self.kernel_size:
@@ -91,7 +95,7 @@ class MACNNNetwork(BaseDeepNetwork):
         x1 = keras.layers.BatchNormalization()(x1)
         x1 = keras.layers.Activation("relu")(x1)
 
-        x2 = keras.layers.Lambda(lambda y: keras.backend.mean(y, axis=1))(x1)
+        x2 = keras.layers.GlobalAveragePooling1D()(x1)
         x2 = keras.layers.Dense(
             units=int(kernels * 3 / reduce), use_bias=False, activation="relu"
         )(x2)
