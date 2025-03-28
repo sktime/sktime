@@ -9,8 +9,6 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
-import warnings
-
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -18,8 +16,6 @@ from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.compose._reduce import DirectReductionForecaster
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
@@ -28,6 +24,7 @@ from sktime.utils.stats import (
     _weighted_min,
 )
 from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.warnings import warn
 
 VALID_AGG_FUNCS = {
     "mean": {"unweighted": np.mean, "weighted": np.average},
@@ -51,8 +48,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
+
         - feature-importance:
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
@@ -60,6 +59,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -72,13 +72,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
-    backend : str or None, optional, default=None
-        Specify the backend used by joblib for parallelization. If None, then
-    backend_params : dict or None, optional, default=None
+    backend : str, optional, default=None
+        The backend to use for parallelization. If None, then the default backend
+    backend_params : dict, optional, default=None
         Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        It is deprecated and will be removed in a future version. Use `backend` instead.
+        Deprecated, use backend_params instead.
+        The number of jobs to run in parallel for fit.
 
     Attributes
     ----------
@@ -124,30 +124,29 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        n_jobs=None,
-        backend="loky",
+        backend=None,
         backend_params=None,
+        n_jobs=None,  # Deprecated
     ):
         if n_jobs is not None:
-            warnings.warn(
-                "`n_jobs` is deprecated and will be removed in a future version. "
-                "Use `backend` instead.",
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "future versions of sktime. Please use `backend_params` instead.",
                 FutureWarning,
+                stacklevel=2,
             )
-            backend = backend or "locky"  # use default backend if not set
-            backend_params = backend_params or {"n_jobs": n_jobs}
-
+        self.method = method
+        self.regressor = regressor
+        self.test_size = test_size
+        self.random_state = random_state
+        self.backend_params = backend_params if backend_params is not None else {}
         self.backend = backend
-        self.backend_params = backend_params
+
         super().__init__(
             forecasters=forecasters,
             backend=backend,
             backend_params=backend_params,
         )
-        self.method = method
-        self.regressor = regressor
-        self.test_size = test_size
-        self.random_state = random_state
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -165,7 +164,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
         if X is not None:
@@ -188,6 +187,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
+            # with y_test as endog/target
             self.regressor_.fit(X=X_meta, y=y_test)
 
             # check if regressor is a sklearn.Pipeline
@@ -239,31 +239,29 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-
-
-        Returns
-        -------
-        params : dict or list of dict
-        """
-        from sklearn.linear_model import LinearRegression
-
+        """Return testing parameter settings for the estimator."""
         from sktime.forecasting.naive import NaiveForecaster
 
-        FORECASTER = NaiveForecaster()
-        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        # Define a list of forecasters for testing
+        forecasters = [
+            ("naive1", NaiveForecaster(strategy="last")),
+            ("naive2", NaiveForecaster(strategy="mean")),
+        ]
+
+        # Define test parameters
+        params1 = {
+            "forecasters": forecasters,
+            "method": "feature-importance",
+            "regressor": None,  # Default regressor
+            "test_size": 0.2,
+            "backend": "threading",
+            "backend_params": {"n_jobs": 1},
+        }
 
         params2 = {
-            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
+            "forecasters": forecasters,
             "method": "inverse-variance",
-            "regressor": LinearRegression(),
-            "test_size": 0.2,
+            "test_size": 0.3,
         }
 
         return [params1, params2]
@@ -299,17 +297,18 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
+
         * (str, estimator) tuples: the string is a name for the estimator.
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
-    backend : str or None, optional, default=None
-        Specify the backend used by joblib for parallelization. If None, then
-        the backend will be set to "loky".
-    backend_params : dict or None, optional, default=None
+
+    backend : str, optional, default=None
+        The backend to use for parallelization. If None, then the default backend
+    backend_params : dict, optional, default=None
         Parameters to pass to the backend.
     n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        It is deprecated and will be removed in a future version. Use `backend` instead.
+        Deprecated, use backend_params instead.
+        The number of jobs to run in parallel for fit.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
@@ -347,20 +346,46 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(
-        self,
-        forecasters,
-        n_jobs=None,
-        aggfunc="mean",
-        weights=None,
-        backend="loky",
+        self, 
+        forecasters, 
+        aggfunc="mean", 
+        weights=None, 
+        backend="multiprocessing", 
         backend_params=None,
+        n_jobs=None  # Deprecated
     ):
+        if n_jobs is not None:
+            from sktime.utils.warnings import warn
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "future versions of sktime. Please use `backend_params` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+        
         self.aggfunc = aggfunc
         self.weights = weights
+        self.backend = backend
+        self.backend_params = backend_params if backend_params is not None else {}
+
+        fc = self._parse_fc_multiplicities(forecasters)
+
         super().__init__(
-            forecasters=forecasters, backend=backend, backend_params=backend_params
+            forecasters=forecasters,
+            backend=backend,
+            backend_params=backend_params,
+            fc_alt=fc
         )
 
+            # the ensemble requires fh in fit
+            # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _parse_fc_multiplicities(self, forecasters):
+        """Parse forecasters with multiplicities.
+
+        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
+        """
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -377,17 +402,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                     "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
                 raise ValueError(msg)
-
-        self._forecasters = self._check_estimators(
-            fc, clone_ests=False, allow_empty=True
-        )
-        self.forecasters_ = self._check_estimators(
-            fc, clone_ests=True, allow_empty=True
-        )
-
-        # the ensemble requires fh in fit
-        # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        return fc
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -405,8 +420,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        self._check_forecasters()
-        self._fit_forecasters(self.forecasters, y, X, fh)
+
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):
@@ -439,63 +454,32 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
+        """Return testing parameter settings for the estimator."""
+        from sktime.forecasting.naive import NaiveForecaster
 
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
+        # Define a list of forecasters for testing
+        forecasters = [
+            ("naive1", NaiveForecaster(strategy="last")),
+            ("naive2", NaiveForecaster(strategy="mean")),
+        ]
 
+        # Define test parameters
+        params1 = {
+            "forecasters": forecasters,
+            "method": "feature-importance",
+            "regressor": None,  # Default regressor
+            "test_size": 0.2,
+            "backend": "threading",
+            "backend_params": {"n_jobs": 1},
+        }
 
-        Returns
-        -------
-        params : dict or list of dict
-        """
-        try:
-            FORECASTER = NaiveForecaster()
-            print("NaiveForecaster initialized successfully:", FORECASTER)
-        except Exception as e:
-            print("NaiveForecaster failed to initialize:", e)
-            FORECASTER = None
+        params2 = {
+            "forecasters": forecasters,
+            "method": "inverse-variance",
+            "test_size": 0.3,
+        }
 
-        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-
-        # Check if DirectReductionForecaster creates a test instance
-        try:
-            FORECASTER = DirectReductionForecaster.create_test_instance()
-            print("DirectReductionForecaster initialized successfully:", FORECASTER)
-        except Exception as e:
-            print("DirectReductionForecaster failed to create test instance:", e)
-            FORECASTER = None
-
-        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        params2 = {"forecasters": [("f", FORECASTER, 2)]}
-
-        # Ensure we don't return None
-        for i, params in enumerate([params0, params1, params2]):
-            for key, value in params.items():
-                if value is None or any(f[1] is None for f in value):
-                    print(f"Warning: params{i} contains None!")
-
-        return [params0, params1, params2]
-
-
-# Helper functions remain unchanged
-def _get_weights(regressor):
-    if hasattr(regressor, "feature_importances_"):
-        weights = regressor.feature_importances_
-    elif hasattr(regressor, "coef_"):
-        weights = regressor.coef_
-    else:
-        raise NotImplementedError(
-            """The given regressor is not supported. It must have
-            either an attribute feature_importances_ or coef_ after fitting."""
-        )
-    # avoid ZeroDivisionError if all weights are 0
-    if weights.sum() == 0:
-        weights += 1
-    return list(weights)
+        return [params1, params2]
 
 
 def _aggregate(y, aggfunc, weights):
