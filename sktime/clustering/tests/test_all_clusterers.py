@@ -60,7 +60,6 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         Test predict produces a np.array or pd.Series with only values seen in the train
         data, and that predict_proba probability estimates add up to one.
         """
-        n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         # we use check_is_scitype to get the number instances in X_new
         #   this is more robust against different scitypes in X_new
@@ -68,18 +67,34 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         X_new_instances = X_new_metadata["n_instances"]
 
         # run fit
-        y_pred = scenario.run(estimator_instance, method_sequence=["fit"])
+        scenario.run(estimator_instance, method_sequence=["fit"])
 
         # only clusterers with capability:predict have predict
         if not estimator_instance.get_tag("capability:predict"):
             return None
 
+        # run predict
+        y_pred = scenario.run(estimator_instance, method_sequence=["predict"])
+
+        shape_msg = "Incorrect shape returned by predict"
+
         # check predict
-        assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new_instances,)
+        msg = f"Incorrect type returned by predict ({type(y_pred)})"
+        assert isinstance(y_pred, np.ndarray), msg
+        assert y_pred.shape == (X_new_instances,), shape_msg
 
         # check predict proba (all clusterers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
-        assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new_instances, n_classes)
-        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
+        msg = f"Incorrect type returned by predict_proba ({type(y_proba)})"
+        assert isinstance(y_proba, np.ndarray), msg
+        assert y_proba.shape[0] == X_new_instances, shape_msg
+
+        if hasattr(estimator_instance, "n_clusters") and estimator_instance.n_clusters:
+            assert y_proba.shape[1] == estimator_instance.n_clusters
+
+        # If a sample doesn't belong to a cluster, it may not contribute to the total
+        # probability. Check that total probability in range [0,1] + rounding error
+        msg = "Total assigned probability exceeds 1"
+        assert np.all(y_proba.sum(axis=1) < 1.0001), msg
+        msg = "Total assigned probability negative"
+        assert np.all(y_proba.sum(axis=1) >= 0), msg
