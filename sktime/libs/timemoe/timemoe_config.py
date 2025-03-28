@@ -79,10 +79,13 @@ class TimeMoeConfig(PretrainedConfig):
         self.apply_aux_loss = apply_aux_loss
         self.router_aux_loss_factor = router_aux_loss_factor
 
-        assert (
-            self.use_dense ^ self.apply_aux_loss
-        ), "Both use_dense and apply_aux_loss cannot be set to True or False at the same time."  # noqa: E501
+        assert self.use_dense ^ self.apply_aux_loss, (
+            "Both use_dense and apply_aux_loss cannot be set to True or False at the same time."  # noqa: E501
+        )
 
+        # remove the kwargs that are not in the config
+        # and not in the parent class
+        # (e.g. tie_word_embeddings)
         kwargs.pop("tie_word_embeddings", None)
         super().__init__(
             tie_word_embeddings=tie_word_embeddings,
