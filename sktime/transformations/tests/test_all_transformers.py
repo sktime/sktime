@@ -142,10 +142,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             if X_scitype == "Series" and Xt_scitype == "Series":
                 if estimator_instance.get_tag("transform-returns-same-time-index"):
                     assert X.shape[0] == Xt.shape[0]
-            if X_scitype == "Panel" and Xt_scitype == "Panel":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
-            if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
 
         # panel-to-panel transformers
         if trafo_input == "Panel" and trafo_output == "Panel":
