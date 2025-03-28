@@ -1829,7 +1829,7 @@ class _ReducerMixin:
         return fh_idx
 
 
-class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
+class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
@@ -2270,7 +2270,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         return params
 
 
-class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
+class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """Recursive reduction forecaster, incl exogeneous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
@@ -2670,7 +2670,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return [params1, params2, params3, params4, params5, params6]
 
 
-class YfromX(BaseForecaster, _ReducerMixin):
+class YfromX(_ReducerMixin, BaseForecaster):
     """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
     Tabulates all seen ``X`` and ``y`` by time index and applies
