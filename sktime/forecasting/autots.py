@@ -338,6 +338,7 @@ class AutoTS(BaseForecaster):
         self._y = y
 
         self._fh = fh
+
         self._instantiate_model()
         try:
             self.forecaster_.fit(df=self._y)
