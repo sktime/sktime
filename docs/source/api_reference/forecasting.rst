@@ -463,6 +463,14 @@ Structural time series models
 Deep learning based forecasters
 -------------------------------
 
+.. currentmodule:: sktime.forecasting.da_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DualStageAttentionRNN
+
 .. currentmodule:: sktime.forecasting.ltsf
 
 .. autosummary::

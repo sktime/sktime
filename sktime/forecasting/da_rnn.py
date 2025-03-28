@@ -177,6 +177,25 @@ class DualStageAttentionRNN(BaseForecaster):
     This forecaster implements the DA-RNN model described in [1].
     Used for predicting univariate time series with exogenous features one step ahead.
 
+    **Architecture Details:**
+    - The model consists of an **encoder-decoder architecture** with dual-stage \
+        attention.
+    - **Encoder:**
+        - A recurrent network (LSTM) processes the exogenous features.
+        - The encoder uses **input attention** to dynamically select the most \
+            relevant exogenous variables at each time step.
+    - **Decoder:**
+        - A recurrent network (LSTM) processes the past target values.
+        - The decoder uses **temporal attention** to weigh the importance \
+            of encoder hidden states for forecasting.
+    - **Attention Mechanisms:**
+        - **Input Attention:** Selects relevant exogenous variables for \
+            the encoder.
+        - **Temporal Attention:** Selects relevant encoder hidden states \
+            during decoding.
+    - The model is trained using **mini-batch gradient descent** with the Adam \
+        optimizer and MSE loss.
+
     Parameters
     ----------
     window_length : int, default=10
