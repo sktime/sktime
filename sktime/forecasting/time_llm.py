@@ -7,8 +7,11 @@ __author__ = ["KimMeen", "jgyasu"]
 from types import SimpleNamespace
 from typing import Optional
 
+import pandas as pd
+
 from sktime.forecasting.base import _BaseGlobalForecaster
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
@@ -67,8 +70,9 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(y)
+    >>> forecaster.fit(y, fh=[1])
+    TimeLLMForecaster(pred_len=1)
+    >>> y_pred = forecaster.predict(fh=[1])
     """
 
     _tags = {
@@ -79,16 +83,16 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": [
             "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
+            # "pd-multiindex",
+            # "pd_multiindex_hier",
         ],
         "X_inner_mtype": [
             "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
+            # "pd-multiindex",
+            # "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": True,
         "capability:global_forecasting": True,
     }
 
@@ -141,51 +145,67 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
         """
-        configs = SimpleNamespace(
-            task_name=self.task_name,
-            pred_len=self.pred_len,
-            seq_len=self.seq_len,
-            llm_model=self.llm_model,
-            llm_layers=self.llm_layers,
-            llm_dim=self.llm_dim,
-            patch_len=self.patch_len,
-            stride=self.stride,
-            d_model=self.d_model,
-            d_ff=self.d_ff,
-            n_heads=self.n_heads,
-            dropout=self.dropout,
-            enc_in=1 if self.broadcasting else y.shape[1],
-            prompt_domain=False,
+        self.device_ = (
+            "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
         )
 
-        if self.device is None:
-            self.device_ = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device_ = self.device
+        self.fh_ = fh
 
-        from sktime.libs.time_llm.TimeLLM import Model
+        if isinstance(fh, int):
+            self.pred_len = fh
+        elif hasattr(fh, "__len__"):
+            self.pred_len = len(fh)
 
-        self.model_ = Model(configs).to(self.device_)
+        # Create a unique key for the current model configuration
+        key = self._get_unique_time_llm_key()
+
+        # Load or reuse cached model with the same key
+        self.model_ = _CachedTimeLLM(
+            key=key,
+            time_llm_kwargs={
+                "task_name": self.task_name,
+                "pred_len": self.pred_len,
+                "seq_len": self.seq_len,
+                "llm_model": self.llm_model,
+                "llm_layers": self.llm_layers,
+                "llm_dim": self.llm_dim,
+                "patch_len": self.patch_len,
+                "stride": self.stride,
+                "d_model": self.d_model,
+                "d_ff": self.d_ff,
+                "n_heads": self.n_heads,
+                "dropout": self.dropout,
+                "enc_in": 1 if self.broadcasting else y.shape[1],
+                "prompt_domain": self.prompt_domain,
+            },
+        ).load_model()
+
+        self.model_ = self.model_.to(self.device_)
+        self.model_ = self.model_.to(torch.bfloat16)
+
+        self.last_values = y
+
+    def _get_unique_time_llm_key(self):
+        """Get unique key for Time-LLM model to use in multiton."""
+        config_dict = {
+            "task_name": self.task_name,
+            "pred_len": self.pred_len,
+            "seq_len": self.seq_len,
+            "llm_model": self.llm_model,
+            "llm_layers": self.llm_layers,
+            "llm_dim": self.llm_dim,
+            "patch_len": self.patch_len,
+            "stride": self.stride,
+            "d_model": self.d_model,
+            "d_ff": self.d_ff,
+            "n_heads": self.n_heads,
+            "dropout": self.dropout,
+            "device": self.device,
+            "broadcasting": self.broadcasting,
+            "prompt_domain": self.prompt_domain,
+        }
+        return str(sorted(config_dict.items()))
 
     def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
@@ -222,7 +242,21 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        return self.model_.forward(X)
+        X_tensor = (
+            torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
+        )
+        X_tensor = X_tensor.to(torch.float32)
+        res = self.model_.forward(
+            X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
+        )
+
+        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+
+        return pd.DataFrame(
+            data=res.detach().cpu().numpy().flatten(),
+            index=forecast_index,
+            columns=self.last_values.columns,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -248,7 +282,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
                 "task_name": "short_term_forecast",
                 "pred_len": 24,
                 "seq_len": 96,
-                "llm_model": "BERT",
+                "llm_model": "GPT2",
                 "llm_layers": 3,
                 "llm_dim": 768,
                 "patch_len": 16,
@@ -279,3 +313,28 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         ]
 
         return params_list
+
+
+@_multiton
+class _CachedTimeLLM:
+    """Cached Time-LLM model to ensure only one instance per configuration exists.
+
+    Time-LLM is immutable and hence multiple instances with the same config can
+    share the same model without any side effects.
+    """
+
+    def __init__(self, key, time_llm_kwargs):
+        self.key = key
+        self.time_llm_kwargs = time_llm_kwargs
+        self.model_pipeline = None
+
+    def load_model(self):
+        """Load Time-LLM model from checkpoint if not already loaded."""
+        if self.model_pipeline is not None:
+            return self.model_pipeline
+
+        from sktime.libs.time_llm.TimeLLM import Model
+
+        configs = SimpleNamespace(**self.time_llm_kwargs)
+        self.model_pipeline = Model(configs)
+        return self.model_pipeline
