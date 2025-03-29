@@ -44,6 +44,7 @@ class ARDL(_StatsModelsAdapter):
         * 'c' - Constant only.
         * 't' - Time trend only.
         * 'ct' - Constant and time trend.
+        * 'ctt' - Constant plus linear plus quadratic time trends.
 
         The default is 'c'.
 
