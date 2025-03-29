@@ -249,7 +249,14 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         res = self.model_.forward(
             X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
         )
-        return pd.Series(res.detach().cpu().numpy().flatten())
+
+        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+
+        return pd.DataFrame(
+            data=res.detach().cpu().numpy().flatten(),
+            index=forecast_index,
+            columns=self.last_values.columns,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -275,7 +282,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
                 "task_name": "short_term_forecast",
                 "pred_len": 24,
                 "seq_len": 96,
-                "llm_model": "BERT",
+                "llm_model": "GPT2",
                 "llm_layers": 3,
                 "llm_dim": 768,
                 "patch_len": 16,
