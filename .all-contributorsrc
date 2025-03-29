@@ -3442,6 +3442,15 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "tapyu",
+      "name": "Rubem Pacelli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22801918?v=4",
+      "profile": "https://github.com/tapyu",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
