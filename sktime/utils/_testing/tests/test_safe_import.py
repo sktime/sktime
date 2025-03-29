@@ -59,3 +59,18 @@ def test_import_existing_object():
     from pandas import DataFrame
 
     assert result is DataFrame
+
+
+def test_multiple_inheritance_from_mock():
+    """Test multiple inheritance from dynamic MagicMock."""
+    Class1 = _safe_import("foobar.foo.FooBar")
+    Class2 = _safe_import("barfoobar.BarFooBar")
+
+    class NewClass(Class1, Class2):
+        """This should not trigger an error.
+
+        The class definition would trigger an error if multiple inheritance
+        from Class1 and Class2 does not work, e.g., if it is simply
+        identical to MagicMock.
+        """
+        pass
