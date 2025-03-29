@@ -113,4 +113,4 @@ def pytest_generate_tests(metafunc):
 
 def test_all_functions_doctest(func):
     """Run doctest for all functions in sktime."""
-    run_doctest(func, name = f"function {func.__name__}")
+    run_doctest(func, name=f"function {func.__name__}")

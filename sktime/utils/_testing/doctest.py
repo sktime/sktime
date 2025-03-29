@@ -45,7 +45,7 @@ def run_doctest(
     with contextlib.redirect_stdout(doctest_output_io):
         doctest.run_docstring_examples(
             f=f,
-            globs = globals(),
+            globs=globals(),
             verbose=verbose,
             name=name,
             compileflags=compileflags,
