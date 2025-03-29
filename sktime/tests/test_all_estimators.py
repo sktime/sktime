@@ -6,7 +6,9 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import contextlib
 import numbers
+import io
 import os
 import types
 from copy import deepcopy
@@ -716,16 +718,19 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Runs doctests for estimator class."""
         import doctest
 
-        doctest_result = doctest.run_docstring_examples(
-            estimator_class,
-            globals(),
-            optionflags=doctest.ELLIPSIS,
-        )
+        doctest_output_io = io.StringIO()
+        with contextlib.redirect_stdout(doctest_output_io):
+            doctest.run_docstring_examples(
+                estimator_class,
+                globals(),
+                optionflags=doctest.ELLIPSIS,
+            )
+        doctest_output = doctest_output_io.getvalue()
 
-        if doctest_result.failed:
+        if len(doctest_output) > 0:
             raise ValueError(
                 f"Docstring examples failed doctests "
-                f"for {estimator_class.__name__}, doctest output: {doctest_result}"
+                f"for {estimator_class.__name__}, doctest output: {doctest_output}"
             )
 
     def test_create_test_instance(self, estimator_class):
