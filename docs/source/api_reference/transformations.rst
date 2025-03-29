@@ -430,6 +430,7 @@ Filtering and denoising
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+    KalmanFilterTransformerSIMD
 
 .. currentmodule:: sktime.transformations.series.theta
 
