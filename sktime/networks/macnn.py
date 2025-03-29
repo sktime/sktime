@@ -5,7 +5,7 @@ __author__ = ["jnrusson1"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
-if _check_dl_dependencies(severity=None):
+if _check_dl_dependencies(severity="none"):
     from tensorflow import keras
 else:
     keras = None
