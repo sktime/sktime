@@ -226,13 +226,6 @@ def test_evaluate_global_mode(scoring, strategy, backend):
             # if strategy in ["update","no-update_params"], it won't run parallelly
             return None
 
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
-    # also skip for ray backend if ray is not installed
-    if backend == "ray" and not _check_soft_dependencies("ray", severity="ray"):
-        return None
-
     hierarchy_levels = (4, 4)
     timepoints = 5
     data = _make_hierarchical(
