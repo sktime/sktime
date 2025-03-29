@@ -98,7 +98,8 @@ def _create_mock_class(name: str, bases=()):
         "__init__": lambda self, *args, **kwargs: setattr(self, "_m_o_ck", MagicMock()),
         "__getattr__": lambda self, name: getattr(self._m_o_ck, name),
         "__setattr__": lambda self, name, value: setattr(self._m_o_ck, name, value)
-        if name != "_m_o_ck" else object.__setattr__(self, name, value),
+        if name != "_m_o_ck"
+        else object.__setattr__(self, name, value),
     }
 
     return type(name, bases, class_dict)

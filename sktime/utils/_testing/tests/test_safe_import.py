@@ -73,4 +73,5 @@ def test_multiple_inheritance_from_mock():
         from Class1 and Class2 does not work, e.g., if it is simply
         identical to MagicMock.
         """
+
         pass
