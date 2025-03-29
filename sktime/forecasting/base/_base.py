@@ -1003,7 +1003,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if fh is not None and not isinstance(fh, ForecastingHorizon):
             _fh = ForecastingHorizon(fh)
 
-        self._pretrain(y=y, X=X, fh=_fh)
+        if self._state == "new":
+            self._pretrain(y=y, X=X, fh=_fh)
+        else:
+            self._pretrain_update(y=y, X=X, fh=_fh)
 
         if not hasattr(self, "_pretrained_attrs"):
             self._pretrained_attrs = []
@@ -2200,7 +2203,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def _pretrain(self, y, X=None, fh=None):
-        """Pretrain forecaster on training data.
+        """Pretrain forecaster on training data, first pretraining batch.
 
         private _pretrain containing the core logic, called from pretrain
 
@@ -2213,6 +2216,24 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         # the default simply discards the data, i.e., no pretraining happens
         return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, if already pretrained.
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Reads from self:
+            Pretrained model attributes ending in "_".
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default calls _pretrain
+        return self._pretrain(y=y, X=X, fh=fh)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
