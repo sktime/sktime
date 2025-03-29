@@ -105,8 +105,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y=y, fh=[1,2,3])
-    AutoEnsembleForecaster(forecasters=[('trend', PolynomialTrendForecaster()),
-                                        ('naive', NaiveForecaster())])
+    AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
 
@@ -140,8 +139,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
-        self.backend_params = backend_params if backend_params is not None else {}
         self.backend = backend
+        self.backend_params = backend_params if backend_params is not None else {}
 
         super().__init__(
             forecasters=forecasters,
@@ -355,31 +354,29 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
-        method="feature-importance",
-        regressor=None,
-        test_size=None,
-        random_state=None,
         backend=None,
         backend_params=None,
         n_jobs=None,  # Deprecated
         aggfunc="mean",
         weights=None,
     ):
-        self.method = method
-        self.regressor = regressor
-        self.test_size = test_size
-        self.random_state = random_state
-
+        if n_jobs is not None:
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "future versions of sktime. Please use `backend_params` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
         self.aggfunc = aggfunc
         self.weights = weights
 
-        # Unused variable
-        # fc = self._parse_fc_multiplicities(forecasters)
+        fc = self._parse_fc_multiplicities(forecasters)
 
         super().__init__(
             forecasters=forecasters,
             backend=backend,
             backend_params=backend_params,
+            fc_alt=fc,
         )
 
         # the ensemble requires fh in fit
@@ -393,28 +390,20 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         fc = []
         for forecaster in forecasters:
-            if isinstance(forecaster, tuple):
-                if len(forecaster) == 2:
-                    # Handle (str, estimator)
-                    name, estimator = forecaster
-                    fc.append((name, estimator))
-                elif len(forecaster) == 3:
-                    # Handle (str, estimator, num_replicates)
-                    name, estimator, num_replicates = forecaster
-                    fc.extend(
-                        [(f"{name}_{i}", estimator) for i in range(num_replicates)]
-                    )
-                else:
-                    raise ValueError(
-                        "Error in EnsembleForecaster construction: forecasters"
-                        "must be a list of (str, estimator) or"
-                        "(str, estimator, count) tuples."
-                    )
+            if len(forecaster) <= 2:
+                # Handle the (str, est) tuple
+                fc.append(forecaster)
+            elif len(forecaster) == 3:
+                # Handle the (str, est, num_replicates) tuple
+                name, estimator, num_replicates = forecaster
+                fc.extend([(name, estimator)] * num_replicates)
             else:
-                raise TypeError(
-                    "Each forecaster must be a tuple (str, estimator) or"
-                    "(str, estimator, count)"
+                msg = (
+                    "Error in EnsembleForecaster construction: "
+                    "forecasters argument must be as list of "
+                    "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
+                raise ValueError(msg)
         return fc
 
     def _fit(self, y, X, fh):
@@ -482,20 +471,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
-        # Univariate case
-        forecaster1 = NaiveForecaster()
-        params0 = {"forecasters": [("f1", forecaster1), ("f2", forecaster1)]}
+        # univariate case
+        FORECASTER = NaiveForecaster()
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        # Multivariate case
-        forecaster2 = DirectReductionForecaster.create_test_instance()
-        params1 = {"forecasters": [("f1", forecaster2), ("f2", forecaster2)]}
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        # Handle case where a forecaster should be repeated
-        forecaster3 = DirectReductionForecaster.create_test_instance()
-
-        params2 = {
-            "forecasters": [("f_0", forecaster3), ("f_1", forecaster3)]
-        }  # Instead of ("f", forecaster, 2)
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
 
         return [params0, params1, params2]
 

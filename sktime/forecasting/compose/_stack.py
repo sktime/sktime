@@ -32,10 +32,13 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         The regressor can also be a sklearn.Pipeline().
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+    backend : str, optional, default=None
+        The backend to use for parallelization. If None, then the default backend
+    backend_params : dict, optional, default=None
+        Parameters to pass to the backend.
+    n_jobs : int or None, optional, default=None
+        Deprecated, use backend_params instead.
+        The number of jobs to run in parallel for fit.
 
     Attributes
     ----------
@@ -68,10 +71,31 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "X-y-must-have-same-index": True,
     }
 
-    def __init__(self, forecasters, regressor=None, random_state=None):
-        super().__init__(forecasters=forecasters)  # Removed n_jobs
+    def __init__(
+        self,
+        forecasters,
+        regressor=None,
+        random_state=None,
+        backend=None,
+        backend_params=None,
+        n_jobs=None,  # Deprecated
+    ):
+        if n_jobs is not None:
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "future versions of sktime. Please use `backend_params` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
         self.regressor = regressor
         self.random_state = random_state
+
+        super().__init__(
+            forecasters=forecasters,
+            backend=backend,
+            backend_params=backend_params,
+            n_jobs=n_jobs,
+        )
 
         self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
@@ -93,7 +117,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
         )

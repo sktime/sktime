@@ -15,29 +15,29 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     """Base class for heterogeneous ensemble forecasters."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
-    # *steps*attr points to the attribute of self
+    # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "forecasters"
+    _steps_attr = "_forecasters"
 
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, *steps*fitted_attr
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
     def __init__(
-        self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_fault=None
+        self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_alt=None
     ):
         if forecasters is not None:
             self.forecasters = forecasters
         self.backend = None
-        self.backend_params = backend_params if backend_params != {} else {}
+        self.backend_params = None
         self.n_jobs = n_jobs  # Retained for backward compatibility
         super().__init__()
 
-        if fc_fault is not None:
-            fc = fc_fault
+        if fc_alt is not None:
+            fc = fc_alt
         else:
             fc = forecasters
 
