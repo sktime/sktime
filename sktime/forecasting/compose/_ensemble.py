@@ -105,7 +105,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y=y, fh=[1,2,3])
-    AutoEnsembleForecaster(...)
+    AutoEnsembleForecaster(forecasters=[('trend', PolynomialTrendForecaster()),
+                                        ('naive', NaiveForecaster())])
     >>> y_pred = forecaster.predict()
     """
 
@@ -239,29 +240,31 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sklearn.linear_model import LinearRegression
+
         from sktime.forecasting.naive import NaiveForecaster
 
-        # Define a list of forecasters for testing
-        forecasters = [
-            ("naive1", NaiveForecaster(strategy="last")),
-            ("naive2", NaiveForecaster(strategy="mean")),
-        ]
-
-        # Define test parameters
-        params1 = {
-            "forecasters": forecasters,
-            "method": "feature-importance",
-            "regressor": None,  # Default regressor
-            "test_size": 0.2,
-            "backend": "threading",
-            "backend_params": {"n_jobs": 1},
-        }
+        FORECASTER = NaiveForecaster()
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
         params2 = {
-            "forecasters": forecasters,
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
             "method": "inverse-variance",
-            "test_size": 0.3,
+            "regressor": LinearRegression(),
+            "test_size": 0.2,
         }
 
         return [params1, params2]
@@ -304,8 +307,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     backend : str, optional, default=None
         The backend to use for parallelization. If None, then the default backend
+        is used.
     backend_params : dict, optional, default=None
         Parameters to pass to the backend.
+        If None, then the default parameters are used.
     n_jobs : int or None, optional, default=None
         Deprecated, use backend_params instead.
         The number of jobs to run in parallel for fit.
@@ -331,7 +336,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
     >>> forecaster.fit(y=y, fh=[1,2,3])
-    EnsembleForecaster(...)
+    EnsembleForecaster(forecasters=[('trend', PolynomialTrendForecaster()),
+                                    ('naive', NaiveForecaster())],
+                       weights=[4, 10])
     >>> y_pred = forecaster.predict()
     """
 
@@ -346,39 +353,37 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     }
 
     def __init__(
-        self, 
-        forecasters, 
-        aggfunc="mean", 
-        weights=None, 
-        backend="multiprocessing", 
+        self,
+        forecasters,
+        method="feature-importance",
+        regressor=None,
+        test_size=None,
+        random_state=None,
+        backend=None,
         backend_params=None,
-        n_jobs=None  # Deprecated
+        n_jobs=None,  # Deprecated
+        aggfunc="mean",
+        weights=None,
     ):
-        if n_jobs is not None:
-            from sktime.utils.warnings import warn
-            warn(
-                "The parameter `n_jobs` is deprecated and will be removed in "
-                "future versions of sktime. Please use `backend_params` instead.",
-                FutureWarning,
-                stacklevel=2,
-            )
-        
+        self.method = method
+        self.regressor = regressor
+        self.test_size = test_size
+        self.random_state = random_state
+
         self.aggfunc = aggfunc
         self.weights = weights
-        self.backend = backend
-        self.backend_params = backend_params if backend_params is not None else {}
 
-        fc = self._parse_fc_multiplicities(forecasters)
+        # Unused variable
+        # fc = self._parse_fc_multiplicities(forecasters)
 
         super().__init__(
             forecasters=forecasters,
             backend=backend,
             backend_params=backend_params,
-            fc_alt=fc
         )
 
-            # the ensemble requires fh in fit
-            # iff any of the component forecasters require fh in fit
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
 
     def _parse_fc_multiplicities(self, forecasters):
@@ -388,20 +393,28 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         fc = []
         for forecaster in forecasters:
-            if len(forecaster) <= 2:
-                # Handle the (str, est) tuple
-                fc.append(forecaster)
-            elif len(forecaster) == 3:
-                # Handle the (str, est, num_replicates) tuple
-                name, estimator, num_replicates = forecaster
-                fc.extend([(name, estimator)] * num_replicates)
+            if isinstance(forecaster, tuple):
+                if len(forecaster) == 2:
+                    # Handle (str, estimator)
+                    name, estimator = forecaster
+                    fc.append((name, estimator))
+                elif len(forecaster) == 3:
+                    # Handle (str, estimator, num_replicates)
+                    name, estimator, num_replicates = forecaster
+                    fc.extend(
+                        [(f"{name}_{i}", estimator) for i in range(num_replicates)]
+                    )
+                else:
+                    raise ValueError(
+                        "Error in EnsembleForecaster construction: forecasters"
+                        "must be a list of (str, estimator) or"
+                        "(str, estimator, count) tuples."
+                    )
             else:
-                msg = (
-                    "Error in EnsembleForecaster construction: "
-                    "forecasters argument must be as list of "
-                    "estimator, (str, estimator) or (str, estimator, count) tuples."
+                raise TypeError(
+                    "Each forecaster must be a tuple (str, estimator) or"
+                    "(str, estimator, count)"
                 )
-                raise ValueError(msg)
         return fc
 
     def _fit(self, y, X, fh):
@@ -420,7 +433,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-
         self._fit_forecasters(None, y, X, fh)
         return self
 
@@ -454,32 +466,38 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
-        # Define a list of forecasters for testing
-        forecasters = [
-            ("naive1", NaiveForecaster(strategy="last")),
-            ("naive2", NaiveForecaster(strategy="mean")),
-        ]
+        # Univariate case
+        forecaster1 = NaiveForecaster()
+        params0 = {"forecasters": [("f1", forecaster1), ("f2", forecaster1)]}
 
-        # Define test parameters
-        params1 = {
-            "forecasters": forecasters,
-            "method": "feature-importance",
-            "regressor": None,  # Default regressor
-            "test_size": 0.2,
-            "backend": "threading",
-            "backend_params": {"n_jobs": 1},
-        }
+        # Multivariate case
+        forecaster2 = DirectReductionForecaster.create_test_instance()
+        params1 = {"forecasters": [("f1", forecaster2), ("f2", forecaster2)]}
+
+        # Handle case where a forecaster should be repeated
+        forecaster3 = DirectReductionForecaster.create_test_instance()
 
         params2 = {
-            "forecasters": forecasters,
-            "method": "inverse-variance",
-            "test_size": 0.3,
-        }
+            "forecasters": [("f_0", forecaster3), ("f_1", forecaster3)]
+        }  # Instead of ("f", forecaster, 2)
 
-        return [params1, params2]
+        return [params0, params1, params2]
 
 
 def _aggregate(y, aggfunc, weights):

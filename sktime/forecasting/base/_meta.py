@@ -26,7 +26,9 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_fault=None):
+    def __init__(
+        self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_fault=None
+    ):
         if forecasters is not None:
             self.forecasters = forecasters
         self.backend = None
@@ -38,10 +40,10 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             fc = fc_fault
         else:
             fc = forecasters
-        
+
         if fc is not None:
             self._initialize_forecaster_tuples(fc)
-        
+
     def _initialize_forecaster_tuples(self, forecasters):
         """Initialize estimator tuple attributes, default.
 
@@ -57,7 +59,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         self._forecasters = self._check_forecasters_init(forecasters)
         self.forecasters_ = self._check_estimators(
             forecasters, clone_ests=True, allow_empty=True
-        )   
+        )
 
     def _check_forecasters_init(self, estimators):
         """Check Steps.
@@ -148,6 +150,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         -------
         self : an instance of self.
         """
-        for forecaster in self.forecasters_:
+        for name, forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
