@@ -162,10 +162,11 @@ class ClustererAsTransformer(BaseTransformer):
         transformed version of X
         """
         requires_index_mapping = isinstance(X, pd.DataFrame) and X.index.nlevels > 2
-        expected_index = X.index.droplevel(-1).unique()
 
         if requires_index_mapping:  # map indices to flat index
             X, mapping = self._map_hier_to_panel(X)
+
+        expected_index = X.index.droplevel(-1).unique()
 
         y_pred = self.clusterer_.predict(X)
 
