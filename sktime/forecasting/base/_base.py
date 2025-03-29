@@ -149,6 +149,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        self._state = "init"
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
@@ -317,6 +318,39 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    @property
+    def is_fitted(self):
+        """Whether ``fit`` has been called.
+
+        Inspects object's ``_is_fitted` attribute that should initialize to ``False``
+        during object construction, and be set to True in calls to an object's
+        `fit` method.
+
+        Returns
+        -------
+        bool
+            Whether the estimator has been `fit`.
+        """
+        return self.state == "fitted"
+
+    @property
+    def state(self):
+        """State of the estimator.
+
+        Possible states for forecasters are:
+
+        * "new": post-init state
+        * "fitted": if ``fit`` has been called.
+        * "pretrained": if ``pretrain`` has been called. Only available for
+            forecasters that support pretraining.
+
+        Returns
+        -------
+        str, one of {"new", "fitted", "pretrained"}
+            State of the estimator.
+        """
+        return self._state
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -374,7 +408,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
-        self.reset()
+        if not self._state == "pretrained":
+            self.reset()
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -399,6 +434,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # this should happen last
         self._is_fitted = True
+        self._state = "fitted"
 
         return self
 
@@ -950,6 +986,35 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
+
+    def pretrain(self, y, X=None, fh=None):
+        """Pre-train forecaster on data.
+
+        State change:
+            Changes state to "pretrained".
+
+        Writes to self:
+
+            * Sets pretrained model attributes ending in "_", fitted attributes are
+              inspectable via ``get_pretrained_params``.
+            * Sets ``self.state`` flag to ``"pretrained"``.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attributes.
+        """
+        if fh is not None and not isinstance(fh, ForecastingHorizon):
+            _fh = ForecastingHorizon(fh)
+
+        self._pretrain(y=y, X=X, fh=_fh)
+
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        attrs_ending_in_underscore = [
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        ]
+        self._pretrained_attrs.append(attrs_ending_in_underscore)
+
+        self._state = "pretrained"
+        return self
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -2133,6 +2198,21 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Point predictions
         """
         raise NotImplementedError("abstract method")
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data.
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
