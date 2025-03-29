@@ -104,7 +104,7 @@ def pytest_generate_tests(metafunc):
     funcs_and_names = _all_functions("sktime")
 
     if len(funcs_and_names) > 0:
-        funcs, names = zip(*funcs_and_names)
+        names, funcs = zip(*funcs_and_names)
 
         metafunc.parametrize("func", funcs, ids=names)
     else:
