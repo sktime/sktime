@@ -91,8 +91,8 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": True,
         "capability:global_forecasting": True,
     }
 
@@ -149,6 +149,8 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         self.device_ = (
             "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
         )
+
+        self.pred_len = fh
 
         # Create a unique key for the current model configuration
         key = self._get_unique_time_llm_key()
