@@ -8,31 +8,36 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import is_scitype
+from sktime.utils.parallel import parallelize
 
 
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
+    # *steps*attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_forecasters"
+    _steps_attr = "forecasters"
 
     # if the estimator is fittable, _HeterogenousMetaEstimator also
     # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # the fitted estimators should be in a different attribute, *steps*fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None, fc_alt=None):
+    def __init__(
+        self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_fault=None
+    ):
         if forecasters is not None:
             self.forecasters = forecasters
-        self.n_jobs = n_jobs
+        self.backend = None
+        self.backend_params = backend_params if backend_params != {} else {}
+        self.n_jobs = n_jobs  # Retained for backward compatibility
         super().__init__()
 
-        if fc_alt is not None:
-            fc = fc_alt
+        if fc_fault is not None:
+            fc = fc_fault
         else:
             fc = forecasters
 
@@ -108,19 +113,21 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         list of references to fitted forecasters
             in same order as forecasters
         """
-        from joblib import Parallel, delayed
 
-        def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster."""
-            return forecaster.fit(y, X, fh)
+        def _fit_single_forecaster(forecaster, meta):
+            """Fit single forecaster with meta containing y, X, fh."""
+            return forecaster.clone().fit(y, X, fh)
 
         if forecasters is None:
             forecasters = self._get_forecaster_list()
 
-        fitted_fcst = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
-            for forecaster in forecasters
+        fitted_fcst = parallelize(
+            fun=_fit_single_forecaster,
+            iter=forecasters,
+            backend=self.backend,
+            backend_params=self.backend_params,
         )
+
         fcst_names = self._get_forecaster_names()
         self.forecasters_ = list(zip(fcst_names, fitted_fcst))
 
@@ -143,6 +150,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         -------
         self : an instance of self.
         """
-        for forecaster in self._get_forecaster_list():
+        for name, forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
