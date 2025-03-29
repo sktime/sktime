@@ -6,9 +6,7 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
-import contextlib
 import numbers
-import io
 import os
 import types
 from copy import deepcopy
@@ -41,6 +39,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
+from sktime.utils._testing.doctest import run_doctest
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -716,22 +715,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
-        import doctest
-
-        doctest_output_io = io.StringIO()
-        with contextlib.redirect_stdout(doctest_output_io):
-            doctest.run_docstring_examples(
-                estimator_class,
-                globals(),
-                optionflags=doctest.ELLIPSIS,
-            )
-        doctest_output = doctest_output_io.getvalue()
-
-        if len(doctest_output) > 0:
-            raise ValueError(
-                f"Docstring examples failed doctests "
-                f"for {estimator_class.__name__}, doctest output: {doctest_output}"
-            )
+        run_doctest(estimator_class)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
