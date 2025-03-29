@@ -68,10 +68,10 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
     >>> forecaster = TimeLLMForecaster(
     ...     pred_len=36,
     ...     seq_len=96,
-    ...     llm_model='BERT'
+    ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y)
-    TimeLLMForecaster(llm_model='BERT', pred_len=36)
+    >>> forecaster.fit(y, fh=[1])
+    TimeLLMForecaster(pred_len=1)
     >>> y_pred = forecaster.predict(fh=[1])
     """
 
@@ -83,13 +83,13 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": [
             "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
+            # "pd-multiindex",
+            # "pd_multiindex_hier",
         ],
         "X_inner_mtype": [
             "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
+            # "pd-multiindex",
+            # "pd_multiindex_hier",
         ],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -150,7 +150,12 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
             "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
         )
 
-        self.pred_len = fh
+        self.fh_ = fh
+
+        if isinstance(fh, int):
+            self.pred_len = fh
+        elif hasattr(fh, "__len__"):
+            self.pred_len = len(fh)
 
         # Create a unique key for the current model configuration
         key = self._get_unique_time_llm_key()
