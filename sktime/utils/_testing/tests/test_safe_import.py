@@ -15,10 +15,8 @@ def test_import_present_module():
 def test_import_missing_module():
     """Test importing a dependency that is not installed."""
     result = _safe_import("nonexistent_module")
-    assert isinstance(result, MagicMock)
-    assert str(result) == (
-        "Please install nonexistent_module to use this functionality."
-    )
+    assert hasattr(result, "__name__")
+    assert result.__name__ == "nonexistent_module"
 
 
 def test_import_without_pkg_name():
