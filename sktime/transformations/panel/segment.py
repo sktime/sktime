@@ -516,7 +516,7 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     # check input: n_timepoints
     if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
         raise ValueError(
-            f"`n_timepoints` must be an integer, but found: " f"{type(n_timepoints)}"
+            f"`n_timepoints` must be an integer, but found: {type(n_timepoints)}"
         )
     if not n_timepoints >= 1:
         raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
