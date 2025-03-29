@@ -19,7 +19,7 @@ def make_moving_blobs(
     centers = np.array(centers_origin, dtype=float)
     n_orig_clusters = centers.shape[0]
     centers_ = centers.copy()
-    center_time_map = {i: 0 for i in range(n_orig_clusters)}
+    center_time_map = dict.fromkeys(range(n_orig_clusters), 0)
     center_cluster_map = {i: i for i in range(n_orig_clusters)}
     cluster_id = n_orig_clusters
     for t in range(n_times - 1):
