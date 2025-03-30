@@ -71,7 +71,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
-        "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        "X_inner_mtype": ["numpy3D"],
         # required by the update_data utility
         # otherwise, we could pass through to the distance directly
         "capability:out_of_sample": False,
@@ -79,13 +79,14 @@ class TimeSeriesKvisibility(BaseClusterer):
         "capability:predict_proba": False,
     }
 
-    DELEGATED_PARAMS = ["init", "n_clusters", "n_init"]
+    DELEGATED_PARAMS = ["init", "n_clusters", "n_init", "random_state"]
     DELEGATED_FITTED_PARAMS = ["core_sample_indices_", "components_ ", "labels_"]
 
-    def __init__(self, n_clusters=5, init="k-means++", n_init=4):
+    def __init__(self, n_clusters=5, init="k-means++", n_init=4, random_state=None):
         self.n_clusters = n_clusters
         self.init = init
         self.n_init = n_init
+        self.random_state = random_state
 
         super().__init__(n_clusters=n_clusters)
 
@@ -96,12 +97,11 @@ class TimeSeriesKvisibility(BaseClusterer):
         from ts2vg import HorizontalVG, NaturalVG
 
         ts_attr = []
-        X_ts = []
 
         for i in range(len(X)):
-            X_ts.append(X[i].reshape(1, X[1].shape[0])[0])
-        for ts in X_ts:
             # ts for each time series
+            ts = X[i].squeeze()
+
             g = HorizontalVG()
             g.build(ts)
             nx_g = g.as_networkx()
@@ -149,9 +149,6 @@ class TimeSeriesKvisibility(BaseClusterer):
         self.ts_features = self._ts_to_graph(X)
 
         self.kmeans_ = KMeans(
-            init=self.init,
-            n_clusters=self.n_clusters,
-            n_init=self.n_init,
             **deleg_param_dict,
         )
         self.kmeans_.fit(self.ts_features)
@@ -185,9 +182,6 @@ class TimeSeriesKvisibility(BaseClusterer):
         self.ts_features = self._ts_to_graph(X)
 
         self.kmeans_ = KMeans(
-            init=self.init,
-            n_clusters=self.n_clusters,
-            n_init=self.n_init,
             **deleg_param_dict,
         )
         self.kmeans_.fit(self.ts_features)
@@ -216,8 +210,8 @@ class TimeSeriesKvisibility(BaseClusterer):
         if X is self._X:
             return self.labels_
         else:
-            self.ts_features = self._ts_to_graph(X)
-            return self.clone().fit_predict(self.ts_features)
+            ts_features = self._ts_to_graph(X)
+            return self.kmeans_.predict(ts_features)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
