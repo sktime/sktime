@@ -83,8 +83,6 @@ class PyPOTSImputer(BaseTransformer):
         _check_soft_dependencies("pypots", severity="error")
         import pypots
 
-        return pypots
-
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
         # Check dependencies
