@@ -81,6 +81,10 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             if X_scitype in ["Panel", "Hierarchical"]:
                 return "Hierarchical"
         if trafo_input == "Panel" and trafo_output == "Series":
+            if X_scitype == "Hierarchical":
+                # Could be Hierarchical or Panel, depending on the
+                # depth of the hierarchy
+                return ["Panel", "Hierarchical"]
             return "Series"
 
     def test_fit_transform_output(self, estimator_instance, scenario):
