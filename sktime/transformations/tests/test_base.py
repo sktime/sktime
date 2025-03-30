@@ -445,7 +445,8 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
 @pytest.mark.skipif(
@@ -485,7 +486,8 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
 @pytest.mark.skipif(
