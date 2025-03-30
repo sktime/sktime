@@ -41,7 +41,11 @@ class ReconcileForecasts(BaseTransformer):
     forecasting, please refer to BottomUpReconciler, OptimalReconciler,
     TopdownReconciler, or MiddleOutReconciler.
 
-    Please refer to [1]_ for further information
+    For reconciliation methods that require historical values in addition to the
+    forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
+
+    For further information on the methods, see [1]_.
+
 
     Parameters
     ----------

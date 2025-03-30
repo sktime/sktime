@@ -3106,7 +3106,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
       "profile": "https://github.com/vedantag17",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -3320,10 +3321,12 @@
     {
       "login": "jgyasu",
       "name": "Jigyasu",
-      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94278611",
       "profile": "https://jgyasu.github.io",
       "contributions": [
         "code",
+        "bug",
+        "test",
         "doc"
       ]
     },
@@ -3409,6 +3412,44 @@
       "profile": "https://github.com/Ankit-1204",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "LHoelper",
+      "name": "Luca Hölper",
+      "avatar_url": "https://avatars.githubusercontent.com/LHoelper",
+      "profile": "https://github.com/LHoelper",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sky0walker99",
+      "name": "Muhammed Haroon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/106879583?s=96&v=4",
+      "profile": "https://github.com/sky0walker99",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "wilsbj",
+      "name": "Brendan Wilson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16727867?v=4",
+      "profile": "https://github.com/wilsbj",
+      "contributions": [
+        "bug",
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "tapyu",
+      "name": "Rubem Pacelli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22801918?v=4",
+      "profile": "https://github.com/tapyu",
+      "contributions": [
+        "doc"
       ]
     }
   ]
