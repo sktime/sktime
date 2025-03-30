@@ -333,10 +333,13 @@ class ColumnConcatenator(BaseTransformer):
 
         # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
-        inst_idx = Xt.index.get_level_values(0)
+        levels = list(range(Xt.index.nlevels - 1))
+        inst_arr = [Xt.index.get_level_values(level) for level in levels]
+        inst_idx = pd.MultiIndex.from_arrays(inst_arr)
+
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
         t_idx = np.concatenate(t_idx)
 
-        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index = pd.MultiIndex.from_arrays(inst_arr + [t_idx])
         Xt.index.names = X.index.names
         return Xt
