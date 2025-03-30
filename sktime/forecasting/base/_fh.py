@@ -10,6 +10,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -846,7 +847,6 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         cutoff = cutoff.index
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
-        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
         # remember timezone to restore it later
         if hasattr(cutoff, "tz"):
@@ -854,38 +854,40 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             old_tz = None
 
-        if is_timestamp:
-            # coerce to pd.Period for reliable arithmetic operations and
-            # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
-        if isinstance(cutoff, pd.Index):
-            cutoff = cutoff[[0] * len(relative)]
+        if isinstance(cutoff, pd.DatetimeIndex):
+            # preserve the format of DatetimeIndex # see #5186
+            absolute = [cutoff[0]] * len(relative)
+            if isinstance(relative[0], Timedelta):
+                for i in range(len(relative)):
+                    absolute[i] = cutoff[0] + relative[i]
+            else:
+                for i in range(len(relative)):
+                    absolute[i] = cutoff[0] + relative[i] * to_offset(fh.freq)
 
-        # pandas bugfix
-        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
-        if not pandas_version_with_bugfix and isinstance(cutoff, pd.PeriodIndex):
-            absolute = pd.PeriodIndex(cutoff.to_list() + relative, freq=fh._freq)
-        elif not pandas_version_with_bugfix and isinstance(cutoff, pd.DatetimeIndex):
-            absolute = pd.DatetimeIndex(cutoff.to_list() + relative, freq=fh._freq)
-        else:
-            absolute = cutoff + relative
-
-        if is_timestamp:
-            # coerce back to DatetimeIndex after operation
             try:
-                absolute = absolute.to_timestamp(fh._freq)
-            # this try-except block is a workaround for what seems like a bug in pandas
-            # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
-            # of type month-begin, which should be supported, a ValueError is raised
-            # see issue #6752 for details
-            except ValueError as e:
-                if "not supported" in str(e):
-                    absolute = absolute.to_timestamp()
+                absolute = pd.DatetimeIndex(absolute, freq=fh.freq)
+            except ValueError as e:  # freq can not be set if missing values exist
+                if "not conform" in str(e):
+                    absolute = pd.DatetimeIndex(absolute)
                 else:
                     raise e
+        else:
+            if isinstance(cutoff, pd.Index):
+                cutoff = cutoff[[0] * len(relative)]
+
+            # pandas bugfix
+            pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
+            if not pandas_version_with_bugfix and isinstance(cutoff, pd.PeriodIndex):
+                absolute = pd.PeriodIndex(cutoff.to_list() + relative, freq=fh._freq)
+            elif not pandas_version_with_bugfix and isinstance(
+                cutoff, pd.DatetimeIndex
+            ):
+                absolute = pd.DatetimeIndex(cutoff.to_list() + relative, freq=fh._freq)
+            else:
+                absolute = cutoff + relative
 
         if old_tz is not None:
-            absolute = absolute.tz_localize(old_tz)
+            absolute = absolute.tz_convert(old_tz)
 
         return fh._new(absolute, is_relative=False, freq=fh.freq)
 
