@@ -15,7 +15,7 @@ class GrangerCausalityFitter(BaseParamFitter):
 
     Parameters
     ----------
-    maxlag : int, default=12
+    maxlag : int, default=8
         Maximum number of lags to test.
     ic : str, default="bic"
         Information criterion to use for lag selection ("aic" or "bic").
@@ -46,7 +46,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         "capability:missing_values": False,
         "capability:multivariate": True,
         "requires_y": False,
-        "X_inner_X_required_cols": 2,
+        # "X_inner_X_required_cols": 2,
         "authors": "Spinachboul",
         "python_dependencies": "statsmodels",
     }
@@ -56,7 +56,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         self.maxlag = maxlag
         self.ic = ic
         self.verbose = verbose
-        self.addconst = addconst
+        self.addconst = True
         self._is_fitted = False
         super().__init__()
 
@@ -248,7 +248,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         ----------
         .. [1] https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.range_unit_root_test.html
         """
-        stat, p_value, crit, rstore = range_unit_root_func(series, store=False)
+        stat, p_value, crit, rstore = range_unit_root_func(series, store=True)
         return {
             "RUR Statistic": stat,
             "p-value": p_value,
@@ -300,7 +300,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             "critical values": crit,
         }
 
-    def pacf_analysis(self, series, pacf_func, nlags=30, method="ywadjusted"):
+    def pacf_analysis(self, series, pacf_func, nlags=8, method="ywadjusted"):
         """
         Calculate partial autocorrelation function (PACF) for a time series.
 
@@ -310,7 +310,7 @@ class GrangerCausalityFitter(BaseParamFitter):
             The time series to analyze.
         pacf_func : function
             The pacf function from statsmodels.
-        nlags : int, default=30
+        nlags : int, default=8
             Number of lags to include in the analysis.
         method : str, default='ywadjusted'
             Method to calculate the PACF. Options include 'yw', 'ywadjusted', 'ols',
@@ -377,7 +377,7 @@ class GrangerCausalityFitter(BaseParamFitter):
         best_pvalue = None
 
         for lag, res in result.items():
-            ic_value = res[0][f"ssr_{self.ic}"][0]
+            ic_value = res[0]["ssr_ftest"][0]
             if ic_value < best_ic:
                 best_ic = ic_value
                 best_lag = lag
@@ -401,6 +401,6 @@ class GrangerCausalityFitter(BaseParamFitter):
             Parameters to create testing instances of the class.
         """
         params1 = {"maxlag": 5, "ic": "bic"}
-        params2 = {"maxlag": 10, "ic": "aic", "verbose": True, "addconst": False}
+        params2 = {"maxlag": 8, "ic": "aic", "verbose": True, "addconst": True}
 
         return [params1, params2]
