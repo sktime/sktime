@@ -72,14 +72,17 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "scitype:y": "univariate",
     }
 
-    def __init__(self, forecasters, ensemble_algorithm=None, backend=None, backend_params=None):
+    def __init__(
+        self, forecasters, ensemble_algorithm=None, backend=None, backend_params=None
+    ):
         # self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
         self.backend = backend
         self.backend_params = backend_params
 
-
-        super().__init__(forecasters=forecasters, backend=backend, backend_params=backend_params)
+        super().__init__(
+            forecasters=forecasters, backend=backend, backend_params=backend_params
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -170,7 +173,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         FORECASTER = NaiveForecaster()
         params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        
+
         params2 = {
             "forecasters": [
                 ("f1", FORECASTER),
