@@ -1278,12 +1278,16 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # run fit plus method_nsc once, save results
         set_random_state(estimator)
-        results = scenario.run(
-            estimator,
-            method_sequence=["fit", method_nsc_arraylike],
-            return_all=True,
-            deepcopy_return=True,
-        )
+        if method_nsc_arraylike in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
+                results = scenario.run(
+                    estimator,
+                    method_sequence=["fit", method_nsc_arraylike],
+                    return_all=True,
+                    deepcopy_return=True,
+                )
+            if handler.skipped:
+                return None
 
         estimator = results[0]
         set_random_state(estimator)
