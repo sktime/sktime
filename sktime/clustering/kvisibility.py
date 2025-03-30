@@ -44,6 +44,8 @@ class TimeSeriesKvisibility(BaseClusterer):
         init is an array-like.
     n_clusters : int, default=5
         The number of clusters to form as well as the number of centroids to generate.
+    random_state : int, optional (default=None)
+        Seed to ensure reproducibility.
 
     Attributes
     ----------
