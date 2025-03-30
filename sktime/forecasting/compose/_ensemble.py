@@ -151,7 +151,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        #n_jobs=None,  # Deprecated
+        # n_jobs=None,  # Deprecated
         backend=None,
         backend_params=None,
     ):
@@ -162,7 +162,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(
             forecasters=forecasters,
-            #n_jobs=n_jobs,
+            # n_jobs=n_jobs,
             backend=backend,
             backend_params=backend_params,
         )
@@ -399,7 +399,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
-        #n_jobs=None,  # Deprecated
+        # n_jobs=None,  # Deprecated
         aggfunc="mean",
         weights=None,
         backend=None,
@@ -413,7 +413,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         super().__init__(
             forecasters=forecasters,
             fc_alt=fc,
-            #n_jobs=n_jobs,
+            # n_jobs=n_jobs,
             backend=backend,
             backend_params=backend_params,
         )
