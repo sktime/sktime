@@ -38,7 +38,7 @@ class DetectorAsTransformer(BaseTransformer):
     --------
     >>> from sktime.detection.compose import DetectorAsTransformer
     >>> from sktime.detection.stray import STRAY
-    >>> from sktime.utils._testing import _make_hierarchical
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
     >>> t = DetectorAsTransformer(STRAY())
     >>> t.fit(X)
