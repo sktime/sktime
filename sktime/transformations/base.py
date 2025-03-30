@@ -1368,8 +1368,17 @@ class BaseTransformer(BaseEstimator):
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
             elif self.get_tags()["scitype:transform-input"] == "Panel":
-                # Input has always to be Panel
-                X_output_mtype = "pd.DataFrame"
+                # Converting Panel to Series
+                if X_input_scitype == "Hierarchical":
+                    # Input was Hierarchical, but output has dropped one level.
+                    # One level Hierarchical should be converted to Panel, but
+                    # deeper Hierarchical should be converted to Hierarchical.
+                    # Choose the simplest structure of the two.
+                    X_output_mtype = ["pd-multiindex", "pd_multiindex_hier"]
+                    output_scitype = ["Panel", "Hierarchical"]
+                else:
+                    # Input must have been Panel, output should be Series
+                    X_output_mtype = "pd.DataFrame"
             else:
                 # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype

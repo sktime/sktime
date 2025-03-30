@@ -50,6 +50,8 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
+    # Test estimators
+    "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
     "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
@@ -57,6 +59,10 @@ EXCLUDE_ESTIMATORS = [
     "PytorchForecastingDeepAR",
     # STDBSCAN is not API compliant, see #7994
     "STDBSCAN",
+    # DistanceFeatures does ont work for hierarchical data, see #8077
+    "DistanceFeatures",
+    # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
+    "TimeSeriesKvisibility",
 ]
 
 
