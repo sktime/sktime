@@ -24,9 +24,13 @@ class PyODDetector(BaseDetector):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> X = pd.DataFrame(piecewise_normal_multivariate(
-    ...     means=[[1, 3], [4, 5]], lengths=[3, 4], random_state=10))
+    ...     means=[[1, 3], [4, 5]],
+    ...     lengths=[3, 4],
+    ...     random_state=10),
+    ... )
     >>> from sktime.detection.adapters._pyod import PyODDetector
     >>> from pyod.models.ecod import ECOD
     >>> model = PyODDetector(ECOD())
