@@ -96,9 +96,9 @@ class MoiraiForecast(L.LightningModule):
         patch_size="auto",
         num_samples: int = 100,
     ):
-        assert (module is not None) or (
-            module_kwargs is not None
-        ), "if module is not provided, module_kwargs is required"
+        assert (module is not None) or (module_kwargs is not None), (
+            "if module is not provided, module_kwargs is required"
+        )
         super().__init__()
         self.save_hyperparameters(ignore=["module"])
         self.module = MoiraiModule(**module_kwargs) if module is None else module

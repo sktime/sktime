@@ -358,8 +358,7 @@ class TimesFm:
         """Forecast."""
         if not self._train_state or not self._model:
             raise ValueError(
-                "Checkpoint not loaded. Call `load_from_checkpoint` before"
-                " `forecast`."
+                "Checkpoint not loaded. Call `load_from_checkpoint` before `forecast`."
             )
         if forecast_context_len is None:
             forecast_context_len = self.context_len

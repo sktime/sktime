@@ -88,7 +88,7 @@ def test_plot_series_runs_without_error(series_to_plot):
     if isinstance(series_to_plot, pd.Series):
         labels = ["Series 1"]
     elif isinstance(series_to_plot, tuple):
-        labels = [f"Series {i+1}" for i in range(len(series_to_plot))]
+        labels = [f"Series {i + 1}" for i in range(len(series_to_plot))]
     _plot_series(series_to_plot, labels=labels)
     plt.gcf().canvas.draw_idle()
     plt.close()
