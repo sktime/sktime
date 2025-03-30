@@ -1,10 +1,18 @@
 """Kalman Filter Transformers."""
 
-from ._filterpy import KalmanFilterTransformerFP
-from ._pykalman import KalmanFilterTransformerPK
-from ._simdkalman import KalmanFilterTransformerSIMD
+from sktime.transformations.series.kalman_filter._base import (
+    _BaseKalmanFilter as BaseKalmanFilter,
+)
+from sktime.transformations.series.kalman_filter._kalman_filter import (
+    KalmanFilterTransformerFP,
+    KalmanFilterTransformerPK,
+)
+from sktime.transformations.series.kalman_filter._simdkalman import (
+    KalmanFilterTransformerSIMD,
+)
 
 __all__ = [
+    "BaseKalmanFilter",
     "KalmanFilterTransformerFP",
     "KalmanFilterTransformerPK",
     "KalmanFilterTransformerSIMD",
