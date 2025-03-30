@@ -5,11 +5,6 @@ __author__ = ["jnrusson1"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
-if _check_dl_dependencies(severity="none"):
-    from tensorflow import keras
-else:
-    keras = None
-
 
 class MACNNNetwork(BaseDeepNetwork):
     """Base MACNN Network for MACNNClassifier and MACNNRegressor.
@@ -82,6 +77,8 @@ class MACNNNetwork(BaseDeepNetwork):
         block_output: An instance of keras.layers.Layer
             Represents the last layer of a MACNN Block, to be used by the next block.
         """
+        from tensorflow import keras
+
         conv_layers = []
         for kernel_size in self.kernel_size:
             conv_layer = keras.layers.Conv1D(
