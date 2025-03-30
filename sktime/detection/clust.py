@@ -28,7 +28,7 @@ class ClusterSegmenter(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.cluster import ClusterSegmenter
+    >>> from sktime.detection.cluster import ClusterSegmenter
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
     >>> clusterer = KMeans()
