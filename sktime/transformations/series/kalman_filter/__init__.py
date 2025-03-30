@@ -1,7 +1,9 @@
 """Kalman Filter Transformers."""
 
+from sktime.transformations.series.kalman_filter._base import (
+    _BaseKalmanFilter as BaseKalmanFilter,
+)
 from sktime.transformations.series.kalman_filter._kalman_filter import (
-    BaseKalmanFilter,
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
 )

@@ -3,13 +3,11 @@
 __author__ = ["oseiskar"]
 
 import numpy as np
+from ._base import _BaseKalmanFilter
 from sktime.transformations.base import BaseTransformer
 
 
-from ._kalman_filter import BaseKalmanFilter
-
-
-class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
+class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
     """Vectorized Kalman Filter from simdkalman.
 
     The Kalman Filter is an unsupervised algorithm, consisting of
