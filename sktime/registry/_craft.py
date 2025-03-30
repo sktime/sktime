@@ -180,8 +180,8 @@ def _get_public_import(module_path: str) -> str:
 
     Removes everything from the first private submodule (starting with '_') onwards.
     """
-    parts = module_path.split('.')
+    parts = module_path.split(".")
     for i, part in enumerate(parts):
-        if part.startswith('_'):
-            return '.'.join(parts[:i])  # Keep only part before first private submodule
+        if part.startswith("_"):
+            return ".".join(parts[:i])  # Keep only part before first private submodule
     return module_path  # Return the original path if no private submodules are found
