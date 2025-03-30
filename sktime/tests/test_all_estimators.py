@@ -96,6 +96,23 @@ def subsample_by_version_os(x):
     return res
 
 
+class ValidProbaErrors:
+    """Context manager, returns None on valid predict_proba or skpro exception."""
+
+    def __enter__(self):
+        self.skipped = False
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if isinstance(exc_value, NotImplementedError):
+            self.skipped = True
+            return True
+        if isinstance(exc_value, ImportError) and "skpro" in str(exc_value):
+            self.skipped = True
+            return True
+        return False  # Propagate any other exceptions
+
+
 class BaseFixtureGenerator:
     """Fixture generator for base testing functionality in sktime.
 
@@ -1343,16 +1360,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
+        if method_nsc in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
                 scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+            if handler.skipped:
                 return None
-            except ImportError as e:
-                if "skpro" in str(e):
-                    return None
-                else:
-                    raise e
 
         # dict_after = dictionary of estimator after predict and fit
         output = scenario.run(estimator, method_sequence=[method_nsc])
@@ -1407,16 +1419,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
+        if method_nsc in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
                 scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+            if handler.skipped:
                 return None
-            except ImportError as e:
-                if "skpro" in str(e):
-                    return None
-                else:
-                    raise e
 
         # Fit the model, get args before and after
         _, args_after = scenario.run(
@@ -1434,19 +1441,24 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     ):
         """Check that we can pickle all estimators."""
         method_nsc = method_nsc_arraylike
-        # escape predict_proba for forecasters, tfp distributions cannot be pickled
-        if (
-            isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
-        ):
+        estimator = estimator_instance
+        is_forecaster = scitype(estimator) == "forecaster"
+
+        # escape predict_proba for forecasters, skpro distributions cannot be pickled
+        if is_forecaster and method_nsc == "predict_proba":
             return None
+
+        # escape predict_var for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
+            return None
+
         # escape Deep estimators if soft-dep `h5py` isn't installed
         if isinstance(
             estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
         ) and not _check_soft_dependencies("h5py", severity="warning"):
             return None
 
-        estimator = estimator_instance
         set_random_state(estimator)
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
@@ -1478,14 +1490,18 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     ):
         """Check if saved estimators onto disk can be loaded correctly."""
         method_nsc = method_nsc_arraylike
-        # escape predict_proba for forecasters, tfp distributions cannot be pickled
-        if (
-            isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
-        ):
+        estimator = estimator_instance
+        is_forecaster = scitype(estimator) == "forecaster"
+
+        # escape predict_proba for forecasters, skpro distributions cannot be pickled
+        if is_forecaster and method_nsc == "predict_proba":
             return None
 
-        estimator = estimator_instance
+        # escape predict_var for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
+            return None
+
         set_random_state(estimator)
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
@@ -1532,7 +1548,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # skip test for predict_proba
         # this produces a BaseDistribution object, for which no ready
         # equality check is implemented
-        if method_nsc == "predict_proba":
+        is_forecaster = scitype(estimator_instance) == "forecaster"
+        if is_forecaster and method_nsc == "predict_proba":
+            return None
+        # escape predict_proba etc for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
             return None
 
         # run on a single process
