@@ -18,7 +18,6 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
-
 from ._base import BaseKalmanFilter, _init_matrix, _validate_param_shape
 
 

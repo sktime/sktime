@@ -3,8 +3,8 @@
 __author__ = ["oseiskar"]
 
 import numpy as np
-from sktime.transformations.base import BaseTransformer
 
+from sktime.transformations.base import BaseTransformer
 
 from ._base import BaseKalmanFilter
 
@@ -190,7 +190,8 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         Parameters
         ----------
         X : np.ndarray
-            of shape (time_steps, measurement_dim).
+            of shape (time_steps, measurement_dim) or
+            (instance, time_steps, measurement_dim).
             Data (measurements) to be transformed.
             Missing values must be represented as np.NaN or np.nan.
         y : ignored argument for interface compatibility
@@ -205,9 +206,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
 
         for m in mat_tup:
             if len(m.shape) > 2:
-                raise ValueError(
-                    "Dynamic inputs (list of matrices per time-step) are not supported by simdkalman"
-                )
+                raise ValueError("Dynamic inputs are not supported by simdkalman")
 
         from simdkalman import KalmanFilter as simdkalman_KalmanFilter
 
@@ -238,7 +237,8 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         Parameters
         ----------
         X : np.ndarray
-            of shape (time_steps, measurement_dim).
+            of shape (time_steps, measurement_dim) or
+            (instance, time_steps, measurement_dim).
             Data (measurements) to be transformed.
             Missing values must be represented as np.NaN or np.nan.
         y : ignored argument for interface compatibility
