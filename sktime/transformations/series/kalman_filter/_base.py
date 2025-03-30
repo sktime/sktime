@@ -6,7 +6,66 @@ __author__ = ["NoaWegerhoff", "lielleravid", "oseiskar"]
 import numpy as np
 
 
-class _BaseKalmanFilter:
+def _init_matrix(matrices, transform_func, default_val):
+    """Initialize default value if matrix is None, or transform to np.ndarray.
+
+    Parameters
+    ----------
+    matrices : np.ndarray
+    transform_func : transformation function from array-like to ndarray
+    default_val : np.ndarray
+
+    Returns
+    -------
+        transformed_matrices : np.ndarray
+            matrices as np.ndarray
+    """
+    if matrices is None:
+        return default_val
+    return transform_func(matrices)
+
+
+def _validate_param_shape(param_name, matrix_shape, actual_shape, time_steps=None):
+    """Validate shape of matrix parameter.
+
+    Assert ``actual_shape`` equals to:
+        -  'shape' of a single matrix or
+        -  'shape' of time_steps matrices.
+    If neither, raise an informative ``ValueError`` that includes the parameter's name.
+
+    Parameters
+    ----------
+    param_name : str
+        The name of the matrix-parameter.
+    matrix_shape : tuple
+        The supposed shape of a single matrix.
+    actual_shape : tuple
+        The actual shape of matrix-parameter.
+    time_steps : int
+        actual_shape[0] if matrix-parameter is dynamic (matrix per time-step).
+
+    Raises
+    ------
+        ValueError
+            error with an informative message that includes parameter's name,
+            and the shape that parameter should have.
+    """
+    if time_steps is None:
+        if actual_shape != matrix_shape:
+            raise ValueError(
+                f"Shape of parameter `{param_name}` is: {actual_shape}, "
+                f"but should be: {matrix_shape}."
+            )
+    else:
+        matrices_shape = (time_steps, *matrix_shape)
+        if not (actual_shape == matrix_shape or actual_shape == matrices_shape):
+            raise ValueError(
+                f"Shape of parameter `{param_name}` is: {actual_shape}, but should be: "
+                f"{matrix_shape} or {matrices_shape}."
+            )
+
+
+class BaseKalmanFilter:
     """Kalman Filter is used for denoising data, or inferring the hidden state of data.
 
     Note - this class is a base class and should not be used directly.

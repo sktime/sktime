@@ -1,13 +1,15 @@
-"""KalmanFilterTransformerSIMD - Kalman Filter transformer using simdkalman"""
+"""KalmanFilterTransformerSIMD - Kalman Filter transformer using simdkalman."""
 
 __author__ = ["oseiskar"]
 
 import numpy as np
-from ._base import _BaseKalmanFilter
+
 from sktime.transformations.base import BaseTransformer
 
+from ._base import BaseKalmanFilter
 
-class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
+
+class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     """Vectorized Kalman Filter from simdkalman.
 
     The Kalman Filter is an unsupervised algorithm, consisting of
@@ -86,30 +88,22 @@ class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
     --------
         Timing example:
 
-    >>> import numpy as np  # doctest: +SKIP
-    >>> import sktime.transformations.series.kalman_filter as kf
-    >>> time_steps, state_dim, measurement_dim = 10, 2, 1
-    >>>
-    >>> X = np.random.rand(time_steps, measurement_dim) * 10
-    >>> transformer = kf.KalmanFilterTransformerSIMD(  # doctest: +SKIP
-    ...     state_dim=state_dim,
-    ...     state_transition=np.array([[1,1],[0,1]]),
-    ...     process_noise=np.diag([0.1, 0.01]),
-    ...     measurement_function=np.array([[1,0]]),
-    ...     measurement_noise=np.eye(measurement_dim) * 2.0,
-    ...     )
-    >>> Xt = transformer.fit_transform(X=X)  # doctest: +SKIP
-
-    >>> import numpy as np  # doctest: +SKIP
-    >>> import time  # doctest: +SKIP
+    >>> import numpy as np
+    >>> import time
     >>> from sktime.utils._testing.panel import make_transformer_problem
-    >>> from sktime.transformations.series.kalman_filter import KalmanFilterTransformerPK
-    >>> from sktime.transformations.series.kalman_filter import KalmanFilterTransformerSIMD
+    >>> from sktime.transformations.series.kalman_filter import (
+    ...     KalmanFilterTransformerPK,
+    ...     KalmanFilterTransformerSIMD,
+    ... )
     >>>
     >>> # Test data
-    >>> X = make_transformer_problem(n_instances=200, n_columns=2, n_timepoints=500)
+    >>> X = make_transformer_problem(  # doctest: +SKIP
+    ...     n_instances=200,
+    ...     n_columns=2,
+    ...     n_timepoints=500
+    ... )
     >>>
-    >>> kf_params = dict(
+    >>> kf_params = dict(  # doctest: +SKIP
     ...     state_dim=2,
     ...     state_transition=np.array([[1, 1], [0, 1]]),
     ...     process_noise=np.diag([1e-6, 0.01]),
@@ -120,21 +114,20 @@ class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
     ... )
     >>>
     >>> t0 = time.time()  # doctest: +SKIP
-    >>> X_SIMD = KalmanFilterTransformerSIMD(**kf_params).fit_transform(X)  # doctest: +SKIP
+    >>> kf_SIMD = KalmanFilterTransformerSIMD(**kf_params)  # doctest: +SKIP
+    >>> X_SIMD = kf_SIMD.fit_transform(X)  # doctest: +SKIP
     >>> T_SIMD = time.time() - t0  # doctest: +SKIP
     >>>
     >>> t0 = time.time()  # doctest: +SKIP
-    >>> X_PK = KalmanFilterTransformerPK(**kf_params).fit_transform(X)  # doctest: +SKIP
+    >>> kf_PK = KalmanFilterTransformerPK(**kf_params)  # doctest: +SKIP
+    >>> X_PK = kf_PK.fit_transform(X)  # doctest: +SKIP
     >>> T_PK = time.time() - t0  # doctest: +SKIP
     >>>
-    >>> print(f"SIMDKalman:\t%.03f s\nPyKalman:\t%.03f s" % (T_SIMD, T_PK))  # doctest: +SKIP
-    SIMDKalman:	0.254 s
-    PyKalman:	14.254 s
+    >>> print("SIMD Kalman: %.03f s" % T_SIMD)  # doctest: +SKIP
+    SIMD Kalman: 0.260 s
+    >>> print("PyKalman:    %.03f s" % T_PK)  # doctest: +SKIP
+    PyKalman:    13.934 s
     >>>
-    >>> from numpy.testing import assert_array_almost_equal  # doctest: +SKIP
-    >>> assert_array_almost_equal(X_SIMD, X_PK)  # doctest: +SKIP
-    >>>
-
     """
 
     _tags = {
@@ -197,7 +190,8 @@ class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
         Parameters
         ----------
         X : np.ndarray
-            of shape (time_steps, measurement_dim).
+            of shape (time_steps, measurement_dim) or
+            (instance, time_steps, measurement_dim).
             Data (measurements) to be transformed.
             Missing values must be represented as np.NaN or np.nan.
         y : ignored argument for interface compatibility
@@ -206,16 +200,13 @@ class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-
         measurement_dim = X.shape[1]
         mat_tup = self._get_init_values(measurement_dim, self.state_dim)
         (F_, Q_, R_, H_, X0_, P0_) = mat_tup
 
         for m in mat_tup:
             if len(m.shape) > 2:
-                raise ValueError(
-                    "Dynamic inputs (list of matrices per time-step) are not supported by simdkalman"
-                )
+                raise ValueError("Dynamic inputs are not supported by simdkalman")
 
         from simdkalman import KalmanFilter as simdkalman_KalmanFilter
 
@@ -246,7 +237,8 @@ class KalmanFilterTransformerSIMD(_BaseKalmanFilter, BaseTransformer):
         Parameters
         ----------
         X : np.ndarray
-            of shape (time_steps, measurement_dim).
+            of shape (time_steps, measurement_dim) or
+            (instance, time_steps, measurement_dim).
             Data (measurements) to be transformed.
             Missing values must be represented as np.NaN or np.nan.
         y : ignored argument for interface compatibility
