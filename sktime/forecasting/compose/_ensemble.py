@@ -24,7 +24,6 @@ from sktime.utils.stats import (
     _weighted_min,
 )
 from sktime.utils.validation.forecasting import check_regressor
-from sktime.utils.warnings import warn
 
 VALID_AGG_FUNCS = {
     "mean": {"unweighted": np.mean, "weighted": np.average},
@@ -72,10 +71,38 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
-    backend : str, optional, default=None
-        The backend to use for parallelization. If None, then the default backend
-    backend_params : dict, optional, default=None
-        Parameters to pass to the backend.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
     n_jobs : int or None, optional, default=None
         Deprecated, use backend_params instead.
         The number of jobs to run in parallel for fit.
@@ -124,26 +151,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
+        n_jobs=None,  # Deprecated
         backend=None,
         backend_params=None,
-        n_jobs=None,  # Deprecated
     ):
-        if n_jobs is not None:
-            warn(
-                "The parameter `n_jobs` is deprecated and will be removed in "
-                "future versions of sktime. Please use `backend_params` instead.",
-                FutureWarning,
-                stacklevel=2,
-            )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
-        self.backend = backend
-        self.backend_params = backend_params if backend_params is not None else {}
 
         super().__init__(
             forecasters=forecasters,
+            n_jobs=n_jobs,
             backend=backend,
             backend_params=backend_params,
         )
@@ -304,12 +323,38 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
 
-    backend : str, optional, default=None
-        The backend to use for parallelization. If None, then the default backend
-        is used.
-    backend_params : dict, optional, default=None
-        Parameters to pass to the backend.
-        If None, then the default parameters are used.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
     n_jobs : int or None, optional, default=None
         Deprecated, use backend_params instead.
         The number of jobs to run in parallel for fit.
@@ -354,19 +399,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
-        backend=None,
-        backend_params=None,
         n_jobs=None,  # Deprecated
         aggfunc="mean",
         weights=None,
+        backend=None,
+        backend_params=None,
     ):
-        if n_jobs is not None:
-            warn(
-                "The parameter `n_jobs` is deprecated and will be removed in "
-                "future versions of sktime. Please use `backend_params` instead.",
-                FutureWarning,
-                stacklevel=2,
-            )
         self.aggfunc = aggfunc
         self.weights = weights
 
@@ -374,9 +412,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(
             forecasters=forecasters,
+            fc_alt=fc,
+            n_jobs=n_jobs,
             backend=backend,
             backend_params=backend_params,
-            fc_alt=fc,
         )
 
         # the ensemble requires fh in fit

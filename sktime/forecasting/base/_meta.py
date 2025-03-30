@@ -9,6 +9,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import is_scitype
 from sktime.utils.parallel import parallelize
+from sktime.utils.warnings import warn
 
 
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
@@ -27,13 +28,22 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     _steps_fitted_attr = "forecasters_"
 
     def __init__(
-        self, forecasters, backend=None, backend_params=None, n_jobs=None, fc_alt=None
+        self, forecasters, n_jobs=None, fc_alt=None, backend=None, backend_params=None
     ):
+        if n_jobs is not None:
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "sktime 0.36.0. To keep the current behavior and to silence this "
+                "warninng, set `backend_params=` to `joblib` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            self.backend_params = {"n_jobs": n_jobs}
+        else:
+            self.backend_params = backend_params
         if forecasters is not None:
             self.forecasters = forecasters
         self.backend = None
-        self.backend_params = None
-        self.n_jobs = n_jobs  # Retained for backward compatibility
         super().__init__()
 
         if fc_alt is not None:
@@ -114,15 +124,15 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             in same order as forecasters
         """
 
-        def _fit_single_forecaster(forecaster, meta):
-            """Fit single forecaster with meta containing y, X, fh."""
-            return forecaster.clone().fit(y, X, fh)
+        def _fit_forecaster(forecaster, meta):
+            """Fit single forecaster."""
+            return forecaster.fit(y, X, fh)
 
         if forecasters is None:
             forecasters = self._get_forecaster_list()
 
         fitted_fcst = parallelize(
-            fun=_fit_single_forecaster,
+            fun=_fit_forecaster,
             iter=forecasters,
             backend=self.backend,
             backend_params=self.backend_params,
@@ -150,6 +160,6 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         -------
         self : an instance of self.
         """
-        for name, forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
         return self
