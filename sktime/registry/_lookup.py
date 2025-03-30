@@ -426,7 +426,7 @@ def _check_estimator_types(estimator_types):
     for i, estimator_type in enumerate(estimator_types):
         if not isinstance(estimator_type, (type, str)):
             raise ValueError(
-                "Please specify `estimator_types` as a list of str or " "types."
+                "Please specify `estimator_types` as a list of str or types."
             )
         if isinstance(estimator_type, str):
             if estimator_type not in get_obj_scitype_list():
