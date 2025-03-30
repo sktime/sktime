@@ -34,16 +34,16 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
             warn(
                 "The parameter `n_jobs` is deprecated and will be removed in "
                 "sktime 0.36.0. To keep the current behavior and to silence this "
-                "warninng, set `backend_params=` to `joblib` instead.",
+                "warninng, set `backend_params='joblib'` instead.",
                 FutureWarning,
                 stacklevel=2,
             )
-            self.backend_params = {"n_jobs": n_jobs}
-        else:
-            self.backend_params = backend_params
+            backend_params = "joblib"
+
         if forecasters is not None:
             self.forecasters = forecasters
         self.backend = None
+        self.backend_params = backend_params
         super().__init__()
 
         if fc_alt is not None:
