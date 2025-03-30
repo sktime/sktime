@@ -34,11 +34,13 @@ class ClustererAsTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
-    >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererAsTransformer
+    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
+    >>> from sktime.dists_kernels import AggrDist
+    >>> from sktime.datasets import load_unit_test
     >>> X, _ = load_unit_test(split="train")
-    >>> cluster_assign_trafo = ClustererAsTransformer(TimeSeriesDBSCAN())
+    >>> clusterer = TimeSeriesDBSCAN(AggrDist.create_test_instance())
+    >>> cluster_assign_trafo = ClustererAsTransformer(clusterer)
     >>> cluster_assign_trafo.fit(X)
     ClustererAsTransformer(...)
     >>> cluster_assignment = cluster_assign_trafo.transform(X)
