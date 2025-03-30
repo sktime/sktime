@@ -50,7 +50,7 @@ class AlignerDTW(BaseAligner):
     Basic usage example:
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.alignment.dtw import AlignerDTW
+    >>> from sktime.alignment.dtw_python import AlignerDTW
     >>> X = [
     ...     pd.DataFrame({'col1': np.random.randn(100)}),
     ...     pd.DataFrame({'col1': np.random.randn(100)})
