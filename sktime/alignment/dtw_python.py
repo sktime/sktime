@@ -52,22 +52,22 @@ class AlignerDTW(BaseAligner):
     >>> import pandas as pd
     >>> from sktime.alignment.dtw import AlignerDTW
     >>> X = [
-    >>>     pd.DataFrame({'col1': np.random.randn(100)}),
-    >>>     pd.DataFrame({'col1': np.random.randn(100)})
-    >>> ]
+    ...     pd.DataFrame({'col1': np.random.randn(100)}),
+    ...     pd.DataFrame({'col1': np.random.randn(100)})
+    ... ]
     >>> aligner = AlignerDTW(dist_method='euclidean', step_pattern='symmetric2')
     >>> aligner.fit(X)
     >>> alignment_df = aligner.get_alignment()
 
     Advanced usage example with open-ended alignment:
     >>> aligner_advanced = AlignerDTW(
-    >>>     dist_method='cityblock', window_type='sakoechiba', open_begin=True,
-    >>>     open_end=True
-    >>> )
+    ...     dist_method='cityblock', window_type='sakoechiba', open_begin=True,
+    ...     open_end=True
+    ... )
     >>> X_advanced = [
-    >>>     pd.DataFrame({'col1': np.random.randn(150)}),
-    >>>     pd.DataFrame({'col1': np.random.randn(150)})
-    >>> ]
+    ...     pd.DataFrame({'col1': np.random.randn(150)}),
+    ...     pd.DataFrame({'col1': np.random.randn(150)})
+    ... ]
     >>> aligner_advanced.fit(X_advanced)
     >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
