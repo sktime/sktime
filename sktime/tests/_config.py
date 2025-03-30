@@ -57,6 +57,8 @@ EXCLUDE_ESTIMATORS = [
     "PytorchForecastingDeepAR",
     # STDBSCAN is not API compliant, see #7994
     "STDBSCAN",
+    # Temporarily remove RRF from tests, while #7380 is not merged
+    "RecursiveReductionForecaster",
 ]
 
 
