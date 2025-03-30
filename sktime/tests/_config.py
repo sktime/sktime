@@ -59,6 +59,8 @@ EXCLUDE_ESTIMATORS = [
     "PytorchForecastingDeepAR",
     # STDBSCAN is not API compliant, see #7994
     "STDBSCAN",
+    # DistanceFeatures does ont work for hierarchical data, see #8077
+    "DistanceFeatures",
 ]
 
 
