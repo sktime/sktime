@@ -61,6 +61,8 @@ EXCLUDE_ESTIMATORS = [
     "STDBSCAN",
     # DistanceFeatures does ont work for hierarchical data, see #8077
     "DistanceFeatures",
+    # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
+    "TimeSeriesKvisibility",
 ]
 
 
