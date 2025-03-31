@@ -7,7 +7,6 @@ from sktime.detection.plotting.utils import (
     plot_time_series_with_change_point_detection,
     plot_time_series_with_change_points,
     plot_time_series_with_detrender,
-    plot_time_series_with_detrender_pipeline,
     plot_time_series_with_predicted_anomalies,
     plot_time_series_with_profiles,
     plot_time_series_with_subsequent_outliers,
@@ -20,6 +19,5 @@ __all__ = [
     "plot_time_series_with_predicted_anomalies",
     "plot_time_series_with_detrender",
     "plot_time_series_with_change_point_detection",
-    "plot_time_series_with_detrender_pipeline",
     "plot_time_series_with_subsequent_outliers",
 ]

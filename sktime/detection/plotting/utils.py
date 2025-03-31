@@ -13,7 +13,6 @@ __all__ = [
     "plot_time_series_with_anomalies",
     "plot_time_series_with_predicted_anomalies",
     "plot_time_series_with_detrender",
-    "plot_time_series_with_detrender_pipeline",
 ]
 
 __author__ = ["patrickzib"]
@@ -178,13 +177,7 @@ def plot_time_series_with_profiles(
 
 
 def plot_time_series_with_anomalies(
-    ts,
-    X,
-    y,
-    ax=None,
-    title=None,
-    X_label=None,
-    Y_label=None,
+    ts, X, y, ax=None, title=None, X_label=None, Y_label=None, subplot=False
 ):
     """Plot the time series with actual anomalies.
 
@@ -290,8 +283,8 @@ def plot_time_series_with_predicted_anomalies(
 
 def plot_time_series_with_detrender(
     df,
-    detrended,
     y_hat,
+    detrended=None,
     ax=None,
 ):
     """Plot the time series with actual anomalies using a detrender.
@@ -322,70 +315,33 @@ def plot_time_series_with_detrender(
     else:
         fig = ax.figure
 
-    plot_time_series_with_anomalies(
-        ts=detrended,
-        X=detrended.loc[df.iloc[:, 1] == 1.0].index,
-        y=detrended.loc[df.iloc[:, 1] == 1.0],
-        ax=ax[0],
-        title="Actual Anomalies",
-    )
-
-    plot_time_series_with_anomalies(
-        ts=detrended,
-        X=detrended.loc[y_hat].index,
-        y=detrended.loc[y_hat],
-        ax=ax[1],
-        title="Actual Anomalies",
-    )
-
-    return fig, ax
-
-
-def plot_time_series_with_detrender_pipeline(
-    df,
-    y_hat,
-    ax=None,
-):
-    """Plot the time series with actual anomalies using detrender pipeline.
-
-    Parameters
-    ----------
-    df: pandas.DataFrame
-        dataframe consisting of time series and labels
-    y_hat: pandas.Series
-        Actual anotations of anomalies
-    ax: np.ndarray
-        Array of the figure's Axe objects to plot on
-
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
-    axes : np.ndarray
-        Array of the figure's Axe objects
-    """
-    # Checks availability of plotting libraries
-    _check_soft_dependencies("matplotlib", "seaborn")
-    import matplotlib.pyplot as plt
-
-    if ax is None:
-        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+    if detrended is None:
+        X_actual = df.loc[df.iloc[:, 1] == 1.0, df.columns[0]].index
+        y_actual = df.loc[df.iloc[:, 1] == 1.0, df.columns[0]]
+        X_predicted = df.loc[y_hat, df.columns[0]].index
+        y_predicted = df.loc[y_hat, df.columns[0]]
+        ts = df.iloc[:, 0]
     else:
-        fig = ax.figure
+        X_actual = detrended.loc[df.iloc[:, 1] == 1.0].index
+        y_actual = detrended.loc[df.iloc[:, 1] == 1.0]
+        X_predicted = detrended.loc[y_hat].index
+        y_predicted = detrended.loc[y_hat]
+        ts = detrended
 
     plot_time_series_with_anomalies(
-        ts=df.iloc[:, 0],
-        X=df.loc[df.iloc[:, 1] == 1.0, df.columns[0]].index,
-        y=df.loc[df.iloc[:, 1] == 1.0, df.columns[0]],
+        ts=ts,
+        X=X_actual,
+        y=y_actual,
         ax=ax[0],
         title="Actual Anomalies",
     )
 
     plot_time_series_with_anomalies(
-        ts=df.iloc[:, 0],
-        X=df.loc[y_hat, df.columns[0]].index,
-        y=df.loc[y_hat, df.columns[0]],
+        ts=ts,
+        X=X_predicted,
+        y=y_predicted,
         ax=ax[1],
-        title="Predicted Anomalies",
+        title="Actual Anomalies",
     )
 
     return fig, ax
