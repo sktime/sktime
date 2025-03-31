@@ -193,7 +193,8 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
             idx_range = [cv_window[0] + half_window_length]
 
         for idx in idx_range:
-            Z.iloc[idx] = _compare(
+            loc_idx = Z.index[idx]  # convert to loc to avoid write on copy
+            Z.loc[loc_idx] = _compare(
                 value=Z.iloc[idx],
                 cv_median=cv_median,
                 cv_sigma=cv_sigma,
