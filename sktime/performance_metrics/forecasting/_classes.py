@@ -1113,18 +1113,18 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mase = MeanAbsoluteScaledError()
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.18333333333333335
+    np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mase = MeanAbsoluteScaledError(multioutput='raw_values')
     >>> mase(y_true, y_pred, y_train=y_train)
     array([0.10526316, 0.28571429])
     >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
 
     func = mean_absolute_scaled_error
@@ -1245,18 +1245,18 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
     >>> y_pred = np.array([2.5, 0.0, 2, 8])
     >>> mdase = MedianAbsoluteScaledError()
     >>> mdase(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdase(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mdase = MedianAbsoluteScaledError(multioutput='raw_values')
     >>> mdase(y_true, y_pred, y_train=y_train)
     array([0.10526316, 0.28571429])
     >>> mdase = MedianAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mdase( y_true, y_pred, y_train=y_train)
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
 
     func = median_absolute_scaled_error
@@ -2977,16 +2977,16 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
     >>> mdape(y_true, y_pred)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> smdape = MedianAbsolutePercentageError(symmetric=True)
     >>> smdape(y_true, y_pred)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdape(y_true, y_pred)
-    0.5714285714285714
+    np.float64(0.5714285714285714)
     >>> smdape(y_true, y_pred)
-    0.39999999999999997
+    np.float64(0.39999999999999997)
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mdape(y_true, y_pred)
     array([0.14285714, 1.        ])
@@ -2995,10 +2995,10 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdape(y_true, y_pred)
-    0.7428571428571428
+    np.float64(0.7428571428571428)
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
-    0.5066666666666666
+    np.float64(0.5066666666666666)
     """  # noqa: E501
 
     func = median_absolute_percentage_error
@@ -3518,18 +3518,18 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> mdrae = MedianRelativeAbsoluteError()
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    1.0
+    np.float64(1.0)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.6944444444444443
+    np.float64(0.6944444444444443)
     >>> mdrae = MedianRelativeAbsoluteError(multioutput='raw_values')
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([0.55555556, 0.83333333])
     >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.7499999999999999
+    np.float64(0.7499999999999999)
     """
 
     _tags = {
@@ -3695,18 +3695,18 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrse = GeometricMeanRelativeSquaredError()
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.0008303544925949156
+    np.float64(0.0008303544925949156)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.622419372049448
+    np.float64(0.622419372049448)
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput='raw_values')
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([4.09227746e-06, 1.24483465e+00])
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput=[0.3, 0.7])
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8713854839582426
+    np.float64(0.8713854839582426)
     """
 
     _tags = {
