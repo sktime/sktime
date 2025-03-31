@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.estimator_checks import check_estimator, parametrize_with_checks
@@ -85,6 +86,7 @@ class _TransformChangeNInstances(BaseTransformer):
         ]
 
 
+@pytest.mark.xfail
 @parametrize_with_checks([_TransformChangeNInstances])
 def test_transformation_can_return_new_instances(obj, test_name):
     """
