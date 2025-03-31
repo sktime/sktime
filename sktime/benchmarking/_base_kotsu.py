@@ -1,25 +1,11 @@
 """Interface to override kotsu code for sktime use."""
 
-import re
 import warnings
 from collections.abc import Callable
 from typing import Optional, Union
 
 from sktime.benchmarking._lib_mini_kotsu.registration import _Registry, _Spec
-
-
-def _check_id_format(id_format: str, id: str) -> None:
-    """Check if given input ID follows regex specified in id_format."""
-    if id_format is not None:
-        if not isinstance(id_format, str):
-            raise TypeError(f"id_format must be str but receive {type(id_format)}")
-        entity_id_re = re.compile(id_format)
-        match = entity_id_re.search(id)
-        if not match:
-            raise ValueError(
-                f"Attempted to register malformed entity ID: [id={id}]. "
-                f"All IDs must be of the form {entity_id_re.pattern}."
-            )
+from sktime.benchmarking._utils import _check_id_format
 
 
 class _SktimeSpec(_Spec):

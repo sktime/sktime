@@ -12,6 +12,24 @@ from sktime.benchmarking.base import BaseMetric
 from sktime.split.base._base_splitter import BaseSplitter
 
 
+def _coerce_data_for_evaluate(dataset_loader):
+    """Coerce data input object to a dict to pass to forecasting evaluate."""
+    if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
+        data = dataset_loader()
+    elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
+        data = dataset_loader.load()
+    else:
+        data = dataset_loader
+
+    if isinstance(data, tuple) and len(data) == 2:
+        y, X = data
+        return y, X
+    elif isinstance(data, tuple) and len(data) == 1:
+        return data[0], None
+    else:
+        return data, None
+
+
 @dataclass
 class TaskObject:
     """
@@ -28,28 +46,27 @@ class TaskObject:
         Splitter used for generating validation folds.
     scorers: list of BaseMetric objects
         Each BaseMetric output will be included in the results.
+    strategy: str, optional (default="refit")
+        The strategy to use for refitting the model.
+    cv_X: BaseSplitter object, optional (default=None)
+        Splitter used for generating global cross-validation folds.
+    cv_global: BaseSplitter object, optional (default=None)
+        Splitter used for generating global cross-validation folds.
+    error_score: str, optional (default="raise")
+        The error score strategy to use.
     """
 
     data: Union[Callable, tuple]
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
     strategy: str = "refit"
-    global_mode: bool = False
     cv_X = None
-    cv_global: Optional[BaseSplitter] = None  # TODO needs to be fixed
+    cv_global: Optional[BaseSplitter] = None
+    error_score: str = "raise"
 
     def get_y_X(self):
         """Get the endogenous and exogenous data."""
-        if isinstance(self.data, tuple):
-            return self.data
-        elif isinstance(self.data, Callable):
-            data = self.data()
-            if isinstance(data, tuple):
-                return data
-            else:
-                return data, None
-        else:
-            return self.data, None
+        return _coerce_data_for_evaluate(self.data)
 
 
 @dataclass
