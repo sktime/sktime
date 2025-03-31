@@ -169,6 +169,7 @@ class WindowSegmenter(BaseDetector):
     Examples
     --------
     >>> from sktime.detection.wclust import WindowSegmenter
+    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
     >>> clusterer = TimeSeriesDBSCAN()
