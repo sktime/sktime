@@ -7,6 +7,18 @@ from sktime.transformations.hierarchical.reconciliation._utils import (
 __all__ = ["_ReconcilerTransformer"]
 
 
+def _has_hierarchy(X):
+    """Check if the data has hierarchy.
+
+    To have an hierarchy, it must either:
+    - Have more than 2 index levels
+    - Have a __total level at the second index level
+    """
+    n_levels_geq_3 = X.index.nlevels >= 3
+    total_at_last_non_temporal_level = "__total" in X.index.get_level_values(-2)
+    return n_levels_geq_3 or total_at_last_non_temporal_level
+
+
 class _ReconcilerTransformer(BaseTransformer):
     """Base class of reconcilers that follow the reconciliation API.
 
@@ -69,7 +81,7 @@ class _ReconcilerTransformer(BaseTransformer):
         -------
         self
         """
-        self._no_hierarchy = X.index.nlevels < 3
+        self._no_hierarchy = not _has_hierarchy(X)
         if self._no_hierarchy:
             return self
         self._original_series = X.index.droplevel(-1).unique()

@@ -15,6 +15,7 @@ from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+from sktime.utils._testing.panel import _make_panel
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
@@ -311,7 +312,7 @@ class TestAllReconciliationTransformers(
 ):
     """Module level tests for all sktime transformers."""
 
-    @pytest.mark.parametrize("no_levels", [2, 3, 4])
+    @pytest.mark.parametrize("no_levels", [1, 2, 3, 4])
     @pytest.mark.parametrize("flatten_single_levels", [True, False])
     @pytest.mark.parametrize("unnamed_levels", [True, False])
     def test_hierarchical_reconcilers(
@@ -373,16 +374,12 @@ class TestAllReconciliationTransformers(
         for method in methods_to_implement:
             assert method in estimator_instance.__class__.__dict__
 
-    @pytest.mark.parametrize("no_levels", [1])
+    @pytest.mark.parametrize("n_instances", [1, 10])
     def test_behaves_as_identity_if_input_not_hierarchical(
-        self, estimator_instance, no_levels
+        self, estimator_instance, n_instances
     ):
         """Test that the reconciler behaves as identity when required."""
-        X = _bottom_hier_datagen(
-            no_bottom_nodes=5,
-            no_levels=no_levels,
-            random_seed=123,
-        )
+        X = _make_panel(n_instances=20)
 
         # reconcile forecasts
         reconciler = estimator_instance
