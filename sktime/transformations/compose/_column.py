@@ -596,14 +596,13 @@ class ColumnwiseTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.detrend import Detrender
 
         return [
             {"transformer": Detrender()},
-            {"transformer": BoxCoxTransformer(), "columns": ["col1", "col2"]},
+            {"transformer": BoxCoxTransformer(), "columns": None},
         ]
-
 
 
 def _check_columns(z, selected_columns):
