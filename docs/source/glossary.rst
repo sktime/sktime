@@ -129,6 +129,9 @@ sktime.
         in the context of ``scikit-learn``, the "composite estimator"
         combines both the composite pattern and the strategy pattern.
 
+    Composite Pattern:
+        In software engineering, a composite pattern combines objects into tree structures; here, it refers to combining multiple estimators.
+
     Hyperparameter:
         A parameter of a machine learning model that is set at construction.
         Usually, this affects the model's performance.
