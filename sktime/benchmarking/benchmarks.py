@@ -108,22 +108,8 @@ class BaseBenchmark:
         if None, no format is enforced on task/estimator ID
     """
 
-    def __init__(self, id_format: Optional[str] = None, legacy: bool = True):
-        if legacy:
-            warn(
-                "You are using a legacy version of BaseBenchmark. "
-                "use legacy=False to use the new version. "
-                "In version 0.38.0, the legacy version will be removed, "
-                "i.e., estimators, and validations will not be public"
-                "attributes anymore.",
-            )
-            from sktime.benchmarking._base_kotsu import (
-                SktimeModelRegistry,
-                SktimeValidationRegistry,
-            )
-
-            self.estimators = SktimeModelRegistry(id_format)
-            self.validations = SktimeValidationRegistry(id_format)
+    def __init__(self, id_format: Optional[str] = None):
+        self.id_format = id_format
 
     def add_estimator(
         self,

@@ -352,3 +352,19 @@ def test_add_estimator_twice(tmp_path):
 
     msg = "add_estimator does not register all estimators."
     assert len(benchmark.estimators.entities) == 2, msg
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_raise_id_restraint():
+    """Test to ensure ID format is raised for malformed input ID."""
+    # format of the form [username/](entity-name)-v(major).(minor)
+    id_format = r"^(?:[\w:-]+\/)?([\w:.\-{}=\[\]]+)-v([\d.]+)$"
+    error_msg = "Attempted to register malformed entity ID"
+    benchmark = ForecastingBenchmark(id_format)
+    with pytest.raises(ValueError) as exc_info:
+        benchmark.add_estimator(NaiveForecaster(), "test_id")
+    assert exc_info.type is ValueError, "Must raise a ValueError"
+    assert error_msg in exc_info.value.args[0], "Error msg is not raised"

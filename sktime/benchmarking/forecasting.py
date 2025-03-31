@@ -331,7 +331,7 @@ class ForecastingBenchmark(BaseBenchmark):
         backend_params=None,
         return_data=False,
     ):
-        super().__init__(id_format, legacy=False)
+        super().__init__(id_format)
         self.backend = backend
         self.backend_params = backend_params
         self.estimators = _SktimeRegistry(id_format)
