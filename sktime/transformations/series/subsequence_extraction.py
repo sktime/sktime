@@ -53,6 +53,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.transformations.series.subsequence_extraction import (
     ...     SubsequenceExtractionTransformer
     ... )
