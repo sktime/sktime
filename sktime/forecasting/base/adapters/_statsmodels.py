@@ -92,7 +92,8 @@ class _StatsModelsAdapter(BaseForecaster):
                 )
                 if index_diff.isin(y.index).all():
                     y = y.loc[index_diff]
-                self._fitted_forecaster = self._fitted_forecaster.append(y)
+                self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+
 
     def _predict(self, fh, X):
         """Make forecasts.
