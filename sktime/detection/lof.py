@@ -103,7 +103,7 @@ class SubLOF(BaseDetector):
     --------
     >>> import pandas as pd
     >>> from sktime.annotation.lof import SubLOF
-    >>> model = SubLOF(3, window_size=5, novelty=True)	
+    >>> model = SubLOF(3, window_size=5, novelty=True)
     >>> x = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0, 0, 100, 0, 0, 0.3, -1, 0, 100, 0.2])
     >>> model.fit_transform(x)
     0     0
