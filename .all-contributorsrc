@@ -3451,6 +3451,25 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "LorchZachery",
+      "name": "Zachery Lorch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54079406?v=4",
+      "profile": "https://github.com/LorchZachery",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "danferns",
+      "name": "Daniel Fernandes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57069381?v=4",
+      "profile": "https://github.com/danferns",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
