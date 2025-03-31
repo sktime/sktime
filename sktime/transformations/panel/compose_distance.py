@@ -131,10 +131,15 @@ class DistanceFeatures(BaseTransformer):
         X_ind = X.index.droplevel(-1).unique()
 
         def _coerce_to_panel(x):
-            """Coerce hierarchical or pandel x to panel."""
+            """Coerce hierarchical or panel x to panel."""
             nlevels = x.index.nlevels
             if nlevels > 2:
-                return x.droplevel(list(range(nlevels - 2)))
+                # Reduce nlevels to 2 while keeping instances unique
+                inst_idx = flatten_multiindex(x.index.droplevel(-1))
+                t_idx = x.index.get_level_values(-1)
+                idx = pd.MultiIndex.from_arrays((inst_idx, t_idx))
+
+                return x.set_index(idx)
             else:
                 return x
 
@@ -143,9 +148,35 @@ class DistanceFeatures(BaseTransformer):
 
         distmat = distance(X, X_train)
 
-        if self.flatten_hierarchy:
+        if self.flatten_hierarchy and X.index.nlevels > 1:
             X_ind = flatten_multiindex(X_ind)
 
         Xt = pd.DataFrame(distmat, columns=X_train_ind, index=X_ind)
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sktime.dists_kernels.edit_dist import EditDist
+
+        param1 = {}
+        param2 = {"distance": "cityblock", "flatten_hierarchy": True}
+        param3 = {"distance": EditDist.create_test_instance()}
+        return [param1, param2, param3]

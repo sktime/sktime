@@ -61,8 +61,6 @@ EXCLUDE_ESTIMATORS = [
     "STDBSCAN",
     # Temporarily remove RRF from tests, while #7380 is not merged
     "RecursiveReductionForecaster",
-    # DistanceFeatures does ont work for hierarchical data, see #8077
-    "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
 ]
@@ -296,7 +294,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
-        "DistanceFeatures",
         "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
