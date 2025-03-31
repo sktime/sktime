@@ -1,7 +1,5 @@
 __author__ = ["jgyasu"]
 
-from unittest.mock import MagicMock
-
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 
