@@ -847,6 +847,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         cutoff = cutoff.index
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
+        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
         # remember timezone to restore it later
         if hasattr(cutoff, "tz"):
@@ -854,7 +855,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             old_tz = None
 
-        if isinstance(cutoff, pd.DatetimeIndex):
+        if is_timestamp:
             # preserve the format of DatetimeIndex # see #5186
             absolute = [cutoff[0]] * len(relative)
             if isinstance(relative[0], Timedelta):
