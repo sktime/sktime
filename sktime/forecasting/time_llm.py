@@ -9,14 +9,14 @@ from typing import Optional
 
 import pandas as pd
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class TimeLLMForecaster(_BaseGlobalForecaster):
+class TimeLLMForecaster(BaseForecaster):
     """
     Interface to the Time-LLM.
 
@@ -81,19 +81,10 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM
         "maintainers": ["jgyasu"],
         "python_dependencies": ["torch", "transformers"],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            # "pd-multiindex",
-            # "pd_multiindex_hier",
-        ],
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            # "pd-multiindex",
-            # "pd_multiindex_hier",
-        ],
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -111,7 +102,6 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         n_heads=4,
         dropout=0.1,
         device: Optional[str] = None,
-        broadcasting=False,
         prompt_domain=False,
     ):
         self.task_name = task_name
@@ -127,17 +117,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         self.n_heads = n_heads
         self.dropout = dropout
         self.device = device
-        self.broadcasting = broadcasting
         self.prompt_domain = prompt_domain
-
-        if self.broadcasting:
-            self.set_tags(
-                **{
-                    "y_inner_mtype": "pd.Series",
-                    "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
-                }
-            )
 
         super().__init__()
 
@@ -153,9 +133,11 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         self.fh_ = fh
 
         if isinstance(fh, int):
-            self.pred_len = fh
+            self._pred_len = fh
         elif hasattr(fh, "__len__"):
-            self.pred_len = len(fh)
+            self._pred_len = len(fh)
+        else:
+            self._pred_len = self.pred_len
 
         # Create a unique key for the current model configuration
         key = self._get_unique_time_llm_key()
@@ -165,7 +147,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
             key=key,
             time_llm_kwargs={
                 "task_name": self.task_name,
-                "pred_len": self.pred_len,
+                "pred_len": self._pred_len,
                 "seq_len": self.seq_len,
                 "llm_model": self.llm_model,
                 "llm_layers": self.llm_layers,
@@ -176,7 +158,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
                 "d_ff": self.d_ff,
                 "n_heads": self.n_heads,
                 "dropout": self.dropout,
-                "enc_in": 1 if self.broadcasting else y.shape[1],
+                "enc_in": y.shape[1],
                 "prompt_domain": self.prompt_domain,
             },
         ).load_model()
@@ -190,7 +172,7 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
         """Get unique key for Time-LLM model to use in multiton."""
         config_dict = {
             "task_name": self.task_name,
-            "pred_len": self.pred_len,
+            "pred_len": self._pred_len,
             "seq_len": self.seq_len,
             "llm_model": self.llm_model,
             "llm_layers": self.llm_layers,
@@ -202,7 +184,6 @@ class TimeLLMForecaster(_BaseGlobalForecaster):
             "n_heads": self.n_heads,
             "dropout": self.dropout,
             "device": self.device,
-            "broadcasting": self.broadcasting,
             "prompt_domain": self.prompt_domain,
         }
         return str(sorted(config_dict.items()))
