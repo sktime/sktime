@@ -523,7 +523,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing values
-    >>> X[0] = [np.NaN for i in range(measurement_dim)]
+    >>> X[0] = [np.nan for i in range(measurement_dim)]
     >>>
     >>> # Dynamic input -
     >>> # ``state_transition`` provide different matrix for each time step.
@@ -1017,7 +1017,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing values
-    >>> X[0] = [np.NaN for i in range(measurement_dim)]
+    >>> X[0] = [np.nan for i in range(measurement_dim)]
     >>>
     >>> # y
     >>> control_variable = np.random.rand(control_variable_dim)
