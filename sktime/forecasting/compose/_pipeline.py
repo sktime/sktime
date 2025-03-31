@@ -85,20 +85,23 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         if not all([is_scitype(x, ["forecaster", "transformer"]) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
-                f"must be either transformer or forecaster"
+                f"must be either transformer or forecaster or global_forecaster"
             )
         scitypes = [is_scitype(x, ["forecaster"]) for x in estimators]
         if sum(scitypes) != 1:
             raise TypeError(
-                f"exactly one forecaster must be contained in the chain, "
-                f"but found {scitypes.count('forecaster')}"
+                f"exactly one forecaster or global_forecaster "
+                f"must be contained in the chain, "
+                f"but found forecaster: {scitypes.count('forecaster')}, "
+                f"global_forecaster: {scitypes.count('global_forecaster')}"
             )
 
         forecaster_ind = self._get_forecaster_index(estimator_tuples)
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
-                f"in {self_name}, last estimator must be a forecaster, "
+                f"in {self_name}, last estimator must be a "
+                f"forecaster or global_forecaster, "
                 f"but found a transformer"
             )
 
