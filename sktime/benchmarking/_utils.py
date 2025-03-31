@@ -15,4 +15,3 @@ def _check_id_format(id_format: str, id: str) -> None:
                 f"Attempted to register malformed entity ID: [id={id}]. "
                 f"All IDs must be of the form {entity_id_re.pattern}."
             )
-

@@ -406,7 +406,8 @@ class ForecastingBenchmark(BaseBenchmark):
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
         cv_global: Optional[BaseSplitter] = None,
-        error_score: str = "raise",  # TODO check the default value
+        error_score: str = "raise",
+        strategy: str = "refit",
     ):
         """Register a forecasting task to the benchmark.
 
@@ -424,6 +425,36 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+        cv_global:  sklearn splitter, or sktime instance splitter, default=None
+            If ``cv_global`` is passed, then global benchmarking is applied, as follows:
+
+            1. the ``cv_global`` splitter is used to split data at instance level,
+            into a global training set ``y_train``,
+            and a global test set ``y_test_global``.
+            2. The estimator is fitted to the global training set ``y_train``.
+            3. ``cv_splitter`` then splits the global test set ``y_test_global``
+            temporally, to obtain temporal splits ``y_past``, ``y_true``.
+
+            Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
+            the following evaluation will be applied:
+
+            .. code-block:: python
+
+                forecaster.fit(y=y_train, fh=cv.fh)
+                y_pred = forecaster.predict(y=y_past)
+                metric(y_true, y_pred)
+        error_score : "raise" or numeric, default=np.nan
+            Value to assign to the score if an exception occurs in estimator fitting.
+            If set to "raise", the exception is raised. If a numeric value is given,
+            FitFailedWarning is raised.
+        strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+            defines the ingestion mode when the forecaster sees new data when window
+            expands
+            "refit" = forecaster is refitted to each training window
+            "update" = forecaster is updated with training window data,
+            in sequence provided
+            "no-update_params" = fit to first training window, re-used without
+            fit or update
 
         Returns
         -------
@@ -451,6 +482,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "cv_splitter": cv_splitter,
             "scorers": scorers,
             "cv_global": cv_global,
+            "error_score": error_score,
         }
         self._add_task(
             task_id,
