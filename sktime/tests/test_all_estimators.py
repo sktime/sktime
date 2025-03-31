@@ -1288,6 +1288,13 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 )
             if handler.skipped:
                 return None
+        else:
+            results = scenario.run(
+                estimator,
+                method_sequence=["fit", method_nsc_arraylike],
+                return_all=True,
+                deepcopy_return=True,
+            )
 
         estimator = results[0]
         set_random_state(estimator)
