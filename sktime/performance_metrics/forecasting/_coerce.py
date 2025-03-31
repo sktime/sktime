@@ -13,6 +13,8 @@ def _coerce_to_scalar(obj):
     if isinstance(obj, pd.Series):
         assert len(obj) == 1
         return obj.iloc[0]
+    if not isinstance(obj, float):
+        obj = float(obj)
     return obj
 
 

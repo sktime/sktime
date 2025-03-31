@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from sktime.annotation.plotting.utils import (
+    plot_time_series_with_anomalies,
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
 )
@@ -12,7 +13,8 @@ from sktime.utils.dependencies import _check_soft_dependencies
 @pytest.fixture
 def time_series_data():
     ts_data = np.random.rand(100)
-    ts = pd.DataFrame({"Data": ts_data})
+    labels = np.random.choice([True, False], size=100)
+    ts = pd.DataFrame({"Data": ts_data, "label": labels})
     true_cps = [4, 8]
     font_size = 12
     ts_name = "Test Time Series"
@@ -73,3 +75,21 @@ def test_plot_time_series_with_profiles(time_series_data):
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, np.ndarray)
     assert ax[0].get_title() == ts_name
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("seaborn", "matplotlib", severity="none"),
+    reason="Seaborn is required as a dependency for this plot.",
+)
+def test_plot_time_series_with_anomalies(time_series_data):
+    import matplotlib.pyplot as plt
+
+    # Accesing data from the fixture
+    df = time_series_data["ts"]
+    X = df.loc[df.iloc[:, 1] == 1.0].index
+    y = df.loc[df.iloc[:, 1] == 1.0, df.columns[0]]
+
+    fig, ax = plot_time_series_with_anomalies(df, X, y)
+
+    assert isinstance(fig, plt.Figure)
+    assert isinstance(ax, np.ndarray)
