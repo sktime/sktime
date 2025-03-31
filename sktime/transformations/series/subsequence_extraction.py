@@ -64,6 +64,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     ...     subseq_len = 3,
     ... )
     >>> subseq_extract.fit(X)
+    SubsequenceExtractionTransformer(...)
     >>> X_transformed = subseq_extract.transform(X)
 
     References
