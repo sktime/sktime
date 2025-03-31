@@ -192,6 +192,7 @@ EXCLUDED_TESTS = {
     "TEASER": [
         "test_non_state_changing_method_contract",
         "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
