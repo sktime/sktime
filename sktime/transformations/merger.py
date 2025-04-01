@@ -45,7 +45,7 @@ class Merger(BaseTransformer):
     >>> y = _make_panel(n_instances=10, n_columns=3, n_timepoints=5)
     >>> result = Merger(method="median").fit_transform(y)
     >>> result.shape
-    (3, 5)
+    (5, 3)
 
     >>> from sktime.transformations.merger import Merger
     >>> from sktime.utils._testing.panel import _make_panel
@@ -106,6 +106,10 @@ class Merger(BaseTransformer):
                 x, np.arange(1, x.shape[0]).repeat(self.stride - 1), np.nan, axis=0
             )
         elif self.stride == 0:
+            # Input had axis 0 = instances, axis 1 = variables, axis 2 = time points
+            # Output needs axis 0 = time points, axis 1 = variables
+            # Hence need to take the transpose
+            x = np.transpose(x, [0, 2, 1])
             return x
         r = []
         for i in range(horizon):

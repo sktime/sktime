@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Composition functionality for reduction approaches to forecasting."""
+"""Reduction approaches to forecasting."""
 
 __author__ = [
     "mloning",
@@ -42,6 +42,7 @@ from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
+from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
@@ -127,63 +128,16 @@ def _sliding_window_transform(
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
 
+    kwargs = {"y": y, "window_length": window_length, "X": X}
     if pooling == "global":
-        n_cut = -window_length
+        kwargs = {"transformers": transformers}
+        _sliding_window_trans_f = _sliding_window_transform_global
+    else:  # if pooling == "local":
+        kwargs = {"fh": fh, "windows_identical": windows_identical}
+        _sliding_window_trans_f = _sliding_window_transform_local
 
-        if len(transformers) == 1:
-            tf_fit = transformers[0].fit(y)
-        else:
-            feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
-            tf_fit = FeatureUnion(feat).fit(y)
-        X_from_y = tf_fit.transform(y)
+    yt, Xt = _sliding_window_trans_f(y=y, X=X, window_length=window_length, **kwargs)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
-        yt = _cut_df(y, n_obs=n_cut)
-
-        if X is not None:
-            X_cut = _cut_df(X, n_obs=n_cut)
-            Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
-        else:
-            Xt = X_from_y_cut
-    else:
-        z = _concat_y_X(y, X)
-        n_timepoints, n_variables = z.shape
-
-        fh = _check_fh(fh)
-        fh_max = fh[-1]
-
-        if window_length + fh_max >= n_timepoints:
-            raise ValueError(
-                "The `window_length` and `fh` are incompatible with the length of `y`"
-            )
-
-        # Get the effective window length accounting for the forecasting horizon.
-        effective_window_length = window_length + fh_max
-        Zt = np.zeros(
-            (
-                n_timepoints + effective_window_length,
-                n_variables,
-                effective_window_length + 1,
-            )
-        )
-
-        # Transform data.
-        for k in range(effective_window_length + 1):
-            i = effective_window_length - k
-            j = n_timepoints + effective_window_length - k
-            Zt[i:j, :, k] = z
-
-        # Truncate data, selecting only full windows, discarding incomplete ones.
-        if windows_identical is True:
-            Zt = Zt[effective_window_length:-effective_window_length]
-        else:
-            Zt = Zt[effective_window_length:-window_length]
-        # Return transformed feature and target variables separately. This
-        # excludes contemporaneous values of the exogenous variables. Including them
-        # would lead to unequal-length data, with more time points for
-        # exogenous series than the target series, which is currently not supported.
-        yt = Zt[:, 0, window_length + fh]
-        Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
     # If the scitype is tabular regression, we have to convert X into a 2d array.
     if scitype == "tabular-regressor" and transformers is None:
@@ -191,6 +145,73 @@ def _sliding_window_transform(
 
     assert Xt.ndim == 2 or Xt.ndim == 3
     assert yt.ndim == 2
+
+    return yt, Xt
+
+
+def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
+    """Transform time series data using sliding window for local pooling."""
+    z = _concat_y_X(y, X)
+    n_timepoints, n_variables = z.shape
+
+    fh = _check_fh(fh)
+    fh_max = fh[-1]
+
+    if window_length + fh_max >= n_timepoints:
+        raise ValueError(
+            "The `window_length` and `fh` are incompatible with the length of `y`"
+        )
+
+    # Get the effective window length accounting for the forecasting horizon.
+    effective_window_length = window_length + fh_max
+    Zt = np.zeros(
+        (
+            n_timepoints + effective_window_length,
+            n_variables,
+            effective_window_length + 1,
+        )
+    )
+
+    # Transform data.
+    for k in range(effective_window_length + 1):
+        i = effective_window_length - k
+        j = n_timepoints + effective_window_length - k
+        Zt[i:j, :, k] = z
+
+    # Truncate data, selecting only full windows, discarding incomplete ones.
+    if windows_identical is True:
+        Zt = Zt[effective_window_length:-effective_window_length]
+    else:
+        Zt = Zt[effective_window_length:-window_length]
+    # Return transformed feature and target variables separately. This
+    # excludes contemporaneous values of the exogenous variables. Including them
+    # would lead to unequal-length data, with more time points for
+    # exogenous series than the target series, which is currently not supported.
+    yt = Zt[:, 0, window_length + fh]
+    Xt = Zt[:, :, :window_length]
+
+    return yt, Xt
+
+
+def _sliding_window_transform_global(y, window_length, X, transformers):
+    """Transform time series data using sliding window for global pooling."""
+    n_cut = -window_length
+
+    if len(transformers) == 1:
+        tf_fit = transformers[0].fit(y)
+    else:
+        feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
+        tf_fit = FeatureUnion(feat).fit(y)
+    X_from_y = tf_fit.transform(y)
+
+    X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+    yt = _cut_df(y, n_obs=n_cut)
+
+    if X is not None:
+        X_cut = _cut_df(X, n_obs=n_cut)
+        Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
+    else:
+        Xt = X_from_y_cut
 
     return yt, Xt
 
@@ -723,7 +744,7 @@ class _DirectReducer(_Reducer):
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
                 if est_type == "regressor":
-                    y_pred[i] = y_pred_est
+                    y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
@@ -2516,8 +2537,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
-
+                y_plus_preds = apply_method_per_series(
+                    y_plus_preds, "asfreq", self.fh.freq
+                )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
@@ -2545,16 +2567,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # otherwise proceed as per direct reduction algorithm
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
-            # 2D numpy array with col index = (var) and 1 row
-            y_pred_list.append(y_pred_i)
 
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+            y_pred_list.append(y_pred_new)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
-        y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
-        y_pred = slice_at_ix(y_pred, fh_idx)
+        y_pred = pd.concat(y_pred_list).sort_index()
+        y_pred = y_pred.loc[fh_idx]
 
         return y_pred
 

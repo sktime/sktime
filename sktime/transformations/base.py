@@ -1368,8 +1368,17 @@ class BaseTransformer(BaseEstimator):
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
             elif self.get_tags()["scitype:transform-input"] == "Panel":
-                # Input has always to be Panel
-                X_output_mtype = "pd.DataFrame"
+                # Converting Panel to Series
+                if X_input_scitype == "Hierarchical":
+                    # Input was Hierarchical, but output has dropped one level.
+                    # One level Hierarchical should be converted to Panel, but
+                    # deeper Hierarchical should be converted to Hierarchical.
+                    # Choose the simplest structure of the two.
+                    X_output_mtype = ["pd-multiindex", "pd_multiindex_hier"]
+                    output_scitype = ["Panel", "Hierarchical"]
+                else:
+                    # Input must have been Panel, output should be Series
+                    X_output_mtype = "pd.DataFrame"
             else:
                 # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype
@@ -1394,15 +1403,26 @@ class BaseTransformer(BaseEstimator):
                 store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
+            # vectorization causes a superfluous zero level
+            # if we have a Series input that is vectorized,
+            # as in that case the index should be "0-level" (no levels)
+            # but this is not possible in pandas, so it will have a level
+            # which always has the entry 0.
+            # in this case, we need to strip this level
+            Xt_has_superfluous_zero_level = (
+                X_input_scitype != "Series"
+                and case == "case 3: requires vectorization"
+                and isinstance(Xt, (pd.DataFrame, pd.Series))
+            )
             # we ensure the output is pd_DataFrame_Table
             # & ensure the returned index is sensible
             # for return index, we need to deal with last level, constant 0
-            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+            if Xt_has_superfluous_zero_level:
                 # if index is multiindex, last level is constant 0
                 # and other levels are hierarchy
                 if isinstance(Xt.index, pd.MultiIndex):
                     Xt.index = Xt.index.droplevel(-1)
-                # else this is only zeros and should be reset to RangeIndex
+                # we have an index with only zeroes, and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
             return convert_to(
