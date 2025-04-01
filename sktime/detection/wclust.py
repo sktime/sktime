@@ -172,7 +172,7 @@ class WindowSegmenter(BaseDetector):
     >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
-    >>> clusterer = TimeSeriesDBSCAN()
+    >>> clusterer = TimeSeriesDBSCAN.create_test_instance()
     >>> segmenter = ClusterSegmenter(clusterer, 3)
     >>> segmenter._fit(X)
     >>> segment_labels = segmenter._predict(X)
