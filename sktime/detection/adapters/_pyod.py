@@ -35,7 +35,7 @@ class PyODDetector(BaseDetector):
     >>> from pyod.models.ecod import ECOD
     >>> model = PyODDetector(ECOD())
     >>> model.fit_transform(X)
-           labels
+       labels
     0       0
     1       1
     2       0
