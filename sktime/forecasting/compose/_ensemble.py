@@ -103,9 +103,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
-    n_jobs : int or None, optional, default=None
-        Deprecated, use backend_params instead.
-        The number of jobs to run in parallel for fit.
 
     Attributes
     ----------
