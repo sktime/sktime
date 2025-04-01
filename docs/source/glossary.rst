@@ -130,7 +130,18 @@ sktime.
         combines both the composite pattern and the strategy pattern.
 
     Composite Pattern: 
-        In software engineering, a composite pattern combines objects into tree structures; here, it refers to combining multiple estimators.
+        Key Elements:
+        - ``Component``: Common interface for all objects
+        - ``Leaf``: Represents individual objects with no children
+        - ``Composite``: Contains and manages child components (Leaves or other Composites)
+
+        Benefits:
+        - Enables recursive handling of nested structures
+        - Uniform treatment of simple and complex elements
+        - Ideal for building tree-like hierarchies in code
+
+        In ``sktime``, this pattern facilitates creation of complex estimator structures where both individual estimators and combinations follow the same interface. This supports modular pipeline construction (e.g., transformers combined with forecasters) and enhances scalability in time series analysis.
+
         
     Hyperparameter:
         A parameter of a machine learning model that is set at construction.
