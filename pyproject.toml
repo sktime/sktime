@@ -273,7 +273,7 @@ tests = [
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
-# these are for specual uses and may be changed or removed at any time
+# these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
   "pandas<2.0.0",
