@@ -59,21 +59,6 @@ class AlignerDTW(BaseAligner):
     >>> aligner.fit(X)
     AlignerDTW(...)
     >>> alignment_df = aligner.get_alignment()
-
-    Advanced usage example with open-ended alignment:
-    >>> aligner_advanced = AlignerDTW(
-    ...     dist_method='cityblock',
-    ...     window_type='sakoechiba',
-    ...     step_pattern='asymmetric',
-    ...     open_begin=True,
-    ...     open_end=True,
-    ... )
-    >>> X_advanced = [
-    ...     pd.DataFrame({'col1': np.random.randn(150)}),
-    ...     pd.DataFrame({'col1': np.random.randn(150)})
-    ... ]
-    >>> aligner_advanced.fit(X_advanced)
-    >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
 
     _tags = {
