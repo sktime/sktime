@@ -59,7 +59,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch"],
+        "python_dependencies": ["pykan", "torch", "matplotlib"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",

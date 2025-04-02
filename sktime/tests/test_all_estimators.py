@@ -39,6 +39,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
+from sktime.utils._testing.doctest import run_doctest
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -731,9 +732,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
-        import doctest
-
-        doctest.run_docstring_examples(estimator_class, globals())
+        run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
@@ -1288,6 +1287,13 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 )
             if handler.skipped:
                 return None
+        else:
+            results = scenario.run(
+                estimator,
+                method_sequence=["fit", method_nsc_arraylike],
+                return_all=True,
+                deepcopy_return=True,
+            )
 
         estimator = results[0]
         set_random_state(estimator)
