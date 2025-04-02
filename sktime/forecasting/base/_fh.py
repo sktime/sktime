@@ -854,16 +854,18 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             old_tz = None
 
-        if isinstance(cutoff, pd.DatetimeIndex):
-            # preserve the format of DatetimeIndex # see #5186
-            absolute = [cutoff[0]] * len(relative)
-            if isinstance(relative[0], Timedelta):
-                for i in range(len(relative)):
-                    absolute[i] = cutoff[0] + relative[i]
+        def _to_offset(r):
+            if isinstance(r, Timedelta):
+                return r
             else:
-                for i in range(len(relative)):
-                    absolute[i] = cutoff[0] + relative[i] * to_offset(fh.freq)
+                return r * to_offset(fh.freq)
 
+        c_is_timestamp = isinstance(cutoff, pd.DateTimeIndex)
+        c_is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
+
+        if c_is_timestamp:
+            # preserve the format of DatetimeIndex # see #5186
+            absolute = [cutoff[0] + _to_offset(r) for r in relative]
             try:
                 absolute = pd.DatetimeIndex(absolute, freq=fh.freq)
             except ValueError as e:  # freq can not be set if missing values exist
@@ -874,15 +876,9 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             if isinstance(cutoff, pd.Index):
                 cutoff = cutoff[[0] * len(relative)]
-
-            # pandas bugfix
-            pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
-            if not pandas_version_with_bugfix and isinstance(cutoff, pd.PeriodIndex):
-                absolute = pd.PeriodIndex(cutoff.to_list() + relative, freq=fh._freq)
-            elif not pandas_version_with_bugfix and isinstance(
-                cutoff, pd.DatetimeIndex
-            ):
-                absolute = pd.DatetimeIndex(cutoff.to_list() + relative, freq=fh._freq)
+            # pandas bugfix patch
+            if not _is_pandas_arithmetic_bug_fixed() and c_is_timelike:
+                absolute = type(cutoff)(cutoff.to_list() + relative, freq=fh._freq)
             else:
                 absolute = cutoff + relative
 
