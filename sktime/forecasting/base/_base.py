@@ -2526,7 +2526,14 @@ class _BaseGlobalForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        raise NotImplementedError("abstract method")
+        absolute_fh = fh.to_absolute(self.cutoff)
+        absolute_idx = absolute_fh.to_pandas() 
+        
+        return pd.Series(
+            [0] * len(fh),
+            index=absolute_idx,
+            name=self._y.name
+        )
 
     def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
         """Compute/return quantile forecasts.
