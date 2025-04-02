@@ -233,11 +233,15 @@ class TimeLLMForecaster(BaseForecaster):
 
         forecast_index = fh.to_absolute(self.cutoff).to_pandas()
 
-        return pd.DataFrame(
+        y_pred = pd.DataFrame(
             data=res.detach().cpu().numpy().flatten(),
             index=forecast_index,
             columns=self.last_values.columns,
         )
+
+        y_pred = y_pred.astype("float64")
+
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
