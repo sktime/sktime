@@ -130,17 +130,7 @@ sktime.
         combines both the composite pattern and the strategy pattern.
 
     Composite Pattern: 
-        Key Elements:
-        - ``Component``: Common interface for all objects
-        - ``Leaf``: Represents individual objects with no children
-        - ``Composite``: Contains and manages child components (Leaves or other Composites)
-
-        Benefits:
-        - Enables recursive handling of nested structures
-        - Uniform treatment of simple and complex elements
-        - Ideal for building tree-like hierarchies in code
-
-        In ``sktime``, this pattern facilitates creation of complex estimator structures where both individual estimators and combinations follow the same interface. This supports modular pipeline construction (e.g., transformers combined with forecasters) and enhances scalability in time series analysis.
+        A design pattern that structures objects into tree-like hierarchies to represent part-whole relationships. It enables treating individual objects and compositions of objects uniformly. In `sktime`, this concept is adapted to create composite estimators, which combine multiple components (e.g., transformers, forecasters) into a single pipeline or workflow. This allows for modular and reusable designs in time series learning tasks.
 
         
     Hyperparameter:
