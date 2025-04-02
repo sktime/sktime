@@ -59,6 +59,22 @@ class AlignerDTW(BaseAligner):
     >>> aligner.fit(X)
     AlignerDTW(...)
     >>> alignment_df = aligner.get_alignment()
+
+    Advanced usage example with open-ended alignment:
+    >>> aligner_advanced = AlignerDTW(
+    ...     dist_method='cityblock',
+    ...     window_type='sakoechiba',
+    ...     window_size=10,
+    ...     step_pattern='asymmetric',
+    ...     open_begin=True,
+    ...     open_end=True,
+    ... )
+    >>> X_advanced = [
+    ...     pd.DataFrame({'col1': np.random.randn(150)}),
+    ...     pd.DataFrame({'col1': np.random.randn(150)})
+    ... ]
+    >>> aligner_advanced.fit(X_advanced)
+    >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
 
     _tags = {
@@ -80,6 +96,7 @@ class AlignerDTW(BaseAligner):
         dist_method="euclidean",
         step_pattern="symmetric2",
         window_type="none",
+        window_size=None,
         open_begin=False,
         open_end=False,
         variable_to_align=None,
@@ -92,6 +109,7 @@ class AlignerDTW(BaseAligner):
         self.dist_method = dist_method
         self.step_pattern = step_pattern
         self.window_type = window_type
+        self.window_size = window_size
         self.open_begin = open_begin
         self.open_end = open_end
         self.variable_to_align = variable_to_align
@@ -121,6 +139,7 @@ class AlignerDTW(BaseAligner):
         dist_method = self.dist_method
         step_pattern = self.step_pattern
         window_type = self.window_type
+        window_size = self.window_size
         open_begin = self.open_begin
         open_end = self.open_end
         var_to_align = self.variable_to_align
@@ -152,6 +171,7 @@ class AlignerDTW(BaseAligner):
             dist_method=dist_method,
             step_pattern=step_pattern,
             window_type=window_type,
+            window_args={'window_size': window_size},
             open_begin=open_begin,
             open_end=open_end,
             keep_internals=True,
@@ -253,7 +273,7 @@ class AlignerDTWfromDist(BaseAligner):
     Basic usage example:
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.alignment.dtw import AlignerDTWfromDist
+    >>> from sktime.alignment.dtw_python import AlignerDTWfromDist
     >>> from sktime.dists_kernels import ScipyDist
     >>> X = [
     ...     pd.DataFrame({'col1': np.random.randn(100)}),
@@ -270,6 +290,7 @@ class AlignerDTWfromDist(BaseAligner):
     >>> aligner_custom = AlignerDTWfromDist(
     ...     dist_trafo=dist_trafo_custom,
     ...     window_type='sakoechiba',
+    ...     window_size=10,
     ... )
     >>> X_custom = [
     ...     pd.DataFrame({'col1': np.random.randn(200)}),
@@ -296,6 +317,7 @@ class AlignerDTWfromDist(BaseAligner):
         dist_trafo,
         step_pattern="symmetric2",
         window_type="none",
+        window_size=None,
         open_begin=False,
         open_end=False,
     ):
@@ -305,6 +327,7 @@ class AlignerDTWfromDist(BaseAligner):
         self.dist_trafo_ = self.dist_trafo.clone()
         self.step_pattern = step_pattern
         self.window_type = window_type
+        self.window_size = window_size
         self.open_begin = open_begin
         self.open_end = open_end
 
@@ -328,6 +351,7 @@ class AlignerDTWfromDist(BaseAligner):
         dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
         window_type = self.window_type
+        window_size = self.window_size
         open_begin = self.open_begin
         open_end = self.open_end
 
@@ -343,6 +367,7 @@ class AlignerDTWfromDist(BaseAligner):
             distmat,
             step_pattern=step_pattern,
             window_type=window_type,
+            window_args={'window_size': window_size},
             open_begin=open_begin,
             open_end=open_end,
             keep_internals=True,
