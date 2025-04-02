@@ -1,4 +1,13 @@
-"""An unofficial fork of the TimeLLM model in sktime.
+"""TimeLLM model in sktime.
+
+Unofficial, partial fork of the ``KimMeen/Time-LLM`` package, maintained in ``sktime``.
+An official package on pypi has not been released yet.
+
+sktime migration: 2025, Apr
+
+Original authors: Qingsong Wen, Ming Jin
+
+2025 release subject to following license:
 
 Apache License
 Version 2.0, January 2004
