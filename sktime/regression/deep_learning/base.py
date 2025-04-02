@@ -13,7 +13,6 @@ from abc import abstractmethod
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class BaseDeepRegressor(BaseRegressor):
@@ -187,15 +186,11 @@ class BaseDeepRegressor(BaseRegressor):
         from zipfile import ZipFile
 
         if path is None:
-            _check_soft_dependencies("h5py")
-            import h5py
-
             in_memory_model = None
             if self.model_ is not None:
-                self.model_.save("disk_less.h5")
-                with h5py.File("disk_less.h5", "r") as h5file:
-                    in_memory_model = h5file.id.get_file_image()
-
+                model_json = self.model_.to_json()
+                model_weights = self.model_.get_weights()
+                in_memory_model = (model_json, model_weights)
             in_memory_history = pickle.dumps(self.history.history)
 
             return (
@@ -249,7 +244,7 @@ class BaseDeepRegressor(BaseRegressor):
         """
         import pickle
 
-        from tensorflow.keras.models import load_model
+        from tensorflow.keras.models import model_from_json
 
         if not isinstance(serial, tuple):
             raise TypeError(
@@ -268,9 +263,10 @@ class BaseDeepRegressor(BaseRegressor):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with open("diskless.h5", "wb") as store_:
-                store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+            model_json, model_weights = in_memory_model
+            cls.model_ = model_from_json(model_json)
+
+            cls.model_.set_weights(model_weights)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)

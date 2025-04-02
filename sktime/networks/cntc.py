@@ -5,6 +5,18 @@ __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
 
+if _check_dl_dependencies(severity=None):
+    import keras
+
+    from sktime.networks._seq_self_attention import SeqSelfAttention
+else:
+    keras = None
+
+    class SeqSelfAttention:
+        """Dummy class to allow for importation of the module."""
+
+        pass
+
 
 class CNTCNetwork(BaseDeepNetwork):
     """Combining contextual neural networks for time series classification.
@@ -89,9 +101,6 @@ class CNTCNetwork(BaseDeepNetwork):
         input_layer: a keras layer
         output_layer: a keras layer
         """
-        from keras_self_attention import SeqSelfAttention
-        from tensorflow import keras
-
         input_layers = []
 
         # CNN Arm
@@ -110,7 +119,7 @@ class CNTCNetwork(BaseDeepNetwork):
         conv1 = keras.layers.Dropout(self.dropout)(conv1)
         conv1 = keras.layers.Dense(
             input_shape[1],
-            input_shape=(input_shape[0], keras.backend.int_shape(conv1)[2]),
+            input_shape=(input_shape[0], conv1.shape[2]),
         )(conv1)
 
         # RNN for CNN Arm (CCNN)
@@ -139,7 +148,7 @@ class CNTCNetwork(BaseDeepNetwork):
         )(conc1)
         conv2 = keras.layers.Dense(
             input_shape[1],
-            input_shape=(input_shape[0], keras.backend.int_shape(conv2)[2]),
+            input_shape=(input_shape[0], conv2.shape[2]),
         )(conv2)
         conv2 = keras.layers.BatchNormalization()(conv2)
         conv2 = keras.layers.Dropout(0.1)(conv2)
