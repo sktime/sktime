@@ -193,15 +193,22 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
             f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
         )
 
-    res = ray.get(
-        [
-            _ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
-            for x in iter
-        ]
-    )
+    # this is to keep the order of results while still using wait to optimize runtime
+    refs = [
+        _ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
+        for x in iter
+    ]
+    res_dict = dict.fromkeys(refs)
+
+    unfinished = refs
+    while unfinished:
+        finished, unfinished = ray.wait(unfinished, num_returns=1)
+        res_dict[finished[0]] = ray.get(finished[0])
 
     if shutdown_ray:
         ray.shutdown()
+
+    res = [res_dict[ref] for ref in refs]
     return res
 
 
