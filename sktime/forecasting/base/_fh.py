@@ -860,12 +860,17 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             else:
                 return r * to_offset(fh.freq)
 
-        c_is_timestamp = isinstance(cutoff, pd.DateTimeIndex)
-        c_is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
+        is_timestamp = isinstance(cutoff, pd.DateTimeIndex)
+        is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
 
-        if c_is_timestamp:
-            # preserve the format of DatetimeIndex # see #5186
+        if is_timestamp:
+            # coerce back to DatetimeIndex after operation
+            # preserve the format of DatetimeIndex, see #5186
             absolute = [cutoff[0] + _to_offset(r) for r in relative]
+            # this try-except block is a workaround for what seems like a bug in pandas
+            # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
+            # of type month-begin, which should be supported, a ValueError is raised
+            # see issue #6752 for details
             try:
                 absolute = pd.DatetimeIndex(absolute, freq=fh.freq)
             except ValueError as e:  # freq can not be set if missing values exist
@@ -877,7 +882,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             if isinstance(cutoff, pd.Index):
                 cutoff = cutoff[[0] * len(relative)]
             # pandas bugfix patch
-            if not _is_pandas_arithmetic_bug_fixed() and c_is_timelike:
+            if not _is_pandas_arithmetic_bug_fixed() and is_timelike:
                 absolute = type(cutoff)(cutoff.to_list() + relative, freq=fh._freq)
             else:
                 absolute = cutoff + relative
