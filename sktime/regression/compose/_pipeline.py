@@ -96,6 +96,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
     }
 
     _required_parameters = ["regressor"]
