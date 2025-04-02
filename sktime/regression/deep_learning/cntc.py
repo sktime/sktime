@@ -2,6 +2,7 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCRegressor"]
+import numpy as np
 from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
@@ -247,4 +248,5 @@ class CNTCRegressor(BaseDeepRegressor):
         """
         X2 = self.prepare_input(X)
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
+        preds = np.squeeze(preds, axis=-1)
         return preds
