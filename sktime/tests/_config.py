@@ -281,7 +281,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CAPA",
         "CNTCClassifier",
         "CNTCNetwork",
-        "CNTCRegressor",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
         "ClaSPTransformer",
