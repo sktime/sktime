@@ -113,7 +113,7 @@ all_extras = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
@@ -157,7 +157,7 @@ all_extras_pandas2 = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
@@ -187,7 +187,7 @@ annotation = [
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
@@ -214,7 +214,7 @@ forecasting = [
 ]
 networks = [
   'keras-self-attention<0.52,>=0.51; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
@@ -222,7 +222,7 @@ param_est = [
 ]
 regression = [
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -294,7 +294,7 @@ dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
