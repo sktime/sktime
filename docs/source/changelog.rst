@@ -17,6 +17,10 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.36.1 - 2025-04-02
+---------------------------
+
+
 Version 0.36.0 - 2025-02-03
 ---------------------------
 
