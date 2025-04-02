@@ -145,6 +145,7 @@ class MSTL(BaseTransformer):
     >>> mstl_deseason_fcst = mstl_trafo * TrendForecaster()
     >>> y = load_airline()
     >>> mstl_deseason_fcst.fit(y, fh=[1, 2, 3])
+    TransformedTargetForecaster(...)
     >>> y_pred = mstl_deseason_fcst.predict()
 
     MSTL can also be used to make forecasts using the full component decomposition.
