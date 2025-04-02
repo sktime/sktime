@@ -38,6 +38,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     >>> y = load_airline()
     >>> forecaster = StatsForecastGARCH(p=2,q=1)
     >>> forecaster.fit(y)
+    StatsForecastGARCH(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
