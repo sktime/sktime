@@ -48,6 +48,8 @@ EXCLUDE_ESTIMATORS = [
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
+    # models with large weights
+    "MomentFMForecaster",
     # Large datasets
     "M5Dataset",
     # Test estimators
