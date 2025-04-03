@@ -36,8 +36,9 @@ def test_pipeline_with_categorical():
     encoder = TabularToSeriesAdaptor(OneHotEncoder(), pooling="global")
 
     pipeline = (
-        ColumnSelect(columns=["color"], index_treatment="keep"),
-        *encoder * KNeighborsTimeSeriesRegressor(n_neighbors=1),
+        ColumnSelect(columns=["color"], index_treatment="keep")
+        * encoder
+        * KNeighborsTimeSeriesRegressor(n_neighbors=1)
     )
     pipeline.fit(data, y)
     pipeline.predict(test_data)
