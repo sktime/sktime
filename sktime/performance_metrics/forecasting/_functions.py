@@ -397,6 +397,7 @@ def mean_absolute_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_absolute_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -524,6 +525,7 @@ def median_absolute_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_absolute_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = [3, -0.5, 2, 7]
@@ -661,6 +663,7 @@ def mean_squared_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -790,6 +793,7 @@ def median_squared_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -897,6 +901,7 @@ def mean_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -984,6 +989,7 @@ def mean_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1083,6 +1089,7 @@ def median_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1175,6 +1182,7 @@ def median_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1519,6 +1527,7 @@ def mean_absolute_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
     mean_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1637,6 +1646,7 @@ def median_absolute_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1762,6 +1772,7 @@ def mean_squared_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1893,6 +1904,7 @@ def median_squared_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2008,6 +2020,7 @@ def mean_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -2116,6 +2129,7 @@ def median_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2229,6 +2243,7 @@ def geometric_mean_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         geometric_mean_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2356,6 +2371,7 @@ def geometric_mean_relative_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         geometric_mean_relative_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
