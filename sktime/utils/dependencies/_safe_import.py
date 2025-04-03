@@ -44,6 +44,8 @@ def _safe_import(import_path, pkg_name=None):
 
     Examples
     --------
+    >>> from sktime.utils.dependencies._safe_import import _safe_import
+
     >>> # Import a top-level module
     >>> torch = _safe_import("torch")
 
