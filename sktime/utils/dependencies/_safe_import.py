@@ -74,8 +74,26 @@ def _safe_import(import_path, pkg_name=None):
         except (ImportError, AttributeError):
             return importlib.import_module(import_path)
     else:
-        mock_obj = _create_mock_class(obj_name)()
+        mock_obj = _create_mock_class(obj_name)
         return mock_obj
+
+
+class CommonMagicMeta(type):
+    def __getattr__(cls, name):
+        return MagicMock()
+
+    def __setattr__(cls, name, value):
+        pass  # Ignore attribute writes
+
+class MagicAttribute(metaclass=CommonMagicMeta):
+    def __getattr__(self, name):
+        return MagicMock()
+
+    def __setattr__(self, name, value):
+        pass  # Ignore attribute writes
+
+    def __call__(self, *args, **kwargs):
+        return self  # Ensures instantiation returns the same object
 
 
 def _create_mock_class(name: str, bases=()):
@@ -93,12 +111,4 @@ def _create_mock_class(name: str, bases=()):
     a new class that behaves like MagicMock, with name ``name``.
         Forwards all attribute access to a MagicMock object stored in the instance.
     """
-    class_dict = {
-        "__init__": lambda self, *args, **kwargs: setattr(self, "_m_o_ck", MagicMock()),
-        "__getattr__": lambda self, name: getattr(self._m_o_ck, name),
-        "__setattr__": lambda self, name, value: setattr(self._m_o_ck, name, value)
-        if name != "_m_o_ck"
-        else object.__setattr__(self, name, value),
-    }
-
-    return type(name, bases, class_dict)
+    return type(name, (MagicAttribute,), {"__metaclass__": CommonMagicMeta})
