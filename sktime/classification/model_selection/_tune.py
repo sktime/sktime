@@ -246,6 +246,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         "capability:missing_values": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(

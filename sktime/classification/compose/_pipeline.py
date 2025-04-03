@@ -106,6 +106,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -141,6 +142,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         )
         # predict_proba is same as that of classifier
         predict_proba = classifier.get_tag("capability:predict_proba")
+        categorical = classifier.get_tag("capability:categorical_in_X", True)
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -150,6 +152,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
             "capability:train_estimate": False,
             "capability:multithreading": False,
             "capability:predict_proba": predict_proba,
+            "capability:categorical_in_X": categorical,
         }
         self.set_tags(**tags_to_set)
 
@@ -438,6 +441,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -464,6 +468,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle unequal length iff transformer chain renders series equal length
         # because sklearn classifiers require equal length (number of variables) input
         unequal = self.transformers_.get_tag("capability:unequal_length:removes", False)
+        categorical = classifier.get_tag("capability:categorical_in_X", True)
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -472,6 +477,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
+            "capability:categorical_in_X": categorical,
         }
         self.set_tags(**tags_to_set)
 
