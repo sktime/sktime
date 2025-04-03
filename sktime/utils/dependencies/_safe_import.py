@@ -85,6 +85,7 @@ class CommonMagicMeta(type):
     def __setattr__(cls, name, value):
         pass  # Ignore attribute writes
 
+
 class MagicAttribute(metaclass=CommonMagicMeta):
     def __getattr__(self, name):
         return MagicMock()
