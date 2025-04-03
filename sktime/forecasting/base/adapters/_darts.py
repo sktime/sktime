@@ -2,11 +2,17 @@
 """Implements adapter for Darts models."""
 
 import abc
+from collections.abc import Sequence
 from typing import Optional, Union
 
+import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _BaseGlobalForecaster,
+)
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
@@ -123,6 +129,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         "handles-missing-data": False,
         "capability:insample": False,
         "capability:pred_int": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -621,6 +628,47 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
     return dataset_copy
 
 
+def _handle_panel_data(data: Union[pd.DataFrame, list]):
+    """Convert Panel data to list of TimeSeries Objects.
+
+    Parameters
+    ----------
+    data: Union[pd.DataFrame, list]
+        The Panel data to be converted into Darts compatible format
+
+    Returns
+    -------
+    list[TimeSeries]
+        The list of TimeSeries for multiple time series predictions for
+        Global Forecasting.
+    """
+    from darts import TimeSeries
+
+    if isinstance(data, pd.DataFrame) and isinstance(data.index, pd.MultiIndex):
+        ts_list = []
+        instance_level = data.index.names[0]
+        # handling multi-index conversions to a list of TimeSeries accepted by darts.
+        for instance in data.index.get_level_values(0).unique():
+            instance_df = data.xs(instance, level=instance_level)
+            ts = TimeSeries.from_dataframe(instance_df, fill_missing_dates=True)
+            ts_list.append(ts)
+        return ts_list
+    if isinstance(data, list):
+        return [
+            TimeSeries.from_series(d)
+            if isinstance(d, pd.Series)
+            else TimeSeries.from_dataframe(
+                _handle_input_index(d if isinstance(d, pd.DataFrame) else d.to_frame())
+            )
+            for d in data
+        ]
+    else:
+        raise TypeError(
+            f"""Expected panel data to be pd-multiindex, or list of `Series` object,
+                    got {type(data)}"""
+        )
+
+
 def _is_int64_type(index: pd.Index) -> bool:
     """Check if the index is an Int64Index type for pandas older versions.
 
@@ -642,4 +690,486 @@ def _is_int64_type(index: pd.Index) -> bool:
         return False
 
 
-__all__ = ["_DartsRegressionAdapter", "_DartsRegressionModelsAdapter"]
+class _DartsMixedCovariatesTorchModelAdapter(_BaseGlobalForecaster):
+    """Base adapter for Darts Models using MixedCovariates.
+
+    This class serves as a base adapter for implementing forecasting models that use
+    mixed covariates in the Darts framework. It provides core functionality for
+    handling time series data, converting between different formats, and managing
+    the training and prediction processes.
+
+    Parameters
+    ----------
+    input_chunk_length : int
+        Number of time steps in the past to take as a model input (per chunk). Applies
+        to the target series, and past and/or future covariates.
+    output_chunk_length : int
+        Number of time steps predicted at once (per chunk) by the internal model. Also,
+        the number of future values from future covariates to use as a model input
+        (if the model supports future covariates). It is not the same as forecast
+        horizon n used in predict(), which is the desired number of prediction points
+        generated using either a one-shot- or autoregressive forecast. Setting
+        n <= output_chunk_length prevents auto-regression. This is useful when the
+        covariates do not extend far enough into the future, or to prohibit the model
+        from using future values of past and / or future covariates for prediction
+        (depending on the covariate support).
+    output_chunk_shift : int, optional (default=0)
+        Optionally, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input and output. If the model supports future_covariates, the future values are
+        extracted from the shifted output chunk. Predictions will start
+        output_chunk_shift steps after the end of the target series. If
+        output_chunk_shift is set, the model cannot generate autoregressive predictions
+        (n > output_chunk_length).
+    past_covariates : list[str], optional (default=None)
+        Names of columns in X to be used as past covariates. Past covariates
+        are a sequence of past covariates time series. These are variables that are
+        only known for past time steps.
+    future_covariates : list[str], optional (default=None)
+        Names of columns in X to be used as future covariates, which are a
+        sequence of future covariates time series. These are variables that
+        are known for future time steps (e.g., holidays, scheduled events).
+    use_static_covariates : bool (default=True)
+        Whether to incorporate static covariates in the model training and prediction.
+    """
+
+    _tags = {
+        "authors": ["PranavBhatP"],
+        "maintainers": ["PranavBhatP"],
+        "python_version": ">=3.9",
+        "python_dependencies": ["darts>=0.29"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "df-list"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
+        "requires-fh-in-fit": False,
+        "handles-missing-data": True,
+        "capability:insample": False,
+        "capability:pred_int": False,
+    }
+
+    def __init__(
+        self,
+        input_chunk_length: int,
+        output_chunk_length: int,
+        output_chunk_shift: int = 0,
+        past_covariates: list[str] = None,
+        future_covariates: list[str] = True,
+        use_static_covariates: bool = True,
+    ):
+        super().__init__()
+
+        self.input_chunk_length = input_chunk_length
+        self.output_chunk_length = output_chunk_length
+        self.output_chunk_shift = output_chunk_shift
+        self.past_covariates = past_covariates
+        self.future_covariates = future_covariates
+        self.use_static_covariates = use_static_covariates
+
+        if past_covariates is not None and not isinstance(past_covariates, list):
+            raise TypeError(
+                f"Expected past_covariates to be a list, found {type(past_covariates)}."
+            )
+        self.past_covariates = past_covariates
+        if future_covariates is not None and not isinstance(future_covariates, list):
+            raise TypeError(
+                f"Expected future_covariates to be a list, found {type(future_covariates)}."  # noqa: E501
+            )
+        self.future_covariates = future_covariates
+        self._is_fitted = False
+        self._forecaster = None
+
+    def _build_train_dataset(
+        self,
+        target: Optional[Union[pd.Series, pd.DataFrame]],
+        past_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
+        future_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
+        sample_weight: Optional[Union[pd.Series, pd.DataFrame, str]] = None,
+        max_samples_per_ts: Optional[int] = None,
+    ):
+        """Build training dataset for Darts model.
+
+        This can be used for creating a darts specific train_dataset to be passed into
+        fit_from_dataset()
+
+        Parameters
+        ----------
+        target: Union[pd.Series, pd.DataFrame]
+            Target time series data
+        past_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of past covariates time series. These are variables that are
+            only known for past time steps.
+        future_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of future covariates time series. These are variables that
+            are known for future time steps (e.g., holidays, scheduled events).
+        sample_weight: Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            Optional sample weights to adjust the importance of individual samples in
+            the dataset. Weights can be provided as a `pd.Series` or `pd.DataFrame`,
+            matching the target series' structure. Alternatively, a string value can
+            specify the weighting schemes:
+
+                - `"linear"`: Weights decrease linearly for older observations.
+                - `"exponential"`: Weights decrase exponentially for older observations.
+            If no weights are specified, all samples are treated equally.
+        max_samples_per_ts: Optional[int], optional (default=None)
+            Maximum number of samples per time series.
+
+        Returns
+        -------
+        MixedCovariatesSequentialDataset
+            Dataset ready for training
+        """
+        from darts.utils.data.sequential_dataset import MixedCovariatesSequentialDataset
+
+        target_ts = self.convert_to_timeseries(target)
+
+        if past_covariates is not None:
+            past_covariates = self.convert_to_timeseries(past_covariates)
+        if future_covariates is not None:
+            future_covariates = self.convert_to_timeseries(future_covariates)
+        if sample_weight is not None and not isinstance(sample_weight, str):
+            sample_weight = self.convert_to_timeseries(sample_weight)
+
+        return MixedCovariatesSequentialDataset(
+            target_series=[target_ts],
+            past_covariates=[past_covariates] if past_covariates is not None else None,
+            future_covariates=[future_covariates]
+            if future_covariates is not None
+            else None,
+            input_chunk_length=self.input_chunk_length,
+            output_chunk_length=self.output_chunk_length,
+            output_chunk_shift=self.output_chunk_shift,
+            max_samples_per_ts=max_samples_per_ts,
+            use_static_covariates=self.use_static_covariates,
+            sample_weight=sample_weight,
+        )
+
+    def _build_inference_dataset(
+        self,
+        target: Optional[Union[pd.Series, pd.DataFrame]],
+        n: int,
+        past_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
+        future_covariates: Optional[Union[pd.Series, pd.DataFrame]] = None,
+        stride: int = 0,
+        bounds: Optional[np.ndarray] = None,
+    ):
+        """Build an inference dataset for making predictions with the Darts model.
+
+        Creates a MixedCovariatesInferenceDataset that is passed into the darts specific
+        predict_from_dataset() function.
+
+        Parameters
+        ----------
+        target : Sequence[TimeSeries]
+            A sequence of target time series for which predictions will be made.
+        n : int
+            Number of future time steps to predict.
+        past_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of past covariates time series. These are variables that are
+            only known for past time steps.
+        future_covariates : Union[[pd.Series, pd.DataFrame]], optional (default=None)
+            A sequence of future covariates time series. These are variables that
+            are known for future time steps (e.g., holidays, scheduled events).
+        stride : int, optional (default=0)
+            The stride between consecutive predictions. A stride of 0 means that
+            predictions will be made at every time step.
+        bounds : Optional[np.ndarray], optional (default=None)
+            Optional bounds for the predictions. If provided, should contain
+            the lower and upper bounds for each time step.
+
+        Returns
+        -------
+        MixedCovariatesInferenceDataset
+            A dataset object ready for making predictions, containing all processed
+            time series data structured for the inference phase.
+        """
+        from darts.utils.data import MixedCovariatesInferenceDataset
+
+        target_ts = self.convert_to_timeseries(target)
+
+        if past_covariates is not None:
+            past_covariates = self.convert_to_timeseries(past_covariates)
+        if future_covariates is not None:
+            future_covariates = self.convert_to_timeseries(future_covariates)
+
+        return MixedCovariatesInferenceDataset(
+            target_series=[target_ts],
+            past_covariates=[past_covariates] if past_covariates is not None else None,
+            future_covariates=[future_covariates]
+            if future_covariates is not None
+            else None,
+            n=n,
+            stride=stride,
+            bounds=bounds,
+            input_chunk_length=self.input_chunk_length,
+            output_chunk_length=self.output_chunk_length,
+            output_chunk_shift=self.output_chunk_shift,
+            use_static_covariates=self.use_static_covariates,
+        )
+
+    def convert_to_timeseries(
+        self: "_DartsMixedCovariatesTorchModelAdapter",
+        data: Union[pd.Series, pd.DataFrame, list],
+    ):
+        """Convert pandas data structures to Darts TimeSeries objects.
+
+        Parameters
+        ----------
+        data : Union[pd.Series, pd.DataFrame, list]
+            The time series data to convert. Can be `Series` or
+            `Panel ` data.
+
+        Returns
+        -------
+        TimeSeries
+            A Darts TimeSeries object containing the converted data.
+
+        Raises
+        ------
+        TypeError
+            If the input is neither a pandas Series nor DataFrame.
+        """
+        from darts import TimeSeries
+
+        if data is None:
+            return None
+        if isinstance(data.index, pd.MultiIndex) or isinstance(data, list):
+            return _handle_panel_data(data)
+        else:
+            data_copy = _handle_input_index(data)
+            return TimeSeries.from_dataframe(data_copy)
+
+    def convert_covariates(
+        self: "_DartsMixedCovariatesTorchModelAdapter",
+        past_covariates: Optional[
+            Union[pd.Series, pd.DataFrame, Sequence[Union[pd.Series, pd.DataFrame]]]
+        ] = None,
+        future_covariates: Optional[
+            Union[pd.Series, pd.DataFrame, Sequence[Union[pd.Series, pd.DataFrame]]]
+        ] = None,
+    ):
+        """
+        Convert past and future covariates into lists of Darts TimeSeries objects.
+
+        Parameters
+        ----------
+        past_covariates : pd.Series, pd.DataFrame, or Sequence of them, optional
+            Past covariates aligned with the target time series.
+        future_covariates : pd.Series, pd.DataFrame, or Sequence of them, optional
+            Future covariates aligned with the target time series.
+
+        Returns
+        -------
+        Tuple[Optional[list], Optional[list]]
+            A tuple of (past_covariates_list, future_covariates_list) where each is a
+            list of TimeSeries objects or None.
+        """
+        from darts import TimeSeries
+
+        def convert_to_list(data):
+            if data is None:
+                return None
+
+            # Converting indices into Darts compatible format
+            if isinstance(data, (pd.Series, pd.DataFrame)):
+                if isinstance(data.index, pd.MultiIndex):
+                    return _handle_panel_data(data)
+                else:
+                    processed_data = _handle_input_index(
+                        data if isinstance(data, pd.DataFrame) else data.to_frame()
+                    )
+                    return [TimeSeries.from_dataframe(processed_data)]
+            if isinstance(data, Sequence):
+                return [
+                    TimeSeries.from_series(d)
+                    if isinstance(d, pd.Series)
+                    else TimeSeries.from_dataframe(
+                        _handle_input_index(
+                            d if isinstance(d, pd.DataFrame) else d.to_frame()
+                        )
+                    )
+                    for d in data
+                ]
+            raise TypeError(
+                f"""Expected covariates to be pd.Series, pd.DataFrame, or a Sequence,
+                    got {type(data)}"""
+            )
+
+        past_covs = convert_to_list(past_covariates)
+        future_covs = convert_to_list(future_covariates)
+        return past_covs, future_covs
+
+    def _get_covariates_from_X(self, X: Optional[pd.DataFrame]):
+        """Extract past and future covariates from X based on specified column names.
+
+        Parameters
+        ----------
+        X : Optional[pd.DataFrame]
+            Exogenous variables DataFrames.
+
+        Returns
+        -------
+        Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]
+            Tuple of (past_covariates, future_covariates)
+        """
+        past_covs = None
+        future_covs = None
+
+        if X is not None and isinstance(X, pd.DataFrame):
+            if self.past_covariates:
+                for col in self.past_covariates:
+                    if col not in X.columns:
+                        raise ValueError(
+                            f"Column {col} in past_covariates not found in X"
+                        )
+                past_covs = X[self.past_covariates]
+            if self.future_covariates:
+                for col in self.future_covariates:
+                    if col not in X.columns:
+                        raise ValueError(
+                            f"Column {col} in future_covariates not found in X"
+                        )
+                future_covs = X[self.future_covariates]
+
+        return past_covs, future_covs
+
+    @classmethod
+    @abc.abstractmethod
+    def _create_forecaster(self="_DartsMixedCovariatesTorchModelAdapter"):
+        """Create Darts Model."""
+
+    def _fit(
+        self,
+        y: Union[pd.Series, pd.DataFrame, list],
+        X: Optional[pd.DataFrame] = None,
+        fh: Optional[ForecastingHorizon] = None,
+    ):
+        """
+        Internally fit the forecaster to training data.
+
+        Parameters
+        ----------
+        y : Union[pd.DataFrame, pd.Series, list]
+            Target time series to which to fit the forecaster.
+        fh: ForecastingHorizon, optional(default=None)
+            fh - not used by Darts, calculated with `output_chunk_length`.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables
+
+        Returns
+        -------
+        self : _DartsMixedCovariatesTorchModelAdapter
+            Fitted model.
+        """
+        past_covs, future_covs = self._get_covariates_from_X(X)
+        target = self.convert_to_timeseries(y)
+        past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
+        if isinstance(target, list):
+            for ts in target:
+                if len(ts) < self.input_chunk_length + self.output_chunk_length:
+                    raise ValueError(
+                        f"""Training data length is at least (self.input_chunk_length
+                        + self.output_chunk_length), got {len(ts)}"""
+                    )
+        else:
+            if len(target) < self.input_chunk_length + self.output_chunk_length:
+                raise ValueError(
+                    f"""Training data length is at least (self.input_chunk_length
+                    + self.output_chunk_length), got {len(target)}"""
+                )
+
+        # Create and fit the forecaster
+        self._forecaster = self._create_forecaster()
+        self._forecaster.fit(
+            series=target, past_covariates=past_covs, future_covariates=future_covs
+        )
+
+        self._is_fitted = True
+        return self
+
+    def _predict(
+        self: "_DartsMixedCovariatesTorchModelAdapter",
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pd.DataFrame] = None,
+        y: Optional[Union[pd.Series, pd.DataFrame, list]] = None,
+    ):
+        """Internally generates predictions for the given forecasting horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon specifying the time steps to predict.
+        y: Union[pd.Series,pd.DataFrame, list], optional (default=None)
+            `y` parameter to specify when multiple time series are to be predicted.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables containing past and/or future covariates.
+
+        Returns
+        -------
+        Union[pd.DataFrame, list]
+            Predicted values for the specified forecasting horizon.
+        """
+        self.check_is_fitted()
+        past_covs, future_covs = self._get_covariates_from_X(X)
+        past_covs, future_covs = self.convert_covariates(past_covs, future_covs)
+
+        max_fh = fh.to_relative(self.cutoff)[-1]
+        target = self.convert_to_timeseries(y if y is not None else self._y)
+
+        if isinstance(target, list):
+            endogenous_predictions = self._forecaster.predict(
+                n=max_fh,
+                series=target,
+                past_covariates=past_covs,
+                future_covariates=future_covs,
+                num_samples=1,
+            )
+            if y is not None and isinstance(y.index, pd.MultiIndex):
+                predictions_list = []
+                instance_names = []
+
+                for idx, pred_ts in enumerate(endogenous_predictions):
+                    df = pred_ts.pd_dataframe()
+
+                    instance_name = (
+                        f"series_{idx}"
+                        if y is None or not isinstance(y.index, pd.MultiIndex)
+                        else self._y.index.get_level_values(0).unique()[idx]
+                    )
+
+                    instance_names.append(instance_name)
+                    predictions_list.append(df)
+                combined_predictions = pd.concat(predictions_list, keys=instance_names)
+
+                if y is not None and isinstance(y.index, pd.MultiIndex):
+                    combined_predictions.index.names = y.index.names
+                else:
+                    combined_predictions.index.names = self._y.index.names
+                return combined_predictions
+            else:
+                return [pred.pd_dataframe() for pred in endogenous_predictions]
+        else:
+            endogenous_predictions = self._forecaster.predict(
+                n=max_fh,
+                past_covariates=past_covs,
+                future_covariates=future_covs,
+                num_samples=1,
+            )
+            predictions = endogenous_predictions.pd_dataframe()
+            predictions = predictions.iloc[fh.to_relative(self.cutoff) - 1]
+            expected_index = fh.get_expected_pred_idx(self.cutoff)
+            predictions = pd.DataFrame(
+                predictions.values, index=expected_index, columns=predictions.columns
+            )
+            if isinstance(self._y, pd.Series):
+                predictions = predictions.squeeze()
+                if hasattr(self._y, "name"):
+                    # ensuring complete replication
+                    predictions.name = self._y.name
+
+        return predictions
+
+
+__all__ = [
+    "_DartsRegressionAdapter",
+    "_DartsRegressionModelsAdapter",
+    "_DartsMixedCovariatesTorchModelAdapter",
+]
