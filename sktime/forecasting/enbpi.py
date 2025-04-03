@@ -9,6 +9,12 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+from sktime.transformations.bootstrap import (
+    MovingBlockBootstrapTransformer,
+    TSBootstrapAdapter,
+)
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -130,13 +136,37 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        from tsbootstrap import MovingBlockBootstrap
+        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
+            self.bootstrap_transformer_ = TSBootstrapAdapter(
+                bootstrap_transformer, return_indices=True
+            )
+        else:
+            self.bootstrap_transformer_ = bootstrap_transformer
 
-        self.bootstrap_transformer_ = (
-            clone(bootstrap_transformer)
-            if bootstrap_transformer is not None
-            else MovingBlockBootstrap()
-        )
+        if self.bootstrap_transformer is None:
+            # todo: 0.38.0 remove this warning
+            warn(
+                "The default value for the bootstrap_transformer will change to the"
+                "sktime MovingBlockBootstrap in version 0.38.0."
+                "For obtaining the current default behaviour after 0.37.0, pass "
+                "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap()), "
+                "with moving block bootstrap from tsbootstrap.",
+                obj=self,
+                stacklevel=2,
+            )
+            from tsbootstrap import MovingBlockBootstrap
+
+            # todo: 0.38.0 replace with Moving Block Bootstrap from sktime. And set
+            # the return_indices=True
+            self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
+
+        if (
+            not self.bootstrap_transformer_.get_tags()["can_return_indices"]
+            or not self.bootstrap_transformer_.return_indices
+        ):
+            raise ValueError(
+                "The bootstrap_transformer needs to be able to return indices"
+            )
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -146,16 +176,16 @@ class EnbPIForecaster(BaseForecaster):
         self.random_state_ = check_random_state(self.random_state)
 
         # fit/transform the transformer to obtain bootstrap samples
-        bs_ts_index = list(
-            self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True)
-        )
-        self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
-        bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
+        bs_ts_index = self.bootstrap_transformer_.fit_transform(y)
+
+        self.indexes = bs_ts_index["resampled_index"].values.reshape((-1, len(y)))
+        bootstrapped_ts = bs_ts_index[y.columns]
 
         self.forecasters = []
         self._preds = []
         # Fit Models per Bootstrap Sample
-        for bs_ts in bootstrapped_ts:
+        for bs_index in bootstrapped_ts.index.get_level_values(0).unique():
+            bs_ts = bootstrapped_ts.loc[bs_index]
             bs_df = pd.DataFrame(bs_ts, index=y.index)
             forecaster = clone(self.forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
@@ -179,7 +209,7 @@ class EnbPIForecaster(BaseForecaster):
     def _predict_interval(self, fh, X, coverage):
         preds = []
         for forecaster in self.forecasters:
-            preds.append(forecaster.predict(fh=fh, X=X))
+            preds.append(forecaster.predict(fh=fh, X=X).values)
 
         train_targets = self._y.copy()
         train_targets.index = pd.RangeIndex(len(train_targets))
@@ -235,21 +265,21 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        deps = cls.get_class_tag("python_dependencies")
-
-        if _check_soft_dependencies(deps, severity="none"):
+        params = [
+            {
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(
+                    return_indices=True
+                ),
+            }
+        ]
+        if _check_soft_dependencies("tsbootstrap", severity="none"):
             from tsbootstrap import BlockBootstrap
 
-            params = [
-                {},
+            params.append(
                 {
                     "forecaster": NaiveForecaster(),
                     "bootstrap_transformer": BlockBootstrap(),
-                },
-            ]
-        else:
-            params = {}
+                }
+            )
 
         return params
