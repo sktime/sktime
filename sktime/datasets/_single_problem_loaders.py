@@ -1569,7 +1569,7 @@ def load_m5(
 
     Examples
     --------
-    >>> from sktime.datasets._single_problem_loaders import load_m5  # doctest: +SKIP
+    >>> from sktime.datasets import load_m5  # doctest: +SKIP
     >>> data = load_m5()  # doctest: +SKIP
     >>> data.head()  # doctest: +SKIP
     """
