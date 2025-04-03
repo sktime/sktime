@@ -441,3 +441,49 @@ class SARIMAX(_StatsModelsAdapter):
             },
             {"cov_type": "robust", "method": "bfgs", "maxiter": 5},
         ]
+    
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        self.check_is_fitted()
+        
+        from sktime.utils.validation.forecasting import check_X
+        if X is not None:
+            X = check_X(X)
+            X = X.loc[y.index] 
+        
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+        else:
+            if not hasattr(self._fitted_forecaster, "append"):
+                warn(
+                    f"NotImplementedWarning: {self.__class__.__name__} "
+                    f"can not accept new data when update_params=False. "
+                    f"Call with update_params=True to refit with new data.",
+                    obj=self,
+                )
+            else:
+                index_diff = y.index.difference(
+                    self._fitted_forecaster.fittedvalues.index
+                )
+                if not index_diff.empty:
+                    y = y.loc[index_diff]
+                    if X is not None:
+                        X = X.loc[index_diff]
+                    
+                    self._fitted_forecaster = self._fitted_forecaster.append(
+                        endog=y,
+                        exog=X,  
+                        refit=update_params
+                    )
+                    
+                    self._update_cutoff(y)
+                    if hasattr(self, "_y"):
+                        self._y = pd.concat([self._y, y])
+                    if X is not None and hasattr(self, "_X"):
+                        self._X = pd.concat([self._X, X])
+        
+        return self
+
+    def _update_cutoff(self, y):
+        """Update cutoff to latest observation"""
+        self.cutoff = y.index[-1]
