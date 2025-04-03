@@ -132,7 +132,6 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         unequal = unequal or self.transformers_.get_tag(
             "capability:unequal_length:removes", False
         )
-        categorical = regressor.get_tag("capability:categorical_in_X", True)
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -141,7 +140,6 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
-            "capability:categorical_in_X": categorical,
         }
         self.set_tags(**tags_to_set)
 
@@ -428,7 +426,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle unequal length iff transformer chain renders series equal length
         # because sklearn regressors require equal length (number of variables) input
         unequal = self.transformers_.get_tag("capability:unequal_length:removes", False)
-        categorical = regressor.get_tag("capability:categorical_in_X", True)
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -437,7 +434,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
-            "capability:categorical_in_X": categorical,
         }
         self.set_tags(**tags_to_set)
 
