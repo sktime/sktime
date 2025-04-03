@@ -28,13 +28,14 @@ class ClusterSegmenter(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.cluster import ClusterSegmenter
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.clust import ClusterSegmenter
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
     >>> clusterer = KMeans()
     >>> segmenter = ClusterSegmenter(clusterer)
-    >>> segmenter._fit(X)
-    >>> segment_labels = segmenter._predict(X)
+    >>> segmenter.fit(X)
+    >>> segment_labels = segmenter.predict(X)
     """
 
     _tags = {

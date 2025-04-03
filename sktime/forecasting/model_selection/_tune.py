@@ -1695,34 +1695,34 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> y = load_shampoo_sales()
     >>> y_train, y_test = temporal_train_test_split(y=y, test_size=6)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False).to_relative(
-    >>> cutoff=y_train.index[-1]
+    ...         cutoff=y_train.index[-1]
     ...     )
     >>> cv = ExpandingWindowSplitter(fh=fh, initial_window=24, step_length=1)
     >>> forecaster = TransformedTargetForecaster(
-    >>> steps=[
-    ...     ("detrender", Detrender()),
-    ...     ("deseasonalizer", Deseasonalizer()),
-    ...     ("scaler", TabularToSeriesAdaptor(RobustScaler())),
-    ...     ("minmax2", TabularToSeriesAdaptor(MinMaxScaler((1, 10)))),
-    ...     ("forecaster", NaiveForecaster()),
-    ...     ]
+    ...     steps=[
+    ...             ("detrender", Detrender()),
+    ...             ("scaler", RobustScaler()),
+    ...             ("minmax2", MinMaxScaler((1, 10))),
+    ...             ("forecaster", NaiveForecaster()),
+    ...         ]
     ...     )
     >>> param_grid = {
     ...     "scaler__transformer__with_scaling": CategoricalDistribution(
-    ...          (True, False)
-    ...     ),
-    "forecaster": CategoricalDistribution(
-    ...     (STLForecaster(), ThetaForecaster())
-    ...     ),
+    ...             (True, False)
+    ...         ),
+    ...     "forecaster": CategoricalDistribution(
+    ...             (STLForecaster(), ThetaForecaster())
+    ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(
-    ...     forecaster=forecaster,
-    ...     param_grid=param_grid,
-    ...     cv=cv,
-    ...     n_evals=10,
+    ...         forecaster=forecaster,
+    ...         param_grid=param_grid,
+    ...         cv=cv,
+    ...         n_evals=10,
     ...     )
     >>> gscv.fit(y)
-    >>> print(f"{gscv.best_params_=}")
+    ForecastingOptunaSearchCV(...)
+    >>> print(f"{gscv.best_params_=}")  # doctest: +SKIP
     """
 
     _tags = {

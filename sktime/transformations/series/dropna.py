@@ -50,7 +50,7 @@ class DropNA(BaseTransformer):
     >>> transformer = DropNA(axis=0, how='any')
     >>> X_transformed = transformer.fit_transform(X)
     >>> print(X_transformed)
-       a    b
+         a    b
     0  1.0  5.0
     3  4.0  8.0
     """
