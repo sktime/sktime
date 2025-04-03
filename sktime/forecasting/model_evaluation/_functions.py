@@ -472,7 +472,7 @@ def evaluate(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default None.
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
@@ -481,6 +481,7 @@ def evaluate(
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -509,6 +510,12 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
+        - "ray": Prevents ray from shutting down after parallelization when setting
+           the "shutdown_ray" key with value "False". Takes a "logger_name" and
+           a "mute_warnings" key for configuration.
+           Additionally takes a "ray_remote_args" dictionary that contains valid keys
+           for ray_init.
+           E.g: backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
@@ -621,6 +628,12 @@ def evaluate(
                 "running evaluate with backend='dask' requires the dask package "
                 "installed, but dask is not present in the python environment"
             )
+
+    if backend == "ray" and not _check_soft_dependencies("ray", severity="none"):
+        raise RuntimeError(
+            "running evaluate with backend='ray' requires the ray package "
+            "installed, but ray is not present in the python environment"
+        )
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)

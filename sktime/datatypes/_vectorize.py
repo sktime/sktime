@@ -522,14 +522,16 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-            Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+        backend : {"dask", "loky", "multiprocessing", "threading","ray"},
+            by default None. Runs parallel evaluate if specified and ``strategy``
+            is set as "refit".
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
             - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
             - "dask_lazy": same as "dask", but returns delayed object instead
+            - "ray": uses ``ray``, requires ``ray`` package in environment
 
             Parameter is passed to ``utils.parallel.parallelize``.
 
@@ -545,6 +547,12 @@ class VectorizedDF:
               which is directly controlled by ``backend``
             - "dask": any valid keys for ``dask.compute`` can be passed,
               e.g., ``scheduler``
+            - "ray": Prevents ray from shutting down after parallelization when setting
+                the "shutdown_ray" key with value "False". Takes a "logger_name" and
+                a "mute_warnings" key for configuration.
+                Additionally takes a "ray_remote_args" dictionary that contains valid
+                keys for ray_init. E.g:
+                backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
         kwargs : will be passed to invoked methods of estimator(s) in ``estimator``
 

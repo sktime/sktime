@@ -453,13 +453,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -504,6 +505,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+        - "ray": Prevents ray from shutting down after parallelization when setting
+           the "shutdown_ray" key with value "False". Takes a "logger_name" and
+           a "mute_warnings" key for configuration.
+           Additionally takes a "ray_remote_args" dictionary that contains valid keys
+           for ray_init.
+           E.g: backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
     Attributes
     ----------
@@ -792,6 +799,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -836,6 +844,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+        - "ray": Prevents ray from shutting down after parallelization when setting
+           the "shutdown_ray" key with value "False". Takes a "logger_name" and
+           a "mute_warnings" key for configuration.
+           Additionally takes a "ray_remote_args" dictionary that contains valid keys
+           for ray_init.
+           E.g: backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
     Attributes
     ----------
@@ -1052,6 +1066,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -1092,6 +1107,12 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+        - "ray": Prevents ray from shutting down after parallelization when setting
+           the "shutdown_ray" key with value "False". Takes a "logger_name" and
+           a "mute_warnings" key for configuration.
+           Additionally takes a "ray_remote_args" dictionary that contains valid keys
+           for ray_init.
+           E.g: backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
     Attributes
     ----------
