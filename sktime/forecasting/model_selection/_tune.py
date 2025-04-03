@@ -1701,9 +1701,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> forecaster = TransformedTargetForecaster(
     ...     steps=[
     ...             ("detrender", Detrender()),
-    ...             ("deseasonalizer", Deseasonalizer()),
-    ...             ("scaler", TabularToSeriesAdaptor(RobustScaler())),
-    ...             ("minmax2", TabularToSeriesAdaptor(MinMaxScaler((1, 10)))),
+    ...             ("scaler", RobustScaler()),
+    ...             ("minmax2", MinMaxScaler((1, 10))),
     ...             ("forecaster", NaiveForecaster()),
     ...         ]
     ...     )

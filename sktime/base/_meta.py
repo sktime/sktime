@@ -762,6 +762,7 @@ def flatten(obj):
 
     Examples
     --------
+    >>> from sktime.base._meta import flatten
     >>> flatten([1, 2, [3, (4, 5)], 6])
     [1, 2, 3, 4, 5, 6]
     """
@@ -788,6 +789,7 @@ def unflatten(obj, template):
 
     Examples
     --------
+    >>> from sktime.base._meta import unflatten
     >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
     [1, 2, [3, (4, 5)], 6]
     """
