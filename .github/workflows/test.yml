@@ -281,6 +281,9 @@ jobs:
 
   test-full:
     needs: test-nosoftdeps
+    env:
+      OMP_NUM_THREADS: 1 # Set OMP threads to 1 to avoid issues with OMP lib installed by torch
+                         # See PR: #7123
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
