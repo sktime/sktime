@@ -187,7 +187,7 @@ Maintenance
 * [MNT] temporary skip for ``TimeSeriesKvisibility`` until fix of known failures (:pr:`8079`) :user:`fkiraly`
 * [MNT] Removes ``MiniRocket`` from ``EXCLUDED_TESTS_BY_TEST`` list to fix CI failures (:pr:`7860`) :user:`satvshr`
 * [MNT] temporary skip of ``pytorch-forecasting`` tests until resolution of #7997 (:pr:`7998`) :user:`fkiraly`
-* [MNT] Temporarily remove RecursiveReductionForecaster from unit tests (:pr:`8081`) :user:`felipeangelimvieira`
+* [MNT] Temporarily remove ``RecursiveReductionForecaster`` from unit tests (:pr:`8081`) :user:`felipeangelimvieira`
 * [MNT] skip early classifier ``TEASER`` in ``test_multiprocessing_idempotent`` (:pr:`8085`) :user:`fkiraly`
 * [MNT] skip ``test_transformation_can_return_new_instances`` until resolution of #8084 (:pr:`8086`) :user:`fkiraly`
 * [MNT] remove ``dask`` from 3.13 dep sets due to failure of dependency resolution (:pr:`8101`) :user:`fkiraly`
@@ -228,7 +228,7 @@ Forecasting
 * [BUG] fix (str, forecaster, count) parametrization for ``EnsembleForecaster`` (:pr:`7785`) :user:`fkiraly`
 * [BUG] fix ``statsmodels`` adapter variable name for ``pd.Series`` (:pr:`7832`) :user:`fkiraly`
 * [BUG] ``test_get_test_params_coverage`` throws an error when all tests are triggered (:pr:`7878`) :user:`satvshr`
-* [BUG] Fix RecursiveReductionForecaster failing test_hierarchical_with_exogeneous (:pr:`7927`) :user:`felipeangelimvieira`
+* [BUG] Fix ``RecursiveReductionForecaster`` failing ``test_hierarchical_with_exogeneous`` (:pr:`7927`) :user:`felipeangelimvieira`
 * [BUG] hack-fix for round trip conversions of ``pandas`` time series (:pr:`7925`) :user:`fkiraly`
 * [BUG] ensure ``statsforecast`` adapter keeps track of trained forecaster (:pr:`7983`) :user:`yarnabrina`
 * [BUG] Fix ``HierarchyEnsembleForecaster`` test failure (:pr:`7992`) :user:`wilsbj`
@@ -271,7 +271,7 @@ Time Series Clustering
 
 * [BUG] ``TimeSeriesKVisibility`` - fix missing ``python_dependencies`` tag (:pr:`7972`) :user:`fkiraly`
 * [BUG] fix broken clustering tests in ``TestAllClusterers`` (:pr:`7977`) :user:`fkiraly`
-* [BUG] Fix failing tests for SklearnClustererPipeline, TimeSeriesDBSCAN, ClustererPipeline (:pr:`8028`) :user:`wilsbj`
+* [BUG] Fix failing tests for ``SklearnClustererPipeline``, ``TimeSeriesDBSCAN``, ``ClustererPipeline`` (:pr:`8028`) :user:`wilsbj`
 
 Time Series Regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -284,7 +284,7 @@ Transformations
 * [BUG] ``sklearn 1.6.X`` compatibility for ``TabularToSeriesAdaptor`` - handle ``stateless`` tag by ``requires_fit`` in ``adapt.py`` (:pr:`7845`) :user:`benHeid`
 * [BUG] Fix infinite recursion in ``_SuppressWarningPattern`` and ``LossySetitemError`` in ``SummaryTransformer`` (:pr:`7903`) :user:`celestinoxp`
 * [BUG] fix ``Series``-to-``Primitives`` transformer output index for hierarchical data (:pr:`8037`) :user:`fkiraly`
-* [BUG] Handle hierarchical mtype in ClustererAsTransformer (:pr:`8013`) :user:`felipeangelimvieira`
+* [BUG] Handle hierarchical mtype in ``ClustererAsTransformer`` (:pr:`8013`) :user:`felipeangelimvieira`
 * [BUG] Hierarchical data passed to ``ClustererAsTransformer`` fails (:pr:`8053`) :user:`wilsbj`
 * [BUG] fix expected output length tests for hierarchical transformations (:pr:`8069`) :user:`fkiraly`
 * [BUG] Make ``_TransformChangeNInstances`` capable of handling hierarchical test scenarios (:pr:`8092`) :user:`felipeangelimvieira`
