@@ -26,7 +26,8 @@ Highlights
 * TimeLLM for Forecasting (:pr:`7663`) :user:`jgyasu`
 * support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
 * ``simdkalman``-based Kalman filtransformers (:pr:`8030`) :user:`oseiskar`
-* ``HierarchyEnsembleForecaster`` parallelization backends (:pr:`7954`) :user:`LHolper`
+* ``ray`` parallelization backend (:pr:`8031`) :user:`LHoelper`
+* ``HierarchyEnsembleForecaster`` can now select different parallelization backends (:pr:`7954`) :user:`LHolper`
 * ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`
 * ``SeasonalDummies`` - one hot encoding for seasonal categorical variable transformer (:pr:`7915`) :user:`ericjb`
 * Revised Forecasting Benchmarking Module (:pr:`7603`) :user:`benHeid`
@@ -36,15 +37,19 @@ Dependency changes
 
 * ``tensorflow`` (deep learning soft dependency) bounds have been updated to ``<2.20``
 * ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2025.2.1,>2024.8.2``
+* ``ray is now`` a soft dependency (parallelization back-end)
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``ForecastingBenchmark`` has been reworked:
+* all native parallelization locations now accept ``"ray"`` as a parallelization backend, for example
+    forecasting parameter tuning, or hierarchical parallelization via ``set_config``
 
-* accepts ``sktime``-in-memory data formats and dataset loaders
-* provides different handlers for benchmarking outputs, including ``json``, ``csv``, and ``parquet``.
-* supports global forecasters
+* ``ForecastingBenchmark`` has been reworked:
+
+  * accepts ``sktime``-in-memory data formats and dataset loaders
+  * provides different handlers for benchmarking outputs, including ``json``, ``csv``, and ``parquet``.
+  * supports global forecasters
 
 Enhancements
 ~~~~~~~~~~~~
