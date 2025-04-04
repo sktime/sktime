@@ -63,25 +63,48 @@ def scitype(
     ------
     TypeError if no scitype can be determined for obj
     """
-    # if object has tag, return tag
+    # this function uses three passes to determine scitype:
+    #
+    # 1st pass: check if object has skbase tag manager, then use that
+    # 2nd pass: check if object is sklearn estimator, then use sklearn scitype
+    # 3rd pass: check if object is subclass of any of the base classes in
+    # the BASE_CLASS_REGISTER, then use that
+    # if neither: if no scitype can be determined, return "object" scitype
+
+    def handle_output_format(detected_scitype):
+        """Handle the return format of the detected scitype."""
+        if not isinstance(detected_scitype, list):
+            return_scitype = [detected_scitype]
+        if force_single_scitype and len(detected_scitype) > 1:
+            return_scitype = [detected_scitype[0]]
+        if not coerce_to_list:
+            return_scitype = return_scitype[0]
+        return return_scitype
+
+    # 1st pass
+    # if object has scitype tag, return tag
     if hasattr(obj, "get_tag"):
         if isclass(obj):
-            tag_type = obj.get_class_tag("object_type", None)
+            detected_scitype = obj.get_class_tag("object_type", None)
         else:
-            tag_type = obj.get_tag("object_type", None, raise_error=False)
-        if tag_type is not None:
-            if not isinstance(tag_type, list):
-                tag_type = [tag_type]
-            if force_single_scitype and len(tag_type) > 1:
-                tag_type = [tag_type[0]]
-            if coerce_to_list:
-                return tag_type
-            else:
-                return tag_type[0]
+            detected_scitype = obj.get_tag("object_type", None, raise_error=False)
+        if detected_scitype is not None:
+            return handle_output_format(detected_scitype)
 
+    # 2nd pass
+    # check if object is sklearn estimator
+    # if it is, return sklearn scitype
+    from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
+
+    if is_sklearn_estimator(obj):
+        detected_scitype = f"{sklearn_scitype(obj)}_tabular"
+        return handle_output_format(detected_scitype)
+
+    # 3rd pass
+    # check in the base class register
+    # if the tag is not present, determine scitype from legacy base class logic
     BASE_CLASS_REGISTER = get_base_class_register()
 
-    # if the tag is not present, determine scitype from legacy base class logic
     if isclass(obj):
         scitypes = [sci[0] for sci in BASE_CLASS_REGISTER if issubclass(obj, sci[1])]
     else:
