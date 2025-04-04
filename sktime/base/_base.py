@@ -128,7 +128,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
             - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
-            - "ray": uses `ray`, requires `ray` package in environment
+            - "ray": uses ``ray``, requires ``ray`` package in environment
         """,
         "backend:parallel:params": """
         backend:parallel:params : dict, optional, default={} (no parameters passed)
@@ -136,26 +136,31 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             Valid keys depend on the value of ``backend:parallel``:
 
             - "None": no additional parameters, ``backend_params`` is ignored
+
             - "loky", "multiprocessing" and "threading": default ``joblib`` backends
               any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
               ``n_jobs``, with the exception of ``backend`` which is directly
               controlled by ``backend``.
               If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
               will default to ``joblib`` defaults.
+
             - "joblib": custom and 3rd party ``joblib`` backends,
               e.g., ``spark``. Any valid keys for ``joblib.Parallel``
               can be passed here, e.g., ``n_jobs``,
               ``backend`` must be passed as a key of ``backend_params`` in this case.
               If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
               will default to ``joblib`` defaults.
+
             - "dask": any valid keys for ``dask.compute`` can be passed,
               e.g., ``scheduler``
-            - "ray": Prevents ray from shutting down after parallelization when setting
-              the "shutdown_ray" key with value "False". Takes a "logger_name" and
-              a "mute_warnings" key for configuration.
-              Additionally takes a "ray_remote_args" dictionary that contains valid keys
-              for ray_init. E.g:
-              backend_params={"shutdown_ray":False,"ray_remote_args":{"num_cpus":2}}
+
+            - "ray": The following keys can be passed:
+
+                - "ray_remote_args": dictionary of valid keys for ``ray.init``
+                - "shutdown_ray": bool, default=True; False prevents ``ray`` from
+                    shutting down after parallelization.
+                - "logger_name": str, default="ray"; name of the logger to use.
+                - "mute_warnings": bool, default=False; if True, suppresses warnings
         """,
     }
 
