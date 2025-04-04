@@ -316,6 +316,7 @@ Contributors
 :user:`itsbharatj`,
 :user:`jgyasu`,
 :user:`LHoelper`,
+:user:`LorchZachery`,
 :user:`oseiskar`,
 :user:`phoeenniixx`,
 :user:`PranavBhatP`,
