@@ -23,7 +23,8 @@ Version 0.36.1 - 2025-04-04
 Highlights
 ~~~~~~~~~~
 
-* TimeLLM for Forecasting (:pr:`7663`) :user:`jgyasu`
+* ``Time-LLM`` forecaster (:pr:`7663`) :user:`jgyasu`
+* ``TimeMoE`` forecaster (:pr:`7869`) :user:`PranavBhatP`
 * support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
 * ``simdkalman``-based Kalman filtransformers (:pr:`8030`) :user:`oseiskar`
 * ``ray`` parallelization backend (:pr:`8031`) :user:`LHoelper`
@@ -94,6 +95,7 @@ Forecasting
 * [ENH] Enable the HF Transformers Forecaster to pass model as object (:pr:`7689`) :user:`Spinachboul`
 * [ENH] ES-RNN Forecaster (:pr:`7772`) :user:`Ankit-1204`
 * [ENH] move naive forecasters to separate folder (:pr:`8067`) :user:`fkiraly`
+* [ENH] ``TimeMoE`` forecaster (vendored) (:pr:`7869`) :user:`PranavBhatP`
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^
