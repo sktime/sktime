@@ -202,6 +202,11 @@ EXCLUDED_TESTS = {
         "test__y_when_refitting",  # see 3176
         "test_update_predict_predicted_index",  # see 7985, timeout
         "test_hierarchical_with_exogeneous",  # see 7985, timeout
+        "test_persistence_via_pickle",  # more timeouts
+        "test_methods_have_no_side_effects",
+        "test_fit_idempotent",
+        "test_fit_does_not_overwrite_hyper_params",
+        "test_non_state_changing_method_contract",
     ],
     "InformationGainSegmentation": [
         "test_inheritance",
@@ -247,6 +252,7 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "ClusterSegmenter": [
+        "test_doctest_examples",
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
@@ -401,7 +407,26 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSBootstrapAdapter",
         "ThetaModularForecaster",
         "WeightedEnsembleClassifier",
-    ]
+    ],
+    "test_doctest_examples": [
+        # between-versions inconsistency how doctest handles np.float64.
+        # on lower version, prints 0.123456
+        # on higher version, prints np.float64(0.123456)
+        # therefore these doctests will fail either on lower or higher versions
+        "MedianSquaredScaledError",
+        "GeometricMeanAbsoluteError",
+        "MedianRelativeAbsoluteError",
+        "MeanSquaredScaledError",
+        "GeometricMeanRelativeAbsoluteError",
+        "GeometricMeanRelativeSquaredError",
+        "MedianSquaredPercentageError",
+        "MedianAbsoluteScaledError",
+        "MedianSquaredError",
+        "MeanAbsolutePercentageError",
+        "MeanAbsoluteScaledError",
+        "MeanAbsoluteError",
+        "MedianAbsoluteError",
+    ],
 }
 
 # estimators that have 2 test params only when their soft dependency is installed

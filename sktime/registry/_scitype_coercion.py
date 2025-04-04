@@ -103,6 +103,7 @@ def coerce_scitype(
     TypeError if ``raise_on_mismatch``, and ``from_scitype`` is not None, and
         the detected scitype does not match the expected scitype ``from_scitype``.
     """
+    from sktime.base._base import _safe_clone
     from sktime.registry._scitype import scitype
     from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
 
@@ -138,12 +139,7 @@ def coerce_scitype(
         from_scitype = detected_scitype
 
     if clone_obj:
-        if is_sklearn_estimator(obj) or not hasattr(obj, "clone"):
-            from sklearn.base import clone
-
-            obj = clone(obj)
-        else:
-            obj = obj.clone()
+        obj = _safe_clone(obj)
 
     if (from_scitype, to_scitype) not in _coerce_register:
         return obj
