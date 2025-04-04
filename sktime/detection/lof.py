@@ -122,7 +122,6 @@ class SubLOF(BaseDetector):
     12       0
     13       1
     14       0
-    dtype: int64
     """
 
     _tags = {

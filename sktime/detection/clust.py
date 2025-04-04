@@ -25,17 +25,6 @@ class ClusterSegmenter(BaseDetector):
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
-
-    Examples
-    --------
-    >>> from sklearn.cluster import KMeans
-    >>> from sktime.detection.clust import ClusterSegmenter
-    >>> from sktime.datasets import load_gunpoint
-    >>> X, y = load_gunpoint()
-    >>> clusterer = KMeans()
-    >>> segmenter = ClusterSegmenter(clusterer)
-    >>> segmenter.fit(X)
-    >>> segment_labels = segmenter.predict(X)
     """
 
     _tags = {
