@@ -135,6 +135,12 @@ class AlignerDTW(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
+        # If sakoi-cheba window is used, window_size must be set or given a default 
+        # value equal to 10 % of the length of the series
+        if self.window_type == "sakoechiba":
+            if self.window_size is None:
+                self.window_size = int(0.1 * len(X[0]))
+
         # these variables from self are accessed
         dist_method = self.dist_method
         step_pattern = self.step_pattern
@@ -236,8 +242,9 @@ class AlignerDTW(BaseAligner):
         """Test parameters for AlignerDTWdist."""
         params1 = {}
         params2 = {"step_pattern": "symmetric1"}
+        params3 = {"window_type": "sakoechiba"}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class AlignerDTWfromDist(BaseAligner):
@@ -347,6 +354,12 @@ class AlignerDTWfromDist(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
+        # If sakoi-cheba window is used, window_size must be set or given a default 
+        # value equal to 10 % of the length of the series
+        if self.window_type == "sakoechiba":
+            if self.window_size is None:
+                self.window_size = int(0.1 * len(X[0]))
+
         # these variables from self are accessed
         dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
@@ -434,5 +447,6 @@ class AlignerDTWfromDist(BaseAligner):
 
         params1 = {"dist_trafo": ScipyDist()}
         params2 = {"dist_trafo": ScipyDist("cityblock"), "step_pattern": "symmetric1"}
+        params3 = {"dist_trafo": ScipyDist(), "window_type": "sakoechiba"}
 
-        return [params1, params2]
+        return [params1, params2, params3]
