@@ -40,7 +40,7 @@ class ThresholdDetector(BaseDetector):
     >>> from sktime.detection.naive import ThresholdDetector
     >>> y = pd.DataFrame([1, 2, 3, 2, 1, 2, 3, 42, 43, 1, 2])
     >>> d = ThresholdDetector(upper=10, mode="segments")
-    >>> d.fit_predict(y)
+    >>> y_pred = d.fit_predict(y)
     """
 
     _tags = {
