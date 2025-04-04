@@ -425,7 +425,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanAbsoluteScaledError",
         "MeanAbsoluteError",
         "MedianAbsoluteError",
-    ]
+    ],
 }
 
 # estimators that have 2 test params only when their soft dependency is installed
