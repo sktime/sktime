@@ -216,7 +216,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     if shutdown_ray:
         ray.shutdown()
         if verbose:
-            logger.info("Stopeed Ray Parallel")
+            logger.info("Shutting Down Ray")
 
     res = [res_dict[ref] for ref in refs]
     return res
