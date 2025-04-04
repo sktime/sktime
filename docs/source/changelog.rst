@@ -194,6 +194,7 @@ Maintenance
 * [MNT] Remove debugging line from test_check_estimator (:pr:`8104`) :user:`felipeangelimvieira`
 * [MNT] update ``PyKANForecaster`` dependency set (:pr:`8109`) :user:`fkiraly`
 * [MNT] remove ``CNTCRegressor`` parameter test skip (:pr:`8122`) :user:`fkiraly`
+* [MNT] prevent ``torch`` installation on ``python 3.13`` and macos (:pr:`8143`) :user:`fkiraly`
 * [MNT] increase ``tensorflow`` bound to ``<2.20`` (:pr:`8119`) :user:`fkiraly`
 * [MNT] update ``dask`` version to ``dask<2025.2.1,>2024.8.2`` (:pr:`8083`) :user:`fkiraly`
 * [MNT] [Dependabot](deps): Update ``sphinx-gallery`` requirement from ``<0.19.0`` to ``<0.20.0`` (:pr:`7819`) :user:`dependabot[bot]`
