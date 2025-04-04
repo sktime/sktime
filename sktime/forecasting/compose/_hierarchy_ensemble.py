@@ -91,6 +91,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
           e.g., ``scheduler``
 
         - "ray": The following keys can be passed:
+
             - "ray_remote_args": dictionary of valid keys for ``ray.init``
             - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
                 down after parallelization.
