@@ -179,6 +179,9 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = backend_params.pop("shutdown_ray", True)
     verbose = backend_params.pop("verbose", False)
 
+    if verbose:
+        logging.disable(logging.CRITICAL)
+
     if "ray_remote_args" not in backend_params.keys():
         backend_params["ray_remote_args"] = {}
 
@@ -193,13 +196,11 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
         return result
 
     if not ray.is_initialized():
-        if verbose:
-            logger.info("Starting Ray Parallel")
+        logger.info("Starting Ray Parallel")
         context = ray.init(**backend_params["ray_remote_args"])
-        if verbose:
-            logger.info(
-                f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
-            )
+        logger.info(
+            f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
+        )
 
     # this is to keep the order of results while still using wait to optimize runtime
     refs = [
@@ -215,8 +216,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     if shutdown_ray:
         ray.shutdown()
-        if verbose:
-            logger.info("Shutting Down Ray")
+        logger.info("Shutting Down Ray")
 
     res = [res_dict[ref] for ref in refs]
     return res
