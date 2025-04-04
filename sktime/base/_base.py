@@ -521,12 +521,26 @@ class BaseEstimator(_BaseEstimator, BaseObject):
 
 
 def _clone_estimator(base_estimator, random_state=None):
+
     estimator = clone(base_estimator)
 
     if random_state is not None:
         set_random_state(estimator, random_state)
 
     return estimator
+
+
+def _safe_clone(object):
+    """Clone an object.
+
+    If the object has a clone method, use that.
+
+    Otherwise delegates to sklearn's clone function.
+    """
+    if hasattr(object, "clone"):
+        return object.clone()
+    else:
+        return clone(object)
 
 
 def deepcopy_func(f, name=None):
