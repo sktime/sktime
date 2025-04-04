@@ -2,10 +2,10 @@
 
 Unofficial fork of the ``Time-MoE/Time-MoE`` package, maintained in ``sktime``.
 
-sktime migration: 2025, Feb
+sktime migration: 2025, Apr
 
-Original author: Xiaoming Shi, Shiyu Wang♠, Yuqi Nie1, Dianqi Li, Zhou Ye,
-Qingsong Wen2†, Ming Jin3†♠
+Original authors: Xiaoming Shi, Shiyu Wang♠, Yuqi Nie1, Dianqi Li, Zhou Ye,
+Qingsong Wen, Ming Jin
 
 2024 releases subject to following license:
 

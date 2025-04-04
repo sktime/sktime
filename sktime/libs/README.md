@@ -26,7 +26,9 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
-* `time_llm` - partial fork of the `time_llm` package , from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package is not available.
+* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package is not available.
+
+* `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package is not available.
 
 * `timesfm` - partial fork of TimesFM, adapted from [google-research/timesfm](https://github.com/google-research/timesfm). This is an unofficial fork created to address the lack of recent updates of `timesfm` package on [pypi](https://pypi.org/project/timesfm/) and the instability caused by significant interface changes in recent versions without prior deprecation warnings. The fork has minimal dependencies and focuses on the core features required for compatibility with the `sktime` forecaster.
 
