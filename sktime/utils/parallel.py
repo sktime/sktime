@@ -179,7 +179,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     shutdown_ray = backend_params.pop("shutdown_ray", True)
     verbose = backend_params.pop("verbose", False)
 
-    if verbose:
+    if not verbose:
         logging.disable(logging.CRITICAL)
 
     if "ray_remote_args" not in backend_params.keys():
