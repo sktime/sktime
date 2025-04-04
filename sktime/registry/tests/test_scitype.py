@@ -1,4 +1,4 @@
-"""Tests for scitype typipng function."""
+"""Tests for scitype typing function."""
 
 import pytest
 
@@ -104,3 +104,44 @@ def test_is_scitype():
     assert is_scitype(_DummyClass, "foo")
     assert is_scitype(_DummyClass, "bar")
     assert not is_scitype(_DummyClass, "baz")
+
+
+def test_sklearn_scitypes():
+    """Test that scitype correctly identifies sklearn scitypes."""
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.svm import SVC
+
+    assert scitype(LinearRegression) == "regressor_tabular"
+    assert scitype(LinearRegression()) == "regressor_tabular"
+    assert scitype(StandardScaler) == "transformer_tabular"
+    assert scitype(StandardScaler()) == "transformer_tabular"
+    assert scitype(SVC) == "classifier_tabular"
+    assert scitype(SVC()) == "classifier_tabular"
+
+    assert is_scitype(LinearRegression, "regressor_tabular")
+    assert is_scitype(LinearRegression(), "regressor_tabular")
+    assert is_scitype(StandardScaler, "transformer_tabular")
+    assert is_scitype(StandardScaler(), "transformer_tabular")
+    assert is_scitype(SVC, "classifier_tabular")
+    assert is_scitype(SVC(), "classifier_tabular")
+
+    from sklearn.pipeline import Pipeline
+
+    class_pipe = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            ("classifier", SVC()),
+        ]
+    )
+    assert scitype(class_pipe) == "classifier_tabular"
+    assert is_scitype(class_pipe, "classifier_tabular")
+
+    reg_pipe = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    assert scitype(reg_pipe) == "regressor_tabular"
+    assert is_scitype(reg_pipe, "regressor_tabular")
