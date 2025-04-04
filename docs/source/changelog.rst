@@ -37,7 +37,7 @@ Dependency changes
 
 * ``tensorflow`` (deep learning soft dependency) bounds have been updated to ``<2.20``
 * ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2025.2.1,>2024.8.2``
-* ``ray is now`` a soft dependency (parallelization back-end)
+* ``ray`` is now a soft dependency (parallelization back-end)
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
