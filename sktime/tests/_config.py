@@ -272,6 +272,12 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
         "test_fit_idempotent",  # not part of bug reports but due to randomness
     ],
+    "ARLagOrderSelector": [
+        "test_doctest_examples",  # doctest fails, see #8129
+    ],
+    "ESRNNForecaster": [
+        "test_persistence_via_pickle"
+    ]  # pickling problem, see #8135
 }
 
 # exclude tests but keyed by test name
