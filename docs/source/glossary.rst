@@ -94,7 +94,7 @@ sktime.
         extensions, see the guide on :ref:`developer_guide_add_estimators`.
         For power users familiar with software engineering
         patterns: the extension templates make use of the template pattern for
-        the extension contract, ensuring compliance with the strategy pattern for
+        the extension contract, ensuring compliance with the :term:`strategy pattern` for
         the user contract, defined by the :term:`scitype` specific interface.
 
     Estimator
@@ -125,12 +125,18 @@ sktime.
         scitype of a pipeline being a forecaster or a classifier, depending on
         whether its last element is a forecaster or a classifier.
         Users familiar with software engineering patterns should note that this term
-        may be used in a different sense than "composite pattern":
+        may be used in a different sense than :term:`composite pattern`:
         in the context of ``scikit-learn``, the "composite estimator"
-        combines both the composite pattern and the strategy pattern.
+        combines both the :term:`composite pattern` and the :term:`strategy pattern`.
 
-    Composite Pattern:
-         A design pattern that allows treating individual objects and compositions of objects uniformly. In `sktime`, this concept is adapted to create composite estimators, which combine multiple components (e.g., transformers, forecasters) into a single pipeline or workflow. This allows for modular and reusable designs in time series learning tasks.
+    Composite pattern
+        A design pattern that allows treating individual objects and compositions of objects uniformly. In `sktime`, this concept is adapted to create composite estimators, which combine multiple components (e.g., transformers, forecasters) into a single pipeline or workflow. This allows for modular and reusable designs in time series learning tasks.
+
+    Strategy pattern
+        A design pattern that allows dynamic selection of algorithms at runtime by encapsulating them as interchangeable objects with a common interface, promoting flexibility and modularity. In sktime, this pattern is used to modularize forecasting and preprocessing techniques, such as ARIMA and detrending. Tools like MultiplexForecaster allow seamless switching between methods without altering core code, enhancing experimentation, extensibility, and reusability in time series analysis.
+
+        For additional design patterns, see `Design Patterns for Humans`_ resource.
+.. _design patterns for humans: https://github.com/kamranahmedse/design-patterns-for-humans
 
     Hyperparameter:
         A parameter of a machine learning model that is set at construction.
