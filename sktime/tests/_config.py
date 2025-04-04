@@ -281,6 +281,7 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
+    "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
 }
 
 # exclude tests but keyed by test name
