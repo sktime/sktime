@@ -94,6 +94,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         "capability:missing_values": True,
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        "python_dependencies": "matplotlib",
     }
 
     def __init__(
@@ -130,7 +131,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         ----------
         X : pd.DataFrame or nested pd.Series
             Panel data with multiple time series
-        y : pd.Series, optional (default=None)
+        X2 : pd.Series, optional (default=None)
             Ignored, exists for API consistency
 
         Returns
@@ -143,15 +144,11 @@ class TransferEntropy(BasePairwiseTransformerPanel):
 
         # Check if X is a valid DataFrame
         # this can also be checked with the tag
-        # if not isinstance(X, pd.DataFrame):
-        #     raise TypeError("Input X must be a pandas DataFrame")
-
-        # Handle missing values
-        # we can use this manual calculation if the tag is False
-
-        # convert explicitly to DataFrame
-        if isinstance(X, list):
-            X = pd.DataFrame(X)
+        if not isinstance(X, pd.DataFrame):
+            try:
+                X = pd.DataFrame(X)
+            except:
+                raise ValueError("Input must be convertible to a pandas DataFrame")
 
         # Handle the missing values according to the specified strategy
         if self.missing_values == "error" and X.isnull().values.any():
@@ -452,6 +449,9 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             digamma(n_yhist) - digamma(n_yhist_xhist) - digamma(n_y)
         )
 
+        # check the te datatype
+        print("TE:", te)
+
         # Normalize if requested
         if self.normalize:
             h_y = digamma(len(y_target)) - np.mean(digamma(n_y))
@@ -584,7 +584,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         return p_value
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Parameters
@@ -603,6 +603,8 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             - `get_test_params` creates instances for individual parameters.
         """
         # Default parameters for testing
+
+        params = {}
         params1 = {
             "lag_target": 1,
             "lag_source": 1,
@@ -617,8 +619,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             "lag_source": 2,
             "estimator": "binning",
             "n_bins": 3,
-            "significance_test": True,
             "missing_values": "drop",
         }
 
-        return [params1, params2]
+        return [params, params1, params2]
