@@ -280,7 +280,7 @@ EXCLUDED_TESTS = {
     ],
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
-    ]
+    ],
 }
 
 # exclude tests but keyed by test name
@@ -425,7 +425,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanAbsoluteScaledError",
         "MeanAbsoluteError",
         "MedianAbsoluteError",
-
     ]
 }
 
