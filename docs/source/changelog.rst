@@ -23,13 +23,32 @@ Version 0.36.1 - 2025-04-04
 Highlights
 ~~~~~~~~~~
 
-* [ENH] Revision Forecasting Benchmarking Module (:pr:`7603`) :user:`benHeid`
-* [ENH] Add ``simdkalman``-based Series and Panel transformers (:pr:`8030`) :user:`oseiskar`
-* [ENH] Adds Seasonal dummies features via a transformer ``SeasonalDummies`` (one hot encoding for seasonal categorical variable) (:pr:`7915`) :user:`ericjb`
-* [ENH] Implement support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
-* [ENH] ``HierarchyEnsembleForecaster`` parallelization backends (:pr:`7954`) :user:`LHoelper`
-* [ENH] TimeLLM for Forecasting (vendored) (:pr:`7663`) :user:`jgyasu`
-* [ENH] ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`
+* TimeLLM for Forecasting (:pr:`7663`) :user:`jgyasu`
+* support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
+* ``simdkalman``-based Kalman filtransformers (:pr:`8030`) :user:`oseiskar`
+* ``HierarchyEnsembleForecaster`` parallelization backends (:pr:`7954`) :user:`LHolper`
+* ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`
+* ``SeasonalDummies`` - one hot encoding for seasonal categorical variable transformer (:pr:`7915`) :user:`ericjb`
+* Revised Forecasting Benchmarking Module (:pr:`7603`) :user:`benHeid`
+* Time Series AUPRC anomaly detection metric based on QuoVadisTAD (:pr:`7729`) :user:`Ankit-1024`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+``ForecastingBenchmark`` has been reworked:
+
+* accepts ``sktime``-in-memory data formats and dataset loaders
+* provides different handlers for benchmarking outputs, including ``json``, ``csv``, and ``parquet``.
+* supports global forecasters
+  
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 Enhancements
 ~~~~~~~~~~~~
@@ -46,7 +65,7 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Extend forecasting benchmark to global setting (:pr:`6774`) :user:`XinyuWuu`
-* [ENH] Add error handling to cINNForecaster's CurveFitForecaster (:pr:`7602`) :user:`Utkarsh-Aggarwal`
+* [ENH] Add error handling to ``cINNForecaster``'s ``CurveFitForecaster`` (:pr:`7602`) :user:`Utkarsh-Aggarwal`
 * [ENH] Revision Forecasting Benchmarking Module (:pr:`7603`) :user:`benHeid`
 * [ENH] Extend benchmarking to accept sktime-in-memory data formats (:pr:`5055`) :user:`hazrulakmal`
 * [ENH] benchmarking: make write to ``csv`` file optional (:pr:`7850`) :user:`fkiraly`
@@ -1236,7 +1255,6 @@ Transformations
 
 * [BUG] fix ``drop_na`` and update mode of ``Differencer`` transformation (:pr:`7115`) :user:`fkiraly`
 Test framework
-
 
 Contributors
 ~~~~~~~~~~~~
