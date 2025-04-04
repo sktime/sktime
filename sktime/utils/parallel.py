@@ -45,6 +45,7 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
+        - "ray": uses a ray remote to execute jobs in parallel
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -62,6 +63,15 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
     """
     if meta is None:
         meta = {}
@@ -87,6 +97,7 @@ backend_dict = {
     "joblib": "joblib",
     "dask": "dask",
     "dask_lazy": "dask",
+    "ray": "ray",
 }
 para_dict = {}
 
@@ -153,6 +164,60 @@ def _parallelize_dask(fun, iter, meta, backend, backend_params):
 para_dict["dask"] = _parallelize_dask
 
 
+def _parallelize_ray(fun, iter, meta, backend, backend_params):
+    """Parallelize loop via ray."""
+    import logging
+    import warnings
+
+    import ray
+
+    # remove the possible excess keys
+    logger = logging.getLogger(backend_params.pop("logger_name", None))
+    mute_warnings = backend_params.pop("mute_warnings", False)
+    shutdown_ray = backend_params.pop("shutdown_ray", True)
+
+    if "ray_remote_args" not in backend_params.keys():
+        backend_params["ray_remote_args"] = {}
+
+    @ray.remote  # pragma: no cover
+    def _ray_execute_function(
+        fun, params: dict, meta: dict, mute_warnings: bool = False
+    ):
+        if mute_warnings:
+            warnings.filterwarnings("ignore")  # silence sktime warnings
+        assert ray.is_initialized()
+        result = fun(params, meta)
+        return result
+
+    if not ray.is_initialized():
+        logger.info("Starting Ray Parallel")
+        context = ray.init(**backend_params["ray_remote_args"])
+        logger.info(
+            f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
+        )
+
+    # this is to keep the order of results while still using wait to optimize runtime
+    refs = [
+        _ray_execute_function.remote(fun, x, meta, mute_warnings=mute_warnings)
+        for x in iter
+    ]
+    res_dict = dict.fromkeys(refs)
+
+    unfinished = refs
+    while unfinished:
+        finished, unfinished = ray.wait(unfinished, num_returns=1)
+        res_dict[finished[0]] = ray.get(finished[0])
+
+    if shutdown_ray:
+        ray.shutdown()
+
+    res = [res_dict[ref] for ref in refs]
+    return res
+
+
+para_dict["ray"] = _parallelize_ray
+
+
 def _get_parallel_test_fixtures(naming="estimator"):
     """Return fixtures for parallelization tests.
 
@@ -196,5 +261,19 @@ def _get_parallel_test_fixtures(naming="estimator"):
     if _check_soft_dependencies("dask", severity="none"):
         fixtures.append({"backend": "dask", "backend_params": {}})
         fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
+
+    # test ray backend
+    if _check_soft_dependencies("ray", severity="none"):
+        import os
+
+        fixtures.append(
+            {
+                "backend": "ray",
+                "backend_params": {
+                    "mute_warnings": True,
+                    "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
+                },
+            }
+        )
 
     return fixtures

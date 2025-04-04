@@ -119,6 +119,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
+        #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
         "remember_data": True,  # whether to remember data in fit - self._X, self._y
     }
