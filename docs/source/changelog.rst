@@ -290,8 +290,8 @@ Transformations
 * [BUG] Make ``_TransformChangeNInstances`` capable of handling hierarchical test scenarios (:pr:`8092`) :user:`felipeangelimvieira`
 * [BUG] Handle hierarchical input types in ``ColumnConcatenator`` correctly (:pr:`8070`) :user:`wilsbj`
 
-On-board library: VMD
-^^^^^^^^^^^^^^^^^^^^^
+On-board library: ``vmdpy``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] Fix VMD odd length data returns even length decomposition (:pr:`8094`) :user:`danferns`, :user:`LorchZachery`
 
