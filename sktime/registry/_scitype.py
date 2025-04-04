@@ -120,12 +120,12 @@ def scitype(
     def handle_output_format(detected_scitype):
         """Handle the return format of the detected scitype."""
         if not isinstance(detected_scitype, list):
-            return_scitype = [detected_scitype]
+            detected_scitype = [detected_scitype]
         if force_single_scitype and len(detected_scitype) > 1:
-            return_scitype = [detected_scitype[0]]
+            detected_scitype = [detected_scitype[0]]
         if not coerce_to_list:
-            return_scitype = return_scitype[0]
-        return return_scitype
+            detected_scitype = detected_scitype[0]
+        return detected_scitype
 
     # 1st pass
     # if object has scitype tag, return tag
