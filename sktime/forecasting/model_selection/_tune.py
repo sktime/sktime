@@ -1711,7 +1711,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
-    ...             (STLForecaster(), ThetaForecaster())
+    ...             (NaiveForecaster(), ThetaForecaster())
     ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(

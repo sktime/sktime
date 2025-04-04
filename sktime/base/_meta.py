@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.base._base import _safe_clone
 from sktime.utils._estimator_html_repr import _VisualBlock
 
 
@@ -350,7 +351,7 @@ class _HeterogenousMetaEstimator:
             name = type(obj).__name__
 
         if clone_est:
-            return (name, est.clone())
+            return (name, _safe_clone(est))
         else:
             return (name, est)
 
@@ -405,7 +406,7 @@ class _HeterogenousMetaEstimator:
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
-            ests = [e.clone() for e in ests]
+            ests = [_safe_clone(e) for e in ests]
         unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
@@ -951,7 +952,7 @@ class _ColumnEstimator:
         if isinstance(estimators, cls):
             ycols = [str(col) for col in X.columns]
             colrange = range(len(ycols))
-            est_list = [estimators.clone() for _ in colrange]
+            est_list = [_safe_clone(estimators) for _ in colrange]
             return list(zip(ycols, est_list, colrange))
 
         if (
