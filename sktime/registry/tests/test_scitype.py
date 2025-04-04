@@ -107,7 +107,7 @@ def test_is_scitype():
 
 
 def test_sklearn_scitypes():
-    """Test that scitype correctly identifies sklearn sciytpes."""
+    """Test that scitype correctly identifies sklearn scitypes."""
     from sklearn.linear_model import LinearRegression
     from sklearn.preprocessing import StandardScaler
     from sklearn.svm import SVC
