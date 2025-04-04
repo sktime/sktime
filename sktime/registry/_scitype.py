@@ -36,28 +36,74 @@ def scitype(
 ):
     """Determine scitype string of obj.
 
+    This function returns the ``sktime`` internal type for the object ``obj``,
+    the so-called :term:`scitype`, e.g., ``"forecaster"``, ``"transformer"``.
+
+    A scitype defines a unified interface for a family of objects, e.g.,
+    all forecasters strictly adhere to the ``BaseForecaster`` API.
+
+    A list of all ``sktime`` scitypes can be found in the
+    ``BASE_CLASS_SCITYPE_LIST`` in the ``sktime.registry`` module,
+    a table with explanations in the ``BASE_CLASS_REGISTER`` in the same module.
+
+    For ``sktime`` objects, the scitype is determined by the ``object_type`` tag.
+
+    For ``sklearn`` objects, the scitype is determined by
+    inheritance from ``sklearn`` mixin classes.
+
     Parameters
     ----------
-    obj : class or object inheriting from sktime BaseObject
+    obj : class or object inheriting from sktime BaseObject or sklearn BaseEstimator
+
     force_single_scitype : bool, optional, default = True
-        whether only a single scitype is returned
-        if True, only the *first* scitype found will be returned
-        order is determined by the order in BASE_CLASS_REGISTER
+        whether only a single scitype is returned.
+
+        * if True, only the *first* scitype found will be returned
+          order is determined by the order in ``BASE_CLASS_REGISTER`` resp
+          ``BASE_CLASS_SCITYPE_LIST`` (both imply the same odrer)
+        * if False, a list of all scitypes is returned
+
     coerce_to_list : bool, optional, default = False
-        determines the return type: if True, returns a single str,
-        if False, returns a list of str
+        determines the return type:
+
+        * if True, always returns a list of str
+        * if False, returns a single str for a single scitype,
+          and a list of str for multiple scitypes
+
     raise_on_unknown : bool, optional, default = True
-        if True, raises an error if no scitype can be determined for obj
-        if False, returns "object" scitype
+
+        * if True, raises an error if no scitype can be determined for obj
+        * if False, returns "object" scitype
 
     Returns
     -------
-    scitype : str, or list of str of sktime scitype strings from BASE_CLASS_REGISTER
-        str, sktime scitype string, if exactly one scitype can be determined for obj
-        or force_single_scitype is True, and if coerce_to_list is False
-        list of str, of scitype strings, if more than one scitype are determined,
-        or if coerce_to_list is True
-        obj has scitype if it inherits from class in same row of BASE_CLASS_REGISTER
+    scitype : str, or list of str of sktime scitype strings
+
+        strings in the return object can be:
+
+        * an ``sktime`` scitype string, from ``BASE_CLASS_SCITYPE_LIST`` resp
+          ``BASE_CLASS_REGISTER`` (both contain the same strings).
+          These include (not an exhaustive list):
+
+            * ``"forecaster"`` - ``sktime`` forecaster
+            * ``"classifier"`` - ``sktime`` time series classifier
+            * ``"regressor"`` - ``sktime`` time series regressor
+            * ``"clusterer"`` - ``sktime`` time series clusterer
+            * ``"transformer"`` - ``sktime`` time series transformation
+
+        * an ``sklearn`` scitype string used in ``sktime``, this can be:
+
+            * ``"classifier_tabular"`` - ``sklearn`` classifier
+            * ``"regressor_tabular"`` - ``sklearn`` regressor
+            * ``"clusterer_tabular"`` - ``sklearn`` clusterer
+            * ``"transformer_tabular"`` - ``sklearn`` transformation
+
+        The return type is:
+
+        * str, sktime scitype string, if exactly one scitype can be determined for obj
+          or ``force_single_scitype`` is True, and if ``coerce_to_list`` is False
+        *  list of str, of scitype strings, if more than one scitype are determined,
+          or if ``coerce_to_list`` is True
 
     Raises
     ------
