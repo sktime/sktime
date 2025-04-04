@@ -405,16 +405,50 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
 
 
 def _same_index(data):
+    """
+    Ensure that all series within a multi-indexed DataFrame share the same index.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A multi-indexed DataFrame where the last level of the index should be the same
+        across all grouped series.
+
+    Returns
+    -------
+    pandas.Index, int
+        The common index found at the last level and the length of this index
+    """
     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
         lambda x: x.index.get_level_values(-1)
     )
-    assert data.map(
-        lambda x: x.equals(data.iloc[0])
-    ).all(), "All series must has the same index"
+    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
+        "All series must has the same index"
+    )
     return data.iloc[0], len(data.iloc[0])
 
 
 def _frame2numpy(data):
+    """
+    Convert a multi-indexed DataFrame into a 3D NumPy array.
+
+    The function first ensures that all series in `data` share the same index at the
+    last level using `_same_index`, then reshapes the DataFrame values into a NumPy
+    array with dimensions `(batch_size, sequence_length, feature_dim)`.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        A multi-indexed DataFrame with consistent last-level indices across all series.
+
+    Returns
+    -------
+    numpy.ndarray
+        A 3D NumPy array of shape `(n_groups, sequence_length, n_features)`, where:
+        - `n_groups` is the number of unique index groups in `data`
+        - `sequence_length` is the length of the common index
+        - `n_features` is the number of columns in `data`.
+    """
     idx, length = _same_index(data)
     arr = np.array(data.values, dtype=np.float32).reshape(
         (-1, length, len(data.columns))
