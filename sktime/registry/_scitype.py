@@ -123,7 +123,7 @@ def scitype(
             detected_scitype = [detected_scitype]
         if force_single_scitype and len(detected_scitype) > 1:
             detected_scitype = [detected_scitype[0]]
-        if not coerce_to_list and len(detected_scitype) == 1:
+        if not coerce_to_list:
             detected_scitype = detected_scitype[0]
         return detected_scitype
 
