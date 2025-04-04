@@ -35,6 +35,9 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``tensorflow`` (deep learning soft dependency) bounds have been updated to ``<2.20``
+* ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2025.2.1,>2024.8.2``
+
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -43,12 +46,6 @@ Core interface changes
 * accepts ``sktime``-in-memory data formats and dataset loaders
 * provides different handlers for benchmarking outputs, including ``json``, ``csv``, and ``parquet``.
 * supports global forecasters
-  
-
-Deprecations and removals
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 Enhancements
 ~~~~~~~~~~~~
@@ -149,7 +146,7 @@ Documentation
 * [DOC] added docstring to the ``HierarchicalDask`` class (:pr:`7684`) :user:`TomatoChocolate12`
 * [DOC] clarify assumptions on function ``fun`` in ``utils.parallel.parallelize`` (:pr:`7823`) :user:`fkiraly`
 * [DOC] minor typo fix in ``add_estimators.rst`` (:pr:`7956`) :user:`fkiraly`
-* [DOC] Added example  for 'AlignerNaive' and 'AlignerLuckyDtw'  (:pr:`7795`) :user:`haroon0x`
+* [DOC] Added example for ``AlignerNaive`` and ``AlignerLuckyDtw`` (:pr:`7795`) :user:`haroon0x`
 * [DOC] fix ``RotationForest`` docstring example (:pr:`7978`) :user:`fkiraly`
 * [DOC] minor linting improvement (:pr:`7987`) :user:`fkiraly`
 * [DOC] extension templates improvements (:pr:`7898`) :user:`fkiraly`
@@ -196,7 +193,7 @@ Maintenance
 * [MNT] increase ``tensorflow`` bound to ``<2.20`` (:pr:`8119`) :user:`fkiraly`
 * [MNT] update ``dask`` version to ``dask<2025.2.1,>2024.8.2`` (:pr:`8083`) :user:`fkiraly`
 * [MNT] [Dependabot](deps): Update ``sphinx-gallery`` requirement from ``<0.19.0`` to ``<0.20.0`` (:pr:`7819`) :user:`dependabot[bot]`
-* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.8.1`` to ``<2025.2.1`` (:pr:`7857`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.1`` to ``<2025.2.1`` (:pr:`7857`) :user:`dependabot[bot]`
 
 Fixes
 ~~~~~
