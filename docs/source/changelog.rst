@@ -30,7 +30,6 @@ Highlights
 * ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`
 * ``SeasonalDummies`` - one hot encoding for seasonal categorical variable transformer (:pr:`7915`) :user:`ericjb`
 * Revised Forecasting Benchmarking Module (:pr:`7603`) :user:`benHeid`
-* Time Series AUPRC anomaly detection metric based on QuoVadisTAD (:pr:`7729`) :user:`Ankit-1024`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
