@@ -472,8 +472,10 @@ def evaluate(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default None.
-        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel evaluate if specified and ``strategy="refit"``.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -487,6 +489,7 @@ def evaluate(
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
+
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
@@ -510,12 +513,13 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
-        - "ray": Prevents ray from shutting down after parallelization when setting
-           the "shutdown_ray" key with value "False". Takes a "logger_name" and
-           a "mute_warnings" key for configuration.
-           Additionally takes a "ray_remote_args" dictionary that contains valid keys
-           for ray_init.
-           E.g: backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
+
+        - "ray": The following keys can be passed:
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
 
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:

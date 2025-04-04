@@ -522,9 +522,10 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        backend : {"dask", "loky", "multiprocessing", "threading","ray"},
-            by default None. Runs parallel evaluate if specified and ``strategy``
-            is set as "refit".
+
+        backend : string, by default "None".
+            Parallelization backend to use for runs.
+            Runs parallel evaluate if specified and ``strategy="refit"``.
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
