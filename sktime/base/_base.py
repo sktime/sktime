@@ -521,7 +521,6 @@ class BaseEstimator(_BaseEstimator, BaseObject):
 
 
 def _clone_estimator(base_estimator, random_state=None):
-
     estimator = clone(base_estimator)
 
     if random_state is not None:
