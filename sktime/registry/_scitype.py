@@ -102,7 +102,7 @@ def scitype(
 
         * str, sktime scitype string, if exactly one scitype can be determined for obj
           or ``force_single_scitype`` is True, and if ``coerce_to_list`` is False
-        *  list of str, of scitype strings, if more than one scitype are determined,
+        * list of str, of scitype strings, if more than one scitype are determined,
           or if ``coerce_to_list`` is True
 
     Raises
