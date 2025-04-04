@@ -1,4 +1,4 @@
-"""Tests for scitype typipng function."""
+"""Tests for scitype typing function."""
 
 import pytest
 
