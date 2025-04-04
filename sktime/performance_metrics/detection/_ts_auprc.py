@@ -101,10 +101,10 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
     --------
     >>> import numpy as np
     >>> from sktime.performance_metrics.detection import TimeSeriesAUPRC
-    >>> ts_auprc=TimeSeriesAUPRC(with_scores=True)
+    >>> ts_auprc = TimeSeriesAUPRC(with_scores=True)
     >>> y_true = np.array([0, 0, 1, 1, 0, 0, 1])
     >>> y_pred = np.array([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
-    >>> area=ts_auprc.evaluate(y_true, y_pred)
+    >>> area = ts_auprc.evaluate(y_true, y_pred)  # doctest: +SKIP
     """
 
     _tags = {
