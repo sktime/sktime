@@ -11,7 +11,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestSaveLoad(unittest.TestCase):
-
     def _test_save_load(self, attention):
         inputs = keras.layers.Input(shape=(None,), name="Input")
         embd = keras.layers.Embedding(

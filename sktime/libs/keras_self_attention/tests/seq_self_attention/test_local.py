@@ -6,7 +6,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestLocal(TestMaskShape):
-
     def check_local_range(self, attention_type):
         attention = SeqSelfAttention(
             return_attention=True,

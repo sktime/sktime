@@ -11,7 +11,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestSaveLoad(TestMaskShape):
-
     def test_save_load(self):
         _, _, token_dict = self.get_input_data()
         model = self.get_model(SeqSelfAttention(name="Attention"), token_dict)

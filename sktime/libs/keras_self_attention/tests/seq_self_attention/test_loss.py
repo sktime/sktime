@@ -8,7 +8,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestLoss(TestMaskShape):
-
     def test_loss(self):
         attention = SeqSelfAttention(
             return_attention=False,

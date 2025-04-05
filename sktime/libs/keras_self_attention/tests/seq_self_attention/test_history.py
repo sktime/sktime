@@ -3,7 +3,6 @@ from sktime.libs.keras_self_attention.tests.seq_self_attention.util import TestM
 
 
 class TestHistory(TestMaskShape):
-
     def test_history(self):
         attention = SeqSelfAttention(
             return_attention=True,

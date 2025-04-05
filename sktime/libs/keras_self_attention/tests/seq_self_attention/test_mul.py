@@ -6,7 +6,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestMul(TestMaskShape):
-
     def test_multiplicative(self):
         attention = SeqSelfAttention(
             return_attention=True,

@@ -30,20 +30,23 @@ class ResidualScaledDotProductAttention(keras.layers.Layer):
         self.intensity = self.attention = None
 
     def get_config(self):
+        """Return the config of the layer."""
         config = {
             "return_attention": self.return_attention,
             "history_only": self.history_only,
         }
-        base_config = super(ResidualScaledDotProductAttention, self).get_config()
+        base_config = super().get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def compute_mask(self, inputs, mask=None):
+        """Compute the mask for the layer."""
         mask = mask[0]
         if self.return_attention:
             mask = [mask, mask[-1], None]
         return [mask, mask[-1]]
 
     def call(self, inputs, mask=None, **kwargs):
+        """Compute the output of the layer."""
         if len(inputs) == 4:
             query, key, value, prev = inputs
             mask = mask[1]

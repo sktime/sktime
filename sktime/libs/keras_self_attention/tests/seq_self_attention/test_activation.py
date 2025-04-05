@@ -6,7 +6,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestActivation(TestMaskShape):
-
     def test_attention_activation(self):
         attention = SeqSelfAttention(
             return_attention=True,

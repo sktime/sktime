@@ -6,7 +6,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestBias(TestMaskShape):
-
     def test_no_bias(self):
         attention = SeqSelfAttention(
             return_attention=True,

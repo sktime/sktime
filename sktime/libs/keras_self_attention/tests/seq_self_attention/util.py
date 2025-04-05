@@ -8,7 +8,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestMaskShape(unittest.TestCase):
-
     @staticmethod
     def get_input_data():
         sentences = [
