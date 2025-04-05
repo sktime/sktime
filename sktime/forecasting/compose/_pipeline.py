@@ -107,8 +107,8 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
 
-        forecaster_index = forecaster_indicator.index(True)
-        self._forecaster_index = forecaster_index
+        forecaster_ind = forecaster_indicator.index(True)
+        self._forecaster_index = forecaster_ind
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
