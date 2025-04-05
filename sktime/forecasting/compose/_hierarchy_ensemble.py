@@ -408,7 +408,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
+        for forecaster, ind in self.fitted_list_:
             if z.index.nlevels == 1:
                 forecaster.update(z, X=x, update_params=update_params)
             else:
@@ -452,7 +452,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         preds = parallelize(
             _predict_one_forecaster,
-            self.fitted_list,
+            self.fitted_list_,
             meta,
             backend=self.backend,
             backend_params=self.backend_params,
