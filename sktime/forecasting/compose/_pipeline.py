@@ -33,6 +33,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
+        if hasattr(self, "_forecaster_index"):
+            return self._forecaster_index
+        # fallback logic
         for i, est in enumerate(estimators):
             if is_scitype(est[1], "forecaster"):
                 return i
@@ -104,7 +107,8 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
 
-        forecaster_ind = self._get_forecaster_index(estimator_tuples)
+        forecaster_index = forecaster_indicator.index(True)
+        self._forecaster_index = forecaster_index
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
