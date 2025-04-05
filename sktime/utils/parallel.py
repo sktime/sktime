@@ -180,7 +180,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     verbose = backend_params.pop("verbose", False)
 
     if not verbose:
-        logging.disable(logging.CRITICAL)
+        logging.disable(logging.WARNING)
 
     if "ray_remote_args" not in backend_params.keys():
         backend_params["ray_remote_args"] = {}
