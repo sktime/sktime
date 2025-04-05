@@ -7,7 +7,46 @@ K = _safe_import("tensorflow.keras.backend")
 
 
 class SeqSelfAttention(keras.layers.Layer):
-    """Sequential self-attention layer."""
+    """Sequential self-attention layer.
+
+    For additive attention, see: https://arxiv.org/pdf/1806.01264.pdf
+
+    Parameters
+    ----------
+    units: int, optional (default=32)
+        The dimension of the vectors that used to calculate the attention weights.
+    attention_width: int, optional (default=None)
+        The width of local attention.
+    attention_type: str, optional (default='additive')
+        'additive' or 'multiplicative'.
+    return_attention: bool, optional (default=False)
+        Whether to return the attention weights for visualization.
+    history_only: bool, optional (default=False)
+        Only use historical pieces of data.
+    kernel_initializer: str, optional (default='glorot_normal')
+        The initializer for weight matrices.
+    bias_initializer: str, optional (default='zeros')
+        The initializer for biases.
+    kernel_regularizer: str, optional (default=None)
+        The regularization for weight matrices.
+    bias_regularizer: str, optional (default=None)
+        The regularization for biases.
+    kernel_constraint: str, optional (default=None)
+        The constraint for weight matrices.
+    bias_constraint: str, optional (default=None)
+        The constraint for biases.
+    use_additive_bias: bool, optional (default=True)
+        Whether to use bias while calculating the relevance of inputs features
+        in additive mode.
+    use_attention_bias: bool, optional (default=True)
+        Whether to use bias while calculating the weights of attention.
+    attention_activation: str, optional (default=None)
+        The activation used for calculating the weights of attention.
+    attention_regularizer_weight: float, optional (default=0.0)
+        The weights of attention regularizer.
+    kwargs: dict, optional
+        Parameters for parent class.
+    """
 
     ATTENTION_TYPE_ADD = "additive"
     ATTENTION_TYPE_MUL = "multiplicative"
@@ -31,28 +70,7 @@ class SeqSelfAttention(keras.layers.Layer):
         attention_regularizer_weight=0.0,
         **kwargs,
     ):
-        """Layer initialization.
-
-        For additive attention, see: https://arxiv.org/pdf/1806.01264.pdf
-
-        :param units: The dimension of the vectors that used to calculate the attention weights.
-        :param attention_width: The width of local attention.
-        :param attention_type: 'additive' or 'multiplicative'.
-        :param return_attention: Whether to return the attention weights for visualization.
-        :param history_only: Only use historical pieces of data.
-        :param kernel_initializer: The initializer for weight matrices.
-        :param bias_initializer: The initializer for biases.
-        :param kernel_regularizer: The regularization for weight matrices.
-        :param bias_regularizer: The regularization for biases.
-        :param kernel_constraint: The constraint for weight matrices.
-        :param bias_constraint: The constraint for biases.
-        :param use_additive_bias: Whether to use bias while calculating the relevance of inputs features
-                                  in additive mode.
-        :param use_attention_bias: Whether to use bias while calculating the weights of attention.
-        :param attention_activation: The activation used for calculating the weights of attention.
-        :param attention_regularizer_weight: The weights of attention regularizer.
-        :param kwargs: Parameters for parent class.
-        """
+        """Layer initialization."""
         super().__init__(**kwargs)
         self.supports_masking = True
         self.units = units
@@ -86,6 +104,7 @@ class SeqSelfAttention(keras.layers.Layer):
             )
 
     def get_config(self):
+        """Return the config of the layer."""
         config = {
             "units": self.units,
             "attention_width": self.attention_width,
@@ -105,29 +124,30 @@ class SeqSelfAttention(keras.layers.Layer):
             ),
             "attention_regularizer_weight": self.attention_regularizer_weight,
         }
-        base_config = super(SeqSelfAttention, self).get_config()
+        base_config = super().get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def build(self, input_shape):
+        """Build the layer."""
         if self.attention_type == SeqSelfAttention.ATTENTION_TYPE_ADD:
             self._build_additive_attention(input_shape)
         elif self.attention_type == SeqSelfAttention.ATTENTION_TYPE_MUL:
             self._build_multiplicative_attention(input_shape)
-        super(SeqSelfAttention, self).build(input_shape)
+        super().build(input_shape)
 
     def _build_additive_attention(self, input_shape):
         feature_dim = int(input_shape[2])
 
         self.Wt = self.add_weight(
             shape=(feature_dim, self.units),
-            name="{}_Add_Wt".format(self.name),
+            name=f"{self.name}_Add_Wt",
             initializer=self.kernel_initializer,
             regularizer=self.kernel_regularizer,
             constraint=self.kernel_constraint,
         )
         self.Wx = self.add_weight(
             shape=(feature_dim, self.units),
-            name="{}_Add_Wx".format(self.name),
+            name=f"{self.name}_Add_Wx",
             initializer=self.kernel_initializer,
             regularizer=self.kernel_regularizer,
             constraint=self.kernel_constraint,
@@ -135,7 +155,7 @@ class SeqSelfAttention(keras.layers.Layer):
         if self.use_additive_bias:
             self.bh = self.add_weight(
                 shape=(self.units,),
-                name="{}_Add_bh".format(self.name),
+                name=f"{self.name}_Add_bh",
                 initializer=self.bias_initializer,
                 regularizer=self.bias_regularizer,
                 constraint=self.bias_constraint,
@@ -143,7 +163,7 @@ class SeqSelfAttention(keras.layers.Layer):
 
         self.Wa = self.add_weight(
             shape=(self.units, 1),
-            name="{}_Add_Wa".format(self.name),
+            name=f"{self.name}_Add_Wa",
             initializer=self.kernel_initializer,
             regularizer=self.kernel_regularizer,
             constraint=self.kernel_constraint,
@@ -151,7 +171,7 @@ class SeqSelfAttention(keras.layers.Layer):
         if self.use_attention_bias:
             self.ba = self.add_weight(
                 shape=(1,),
-                name="{}_Add_ba".format(self.name),
+                name=f"{self.name}_Add_ba",
                 initializer=self.bias_initializer,
                 regularizer=self.bias_regularizer,
                 constraint=self.bias_constraint,
@@ -162,7 +182,7 @@ class SeqSelfAttention(keras.layers.Layer):
 
         self.Wa = self.add_weight(
             shape=(feature_dim, feature_dim),
-            name="{}_Mul_Wa".format(self.name),
+            name=f"{self.name}_Mul_Wa",
             initializer=self.kernel_initializer,
             regularizer=self.kernel_regularizer,
             constraint=self.kernel_constraint,
@@ -170,13 +190,14 @@ class SeqSelfAttention(keras.layers.Layer):
         if self.use_attention_bias:
             self.ba = self.add_weight(
                 shape=(1,),
-                name="{}_Mul_ba".format(self.name),
+                name=f"{self.name}_Mul_ba",
                 initializer=self.bias_initializer,
                 regularizer=self.bias_regularizer,
                 constraint=self.bias_constraint,
             )
 
     def call(self, inputs, mask=None, **kwargs):
+        """Compute the output of the layer."""
         input_len = K.shape(inputs)[1]
 
         if self.attention_type == SeqSelfAttention.ATTENTION_TYPE_ADD:
@@ -247,6 +268,7 @@ class SeqSelfAttention(keras.layers.Layer):
         return e
 
     def compute_output_shape(self, input_shape):
+        """Compute the output shape of the layer."""
         output_shape = input_shape
         if self.return_attention:
             attention_shape = (input_shape[0], output_shape[1], input_shape[1])
@@ -254,6 +276,7 @@ class SeqSelfAttention(keras.layers.Layer):
         return output_shape
 
     def compute_mask(self, inputs, mask=None):
+        """Compute the mask of the layer."""
         if self.return_attention:
             return [mask, None]
         return mask
@@ -277,4 +300,5 @@ class SeqSelfAttention(keras.layers.Layer):
 
     @staticmethod
     def get_custom_objects():
+        """Get custom objects for Keras."""
         return {"SeqSelfAttention": SeqSelfAttention}

@@ -14,30 +14,37 @@ class ScaledDotProductAttention(keras.layers.Layer):
     \text{Attention}(Q, K, V) = \text{softmax}(\frac{Q K^T}{\sqrt{d_k}}) V
 
     See: https://arxiv.org/pdf/1706.03762.pdf
+
+    Parameters
+    ----------
+    return_attention : bool, optional (default=False)
+        Whether to return attention weights.
+    history_only : bool, optional (default=False)
+        Whether to only use history data. If True, the attention weights are masked
+        to prevent attending to future positions in the sequence.
+    **kwargs : keyword arguments
+        Additional arguments for the parent class.
     """
 
     def __init__(self, return_attention=False, history_only=False, **kwargs):
-        """Initialize the layer.
-
-        :param return_attention: Whether to return attention weights.
-        :param history_only: Whether to only use history data.
-        :param kwargs: Arguments for parent class.
-        """
-        super(ScaledDotProductAttention, self).__init__(**kwargs)
+        """Initialize the layer."""
+        super().__init__(**kwargs)
         self.supports_masking = True
         self.return_attention = return_attention
         self.history_only = history_only
         self.intensity = self.attention = None
 
     def get_config(self):
+        """Return the config of the layer."""
         config = {
             "return_attention": self.return_attention,
             "history_only": self.history_only,
         }
-        base_config = super(ScaledDotProductAttention, self).get_config()
+        base_config = super().get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def compute_output_shape(self, input_shape):
+        """Compute the output shape of the layer."""
         if isinstance(input_shape, list):
             query_shape, key_shape, value_shape = input_shape
         else:
@@ -49,6 +56,7 @@ class ScaledDotProductAttention(keras.layers.Layer):
         return output_shape
 
     def compute_mask(self, inputs, mask=None):
+        """Compute the mask for the layer."""
         if isinstance(mask, list):
             mask = mask[0]
         if self.return_attention:
@@ -56,6 +64,7 @@ class ScaledDotProductAttention(keras.layers.Layer):
         return mask
 
     def call(self, inputs, mask=None, **kwargs):
+        """Compute the output of the layer."""
         if isinstance(inputs, list):
             query, key, value = inputs
         else:
