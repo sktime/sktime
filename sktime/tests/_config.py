@@ -65,6 +65,8 @@ EXCLUDE_ESTIMATORS = [
     "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
+    # fails due to #8151 or #8059
+    "CNTCRegressor",
 ]
 
 
