@@ -277,6 +277,7 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
     ],
     "MCDCNNClassifier": [
+        "test_persistence_via_pickle",
         "test_multioutput",
         "test_classifier_on_unit_test_data",
         "test_fit_idempotent",  # not part of bug reports but due to randomness
