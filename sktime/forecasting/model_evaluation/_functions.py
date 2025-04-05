@@ -13,7 +13,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -429,7 +429,6 @@ def evaluate(
     6. Set ``i = i + 1``
     8. Go to 2
 
-
     Results returned in this function's return are:
 
     * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
@@ -473,8 +472,10 @@ def evaluate(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel evaluate if specified and ``strategy="refit"``.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -482,11 +483,13 @@ def evaluate(
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
+
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
@@ -510,6 +513,14 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
 
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
@@ -623,6 +634,12 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
 
+    if backend == "ray" and not _check_soft_dependencies("ray", severity="none"):
+        raise RuntimeError(
+            "running evaluate with backend='ray' requires the ray package "
+            "installed, but ray is not present in the python environment"
+        )
+
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = _check_scores(scoring)
@@ -631,23 +648,28 @@ def evaluate(
     else:
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
-    y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
+    y_valid, _, y_metadata = check_is_scitype(
+        y, scitype=ALLOWED_SCITYPES, return_metadata=[]
+    )
     if not y_valid:
         raise TypeError(
             f"Expected y dtype {ALLOWED_SCITYPES!r}. Got {type(y)} instead."
         )
+    y_mtype = y_metadata["mtype"]
 
-    y = convert_to(y, to_type=PANDAS_MTYPES)
+    y = convert(y, from_type=y_mtype, to_type=PANDAS_MTYPES)
 
     if X is not None:
-        X_valid, _, _ = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True
+        X_valid, _, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
         )
         if not X_valid:
             raise TypeError(
                 f"Expected X dtype {ALLOWED_SCITYPES!r}. Got {type(X)} instead."
             )
-        X = convert_to(X, to_type=PANDAS_MTYPES)
+        X_mtype = X_metadata["mtype"]
+
+        X = convert(X, from_type=X_mtype, to_type=PANDAS_MTYPES)
 
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
@@ -716,12 +738,12 @@ def evaluate(
             cv_global = InstanceSplitter(cv_global)
 
         if cv_X is not None:
-            assert isinstance(
-                cv_X, SingleWindowSplitter
-            ), "cv_X must be an instance of sktime.split.SingleWindowSplitter"
-        assert isinstance(
-            cv, SingleWindowSplitter
-        ), "cv must be an instance of sktime.split.SingleWindowSplitter"
+            assert isinstance(cv_X, SingleWindowSplitter), (
+                "cv_X must be an instance of sktime.split.SingleWindowSplitter"
+            )
+        assert isinstance(cv, SingleWindowSplitter), (
+            "cv must be an instance of sktime.split.SingleWindowSplitter"
+        )
 
         geny = cv_global.split_series(y)
         if X is None:

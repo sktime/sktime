@@ -60,7 +60,7 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
     """
@@ -86,6 +86,8 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="transformer", as_dataframe=True)
         #
