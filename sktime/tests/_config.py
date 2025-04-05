@@ -282,6 +282,7 @@ EXCLUDED_TESTS = {
         "test_doctest_examples",  # doctest fails, see #8129
     ],
     "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
+    "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
 # exclude tests but keyed by test name
