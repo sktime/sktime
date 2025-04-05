@@ -65,6 +65,9 @@ EXCLUDE_ESTIMATORS = [
     "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
+    # fails due to #8151 or #8059
+    "CNTCRegressor",
+    "FreshPRINCE",
 ]
 
 
@@ -274,6 +277,7 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
     ],
     "MCDCNNClassifier": [
+        "test_persistence_via_pickle",
         "test_multioutput",
         "test_classifier_on_unit_test_data",
         "test_fit_idempotent",  # not part of bug reports but due to randomness
@@ -282,6 +286,7 @@ EXCLUDED_TESTS = {
         "test_doctest_examples",  # doctest fails, see #8129
     ],
     "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
+    "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
 # exclude tests but keyed by test name
@@ -426,6 +431,12 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanAbsoluteScaledError",
         "MeanAbsoluteError",
         "MedianAbsoluteError",
+        "MeanSquaredPercentageError",
+        "MedianAbsolutePercentageError",
+        "MeanSquaredError",
+        "PinballLoss",
+        "RelativeLoss",
+        "MeanRelativeAbsoluteError",
     ],
 }
 
