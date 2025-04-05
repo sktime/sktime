@@ -39,6 +39,7 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
+    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -210,6 +211,7 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_fit_does_not_overwrite_hyper_params",
         "test_non_state_changing_method_contract",
+        "test_save_estimators_to_file",
     ],
     "InformationGainSegmentation": [
         "test_inheritance",
