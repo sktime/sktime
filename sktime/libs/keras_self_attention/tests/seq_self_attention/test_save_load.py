@@ -2,10 +2,12 @@ import os
 import tempfile
 
 import numpy as np
-from tensorflow import keras
 
-from keras_self_attention import SeqSelfAttention
-from .util import TestMaskShape
+from sktime.libs.keras_self_attention import SeqSelfAttention
+from sktime.libs.keras_self_attention.tests.seq_self_attention.util import TestMaskShape
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
 
 
 class TestSaveLoad(TestMaskShape):

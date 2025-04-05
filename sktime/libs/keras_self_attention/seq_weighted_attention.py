@@ -1,9 +1,15 @@
-from tensorflow import keras
-from tensorflow.keras import backend as K
+"""Sequential weighted attention layer."""
+
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
+K = _safe_import("tensorflow.keras.backend")
 
 
 class SeqWeightedAttention(keras.layers.Layer):
-    r"""Y = \text{softmax}(XW + b) X
+    r"""Sequential weighted attention layer.
+
+    Y = \text{softmax}(XW + b) X
 
     See: https://arxiv.org/pdf/1708.00524.pdf
     """

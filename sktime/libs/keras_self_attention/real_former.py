@@ -1,9 +1,15 @@
-from tensorflow import keras
-from tensorflow.keras import backend as K
+"""RealFormer layers."""
+
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
+K = _safe_import("tensorflow.keras.backend")
 
 
 class ResidualScaledDotProductAttention(keras.layers.Layer):
-    r"""The attention layer that takes three inputs representing queries, keys and values.
+    r"""Residual scaled dot product attention layer.
+
+    The attention layer that takes three inputs representing queries, keys and values.
 
     \text{Attention}(Q, K, V, Prev) = \text{softmax}(\frac{Q K^T}{\sqrt{d_k}} + Prev) V
 

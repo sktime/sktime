@@ -3,9 +3,11 @@ import tempfile
 import unittest
 
 import numpy as np
-from tensorflow import keras
 
-from keras_self_attention import ResidualScaledDotProductAttention
+from sktime.libs.keras_self_attention import ResidualScaledDotProductAttention
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
 
 
 class TestResidualScaledDotProductAttention(unittest.TestCase):

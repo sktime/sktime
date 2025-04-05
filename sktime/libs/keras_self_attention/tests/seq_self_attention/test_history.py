@@ -1,5 +1,5 @@
-from keras_self_attention import SeqSelfAttention
-from .util import TestMaskShape
+from sktime.libs.keras_self_attention import SeqSelfAttention
+from sktime.libs.keras_self_attention.tests.seq_self_attention.util import TestMaskShape
 
 
 class TestHistory(TestMaskShape):

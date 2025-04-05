@@ -1,9 +1,11 @@
 import unittest
 
 import numpy as np
-from tensorflow import keras
 
-from keras_self_attention import ScaledDotProductAttention
+from sktime.libs.keras_self_attention import ScaledDotProductAttention
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
 
 
 class TestAttention(unittest.TestCase):

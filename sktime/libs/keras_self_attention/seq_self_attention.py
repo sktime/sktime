@@ -1,29 +1,36 @@
-from tensorflow import keras
-from tensorflow.keras import backend as K
+"""Sequential self-attention layer."""
+
+from sktime.utils.dependencies import _safe_import
+
+keras = _safe_import("tensorflow.keras")
+K = _safe_import("tensorflow.keras.backend")
 
 
 class SeqSelfAttention(keras.layers.Layer):
+    """Sequential self-attention layer."""
 
     ATTENTION_TYPE_ADD = 'additive'
     ATTENTION_TYPE_MUL = 'multiplicative'
 
-    def __init__(self,
-                 units=32,
-                 attention_width=None,
-                 attention_type=ATTENTION_TYPE_ADD,
-                 return_attention=False,
-                 history_only=False,
-                 kernel_initializer='glorot_normal',
-                 bias_initializer='zeros',
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 use_additive_bias=True,
-                 use_attention_bias=True,
-                 attention_activation=None,
-                 attention_regularizer_weight=0.0,
-                 **kwargs):
+    def __init__(
+        self,
+        units=32,
+        attention_width=None,
+        attention_type=ATTENTION_TYPE_ADD,
+        return_attention=False,
+        history_only=False,
+        kernel_initializer='glorot_normal',
+        bias_initializer='zeros',
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        kernel_constraint=None,
+        bias_constraint=None,
+        use_additive_bias=True,
+        use_attention_bias=True,
+        attention_activation=None,
+        attention_regularizer_weight=0.0,
+        **kwargs,
+    ):
         """Layer initialization.
 
         For additive attention, see: https://arxiv.org/pdf/1806.01264.pdf
@@ -46,7 +53,7 @@ class SeqSelfAttention(keras.layers.Layer):
         :param attention_regularizer_weight: The weights of attention regularizer.
         :param kwargs: Parameters for parent class.
         """
-        super(SeqSelfAttention, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.supports_masking = True
         self.units = units
         self.attention_width = attention_width
