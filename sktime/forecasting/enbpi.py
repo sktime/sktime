@@ -75,7 +75,7 @@ class EnbPIForecaster(BaseForecaster):
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
     >>> fh = ForecastingHorizon(np.arange(1, 13))
     >>> forecaster.fit(y, fh=fh)
-    EnbPIForecaster(...)
+    TransformedTargetForecaster(...)
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
 
