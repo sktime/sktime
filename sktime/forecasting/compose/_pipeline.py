@@ -1050,8 +1050,6 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
-
         # transform pre
         yt = y
         for _, t in self.transformers_pre_:
