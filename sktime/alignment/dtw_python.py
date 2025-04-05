@@ -253,7 +253,7 @@ class AlignerDTWfromDist(BaseAligner):
     Basic usage example:
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.alignment.dtw import AlignerDTWfromDist
+    >>> from sktime.alignment.dtw_python import AlignerDTWfromDist
     >>> from sktime.dists_kernels import ScipyDist
     >>> X = [
     ...     pd.DataFrame({'col1': np.random.randn(100)}),
@@ -264,19 +264,6 @@ class AlignerDTWfromDist(BaseAligner):
     >>> aligner.fit(X)
     AlignerDTWfromDist(...)
     >>> alignment_df = aligner.get_alignment()
-
-    Advanced usage example with custom distance transformation:
-    >>> dist_trafo_custom = ScipyDist('cityblock')
-    >>> aligner_custom = AlignerDTWfromDist(
-    ...     dist_trafo=dist_trafo_custom,
-    ...     window_type='sakoechiba',
-    ... )
-    >>> X_custom = [
-    ...     pd.DataFrame({'col1': np.random.randn(200)}),
-    ...     pd.DataFrame({'col1': np.random.randn(200)})
-    ... ]
-    >>> aligner_custom.fit(X_custom)
-    >>> alignment_df_custom = aligner_custom.get_alignment()
     """
 
     _tags = {
