@@ -287,6 +287,10 @@ EXCLUDED_TESTS = {
     ],
     "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
+    # see bug report #8142
+    "GroupbyCategoryForecaster": [
+        "test_baseclasses_last_in_mro_order",
+    ],
 }
 
 # exclude tests but keyed by test name
