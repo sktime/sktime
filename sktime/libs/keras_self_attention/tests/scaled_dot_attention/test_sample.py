@@ -9,7 +9,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestAttention(unittest.TestCase):
-
     def test_sample(self):
         input_layer = keras.layers.Input(
             shape=(5,),

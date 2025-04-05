@@ -9,7 +9,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestHistory(unittest.TestCase):
-
     def test_history(self):
         input_layer = keras.layers.Input(
             shape=(5,),

@@ -11,7 +11,6 @@ keras = _safe_import("tensorflow.keras")
 
 
 class TestResidualScaledDotProductAttention(unittest.TestCase):
-
     def test_history(self):
         input_layer = keras.layers.Input(
             shape=(5,),
