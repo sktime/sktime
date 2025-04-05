@@ -48,7 +48,7 @@ class ClaSPTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.clasp import ClaSPTransformer
-    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.detection.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_electric_devices_segmentation
     >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
     >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
