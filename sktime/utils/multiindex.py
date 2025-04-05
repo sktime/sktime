@@ -76,7 +76,10 @@ def rename_multiindex(idx, feature_names_out, idx_name="index"):
         flat = flatten_multiindex(idx)
         duplicated = original.duplicated(keep=False)
 
-        idx_out[duplicated] = flat[duplicated]
+        idx_out = list(idx_out)
+        for i in range(len(duplicated)):
+            if duplicated[i]:
+                idx_out[i] = flat[i]
         return pd.Index(idx_out)
     else:
         raise ValueError(
