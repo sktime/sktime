@@ -64,7 +64,7 @@ class FhPlexForecaster(BaseForecaster):
     >>> f = FhPlexForecaster(NaiveForecaster())
     >>> f.fit(y, fh=[1, 2, 3])
     FhPlexForecaster(...)
-    # get individual fitted forecasters
+    >>> # get individual fitted forecasters
     >>> f.forecasters_  # doctest: +SKIP
     {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
     >>> fitted_params = f.get_fitted_params()  # or via get_fitted_params
