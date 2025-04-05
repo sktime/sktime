@@ -34,11 +34,13 @@ class ClustererAsTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
-    >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererAsTransformer
+    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
+    >>> from sktime.dists_kernels import AggrDist
+    >>> from sktime.datasets import load_unit_test
     >>> X, _ = load_unit_test(split="train")
-    >>> cluster_assign_trafo = ClustererAsTransformer(TimeSeriesDBSCAN())
+    >>> clusterer = TimeSeriesDBSCAN(AggrDist.create_test_instance())
+    >>> cluster_assign_trafo = ClustererAsTransformer(clusterer)
     >>> cluster_assign_trafo.fit(X)
     ClustererAsTransformer(...)
     >>> cluster_assignment = cluster_assign_trafo.transform(X)
@@ -162,10 +164,11 @@ class ClustererAsTransformer(BaseTransformer):
         transformed version of X
         """
         requires_index_mapping = isinstance(X, pd.DataFrame) and X.index.nlevels > 2
-        expected_index = X.index.droplevel(-1).unique()
 
         if requires_index_mapping:  # map indices to flat index
             X, mapping = self._map_hier_to_panel(X)
+
+        expected_index = X.index.droplevel(-1).unique()
 
         y_pred = self.clusterer_.predict(X)
 

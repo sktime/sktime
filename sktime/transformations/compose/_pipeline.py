@@ -81,6 +81,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
 
     Examples
     --------
+    >>> from sktime.transformations.compose import TransformerPipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
