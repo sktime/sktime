@@ -73,7 +73,7 @@ def check_align(align_df, name="align_df", index="iloc", return_metadata=False):
     """
     if not isinstance(align_df, pd.DataFrame):
         msg = f"{name} is not a pandas DataFrame"
-        return False, msg
+        return False, msg, {}
 
     cols = align_df.columns
     n = len(cols)
@@ -110,7 +110,7 @@ def check_align(align_df, name="align_df", index="iloc", return_metadata=False):
         )
         if not np.all(np.isin(dtypearr, allowedtypes)):
             msg = f"columns of {name} must have dtype intX, uintX, IntX, or UIntX"
-            return False, msg
+            return False, msg, {}
     # no additional restrictions apply if loc or either, so no elif
 
     metadata = {}

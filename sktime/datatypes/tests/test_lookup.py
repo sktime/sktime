@@ -63,8 +63,7 @@ def test_mtype_to_scitype_list():
     expected_scitype_list = [k[1] for k in MTYPE_REGISTER]
     result = mtype_to_scitype(mtype_list)
     msg = (
-        "mtype_to_scitype does not correctly convert list of mtypes"
-        " to list of scitypes"
+        "mtype_to_scitype does not correctly convert list of mtypes to list of scitypes"
     )
     assert result == expected_scitype_list, msg
 

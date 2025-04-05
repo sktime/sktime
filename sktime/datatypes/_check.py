@@ -652,7 +652,7 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     if len(valid_scitypes) > 1:
         raise TypeError(
             "Error in function scitype, more than one valid scitype identified:"
-            f"{ valid_scitypes}"
+            f"{valid_scitypes}"
         )
     if len(valid_scitypes) == 0:
         raise TypeError(

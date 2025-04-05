@@ -9,11 +9,8 @@ from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.croston import Croston
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.registry import coerce_scitype
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.adi_cv import ADICVTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -155,9 +152,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         dict of forecasters with the key corresponding to categories generated
         by the given transformer and the value corresponding to a sktime forecaster.
 
-    transformer : sktime transformer, default = ADICVTransformer()
-        A series-to-primitives sk-time transformer that generates a value
+    transformer : sktime transformer or clusterer, default = ADICVTransformer()
+        A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
+
+        If a clusterer is used, it must suport cluster assignment,
+        i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
         generated category in the first column of the returned values when
@@ -245,12 +245,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self.transformer = transformer
 
         else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
             self.transformer = ADICVTransformer(features=["class"])
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = self.transformer.clone()
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
         super().__init__()
 
@@ -508,6 +510,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
+        from sktime.forecasting.croston import Croston
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.transformations.series.adi_cv import ADICVTransformer
+
         param1 = {
             "forecasters": {
                 "smooth": NaiveForecaster(),
@@ -526,7 +534,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "fallback_forecaster": Croston(),
         }
 
-        params = [param1, param2]
+        # use with clusterer
+        param3 = {
+            "forecasters": {},
+            "transformer": TimeSeriesDBSCAN.create_test_instance(),
+            "fallback_forecaster": Croston(),
+        }
+
+        params = [param1, param2, param3]
         return params
 
     def _iterate_predict_method_over_categories(

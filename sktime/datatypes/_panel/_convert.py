@@ -249,8 +249,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     else:
         raise ValueError(
-            f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}"
+            f"Expected input is pandas Series or pandas DataFrame, but found: {type(X)}"
         )
 
     if return_numpy:
