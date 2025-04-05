@@ -176,7 +176,7 @@ def all_coercible_to(to_scitype):
         list of scitypes that can be coerced to the given scitype, excluding to_scitype
     """
     coercible_scitypes = []
-    for (from_scitype, to_scitype_) in _coerce_register.keys():
+    for from_scitype, to_scitype_ in _coerce_register.keys():
         if to_scitype_ == to_scitype and from_scitype != to_scitype:
             coercible_scitypes.append(from_scitype)
     return coercible_scitypes
