@@ -513,6 +513,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
 
     Attributes
@@ -855,6 +857,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
 
     Attributes
@@ -1121,6 +1125,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
 
     Attributes
