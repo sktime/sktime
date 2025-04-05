@@ -165,16 +165,6 @@ class WindowSegmenter(BaseDetector):
     return_segments : Boolean, default=True
         If True, returns the segments with the labels.
         If False, returns the labels for each time point.
-
-    Examples
-    --------
-    >>> from sktime.detection.wclust import WindowSegmenter
-    >>> from sktime.datasets import load_gunpoint
-    >>> X, y = load_gunpoint()
-    >>> clusterer = TimeSeriesDBSCAN()
-    >>> segmenter = ClusterSegmenter(clusterer, 3)
-    >>> segmenter._fit(X)
-    >>> segment_labels = segmenter._predict(X)
     """
 
     _tags = {

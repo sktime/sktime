@@ -47,6 +47,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
 
@@ -57,6 +58,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -120,14 +122,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super().__init__(
-            forecasters=forecasters,
-            n_jobs=n_jobs,
-        )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
+
+        super().__init__(
+            forecasters=forecasters,
+            n_jobs=n_jobs,
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -145,7 +148,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
         if X is not None:
@@ -325,23 +328,23 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_forecasters"
-
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "forecasters_"
-
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         self.aggfunc = aggfunc
         self.weights = weights
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
+        fc = self._parse_fc_multiplicities(forecasters)
+
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs, fc_alt=fc)
+
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _parse_fc_multiplicities(self, forecasters):
+        """Parse forecasters with multiplicities.
+
+        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
+        """
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -358,17 +361,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                     "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
                 raise ValueError(msg)
-
-        self._forecasters = self._check_estimators(
-            fc, clone_ests=False, allow_empty=True
-        )
-        self.forecasters_ = self._check_estimators(
-            fc, clone_ests=True, allow_empty=True
-        )
-
-        # the ensemble requires fh in fit
-        # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        return fc
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -386,8 +379,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        forecasters = [f[1] for f in self._forecasters]
-        self._fit_forecasters(forecasters, y, X, fh)
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):

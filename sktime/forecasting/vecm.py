@@ -64,6 +64,8 @@ class VECM(_StatsModelsAdapter):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> import pandas as pd
     >>> from sktime.forecasting.vecm import VECM
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon

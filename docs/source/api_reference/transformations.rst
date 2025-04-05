@@ -430,6 +430,7 @@ Filtering and denoising
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+    KalmanFilterTransformerSIMD
 
 .. currentmodule:: sktime.transformations.series.theta
 
@@ -798,6 +799,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    RepeatBootstrapTransformer
 
 Panel-to-Series transformers
 ----------------------------
