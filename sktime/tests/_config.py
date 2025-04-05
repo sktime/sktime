@@ -67,6 +67,7 @@ EXCLUDE_ESTIMATORS = [
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
     "CNTCRegressor",
+    "FreshPRINCE",
 ]
 
 
