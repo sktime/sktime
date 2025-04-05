@@ -89,8 +89,9 @@ class CNTCNetwork(BaseDeepNetwork):
         input_layer: a keras layer
         output_layer: a keras layer
         """
-        from keras_self_attention import SeqSelfAttention
         from tensorflow import keras
+
+        from sktime.libs.keras_self_attention import SeqSelfAttention
 
         input_layers = []
 
