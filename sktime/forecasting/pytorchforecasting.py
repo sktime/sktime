@@ -458,10 +458,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         implementation_counts = super()._implementation_counts()
         implementation_counts.update(
             {
-                "_predict_proba": 3,
-                "_predict_var": 3,
-                "_predict_interval": 3,
-                "_predict_quantiles": 3,
+                # _predict_quantiles is overwritten in _PytorchForecastingAdapter but
+                # it can not be used by PytorchForecastingNBeats
+                # PytorchForecastingNBeats can not perform probabilistic forecasting.
+                "_predict_quantiles": 2,
             }
         )
         return implementation_counts
