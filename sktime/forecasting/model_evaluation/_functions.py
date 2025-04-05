@@ -60,12 +60,25 @@ def _check_scores(metrics) -> dict:
     metrics_type = {}
     for metric in metrics:
         metric = check_scoring(metric)
-        # collect predict type
+
+        params = metric.get_params()
+        default_metric = metric.__class__()
+        default_params = default_metric.get_params()
+
+        non_default_params = {
+            k: v for k, v in params.items()
+            if k in default_params and v != default_params[k]
+        }
+
+        if non_default_params:
+            param_str = "_".join(f"{k}={v}" for k, v in sorted(non_default_params.items()))
+            metric.name = f"{metric.name}_{param_str}"
+            
         if hasattr(metric, "get_tag"):
             scitype = metric.get_tag(
                 "scitype:y_pred", raise_error=False, tag_value_default="pred"
             )
-        else:  # If no scitype exists then metric is a point forecast type
+        else: 
             scitype = "pred"
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
