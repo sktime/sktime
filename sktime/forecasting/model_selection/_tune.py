@@ -453,13 +453,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -504,6 +505,15 @@ class ForecastingGridSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -792,6 +802,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -836,6 +847,15 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -1052,6 +1072,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -1092,6 +1113,15 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -1711,7 +1741,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
-    ...             (STLForecaster(), ThetaForecaster())
+    ...             (NaiveForecaster(), ThetaForecaster())
     ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(

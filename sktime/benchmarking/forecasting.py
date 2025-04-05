@@ -82,8 +82,8 @@ def forecasting_validation(
     estimator : BaseForecaster object
         Estimator to benchmark.
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate for each task if specified.
+    backend : string, by default "None".
+        Parallelization backend to use.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -91,6 +91,7 @@ def forecasting_validation(
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
         but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -115,6 +116,15 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     cv_global:  sklearn splitter, or sktime instance splitter, optional, default=None
         If ``cv_global`` is passed, then global benchmarking is applied, as follows:
@@ -286,8 +296,9 @@ class ForecastingBenchmark(BaseBenchmark):
     ----------
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate for each task if specified.
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -295,6 +306,7 @@ class ForecastingBenchmark(BaseBenchmark):
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
         but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the
@@ -320,6 +332,15 @@ class ForecastingBenchmark(BaseBenchmark):
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
     """
