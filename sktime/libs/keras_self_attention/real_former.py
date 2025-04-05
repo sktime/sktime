@@ -16,10 +16,7 @@ class ResidualScaledDotProductAttention(keras.layers.Layer):
     See: https://arxiv.org/pdf/1706.03762.pdf
     """
 
-    def __init__(self,
-                 return_attention=False,
-                 history_only=False,
-                 **kwargs):
+    def __init__(self, return_attention=False, history_only=False, **kwargs):
         """Initialize the layer.
 
         :param return_attention: Whether to return attention weights.
@@ -34,8 +31,8 @@ class ResidualScaledDotProductAttention(keras.layers.Layer):
 
     def get_config(self):
         config = {
-            'return_attention': self.return_attention,
-            'history_only': self.history_only,
+            "return_attention": self.return_attention,
+            "history_only": self.history_only,
         }
         base_config = super(ResidualScaledDotProductAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
@@ -55,7 +52,9 @@ class ResidualScaledDotProductAttention(keras.layers.Layer):
             prev = inputs[1]
             mask = mask[0]
         feature_dim = K.shape(query)[-1]
-        e = K.batch_dot(query, key, axes=2) / K.sqrt(K.cast(feature_dim, dtype=K.floatx()))
+        e = K.batch_dot(query, key, axes=2) / K.sqrt(
+            K.cast(feature_dim, dtype=K.floatx())
+        )
         new_prev = e = e + prev
         if self.history_only:
             query_len, key_len = K.shape(query)[1], K.shape(key)[1]

@@ -8,12 +8,14 @@ keras = _safe_import("tensorflow.keras")
 class TestLocal(TestMaskShape):
 
     def check_local_range(self, attention_type):
-        attention = SeqSelfAttention(return_attention=True,
-                                     attention_width=5,
-                                     attention_type=attention_type,
-                                     kernel_regularizer=keras.regularizers.l2(1e-4),
-                                     bias_regularizer=keras.regularizers.l1(1e-4),
-                                     name='Attention')
+        attention = SeqSelfAttention(
+            return_attention=True,
+            attention_width=5,
+            attention_type=attention_type,
+            kernel_regularizer=keras.regularizers.l2(1e-4),
+            bias_regularizer=keras.regularizers.l1(1e-4),
+            name="Attention",
+        )
         self.check_mask_shape(attention)
 
     def test_add(self):

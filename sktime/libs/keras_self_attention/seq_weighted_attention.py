@@ -23,20 +23,24 @@ class SeqWeightedAttention(keras.layers.Layer):
 
     def get_config(self):
         config = {
-            'use_bias': self.use_bias,
-            'return_attention': self.return_attention,
+            "use_bias": self.use_bias,
+            "return_attention": self.return_attention,
         }
         base_config = super(SeqWeightedAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def build(self, input_shape):
-        self.W = self.add_weight(shape=(int(input_shape[2]), 1),
-                                 name='{}_W'.format(self.name),
-                                 initializer=keras.initializers.get('uniform'))
+        self.W = self.add_weight(
+            shape=(int(input_shape[2]), 1),
+            name="{}_W".format(self.name),
+            initializer=keras.initializers.get("uniform"),
+        )
         if self.use_bias:
-            self.b = self.add_weight(shape=(1,),
-                                     name='{}_b'.format(self.name),
-                                     initializer=keras.initializers.get('zeros'))
+            self.b = self.add_weight(
+                shape=(1,),
+                name="{}_b".format(self.name),
+                initializer=keras.initializers.get("zeros"),
+            )
         super(SeqWeightedAttention, self).build(input_shape)
 
     def call(self, x, mask=None):
@@ -69,4 +73,4 @@ class SeqWeightedAttention(keras.layers.Layer):
 
     @staticmethod
     def get_custom_objects():
-        return {'SeqWeightedAttention': SeqWeightedAttention}
+        return {"SeqWeightedAttention": SeqWeightedAttention}

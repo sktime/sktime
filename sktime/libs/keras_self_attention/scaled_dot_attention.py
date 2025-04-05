@@ -16,10 +16,7 @@ class ScaledDotProductAttention(keras.layers.Layer):
     See: https://arxiv.org/pdf/1706.03762.pdf
     """
 
-    def __init__(self,
-                 return_attention=False,
-                 history_only=False,
-                 **kwargs):
+    def __init__(self, return_attention=False, history_only=False, **kwargs):
         """Initialize the layer.
 
         :param return_attention: Whether to return attention weights.
@@ -34,8 +31,8 @@ class ScaledDotProductAttention(keras.layers.Layer):
 
     def get_config(self):
         config = {
-            'return_attention': self.return_attention,
-            'history_only': self.history_only,
+            "return_attention": self.return_attention,
+            "history_only": self.history_only,
         }
         base_config = super(ScaledDotProductAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
@@ -66,7 +63,9 @@ class ScaledDotProductAttention(keras.layers.Layer):
         if isinstance(mask, list):
             mask = mask[1]
         feature_dim = K.shape(query)[-1]
-        e = K.batch_dot(query, key, axes=2) / K.sqrt(K.cast(feature_dim, dtype=K.floatx()))
+        e = K.batch_dot(query, key, axes=2) / K.sqrt(
+            K.cast(feature_dim, dtype=K.floatx())
+        )
         if self.history_only:
             query_len, key_len = K.shape(query)[1], K.shape(key)[1]
             indices = K.expand_dims(K.arange(0, key_len), axis=0)

@@ -8,8 +8,10 @@ keras = _safe_import("tensorflow.keras")
 class TestMask(TestMaskShape):
 
     def test_return_attention(self):
-        attention = SeqSelfAttention(return_attention=True,
-                                     kernel_regularizer=keras.regularizers.l2(1e-4),
-                                     bias_regularizer=keras.regularizers.l1(1e-4),
-                                     name='Attention')
+        attention = SeqSelfAttention(
+            return_attention=True,
+            kernel_regularizer=keras.regularizers.l2(1e-4),
+            bias_regularizer=keras.regularizers.l1(1e-4),
+            name="Attention",
+        )
         self.check_mask_shape(attention)

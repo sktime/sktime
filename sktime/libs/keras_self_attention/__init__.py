@@ -1,4 +1,3 @@
-
 """Python implementations of Kalman Filters and Kalman Smoothers.
 
 Unofficial fork of the ``pykalman`` package, maintained in ``sktime``.
@@ -34,10 +33,10 @@ SOFTWARE.
 __authors__ = ["CyberZHG", "EtcEc"]
 
 from sktime.libs.keras_self_attention.real_former import (
-    ResidualScaledDotProductAttention
+    ResidualScaledDotProductAttention,
 )
 from sktime.libs.keras_self_attention.scaled_dot_attention import (
-    ScaledDotProductAttention
+    ScaledDotProductAttention,
 )
 from sktime.libs.keras_self_attention.seq_self_attention import SeqSelfAttention
 from sktime.libs.keras_self_attention.seq_weighted_attention import SeqWeightedAttention
