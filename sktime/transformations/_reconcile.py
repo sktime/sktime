@@ -15,8 +15,15 @@ def _has_hierarchy(X):
     - Have a __total level at the second index level
     """
     n_levels_geq_3 = X.index.nlevels >= 3
-    total_at_last_non_temporal_level = "__total" in X.index.get_level_values(-2)
-    return n_levels_geq_3 or total_at_last_non_temporal_level
+    if n_levels_geq_3:
+        return True
+    n_levels_eq_2 = X.index.nlevels == 2
+    if n_levels_eq_2:
+        has___total_at_last_non_temporal_level = "__total" in X.index.get_level_values(
+            -2
+        )
+        return has___total_at_last_non_temporal_level
+    return False
 
 
 class _ReconcilerTransformer(BaseTransformer):
@@ -55,7 +62,7 @@ class _ReconcilerTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
