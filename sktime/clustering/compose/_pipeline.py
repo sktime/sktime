@@ -125,7 +125,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
         missing = clusterer.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -465,7 +465,7 @@ class SklearnClustererPipeline(ClustererPipeline):
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

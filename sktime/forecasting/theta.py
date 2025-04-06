@@ -100,7 +100,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
@@ -423,7 +423,7 @@ class ThetaModularForecaster(BaseForecaster):
         "univariate-only": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "python_version": ">3.7",
     }
 
