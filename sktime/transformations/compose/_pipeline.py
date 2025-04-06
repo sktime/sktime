@@ -362,8 +362,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         -------
         self: reference to self
         """
-        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
-
         Xt = X
         for _, transformer in self.steps_:
             Xt = transformer.fit_transform(X=Xt, y=y)
