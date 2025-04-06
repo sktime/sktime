@@ -204,7 +204,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     def _steps(self, value):
         self.steps = value
 
-
     def _check_steps(self, estimators):
         """Check Steps.
 
