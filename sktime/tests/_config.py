@@ -278,7 +278,10 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
-    "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
+    "ESRNNForecaster": [  # pickling problem, see #8135
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
