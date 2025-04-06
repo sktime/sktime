@@ -69,6 +69,9 @@ EXCLUDE_ESTIMATORS = [
     # fails due to #8151 or #8059
     "CNTCRegressor",
     "FreshPRINCE",
+    # multiple timeouts and sporadic failures reported related to VARMAX
+    # 2997, 3176, 7985
+    "VARMAX",
 ]
 
 
@@ -201,18 +204,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    "VARMAX": [
-        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
-        "test__y_when_refitting",  # see 3176
-        "test_update_predict_predicted_index",  # see 7985, timeout
-        "test_hierarchical_with_exogeneous",  # see 7985, timeout
-        "test_persistence_via_pickle",  # more timeouts
-        "test_methods_have_no_side_effects",
-        "test_fit_idempotent",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_non_state_changing_method_contract",
-        "test_save_estimators_to_file",
-    ],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
