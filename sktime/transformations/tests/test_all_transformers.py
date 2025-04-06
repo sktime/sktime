@@ -355,6 +355,8 @@ class TestAllReconciliationTransformers(
         prds = Xt + np.random.normal(0, 10, (Xt.shape[0], 1))
         prds_recon = reconciler._inverse_transform_reconciler(prds)
 
+        # Assert hierarchy detected
+        assert not reconciler._no_hierarchy
         # Assert not empty
         assert not prds_recon.empty
         # Assert no Nans
