@@ -76,6 +76,7 @@ class ScitypePanel(BaseDatatype):
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": None,
+        "internal_only": False
     }
 
     def __init__(

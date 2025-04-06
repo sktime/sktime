@@ -24,6 +24,7 @@ class BaseDatatype(BaseObject):
         "python_version": None,
         "python_dependencies": None,
         "python_type": "object",  # implied python type (lowest)
+        "internal_only": False,  # whether type is for internal use only
     }
 
     def __init__(self):
