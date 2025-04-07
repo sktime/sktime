@@ -83,7 +83,8 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         te_value : float
             Estimated Transfer Entropy from X_src -> X_tgt.
         """
-        # Example: flatten all series to 1D for simplicity (expand later)
+        
+        # flatten the arrays to 1D for easy processing
         x = X_src.values.flatten()
         y = X_tgt.values.flatten()
 
@@ -92,16 +93,19 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         if len(x) < min_length or len(y) < min_length:
             return np.nan
 
-        # Create lagged vectors
+        # we need lagged vectors for getting the past information on x and y
         x_lagged = np.array([x[i - self.lag_source] for i in range(min_length, len(x))])
         y_lagged = np.array([y[i - self.lag_target] for i in range(min_length, len(y))])
         y_future = np.array([y[i] for i in range(min_length, len(y))])
 
-        # Check if any of the vectors are empty
+        # Check if any of the lagged vectors are empty
         if len(x_lagged) == 0 or len(y_lagged) == 0 or len(y_future) == 0:
             return np.nan
 
-        # Binning (basic estimation)
+        # Binning
+        # This is the starting version, in future we can add more estimators
+        
+        # we use digitize method to basically assign each discrete value a label
         if self.estimator == "binning":
             x_lagged_binned = np.digitize(
                 x_lagged, np.histogram_bin_edges(x, bins=self.n_bins)
@@ -126,8 +130,8 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             # Calculate TE based on conditional entropies
             H1 = self._conditional_entropy(p_yfuture_ylag, p_ylag)
             H2 = self._conditional_entropy(p_yfuture_ylag_xlag, p_ylag_xlag)
-            te_value = H1 - H2
-            return te_value
+            te_value = np.abs(H1 - H2)
+            return te_value # return the float value
 
         else:
             raise NotImplementedError(
@@ -172,18 +176,22 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         bins = max(1, np.max(x) + 1)
         hist, _ = np.histogram(x, bins=bins)
         return hist / np.sum(hist) if np.sum(hist) > 0 else hist
-
+    
     def _conditional_entropy(self, joint, marginal):
         """Calculate conditional entropy H(Y|X) = H(X,Y) - H(X)."""
         eps = 1e-10
-        # Skip calculation if arrays are all zeros
+        # return 0 if arrays are all zeros
         if np.sum(joint) == 0 or np.sum(marginal) == 0:
             return 0.0
 
-        joint = np.clip(joint, eps, 1.0)
+        # to ensure the values are in the range of [eps, 1.0]
+        joint = np.clip(joint, eps, 1.0) # ()
         marginal = np.clip(marginal, eps, 1.0)
+
+        # find joint entropy and marginal entropy
         H_joint = -np.sum(joint * np.log(joint))
         H_marginal = -np.sum(marginal * np.log(marginal))
+        # the difference in the conditional entropy
         return H_joint - H_marginal
 
     @classmethod
