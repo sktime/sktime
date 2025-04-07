@@ -165,5 +165,5 @@ class _ReconcilerTransformer(BaseTransformer):
     def _inverse_transform_reconciler(self, X, y):
         """Apply reconciliation."""
         raise NotImplementedError(
-            f"{self.__class__.__name__} must implement" "_inverse_transform_reconciler."
+            f"{self.__class__.__name__} must implement _inverse_transform_reconciler."
         )

@@ -13,7 +13,6 @@ from warnings import warn
 
 from sktime.transformations.hierarchical.reconciliation.reconcile_forecasts import (
     ReconcileForecasts as Reconciler,
-    _get_s_matrix,
 )
 
 warn(

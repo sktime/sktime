@@ -50,7 +50,7 @@ class TopdownReconciler(_ReconcilerTransformer):
 
         if method not in ["td_fcst", "td_share"]:
             raise ValueError(
-                "Method must be one of 'td_fcst' or 'td_share'." f"Got {method}."
+                f"Method must be one of 'td_fcst' or 'td_share'. Got {method}."
             )
 
     def _fit_reconciler(self, X, y=None):
