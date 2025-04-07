@@ -17,6 +17,12 @@ class GreykiteForecaster(BaseForecaster):
     This forecaster wraps Greykite forecast_pipeline (configured via a ForecastConfig)
     and exposes a sktime-compatible API.
 
+    WARNING: the ``greykite`` package has very restrictive dependencies that typically
+    prevent installation together with other packages. For this reason, this estimator
+    is also not covered by regular tests. We therefore recommend to run
+    ``check_estimator(GreykiteForecaster)`` on your system before deploying
+    this estimator.
+
     Parameters
     ----------
     forecast_config : ForecastConfig, optional
