@@ -104,7 +104,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         forecasters,
         regressor=None,
         random_state=None,
-        n_jobs=None,  # Deprecated
+        # n_jobs=None,  # Deprecated
         backend=None,
         backend_params=None,
     ):
@@ -113,7 +113,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(
             forecasters=forecasters,
-            n_jobs=n_jobs,
+            # n_jobs=n_jobs,
             backend=backend,
             backend_params=backend_params,
         )
