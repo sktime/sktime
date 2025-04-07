@@ -171,7 +171,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     import ray
 
-    # remove the possible excess keys
+    # read the possible additional keys
     logger = logging.getLogger(backend_params.get("logger_name", None))
     mute_warnings = backend_params.get("mute_warnings", False)
     shutdown_ray = backend_params.get("shutdown_ray", True)
