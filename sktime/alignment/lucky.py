@@ -36,6 +36,7 @@ class AlignerLuckyDtw(BaseAligner):
     >>> ts2_df = pd.DataFrame({"dim_0": [2, 3, 4, 5, 6]})
     >>> aligner = AlignerLuckyDtw(window=2)
     >>> aligner.fit([ts1_df, ts2_df])
+    AlignerLuckyDtw(...)
     >>> alignment = aligner.get_alignment()
     """
 

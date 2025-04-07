@@ -61,6 +61,7 @@ class EnbPIForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tsbootstrap import MovingBlockBootstrap
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -74,9 +75,9 @@ class EnbPIForecaster(BaseForecaster):
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
     >>> fh = ForecastingHorizon(np.arange(1, 13))
     >>> forecaster.fit(y, fh=fh)
+    TransformedTargetForecaster(...)
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
-
 
     References
     ----------

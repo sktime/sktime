@@ -171,9 +171,6 @@ def test_evaluate_common_configs(
     CV, fh, window_length, step_length, strategy, scoring, backend
 ):
     """Test evaluate common configs."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
@@ -222,10 +219,6 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         if strategy not in ["update", "no-update_params"]:
             # if strategy in ["update","no-update_params"], it won't run parallelly
             return None
-
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     hierarchy_levels = (4, 4)
     timepoints = 5
@@ -426,9 +419,6 @@ def test_evaluate_error_score(
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_hierarchical(backend):
     """Check that evaluate works with hierarchical data."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     y = _make_hierarchical(
         random_state=0, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12

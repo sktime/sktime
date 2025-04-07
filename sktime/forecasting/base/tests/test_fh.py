@@ -745,7 +745,7 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
-# todo 0.36.0: check whether numpy 2 bound is still necessary
+# todo 0.37.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
     or not _check_estimator_deps(AutoARIMA, severity="none")
@@ -1066,3 +1066,10 @@ def test_pandas22_freq_roundtrip(ts):
     fh = ForecastingHorizon([0], is_relative=True)
     fh.to_absolute(f.cutoff)
     fh.to_absolute(f.cutoff).to_relative(f.cutoff)
+
+
+def test_timestamp_format_to_absolute():
+    cutoff = pd.Timestamp("2025-03-02 12:00:00")
+    fh = ForecastingHorizon([1, 2, 3], freq="D")
+    y_pred_idx = fh.to_absolute_index(cutoff)
+    assert "12:00:00" in str(y_pred_idx)
