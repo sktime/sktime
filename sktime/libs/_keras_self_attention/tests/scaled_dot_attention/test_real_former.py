@@ -1,16 +1,21 @@
 import os
 import tempfile
-import unittest
 
 import numpy as np
+import pytest
 
-from sktime.libs.keras_self_attention import ResidualScaledDotProductAttention
+from sktime.libs._keras_self_attention import ResidualScaledDotProductAttention
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _safe_import
 
 keras = _safe_import("tensorflow.keras")
 
 
-class TestResidualScaledDotProductAttention(unittest.TestCase):
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    reason="Execute tests for iff anything in the module has changed",
+)
+class TestResidualScaledDotProductAttention:
     def test_history(self):
         input_layer = keras.layers.Input(
             shape=(5,),

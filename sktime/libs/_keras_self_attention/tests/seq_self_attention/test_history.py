@@ -1,7 +1,16 @@
-from sktime.libs.keras_self_attention import SeqSelfAttention
-from sktime.libs.keras_self_attention.tests.seq_self_attention.util import TestMaskShape
+import pytest
+
+from sktime.libs._keras_self_attention import SeqSelfAttention
+from sktime.libs._keras_self_attention.tests.seq_self_attention.util import (
+    TestMaskShape
+)
+from sktime.tests.test_switch import run_test_module_changed
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    reason="Execute tests for iff anything in the module has changed",
+)
 class TestHistory(TestMaskShape):
     def test_history(self):
         attention = SeqSelfAttention(

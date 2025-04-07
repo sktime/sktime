@@ -2,14 +2,22 @@ import os
 import tempfile
 
 import numpy as np
+import pytest
 
-from sktime.libs.keras_self_attention import SeqSelfAttention
-from sktime.libs.keras_self_attention.tests.seq_self_attention.util import TestMaskShape
+from sktime.libs._keras_self_attention import SeqSelfAttention
+from sktime.libs._keras_self_attention.tests.seq_self_attention.util import (
+    TestMaskShape
+)
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _safe_import
 
 keras = _safe_import("tensorflow.keras")
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    reason="Execute tests for iff anything in the module has changed",
+)
 class TestSaveLoad(TestMaskShape):
     def test_save_load(self):
         _, _, token_dict = self.get_input_data()

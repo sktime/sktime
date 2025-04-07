@@ -1,16 +1,21 @@
 import os
 import tempfile
-import unittest
 
 import numpy as np
+import pytest
 
-from sktime.libs.keras_self_attention import ScaledDotProductAttention
+from sktime.libs._keras_self_attention import ScaledDotProductAttention
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _safe_import
 
 keras = _safe_import("tensorflow.keras")
 
 
-class TestSaveLoad(unittest.TestCase):
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    reason="Execute tests for iff anything in the module has changed",
+)
+class TestSaveLoad:
     def test_save_load(self):
         input_q = keras.layers.Input(shape=(5, 3), name="Input-Q")
         input_k = keras.layers.Input(shape=(4, 3), name="Input-K")
