@@ -47,6 +47,12 @@ def get_check_dict(soft_deps="present"):
     soft_deps : str, optional - one of "present", "all"
         "present" - only checks with soft dependencies present are included
         "all" - all checks are included
+
+    Returns
+    -------
+    check_dict : dict of (str, str) : object (mtype registry class)
+        dictionary of check classes, with keys being tuples of (mtype, scitype)
+        and values an instance of the check class for that mtype/scitype combination
     """
     if soft_deps not in ["present", "all"]:
         raise ValueError(
