@@ -27,9 +27,10 @@ def hierarchical_data():
 def create_redundant_hierarchical_indexes(
     n_hier_levels, n_redundant, n_instances_per_level
 ):
-    assert (
-        n_redundant < n_hier_levels
-    ), "Number of redundant levels must be less than the number of levels."
+    assert n_redundant < n_hier_levels, (
+        "Number of redundant levels must be less than the number of levels."
+    )
+
     level_and_subvalues = [
         [f"level{l}_{i}" for i in range(n_instances_per_level)]
         for l in range(n_hier_levels)
@@ -71,9 +72,9 @@ def test_fit(n_redundant, n_hier_levels, n_instances_per_level=2):
     expected_levels_to_drop = min(n_redundant, n_hier_levels - 2)
 
     assert hasattr(transformer, "levels_to_drop_")
-    assert len(transformer.levels_to_drop_) == expected_levels_to_drop,(
+    assert len(transformer.levels_to_drop_) == expected_levels_to_drop, (
         "Expected to drop the first level."
-    ) 
+    )
 
 
 @pytest.mark.parametrize(
@@ -93,7 +94,7 @@ def test_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     expected = max(n_hier_levels - n_redundant, 2)
     assert transformed.index.nlevels - 1 == expected, (
         "Expected the transformed index to have 3 levels."
-    ) 
+    )
 
 
 @pytest.mark.parametrize(
@@ -111,7 +112,7 @@ def test_inverse_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
 
     pd.testing.assert_frame_equal(X, inversed)
     assert inversed.index.nlevels == X.index.nlevels, (
-        "Expected the index to match the original."   
+        "Expected the index to match the original."
     )
 
 
