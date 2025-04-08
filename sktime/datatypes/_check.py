@@ -71,8 +71,9 @@ def generate_check_dict(soft_deps="present"):
     check_dict = dict()
     for cls in classes:
         k = cls()
-        key = k._get_key()
-        check_dict[key] = k
+        if not k.get_tag("skip_in_checks", False):
+            key = k._get_key()
+            check_dict[key] = k
 
     return check_dict
 

@@ -1583,6 +1583,7 @@ class PanelPdWide(ScitypePanel):
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
         "internal_only": True,
+        "skip_in_checks": True,
     }
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
@@ -1657,6 +1658,7 @@ class PanelPdLong(ScitypePanel):
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
         "internal_only": True,
+        "skip_in_checks": True,
     }
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
