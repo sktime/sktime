@@ -1,7 +1,5 @@
 __author__ = ["jgyasu"]
 
-from unittest.mock import MagicMock
-
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 
@@ -15,10 +13,8 @@ def test_import_present_module():
 def test_import_missing_module():
     """Test importing a dependency that is not installed."""
     result = _safe_import("nonexistent_module")
-    assert isinstance(result, MagicMock)
-    assert str(result) == (
-        "Please install nonexistent_module to use this functionality."
-    )
+    assert hasattr(result, "__name__")
+    assert result.__name__ == "nonexistent_module"
 
 
 def test_import_without_pkg_name():
@@ -59,3 +55,19 @@ def test_import_existing_object():
     from pandas import DataFrame
 
     assert result is DataFrame
+
+
+def test_multiple_inheritance_from_mock():
+    """Test multiple inheritance from dynamic MagicMock."""
+    Class1 = _safe_import("foobar.foo.FooBar")
+    Class2 = _safe_import("barfoobar.BarFooBar")
+
+    class NewClass(Class1, Class2):
+        """This should not trigger an error.
+
+        The class definition would trigger an error if multiple inheritance
+        from Class1 and Class2 does not work, e.g., if it is simply
+        identical to MagicMock.
+        """
+
+        pass

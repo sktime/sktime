@@ -1737,7 +1737,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...         ]
     ...     )
     >>> param_grid = {
-    ...     "scaler__transformer__with_scaling": CategoricalDistribution(
+    ...     "scaler__with_scaling": CategoricalDistribution(
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(

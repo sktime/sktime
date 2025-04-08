@@ -54,10 +54,10 @@ def test_scitype_generic(force_single_scitype, coerce_to_list):
 
     if force_single_scitype and coerce_to_list:
         expected = ["foo"]
-    if not force_single_scitype and coerce_to_list:
-        expected = ["foo", "bar"]
-    if not coerce_to_list:
+    if force_single_scitype and not coerce_to_list:
         expected = "foo"
+    if not force_single_scitype:
+        expected = ["foo", "bar"]
 
     assert scitype_inferred == expected
 
