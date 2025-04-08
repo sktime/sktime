@@ -36,7 +36,8 @@ def test_sliding_greedy_splitter_indices():
     # Convert to list of tuples for easy comparison
     splits = [(list(trn), list(tst)) for trn, tst in cv.split(y)]
 
-    # The expected indices for a sliding greedy splitter with train_size=4, test_size=2, folds=2
+    # The expected indices for a sliding greedy splitter with train_size=4, test_size=2,
+    # folds=2
     expected = [([2, 3, 4, 5], [6, 7]), ([4, 5, 6, 7], [8, 9])]
 
     # Compare actual and expected splits
