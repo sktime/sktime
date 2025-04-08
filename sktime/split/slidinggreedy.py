@@ -8,6 +8,8 @@ __all__ = [
     "SlidingGreedySplitter",
 ]
 
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 
@@ -66,10 +68,10 @@ class SlidingGreedySplitter(BaseSplitter):
 
     def __init__(
         self,
-        train_size: int | float,
-        test_size: int | float,
+        train_size: Union[int, float],
+        test_size: Union[int, float],
         folds: int = 5,
-        step_length: int | None = None,
+        step_length: Optional[int] = None,
     ):
         super().__init__()
         self.train_size = train_size
