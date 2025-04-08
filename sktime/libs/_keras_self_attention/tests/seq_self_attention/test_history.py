@@ -5,10 +5,12 @@ from sktime.libs._keras_self_attention.tests.seq_self_attention.util import (
     TestMaskShape,
 )
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    not run_test_module_changed("sktime.libs._keras_self_attention")
+    or not _check_soft_dependencies("tensorflow"),
     reason="Execute tests for iff anything in the module has changed",
 )
 class TestHistory(TestMaskShape):

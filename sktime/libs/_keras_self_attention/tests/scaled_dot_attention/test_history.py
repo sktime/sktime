@@ -3,13 +3,14 @@ import pytest
 
 from sktime.libs._keras_self_attention import ScaledDotProductAttention
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 keras = _safe_import("tensorflow.keras")
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.libs._keras_self_attention"),
+    not run_test_module_changed("sktime.libs._keras_self_attention")
+    or not _check_soft_dependencies("tensorflow"),
     reason="Execute tests for iff anything in the module has changed",
 )
 class TestHistory:
