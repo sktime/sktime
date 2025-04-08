@@ -165,3 +165,54 @@ def apply_method_per_series(y, method_name, *args, **kwargs):
         series_list.append(y_series)
     y = pd.concat(series_list).sort_index()
     return y
+
+
+def is_hierarchical(multiindex: pd.Index, raise_if_false=False) -> bool:
+    """Determine if a pandas MultiIndex is truly hierarchical.
+
+    Truly hierarchical means that each lower-level value corresponds to only
+    a single higher-level value.
+
+    If a regular index is passed, it is considered hierarchical (single level).
+
+    Parameters
+    ----------
+    multiindex (pd.Index or pd.DataFrame): The MultiIndex (or DataFrame) to check.
+    raise_if_false (bool, optional): If set to True, an exception is raised when
+                                      the index is not hierarchical. Default is False.
+
+    Returns
+    -------
+    bool: True if the MultiIndex is hierarchical, False otherwise.
+
+    Raises
+    ------
+    Exception: If `raise_if_false` is True and the MultiIndex is not hierarchical,
+               an exception is raised with details about the issue.
+    """
+    # Handle the case where a DataFrame is passed
+    if isinstance(multiindex, pd.DataFrame):
+        multiindex = multiindex.index
+
+    # If the index is not a MultiIndex, return True as it is "inherently hierarchical"
+    if not isinstance(multiindex, pd.MultiIndex):
+        return True
+
+    # Determine if the MultiIndex is truly hierarchical
+    for level in range(len(multiindex.levels) - 1):
+        parent = multiindex.get_level_values(level)
+        child = multiindex.get_level_values(level + 1)
+        mapping = pd.DataFrame(
+            {f"{level}": parent, f"{level + 1}": child}
+        ).drop_duplicates()
+
+        # Check if any child value appears under multiple parent values
+        if mapping.duplicated(subset=f"{level + 1}").any():
+            if raise_if_false:
+                msg = f"Duplicate child values found for level: {level + 1}\n{
+                    mapping[mapping.duplicated(subset=f'{level + 1}', keep=False)].to_string()
+                    }"
+                raise Exception(msg)
+            else:
+                return False
+    return True
