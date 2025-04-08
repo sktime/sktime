@@ -227,16 +227,15 @@ class TSFreshClassifier(BaseClassifier):
             dists[:, self._majority_class] = 1
             return dists
 
-        X_t = self._transformer.transform(X)
-        X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
-
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(X_t)
+            return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
+            X_t = self._transformer.transform(X)
+            X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
             preds = self._estimator.predict(X_t)
-            for i in range(X.shape[0]):
+            for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
 
