@@ -72,6 +72,7 @@ EXCLUDE_ESTIMATORS = [
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "VARMAX",
+    "SCINetForecaster",  # known bug #7871
 ]
 
 
