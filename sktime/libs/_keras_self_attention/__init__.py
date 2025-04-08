@@ -32,14 +32,16 @@ SOFTWARE.
 
 __authors__ = ["CyberZHG", "EtcEc"]
 
-from sktime.libs.keras_self_attention.real_former import (
+from sktime.libs._keras_self_attention.real_former import (
     ResidualScaledDotProductAttention,
 )
-from sktime.libs.keras_self_attention.scaled_dot_attention import (
+from sktime.libs._keras_self_attention.scaled_dot_attention import (
     ScaledDotProductAttention,
 )
-from sktime.libs.keras_self_attention.seq_self_attention import SeqSelfAttention
-from sktime.libs.keras_self_attention.seq_weighted_attention import SeqWeightedAttention
+from sktime.libs._keras_self_attention.seq_self_attention import SeqSelfAttention
+from sktime.libs._keras_self_attention.seq_weighted_attention import (
+    SeqWeightedAttention,
+)
 
 __all__ = [
     "SeqSelfAttention",
