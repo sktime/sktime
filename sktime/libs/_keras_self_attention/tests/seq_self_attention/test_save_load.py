@@ -6,7 +6,7 @@ import pytest
 
 from sktime.libs._keras_self_attention import SeqSelfAttention
 from sktime.libs._keras_self_attention.tests.seq_self_attention.util import (
-    TestMaskShape
+    TestMaskShape,
 )
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _safe_import
