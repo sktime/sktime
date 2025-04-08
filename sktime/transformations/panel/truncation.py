@@ -29,6 +29,7 @@ class TruncationTransformer(BaseTransformer):
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer()
     >>> tt.fit(X)
+    TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
     """
 

@@ -1,5 +1,7 @@
 import numpy as np
+import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.estimator_checks import check_estimator, parametrize_with_checks
 
@@ -70,12 +72,15 @@ class _TransformChangeNInstances(BaseTransformer):
 
         rng = np.random.default_rng(self.random_state)
         # series names
-        instances = X.index.droplevel(-1).unique()
+        instances_idx = X.index.droplevel(-1).unique()
         # Sample self.n_instances at random
 
-        n = min(self.n, len(instances))
-        instances = rng.choice(instances, n, replace=False)
-        return X.loc[instances].sort_index()
+        n = min(self.n, len(instances_idx))
+        selected_instances_idx = rng.choice(
+            list(range(len(instances_idx))), n, replace=False
+        )
+        instances = instances_idx[selected_instances_idx]
+        return X.loc[X.index.droplevel(-1).isin(instances)].sort_index()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -85,6 +90,10 @@ class _TransformChangeNInstances(BaseTransformer):
         ]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.base"),
+    reason="run test only if transformations base class has changed",
+)
 @parametrize_with_checks([_TransformChangeNInstances])
 def test_transformation_can_return_new_instances(obj, test_name):
     """

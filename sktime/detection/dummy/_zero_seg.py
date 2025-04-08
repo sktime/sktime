@@ -14,9 +14,9 @@ class ZeroSegments(BaseDetector):
     --------
     >>> import pandas as pd
     >>> from sktime.detection.dummy import ZeroSegments
-    >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    >>> X = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> d = ZeroSegments()
-    >>> d.fit_transform(y)
+    >>> Xt = d.fit_transform(X)
     """
 
     _tags = {

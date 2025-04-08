@@ -385,6 +385,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
 
+        y_pred.index = expected_index
         y_pred.name = _y.name
         return y_pred
 
