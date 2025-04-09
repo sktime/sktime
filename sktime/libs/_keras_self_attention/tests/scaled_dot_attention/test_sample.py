@@ -10,7 +10,7 @@ keras = _safe_import("tensorflow.keras")
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.libs._keras_self_attention")
-    or not _check_soft_dependencies("tensorflow"),
+    or not _check_soft_dependencies("tensorflow", severity="none"),
     reason="Execute tests for iff anything in the module has changed",
 )
 class TestAttention:
