@@ -156,8 +156,9 @@ class TapNetNetwork(BaseDeepNetwork):
         output_layer : a keras layer
         """
         import tensorflow as tf
-        from keras_self_attention import SeqSelfAttention
         from tensorflow import keras
+
+        from sktime.libs.keras_self_attention import SeqSelfAttention
 
         input_layer = keras.layers.Input(input_shape)
 
