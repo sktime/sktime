@@ -118,7 +118,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
         missing = regressor.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("capability:missing_values", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

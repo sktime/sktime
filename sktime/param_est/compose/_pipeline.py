@@ -118,7 +118,9 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data
         missing = param_est.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("capability:missing_values", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

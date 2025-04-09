@@ -126,7 +126,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
         missing = classifier.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("capability:missing_values", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

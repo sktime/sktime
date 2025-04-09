@@ -176,7 +176,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
-            self._anytagis_then_set("capability:missing_values", False, True, l_forecasters)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_forecasters
+            )
 
     @property
     def _forecasters(self):
