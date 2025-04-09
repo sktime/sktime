@@ -521,6 +521,8 @@ def evaluate(
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
