@@ -214,6 +214,62 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Efficiently update model state for new observations.
+
+        Implements estimator-specific logic to update the internal state
+        of the NaiveForecaster, without retraining from scratch. This method
+        is invoked by the public `update()` method defined in BaseForecaster.
+
+        This implementation appends the new target values (`y`) and optionally
+        new exogenous values (`X`) to the stored training data. If a window
+        length is specified, it keeps only the most recent observations in
+        the window. It updates the forecasting parameters only if
+        `update_params=True`.
+
+        Parameters
+        ----------
+        y : sktime compatible time series
+            New target values to update the forecaster with.
+            Expected to be a pandas Series or DataFrame (univariate or multivariate).
+
+        X : sktime compatible time series, optional (default=None)
+            New exogenous data associated with `y`, if any.
+
+        update_params : bool, optional (default=True)
+            Whether to update model parameters. If False, the method
+            only updates internal data and cutoff, but does not update
+            the parameters used for forecasting.
+
+        Returns
+        -------
+        self : reference to self
+            Updated forecaster instance.
+        """
+        # Only update if parameters need to change
+        if not update_params:
+            return self
+
+        # Append new observations to existing training data
+        self._y = pd.concat([self._y, y])
+
+        # If exogenous variables are used, also update X
+        if X is not None:
+            if self._X is None:
+                self._X = X
+            else:
+                self._X = pd.concat([self._X, X])
+
+        # If window_length is set, keep only the last N observations
+        if self.window_length is not None:
+            self._y = self._y[-self.window_length:]
+            if self._X is not None:
+                self._X = self._X[-self.window_length:]
+
+        # No additional computation is needed here because NaiveForecaster
+        # uses simple rules (e.g., last value, mean) which can be recalculated on prediction
+        return self
+
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
