@@ -5,9 +5,11 @@
 from sktime.detection.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
+    plot_time_series_with_subsequent_outliers,
 )
 
 __all__ = [
     "plot_time_series_with_change_points",
     "plot_time_series_with_profiles",
+    "plot_time_series_with_subsequent_outliers",
 ]
