@@ -34,4 +34,4 @@ class TestLoss(TestMaskShape):
             y=np.zeros((len(sentences), sentence_len, 1)),
             epochs=10,
         )
-        self.assertTrue(model is not None)
+        assert model is not None

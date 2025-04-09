@@ -75,9 +75,9 @@ class TestMaskShape:
             for j in range(len(sentence)):
                 for k in range(len(sentence)):
                     if history_only and 0 <= j - k < attention_width:
-                        self.assertGreater(attention_output[i][j][k], 0.0)
+                        assert attention_output[i][j][k] > 0.0
                     elif not history_only and abs(j - k) <= attention_width // 2:
-                        self.assertGreater(attention_output[i][j][k], 0.0)
+                        assert attention_output[i][j][k] > 0.0
                     else:
-                        self.assertEqual(attention_output[i][j][k], 0.0)
-                self.assertTrue(abs(np.sum(attention_output[i][j]) - 1.0) < 1e-6)
+                        assert attention_output[i][j][k] == 0.0
+                assert abs(np.sum(attention_output[i][j]) - 1.0) < 1e-6

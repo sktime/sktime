@@ -41,13 +41,10 @@ class TestAttention:
         model.summary()
         inputs = np.array([[1, 2, 3, 1, 0]])
         predict = model.predict(inputs)[0]
-        self.assertTrue(np.allclose(predict[0], predict[3]))
-        self.assertTrue(
-            np.allclose(
+        assert np.allclose(predict[0], predict[3])
+        assert np.allclose(
                 np.asarray(
                     [0.27883747, 0.45767492, 0.47448885, 0.69199574, 0.47368336]
                 ),
                 predict[2],
-            ),
-            predict[2],
-        )
+            ), predict[2]

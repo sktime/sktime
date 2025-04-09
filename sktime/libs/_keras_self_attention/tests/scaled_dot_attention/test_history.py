@@ -46,17 +46,14 @@ class TestHistory:
         inputs = np.array([[1, 2, 3, 1, 0]])
         predicts = model.predict(inputs)
         results, weights = predicts[0][0], predicts[1][0]
-        self.assertFalse(np.allclose(results[0], results[3]))
-        self.assertTrue(
-            np.allclose(
+        assert not np.allclose(results[0], results[3])
+        assert np.allclose(
                 np.asarray([0.2, 0.3, 0.4, 0.6, 0.5]),
                 results[0],
-            ),
-            results[0],
-        )
+            ), results[0]
         for i in range(4):
             for j in range(5):
                 if j > i:
-                    self.assertEqual(0.0, weights[i][j])
+                    assert weights[i][j] == 0.0
                 else:
-                    self.assertLess(0.0, weights[i][j])
+                    assert weights[i][j] > 0.0

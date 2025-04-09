@@ -28,5 +28,5 @@ class TestMul(TestMaskShape):
         self.check_mask_shape(attention)
 
     def test_not_implemented(self):
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             SeqSelfAttention(return_attention=True, attention_type="random")

@@ -48,9 +48,9 @@ class TestSaveLoad:
         )
         model.summary(line_length=100)
         if attention.return_attention:
-            self.assertEqual(2, len(model.outputs))
+            assert len(model.outputs) == 2
         else:
-            self.assertEqual(1, len(model.outputs))
+            assert len(model.outputs) == 1
 
     def test_default(self):
         self._test_save_load(Attention(name="Attention"))

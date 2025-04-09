@@ -41,4 +41,4 @@ class TestSaveLoad:
             },
         )
         model.summary(line_length=120)
-        self.assertTrue(model is not None)
+        assert model is not None

@@ -65,20 +65,17 @@ class TestResidualScaledDotProductAttention:
         prev = np.zeros((1, 5, 5))
         predicts = model.predict([inputs, prev])
         results, weights = predicts[0][0], predicts[1][0]
-        self.assertFalse(np.allclose(results[0], results[3]))
-        self.assertTrue(
-            np.allclose(
+        assert not np.allclose(results[0], results[3])
+        assert not np.allclose(
                 np.asarray([0.2, 0.3, 0.4, 0.6, 0.5]),
                 results[0],
-            ),
-            results[0],
-        )
+            ), results[0]
         for i in range(4):
             for j in range(5):
                 if j > i:
-                    self.assertEqual(0.0, weights[i][j])
+                    assert weights[i][j] == 0.0
                 else:
-                    self.assertLess(0.0, weights[i][j])
+                    assert 0.0 < weights[i][j] < 1.0
 
     def test_sample(self):
         input_layer = keras.layers.Input(
@@ -113,13 +110,10 @@ class TestResidualScaledDotProductAttention:
         inputs = np.array([[1, 2, 3, 1, 0]])
         prev = np.zeros((1, 5, 5))
         predict = model.predict([inputs, prev])[0]
-        self.assertTrue(np.allclose(predict[0], predict[3]))
-        self.assertTrue(
-            np.allclose(
+        assert np.allclose(predict[0], predict[3])
+        assert np.allclose(
                 np.asarray(
                     [0.27883747, 0.45767492, 0.47448885, 0.69199574, 0.47368336]
                 ),
                 predict[2],
-            ),
-            predict[2],
-        )
+            ), predict[2]

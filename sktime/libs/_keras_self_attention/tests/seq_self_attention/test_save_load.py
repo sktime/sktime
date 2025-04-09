@@ -32,7 +32,7 @@ class TestSaveLoad(TestMaskShape):
             model_path, custom_objects={"SeqSelfAttention": SeqSelfAttention}
         )
         model.summary()
-        self.assertTrue(model is not None)
+        assert model is not None
 
     def test_save_load_with_loss(self):
         attention = SeqSelfAttention(
@@ -55,4 +55,4 @@ class TestSaveLoad(TestMaskShape):
             model_path, custom_objects=SeqSelfAttention.get_custom_objects()
         )
         model.summary()
-        self.assertTrue(model is not None)
+        assert model is not None
