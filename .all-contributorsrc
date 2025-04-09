@@ -3238,7 +3238,7 @@
       "login": "PranavBhatP",
       "name": "Pranav Bhat",
       "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
-      "profile" :"https://github.com/PranavBhatP",
+      "profile": "https://github.com/PranavBhatP",
       "contributions": [
         "doc",
         "code",
@@ -3483,6 +3483,16 @@
       "profile": "https://github.com/danferns",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "hridaya14",
+      "name": "Hridaya Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53822171?s=400&v=4",
+      "profile": "https://github.com/hridaya14",
+      "contributions": [
+        "code",
+        "test"
       ]
     }
   ]
