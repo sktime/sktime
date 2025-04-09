@@ -39,7 +39,7 @@ class BinarySegmentation(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.annotation.bs import BinarySegmentation
+    >>> from sktime.detection.bs import BinarySegmentation
     >>> model = BinarySegmentation(threshold=1)
     >>> X = pd.Series([1, 1, 1, 1, 5, 5, 5, 5])
     >>> model.fit_predict(X)
