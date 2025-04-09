@@ -67,9 +67,9 @@ class TestResidualScaledDotProductAttention:
         results, weights = predicts[0][0], predicts[1][0]
         assert not np.allclose(results[0], results[3])
         assert not np.allclose(
-                np.asarray([0.2, 0.3, 0.4, 0.6, 0.5]),
-                results[0],
-            ), results[0]
+            np.asarray([0.2, 0.3, 0.4, 0.6, 0.5]),
+            results[0],
+        ), results[0]
         for i in range(4):
             for j in range(5):
                 if j > i:
@@ -112,8 +112,6 @@ class TestResidualScaledDotProductAttention:
         predict = model.predict([inputs, prev])[0]
         assert np.allclose(predict[0], predict[3])
         assert np.allclose(
-                np.asarray(
-                    [0.27883747, 0.45767492, 0.47448885, 0.69199574, 0.47368336]
-                ),
-                predict[2],
-            ), predict[2]
+            np.asarray([0.27883747, 0.45767492, 0.47448885, 0.69199574, 0.47368336]),
+            predict[2],
+        ), predict[2]
