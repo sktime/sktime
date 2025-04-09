@@ -132,7 +132,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     >>> y_new=scaler.fit_transform(y)
     >>> forecaster.fit(y_new, fh=[1,2,3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
-    >>> y_pred=scaler.inverse_transform(y_pred)
+    >>> y_pred=scaler.inverse_transform(y_pred) # doctest: +SKIP
     """
 
     _tags = {
