@@ -85,7 +85,7 @@ The ``Series`` mtype represents a single time series.
     SeriesPdDataFrame
     SeriesPdSeries
     SeriesNp2D
-    SeriesXArray
+    SeriesXarray
     SeriesDask
     SeriesPolarsEager
     SeriesGluontsList
