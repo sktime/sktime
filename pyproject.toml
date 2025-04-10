@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.36.0"
+version = "0.36.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -100,6 +100,7 @@ all_extras = [
   'pycatch22<0.4.6; python_version < "3.13"',
   'pyod>=0.8; python_version < "3.11"',
   "pyts<0.14.0; python_version < '3.12'",
+  'ray >=2.40.0; python_version < "3.13"',
   'scikit-optimize; python_version < "3.13"',
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
@@ -144,6 +145,7 @@ all_extras_pandas2 = [
   'prophet>=1.1; python_version < "3.12"',
   'pycatch22<0.4.6; python_version < "3.13"',
   'pyod>=0.8; python_version < "3.11"',
+  'ray >=2.40.0; python_version < "3.13"',
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
@@ -156,7 +158,6 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.20,>=2; python_version < "3.13"',
-  'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
@@ -293,10 +294,10 @@ dl = [
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
   'tensorflow<2.20,>=2; python_version < "3.13"',
-  'torch; python_version < "3.12"',
+  "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0,<1.4.0',
+  "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',

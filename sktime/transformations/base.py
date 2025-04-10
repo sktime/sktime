@@ -160,11 +160,12 @@ class BaseTransformer(BaseEstimator):
         # "off" - output of _transform, _inverse_transform is directly returned
         # valid mtype string - output is converted to specified mtype
         "backend:parallel": None,  # parallelization backend for broadcasting
-        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  {None, "dask", "loky", "multiprocessing", "threading","ray"}
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
+        #  "ray": uses ``ray``, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
     }
 

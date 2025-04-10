@@ -715,7 +715,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     --------
         Basic example:
 
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
@@ -724,7 +724,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> Xt = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - denoising, matrix estimation, missing values and transform with y:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 3, 3
     >>> control_variable_dim = 2
@@ -748,7 +748,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
 
         Example of - dynamic inputs (matrix per time-step), missing values:
 
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
     >>> control_variable_dim = 4
