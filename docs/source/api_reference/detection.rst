@@ -211,7 +211,7 @@ Time Series Segmentation
 
     STRAY
 
-.. currentmodule:: sktime.detection.bs.BinarySegmentation
+.. currentmodule:: sktime.detection.bs
 
 .. autosummary::
     :toctree: auto_generated/

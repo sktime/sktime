@@ -22,7 +22,7 @@ Forecasting datasets
     :template: class.rst
 
     Airline
-    HierarchicalSalesToyData
+    HierarchicalSalesToydata
     Longley
     Lynx
     M5Dataset

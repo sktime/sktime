@@ -137,6 +137,7 @@ Event detection - anomalies, outliers
 .. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: function.rst
 
