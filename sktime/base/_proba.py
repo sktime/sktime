@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to
+from sktime.forecasting.base._fh import ForecastingHorizon
 
 
 class _PredictProbaMixin:
@@ -128,6 +129,19 @@ class _PredictProbaMixin:
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
+        
+        fh = kwargs.get('fh',None) 
+        # Store original forecasting horizon steps to check if 1 was already present
+        original_fh_contained_1 = False
+        if fh.is_relative:
+            fh_steps = fh.to_numpy()
+            original_fh_contained_1 = 1 in fh_steps
+            if not original_fh_contained_1:
+                # Create new steps with 1 appended
+                new_steps = np.append(fh_steps, 1)
+                # Maintain relative horizon properties
+                fh = ForecastingHorizon(new_steps, is_relative=True, freq=fh.freq)
+                kwargs['fh'] = fh  # Update kwargs for consistency
 
         # defaulting logic is as follows:
         # var direct deputies are proba, then interval
@@ -171,7 +185,11 @@ class _PredictProbaMixin:
             pred_proba = self.predict_proba(**kwargs)
             pred_int = pred_proba.quantile(alpha=alpha)
 
-        return pred_int
+        # Only slice off horizon 1 if it wasn't in the original forecasting horizon
+        if fh.is_relative and not original_fh_contained_1:
+            return pred_int[1:]
+        else:
+            return pred_int
 
     def _predict_var(self, cov=False, **kwargs):
         """Compute/return variance forecasts.
