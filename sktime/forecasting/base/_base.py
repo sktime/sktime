@@ -637,11 +637,21 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh, pred_int=True)
+
+        # Store original forecasting horizon steps to check if 1 was already present
+        original_fh_contained_1 = False
+        if fh.is_relative:
+            fh_steps = fh.to_numpy()
+            original_fh_contained_1 = 1 in fh_steps
+            if not original_fh_contained_1:
+                # Create new steps with 1 appended
+                new_steps = np.append(fh_steps, 1)
+                # Maintain relative horizon properties
+                fh = ForecastingHorizon(new_steps, is_relative=True, freq=fh.freq)
 
         # default alpha
         if alpha is None:
@@ -664,7 +674,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 alpha=alpha,
             )
 
-        return quantiles
+        # Only slice off horizon 1 if it wasn't in the original forecasting horizon
+        if fh.is_relative and not original_fh_contained_1:
+            return quantiles[1:]
+        else:
+            return quantiles
 
     def predict_interval(self, fh=None, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
