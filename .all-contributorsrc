@@ -3236,11 +3236,13 @@
     },
     {
       "login": "PranavBhatP",
-      "name": "PranavBhatP",
+      "name": "Pranav Bhat",
       "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
       "profile" :"https://github.com/PranavBhatP",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "test"
       ]
     },
     {
@@ -3420,7 +3422,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/LHoelper",
       "profile": "https://github.com/LHoelper",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3444,12 +3447,42 @@
       ]
     },
     {
+      "login": "oseiskar",
+      "name": "Otto Seiskari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1812432?v=4",
+      "profile": "https://github.com/oseiskar",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
       "login": "tapyu",
       "name": "Rubem Pacelli",
       "avatar_url": "https://avatars.githubusercontent.com/u/22801918?v=4",
       "profile": "https://github.com/tapyu",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "LorchZachery",
+      "name": "Zachery Lorch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54079406?v=4",
+      "profile": "https://github.com/LorchZachery",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "danferns",
+      "name": "Daniel Fernandes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57069381?v=4",
+      "profile": "https://github.com/danferns",
+      "contributions": [
+        "code"
       ]
     }
   ]
