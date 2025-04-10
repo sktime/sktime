@@ -98,7 +98,6 @@ class VECM(_StatsModelsAdapter):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "univariate-only": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,

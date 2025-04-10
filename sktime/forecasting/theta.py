@@ -420,7 +420,7 @@ class ThetaModularForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["GuzalBulatova", "fkiraly"],
-        "univariate-only": False,
+        "scitype:y": "both",
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
