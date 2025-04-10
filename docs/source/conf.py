@@ -108,7 +108,20 @@ numpydoc_show_class_members = True
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
-numpydoc_validation_checks = {"all"}
+# https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
+numpydoc_validation_checks = {
+    "all",
+    "SA04",  # Missing description for See Also "{reference_name}" reference
+    "EX01",  # No examples section found
+    "SA01",  # See Also section not found
+    "YD01",  # No Yields section found
+    "ES01",  # No extended summary found
+    "GL01",  # Docstring text (summary) should start in the line immediately ...
+    "PR08",  # Parameter "{param_name}" description should start with a capital letter
+    "PR09",  # Parameter "{param_name}" description should finish with "."
+    "RT05",  # Return value description should finish with "."
+    "RT03",  # Return value has no description
+}
 
 # generate autosummary even if no references
 autosummary_generate = True
