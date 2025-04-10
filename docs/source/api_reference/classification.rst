@@ -62,20 +62,20 @@ Deep learning
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    CNTCClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    GRUClassifier
-    GRUFCNNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    MVTSTransformerClassifier
-    ResNetClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    cnn.CNNClassifier
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    lstmfcn.LSTMFCNClassifier
+    macnn.MACNNClassifier
+    mcdcnn.MCDCNNClassifier
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    tapnet.TapNetClassifier
 
 Dictionary-based
 ----------------

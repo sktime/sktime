@@ -21,15 +21,15 @@ Forecasting datasets
     :toctree: auto_generated/
     :template: class.rst
 
-    Airline
-    HierarchicalSalesToydata
-    Longley
-    Lynx
-    M5Dataset
-    Macroeconomic
-    ShampooSales
-    Solar
-    USChange
+    airline.Airline
+    hierarchical_sales_toydata.HierarchicalSalesToydata
+    longley.Longley
+    lynx.Lynx
+    m5_competition.M5Dataset
+    macroeconomic.Macroeconomic
+    shampoo_sales.ShampooSales
+    solar.Solar
+    uschange.USChange
 
 Classification datasets
 -----------------------
@@ -41,13 +41,13 @@ Classification datasets
     :toctree: auto_generated/
     :template: class.rst
 
-    ArrowHead
-    BasicMotions
-    GunPoint
-    ItalyPowerDemand
-    JapaneseVowels
-    OSULeaf
-    PLAID
+    arrow_head.ArrowHead
+    basic_motions.BasicMotions
+    gunpoint.GunPoint
+    italy_power_demand.ItalyPowerDemand
+    japanese_vowels.JapaneseVowels
+    osuleaf.OSULeaf
+    plaid.PLAID
 
 Regression datasets
 -------------------

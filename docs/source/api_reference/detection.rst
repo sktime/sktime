@@ -36,9 +36,9 @@ Change Point Detection
     :toctree: auto_generated/
     :template: class.rst
 
-    MovingWindow
-    PELT
-    SeededBinarySegmentation
+        moving_window.MovingWindow
+        pelt.PELT
+        seeded_binseg.SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -112,10 +112,10 @@ Segment anomaly detectors identify anomalous segment.
     :toctree: auto_generated/
     :template: class.rst
 
-    StatThresholdAnomaliser
-    CircularBinarySegmentation
-    CAPA
-    MVCAPA
+    statthreshold.StatThresholdAnomaliser
+    circular_binseg.CircularBinarySegmentation
+    capa.CAPA
+    mvcapa.MVCAPA
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
