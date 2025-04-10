@@ -147,6 +147,19 @@ def run_test_for_class(cls, return_reason=False):
     return _return(run, reason)
 
 
+def _flatten_list(nested_list):
+    """Recursively flattens a nested list or tuple of arbitrary depth."""
+    flat_list = []
+
+    for item in nested_list:
+        if isinstance(item, (list, tuple)):
+            flat_list.extend(_flatten_list(item))  # Recursively flatten
+        else:
+            flat_list.append(item)
+
+    return flat_list
+
+
 @lru_cache
 def _run_test_for_class(cls):
     """Check if test should run - cached with hashable cls.
@@ -220,6 +233,7 @@ def _run_test_for_class(cls):
             cls_reqs = []
         if not isinstance(cls_reqs, list):
             cls_reqs = [cls_reqs]
+        cls_reqs = _flatten_list(cls_reqs)
         package_deps = [Requirement(req).name for req in cls_reqs]
 
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
