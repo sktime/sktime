@@ -23,8 +23,8 @@ class AlignerNaive(BaseAligner):
         end: aligns ends (highest index), no squeezing/stretching
         start-end: aligns starts and ends, stretches linearly and rounds
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pandas as pd
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.alignment.naive import AlignerNaive
