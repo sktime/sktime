@@ -26,7 +26,7 @@ class Id(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
     }
 
     def _transform(self, X, y=None):

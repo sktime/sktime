@@ -189,7 +189,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # removes missing data iff can handle missing data,
         #   and there is an estimator in the chain that removes it
         self._tagchain_is_linked_set(
-            "handles-missing-data", "capability:missing_values:removes", ests
+            "capability:missing_values", "capability:missing_values:removes", ests
         )
         # can handle unequal length iff all estimators can handle unequal length
         #   up to a potential estimator which turns the series equal length

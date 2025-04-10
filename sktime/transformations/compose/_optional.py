@@ -101,7 +101,7 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:instancewise",
             "y_inner_mtype",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",

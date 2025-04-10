@@ -28,7 +28,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, random_state=None):

@@ -129,7 +129,7 @@ class FourierFeatures(BaseTransformer):
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
         #   not relevant for transformers that return Primitives in transform-output
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
@@ -385,7 +385,7 @@ class FourierTransform(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self):

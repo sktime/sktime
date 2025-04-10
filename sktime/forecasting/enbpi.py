@@ -92,7 +92,7 @@ class EnbPIForecaster(BaseForecaster):
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",
