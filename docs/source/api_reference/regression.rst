@@ -55,6 +55,7 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 

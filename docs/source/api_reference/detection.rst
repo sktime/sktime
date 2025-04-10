@@ -32,6 +32,7 @@ Change Point Detection
 .. currentmodule:: sktime.detection.skchange_cp
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
@@ -107,6 +108,7 @@ Segment anomaly detectors identify anomalous segment.
 .. currentmodule:: sktime.detection.skchange_aseg
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 

@@ -17,6 +17,7 @@ Forecasting datasets
 .. currentmodule:: sktime.datasets.forecasting
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
@@ -36,6 +37,7 @@ Classification datasets
 .. currentmodule:: sktime.datasets.classification
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 

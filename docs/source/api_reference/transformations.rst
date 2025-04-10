@@ -361,6 +361,7 @@ Detrending and Decomposition
 .. currentmodule:: sktime.transformations.series.detrend
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
@@ -569,6 +570,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.holiday
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 

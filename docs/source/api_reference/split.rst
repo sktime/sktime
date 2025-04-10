@@ -44,18 +44,18 @@ They have tag ``"split_type"="temporal"``.
 .. currentmodule:: sktime.split
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    ExpandingWindowSplitter
-    ExpandingCutoffSplitter
-    ExpandingGreedySplitter
-    ExpandingSlidingWindowSplitter
-    TemporalTrainTestSplitter
-
+    cutoff.CutoffSplitter
+    singlewindow.SingleWindowSplitter
+    slidingwindow.SlidingWindowSplitter
+    expandingwindow.ExpandingWindowSplitter
+    expandingcutoff.ExpandingCutoffSplitter
+    expandinggreedy.ExpandingGreedySplitter
+    expandingslidingwindow.ExpandingSlidingWindowSplitter
+    temporal_train_test_split.TemporalTrainTestSplitter
 
 Time index splitter composition
 -------------------------------
