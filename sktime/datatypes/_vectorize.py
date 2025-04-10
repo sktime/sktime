@@ -685,8 +685,13 @@ class VectorizedDF:
             args_i[varname_of_self] = group
 
         est_i_method = getattr(est_i, method)
-        est_i_result = est_i_method(**args_i)
-
+        try:
+            est_i_result = est_i_method(**args_i)
+        except Exception as e:
+            raise RuntimeError(
+                f"Error applying {method} to group {group_name}, column {col_name},\
+                    arguments passed {args_i}"
+            ) from e
         if group_name is None:
             group_name = rowname_default
         if col_name is None:
