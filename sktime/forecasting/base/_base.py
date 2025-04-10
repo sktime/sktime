@@ -642,7 +642,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh, pred_int=True)
 
-
         # default alpha
         if alpha is None:
             alpha = [0.05, 0.95]

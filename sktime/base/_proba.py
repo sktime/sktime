@@ -129,8 +129,8 @@ class _PredictProbaMixin:
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
-        
-        fh = kwargs.get('fh',None) 
+
+        fh = kwargs.get("fh", None)
         # Store original forecasting horizon steps to check if 1 was already present
         original_fh_contained_1 = False
         if fh.is_relative:
@@ -141,7 +141,7 @@ class _PredictProbaMixin:
                 new_steps = np.append(fh_steps, 1)
                 # Maintain relative horizon properties
                 fh = ForecastingHorizon(new_steps, is_relative=True, freq=fh.freq)
-                kwargs['fh'] = fh  # Update kwargs for consistency
+                kwargs["fh"] = fh  # Update kwargs for consistency
 
         # defaulting logic is as follows:
         # var direct deputies are proba, then interval
