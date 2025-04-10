@@ -135,7 +135,7 @@ class AlignerDTW(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
-        # If sakoi-cheba window is used, window_size must be set or given a default 
+        # If sakoi-cheba window is used, window_size must be set or given a default
         # value equal to 10 % of the length of the series
         if self.window_type == "sakoechiba":
             if self.window_size is None:
@@ -354,7 +354,7 @@ class AlignerDTWfromDist(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
-        # If sakoi-cheba window is used, window_size must be set or given a default 
+        # If sakoi-cheba window is used, window_size must be set or given a default
         # value equal to 10 % of the length of the series
         if self.window_type == "sakoechiba":
             if self.window_size is None:
