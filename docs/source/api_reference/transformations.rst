@@ -77,6 +77,12 @@ Pipeline building - Broadcasting and apply-map
 
 .. currentmodule:: sktime.transformations.panel.compose
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnTransformer
+
 .. currentmodule:: sktime.transformations.series.func_transform
 
 .. autosummary::
@@ -193,9 +199,12 @@ Shapelets, wavelets, and convolution
     :template: class.rst
 
     Rocket
+    RocketPyts
     MiniRocket
     MiniRocketMultivariate
     MiniRocketMultivariateVariable
+    MultiRocket
+    MultiRocketMultivariate
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
@@ -226,6 +235,9 @@ Dictionary-based features
     :template: class.rst
 
     SFA
+    SFAFast
+    PAAlegacy
+    SAXlegacy
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -503,6 +515,7 @@ Binning, sampling and segmentation
 
     IntervalSegmenter
     RandomIntervalSegmenter
+    SlidingWindowSegmenter
 
 .. currentmodule:: sktime.transformations.series.dilation_mapping
 
@@ -527,15 +540,6 @@ Binning, sampling and segmentation
     :template: class.rst
 
     SAX
-
-.. currentmodule:: sktime.transformations.panel.dictionary_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PAAlegacy
-    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -801,6 +805,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    TSBootstrapAdapter
     RepeatBootstrapTransformer
 
 Panel-to-Series transformers
