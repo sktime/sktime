@@ -3,6 +3,7 @@
 __author__ = ["Spinachboul", "kartik-555"]
 __all__ = ["PyPOTSImputer"]
 
+import os
 from typing import Optional
 
 import numpy as np
@@ -83,6 +84,8 @@ class PyPOTSImputer(BaseTransformer):
         _check_soft_dependencies("pypots", severity="error")
         import pypots
 
+        return pypots
+
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
         # Check dependencies
@@ -121,6 +124,13 @@ class PyPOTSImputer(BaseTransformer):
 
         # Initialize and train the model
         self._imputer = model_cls(**params)
+
+        # Skip if inside readthedocs build
+        if os.environ.get("READTHEDOCS") == "True":
+            self._is_fitted
+            return self
+
+        # Fit the model
         train_data = {"X": X_array, "missing_mask": X_mask}
         self._imputer.fit(train_data)
 
