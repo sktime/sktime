@@ -135,6 +135,7 @@ add_function_parentheses = False
 # dollarmath and amsmath extensions, or specified in math directives. We here silence
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
+show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
 issues_github_path = "sktime/sktime"
