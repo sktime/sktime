@@ -461,11 +461,6 @@ checks = [ # same as in docs/source/conf.py
     'RT05',  # Return value description should finish with '.'
     'RT03',  # Return value has no description
 ]
-
 exclude = [  # don't report on objects that match any of these regex
-    'docs',
-    '_build',
-    '.ipynb_checkpoints',
-    'Thumbs.db',
-    '.DS_Store',
+    'docs/*',
 ]
