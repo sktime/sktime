@@ -206,13 +206,6 @@ html_theme_options = {
             "icon": "fab fa-linkedin",
         },
     ],
-    "favicons": [
-        {
-            "rel": "icon",
-            "sizes": "16x16",
-            "href": "images/sktime-favicon.ico",
-        }
-    ],
     "show_prev_next": False,
     "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
