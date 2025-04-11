@@ -522,7 +522,7 @@ def _make_estimator_overview(app):
         del path_parts[-2]
         import_path = ".".join(path_parts[:-1])
         # includes part of class string
-        url = obj_class._get_doc_link()
+        url = obj_class._generate_doc_link()
         # adds html link reference
         obj_name = f"""<a href={url}>{obj_name}</a>"""
 

@@ -276,7 +276,7 @@ class _HTMLDocumentationLinkMixin:
     _doc_link_module = "sktime"
 
     @classmethod
-    def _doc_link_generator(cls):
+    def _generate_doc_link(cls):
         module = importlib.import_module(cls._doc_link_module)
         version = parse_version(module.__version__).base_version
         modpath = str(cls)[8:-2]
@@ -284,9 +284,10 @@ class _HTMLDocumentationLinkMixin:
 
         return f"https://www.sktime.net/en/v{version}/api_reference/auto_generated/{path}.html"
 
-    @classmethod
-    def _get_doc_link(cls):
+    def _get_doc_link(self):
         """Generate a link to the API documentation for a given base object.
+
+        For compatibility with sklearn it's an instance method.
 
         Returns
         -------
@@ -295,12 +296,12 @@ class _HTMLDocumentationLinkMixin:
             not belong to module `_doc_link_module`, the empty string (i.e. `""`) is
             returned.
         """
-        if cls.__module__.split(".")[0] != cls._doc_link_module:
+        if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
         # TODO: add check if link is well-structured
         # TODO: add fallback to stable version (?)
-        return cls._doc_link_generator()
+        return self.__class__._generate_doc_link()
 
     @property
     def _repr_html_(self):
