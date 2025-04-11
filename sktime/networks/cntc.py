@@ -52,7 +52,7 @@ class CNTCNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(
@@ -64,7 +64,6 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        _check_soft_dependencies("keras-self-attention", severity="error")
         _check_dl_dependencies(severity="error")
 
         self.random_state = random_state
@@ -91,7 +90,7 @@ class CNTCNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        from sktime.libs.keras_self_attention import SeqSelfAttention
+        from sktime.libs._keras_self_attention import SeqSelfAttention
 
         input_layers = []
 
