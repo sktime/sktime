@@ -531,14 +531,11 @@ def _make_estimator_overview(app):
         modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
-        clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
+        # includes part of class string
+        url = obj_class._get_doc_link()
         # adds html link reference
-        obj_name = (
-            """<a href='#'"""
-            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
-        )
+        obj_name = f"""<a href={url}>{obj_name}</a>"""
 
         # determine the "main" object type
         # this is the first in the list that also appears in the dropdown menu
