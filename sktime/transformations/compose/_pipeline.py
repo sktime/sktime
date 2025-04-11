@@ -256,7 +256,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # coerce to transformer if needed
 
         def _coerce_to_trafo(x, x_st):
-            if x not in ["transformer"]:
+            if x_st not in ["transformer"]:
                 return coerce_scitype(x, to_scitype="transformer", from_scitype=x_st)
             return x
 
