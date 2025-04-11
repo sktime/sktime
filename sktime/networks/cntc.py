@@ -3,7 +3,7 @@
 __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCNetwork(BaseDeepNetwork):
