@@ -526,6 +526,14 @@ Deep learning based forecasters
 
     RBFForecaster
 
+.. currentmodule:: sktime.forecasting.es_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ESRNNForecaster
+
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -569,6 +577,12 @@ Pre-trained and foundation models
 
     TimesFMForecaster
 
+.. currentmodule:: sktime.forecasting.timemoe
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeMoEForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
@@ -576,6 +590,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     TinyTimeMixerForecaster
+
+.. currentmodule:: sktime.forecasting.time_llm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeLLMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
@@ -587,6 +609,14 @@ Intermittent time series forecasters
     :template: class.rst
 
     Croston
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastADIDA
 
 Ensembles and stacking
 ----------------------

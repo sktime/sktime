@@ -469,7 +469,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     ... })
     >>> pl = PinballLoss()
     >>> pl(y_true, y_pred)
-    0.1791666666666667
+    np.float64(0.1791666666666667)
     >>> pl = PinballLoss(score_average=False)
     >>> pl(y_true, y_pred).to_numpy()
     array([0.16625, 0.275  , 0.09625])
@@ -490,7 +490,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     array([0.16233333, 0.465     ])
     >>> pl = PinballLoss(multioutput=np.array([0.3, 0.7]))
     >>> pl(y_true, y_pred)
-    0.3742000000000001
+    np.float64(0.3742000000000001)
     """
 
     _tags = {

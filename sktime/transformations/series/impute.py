@@ -89,6 +89,7 @@ class Imputer(BaseTransformer):
     >>> transformer = Imputer(method="drift")
     >>> transformer.fit(y_train)
     Imputer(...)
+    >>> import numpy as np
     >>> y_test.iloc[3] = np.nan
     >>> y_hat = transformer.transform(y_test)
     """
