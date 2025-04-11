@@ -39,11 +39,9 @@ class OptimalReconciler(_ReconcilerTransformer):
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeOptimalReconciler()
-    >>> pipe = reconciler * ExponentialSmoothing()
+    >>> pipe = OptimalReconciler() * ExponentialSmoothing()
     >>> pipe.fit(y)
-    >>> y_pred = pipe.predict()
-
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
@@ -255,12 +253,9 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeOptimalReconciler()
-    >>> pipe = reconciler * ExponentialSmoothing()
+    >>> pipe = NonNegativeOptimalReconciler() * ExponentialSmoothing()
     >>> pipe.fit(y)
-    >>> y_pred = pipe.predict()
-
-
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
     _tags = {
