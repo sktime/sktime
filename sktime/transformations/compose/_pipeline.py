@@ -210,8 +210,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         Parameters
         ----------
         estimators : list of estimators, or list of (name, estimator) pairs
-        allow_postproc : bool, optional, default=False
-            whether transformers after the forecaster are allowed
 
         Returns
         -------
@@ -222,9 +220,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         Raises
         ------
         TypeError if names in ``estimators`` are not unique
-        TypeError if estimators in ``estimators`` are not all forecaster or transformer
-        TypeError if there is not exactly one forecaster in ``estimators``
-        TypeError if not allow_postproc and forecaster is not last estimator
+        TypeError if estimators in ``estimators`` are not all transformers
         """
         from sktime.registry._scitype_coercion import all_coercible_to, coerce_scitype
 
