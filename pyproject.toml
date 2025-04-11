@@ -156,7 +156,6 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.20,>=2; python_version < "3.13"',
-  'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
