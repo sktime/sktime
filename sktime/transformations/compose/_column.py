@@ -191,7 +191,9 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set(
                 "capability:unequal_length:removes", False, True, l_transformers
             )
-            self._anytagis_then_set("capability:missing_values", False, True, l_transformers)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_transformers
+            )
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
             )

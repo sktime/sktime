@@ -1432,7 +1432,7 @@ class ForecastX(BaseForecaster):
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
 
         # tag_translate_dict = {
-        #    "capability:missing_values": forecaster.get_tag("capability:missing_values")
+        #   "capability:missing_values": forecaster.get_tag("capability:missing_values")
         # }
         # self.set_tags(**tag_translate_dict)
 

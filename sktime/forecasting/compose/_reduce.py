@@ -254,7 +254,9 @@ class _Reducer(_BaseWindowForecaster):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"capability:missing_values": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
@@ -1992,7 +1994,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"capability:missing_values": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
