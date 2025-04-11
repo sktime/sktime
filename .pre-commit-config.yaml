@@ -35,3 +35,8 @@ repos:
     hooks:
       - id: shellcheck
         name: shellcheck
+
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.7.0
+    hooks:
+      - id: numpydoc-validation
