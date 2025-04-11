@@ -4,6 +4,7 @@
 import datetime
 import os
 import sys
+import warnings
 
 import sktime
 
@@ -134,7 +135,18 @@ add_function_parentheses = False
 # configuration. This ensures that MathJax processes only math, identified by the
 # dollarmath and amsmath extensions, or specified in math directives. We here silence
 # the corresponding warning that this override happens.
-suppress_warnings = ["myst.mathjax"]
+suppress_warnings = [
+    "myst.mathjax",
+    "docutils",
+    "toc.not_included",
+    "autodoc.import_object",
+    "autosectionlabel.changelog",
+    "autosectionlabel.changelog_header_template",
+    "autosectionlabel.examples",
+    "autosectionlabel.api_reference",
+]
+# FIXME: Temporary solution until numpydoc issues are fixed
+warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
 show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
