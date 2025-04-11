@@ -71,10 +71,19 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     ----------
     middle_level : int
         The level at which to split the hierarchy for reconciliation.
-    middle_top_reconciler : BaseTransformer
-        The transformer to use for the top part of the hierarchy (above the middle).
     middle_bottom_reconciler : BaseTransformer
         The transformer to use for each subtree below the middle-level totals.
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ...     MiddleOutReconciler)
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = _make_hierarchical()
+    >>> pipe = MiddleOutReconciler() * ExponentialSmoothing()
+    >>> pipe = pipe.fit(y)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
     _tags = {

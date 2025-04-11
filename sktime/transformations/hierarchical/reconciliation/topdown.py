@@ -30,13 +30,23 @@ class TopdownReconciler(_ReconcilerTransformer):
 
     For more information, see "Single level approaches" in [1].
 
-
     Parameters
     ----------
     method : str, default="td_fcst"
         The method to use for reconciliation.
         - `td_fcst`: Forecast Proportions.
         - `td_share`: Topdown Share.
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ...     TopdownReconciler)
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = _make_hierarchical()
+    >>> pipe = TopdownReconciler() * ExponentialSmoothing()
+    >>> pipe = pipe.fit(y)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
 
     References
     ----------

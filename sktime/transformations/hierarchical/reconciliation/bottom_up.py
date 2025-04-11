@@ -30,6 +30,17 @@ class BottomUpReconciler(_ReconcilerTransformer):
         An instance of the Aggregator class used for aggregation.
     _bottom_series : pd.Index
         The index of the bottom level series.
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ...     BottomUpReconciler)
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> y = _make_hierarchical()
+    >>> pipe = BottomUpReconciler() * ExponentialSmoothing()
+    >>> pipe = pipe.fit(y)
+    >>> y_pred = pipe.predict(fh=[1, 2, 3])
     """
 
     def _fit_reconciler(self, X, y=None):

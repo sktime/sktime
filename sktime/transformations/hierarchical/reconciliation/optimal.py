@@ -40,7 +40,7 @@ class OptimalReconciler(_ReconcilerTransformer):
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
     >>> pipe = OptimalReconciler() * ExponentialSmoothing()
-    >>> pipe.fit(y)
+    >>> pipe = pipe.fit(y)
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
@@ -254,7 +254,7 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
     >>> pipe = NonNegativeOptimalReconciler() * ExponentialSmoothing()
-    >>> pipe.fit(y)
+    >>> pipe = pipe.fit(y)
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 

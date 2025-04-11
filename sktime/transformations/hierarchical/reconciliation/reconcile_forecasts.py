@@ -68,7 +68,8 @@ class ReconcileForecasts(BaseTransformer):
     Examples
     --------
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.transformations.hierarchical.reconcile import Reconciler
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ... ReconcileForecasts)
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> agg = Aggregator()
@@ -83,7 +84,7 @@ class ReconcileForecasts(BaseTransformer):
     PolynomialTrendForecaster(...)
     >>> prds = forecaster.predict(fh=[1])
     >>> # reconcile forecasts
-    >>> reconciler = Reconciler(method="ols")
+    >>> reconciler = ReconcileForecasts(method="ols")
     >>> prds_recon = reconciler.fit_transform(prds)
     """
 
