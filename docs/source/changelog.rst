@@ -24,6 +24,25 @@ Maintenance release with scheduled updates to version bounds.
 
 For the last non-maintenance content update, see 0.36.1.
 
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Carries out deprecations and change actions scheduled for 0.35.0:
+
+Forecasting
+^^^^^^^^^^^
+
+* the deprecated ``HierarchyEnsembleForecaster.fitted_list`` parameter has been removed.
+  Users should use ``get_fitted_params`` or ``forecasters_`` instead.
+
+Time Series Anomalies, Changepoints, Segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* the deprecated ``annotation`` module has been removed. Users should replace
+  imports from ``sktime.annotation`` with imports from ``sktime.detection``.
+* the deprecated ``Y`` argument in detector methods has been removed.
+  Instead, users should use the ``y`` argument.
+
 
 Version 0.36.1 - 2025-04-04
 ---------------------------
