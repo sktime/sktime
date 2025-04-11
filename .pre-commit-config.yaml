@@ -43,5 +43,7 @@ repos:
       # https://github.com/numpy/numpydoc/issues/497
         exclude: |
           (?x)(
-              docs/source
+              docs/source|
+              tests|
+              _.*\.py
           )
