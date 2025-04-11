@@ -1546,14 +1546,15 @@ def load_m5(
             sell_prices : pd.DataFrame
             calander : pd.DataFrame
 
-    Notes
-    -----
-    Overview:
+    Dataset Description
+    -------------------
     - **Number of Rows**: Approximately 58 million rows (for the full dataset).
     - **Number of Columns**: Varies based on `include_events` parameter.
       - Without events: 9 columns.
       - With events: 13 columns.
 
+    Notes
+    -----
     The dataset consists of three main files:
     - sales_train_validation.csv: daily sales data for each product and store
     - sell_prices.csv: price data for each product and store

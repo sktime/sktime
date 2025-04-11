@@ -163,8 +163,8 @@ class CNTCClassifier(BaseDeepClassifier):
                 stamps
             "
 
-        Parameters
-        ----------
+        Arguments
+        ---------
         X: tuple of shape = (series_length (m), n_dimensions (d))
             The shape of the data fed into the model.
 

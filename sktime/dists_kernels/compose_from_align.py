@@ -12,7 +12,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     Behaviour: uses aligner.get_distance on pairs to obtain distance matrix.
 
-    Parameters
+    Components
     ----------
     aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
