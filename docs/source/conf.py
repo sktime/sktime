@@ -108,7 +108,9 @@ numpydoc_show_class_members = True
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
-numpydoc_validation_checks = {"all"}
+# https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
+# Let's turn of the check for building but keep it in pre-commit hooks
+numpydoc_validation_checks = set()
 
 # generate autosummary even if no references
 autosummary_generate = True
@@ -133,6 +135,7 @@ add_function_parentheses = False
 # dollarmath and amsmath extensions, or specified in math directives. We here silence
 # the corresponding warning that this override happens.
 suppress_warnings = ["myst.mathjax"]
+show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
 issues_github_path = "sktime/sktime"
@@ -518,14 +521,11 @@ def _make_estimator_overview(app):
         modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
-        clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
+        # includes part of class string
+        url = obj_class._generate_doc_link()
         # adds html link reference
-        obj_name = (
-            """<a href='#'"""
-            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
-        )
+        obj_name = f"""<a href={url}>{obj_name}</a>"""
 
         # determine the "main" object type
         # this is the first in the list that also appears in the dropdown menu
