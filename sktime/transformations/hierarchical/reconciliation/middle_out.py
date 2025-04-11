@@ -80,8 +80,8 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     ...     MiddleOutReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-    >>> y = _make_hierarchical()
-    >>> pipe = MiddleOutReconciler() * ExponentialSmoothing()
+    >>> y = _make_hierarchical(hierarchy_levels=(2, 2, 4))
+    >>> pipe = MiddleOutReconciler(middle_level=1) * ExponentialSmoothing()
     >>> pipe = pipe.fit(y)
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
