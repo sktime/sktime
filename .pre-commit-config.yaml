@@ -40,3 +40,8 @@ repos:
     rev: v1.7.0
     hooks:
       - id: numpydoc-validation
+      # https://github.com/numpy/numpydoc/issues/497
+        exclude: |
+          (?x)(
+              docs/source
+          )
