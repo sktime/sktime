@@ -248,10 +248,9 @@ def test_scitype_inference(estimator_scitype):
     inferred_scitype = all_scitypes[0]
 
     # stepout for detector due to rename in scitype
-    # todo 0.37.0 - replace "detector" with "series-annotator"
     # todo 1.0.0 - remove this stepout entirely
-    if estimator_scitype == "detector":
-        assert "detector" in all_scitypes
+    if estimator_scitype == "series-annotator":
+        assert "series-annotator" in all_scitypes
         return None
 
     assert inferred_scitype == estimator_scitype, (
