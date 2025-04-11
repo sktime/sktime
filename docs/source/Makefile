@@ -24,7 +24,7 @@ clean:
 # make build O="--no-color 2> build_warnings.log"
 html:
 #	./symlink_examples.sh
-	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -j auto >> build.log 2>&1
+	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -j auto
 
 # $(O) is meant as a shortcut for custom options.
 autobuild:
