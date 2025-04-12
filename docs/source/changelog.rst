@@ -32,15 +32,18 @@ Carries out deprecations and change actions scheduled for 0.35.0:
 Forecasting
 ^^^^^^^^^^^
 
-* the deprecated ``HierarchyEnsembleForecaster.fitted_list`` parameter has been removed.
+* deprecated: the ``handles-missing-data`` tag is deprecated and renamed to ``capability:missing_values``,
+  to be consistent with other estimator types. The old tag name ``handles-missing-data`` can be used until 1.0.0,
+  when it will be removed, but will raise a deprecation warning.
+* removed: the deprecated ``HierarchyEnsembleForecaster.fitted_list`` parameter has been removed.
   Users should use ``get_fitted_params`` or ``forecasters_`` instead.
 
 Time Series Anomalies, Changepoints, Segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* the deprecated ``annotation`` module has been removed. Users should replace
+* removed: the deprecated ``annotation`` module has been removed. Users should replace
   imports from ``sktime.annotation`` with imports from ``sktime.detection``.
-* the deprecated ``Y`` argument in detector methods has been removed.
+* removed: the deprecated ``Y`` argument in detector methods has been removed.
   Instead, users should use the ``y`` argument.
 
 
