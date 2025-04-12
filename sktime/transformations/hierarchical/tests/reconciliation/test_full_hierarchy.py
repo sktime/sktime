@@ -55,9 +55,9 @@ def test_create_summing_matrix_from_index(small_hier_index):
     # so we expect 2 ones in that row
     expected_sum = 2
     actual_sum = S_df.loc[row_agg].sum()
-    assert (
-        actual_sum == expected_sum
-    ), f"Row for {row_agg} should sum to {expected_sum}, got {actual_sum}"
+    assert actual_sum == expected_sum, (
+        f"Row for {row_agg} should sum to {expected_sum}, got {actual_sum}"
+    )
 
     # --- 3) Check that a fully aggregated node has 1 for all bottom nodes ---
     # e.g., the global aggregator ('__total', '__total', '__total', '__total')
@@ -83,9 +83,9 @@ def test_create_summing_matrix_from_index(small_hier_index):
     )
     # Check that the position of the 1 is exactly the matching column
     leaf_node_col_index = S_df.columns.tolist().index(leaf_node)
-    assert (
-        row_values[leaf_node_col_index] == 1
-    ), "Leaf node row should have a 1 in its own column."
+    assert row_values[leaf_node_col_index] == 1, (
+        "Leaf node row should have a 1 in its own column."
+    )
 
     # If all assertions pass, the test passes
     print("All tests passed for create_summing_matrix_from_index!")

@@ -39,11 +39,9 @@ class OptimalReconciler(_ReconcilerTransformer):
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeOptimalReconciler()
-    >>> pipe = reconciler * ExponentialSmoothing()
-    >>> pipe.fit(y)
-    >>> y_pred = pipe.predict()
-
+    >>> pipe = OptimalReconciler() * ExponentialSmoothing()
+    >>> pipe = pipe.fit(y)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None):
@@ -69,11 +67,34 @@ class OptimalReconciler(_ReconcilerTransformer):
         self.A_, self.I_ = _split_summing_matrix(self.S_)
 
         self._sigma = self.error_covariance_matrix
+
         if not isinstance(self._sigma, pd.DataFrame):
             self._sigma = self._get_error_covariance_matrix(self._sigma)
+        else:
+            if not isinstance(self._sigma.index, pd.MultiIndex):
+                # Coerce to pd.MultiIndex
+                # MultiIndex and Index have a lot of differences
+                # that avoid us to use the same code for both
+                index = pd.MultiIndex.from_tuples(
+                    [
+                        x if isinstance(x, tuple) else (x,)
+                        for x in self.error_covariance_matrix.index.to_list()
+                    ]
+                )
+                columns = pd.MultiIndex.from_tuples(
+                    [
+                        x if isinstance(x, tuple) else (x,)
+                        for x in self.error_covariance_matrix.columns.to_list()
+                    ]
+                )
+                self._sigma.index = index
+                self._sigma.columns = columns
+        # If the index has integer values and __total, the
+        # sort_index will raise TypeError. We handle this case here.
+        # This is a workaround for the issue,
+        # and shou
 
-        self._sigma = self._sigma.sort_index(axis=0).sort_index(axis=1)
-
+        self._sigma = self._sigma.loc[self.S_.index, self.S_.index]
         self._permutation_matrix = _get_permutation_matrix(self.S_)
 
     def _transform_reconciler(self, X, y):
@@ -232,12 +253,9 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = _make_hierarchical()
-    >>> reconciler = NonNegativeOptimalReconciler()
-    >>> pipe = reconciler * ExponentialSmoothing()
-    >>> pipe.fit(y)
-    >>> y_pred = pipe.predict()
-
-
+    >>> pipe = NonNegativeOptimalReconciler() * ExponentialSmoothing()
+    >>> pipe = pipe.fit(y)
+    >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
     _tags = {
@@ -329,11 +347,14 @@ def _create_summing_matrix_from_index(hier_index):
                 S[i, j] = 1
 
     # Create a DataFrame with the same row index and MultiIndex columns
+    index = pd.MultiIndex.from_tuples(all_nodes, names=hier_index.names)
+    columns = pd.MultiIndex.from_tuples(bottom_nodes, names=hier_index.names)
+
     S_df = (
         pd.DataFrame(
             S,
-            index=pd.MultiIndex.from_tuples(all_nodes, names=hier_index.names),
-            columns=pd.MultiIndex.from_tuples(bottom_nodes, names=hier_index.names),
+            index=index,
+            columns=columns,
         )
         .sort_index(axis=0)
         .sort_index(axis=1)

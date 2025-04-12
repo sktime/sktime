@@ -7,6 +7,25 @@ from sktime.transformations.hierarchical.reconciliation._utils import (
 __all__ = ["_ReconcilerTransformer"]
 
 
+def _has_hierarchy(X):
+    """Check if the data has hierarchy.
+
+    To have an hierarchy, it must either:
+    - Have more than 2 index levels
+    - Have a __total level at the second index level
+    """
+    n_levels_geq_3 = X.index.nlevels >= 3
+    if n_levels_geq_3:
+        return True
+    n_levels_eq_2 = X.index.nlevels == 2
+    if n_levels_eq_2:
+        has___total_at_last_non_temporal_level = "__total" in X.index.get_level_values(
+            -2
+        )
+        return has___total_at_last_non_temporal_level
+    return False
+
+
 class _ReconcilerTransformer(BaseTransformer):
     """Base class of reconcilers that follow the reconciliation API.
 
@@ -43,7 +62,7 @@ class _ReconcilerTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -69,7 +88,7 @@ class _ReconcilerTransformer(BaseTransformer):
         -------
         self
         """
-        self._no_hierarchy = X.index.nlevels < 3
+        self._no_hierarchy = not _has_hierarchy(X)
         if self._no_hierarchy:
             return self
         self._original_series = X.index.droplevel(-1).unique()
@@ -146,5 +165,5 @@ class _ReconcilerTransformer(BaseTransformer):
     def _inverse_transform_reconciler(self, X, y):
         """Apply reconciliation."""
         raise NotImplementedError(
-            f"{self.__class__.__name__} must implement" "_inverse_transform_reconciler."
+            f"{self.__class__.__name__} must implement _inverse_transform_reconciler."
         )

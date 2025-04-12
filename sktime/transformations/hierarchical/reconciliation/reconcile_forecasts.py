@@ -41,7 +41,11 @@ class ReconcileForecasts(BaseTransformer):
     forecasting, please refer to BottomUpReconciler, OptimalReconciler,
     TopdownReconciler, or MiddleOutReconciler.
 
-    Please refer to [1]_ for further information
+    For reconciliation methods that require historical values in addition to the
+    forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
+
+    For further information on the methods, see [1]_.
+
 
     Parameters
     ----------
@@ -64,7 +68,8 @@ class ReconcileForecasts(BaseTransformer):
     Examples
     --------
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.transformations.hierarchical.reconcile import Reconciler
+    >>> from sktime.transformations.hierarchical.reconciliation import (
+    ... ReconcileForecasts)
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> agg = Aggregator()
@@ -79,7 +84,7 @@ class ReconcileForecasts(BaseTransformer):
     PolynomialTrendForecaster(...)
     >>> prds = forecaster.predict(fh=[1])
     >>> # reconcile forecasts
-    >>> reconciler = Reconciler(method="ols")
+    >>> reconciler = ReconcileForecasts(method="ols")
     >>> prds_recon = reconciler.fit_transform(prds)
     """
 
@@ -104,7 +109,7 @@ class ReconcileForecasts(BaseTransformer):
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": True,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
@@ -236,3 +241,66 @@ class ReconcileForecasts(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{"method": x} for x in cls.METHOD_LIST if not x.endswith("nonneg")]
+
+
+def _get_s_matrix(X):
+    """Determine the summation "S" matrix.
+
+    Reconciliation methods require the S matrix, which is defined by the
+    structure of the hierarchy only. The S matrix is inferred from the input
+    multi-index of the forecasts and is used to sum bottom-level forecasts
+    appropriately.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
+    Returns
+    -------
+    s_matrix : pd.DataFrame with rows equal to the number of unique nodes in
+        the hierarchy, and columns equal to the number of bottom level nodes only,
+        i.e. with no aggregate nodes. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
+    """
+    # get bottom level indexes
+    bl_inds = (
+        X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
+        .index.droplevel(level=-1)
+        .unique()
+    )
+    # get all level indexes
+    al_inds = X.droplevel(level=-1).index.unique()
+
+    # set up matrix
+    s_matrix = pd.DataFrame(
+        [[0.0 for i in range(len(bl_inds))] for i in range(len(al_inds))],
+        index=al_inds,
+    )
+    s_matrix.columns = bl_inds
+
+    # now insert indicator for bottom level
+    for i in s_matrix.columns:
+        s_matrix.loc[s_matrix.index == i, i] = 1.0
+
+    # now for each unique column add aggregate indicator
+    for i in s_matrix.columns:
+        if s_matrix.index.nlevels > 1:
+            # replace index with totals -> ("nodeA", "__total")
+            agg_ind = list(i)[::-1]
+            for j in range(len(agg_ind)):
+                agg_ind[j] = "__total"
+                # insert indicator
+                s_matrix.loc[tuple(agg_ind[::-1]), i] = 1.0
+        else:
+            s_matrix.loc["__total", i] = 1.0
+
+    # drop new levels not present in original matrix
+    s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
+
+    return s_matrix
