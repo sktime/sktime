@@ -41,7 +41,7 @@ class _TransformChangeNInstances(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
@@ -72,12 +72,15 @@ class _TransformChangeNInstances(BaseTransformer):
 
         rng = np.random.default_rng(self.random_state)
         # series names
-        instances = X.index.droplevel(-1).unique()
+        instances_idx = X.index.droplevel(-1).unique()
         # Sample self.n_instances at random
 
-        n = min(self.n, len(instances))
-        instances = rng.choice(instances, n, replace=False)
-        return X.loc[instances].sort_index()
+        n = min(self.n, len(instances_idx))
+        selected_instances_idx = rng.choice(
+            list(range(len(instances_idx))), n, replace=False
+        )
+        instances = instances_idx[selected_instances_idx]
+        return X.loc[X.index.droplevel(-1).isin(instances)].sort_index()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -87,7 +90,6 @@ class _TransformChangeNInstances(BaseTransformer):
         ]
 
 
-@pytest.mark.xfail
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.transformations.base"),
     reason="run test only if transformations base class has changed",
