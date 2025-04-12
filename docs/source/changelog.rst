@@ -20,7 +20,7 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.37.0 - 2025-04-12
 ---------------------------
 
-Maintenance release with scheduled updates to version bounds.
+Maintenance release with scheduled deprecations and change actions.
 
 For the last non-maintenance content update, see 0.36.1.
 
