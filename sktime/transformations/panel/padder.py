@@ -44,12 +44,13 @@ class PaddingTransformer(BaseTransformer):
     >>>
     >>> # Fit the transformer to the data
     >>> padder.fit(X)
+    PaddingTransformer()
     >>>
     >>> # Transform the data
     >>> Xt = padder.transform(X)
     >>>
     >>> # Display the transformed data
-    >>> print(Xt)
+    >>> # print(Xt)
     """
 
     _tags = {
