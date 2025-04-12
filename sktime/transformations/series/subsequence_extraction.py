@@ -85,7 +85,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length:removes": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, aggregate_fn, subseq_len, kwargs=None, selector="max"):

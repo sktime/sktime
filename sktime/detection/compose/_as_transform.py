@@ -68,7 +68,7 @@ class DetectorAsTransformer(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:missing_values:removes": True,
     }
 

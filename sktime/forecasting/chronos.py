@@ -299,7 +299,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
