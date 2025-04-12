@@ -315,12 +315,14 @@ class TestAllReconciliationTransformers(
     @pytest.mark.parametrize("no_levels", [1, 2, 3, 4])
     @pytest.mark.parametrize("flatten_single_levels", [True, False])
     @pytest.mark.parametrize("unnamed_levels", [True, False])
+    @pytest.mark.parametrize("aggregate", [True, False])
     def test_hierarchical_reconcilers(
         self,
         estimator_instance,
         no_levels,
         flatten_single_levels,
         unnamed_levels,
+        aggregate,
     ):
         """Test that hierarchical transformers can handle hierarchical data.
 
@@ -334,15 +336,16 @@ class TestAllReconciliationTransformers(
         import numpy as np
         from pandas.testing import assert_frame_equal
 
-        agg = Aggregator(flatten_single_levels=flatten_single_levels)
-
         X = _bottom_hier_datagen(
             no_bottom_nodes=5,
             no_levels=no_levels,
             random_seed=123,
         )
         # add aggregate levels
-        X = agg.fit_transform(X)
+
+        if aggregate:
+            agg = Aggregator(flatten_single_levels=flatten_single_levels)
+            X = agg.fit_transform(X)
 
         if unnamed_levels:
             X.index.names = [None] * X.index.nlevels

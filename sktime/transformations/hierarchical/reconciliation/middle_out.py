@@ -80,6 +80,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     ...     MiddleOutReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> y = _make_hierarchical(hierarchy_levels=(2, 2, 4))
     >>> pipe = MiddleOutReconciler(middle_level=1) * ExponentialSmoothing()
     >>> pipe = pipe.fit(y)
@@ -134,8 +135,9 @@ class MiddleOutReconciler(_ReconcilerTransformer):
         self : MiddleOutReconciler
             The fitted reconciler.
         """
+        series_ids = X.index.droplevel(-1).unique()
         self._hierarchical_level_nodes = _get_series_for_each_hierarchical_level(
-            self._original_series
+            series_ids
         )
 
         if (
@@ -161,7 +163,17 @@ class MiddleOutReconciler(_ReconcilerTransformer):
             self._delegate.fit(X, y)
             return self
 
-        self.middle_level_series_ = self._hierarchical_level_nodes[self.middle_level]
+        try:
+            self.middle_level_series_ = self._hierarchical_level_nodes[
+                self.middle_level
+            ]
+        except IndexError as e:
+            n_levels = len(self._hierarchical_level_nodes)
+            raise ValueError(
+                f"middle_level should be between 0 and {n_levels - 1}, that is"
+                f" the number of levels in the hierarchy."
+                f" The provided value was {self.middle_level}."
+            ) from e
 
         # Notice that the topdown strategy needs to be fitted for each
         # middle-level note, separately.
