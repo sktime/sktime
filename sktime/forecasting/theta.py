@@ -440,18 +440,7 @@ class ThetaModularForecaster(BaseForecaster):
         self.weights = weights
         self.theta_values = theta_values
 
-        # ensure theta_values is not None
-        if self.theta_values is None:
-            self.theta_values = (0, 2)
-
         forecasters_ = self._check_forecasters(forecasters)
-
-        # Add a debug print
-        print(f"After _check_forecasters, forecasters_ = {forecasters_}")
-
-        if forecasters_ is None or len(forecasters_) == 0:
-            raise ValueError("No valid forecasters could be created")
-
         self._colens = ColumnEnsembleForecaster(forecasters=forecasters_)
 
         self.pipe_ = TransformedTargetForecaster(
@@ -462,8 +451,6 @@ class ThetaModularForecaster(BaseForecaster):
         )
 
     def _check_forecasters(self, forecasters):
-        from sktime.forecasting.naive import NaiveForecaster  # Import here
-
         if forecasters is None:
             _forecasters = []
             for i, theta in enumerate(self.theta_values):
@@ -489,10 +476,6 @@ class ThetaModularForecaster(BaseForecaster):
             )
         else:
             _forecasters = forecasters
-
-        if not _forecasters:
-            # add a default forecaster
-            _forecasters = [("naive default", NaiveForecaster(), 0)]
         return _forecasters
 
     def _fit(self, y, X, fh):
@@ -533,9 +516,6 @@ class ThetaModularForecaster(BaseForecaster):
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.utils.dependencies._dependencies import _check_estimator_deps
-
-        print("starting get_test_params")
 
         params0 = {
             "forecasters": [
@@ -543,17 +523,13 @@ class ThetaModularForecaster(BaseForecaster):
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-
-        params1 = {"theta_values": (0, 1, 2)}
+        params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
 
-        var = _check_estimator_deps(ExponentialSmoothing, severity="none")
-        print("Exponential Smoothing Available: ", var)
-
+        # params1 and params2 invoke ExponentialSmoothing which requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             params = [params0, params1, params2]
         else:
-            params = [params0]
+            params = params0
 
-        print(f"Final Params: {params}")
         return params

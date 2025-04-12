@@ -9,8 +9,6 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
-import warnings
-
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -18,8 +16,6 @@ from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.compose._reduce import DirectReductionForecaster
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.stats import (
     _weighted_geometric_mean,
@@ -51,8 +47,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
+
         - feature-importance:
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
@@ -60,6 +58,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -72,13 +71,38 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
-    backend : str or None, optional, default=None
-        Specify the backend used by joblib for parallelization. If None, then
-    backend_params : dict or None, optional, default=None
-        Parameters to pass to the backend.
-    n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        It is deprecated and will be removed in a future version. Use `backend` instead.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
 
     Attributes
     ----------
@@ -124,30 +148,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        n_jobs=None,
-        backend="loky",
+        # n_jobs=None,  # Deprecated
+        backend=None,
         backend_params=None,
     ):
-        if n_jobs is not None:
-            warnings.warn(
-                "`n_jobs` is deprecated and will be removed in a future version. "
-                "Use `backend` instead.",
-                FutureWarning,
-            )
-            backend = backend or "locky"  # use default backend if not set
-            backend_params = backend_params or {"n_jobs": n_jobs}
-
-        self.backend = backend
-        self.backend_params = backend_params
-        super().__init__(
-            forecasters=forecasters,
-            backend=backend,
-            backend_params=backend_params,
-        )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
+
+        super().__init__(
+            forecasters=forecasters,
+            # n_jobs=n_jobs,
+            backend=backend,
+            backend_params=backend_params,
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -165,7 +180,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
         if X is not None:
@@ -188,6 +203,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
+            # with y_test as endog/target
             self.regressor_.fit(X=X_meta, y=y_test)
 
             # check if regressor is a sklearn.Pipeline
@@ -299,17 +315,46 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
+
         * (str, estimator) tuples: the string is a name for the estimator.
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
-    backend : str or None, optional, default=None
-        Specify the backend used by joblib for parallelization. If None, then
-        the backend will be set to "loky".
-    backend_params : dict or None, optional, default=None
-        Parameters to pass to the backend.
+
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
     n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        It is deprecated and will be removed in a future version. Use `backend` instead.
+        Deprecated, use backend_params instead.
+        The number of jobs to run in parallel for fit.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
@@ -332,7 +377,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
     >>> forecaster.fit(y=y, fh=[1,2,3])
-    EnsembleForecaster(...)
+    EnsembleForecaster(forecasters=[('trend', PolynomialTrendForecaster()),
+                                    ('naive', NaiveForecaster())],
+                       weights=[4, 10])
     >>> y_pred = forecaster.predict()
     """
 
@@ -349,18 +396,34 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
-        n_jobs=None,
+        # n_jobs=None,  # Deprecated
         aggfunc="mean",
         weights=None,
-        backend="loky",
+        backend=None,
         backend_params=None,
     ):
         self.aggfunc = aggfunc
         self.weights = weights
+
+        fc = self._parse_fc_multiplicities(forecasters)
+
         super().__init__(
-            forecasters=forecasters, backend=backend, backend_params=backend_params
+            forecasters=forecasters,
+            fc_alt=fc,
+            # n_jobs=n_jobs,
+            backend=backend,
+            backend_params=backend_params,
         )
 
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _parse_fc_multiplicities(self, forecasters):
+        """Parse forecasters with multiplicities.
+
+        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
+        """
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -377,17 +440,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                     "estimator, (str, estimator) or (str, estimator, count) tuples."
                 )
                 raise ValueError(msg)
-
-        self._forecasters = self._check_estimators(
-            fc, clone_ests=False, allow_empty=True
-        )
-        self.forecasters_ = self._check_estimators(
-            fc, clone_ests=True, allow_empty=True
-        )
-
-        # the ensemble requires fh in fit
-        # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        return fc
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -451,50 +504,21 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
-        try:
-            FORECASTER = NaiveForecaster()
-            print("NaiveForecaster initialized successfully:", FORECASTER)
-        except Exception as e:
-            print("NaiveForecaster failed to initialize:", e)
-            FORECASTER = None
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
 
+        # univariate case
+        FORECASTER = NaiveForecaster()
         params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        # Check if DirectReductionForecaster creates a test instance
-        try:
-            FORECASTER = DirectReductionForecaster.create_test_instance()
-            print("DirectReductionForecaster initialized successfully:", FORECASTER)
-        except Exception as e:
-            print("DirectReductionForecaster failed to create test instance:", e)
-            FORECASTER = None
-
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
         params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        # test with multiplicities
         params2 = {"forecasters": [("f", FORECASTER, 2)]}
 
-        # Ensure we don't return None
-        for i, params in enumerate([params0, params1, params2]):
-            for key, value in params.items():
-                if value is None or any(f[1] is None for f in value):
-                    print(f"Warning: params{i} contains None!")
-
         return [params0, params1, params2]
-
-
-# Helper functions remain unchanged
-def _get_weights(regressor):
-    if hasattr(regressor, "feature_importances_"):
-        weights = regressor.feature_importances_
-    elif hasattr(regressor, "coef_"):
-        weights = regressor.coef_
-    else:
-        raise NotImplementedError(
-            """The given regressor is not supported. It must have
-            either an attribute feature_importances_ or coef_ after fitting."""
-        )
-    # avoid ZeroDivisionError if all weights are 0
-    if weights.sum() == 0:
-        weights += 1
-    return list(weights)
 
 
 def _aggregate(y, aggfunc, weights):

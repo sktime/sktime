@@ -24,10 +24,38 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
     """
 
     _tags = {
@@ -44,11 +72,17 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "scitype:y": "univariate",
     }
 
-    def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
-        self.n_jobs = n_jobs
+    def __init__(
+        self, forecasters, ensemble_algorithm=None, backend=None, backend_params=None
+    ):
+        # self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
+        self.backend = backend
+        self.backend_params = backend_params
 
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(
+            forecasters=forecasters, backend=backend, backend_params=backend_params
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -138,5 +172,19 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        params2 = {
+            "forecasters": [
+                ("f1", FORECASTER),
+                ("f2", FORECASTER),
+                ("f3", FORECASTER),
+                ("f4", FORECASTER),
+            ]
+        }
+
+        # the error log said it required atleast 2 values in the return value of
+        # get_test_params
+        params = [params1, params2]
+
         return params
