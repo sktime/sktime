@@ -220,7 +220,7 @@ para_dict["ray"] = _parallelize_ray
 
 # list of backends where we skip tests during CI
 SKIP_FIXTURES = [
-    "ray",  # unstable, sporadic crashes in CI
+    "ray",  # unstable, sporadic crashes in CI, see bug 8149
 ]
 
 
