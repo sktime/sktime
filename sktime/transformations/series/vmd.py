@@ -131,7 +131,7 @@ class VmdTransformer(BaseTransformer):
         "skip-inverse-transform": False,
         "capability:unequal_length": False,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": False,
     }
 
