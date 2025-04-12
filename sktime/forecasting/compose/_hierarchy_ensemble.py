@@ -212,26 +212,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return Aggregator().fit_transform(y)
 
-    @property
-    def fitted_list(self):
-        """Deprecated attribute.
-
-        TODO 0.37.0: Remove this property entirely.
-        """
-        import warnings
-
-        warnings.warn(
-            """The fitted_list property of HierarchyEnsembleForecaster is deprecated
-            and will be removed in sktime 0.37.0.
-            Please use the get_fitted_params method,
-            or the attribute forecasters_ instead.
-            Given a fitted instance f, a read call to f.fitted_list can be replaced
-            by f.get_fitted_params()['forecasters'] or f.forecasters_.
-            """,
-            DeprecationWarning,
-        )
-        return self.fitted_list_
-
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -430,7 +410,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
+        for forecaster, ind in self.fitted_list_:
             if z.index.nlevels == 1:
                 forecaster.update(z, X=x, update_params=update_params)
             else:
@@ -474,7 +454,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         preds = parallelize(
             _predict_one_forecaster,
-            self.fitted_list,
+            self.fitted_list_,
             meta,
             backend=self.backend,
             backend_params=self.backend_params,

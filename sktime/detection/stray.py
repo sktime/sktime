@@ -62,7 +62,7 @@ class STRAY(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.annotation.stray import STRAY
+    >>> from sktime.detection.stray import STRAY
     >>> from sktime.datasets import load_airline
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import numpy as np
