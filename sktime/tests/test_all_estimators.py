@@ -1204,6 +1204,20 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
+    def test_baseclasses_last_in_mro_order(self, estimator_class):
+        """Check that base classes appear last in the MRO."""
+        base_classes = get_base_class_list()
+        base_classes = [cls for cls in base_classes if issubclass(estimator_class, cls)]
+
+        msg = "Base classes should always appear last in the MRO"
+        for base_class in base_classes:
+            last_class = [
+                cls
+                for cls in estimator_class.mro()
+                if not issubclass(base_class, cls) or cls is base_class
+            ][-1]
+            assert last_class is base_class, msg + f" ({base_class})"
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
@@ -1626,17 +1640,3 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
-
-    def test_baseclasses_last_in_mro_order(self, estimator_class):
-        """Base classes should always appear last in the  mro"""
-        base_classes = get_base_class_list()
-        base_classes = [cls for cls in base_classes if issubclass(estimator_class, cls)]
-
-        msg = "Base classes should always appear last in the MRO"
-        for base_class in base_classes:
-            last_class = [
-                cls
-                for cls in estimator_class.mro()
-                if not issubclass(base_class, cls) or cls is base_class
-            ][-1]
-            assert last_class is base_class, msg + f" ({base_class})"
