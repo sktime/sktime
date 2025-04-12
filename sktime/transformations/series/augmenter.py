@@ -29,7 +29,7 @@ class _AugmenterTags:
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": False,
