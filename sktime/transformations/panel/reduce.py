@@ -182,15 +182,15 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx_left = pd.interval_range(start=0, end=100, freq=10, closed="left")
+        params1 = {"idx": idx_left}
+
         idx_right = pd.interval_range(start=0, end=50, freq=5, closed="right")
+        params2 = {"idx": idx_right, "aggfunc": np.median}
+
         idx_both = pd.interval_range(start=0, end=50, freq=5, closed="both")
+        params3 = {"idx": idx_both, "aggfunc": np.sum}
+
         idx_neither = pd.interval_range(start=0, end=50, freq=5, closed="neither")
+        params4 = {"idx": idx_neither, "aggfunc": np.max}
 
-        params = [
-            {"idx": idx_left, "aggfunc": np.mean},
-            {"idx": idx_right, "aggfunc": np.median},
-            {"idx": idx_both, "aggfunc": np.sum},
-            {"idx": idx_neither, "aggfunc": np.max},
-        ]
-
-        return params
+        return [params1, params2, params3, params4]
