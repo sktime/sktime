@@ -84,6 +84,20 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         The weights based on either ``regressor.feature_importances_`` or
         ``regressor.coef_`` values.
 
+    Notes
+    _____
+    The feature-importance weighting method implements an approach inspired by
+    Caruana et al.'s ensemble selection methodology, which selects and weights
+    models based on their performance characteristics.
+
+    References
+    __________
+    .. [1] Caruana, R., Niculescu-Mizil, A., Crew, G., & Ksikes, A. (2004).
+           "Ensemble Selection from Libraries of Models."
+           Proceedings of the 21st International Conference on Machine Learning (ICML).
+           https://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
+
+
     See Also
     --------
     EnsembleForecaster
@@ -147,6 +161,19 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Returns
         -------
         self : returns an instance of self.
+
+        Notes
+        _____
+        For the "feature-importance" method, the weighting approach follows principles
+        from Caruana et al. (2004), using either feature importances or coefficients
+        from the meta-model to determine ensemble weights. For the "inverse-variance"
+        method, weights are computed based on the prediction error variance on a
+        held-out test set.
+
+        References
+        __________
+        .. [1] Caruana, R., et al. (2004). "Ensemble Selection from Libraries of Models."
+           ICML '04. https://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
         """
         forecasters = [x[1] for x in self.forecasters_]
 
