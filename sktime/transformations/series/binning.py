@@ -67,7 +67,7 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
