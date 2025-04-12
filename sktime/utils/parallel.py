@@ -282,7 +282,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
             }
         )
 
-    fixtures = [x in fixtures for x in fixtures if x["backend"] not in SKIP_FIXTURES]
+    fixtures = [x for x in fixtures if x["backend"] not in SKIP_FIXTURES]
     # remove backends in SKIP_FIXTURES from fixtures
 
     return fixtures
