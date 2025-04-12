@@ -35,9 +35,22 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_PANEL = [
+    "nested_univ",
+    "numpy3D",
+    "numpyflat",
+    "pd-multiindex",
+    "pd-wide",
+    "pd-long",
+    "df-list",
+    "gluonts_ListDataset_panel",
+    "gluonts_PandasDataset_panel",
+    "polars_panel",
+]
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -236,8 +249,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     else:
         raise ValueError(
-            f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}"
+            f"Expected input is pandas Series or pandas DataFrame, but found: {type(X)}"
         )
 
     if return_numpy:

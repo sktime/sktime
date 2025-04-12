@@ -430,6 +430,7 @@ Filtering and denoising
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+    KalmanFilterTransformerSIMD
 
 .. currentmodule:: sktime.transformations.series.theta
 
@@ -598,6 +599,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.dummies
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SeasonalDummiesOneHot
 
 .. currentmodule:: sktime.transformations.series.basisfunction
 
@@ -790,6 +799,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    RepeatBootstrapTransformer
 
 Panel-to-Series transformers
 ----------------------------

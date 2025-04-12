@@ -39,6 +39,7 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
+    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -50,6 +51,28 @@ EXCLUDE_ESTIMATORS = [
     "DartsXGBModel",
     # Large datasets
     "M5Dataset",
+    # Test estimators
+    "_TransformChangeNInstances",
+    # ptf global models fail the tests, see #7997
+    "PytorchForecastingTFT",
+    "PytorchForecastingNBeats",
+    "PytorchForecastingNHiTS",
+    "PytorchForecastingDeepAR",
+    # STDBSCAN is not API compliant, see #7994
+    "STDBSCAN",
+    # Temporarily remove RRF from tests, while #7380 is not merged
+    "RecursiveReductionForecaster",
+    # DistanceFeatures does ont work for hierarchical data, see #8077
+    "DistanceFeatures",
+    # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
+    "TimeSeriesKvisibility",
+    # fails due to #8151 or #8059
+    "CNTCRegressor",
+    "FreshPRINCE",
+    # multiple timeouts and sporadic failures reported related to VARMAX
+    # 2997, 3176, 7985
+    "VARMAX",
+    "SCINetForecaster",  # known bug #7871
 ]
 
 
@@ -152,9 +175,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "MCDCNNClassifier": [
-        "test_fit_idempotent",
-    ],
     "MCDCNNRegressor": [
         "test_fit_idempotent",
     ],
@@ -180,14 +200,11 @@ EXCLUDED_TESTS = {
     "TEASER": [
         "test_non_state_changing_method_contract",
         "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    "VARMAX": [
-        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
-        "test__y_when_refitting",  # see 3176
-    ],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
@@ -232,6 +249,7 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "ClusterSegmenter": [
+        "test_doctest_examples",
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
@@ -245,6 +263,27 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
+    # see PR 7921
+    "RocketClassifier": ["test_classifier_on_basic_motions"],
+    # see bug report #6465 and #7958
+    "MACNNClassifier": [
+        "test_multioutput",
+        "test_classifier_on_unit_test_data",
+    ],
+    "MCDCNNClassifier": [
+        "test_persistence_via_pickle",
+        "test_multioutput",
+        "test_classifier_on_unit_test_data",
+        "test_fit_idempotent",  # not part of bug reports but due to randomness
+    ],
+    "ARLagOrderSelector": [
+        "test_doctest_examples",  # doctest fails, see #8129
+    ],
+    "ESRNNForecaster": [  # pickling problem, see #8135
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
 # exclude tests but keyed by test name
@@ -254,7 +293,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CAPA",
         "CNTCClassifier",
         "CNTCNetwork",
-        "CNTCRegressor",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
         "ClaSPTransformer",
@@ -361,7 +399,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
-    "HFTransformersForecaster",
+        "HFTransformersForecaster",
         "HolidayFeatures",
         "ParamFitterPipeline",
         "PluginParamsForecaster",
@@ -371,7 +409,32 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSBootstrapAdapter",
         "ThetaModularForecaster",
         "WeightedEnsembleClassifier",
-    ]
+    ],
+    "test_doctest_examples": [
+        # between-versions inconsistency how doctest handles np.float64.
+        # on lower version, prints 0.123456
+        # on higher version, prints np.float64(0.123456)
+        # therefore these doctests will fail either on lower or higher versions
+        "MedianSquaredScaledError",
+        "GeometricMeanAbsoluteError",
+        "MedianRelativeAbsoluteError",
+        "MeanSquaredScaledError",
+        "GeometricMeanRelativeAbsoluteError",
+        "GeometricMeanRelativeSquaredError",
+        "MedianSquaredPercentageError",
+        "MedianAbsoluteScaledError",
+        "MedianSquaredError",
+        "MeanAbsolutePercentageError",
+        "MeanAbsoluteScaledError",
+        "MeanAbsoluteError",
+        "MedianAbsoluteError",
+        "MeanSquaredPercentageError",
+        "MedianAbsolutePercentageError",
+        "MeanSquaredError",
+        "PinballLoss",
+        "RelativeLoss",
+        "MeanRelativeAbsoluteError",
+    ],
 }
 
 # estimators that have 2 test params only when their soft dependency is installed

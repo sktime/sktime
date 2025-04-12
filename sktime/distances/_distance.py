@@ -189,12 +189,12 @@ def edr_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> edr_distance(x_1d, y_1d)
-    1.0
+    np.float64(1.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> edr_distance(x_2d, y_2d)
-    1.0
+    np.float64(1.0)
 
     References
     ----------
@@ -378,12 +378,12 @@ def wddtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wddtw_distance(x_2d, y_2d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     References
     ----------
@@ -483,12 +483,12 @@ def wdtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
-    27.975712863958133
+    np.float64(27.975712863958133)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wdtw_distance(x_2d, y_2d)
-    243.2106560107827
+    np.float64(243.2106560107827)
 
     References
     ----------
@@ -583,12 +583,12 @@ def ddtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> ddtw_distance(x_2d, y_2d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     References
     ----------
@@ -728,12 +728,12 @@ def dtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)
-    58.0
+    np.float64(58.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> dtw_distance(x_2d, y_2d)
-    512.0
+    np.float64(512.0)
 
     References
     ----------
@@ -909,12 +909,12 @@ def twe_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> twe_distance(x_1d, y_1d)
-    28.0
+    np.float64(28.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> twe_distance(x_2d, y_2d)
-    78.37353236814714
+    np.float64(78.37353236814714)
 
     References
     ----------
@@ -976,12 +976,12 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> squared_distance(x_1d, y_1d)
-    64.0
+    np.float64(64.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> squared_distance(x_2d, y_2d)
-    512.0
+    np.float64(512.0)
     """
     return distance(x, y, metric="squared", **kwargs)
 
@@ -1030,12 +1030,12 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> euclidean_distance(x_1d, y_1d)
-    8.0
+    np.float64(8.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> euclidean_distance(x_2d, y_2d)
-    22.627416997969522
+    np.float64(22.627416997969522)
     """
     return distance(x, y, metric="euclidean", **kwargs)
 
@@ -1942,17 +1942,17 @@ def distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> distance(x_1d, y_1d, metric='dtw')
-    58.0
+    np.float64(58.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> distance(x_2d, y_2d, metric='dtw')
-    512.0
+    np.float64(512.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> distance(x_2d, y_2d, metric='dtw', window=0.5)
-    512.0
+    np.float64(512.0)
 
     Returns
     -------

@@ -38,8 +38,19 @@ import pandas as pd
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._series._registry import MTYPE_LIST_SERIES
 from sktime.utils.dependencies import _check_soft_dependencies
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_SERIES = [
+    "pd.Series",
+    "pd.DataFrame",
+    "np.ndarray",
+    "xr.DataArray",
+    "dask_series",
+    "pl.DataFrame",
+    "gluonts_ListDataset_series",
+    "gluonts_PandasDataset_series",
+]
 
 convert_dict = dict()
 
@@ -93,10 +104,11 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
 
     y = obj[obj.columns[0]]
 
-    if (
-        isinstance(store, dict) and "name" in store.keys()
-    ):  ## column name becomes attr name
+    if isinstance(store, dict) and "name" in store.keys():
+        # column name becomes attr name
         y.name = store["name"]
+    else:
+        y.name = None
 
     return y
 
@@ -208,7 +220,7 @@ if _check_soft_dependencies("xarray", severity="none"):
         df = pd.DataFrame(obj.values, index=index, columns=columns)
         # int64 coercions are needed due to inconsistencies specifically on windows
         df = df.astype(
-            {col: "int64" for col in df.select_dtypes(include="int32").columns}
+            dict.fromkeys(df.select_dtypes(include="int32").columns, "int64")
         )
         if df.index.dtype == "int32":
             df.index = df.index.astype("int64")
