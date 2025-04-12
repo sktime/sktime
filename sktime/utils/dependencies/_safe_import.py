@@ -72,10 +72,10 @@ def _safe_import(import_path, pkg_name=None):
             module = importlib.import_module(module_name)
             return getattr(module, attr_name)
         except (ImportError, AttributeError):
-            return importlib.import_module(import_path)
-    else:
-        mock_obj = _create_mock_class(obj_name)
-        return mock_obj
+            pass
+
+    mock_obj = _create_mock_class(obj_name)
+    return mock_obj
 
 
 class CommonMagicMeta(type):
