@@ -422,7 +422,7 @@ def test_tag_handles_missing_data():
     """
     forecaster = MockForecaster()
     # make sure that test forecaster can't handle missing data
-    forecaster.set_tags(**{"handles-missing-data": False})
+    forecaster.set_tags(**{"capability:missing_values": False})
 
     y = _make_series()
     y.iloc[10] = np.nan
