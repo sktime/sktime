@@ -107,14 +107,16 @@ def fdiff(
 
     Examples
     --------
-    This returns the same result with ``numpy.diff`` for integer `n`.
+    This returns the same result with ``numpy.diff`` for integer ``n``,
+    except for the first ``n`` elements which ``fdiff`` fills with
+    values of the generalized fracdiff operator.
 
     >>> import numpy as np
     >>> from sktime.libs.fracdiff import fdiff
     >>> a = np.array([1, 2, 4, 7, 0])
-    >>> (np.diff(a) == fdiff(a)).all()
+    >>> (np.diff(a) == fdiff(a)[1:]).all()
     True
-    >>> (np.diff(a, 2) == fdiff(a, 2)).all()
+    >>> (np.diff(a, 2) == fdiff(a, 2)[2:]).all()
     True
 
     This returns fractional differentiation for noninteger `n`.

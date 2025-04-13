@@ -715,6 +715,9 @@ def mean_squared_scaled_error(
     else:
         loss = mse / np.maximum(mse_naive, EPS)
 
+    if isinstance(loss, float) and not isinstance(loss, np.float64):
+        loss = np.float64(loss)
+
     return loss
 
 
@@ -916,9 +919,12 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     np.float64(0.85)
     """
-    return _mean_absolute_error(
+    loss = _mean_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
+    if isinstance(loss, float) and not isinstance(loss, np.float64):
+        loss = np.float64(loss)
+    return loss
 
 
 def mean_squared_error(
