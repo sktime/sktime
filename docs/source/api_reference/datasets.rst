@@ -17,6 +17,7 @@ Forecasting datasets
 .. currentmodule:: sktime.datasets.forecasting
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -37,6 +38,7 @@ Classification datasets
 .. currentmodule:: sktime.datasets.classification
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -55,6 +57,7 @@ Regression datasets
 .. currentmodule:: sktime.datasets.regression
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -78,6 +81,7 @@ These loaders can be used to access reference datasets for benchmarking.
 .. currentmodule:: sktime.datasets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -103,6 +107,7 @@ Single time series
 .. currentmodule:: sktime.datasets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -124,6 +129,7 @@ Panels of time series
 .. currentmodule:: sktime.datasets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -151,6 +157,7 @@ Hierarchical time series data
 .. currentmodule:: sktime.datasets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -172,6 +179,7 @@ use common utilities such as ``pandas.read_csv``
 .. currentmodule:: sktime.datasets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

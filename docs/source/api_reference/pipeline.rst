@@ -11,6 +11,7 @@ make_pipeline
 .. currentmodule:: sktime.pipeline._make_pipeline
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -22,6 +23,7 @@ Pipeline
 .. currentmodule:: sktime.pipeline.pipeline
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

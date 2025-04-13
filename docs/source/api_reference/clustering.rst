@@ -20,6 +20,7 @@ Partitioning based
 .. currentmodule:: sktime.clustering.k_means
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -29,6 +30,7 @@ Partitioning based
 .. currentmodule:: sktime.clustering.k_medoids
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -37,6 +39,7 @@ Partitioning based
 .. currentmodule:: sktime.clustering.k_shapes
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -48,6 +51,7 @@ Spectral and kernel clustering
 .. currentmodule:: sktime.clustering.kernel_k_means
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -59,6 +63,7 @@ Density-based
 .. currentmodule:: sktime.clustering.dbscan
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -70,6 +75,7 @@ Graph- or network-based
 .. currentmodule:: sktime.clustering.kvisibility
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -84,6 +90,7 @@ observations of locations in space.
 .. currentmodule:: sktime.clustering.spatio_temporal
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -95,6 +102,7 @@ Base
 .. currentmodule:: sktime.clustering.base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -103,6 +111,7 @@ Base
 .. currentmodule:: sktime.clustering.partitioning
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

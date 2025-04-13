@@ -29,6 +29,7 @@ Point forecasts - classes
 .. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class_with_call.rst
 
@@ -60,6 +61,7 @@ Point forecasts - functions
 .. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -92,6 +94,7 @@ Quantile and interval forecasts
 .. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class_with_call.rst
 
@@ -105,6 +108,7 @@ Distribution forecasts
 .. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class_with_call.rst
 
@@ -137,6 +141,7 @@ Event detection - anomalies, outliers
 .. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: function.rst
@@ -153,6 +158,7 @@ Segment detection
 .. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -167,6 +173,7 @@ These metrics do not follow the standard API and will be deprecated in the futur
 .. currentmodule:: sktime.performance_metrics.annotation
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

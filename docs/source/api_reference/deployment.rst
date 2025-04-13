@@ -21,6 +21,7 @@ MLflow
 .. currentmodule:: sktime.utils.mlflow_sktime
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

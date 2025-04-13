@@ -20,6 +20,7 @@ Composition
 .. currentmodule:: sktime.regression.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -33,6 +34,7 @@ Model selection and tuning
 .. currentmodule:: sktime.regression.model_selection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -44,6 +46,7 @@ Ensembles
 .. currentmodule:: sktime.regression.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -55,6 +58,7 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -77,6 +81,7 @@ Distance-based
 .. currentmodule:: sktime.regression.distance_based
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -88,6 +93,7 @@ Dummy
 .. currentmodule:: sktime.regression.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -99,6 +105,7 @@ Interval-based
 .. currentmodule:: sktime.regression.interval_based
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -110,6 +117,7 @@ Kernel-based
 .. currentmodule:: sktime.regression.kernel_based
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -122,6 +130,7 @@ Base
 .. currentmodule:: sktime.regression.base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -130,6 +139,7 @@ Base
 .. currentmodule:: sktime.regression.deep_learning.base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

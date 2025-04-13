@@ -15,6 +15,7 @@ Base classes
 .. currentmodule:: sktime.base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

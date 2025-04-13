@@ -22,6 +22,7 @@ Naive aligners
 .. currentmodule:: sktime.alignment.naive
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -34,6 +35,7 @@ Dynamic time warping
 .. currentmodule:: sktime.alignment.dtw_python
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -43,6 +45,7 @@ Dynamic time warping
 .. currentmodule:: sktime.alignment.dtaidist
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -51,6 +54,7 @@ Dynamic time warping
 .. currentmodule:: sktime.alignment.dtw_numba
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -59,6 +63,7 @@ Dynamic time warping
 .. currentmodule:: sktime.alignment.lucky
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -71,6 +76,7 @@ Edit distance based aligners
 .. currentmodule:: sktime.alignment.edit_numba
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

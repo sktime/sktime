@@ -21,6 +21,7 @@ Base
 .. currentmodule:: sktime.forecasting.base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -36,6 +37,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
 .. currentmodule:: sktime.pipeline
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -44,6 +46,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -75,6 +78,7 @@ Uses exogeneous data at the same time stamp - simple reduction strategy.
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -92,12 +96,14 @@ Different strategies can be constructed via  ``make_reduction`` for easy specifi
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
     make_reduction
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -118,6 +124,7 @@ Direct and recursive - ``sktime`` native 2nd generation
 ``pandas`` based.
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -130,6 +137,7 @@ Direct and recursive - 3rd party
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -139,6 +147,7 @@ Direct and recursive - 3rd party
 .. currentmodule:: sktime.forecasting.darts
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -153,6 +162,7 @@ Naive forecasters
 .. currentmodule:: sktime.forecasting.naive
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -161,6 +171,7 @@ Naive forecasters
 .. currentmodule:: sktime.forecasting.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -174,6 +185,7 @@ Wrappers that add prediction intervals to any forecaster.
 .. currentmodule:: sktime.forecasting.squaring_residuals
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -182,6 +194,7 @@ Wrappers that add prediction intervals to any forecaster.
 .. currentmodule:: sktime.forecasting.naive
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -190,6 +203,7 @@ Wrappers that add prediction intervals to any forecaster.
 .. currentmodule:: sktime.forecasting.conformal
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -198,6 +212,7 @@ Wrappers that add prediction intervals to any forecaster.
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -206,6 +221,7 @@ Wrappers that add prediction intervals to any forecaster.
 .. currentmodule:: sktime.forecasting.enbpi
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -218,6 +234,7 @@ Calibration and bias adjustment
 .. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -230,6 +247,7 @@ Trend forecasters
 .. currentmodule:: sktime.forecasting.trend
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -243,6 +261,7 @@ Trend forecasters
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -254,6 +273,7 @@ Exponential smoothing based forecasters
 .. currentmodule:: sktime.forecasting.exp_smoothing
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -262,6 +282,7 @@ Exponential smoothing based forecasters
 .. currentmodule:: sktime.forecasting.ets
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -270,6 +291,7 @@ Exponential smoothing based forecasters
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -279,6 +301,7 @@ Exponential smoothing based forecasters
 .. currentmodule:: sktime.forecasting.theta
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -287,6 +310,7 @@ Exponential smoothing based forecasters
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -305,6 +329,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.auto_reg
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -313,6 +338,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -322,6 +348,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.sarimax
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -330,6 +357,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.var
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -338,6 +366,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.var_reduce
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -346,6 +375,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.varmax
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -354,6 +384,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 .. currentmodule:: sktime.forecasting.vecm
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -365,6 +396,7 @@ Auto-ARIMA models
 .. currentmodule:: sktime.forecasting.arima
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -373,6 +405,7 @@ Auto-ARIMA models
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -385,6 +418,7 @@ ARCH models
 .. currentmodule:: sktime.forecasting.arch
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -398,6 +432,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.ardl
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -406,6 +441,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -414,6 +450,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.tbats
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -422,6 +459,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -430,6 +468,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.fbprophet
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -438,6 +477,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.prophetverse
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -447,6 +487,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.structural
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -455,6 +496,7 @@ Structural time series models
 .. currentmodule:: sktime.forecasting.dynamic_factor
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -466,6 +508,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.ltsf
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -477,6 +520,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -485,6 +529,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -493,6 +538,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.neuralforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -502,6 +548,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.pytorchforecasting
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -513,6 +560,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.pykan_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -521,6 +569,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.rbf_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -529,6 +578,7 @@ Deep learning based forecasters
 .. currentmodule:: sktime.forecasting.es_rnn
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -540,6 +590,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -548,6 +599,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.chronos
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -556,6 +608,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -564,6 +617,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -578,6 +632,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -586,6 +641,7 @@ Pre-trained and foundation models
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -597,6 +653,7 @@ Intermittent time series forecasters
 .. currentmodule:: sktime.forecasting.croston
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -605,6 +662,7 @@ Intermittent time series forecasters
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -616,6 +674,7 @@ Ensembles and stacking
 .. currentmodule:: sktime.forecasting.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -634,6 +693,7 @@ Hierarchical reconciliation
 .. currentmodule:: sktime.forecasting.reconcile
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -645,6 +705,7 @@ Online and stream forecasting
 .. currentmodule:: sktime.forecasting.online_learning
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -655,6 +716,7 @@ Online and stream forecasting
 .. currentmodule:: sktime.forecasting.stream
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -670,6 +732,7 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
 .. currentmodule:: sktime.forecasting.adapters
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -681,6 +744,7 @@ Model selection and tuning
 .. currentmodule:: sktime.forecasting.model_selection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -695,6 +759,7 @@ Model Evaluation (Backtesting)
 .. currentmodule:: sktime.forecasting.model_evaluation
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

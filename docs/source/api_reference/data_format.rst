@@ -39,6 +39,7 @@ with their subtypes, can be accessed below:
 .. currentmodule:: sktime.datatypes._series._base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -47,6 +48,7 @@ with their subtypes, can be accessed below:
 .. currentmodule:: sktime.datatypes._panel._base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -55,6 +57,7 @@ with their subtypes, can be accessed below:
 .. currentmodule:: sktime.datatypes._hierarchical._base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -63,6 +66,7 @@ with their subtypes, can be accessed below:
 .. currentmodule:: sktime.datatypes._table._base
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -79,6 +83,7 @@ The ``Series`` mtype represents a single time series.
 .. currentmodule:: sktime.datatypes._series._check
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -102,6 +107,7 @@ The ``Panel`` mtype represents a flat collection of time series.
 .. currentmodule:: sktime.datatypes._panel._check
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -124,6 +130,7 @@ The ``Hierarchical`` mtype represents a hierarchical collection of time series.
 .. currentmodule:: sktime.datatypes._hierarchical._check
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -142,6 +149,7 @@ The ``Table`` mtype represents a (non-temporal) data frame table.
 .. currentmodule:: sktime.datatypes._table._check
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

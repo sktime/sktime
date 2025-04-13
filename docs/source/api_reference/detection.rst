@@ -19,6 +19,7 @@ Composition
 .. currentmodule:: sktime.detection.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -32,6 +33,7 @@ Change Point Detection
 .. currentmodule:: sktime.detection.skchange_cp
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -46,6 +48,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -64,6 +67,7 @@ Window-based Anomaly Detection
 .. currentmodule:: sktime.detection.lof
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -75,6 +79,7 @@ Reduction to Tabular Anomaly Detection
 .. currentmodule:: sktime.detection.adapters
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -86,6 +91,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -95,6 +101,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.naive
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -108,6 +115,7 @@ Segment anomaly detectors identify anomalous segment.
 .. currentmodule:: sktime.detection.skchange_aseg
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -123,6 +131,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -131,6 +140,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.naive
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -142,6 +152,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.clasp
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -150,6 +161,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.eagglo
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -158,6 +170,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.hmm_learn.gaussian
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -166,6 +179,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.hmm_learn.gmm
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -174,6 +188,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.ggs
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -182,6 +197,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.hmm
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -190,6 +206,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.igts
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -198,6 +215,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.hmm_learn.poisson
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -206,6 +224,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.stray
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -214,6 +233,7 @@ Time Series Segmentation
 .. currentmodule:: sktime.detection.bs
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -226,6 +246,7 @@ Reduction to clustering
 .. currentmodule:: sktime.detection.clust
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -234,6 +255,7 @@ Reduction to clustering
 .. currentmodule:: sktime.detection.wclust
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -246,6 +268,7 @@ Naive Baselines
 .. currentmodule:: sktime.detection.dummy
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

@@ -52,6 +52,7 @@ Pipeline building - Structural
 .. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -69,6 +70,7 @@ Pipeline building - Broadcasting and apply-map
 .. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -78,6 +80,7 @@ Pipeline building - Broadcasting and apply-map
 .. currentmodule:: sktime.transformations.panel.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -86,6 +89,7 @@ Pipeline building - Broadcasting and apply-map
 .. currentmodule:: sktime.transformations.series.func_transform
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -97,6 +101,7 @@ Pipeline building - AutoML, switches and multiplexing
 .. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -111,6 +116,7 @@ Pipeline building - Logging
 .. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -122,6 +128,7 @@ Sklearn and pandas adapters
 .. currentmodule:: sktime.transformations.panel.reduce
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -131,6 +138,7 @@ Sklearn and pandas adapters
 .. currentmodule:: sktime.transformations.series.adapt
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -153,6 +161,7 @@ These transformers extract simple summary features.
 .. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -163,6 +172,7 @@ These transformers extract simple summary features.
 .. currentmodule:: sktime.transformations.panel.summarize
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -174,6 +184,7 @@ These transformers extract simple summary features.
 .. currentmodule:: sktime.transformations.series.adi_cv
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -185,6 +196,7 @@ Shapelets, wavelets, and convolution
 .. currentmodule:: sktime.transformations.panel.shapelet_transform
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -195,6 +207,7 @@ Shapelets, wavelets, and convolution
 .. currentmodule:: sktime.transformations.panel.rocket
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -209,6 +222,7 @@ Shapelets, wavelets, and convolution
 .. currentmodule:: sktime.transformations.panel.dwt
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -220,6 +234,7 @@ Distance-based features
 .. currentmodule:: sktime.transformations.panel.matrix_profile
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -231,6 +246,7 @@ Dictionary-based features
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -245,6 +261,7 @@ Auto-correlation-based features
 .. currentmodule:: sktime.transformations.series.hurst
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -256,6 +273,7 @@ Moment-based features
 .. currentmodule:: sktime.transformations.series.signature
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -264,6 +282,7 @@ Moment-based features
 .. currentmodule:: sktime.transformations.panel.signature_based
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -277,6 +296,7 @@ These transformers extract larger collections of features.
 .. currentmodule:: sktime.transformations.panel.tsfresh
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -286,6 +306,7 @@ These transformers extract larger collections of features.
 .. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -294,6 +315,7 @@ These transformers extract larger collections of features.
 .. currentmodule:: sktime.transformations.panel.catch22wrapper
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -312,6 +334,7 @@ Lagging
 .. currentmodule:: sktime.transformations.series.lag
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -328,6 +351,7 @@ Depending on the transformer, the transformation parameters can be fitted.
 .. currentmodule:: sktime.transformations.series.boxcox
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -337,6 +361,7 @@ Depending on the transformer, the transformation parameters can be fitted.
 .. currentmodule:: sktime.transformations.series.scaledlogit
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -345,6 +370,7 @@ Depending on the transformer, the transformation parameters can be fitted.
 .. currentmodule:: sktime.transformations.series.cos
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -353,6 +379,7 @@ Depending on the transformer, the transformation parameters can be fitted.
 .. currentmodule:: sktime.transformations.series.exponent
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -362,6 +389,7 @@ Depending on the transformer, the transformation parameters can be fitted.
 .. currentmodule:: sktime.transformations.series.scaledasinh
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -373,6 +401,7 @@ Detrending and Decomposition
 .. currentmodule:: sktime.transformations.series.detrend
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -386,6 +415,7 @@ Detrending and Decomposition
 .. currentmodule:: sktime.transformations.series.vmd
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -394,6 +424,7 @@ Detrending and Decomposition
 .. currentmodule:: sktime.transformations.series.clear_sky
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -406,6 +437,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.filter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -414,6 +446,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.bkfilter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -422,6 +455,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.cffilter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -430,6 +464,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.hpfilter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -438,6 +473,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -448,6 +484,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.theta
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -456,6 +493,7 @@ Filtering and denoising
 .. currentmodule:: sktime.transformations.series.bollinger
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -467,6 +505,7 @@ Differencing, slope, kinematics
 .. currentmodule:: sktime.transformations.series.difference
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -475,6 +514,7 @@ Differencing, slope, kinematics
 .. currentmodule:: sktime.transformations.panel.slope
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -483,6 +523,7 @@ Differencing, slope, kinematics
 .. currentmodule:: sktime.transformations.series.kinematic
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -494,6 +535,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.series.binning
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -502,6 +544,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.panel.interpolate
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -510,6 +553,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.panel.segment
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -520,6 +564,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.series.dilation_mapping
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -528,6 +573,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.series.paa
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -536,6 +582,7 @@ Binning, sampling and segmentation
 .. currentmodule:: sktime.transformations.series.sax
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -547,6 +594,7 @@ Missing value treatment
 .. currentmodule:: sktime.transformations.series.impute
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -555,6 +603,7 @@ Missing value treatment
 .. currentmodule:: sktime.transformations.series.dropna
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -566,6 +615,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.date
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -574,6 +624,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.holiday
 
 .. autosummary::
+    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -585,6 +636,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.time_since
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -593,6 +645,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.fourier
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -601,6 +654,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.fourier
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -609,6 +663,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.dummies
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -617,6 +672,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.basisfunction
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -625,6 +681,7 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.peak
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -636,6 +693,7 @@ Auto-correlation series
 .. currentmodule:: sktime.transformations.series.acf
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -650,6 +708,7 @@ These transformers create a series based on a sequence of sliding windows.
 .. currentmodule:: sktime.transformations.series.matrix_profile
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -658,6 +717,7 @@ These transformers create a series based on a sequence of sliding windows.
 .. currentmodule:: sktime.transformations.panel.hog1d
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -666,6 +726,7 @@ These transformers create a series based on a sequence of sliding windows.
 .. currentmodule:: sktime.transformations.series.subsequence_extraction
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -680,6 +741,7 @@ These transformers convert multivariate series to univariate.
 .. currentmodule:: sktime.transformations.panel.compose
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -691,6 +753,7 @@ Augmentation
 .. currentmodule:: sktime.transformations.series.augmenter
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -707,6 +770,7 @@ These transformers select features in `X` based on `y`.
 .. currentmodule:: sktime.transformations.series.feature_selection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -715,6 +779,7 @@ These transformers select features in `X` based on `y`.
 .. currentmodule:: sktime.transformations.panel.channel_selection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -729,6 +794,7 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
 .. currentmodule:: sktime.transformations.series.subset
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -743,6 +809,7 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
 .. currentmodule:: sktime.transformations.series.temporian
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -764,6 +831,7 @@ These transformations ensure all series in a panel have equal length
 .. currentmodule:: sktime.transformations.panel.padder
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -772,6 +840,7 @@ These transformations ensure all series in a panel have equal length
 .. currentmodule:: sktime.transformations.panel.truncation
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -783,6 +852,7 @@ Dimension reduction
 .. currentmodule:: sktime.transformations.panel.pca
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -799,6 +869,7 @@ Bootstrap transformations
 .. currentmodule:: sktime.transformations.bootstrap
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -816,6 +887,7 @@ These transformers create a single series from a panel.
 .. currentmodule:: sktime.transformations.merger
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -827,6 +899,7 @@ Outlier detection, changepoint detection
 .. currentmodule:: sktime.transformations.series.outlier_detection
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -835,6 +908,7 @@ Outlier detection, changepoint detection
 .. currentmodule:: sktime.transformations.series.clasp
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -850,6 +924,7 @@ The transformation depends on the specified hierarchy in a non-trivial way.
 .. currentmodule:: sktime.transformations.hierarchical.aggregate
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -858,6 +933,7 @@ The transformation depends on the specified hierarchy in a non-trivial way.
 .. currentmodule:: sktime.transformations.hierarchical.reconcile
 
 .. autosummary::
+    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
