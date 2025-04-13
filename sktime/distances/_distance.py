@@ -1968,7 +1968,11 @@ def distance(
         metric, _x, _y, _METRIC_INFOS, **kwargs
     )
 
-    return _metric_callable(_x, _y)
+    res = _metric_callable(_x, _y)
+
+    if isinstance(res, float) and not isinstance(res, np.float64):
+        res = np.float64(res)
+    return res
 
 
 def distance_factory(
