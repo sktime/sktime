@@ -45,3 +45,5 @@ in folders starting with underscore. These should not be accessed by users of `s
 * `_aws_fortuna-enbpi` - Parts of the `EnbPI` class from aws-fortuna.
   The installation of the original package is not working due to dependency
   mismatches.
+
+* `_keras_self_attention` - fork of some layers from the [abandoned package `keras-self-attention`](https://github.com/CyberZHG/keras-self-attention), archived in March 2024.
