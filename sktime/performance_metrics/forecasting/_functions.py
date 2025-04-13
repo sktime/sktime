@@ -145,21 +145,21 @@ def mean_linex_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.19802627763937575
+    np.float64(0.19802627763937575)
     >>> mean_linex_error(y_true, y_pred, b=2)  # doctest: +SKIP
-    0.3960525552787515
+    np.float64(0.3960525552787515)
     >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
-    0.2391800623225643
+    np.float64(0.2391800623225643)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.2700398392309829
+    np.float64(0.2700398392309829)
     >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
-    0.49660966225813563
+    np.float64(0.49660966225813563)
     >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([0.17220024, 0.36787944])
     >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
-    0.30917568000716666
+    np.float64(0.30917568000716666)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -280,21 +280,21 @@ def mean_asymmetric_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_asymmetric_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    0.4625
+    np.float64(0.4625)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_asymmetric_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    0.7083333333333334
+    np.float64(0.7083333333333334)
     >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
@@ -403,18 +403,18 @@ def mean_absolute_scaled_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18333333333333335
+    np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')
     array([0.10526316, 0.28571429])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
 
@@ -531,18 +531,18 @@ def median_absolute_scaled_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')
     array([0.10526316, 0.28571429])
     >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
