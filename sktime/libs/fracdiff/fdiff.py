@@ -109,6 +109,7 @@ def fdiff(
     --------
     This returns the same result with ``numpy.diff`` for integer `n`.
 
+    >>> import numpy as np
     >>> from sktime.libs.fracdiff import fdiff
     >>> a = np.array([1, 2, 4, 7, 0])
     >>> (np.diff(a) == fdiff(a)).all()
