@@ -332,9 +332,13 @@ class TestAllReconciliationTransformers(
         return the same original number of series.
 
         """
-        # skip this test if the estimator is not hierarchical
         import numpy as np
         from pandas.testing import assert_frame_equal
+
+        # If aggregate = False and no_levels=1, we have a single level
+        # without __total, which is not a hierarchy. We skip this case.
+        if not aggregate and no_levels == 1:
+            pytest.skip("No hierarchy with no_levels=1 and aggregate=False.")
 
         X = _bottom_hier_datagen(
             no_bottom_nodes=5,
