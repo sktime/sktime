@@ -1,7 +1,7 @@
 """Bottomup reconciliation."""
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _get_bottom_level_idxs,
     _loc_series_idxs,
 )
@@ -33,7 +33,7 @@ class BottomUpReconciler(_ReconcilerTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.reconciliation import (
+    >>> from sktime.transformations.hierarchical.reconcile import (
     ...     BottomUpReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing

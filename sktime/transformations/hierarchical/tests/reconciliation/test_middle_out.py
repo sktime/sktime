@@ -3,7 +3,7 @@ import functools
 import pandas as pd
 import pytest
 
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _get_series_for_each_hierarchical_level,
 )
 

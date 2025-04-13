@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.hierarchical.reconciliation.optimal import (
+from sktime.transformations.hierarchical.reconcile.optimal import (
     NonNegativeOptimalReconciler,
     _create_summing_matrix_from_index,
 )

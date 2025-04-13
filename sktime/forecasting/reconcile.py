@@ -13,13 +13,13 @@ from sktime.transformations.hierarchical.aggregate import (
     Aggregator,
     _check_index_no_total,
 )
-from sktime.transformations.hierarchical.reconciliation import (
+from sktime.transformations.hierarchical.reconcile import (
     BottomUpReconciler,
     NonNegativeOptimalReconciler,
     OptimalReconciler,
     TopdownReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation._utils import _loc_series_idxs
+from sktime.transformations.hierarchical.reconcile._utils import _loc_series_idxs
 from sktime.utils.warnings import warn
 
 

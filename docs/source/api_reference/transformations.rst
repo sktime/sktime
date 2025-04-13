@@ -856,7 +856,7 @@ The transformation depends on the specified hierarchy in a non-trivial way.
 
     Reconciler
 
-.. currentmodule:: sktime.transformations.hierarchical.reconciliation
+.. currentmodule:: sktime.transformations.hierarchical.reconcile
     :toctree: auto_generated/
     :template: class.rst
 

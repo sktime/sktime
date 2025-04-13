@@ -6,15 +6,15 @@ import pandas as pd
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
 )
-from sktime.transformations.hierarchical.reconciliation.bottom_up import (
+from sktime.transformations.hierarchical.reconcile.bottom_up import (
     BottomUpReconciler,
 )
-from sktime.transformations.hierarchical.reconciliation.topdown import (
+from sktime.transformations.hierarchical.reconcile.topdown import (
     TopdownReconciler,
 )
 
@@ -76,7 +76,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.reconciliation import (
+    >>> from sktime.transformations.hierarchical.reconcile import (
     ...     MiddleOutReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -310,7 +310,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Get test params."""
-        from sktime.transformations.hierarchical.reconciliation.topdown import (
+        from sktime.transformations.hierarchical.reconcile.topdown import (
             TopdownReconciler,
         )
 

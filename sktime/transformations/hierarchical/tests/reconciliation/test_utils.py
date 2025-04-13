@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _promote_hierarchical_indexes,
     _recursively_propagate_topdown,
 )

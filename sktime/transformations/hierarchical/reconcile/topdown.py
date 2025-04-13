@@ -6,7 +6,7 @@ from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.hierarchical.drop_redundant_hierarchical_levels import (  # noqa: E501
     DropRedundantHierarchicalLevels,
 )
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _get_total_level_idxs,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,
@@ -39,7 +39,7 @@ class TopdownReconciler(_ReconcilerTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.reconciliation import (
+    >>> from sktime.transformations.hierarchical.reconcile import (
     ...     TopdownReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing

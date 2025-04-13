@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations._reconcile import _ReconcilerTransformer
-from sktime.transformations.hierarchical.reconciliation._utils import (
+from sktime.transformations.hierarchical.reconcile._utils import (
     _is_ancestor,
 )
 
@@ -34,7 +34,7 @@ class OptimalReconciler(_ReconcilerTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.reconciliation import (
+    >>> from sktime.transformations.hierarchical.reconcile import (
     ...     OptimalReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -248,7 +248,7 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.reconciliation import (
+    >>> from sktime.transformations.hierarchical.reconcile import (
     ...     NonNegativeOptimalReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
