@@ -637,6 +637,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
