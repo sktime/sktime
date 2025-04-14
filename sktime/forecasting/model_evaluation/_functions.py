@@ -5,6 +5,7 @@
 __author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
+import re
 import time
 import warnings
 from copy import deepcopy
@@ -13,6 +14,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
+from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
@@ -58,14 +60,20 @@ def _check_scores(metrics) -> dict:
         metrics = [metrics]
 
     metrics_type = {}
-    for metric in metrics:
+    # Generating cleaned unique names first
+    cleaned_scorer = [
+        re.sub(r"\(.*?\)", "", str(metric)).rstrip("_") for metric in metrics
+    ]
+    unique_scorer = _HeterogenousMetaEstimator()._make_strings_unique(cleaned_scorer)
+
+    for metric, clean_name in zip(metrics, unique_scorer):
         metric = check_scoring(metric)
-        # collect predict type
+        metric.name = clean_name  # Use cleaned unique name as base name
         if hasattr(metric, "get_tag"):
             scitype = metric.get_tag(
                 "scitype:y_pred", raise_error=False, tag_value_default="pred"
             )
-        else:  # If no scitype exists then metric is a point forecast type
+        else:
             scitype = "pred"
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
