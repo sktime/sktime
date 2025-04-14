@@ -97,6 +97,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
 
     Examples
