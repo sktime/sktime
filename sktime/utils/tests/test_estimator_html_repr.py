@@ -28,11 +28,11 @@ def test_doc_link_generator(mock_version):
         ),
     ],
 )
-def test_get_doc_link():
+def test_get_doc_link(module, expected_url):
     """Test `_get_doc_link` when the module does not match `_doc_link_module`."""
     with patch("sktime.__version__", "0.12.0"):
 
         class TestClass(_HTMLDocumentationLinkMixin):
-            _doc_link_module = "unknown"
+            _doc_link_module = module
 
-        assert TestClass._get_doc_link() == ""
+        assert TestClass._get_doc_link() == expected_url
