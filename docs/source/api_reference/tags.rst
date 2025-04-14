@@ -43,7 +43,6 @@ Tags can be inspected at runtime using the following utilities:
 .. currentmodule:: sktime.registry
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -62,7 +61,6 @@ These tags are typically used for typing, packaging and documentation purposes.
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:
@@ -87,7 +85,6 @@ These tags are used to describe capabilities, properties, and behavior of foreca
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:
@@ -115,7 +112,6 @@ these types of objects.
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:
@@ -141,7 +137,6 @@ transform a single time series object (``"transformer"`` type).
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:
@@ -172,7 +167,6 @@ detectors.
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:
@@ -199,7 +193,6 @@ The tags below have limited use in retrieval or inspection of objects.
 .. currentmodule:: sktime.registry._tags
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
     :nosignatures:

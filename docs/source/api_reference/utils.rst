@@ -24,7 +24,6 @@ Data Format Checking and Conversion
 .. currentmodule:: sktime.datatypes
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -51,7 +50,6 @@ Pipeline construction generics
 .. currentmodule:: sktime.pipeline
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -71,7 +69,6 @@ Estimator Search and Retrieval, Estimator Tags
 .. currentmodule:: sktime.registry
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -92,7 +89,6 @@ Estimator Blueprint Serialization
 .. currentmodule:: sktime.registry
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -113,7 +109,6 @@ Plotting
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -133,7 +128,6 @@ Estimator Validity Checking
 .. currentmodule:: sktime.utils.estimator_checks
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

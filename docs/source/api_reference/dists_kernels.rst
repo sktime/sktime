@@ -32,7 +32,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.compose
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -41,7 +40,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.algebra
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -50,7 +48,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.indep
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -59,7 +56,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -69,7 +65,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.compose_from_align
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -78,7 +73,6 @@ Composition
 .. currentmodule:: sktime.dists_kernels.dist_to_kern
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -95,7 +89,6 @@ to pairwise distances in ``ScipyDist``. See docstring of ``AggrDist`` and ``Flat
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -108,7 +101,6 @@ Dynamic Time Warping Distances
 .. currentmodule:: sktime.dists_kernels.dtw
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -122,7 +114,6 @@ Dynamic Time Warping Distances
 .. currentmodule:: sktime.dists_kernels.ctw
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -131,7 +122,6 @@ Dynamic Time Warping Distances
 .. currentmodule:: sktime.dists_kernels.lucky
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -143,7 +133,6 @@ a time warping aligner, see docstring of ``DistFromAligner``:
 .. currentmodule:: sktime.dists_kernels.compose_from_align
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -156,7 +145,6 @@ Edit Distances
 .. currentmodule:: sktime.dists_kernels.edit_dist
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -165,7 +153,6 @@ Edit Distances
 .. currentmodule:: sktime.dists_kernels.lcss
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -182,7 +169,6 @@ See docstring of ``AggrDist`` and ``FlatDist``.
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -194,7 +180,6 @@ Advanced time series kernels that cannot be expressed as aggregates or flat appl
 .. currentmodule:: sktime.dists_kernels.gak
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -203,7 +188,6 @@ Advanced time series kernels that cannot be expressed as aggregates or flat appl
 .. currentmodule:: sktime.dists_kernels.signature_kernel
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -215,7 +199,6 @@ Base class
 .. currentmodule:: sktime.dists_kernels
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -233,7 +216,6 @@ Distance metrics from ``scipy``
 .. currentmodule:: sktime.dists_kernels.scipy_dist
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -245,7 +227,6 @@ Base class
 .. currentmodule:: sktime.dists_kernels
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -260,7 +241,6 @@ Can be used within other ``numba`` compiled functions for end-to-end compilation
 .. currentmodule:: sktime.distances
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 

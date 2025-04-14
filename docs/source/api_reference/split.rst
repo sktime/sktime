@@ -28,7 +28,6 @@ see :ref:`forecasting API reference <forecasting_ref>`.
 .. currentmodule:: sktime.split
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -45,7 +44,6 @@ They have tag ``"split_type"="temporal"``.
 .. currentmodule:: sktime.split
 
 .. autosummary::
-    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -68,7 +66,6 @@ more complex time index based splitting strategies.
 .. currentmodule:: sktime.split.compose
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -77,7 +74,6 @@ more complex time index based splitting strategies.
 .. currentmodule:: sktime.split
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -96,7 +92,6 @@ Instance splitters have tag ``"split_type"="instance"``.
 .. currentmodule:: sktime.split
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

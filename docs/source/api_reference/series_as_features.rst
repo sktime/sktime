@@ -16,7 +16,6 @@ Model selection
 .. currentmodule:: sktime.series_as_features.model_selection
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

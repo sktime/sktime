@@ -28,14 +28,12 @@ Composition
 .. currentmodule:: sktime.param_est.compose
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
     ParamFitterPipeline
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -44,7 +42,6 @@ Composition
 .. currentmodule:: sktime.param_est.plugin
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -57,7 +54,6 @@ Naive
 .. currentmodule:: sktime.param_est.fixed
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -69,7 +65,6 @@ Seasonality estimators
 .. currentmodule:: sktime.param_est.seasonality
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -83,7 +78,6 @@ Stationarity estimators
 .. currentmodule:: sktime.param_est.stationarity
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -102,7 +96,6 @@ Lag estimators
 .. currentmodule:: sktime.param_est.lag
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

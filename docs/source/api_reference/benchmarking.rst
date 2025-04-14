@@ -12,7 +12,6 @@ Base
 .. currentmodule:: sktime.benchmarking.benchmarks
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -21,7 +20,6 @@ Base
 .. currentmodule:: sktime.benchmarking.forecasting
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -30,7 +28,6 @@ Base
 .. currentmodule:: sktime.benchmarking.base
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -43,7 +40,6 @@ Base
 .. currentmodule:: sktime.benchmarking.data
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -54,7 +50,6 @@ Base
 .. currentmodule:: sktime.benchmarking.evaluation
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -63,7 +58,6 @@ Base
 .. currentmodule:: sktime.benchmarking.experiments
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: function.rst
 
@@ -75,7 +69,6 @@ Base
 .. currentmodule:: sktime.benchmarking.orchestration
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -84,7 +77,6 @@ Base
 .. currentmodule:: sktime.benchmarking.results
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -94,7 +86,6 @@ Base
 .. currentmodule:: sktime.benchmarking.strategies
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -106,7 +97,6 @@ Base
 .. currentmodule:: sktime.benchmarking.tasks
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -117,7 +107,6 @@ Base
 .. currentmodule:: sktime.benchmarking.metrics
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 

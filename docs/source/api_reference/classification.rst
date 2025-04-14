@@ -20,7 +20,6 @@ Composition
 .. currentmodule:: sktime.classification.compose
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -35,7 +34,6 @@ Model selection and tuning
 .. currentmodule:: sktime.classification.model_selection
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -47,7 +45,6 @@ Ensembles
 .. currentmodule:: sktime.classification.ensemble
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -61,7 +58,6 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
-    :signatures: none
     :recursive:
     :toctree: auto_generated/
     :template: class.rst
@@ -87,7 +83,6 @@ Dictionary-based
 .. currentmodule:: sktime.classification.dictionary_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -106,7 +101,6 @@ Distance-based
 .. currentmodule:: sktime.classification.distance_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -125,7 +119,6 @@ Dummy
 .. currentmodule:: sktime.classification.dummy
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -137,7 +130,6 @@ Early classification
 .. currentmodule:: sktime.classification.early_classification
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -150,7 +142,6 @@ Feature-based
 .. currentmodule:: sktime.classification.feature_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -168,7 +159,6 @@ Hybrid
 .. currentmodule:: sktime.classification.hybrid
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -181,7 +171,6 @@ Interval-based
 .. currentmodule:: sktime.classification.interval_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -197,7 +186,6 @@ Kernel-based
 .. currentmodule:: sktime.classification.kernel_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -212,7 +200,6 @@ Shapelet-based
 .. currentmodule:: sktime.classification.shapelet_based
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -235,7 +222,6 @@ directly in a tabular setting.
 .. currentmodule:: sktime.classification.sklearn
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -248,7 +234,6 @@ Base
 .. currentmodule:: sktime.classification
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -257,7 +242,6 @@ Base
 .. currentmodule:: sktime.classification.deep_learning.base
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
@@ -266,7 +250,6 @@ Base
 .. currentmodule:: sktime.classification.early_classification.base
 
 .. autosummary::
-    :signatures: none
     :toctree: auto_generated/
     :template: class.rst
 
