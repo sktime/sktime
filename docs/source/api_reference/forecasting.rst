@@ -292,6 +292,17 @@ Exponential smoothing based forecasters
 
     StatsForecastAutoTheta
 
+Filtering and denoising based forecasters
+-----------------------------------------
+
+.. currentmodule:: sktime.forecasting.kalman_filter_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KalmanFilterForecaster
+
 AR/MA type forecasters
 ----------------------
 
