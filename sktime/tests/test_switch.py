@@ -29,7 +29,7 @@ def run_test_for_class(cls, return_reason=False):
     2. Condition 2:
 
       If the module containing the class/func has changed according to is_class_changed,
-      or one of the modules containing any parent classes  in the local package,
+      or one of the modules containing any parent classes in the local package,
       then condition 2 is met.
 
     3. Condition 3:
