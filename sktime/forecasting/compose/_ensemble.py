@@ -37,8 +37,11 @@ VALID_AGG_FUNCS = {
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
-    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
-    using given method or a meta-model (regressor) .
+    The AutoEnsembleForecaster finds optimal weights for the ensembled 
+    forecasters using a specified weighting strategy. Weights can be 
+    derived either from the inverse variance of forecast errors or by
+    training a meta-model (regressor) on the predictions of the base 
+    forecasters (stacking) .
     The regressor has to be sklearn-like and needs to have either an attribute
     ``feature_importances_`` or ``coef_``, as this is used as weights.
     Regressor can also be a sklearn.Pipeline.
@@ -48,27 +51,49 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
 
-    method : str, optional, default="feature-importance"
-        Strategy used to compute weights. Available choices:
+    method : str, {"feature-importance", "inverse-variance"}, optional, \
+            default="feature-importance"
+        Strategy used to compute weights for the ensemble members.
 
-        - feature-importance:
+        - ``"feature-importance"``:
+            this strategy implements a form of **stacking**.
+            It trains a meta-regression model (controlled by `regressor`)
+            on out-of-sample predictions generated from the constituent
+            `forecasters`.
+            the input features for the meta-model are the predictions of the
+            base forecasters on a held-out test set, and the target is the actual
+            time series value (`y_test`). the final weights assigned to each base
+            forecaster in the ensemble are derived from the fitted `coef_` attribute
+            (for linear meta-models) or `feature_importances_` attribute
+            (for tree-based meta-models) of the meta-regressor.
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
-        - inverse-variance:
+        - ``"inverse-variance"``:
+            weights are computed based on the inverse of the prediction error
+            variance for each forecaster, evaluated on a held-out portion of the
+            training data (determined by `test_size`).
+            forecasters with lower prediction variance (more consistent performance)
+            receive higher weights. A `regressor` will not be used with this method.
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
 
     regressor : sklearn-like regressor, optional, default=None.
+        Used only when ``method="feature-importance"``, defines the meta-model.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
-        a GradientBoostingRegressor(max_depth=5) is used.
-        The regressor can also be a sklearn.Pipeline().
+        a GradientBoostingRegressor(max_depth=5) is used by default.
+        The regressor must expose either a ``feature_importances_`` or ``coef_``
+        attribute after fitting. It can also be a ``sklearn.pipeline.Pipeline``
+        ending in such a regressor.
     test_size : int or float, optional, default=None
-        Used to do an internal temporal_train_test_split(). The test_size data
-        will be the endog data of the regressor and it is the most recent data.
-        The exog data of the regressor are the predictions from the temporarily
-        trained ensemble models. If None, it will be set to 0.25.
+        Size of the test set used for the internal train-test split. This data
+        is used to evaluate forecasters for weight calculation (either as the target
+        for the meta-regressor in "feature-importance" or for variance calculation in 
+        "inverse-variance").
+        The test_size data will be the endog data of the regressor and it is the 
+        most recent data. The exog data of the regressor are the predictions from
+        the temporarily trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
     n_jobs : int or None, optional, default=None
@@ -79,19 +104,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Attributes
     ----------
     regressor_ : sklearn-like regressor
-        Fitted regressor.
+        Fitted regressor (meta-model), only available if ``method="feature-importance"``.
     weights_ : np.array
-        The weights based on either ``regressor.feature_importances_`` or
-        ``regressor.coef_`` values.
+        The final weights assigned to each forecaster in the ``forecasters`` list,
+        derived according to the chosen ``method``.
 
     Notes
-    _____
-    The feature-importance weighting method implements an approach inspired by
-    Caruana et al.'s ensemble selection methodology, which selects and weights
-    models based on their performance characteristics.
+    -----
+    The ``"feature-importance"`` weighting strategy implements **stacking**, a
+    common ensemble technique. While distinct from the **greedy forward selection**
+    algorithm presented by Caruana et al. (2004) [1], this stacking approach
+    shares the core principle of using validation/out-of-sample performance
+    data to learn an effective combination of diverse models from a library.
 
     References
-    __________
+    ----------
     .. [1] Caruana, R., Niculescu-Mizil, A., Crew, G., & Ksikes, A. (2004).
            "Ensemble Selection from Libraries of Models."
            Proceedings of the 21st International Conference on Machine Learning (ICML).
@@ -113,10 +140,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("trend", PolynomialTrendForecaster()),
     ...     ("naive", NaiveForecaster()),
     ... ]
-    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> # Using feature-importance (stacking) with default Gradient Boosting Regressor 
+    >>> forecaster_fi = AutoEnsembleForecaster(forecasters=forecasters)
+    >>> forecaster_fi.fit(y=y, fh=[1,2,3])
     AutoEnsembleForecaster(...)
-    >>> y_pred = forecaster.predict()
+    >>> y_pred_fi = forecaster_fi.predict()
+    >>> # Using inverse variance weighting
+    >>> forecaster_iv = AutoEnsembleForecaster(
+    ...     forecasters=forecasters, method="inverse-variance"
+    ... )
+    >>> forecaster_iv.fit(y=y, fh=[1,2,3])
+    AutoEnsembleForecaster(method='inverse-variance')
+    >>> y_pred_iv = forecaster_iv.predict()
     """
 
     _tags = {
@@ -161,19 +196,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Returns
         -------
         self : returns an instance of self.
-
-        Notes
-        _____
-        For the "feature-importance" method, the weighting approach follows principles
-        from Caruana et al. (2004), using either feature importances or coefficients
-        from the meta-model to determine ensemble weights. For the "inverse-variance"
-        method, weights are computed based on the prediction error variance on a
-        held-out test set.
-
-        References
-        __________
-        .. [1] Caruana, R., et al. (2004). "Ensemble Selection from Libraries of Models."
-           ICML '04. https://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
         """
         forecasters = [x[1] for x in self.forecasters_]
 
