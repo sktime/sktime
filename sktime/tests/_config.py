@@ -53,11 +53,6 @@ EXCLUDE_ESTIMATORS = [
     "M5Dataset",
     # Test estimators
     "_TransformChangeNInstances",
-    # ptf global models fail the tests, see #7997
-    "PytorchForecastingTFT",
-    "PytorchForecastingNBeats",
-    "PytorchForecastingNHiTS",
-    "PytorchForecastingDeepAR",
     # STDBSCAN is not API compliant, see #7994
     "STDBSCAN",
     # Temporarily remove RRF from tests, while #7380 is not merged
