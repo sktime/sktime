@@ -57,7 +57,7 @@ def test_run_test_for_class():
     from sktime.forecasting.naive import NaiveForecaster
 
     # boolean flag for whether to run tests for all estimators
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
 
     # test that assumptions on being on exception list are correct
     assert "HIVECOTEV2" in EXCLUDE_ESTIMATORS  # if this fails, switch the example
