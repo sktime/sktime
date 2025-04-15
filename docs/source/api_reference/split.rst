@@ -52,6 +52,7 @@ They have tag ``"split_type"="temporal"``.
     cutoff.CutoffFhSplitter
     singlewindow.SingleWindowSplitter
     slidingwindow.SlidingWindowSplitter
+    slidinggreedy.SlidingGreedySplitter
     expandingwindow.ExpandingWindowSplitter
     expandingcutoff.ExpandingCutoffSplitter
     expandinggreedy.ExpandingGreedySplitter
