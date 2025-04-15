@@ -206,14 +206,19 @@ class _StatsModelsAdapter(BaseForecaster):
             return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
 
         start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
-        if fh.min() > 0:
-            start = start - fh.min() + 1
+
+        # Check if fh is relative (based on integers) or absolute (based on timestamps)
+        if not fh.is_relative:
+            fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+            fh_int = fh_int - fh_int[0]
         else:
-            start = start + fh.min()
-        fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
-        # if fh > 1 steps ahead of cutoff
-        fh_int = fh_int - fh_int[0]
-        fh_int = fh_int + fh.min() - 1
+            if fh.min() > 0:
+                start = start - fh.min() + 1
+            else:
+                start = start + fh.min()
+            fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+            fh_int = fh_int - fh_int[0]
+            fh_int = fh_int + fh.min() - 1
 
         get_prediction_arguments = {"start": start, "end": end}
 
