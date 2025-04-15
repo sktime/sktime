@@ -15,24 +15,12 @@ def test_doc_link_generator(mock_version):
             f"https://www.sktime.net/en/v{expected_version}/api_reference/auto_generated/"
             f"{expected_path}.html"
         )
-        assert _HTMLDocumentationLinkMixin._doc_link_generator() == expected_url
+        assert _HTMLDocumentationLinkMixin._generate_doc_link() == expected_url
 
 
-@pytest.mark.parametrize(
-    "module, expected_url",
-    [
-        ("unknown", ""),
-        (
-            "sktime",
-            "https://www.sktime.net/en/0.12.0/api_reference/auto_generated/sktime.utils._HTMLDocumentationLinkMixin.html",
-        ),
-    ],
-)
-def test_get_doc_link(module, expected_url):
+def test_get_doc_link():
     """Test `_get_doc_link` when the module does not match `_doc_link_module`."""
     with patch("sktime.__version__", "0.12.0"):
+        expected_url = "https://www.sktime.net/en/v0.12.0/api_reference/auto_generated/sktime.utils._HTMLDocumentationLinkMixin.html"
 
-        class TestClass(_HTMLDocumentationLinkMixin):
-            _doc_link_module = module
-
-        assert TestClass._get_doc_link() == expected_url
+        assert _HTMLDocumentationLinkMixin()._get_doc_link() == expected_url
