@@ -10,6 +10,7 @@ __all__ = [
 __author__ = ["davidgilbertson"]
 
 from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 
