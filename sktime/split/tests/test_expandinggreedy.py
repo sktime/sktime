@@ -117,7 +117,7 @@ def test_expanding_greedy_splitter_consecutive():
     not run_test_for_class(ExpandingGreedySplitter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_sliding_greedy_expanding_forecast_horizon():
+def test_expanding_greedy_splitter_forecast_horizon():
     """Test that ExpandingGreedySplitter's forecast horizon is properly handled."""
     ts = np.arange(10)
 
