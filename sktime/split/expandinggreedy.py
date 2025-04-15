@@ -84,7 +84,7 @@ class ExpandingGreedySplitter(BaseSplitter):
         test_size = self.test_size
 
         if isinstance(test_size, float):
-            _test_size = np.ceil(len(y) * test_size)
+            _test_size = int(np.ceil(len(y) * test_size))
             self.fh = np.arange(_test_size) + 1
         else:
             _test_size = test_size
