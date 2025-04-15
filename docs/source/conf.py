@@ -140,10 +140,8 @@ suppress_warnings = [
     "docutils",
     "toc.not_included",
     "autodoc.import_object",
-    "autosectionlabel.changelog",
-    "autosectionlabel.changelog_header_template",
-    "autosectionlabel.examples",
-    "autosectionlabel.api_reference",
+    "autosectionlabel",
+    "ref",
 ]
 # FIXME: Temporary solution until numpydoc issues are fixed
 warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
