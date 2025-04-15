@@ -32,7 +32,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.37.0: check if this is still necessary
+        # todo 0.38.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -1177,7 +1177,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -1737,7 +1737,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...         ]
     ...     )
     >>> param_grid = {
-    ...     "scaler__transformer__with_scaling": CategoricalDistribution(
+    ...     "scaler__with_scaling": CategoricalDistribution(
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
@@ -1760,7 +1760,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
