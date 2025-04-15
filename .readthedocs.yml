@@ -3,12 +3,12 @@
 
 version: 2
 
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+# python:
+#   install:
+#     - method: pip
+#       path: .
+#       extra_requirements:
+#         - docs
 build:
   os: ubuntu-22.04
   tools:
@@ -16,17 +16,17 @@ build:
   commands:
     - pip install .[docs]
     - sphinx-build -b html -d _build/doctrees -j auto docs/source $READTHEDOCS_OUTPUT/html
-  jobs:
-    post_checkout:
-    # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
-    #
-    # If there are no changes (git diff exits with 0) we force the command to return with 183.
-    # This is a special exit code on Read the Docs that will cancel the build immediately.
-    - |
-      if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- docs/ .readthedocs.yaml;
-      then
-        exit 183;
-      fi
+  # jobs:
+  #   post_checkout:
+  #   # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
+  #   #
+  #   # If there are no changes (git diff exits with 0) we force the command to return with 183.
+  #   # This is a special exit code on Read the Docs that will cancel the build immediately.
+  #   - |
+  #     if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- docs/ .readthedocs.yaml;
+  #     then
+  #       exit 183;
+  #     fi
 
 # sphinx:
 #   configuration: docs/source/conf.py
