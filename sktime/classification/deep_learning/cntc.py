@@ -79,7 +79,7 @@ class CNTCClassifier(BaseDeepClassifier):
             "AurumnPegasus",
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(

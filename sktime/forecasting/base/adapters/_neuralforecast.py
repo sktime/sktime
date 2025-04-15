@@ -84,7 +84,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
     }
