@@ -225,6 +225,14 @@ Distance-based features
 
     MatrixProfile
 
+.. currentmodule:: sktime.transformations.panel.compose_distance
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DistanceFeatures
+
 Dictionary-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -381,7 +389,7 @@ Detrending and Decomposition
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-    MSTL
+    mstl.MSTL
 
 .. currentmodule:: sktime.transformations.series.vmd
 
@@ -517,6 +525,22 @@ Binning, sampling and segmentation
     RandomIntervalSegmenter
     SlidingWindowSegmenter
 
+.. currentmodule:: sktime.transformations.panel.random_intervals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RandomIntervals
+
+.. currentmodule:: sktime.transformations.panel.supervised_intervals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SupervisedIntervals
+
 .. currentmodule:: sktime.transformations.series.dilation_mapping
 
 .. autosummary::
@@ -579,8 +603,8 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     HolidayFeatures
-    CountryHolidaysTransformer
-    FinancialHolidaysTransformer
+    country_holidays.CountryHolidaysTransformer
+    financial_holidays.FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
@@ -839,6 +863,14 @@ Outlier detection, changepoint detection
     :template: class.rst
 
     ClaSPTransformer
+
+.. currentmodule:: sktime.transformations.series.dobin
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DOBIN
 
 Hierarchical transformers
 -------------------------

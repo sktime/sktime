@@ -98,6 +98,7 @@ Quantile and interval forecasts
     PinballLoss
     EmpiricalCoverage
     ConstraintViolation
+    IntervalWidth
 
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~

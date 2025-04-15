@@ -55,10 +55,11 @@ Regression datasets
 .. currentmodule:: sktime.datasets.regression
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    Tecator
+    tecator.Tecator
 
 Loaders
 -------
