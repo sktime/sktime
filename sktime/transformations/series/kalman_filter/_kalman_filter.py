@@ -295,7 +295,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -786,7 +786,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
