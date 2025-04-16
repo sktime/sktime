@@ -284,6 +284,14 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
+    # see bug report #8142
+    "GroupbyCategoryForecaster": [
+        "test_baseclasses_last_in_mro_order",
+    ],
+    # see bug report #8142
+    "TransformSelectForecaster": [
+        "test_baseclasses_last_in_mro_order",
+    ],
 }
 
 # exclude tests but keyed by test name

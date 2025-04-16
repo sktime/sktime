@@ -132,7 +132,7 @@ class ForecastByLevel(_DelegatedForecaster):
         return params
 
 
-class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
+class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Choosing a global forecaster based on category or cluster of time series.
 
     Programmatic generalization of "cluster then apply forecaster" approach,
@@ -241,7 +241,13 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         fallback_forecaster=None,
     ):
         # saving arguments to object storage
-        self.transformer = self._get_transformer_or_default(transformer)
+        if transformer is not None:
+            self.transformer = transformer
+
+        else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
+            self.transformer = ADICVTransformer(features=["class"])
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
@@ -322,38 +328,11 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
     @property
     def _steps(self):
-        """Return the unfitted steps."""
-        return [("transformer", self.transformer)] + self._forecasters
-
-    @_steps.setter
-    def _steps(self, new_steps):
-        """Provide new values for the steps.
-
-        Parameters
-        ----------
-        new_steps : list[tuple[str, sktime_estimator]]
-            The list of new estimators to update the object's steps with
-        """
-        transformer = None
-        fallback_forecaster = None
-        forecasters = dict()
-        for category, estimator in new_steps:
-            estimator = estimator.clone() if estimator is not None else None
-            # We assign two categories directly
-            if category == "fallback_forecaster":
-                fallback_forecaster = estimator
-            elif category == "transformer":
-                transformer = estimator
-            else:
-                forecasters[category] = estimator
-        self.forecasters = forecasters
-        self.transformer = self._get_transformer_or_default(transformer)
-        self.fallback_forecaster = fallback_forecaster
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
 
     @property
     def steps_(self):
-        """Return the fitted steps."""
-        return [("transformer", self.transformer_)] + list(self.forecasters_.items())
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -396,12 +375,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         """
         # passing time series through the provided transformer!
 
-        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
         self.category_ = self.transformer_.fit_transform(X=y, y=X).iloc[:, 0]
-
-        # If self.transformer_ is a clusterer, the groups are likely integers.
-        # We later assume they are strings, so we need to convert them.
-        self.category_ = self.category_.astype(str)
         self.forecasters_ = {}
 
         if y.index.nlevels == 1:
@@ -416,7 +390,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                 if self.fallback_forecaster is None:
                     raise ValueError(
                         "Forecaster not provided for given"
-                        + f"time series of type {category}"
+                        + f"time series of type {self.category_}"
                         + "and no fallback forecaster provided to use for this case."
                     )
 
@@ -617,7 +591,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         Returns
         -------
-        forecasters : list[tuple[str, sktime forecasters]]
+        forecasters : list[tuple[str, strsktime forecasters]]
             The list of forecasters which is returned. Also includes the
             fallback forecaster with the category: "fallback_forecaster"
         """
@@ -631,7 +605,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         Parameters
         ----------
-        new_forecasters : list[tuple[str, sktime forecasters]]
+        new_forecasters : list[tuple[str, strsktime forecasters]]
             The list of new forecasters to update the object's forecasters with
         """
         # Accepting in possible new forecasters
@@ -665,25 +639,6 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         if df is None or group is None:
             return df
         return df.loc[df.index.droplevel(-1).map(lambda x: x in group.index),]
-
-    def _get_transformer_or_default(self, transformer=None):
-        """Return the transformer is provided, or a default.
-
-        Parameters
-        ----------
-        transformer, optional: sktime transformer or clusterer
-
-        Returns
-        -------
-        sktime transformer or clusterer
-        """
-        if transformer is not None:
-            return transformer
-
-        from sktime.transformations.series.adi_cv import ADICVTransformer
-
-        transformer = ADICVTransformer(features=["class"])
-        return transformer
 
 
 # Function implementations that will be added dynamically
