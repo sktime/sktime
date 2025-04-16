@@ -204,56 +204,6 @@ class THieFForecaster(BaseForecaster):
 
         return result
 
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
-
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        if isinstance(y, pd.Series):
-            y = y.to_frame()
-
-        for level in self._aggregation_levels:
-            y_agg = MAPAForecaster._aggregate(self, y, level)
-            if level in self.forecasters:
-                self.forecasters[level].update(y_agg, X, update_params=update_params)
-            else:
-                raise ValueError(
-                    f"No trained forecaster found for aggregation level {level}"
-                )
-
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
