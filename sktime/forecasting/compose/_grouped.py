@@ -64,7 +64,7 @@ class ForecastByLevel(_DelegatedForecaster):
     _tags = {
         "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -264,7 +264,7 @@ class GroupbyCategoryForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             "ignores-exogeneous-X": True,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,

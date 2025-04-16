@@ -49,14 +49,14 @@ def test_hierarchy_ensemble_level_predict(forecasters):
 
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[i][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
         test_frcstr.fit(df, fh=[1, 2, 3])
         test_pred = test_frcstr.predict()
         msg = "Level predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
-    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[-1][1])]
+    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
     def_frcstr.fit(df, fh=[1, 2, 3])
     def_pred = def_frcstr.predict()
     msg = "Level default predictions do not match"
@@ -99,14 +99,14 @@ def test_hierarchy_ensemble_level_predict_parallel(forecasters):
 
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[i][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
         test_frcstr.fit(df, fh=[1, 2, 3])
         test_pred = test_frcstr.predict()
         msg = "Level predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
-    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[-1][1])]
+    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
     def_frcstr.fit(df, fh=[1, 2, 3])
     def_pred = def_frcstr.predict()
     msg = "Level default predictions do not match"
@@ -152,14 +152,14 @@ def test_hierarchy_ensemble_node_predict_parallel(forecasters):
 
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[i][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
         test_frcstr.fit(df, fh=[1, 2, 3])
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
-    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[-1][1])]
+    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
     def_frcstr.fit(df, fh=[1, 2, 3])
     def_pred = def_frcstr.predict()
     msg = "Node default predictions do not match"
@@ -201,14 +201,14 @@ def test_hierarchy_ensemble_node_predict(forecasters):
 
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[i][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
         test_frcstr.fit(df, fh=[1, 2, 3])
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
-    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[-1][1])]
+    df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
     def_frcstr.fit(df, fh=[1, 2, 3])
     def_pred = def_frcstr.predict()
     msg = "Node default predictions do not match"
@@ -300,7 +300,7 @@ def test_level_one_data(forecasters, default):
 
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[i][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
         test_frcstr.fit(df, fh=[1, 2, 3])
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
@@ -310,7 +310,7 @@ def test_level_one_data(forecasters, default):
     nodes = set(flatten(nodes))
     if default is not None and len(nodes) != len(y.index.droplevel(-1).unique()):
         def_frcstr = default
-        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list[-1][1])]
+        df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
         def_frcstr.fit(df, fh=[1, 2, 3])
         def_pred = def_frcstr.predict()
         msg = "Node default predictions do not match"

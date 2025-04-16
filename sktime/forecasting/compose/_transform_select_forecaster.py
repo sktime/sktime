@@ -137,7 +137,7 @@ class TransformSelectForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             "ignores-exogeneous-X": True,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,
