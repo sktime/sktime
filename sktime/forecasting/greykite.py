@@ -31,8 +31,6 @@ class GreykiteForecaster(BaseForecaster):
         is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
-    freq : str, optional
-        Frequency of the time series data (e.g., 'D' for daily, 'M' for monthly).
     forecast_horizon : int, optional
         The number of periods to forecast. If None, it will be set via the
         forecasting horizon.
@@ -83,7 +81,6 @@ class GreykiteForecaster(BaseForecaster):
         self,
         forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
         date_format: Optional[str] = None,
-        freq: Optional[str] = None,
         forecast_horizon: Optional[int] = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
@@ -91,7 +88,6 @@ class GreykiteForecaster(BaseForecaster):
         super().__init__()
         self.forecast_config = forecast_config
         self.date_format = date_format
-        self.freq = freq
         self.forecast_horizon = forecast_horizon
         self.model_template = model_template
         self.coverage = coverage
@@ -106,11 +102,13 @@ class GreykiteForecaster(BaseForecaster):
             return self.forecast_config
 
         # If frequency is not provided, try to infer it from the index.
-        if y is not None and self.freq is None:
+        if y is not None:
             if isinstance(y.index, pd.PeriodIndex):
-                self.freq = y.index.freqstr
+                freq = y.index.freqstr
             else:
-                self.freq = pd.infer_freq(y.index)
+                freq = pd.infer_freq(y.index)
+        else:
+            freq = None
 
         # Set train_end_date explicitly using the maximum timestamp in y
         train_end_date = y.index.max() if y is not None else None
@@ -129,7 +127,7 @@ class GreykiteForecaster(BaseForecaster):
             time_col="ts",
             value_col="y",
             date_format=self.date_format,
-            freq=self.freq,
+            freq=freq,
             train_end_date=train_end_date,
         )
         # Default model components.
