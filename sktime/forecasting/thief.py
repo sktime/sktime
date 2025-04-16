@@ -1,49 +1,6 @@
 """THieF Forecaster implementation."""
 
-"""Extension template for forecasters.
-
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Optional implements:
-    updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
-    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
-    distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - _get_fitted_params()
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+__author__ = ["satvshr"]
 
 
 import numpy as np
@@ -51,9 +8,6 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.mapa import MAPAForecaster
-from sktime.transformations.hierarchical.reconcile import (
-    _get_g_matrix_ols,
-)
 
 # todo: add any necessary imports here
 
@@ -112,34 +66,42 @@ class THieFForecaster(BaseForecaster):
                 f"{self.reconciliation_method} has not been implemented for THieF."
             )
 
-    def _convert_forecasts_to_multiindex(self, forecasts):
-        levels = []
-        dates = []
-        values = []
+    def _build_summing_matrix(self, n_periods, agg_factor):
+        """Build summing matrix S for given number of periods and aggregation factor."""
+        k = n_periods // agg_factor
+        S = np.zeros((k, n_periods))
 
-        for level, forecast_values in forecasts.items():
-            levels.extend([level] * len(forecast_values.index))
-            dates.extend(forecast_values.index)
-            values.extend(forecast_values.values.tolist())
+        for i in range(k):
+            end = n_periods - i * agg_factor
+            start = end - agg_factor
+            S[k - i - 1, start:end] = 1
 
-        multi_index = pd.MultiIndex.from_tuples(list(zip(levels, dates)))
-        values = np.array(values).flatten()
-        df = pd.DataFrame(values, index=multi_index)
+        return S
 
-        return df
+    def _thief_s_matrix(self, agg_factors):
+        """Build full S matrix for THieF using all aggregation levels."""
+        all_S = []
+        agg_list = list(agg_factors)
+        agg_list.sort(reverse=True)
+        for f in agg_list:
+            if agg_list[0] % f == 0:
+                S_f = self._build_summing_matrix(agg_list[0], f)
+                all_S.append(S_f)
+
+        return np.vstack(all_S)
 
     def _determine_aggregation_levels(self, y):
         """Determine the aggregation level based on the frequency of the time series."""
         m = None
-        if isinstance(y.index, pd.PeriodIndex):
+        if hasattr(y.index, "freqstr") and y.index.freqstr:
+            freq = y.index.freqstr
+        elif isinstance(y.index, pd.PeriodIndex):
             idx = y.index.to_timestamp()
             freq = idx.freqstr
         elif isinstance(y.index, pd.RangeIndex):
             m = y.index.stop - y.index.start
         elif isinstance(y.index, pd.Index):
             m = y.index[-1] - y.index[0]
-        elif hasattr(y.index, "freqstr") and y.index.freqstr:
-            freq = y.index.freqstr
 
         freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
 
@@ -165,85 +127,40 @@ class THieFForecaster(BaseForecaster):
         """Convert fh into aggregated levels."""
         from sktime.forecasting.base import ForecastingHorizon
 
-        fh_vals = fh.to_numpy()
-        if np.issubdtype(fh_vals.dtype, np.datetime64):
-            reference_date = fh_vals.min()
-            fh_vals = (fh_vals - reference_date).astype("timedelta64[D]").astype(int)
-        if isinstance(fh_vals[0], pd.Period):
-            reference_date = fh_vals[0]
-            fh_vals = np.array(
-                [p.ordinal - reference_date.ordinal + 1 for p in fh_vals]
-            )
+        fh_period = fh.to_pandas()
+        if not isinstance(fh_period, pd.PeriodIndex):
+            fh_period = fh_period.to_period("M")
 
+        reference_period = fh_period.min()
+        fh_diffs = np.array([(p - reference_period).n for p in fh_period]) + 1
         new_vals = np.unique(
-            [int(np.ceil(i / level)) for i in fh_vals if (i / level) >= 1]
+            [int(np.ceil(i / level)) for i in fh_diffs if (i / level) >= 1]
         )
+
         return ForecastingHorizon(new_vals, is_relative=True)
 
     def _reconcile_forecasts(self, forecasts):
         """Reconcile forecasts using the specified reconciliation method."""
+        self._Y_base = np.vstack(
+            [forecasts[level].values for level in forecasts.keys()]
+        )
+        self.S = self._thief_s_matrix(self.forecasters.keys())
+
         if self.reconciliation_method == "bu":
-            reconciled_forecast = {}
-            levels = sorted(forecasts.keys())
-
-            reconciled_forecast[levels[0]] = forecasts[levels[0]].copy()
-
-            for level in levels[1:]:
-                reconciled_forecast[level] = (
-                    reconciled_forecast[levels[0]]
-                    .rolling(window=level, min_periods=1)
-                    .sum()
-                )
-
-            return pd.DataFrame(
-                reconciled_forecast[levels[0]].values.flatten(),
-                index=reconciled_forecast[levels[0]].index,
-            )
+            Y = forecasts[1].values  # Only bottom-level forecast is used
+            return self.S @ Y
 
         elif self.reconciliation_method == "ols":
-            hier = self._convert_forecasts_to_multiindex(forecasts)
-            hier = hier.unstack(level=0)
-            g_ols = _get_g_matrix_ols(hier)
-            print(g_ols)
-            reconciled_values = g_ols @ hier.values
-            dates = hier.index.get_level_values(1).unique()
-
-            return pd.DataFrame(reconciled_values, index=dates)
+            G_ols = np.linalg.inv(self.S.T @ self.S) @ self.S.T
+            return self.S @ G_ols @ self._Y_base
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
+        """Fit forecaster to training data."""
         if isinstance(y, pd.Series):
             y = y.to_frame()
 
         self._aggregation_levels = self._determine_aggregation_levels(y)
+
         for level in self._aggregation_levels:
             y_agg = MAPAForecaster._aggregate(self, y, level)
 
@@ -265,45 +182,23 @@ class THieFForecaster(BaseForecaster):
                 )
 
             forecaster = self.base_forecaster.clone()
-            forecaster.fit(y_agg, X)
+            forecaster.fit(y_agg, X, fh=fh)
             self.forecasters[level] = forecaster
 
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
+        """Predict using the fitted forecaster."""
         self._forecast_store = {}
         for level, forecaster in self.forecasters.items():
             fh_level = self._divide_fh(fh, level)
-            if fh_level:
+
+            if len(fh_level) > 0:
                 y_pred_agg = forecaster.predict(fh=fh_level, X=X)
                 if not y_pred_agg.isna().values.any():
                     self._forecast_store[level] = y_pred_agg
+            else:
+                raise AssertionError("Forecast horizon cannot be empty")
 
         result = self._reconcile_forecasts(self._forecast_store)
 
