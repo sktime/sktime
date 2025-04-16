@@ -237,13 +237,11 @@ class GreykiteForecaster(BaseForecaster):
         return [
             {
                 "forecast_horizon": 24,
-                "freq": "D",
                 "model_template": "SILVERKITE",
                 "date_format": None,
             },
             {
                 "forecast_horizon": 12,
-                "freq": "MS",
                 "model_template": "SILVERKITE",
                 "date_format": None,
             },
