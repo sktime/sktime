@@ -154,7 +154,7 @@ class THieFForecaster(BaseForecaster):
             G_ols = np.linalg.inv(self.S.T @ self.S) @ self.S.T
             return self.S @ G_ols @ self._Y_base
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None):
         """Fit forecaster to training data."""
         if isinstance(y, pd.Series):
             y = y.to_frame()
@@ -182,7 +182,7 @@ class THieFForecaster(BaseForecaster):
                 )
 
             forecaster = self.base_forecaster.clone()
-            forecaster.fit(y_agg, X, fh=fh)
+            forecaster.fit(y_agg, X)
             self.forecasters[level] = forecaster
 
         return self
