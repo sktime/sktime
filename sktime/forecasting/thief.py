@@ -154,7 +154,7 @@ class THieFForecaster(BaseForecaster):
             G_ols = np.linalg.inv(self.S.T @ self.S) @ self.S.T
             return self.S @ G_ols @ self._Y_base
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
         if isinstance(y, pd.Series):
             y = y.to_frame()
