@@ -38,6 +38,8 @@ class GreykiteForecaster(BaseForecaster):
         forecasting horizon.
     model_template : str, optional
         Name of the model template to use (default: "SILVERKITE").
+    coverage : float, optional
+        Intended coverage of the prediction bands (0.0 to 1.0).
 
     Attributes
     ----------
@@ -58,6 +60,10 @@ class GreykiteForecaster(BaseForecaster):
     >>> forecaster = GreykiteForecaster()
     >>> forecaster.fit(y=y, fh=fh)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=fh) # doctest: +SKIP
+
+    References
+    ----------
+    .. [1] https://linkedin.github.io/greykite/docs/0.1.0/html/pages/stepbystep/0400_configuration.html
 
     """
 
@@ -187,8 +193,7 @@ class GreykiteForecaster(BaseForecaster):
             raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
 
         # Use stored forecasting horizon from Sktime.
-        fh = self._fh if fh is None else fh
-
+        fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
         # Use only the first len(fh) predictions.
         y_pred = pd.Series(
