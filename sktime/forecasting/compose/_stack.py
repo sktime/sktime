@@ -63,18 +63,19 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "authors": ["mloning", "fkiraly", "indinewton"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "univariate",
         "X-y-must-have-same-index": True,
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.random_state = random_state
 
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
+
         self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
-        self._anytagis_then_set("handles-missing-data", False, True, forecasters)
+        self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
     def _fit(self, y, X, fh):
@@ -93,7 +94,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
         )
@@ -142,7 +143,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         if update_params:
             warn("Updating `final regressor is not implemented", obj=self)
-        for forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
         return self
 

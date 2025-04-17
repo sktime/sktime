@@ -324,7 +324,7 @@ def _make_estimator_overview(app):
         with the final name always preceded by "&".
         """
         if isinstance(author_info, str) and author_info.lower() == "sktime developers":
-            link = '<a href="about/team.html">' "sktime developers</a>"
+            link = '<a href="about/team.html">sktime developers</a>'
             return link
 
         if not isinstance(author_info, list):
@@ -350,7 +350,7 @@ def _make_estimator_overview(app):
             "capability:insample",
             "capability:pred_int",
             "capability:pred_int:insample",
-            "handles-missing-data",
+            "capability:missing_values",
             "ignores-exogeneous-X",
             "scitype:y",
             "requires-fh-in-fit",
@@ -364,7 +364,7 @@ def _make_estimator_overview(app):
             "scitype:transform-output",
             "scitype:transform-labels",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "capability:missing_values:removes",
             "capability:unequal_length",
             "capability:unequal_length:removes",
