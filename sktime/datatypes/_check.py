@@ -27,9 +27,13 @@ from functools import lru_cache
 
 import numpy as np
 
-from sktime.datatypes._base import BaseDatatype
 from sktime.datatypes._base._common import _metadata_requested, _ret
-from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
+from sktime.datatypes._registry import (
+    AMBIGUOUS_MTYPES,
+    SCITYPE_LIST,
+    generate_mtype_cls_list,
+    mtype_to_scitype,
+)
 
 
 def get_check_dict(soft_deps="present"):
@@ -43,6 +47,12 @@ def get_check_dict(soft_deps="present"):
     soft_deps : str, optional - one of "present", "all"
         "present" - only checks with soft dependencies present are included
         "all" - all checks are included
+
+    Returns
+    -------
+    check_dict : dict of (str, str) : object (mtype registry class)
+        dictionary of check classes, with keys being tuples of (mtype, scitype)
+        and values an instance of the check class for that mtype/scitype combination
     """
     if soft_deps not in ["present", "all"]:
         raise ValueError(
@@ -56,25 +66,14 @@ def get_check_dict(soft_deps="present"):
 @lru_cache(maxsize=1)
 def generate_check_dict(soft_deps="present"):
     """Generate check_dict using lookup."""
-    from skbase.utils.dependencies import _check_estimator_deps
-
-    from sktime.utils.retrieval import _all_classes
-
-    classes = _all_classes("sktime.datatypes")
-    classes = [x[1] for x in classes]
-    classes = [x for x in classes if issubclass(x, BaseDatatype)]
-    classes = [x for x in classes if not x.__name__.startswith("Base")]
-    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
-
-    # subset only to data types with soft dependencies present
-    if soft_deps == "present":
-        classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
+    classes = generate_mtype_cls_list(soft_deps=soft_deps)
 
     check_dict = dict()
     for cls in classes:
         k = cls()
-        key = k._get_key()
-        check_dict[key] = k
+        if not k.get_tag("skip_in_checks", False):
+            key = k._get_key()
+            check_dict[key] = k
 
     return check_dict
 

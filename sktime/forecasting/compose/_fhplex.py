@@ -85,7 +85,7 @@ class FhPlexForecaster(BaseForecaster):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": PANDAS_TS_MTYPES,
         "X_inner_mtype": PANDAS_TS_MTYPES,
