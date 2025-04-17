@@ -100,7 +100,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
@@ -1536,12 +1536,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         def _check_missing(metadata, obj_name):
             """Check input metadata against self's missing capability tag."""
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 msg = (
                     f"{type(self).__name__} cannot handle missing data (nans), "
                     f"but {obj_name} passed contained missing data."
                 )
-                if self.get_class_tag("handles-missing-data"):
+                if self.get_class_tag("capability:missing_values"):
                     msg = msg + (
                         f" Whether instances of {type(self).__name__} can handle "
                         "missing data depends on parameters of the instance, "
@@ -1571,7 +1571,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 y_metadata_required += ["has_nans"]
 
             y_valid, y_msg, y_metadata = check_is_scitype(
@@ -1638,7 +1638,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if X is not None:
             # request only required metadata from checks
             X_metadata_required = ["feature_kind"]
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 X_metadata_required += ["has_nans"]
 
             X_valid, X_msg, X_metadata = check_is_scitype(

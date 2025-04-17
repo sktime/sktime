@@ -41,7 +41,7 @@ class _TransformChangeNInstances(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
