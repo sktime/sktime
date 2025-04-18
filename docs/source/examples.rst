@@ -48,9 +48,6 @@ Time Series Classification, Regression, Clustering
     :glob:
 
     examples/02_classification.ipynb
-    examples/02a_classification_multivariate_cnn.ipynb
-    examples/02b_classification_multivariate_lstmfcn.ipynb
-    examples/02c_classification_multivariate_inceptiontime.ipynb
 
 Transformations, pipelines
 ==========================

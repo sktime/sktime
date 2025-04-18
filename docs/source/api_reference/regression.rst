@@ -55,20 +55,21 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNRegressor
-    CNTCRegressor
-    FCNRegressor
-    InceptionTimeRegressor
-    LSTMFCNRegressor
-    MACNNRegressor
-    MCDCNNRegressor
-    MLPRegressor
-    SimpleRNNRegressor
-    ResNetRegressor
-    TapNetRegressor
+    cnn.CNNRegressor
+    cntc.CNTCRegressor
+    fcn.FCNRegressor
+    inceptiontime.InceptionTimeRegressor
+    lstmfcn.LSTMFCNRegressor
+    macnn.MACNNRegressor
+    mcdcnn.MCDCNNRegressor
+    mlp.MLPRegressor
+    resnet.ResNetRegressor
+    rnn.SimpleRNNRegressor
+    tapnet.TapNetRegressor
 
 Distance-based
 --------------
