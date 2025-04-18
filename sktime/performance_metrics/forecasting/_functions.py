@@ -1033,7 +1033,11 @@ def mean_squared_error(
         # use that directly to avoid DeprecationWarning from sklearn 1.6
         metric_function = _root_mean_squared_error
 
-    return metric_function(*metric_args, **metric_kwargs)
+    loss = metric_function(*metric_args, **metric_kwargs)
+
+    if isinstance(loss, float) and not isinstance(loss, np.float64):
+        loss = np.float64(loss)
+    return loss
 
 
 def median_absolute_error(

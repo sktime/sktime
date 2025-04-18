@@ -115,9 +115,9 @@ def fdiff(
     >>> from sktime.libs.fracdiff import fdiff
     >>> a = np.array([1, 2, 4, 7, 0])
     >>> (np.diff(a) == fdiff(a)[1:]).all()
-    True
+    np.True_
     >>> (np.diff(a, 2) == fdiff(a, 2)[2:]).all()
-    True
+    np.True_
 
     This returns fractional differentiation for noninteger `n`.
 

@@ -95,12 +95,12 @@ def erp_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> erp_distance(x_1d, y_1d)
-    16.0
+    np.float64(16.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> erp_distance(x_2d, y_2d)
-    45.254833995939045
+    np.float64(45.254833995939045)
 
     References
     ----------
