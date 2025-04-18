@@ -8,6 +8,9 @@ __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 import math
 from warnings import simplefilter, warn
 
+from sktime.datatypes._check import check_is_scitype
+from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
+
 
 def plot_series(
     *series,
@@ -419,6 +422,43 @@ def _get_windows(cv, y):
         train_windows.append(train)
         test_windows.append(test)
     return train_windows, test_windows
+
+
+def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("matplotlib")
+
+    import matplotlib.pyplot as plt
+
+    assert len(y.columns) == 1, "y should be univariate"
+    assert check_is_scitype(y, scitype="Panel"), "y should be Panel data"
+
+
+    ins = list(
+        gen_y_X_train_test_global(y, None, cv, None, cv_global, cv_global_temporal)
+    )
+
+    column_name = y.columns[0]
+
+    fig, axes = plt.subplots(len(ins), 2, figsize=(16, 3 * len(ins)))
+    for i, _ins in enumerate(ins):
+        for idx in _ins[0].index.get_level_values(0).unique():
+            _ins[0].loc[idx].rename(columns={column_name: idx}).plot(
+                ax=axes[i, 0], label=idx
+            )
+        test_title = _ins[1].index.get_level_values(0).unique()[0]
+        ax = (
+            _ins[1]
+            .rename(columns={column_name: "Context"})
+            .droplevel(0)
+            .plot(ax=axes[i, 1], title=test_title)
+        )
+        _ins[2].rename(columns={column_name: "Target"}).droplevel(0).plot(ax=ax)
+        axes[i, 0].legend(ncol=len(_ins[0].index.get_level_values(0).unique()))
+        axes[i, 1].legend(ncol=2)
+
+    return fig, axes
 
 
 def plot_windows(cv, y, title="", ax=None):
