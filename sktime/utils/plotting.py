@@ -426,7 +426,7 @@ def _get_windows(cv, y):
 
 def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     """Plot training and test windows for global forecasting.
-    
+
     cv_global_temporal splits the Panel temporally
     before the instance split from cv_global is applied. This avoids
     temporal leakage in the global evaluation across time series.
@@ -434,7 +434,7 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     cv_global and cv_global_temporal.
     The resulting train and test windows are plotted for each fold.
 
-    
+
     Pararameters
     ----------
     cv : sktime splitter object, descendant of BaseSplitter
@@ -457,7 +457,6 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     axes : np.ndarray
         matplotlib axes object with the figure
     """
-
     from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
@@ -466,7 +465,6 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
 
     assert len(y.columns) == 1, "y should be univariate"
     assert check_is_scitype(y, scitype="Panel"), "y should be Panel data"
-
 
     ins = list(
         gen_y_X_train_test_global(y, None, cv, None, cv_global, cv_global_temporal)
