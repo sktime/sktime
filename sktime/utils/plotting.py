@@ -425,6 +425,39 @@ def _get_windows(cv, y):
 
 
 def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
+    """Plot training and test windows for global forecasting.
+    
+    cv_global_temporal splits the Panel temporally
+    before the instance split from cv_global is applied. This avoids
+    temporal leakage in the global evaluation across time series.
+    cv is applied on the test set of the combined application of
+    cv_global and cv_global_temporal.
+    The resulting train and test windows are plotted for each fold.
+
+    
+    Pararameters
+    ----------
+    cv : sktime splitter object, descendant of BaseSplitter
+        Time series splitter, e.g., temporal cross-validation iterator
+    cv_global : sktime splitter object, descendant of BaseSplitter
+        the ``cv_global`` splitter is used to split data at instance level,
+        into a global training set ``y_train``,
+        and a global test set ``y_test_global``.
+    cv_global_temporal : SingleWindowSplitter
+        Time series splitter, e.g., temporal cross-validation iterator.
+        splits the Panel temporally before the instance split from cv_global
+        is applied.
+    y : pd.DataFrame
+        Time series to split
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        matplotlib figure object
+    axes : np.ndarray
+        matplotlib axes object with the figure
+    """
+
     from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
