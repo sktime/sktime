@@ -17,6 +17,10 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
+from sktime.performance_metrics.forecasting._common import (
+    _coerce_to_1d_numpy,
+    _coerce_to_scalar,
+)
 from sktime.utils.stats import _weighted_geometric_mean
 
 if sklearn.__version__ >= "1.4.0":
@@ -62,6 +66,15 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
         )
         raise ValueError(msg)
     return kwarg_
+
+
+def _handle_output(obj, multioutput):
+    """Handle output of metric function."""
+    if multioutput == "raw_values":
+        obj = _coerce_to_1d_numpy(obj)
+    elif multioutput == "uniform_average":
+        obj = _coerce_to_scalar(obj)
+    return obj
 
 
 def mean_linex_error(
@@ -175,7 +188,8 @@ def mean_linex_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_asymmetric_error(
@@ -318,7 +332,8 @@ def mean_asymmetric_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_scaled_error(
@@ -444,7 +459,8 @@ def mean_absolute_scaled_error(
     mae_pred = mean_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
-    return mae_pred / np.maximum(mae_naive, EPS)
+    loss = mae_pred / np.maximum(mae_naive, EPS)
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_scaled_error(
@@ -575,7 +591,8 @@ def median_absolute_scaled_error(
     mdae_pred = median_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
-    return mdae_pred / np.maximum(mdae_naive, EPS)
+    loss = mdae_pred / np.maximum(mdae_naive, EPS)
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_scaled_error(
@@ -715,10 +732,7 @@ def mean_squared_scaled_error(
     else:
         loss = mse / np.maximum(mse_naive, EPS)
 
-    if isinstance(loss, float) and not isinstance(loss, np.float64):
-        loss = np.float64(loss)
-
-    return loss
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_scaled_error(
@@ -849,7 +863,8 @@ def median_squared_scaled_error(
         loss = np.sqrt(mdse / np.maximum(mdse_naive, EPS))
     else:
         loss = mdse / np.maximum(mdse_naive, EPS)
-    return loss
+
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_error(
@@ -922,9 +937,7 @@ def mean_absolute_error(
     loss = _mean_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
-    if isinstance(loss, float) and not isinstance(loss, np.float64):
-        loss = np.float64(loss)
-    return loss
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_error(
@@ -1035,9 +1048,7 @@ def mean_squared_error(
 
     loss = metric_function(*metric_args, **metric_kwargs)
 
-    if isinstance(loss, float) and not isinstance(loss, np.float64):
-        loss = np.float64(loss)
-    return loss
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_error(
@@ -1114,9 +1125,10 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     np.float64(0.85)
     """
-    return _median_absolute_error(
+    loss = _median_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_error(
@@ -1235,7 +1247,8 @@ def median_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_absolute_error(
@@ -1341,7 +1354,8 @@ def geometric_mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_squared_error(
@@ -1467,7 +1481,8 @@ def geometric_mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_percentage_error(
@@ -1582,7 +1597,8 @@ def mean_absolute_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_percentage_error(
@@ -1703,7 +1719,8 @@ def median_absolute_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_percentage_error(
@@ -1831,7 +1848,8 @@ def mean_squared_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_percentage_error(
@@ -1965,7 +1983,8 @@ def median_squared_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_relative_absolute_error(
@@ -2078,7 +2097,8 @@ def mean_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_relative_absolute_error(
@@ -2187,7 +2207,8 @@ def median_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_relative_absolute_error(
@@ -2305,7 +2326,8 @@ def geometric_mean_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_relative_squared_error(
@@ -2435,7 +2457,8 @@ def geometric_mean_relative_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def relative_loss(
@@ -2556,7 +2579,8 @@ def relative_loss(
         horizon_weight=horizon_weight,
         multioutput=multioutput,
     )
-    return np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    return _handle_output(loss, multioutput)
 
 
 def _asymmetric_error(
