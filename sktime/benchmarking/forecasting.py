@@ -22,6 +22,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
+from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.utils.unique_str import _make_strings_unique
 from sktime.utils.warnings import warn
 
@@ -429,6 +430,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_global: Optional[BaseSplitter] = None,
         error_score: str = "raise",
         strategy: str = "refit",
+        cv_global_temporal: Optional[SingleWindowSplitter] = None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -476,6 +478,13 @@ class ForecastingBenchmark(BaseBenchmark):
             in sequence provided
             "no-update_params" = fit to first training window, re-used without
             fit or update
+        cv_global_temporal:  SingleWindowSplitter, default=None
+            ignored if cv_global is None. If passed, it splits the Panel temporally
+            before the instance split from cv_global is applied. This avoids
+            temporal leakage in the global evaluation across time series.
+            Has to be a SingleWindowSplitter.
+            cv is applied on the test set of the combined application of
+            cv_global and cv_global_temporal.
 
         Returns
         -------
@@ -504,6 +513,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "scorers": scorers,
             "cv_global": cv_global,
             "error_score": error_score,
+            "cv_global_temporal": cv_global_temporal,
         }
         self._add_task(
             task_id,
@@ -572,6 +582,7 @@ class ForecastingBenchmark(BaseBenchmark):
             cv_global=task.cv_global,
             strategy=task.strategy,
             return_model=False,
+            cv_global_temporal=task.cv_global_temporal,
         )
 
         folds = {}
