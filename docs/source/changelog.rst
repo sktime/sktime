@@ -117,7 +117,7 @@ Highlights
 * ``Time-LLM`` forecaster (:pr:`7663`) :user:`jgyasu`
 * ``TimeMoE`` forecaster (:pr:`7869`) :user:`PranavBhatP`
 * support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
-* ``simdkalman``-based Kalman filtransformers (:pr:`8030`) :user:`oseiskar`
+* ``simdkalman``-based Kalman filter transformers (:pr:`8030`) :user:`oseiskar`
 * ``ray`` parallelization backend (:pr:`8031`) :user:`LHoelper`
 * ``HierarchyEnsembleForecaster`` can now select different parallelization backends (:pr:`7954`) :user:`LHolper`
 * ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`

@@ -17,6 +17,10 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
+from sktime.performance_metrics.forecasting._common import (
+    _coerce_to_1d_numpy,
+    _coerce_to_scalar,
+)
 from sktime.utils.stats import _weighted_geometric_mean
 
 if sklearn.__version__ >= "1.4.0":
@@ -62,6 +66,15 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
         )
         raise ValueError(msg)
     return kwarg_
+
+
+def _handle_output(obj, multioutput):
+    """Handle output of metric function."""
+    if multioutput == "raw_values":
+        obj = _coerce_to_1d_numpy(obj)
+    elif multioutput == "uniform_average":
+        obj = _coerce_to_scalar(obj)
+    return obj
 
 
 def mean_linex_error(
@@ -145,21 +158,21 @@ def mean_linex_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.19802627763937575
+    np.float64(0.19802627763937575)
     >>> mean_linex_error(y_true, y_pred, b=2)  # doctest: +SKIP
-    0.3960525552787515
+    np.float64(0.3960525552787515)
     >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
-    0.2391800623225643
+    np.float64(0.2391800623225643)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.2700398392309829
+    np.float64(0.2700398392309829)
     >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
-    0.49660966225813563
+    np.float64(0.49660966225813563)
     >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([0.17220024, 0.36787944])
     >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
-    0.30917568000716666
+    np.float64(0.30917568000716666)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -175,7 +188,8 @@ def mean_linex_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_asymmetric_error(
@@ -280,21 +294,21 @@ def mean_asymmetric_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_asymmetric_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    0.4625
+    np.float64(0.4625)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_asymmetric_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')
-    0.7083333333333334
+    np.float64(0.7083333333333334)
     >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
@@ -318,7 +332,8 @@ def mean_asymmetric_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_scaled_error(
@@ -403,18 +418,18 @@ def mean_absolute_scaled_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18333333333333335
+    np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')
     array([0.10526316, 0.28571429])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
 
@@ -444,7 +459,8 @@ def mean_absolute_scaled_error(
     mae_pred = mean_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
-    return mae_pred / np.maximum(mae_naive, EPS)
+    loss = mae_pred / np.maximum(mae_naive, EPS)
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_scaled_error(
@@ -531,18 +547,18 @@ def median_absolute_scaled_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')
     array([0.10526316, 0.28571429])
     >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
@@ -575,7 +591,8 @@ def median_absolute_scaled_error(
     mdae_pred = median_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
     )
-    return mdae_pred / np.maximum(mdae_naive, EPS)
+    loss = mdae_pred / np.maximum(mdae_naive, EPS)
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_scaled_error(
@@ -669,18 +686,18 @@ def mean_squared_scaled_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
-    0.20568833780186058
+    np.float64(0.20568833780186058)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train,  square_root=True)
-    0.15679361328058636
+    np.float64(0.15679361328058636)
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values', square_root=True)
     array([0.11215443, 0.20203051])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7], square_root=True)
-    0.17451891814894502
+    np.float64(0.17451891814894502)
     """
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
 
@@ -715,7 +732,7 @@ def mean_squared_scaled_error(
     else:
         loss = mse / np.maximum(mse_naive, EPS)
 
-    return loss
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_scaled_error(
@@ -799,18 +816,18 @@ def median_squared_scaled_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)
-    0.1472819539849714
+    np.float64(0.1472819539849714)
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values', square_root=True)
     array([0.08687445, 0.20203051])
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7], square_root=True)
-    0.16914781383660782
+    np.float64(0.16914781383660782)
     """
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
 
@@ -846,7 +863,8 @@ def median_squared_scaled_error(
         loss = np.sqrt(mdse / np.maximum(mdse_naive, EPS))
     else:
         loss = mdse / np.maximum(mdse_naive, EPS)
-    return loss
+
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_error(
@@ -906,19 +924,20 @@ def mean_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_error(y_true, y_pred)
-    0.55
+    np.float64(0.55)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
-    return _mean_absolute_error(
+    loss = _mean_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_error(
@@ -994,21 +1013,21 @@ def mean_squared_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_squared_error(y_true, y_pred)
-    0.4125
+    np.float64(0.4125)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_error(y_true, y_pred)
-    0.7083333333333334
+    np.float64(0.7083333333333334)
     >>> mean_squared_error(y_true, y_pred, square_root=True)
-    0.8227486121839513
+    np.float64(0.8227486121839513)
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values', square_root=True)
     array([0.64549722, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.825
+    np.float64(0.825)
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
-    0.8936491673103708
+    np.float64(0.8936491673103708)
     """
     metric_args = (y_true, y_pred)
     metric_kwargs = {"sample_weight": horizon_weight, "multioutput": multioutput}
@@ -1027,7 +1046,9 @@ def mean_squared_error(
         # use that directly to avoid DeprecationWarning from sklearn 1.6
         metric_function = _root_mean_squared_error
 
-    return metric_function(*metric_args, **metric_kwargs)
+    loss = metric_function(*metric_args, **metric_kwargs)
+
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_error(
@@ -1094,19 +1115,20 @@ def median_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> median_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
-    return _median_absolute_error(
+    loss = _median_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
     )
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_error(
@@ -1187,23 +1209,23 @@ def median_squared_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_error(y_true, y_pred)
-    0.25
+    np.float64(0.25)
     >>> median_squared_error(y_true, y_pred, square_root=True)
-    0.5
+    np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_error(y_true, y_pred)
-    0.625
+    np.float64(0.625)
     >>> median_squared_error(y_true, y_pred, square_root=True)
-    0.75
+    np.float64(0.75)
     >>> median_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.25, 1.  ])
     >>> median_squared_error(y_true, y_pred, multioutput='raw_values', square_root=True)
     array([0.5, 1. ])
     >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.7749999999999999
+    np.float64(0.7749999999999999)
     >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
-    0.85
+    np.float64(0.85)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1225,7 +1247,8 @@ def median_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_absolute_error(
@@ -1303,15 +1326,15 @@ def geometric_mean_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> geometric_mean_absolute_error(y_true, y_pred)
-    0.000529527232030127
+    np.float64(0.000529527232030127)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> geometric_mean_absolute_error(y_true, y_pred)
-    0.5000024031086919
+    np.float64(0.5000024031086919)
     >>> geometric_mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([4.80621738e-06, 1.00000000e+00])
     >>> geometric_mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.7000014418652152
+    np.float64(0.7000014418652152)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     errors = y_true - y_pred
@@ -1331,7 +1354,8 @@ def geometric_mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_squared_error(
@@ -1416,25 +1440,25 @@ def geometric_mean_squared_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
-    2.80399089461488e-07
+    np.float64(2.80399089461488e-07)
     >>> gmse(y_true, y_pred, square_root=True)  # doctest: +SKIP
-    0.000529527232030127
+    np.float64(0.000529527232030127)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
-    0.5000000000115499
+    np.float64(0.5000000000115499)
     >>> gmse(y_true, y_pred, square_root=True)  # doctest: +SKIP
-    0.5000024031086919
+    np.float64(0.5000024031086919)
     >>> gmse(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([2.30997255e-11, 1.00000000e+00])
     >>> gmse(y_true, y_pred, multioutput='raw_values', \
     square_root=True)  # doctest: +SKIP
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmse(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
-    0.7000000000069299
+    np.float64(0.7000000000069299)
     >>> gmse(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True)  # doctest: +SKIP
-    0.7000014418652152
+    np.float64(0.7000014418652152)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     errors = y_true - y_pred
@@ -1457,7 +1481,8 @@ def geometric_mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_absolute_percentage_error(
@@ -1533,15 +1558,15 @@ def mean_absolute_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.33690476190476193
+    np.float64(0.33690476190476193)
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    0.5553379953379953
+    np.float64(0.5553379953379953)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.5515873015873016
+    np.float64(0.5515873015873016)
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    0.6080808080808081
+    np.float64(0.6080808080808081)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
         symmetric=False)
     array([0.38095238, 0.72222222])
@@ -1550,10 +1575,10 @@ def mean_absolute_percentage_error(
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
-    0.6198412698412699
+    np.float64(0.6198412698412699)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)
-    0.5668686868686869
+    np.float64(0.5668686868686869)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1572,7 +1597,8 @@ def mean_absolute_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_absolute_percentage_error(
@@ -1652,15 +1678,15 @@ def median_absolute_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.5714285714285714
+    np.float64(0.5714285714285714)
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
-    0.39999999999999997
+    np.float64(0.39999999999999997)
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=False)
     array([0.14285714, 1.        ])
@@ -1669,10 +1695,10 @@ def median_absolute_percentage_error(
     array([0.13333333, 0.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
-    0.7428571428571428
+    np.float64(0.7428571428571428)
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)
-    0.5066666666666666
+    np.float64(0.5066666666666666)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1693,7 +1719,8 @@ def median_absolute_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_squared_percentage_error(
@@ -1777,17 +1804,17 @@ def mean_squared_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_squared_percentage_error(y_true, y_pred, symmetric=False)
-    0.23776218820861678
+    np.float64(0.23776218820861678)
     >>> mean_squared_percentage_error(y_true, y_pred, square_root=True, \
     symmetric=False)
-    0.48760864246710883
+    np.float64(0.48760864246710883)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_percentage_error(y_true, y_pred, symmetric=False)
-    0.5080309901738473
+    np.float64(0.5080309901738473)
     >>> mean_squared_percentage_error(y_true, y_pred, square_root=True, \
     symmetric=False)
-    0.7026794936195895
+    np.float64(0.7026794936195895)
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=False)
     array([0.34013605, 0.67592593])
@@ -1796,10 +1823,10 @@ def mean_squared_percentage_error(
     array([0.58321184, 0.82214714])
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
-    0.5751889644746787
+    np.float64(0.5751889644746787)
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True, symmetric=False)
-    0.7504665536595034
+    np.float64(0.7504665536595034)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1821,7 +1848,8 @@ def mean_squared_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_squared_percentage_error(
@@ -1910,17 +1938,17 @@ def median_squared_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_squared_percentage_error(y_true, y_pred, symmetric=False)
-    0.027777777777777776
+    np.float64(0.027777777777777776)
     >>> median_squared_percentage_error(y_true, y_pred, square_root=True, \
     symmetric=False)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_percentage_error(y_true, y_pred, symmetric=False)
-    0.5102040816326531
+    np.float64(0.5102040816326531)
     >>> median_squared_percentage_error(y_true, y_pred, square_root=True, \
     symmetric=False)
-    0.5714285714285714
+    np.float64(0.5714285714285714)
     >>> median_squared_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=False)
     array([0.02040816, 1.        ])
@@ -1929,10 +1957,10 @@ def median_squared_percentage_error(
     array([0.14285714, 1.        ])
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
-    0.7061224489795918
+    np.float64(0.7061224489795918)
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True, symmetric=False)
-    0.7428571428571428
+    np.float64(0.7428571428571428)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
@@ -1955,7 +1983,8 @@ def median_squared_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def mean_relative_absolute_error(
@@ -2027,19 +2056,19 @@ def mean_relative_absolute_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.9511111111111111
+    np.float64(0.9511111111111111)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.8703703703703702
+    np.float64(0.8703703703703702)
     >>> mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([0.51851852, 1.22222222])
     >>> mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
-    1.0111111111111108
+    np.float64(1.0111111111111108)
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
@@ -2068,7 +2097,8 @@ def mean_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def median_relative_absolute_error(
@@ -2137,19 +2167,19 @@ def median_relative_absolute_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> median_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    1.0
+    np.float64(1.0)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> median_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.6944444444444443
+    np.float64(0.6944444444444443)
     >>> median_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([0.55555556, 0.83333333])
     >>> median_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
-    0.7499999999999999
+    np.float64(0.7499999999999999)
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="median_relative_absolute_error", **kwargs
@@ -2177,7 +2207,8 @@ def median_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_relative_absolute_error(
@@ -2251,19 +2282,19 @@ def geometric_mean_relative_absolute_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.0007839273064064755
+    np.float64(0.0007839273064064755)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.5578632807409556
+    np.float64(0.5578632807409556)
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([4.97801163e-06, 1.11572158e+00])
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
-    0.7810066018326863
+    np.float64(0.7810066018326863)
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -2295,7 +2326,8 @@ def geometric_mean_relative_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def geometric_mean_relative_squared_error(
@@ -2379,19 +2411,19 @@ def geometric_mean_relative_squared_error(
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_squared_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.0008303544925949156
+    np.float64(0.0008303544925949156)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> geometric_mean_relative_squared_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark)
-    0.622419372049448
+    np.float64(0.622419372049448)
     >>> geometric_mean_relative_squared_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
     array([4.09227746e-06, 1.24483465e+00])
     >>> geometric_mean_relative_squared_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
-    0.8713854839582426
+    np.float64(0.8713854839582426)
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -2425,7 +2457,8 @@ def geometric_mean_relative_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    loss = np.average(output_errors, weights=multioutput)
+    return _handle_output(loss, multioutput)
 
 
 def relative_loss(
@@ -2513,21 +2546,21 @@ def relative_loss(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8148148148148147
+    np.float64(0.8148148148148147)
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
     relative_loss_function=mean_squared_error)
-    0.5178095088655261
+    np.float64(0.5178095088655261)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8490566037735847
+    np.float64(0.8490566037735847)
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
     multioutput='raw_values')
     array([0.625     , 1.03448276])
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
     multioutput=[0.3, 0.7])
-    0.927272727272727
+    np.float64(0.927272727272727)
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="relative_loss", **kwargs
@@ -2546,7 +2579,8 @@ def relative_loss(
         horizon_weight=horizon_weight,
         multioutput=multioutput,
     )
-    return np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    return _handle_output(loss, multioutput)
 
 
 def _asymmetric_error(
