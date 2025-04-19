@@ -78,6 +78,7 @@ class SlidingGreedySplitter(BaseSplitter):
         self.test_size = test_size
         self.folds = folds
         self.step_length = step_length
+        self.fh = np.arange(test_size) + 1 if isinstance(test_size, int) else None
 
         if isinstance(train_size, float) or isinstance(test_size, float):
             self.set_tags(**{"split_hierarchical": False})
@@ -93,6 +94,7 @@ class SlidingGreedySplitter(BaseSplitter):
 
         if isinstance(test_size, float):
             _test_size = int(np.ceil(len(y) * test_size))
+            self.fh = np.arange(_test_size) + 1
         else:
             _test_size = test_size
 
