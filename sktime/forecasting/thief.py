@@ -5,7 +5,6 @@ __author__ = ["satvshr"]
 
 import numpy as np
 import pandas as pd
-from numpy.linalg import inv
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.mapa import MAPAForecaster
@@ -51,13 +50,16 @@ class THieFForecaster(BaseForecaster):
         "authors": "satvshr",
     }
 
-    def __init__(
-        self, base_forecaster, aggregation_levels=None, reconciliation_method="ols"
-    ):
+    def __init__(self, base_forecaster, reconciliation_method="ols"):
         self.base_forecaster = base_forecaster
-        self.aggregation_levels = aggregation_levels
         self.reconciliation_method = reconciliation_method
+        self.requires_residuals = self.reconciliation_method in [
+            "wls_var",
+            "mint_cov",
+            "mint_shrink",
+        ]
         self.agg_method = "mean"
+        self.aggregation_levels = None
         self.forecasters = {}
         super().__init__()
 
@@ -140,54 +142,63 @@ class THieFForecaster(BaseForecaster):
 
         return ForecastingHorizon(new_vals, is_relative=True)
 
-    def _get_g_matrix_wls_str(self, S):
-        diag = np.diag(S.sum(axis=1).values)
-
-        g_wls_str = np.dot(
-            inv(np.dot(np.transpose(S), np.dot(diag, S))),
-            np.dot(np.transpose(S), diag),
-        )
-
-        g_wls_str = g_wls_str.transpose()
-
-        return g_wls_str
-
     def _reconcile_forecasts(self, forecasts):
         """Reconcile forecasts using the specified reconciliation method."""
         self._Y_base = np.vstack(
             [forecasts[level].values for level in forecasts.keys()]
         )
         self._S = self._thief_s_matrix(self.forecasters.keys())
+        # if self.requires_residuals:
+        #     self._resids = np.concatenate(
+        #         [self._residuals[level].values for level in self._residuals.keys()]
+        #     )
 
         if self.reconciliation_method == "bu":
             Y = forecasts[1].values  # Only bottom-level forecast is used
             return self._S @ Y
 
         elif self.reconciliation_method == "ols":
-            G_ols = np.linalg.pinv(self.S.T @ self.S) @ self.S.T
-            return self._S @ G_ols @ self._Y_base
+            G = np.linalg.pinv(self._S.T @ self._S) @ self._S.T
+            return self._S @ G @ self._Y_base
 
         elif self.reconciliation_method == "wls_str":
-            G_wls_str = self._get_g_matrix_wls_str(self, self.S)
-            return self._S @ G_wls_str @ self._Y_base
+            D = np.diag(self._S.sum(axis=1))
+            G = np.linalg.pinv(self._S.T @ D @ self._S) @ self._S.T @ D
+            return self._S @ G @ self._Y_base
 
-        elif self.reconciliation_method == "wls_var":
-            resids = np.array(
-                [self._residuals[level].values for level in self._residuals.keys()]
-            )
-            W = np.var(resids, axis=1)
-            W_inv = np.diag(1 / W)
-            G = np.linalg.pinv(self.S.T @ W_inv @ self.S) @ self.S.T @ W_inv
-            return self.S @ G @ self._Y_base
+        # elif self.reconciliation_method == "wls_var":
+        #     variances = np.array([
+        #     np.var(self._residuals[level]) for level in sorted(self._residuals)
+        #     ])
+        #     W = np.diag(variances)
+        #     W_inv = np.linalg.pinv(W)
+        #     G = np.linalg.pinv(self._S.T @ W_inv @ self._S) @ self._S.T @ W_inv
+        #     return self._S @ G @ self._Y_base
 
-        elif self.reconciliation_method == "mint_cov":
-            resids = np.array(
-                [self._residuals[level].values for level in self._residuals.keys()]
-            )
-            W = np.cov(resids)
-            W_inv = np.linalg.pinv(W)
-            G = np.linalg.pinv(self.S.T @ W_inv @ self.S) @ self.S.T @ W_inv
-            return self.S @ G @ self._Y_base
+        # elif self.reconciliation_method == "mint_cov":
+        #     min_len = min(len(res) for res in self._residuals.values())
+        #     aligned_resids = np.vstack([
+        #         self._residuals[level][-min_len:] for level in sorted(self._residuals)
+        #     ])
+        #     W = np.cov(aligned_resids)
+        #     W_inv = np.linalg.pinv(W)
+        #     print(self._S.T.shape, W_inv.shape, self._S.shape)
+        #     G = np.linalg.pinv(self._S.T @ W_inv @ self._S) @ self._S.T @ W_inv
+        #     return self._S @ G @ self._Y_base
+
+        # elif self.reconciliation_method == "mint_shrink":
+        #     from sklearn.covariance import LedoitWolf
+
+        #     min_len = min(len(res) for res in self._residuals.values())
+        #     aligned_resids = np.vstack([
+        #         self._residuals[level][-min_len:] for level in sorted(self._residuals)
+        #     ])
+
+        #     lw = LedoitWolf().fit(aligned_resids.T)
+        #     W = lw.covariance_
+        #     W_inv = np.linalg.pinv(W)
+        #     G = np.linalg.pinv(self._S.T @ W_inv @ self._S) @ self._S.T @ W_inv
+        #     return self._S @ G @ self._Y_base
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
@@ -220,7 +231,7 @@ class THieFForecaster(BaseForecaster):
             forecaster.fit(y_agg, X)
             self.forecasters[level] = forecaster
 
-            if self.reconciliation_method in ["mint_cov", "mint_shrink", "wls_var"]:
+            if self.requires_residuals:
                 fh_insample = ForecastingHorizon(y_agg.index, is_relative=False)
                 y_pred_in = forecaster.predict(fh=fh_insample)
                 residuals = y_agg.squeeze() - y_pred_in.squeeze()
