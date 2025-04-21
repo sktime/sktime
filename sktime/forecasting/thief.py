@@ -130,7 +130,12 @@ class THieFForecaster(BaseForecaster):
         """Convert fh into aggregated levels."""
         from sktime.forecasting.base import ForecastingHorizon
 
-        fh_period = fh.to_pandas()
+        fh_vals = fh.to_numpy()
+        if fh.is_relative:
+            fh_diffs = fh_vals
+        else:
+            fh_period = fh.to_pandas()
+
         if not isinstance(fh_period, pd.PeriodIndex):
             fh_period = fh_period.to_period("M")
 
@@ -233,7 +238,10 @@ class THieFForecaster(BaseForecaster):
 
             if self.requires_residuals:
                 fh_insample = ForecastingHorizon(y_agg.index, is_relative=False)
-                y_pred_in = forecaster.predict(fh=fh_insample)
+                if len(y_agg) == 1:
+                    y_pred_in = y_agg.squeeze()
+                else:
+                    y_pred_in = forecaster.predict(fh=fh_insample)
                 residuals = y_agg.squeeze() - y_pred_in.squeeze()
                 self._residuals[level] = residuals
 
