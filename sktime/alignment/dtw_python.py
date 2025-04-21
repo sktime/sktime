@@ -305,6 +305,7 @@ class AlignerDTWfromDist(BaseAligner):
     ...     pd.DataFrame({'col1': np.random.randn(200)})
     ... ]
     >>> aligner_custom.fit(X_custom)
+    AlignerDTWfromDist(...)
     >>> alignment_df_custom = aligner_custom.get_alignment()
     """
 
