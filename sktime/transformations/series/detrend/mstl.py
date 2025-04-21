@@ -122,11 +122,12 @@ class MSTL(BaseTransformer):
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import MSTL
-    >>> y = load_airline()
-    >>> y.index = y.index.to_timestamp()
+    >>> X = load_airline()
+    >>> X.index = X.index.to_timestamp()
     >>> mstl = MSTL(return_components=True)
-    >>> mstl.fit(y)
-    >>> res = mstl.transform(y)
+    >>> mstl.fit(X)
+    MSTL(...)
+    >>> res = mstl.transform(X)
     >>> res.plot()  # doctest: +SKIP
     >>> plt.tight_layout()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
@@ -144,6 +145,7 @@ class MSTL(BaseTransformer):
     >>> mstl_deseason_fcst = mstl_trafo * TrendForecaster()
     >>> y = load_airline()
     >>> mstl_deseason_fcst.fit(y, fh=[1, 2, 3])
+    TransformedTargetForecaster(...)
     >>> y_pred = mstl_deseason_fcst.predict()
 
     MSTL can also be used to make forecasts using the full component decomposition.
@@ -174,6 +176,7 @@ class MSTL(BaseTransformer):
     ... )
     >>> y = load_airline()
     >>> mstl_component_fcst.fit(y, fh=[1, 2, 3])
+    TransformedTargetForecaster(...)
     >>> y_pred = mstl_component_fcst.predict()
     """
 

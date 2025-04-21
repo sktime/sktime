@@ -151,7 +151,7 @@ Time Series Annotation
 
 .. code-block:: python
 
-    >>> from sktime.annotation.adapters import PyODAnnotator
+    >>> from sktime.detection.adapters import PyODAnnotator
     >>> from pyod.models.iforest import IForest
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
