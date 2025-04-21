@@ -50,6 +50,7 @@ They have tag ``"split_type"="temporal"``.
     CutoffSplitter
     SingleWindowSplitter
     SlidingWindowSplitter
+    SlidingGreedySplitter
     ExpandingWindowSplitter
     ExpandingCutoffSplitter
     ExpandingGreedySplitter
