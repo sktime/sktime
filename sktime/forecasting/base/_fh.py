@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
+__author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs", "Haixi"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache

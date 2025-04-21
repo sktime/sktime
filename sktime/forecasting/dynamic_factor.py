@@ -216,7 +216,9 @@ class DynamicFactor(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-
+        #if fh.is_relative:
+        #    start = self._y.index.get_loc(self._y.index[-1]) + fh.min()
+        #    end = self._y.index.get_loc(self._y.index[-1]) + fh.max()
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
         # statsmodels forecasts all periods from start to end of forecasting
