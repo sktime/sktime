@@ -280,32 +280,26 @@ class THieFForecaster(BaseForecaster):
         params = [
             {
                 "base_forecaster": NaiveForecaster(strategy="mean"),
-                "aggregation_levels": [1, 2, 4, 12],
                 "reconciliation_method": "ols",
             },
             {
                 "base_forecaster": NaiveForecaster(strategy="last"),
-                "aggregation_levels": [1, 3, 6, 12],
                 "reconciliation_method": "bu",
             },
             {
                 "base_forecaster": NaiveForecaster(strategy="drift"),
-                "aggregation_levels": [1, 2, 4, 8, 16],
                 "reconciliation_method": "wls_str",
             },
             {
                 "base_forecaster": NaiveForecaster(strategy="mean"),
-                "aggregation_levels": [1, 2, 4],
                 "reconciliation_method": "mint_cov",
             },
             {
                 "base_forecaster": NaiveForecaster(strategy="last"),
-                "aggregation_levels": [1, 2, 3, 6, 12],
                 "reconciliation_method": "mint_shrink",
             },
             {
                 "base_forecaster": NaiveForecaster(strategy="last"),
-                "aggregation_levels": [1, 2, 3, 6, 12],
                 "reconciliation_method": "wls_var",
             },
         ]
