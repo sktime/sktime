@@ -74,6 +74,7 @@ class AlignerDTW(BaseAligner):
     ...     pd.DataFrame({'col1': np.random.randn(150)})
     ... ]
     >>> aligner_advanced.fit(X_advanced)
+    AlignerDTW(...)
     >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
 
