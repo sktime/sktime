@@ -150,7 +150,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         backend=None,
         backend_params=None,
-        n_jobs="deprecated",  
+        n_jobs="deprecated",
     ):
         self.method = method
         self.regressor = regressor
@@ -162,7 +162,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             backend=backend,
             backend_params=backend_params,
             n_jobs=n_jobs,
-
         )
 
     def _fit(self, y, X, fh):
@@ -399,7 +398,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         forecasters,
         n_jobs="deprecated",  # deprecated
         aggfunc="mean",
-        weights=None,               
+        weights=None,
         backend=None,
         backend_params=None,
     ):
