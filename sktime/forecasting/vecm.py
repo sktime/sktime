@@ -75,7 +75,7 @@ class VECM(_StatsModelsAdapter):
     ... index=pd.PeriodIndex(index))  # doctest: +SKIP
     >>> train, test = temporal_train_test_split(df)  # doctest: +SKIP
     >>> sktime_model = VECM()  # doctest: +SKIP
-    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
+    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])  # doctest: +SKIP
     >>> _ = sktime_model.fit(train, fh=fh)  # doctest: +SKIP
     >>> fc2 = sktime_model.predict(fh=fh)  # doctest: +SKIP
     """
