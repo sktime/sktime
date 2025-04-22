@@ -138,7 +138,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "capability:insample": False,
+        "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
@@ -215,20 +215,14 @@ class DynamicFactor(_StatsModelsAdapter):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        #if fh.is_relative:
-        #    start = self._y.index.get_loc(self._y.index[-1]) + fh.min()
-        #    end = self._y.index.get_loc(self._y.index[-1]) + fh.max()
+        # start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        if not fh.is_relative:
+            start = fh.min()
+            end = fh.max()
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
-        # statsmodels forecasts all periods from start to end of forecasting
-        # horizon, but only return given time points in forecasting horizon
-
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-            y_pred.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
-            )
-        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        
+        return y_pred
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.

@@ -11,11 +11,10 @@ df = pd.read_csv('/home/haixi/Documents/projects/data/LCDMA_March_2025/balanced_
 df = (df.set_index(pd.DatetimeIndex(df['Date']))
        .loc[:,['GDP_new','BSI_new','GPI_new','SPI_new','IP_new','NDM_new','DM_new','OILP_new','CON_new','RT_new']]
      )
+df.index = df.index.to_period('M')
 y = df.loc[:,['GDP_new','BSI_new','GPI_new','SPI_new']]
 x = df.loc[:,['IP_new','NDM_new','DM_new','OILP_new','CON_new','RT_new']]
 forecaster = DynamicFactor()  
 forecaster.fit(df)  
-fh = ForecastingHorizon([1,2,3],is_relative=True)
+fh = ForecastingHorizon([1,2,3],is_relative=False)
 y_pred = forecaster.predict(fh=fh)  
-
-# %%
