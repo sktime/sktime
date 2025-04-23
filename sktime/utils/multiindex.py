@@ -168,10 +168,10 @@ def apply_method_per_series(y, method_name, *args, **kwargs):
 
 
 def is_hierarchical(multiindex: pd.Index, raise_if_false=False) -> bool:
-    """Determine if a pandas MultiIndex is truly hierarchical.
+    """Determine if a pandas MultiIndex is strictly hierarchical.
 
-    Truly hierarchical means that each lower-level value corresponds to only
-    a single higher-level value.
+    Strictly hierarchical means that each child-level value corresponds to one and
+    only one parent-level value.
 
     If a regular index is passed, it is considered hierarchical (single level).
 
