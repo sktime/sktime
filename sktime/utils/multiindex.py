@@ -179,7 +179,7 @@ def is_hierarchical(multiindex: pd.Index, raise_if_false=False) -> bool:
     ----------
     multiindex (pd.Index or pd.DataFrame): The MultiIndex (or DataFrame) to check.
     raise_if_false (bool, optional): If set to True, an exception is raised when
-                                      the index is not hierarchical. Default is False.
+        the index is not hierarchical. Default is False.
 
     Returns
     -------
