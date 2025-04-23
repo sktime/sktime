@@ -210,8 +210,8 @@ def is_hierarchical(multiindex: pd.Index, raise_if_false=False) -> bool:
         if mapping.duplicated(subset=f"{level + 1}").any():
             if raise_if_false:
                 dups = mapping[
-                        mapping.duplicated(subset=f'{level + 1}', keep=False)
-                    ].to_string()
+                    mapping.duplicated(subset=f'{level + 1}', keep=False)
+                ].to_string()
                 msg = f"Duplicate child values found for level: {level + 1}\n{dups}"
                 raise Exception(msg)
             else:
