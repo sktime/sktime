@@ -3,14 +3,14 @@
 __author__ = ["Spinachboul", "kartik-555"]
 __all__ = ["PyPOTSImputer"]
 
-import os
-from typing import Optional
+from typing import Any, Optional, dict
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.validation import check_random_state
 
 
 class PyPOTSImputer(BaseTransformer):
@@ -19,8 +19,7 @@ class PyPOTSImputer(BaseTransformer):
     Parameters
     ----------
     model : str, default="SAITS"
-        The PyPOTS model to use for imputation. Available models: "SAITS", "BRITS",
-        "MRNN", "GPVAE", "Transformer".
+        The PyPOTS model to use for imputation. Available models: "SAITS", "BRITS".
     model_params : dict, optional
         Additional parameters for the PyPOTS model.
     n_epochs : int, default=100
@@ -29,15 +28,24 @@ class PyPOTSImputer(BaseTransformer):
         Batch size for training.
     patience : int, default=10
         Early stopping patience.
-    random_state : int, optional
-        Random seed.
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the estimator.
+
+    Attributes
+    ----------
+    _supported_models : List[str]
+        List of supported PyPOTS models.
+    _default_model_params : Dict[str, Dict[str, Any]]
+        Default parameters for each supported model.
+    _required_model_params : Dict[str, List[str]]
+        Required parameters for each supported model.
 
     Example
     -------
     >>> from sktime.transformations.series.impute_pypots import PyPOTSImputer
     >>> from sktime.datasets import load_airline
     >>> from sktime.split import temporal_train_test_split
-    >>> import numpy np
+    >>> import numpy as np
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = PyPOTSImputer(model="SAITS")
@@ -61,21 +69,58 @@ class PyPOTSImputer(BaseTransformer):
         "python_dependencies": "pypots",
     }
 
+    # Define supported models
+    _supported_models = ["SAITS", "BRITS"]
+
+    # Define default parameters for each model
+    _default_model_params = {
+        "SAITS": {
+            "n_layers": int,
+            "n_steps": int,
+            "n_features": int,
+            "d_model": int,
+            "n_heads": int,
+            "d_k": int,
+            "d_v": int,
+            "d_ffn": int,
+            "dropout": float,
+            "attn_dropout": float,
+            "diagonal_attention_mask": bool,
+            "ORT_weight": float,
+            "MIT_weight": float,
+            "training_loss": str,
+            "validation_metric": str,
+        },
+        "BRITS": {
+            "n_steps": int,
+            "n_features": int,
+            "rnn_hidden_size": int,
+            "training_loss": str,
+            "validation_metric": str,
+        },
+    }
+
+    # Required parameters for each model (excluding n_features which is auto-detected)
+    _required_model_params = {
+        "SAITS": [],
+        "BRITS": [],
+    }
+
     def __init__(
         self,
-        model: str = "SAITS",  # default model
+        model: str = "SAITS",
         model_params: Optional[dict] = None,
         n_epochs: int = 100,
         batch_size: int = 32,
         patience: int = 10,
-        # random_state: Optional[int] = None,
+        random_state: Optional[int] = None,
     ):
         self.model = model
         self.model_params = model_params if model_params is not None else {}
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.patience = patience
-        # self.random_state = random_state
+        self.random_state = random_state
         super().__init__()
         self._is_fitted = False
         self._imputer = None
@@ -87,29 +132,28 @@ class PyPOTSImputer(BaseTransformer):
 
         return pypots
 
-    def _fit(self, X, y=None):
-        """Fit the imputer to the training data."""
-        # Check dependencies
-        self._check_dependencies()
-
-        # Convert input to required format
-        X_array, X_mask = self._prepare_input(X)
-
-        models_list = ["SAITS", "BRITS", "MRNN", "GPVAE", "Transformer"]
-        if self.model not in models_list:
+    def _validate_model(self):
+        """Validate the selected model."""
+        if self.model not in self._supported_models:
             raise ValueError(
-                f"Unknown model: {self.model}. Available models are: {models_list}"
+                f"Unknown model: {self.model}."
+                "Available models are: {self._supported_models}"
             )
 
-        pypots = self._check_dependencies()
+    def _prepare_model_params(self, n_features: int) -> dict[str, Any]:
+        """Prepare model parameters with defaults and validation.
 
-        # Dynamically get model class from PyPOTS
-        model_cls = getattr(pypots.imputation, self.model)
+        Parameters
+        ----------
+        n_features : int
+            Number of features in the data.
 
-        # Get the dimension/feature size from input data
-        n_features = X_array.shape[2] if X_array.ndim == 3 else X_array.shape[1]
-
-        # Set up model parameters
+        Returns
+        -------
+        Dict[str, Any]
+            The prepared model parameters.
+        """
+        # Start with common parameters
         params = {
             "n_features": n_features,
             "batch_size": self.batch_size,
@@ -117,19 +161,54 @@ class PyPOTSImputer(BaseTransformer):
             "patience": self.patience,
         }
 
-        if self.random_state is not None:
-            params["random_state"] = self.random_state
+        # Add default model-specific parameters
+        model_defaults = self._default_model_params.get(self.model, {})
+        params.update(model_defaults)
 
-        # Update with user-defined parameters
+        # Add user-defined parameters (override defaults)
         params.update(self.model_params)
 
-        # Initialize and train the model
+        # Handle random state
+        if self.random_state is not None:
+            params["random_state"] = check_random_state(self.random_state)
+
+        # Check required parameters
+        required_params = self._required_model_params.get(self.model, [])
+        missing_params = [param for param in required_params if param not in params]
+        if missing_params:
+            raise ValueError(
+                f"Missing required parameters for {self.model}: {missing_params}"
+            )
+
+        return params
+
+    def _fit(self, X, y=None):
+        """Fit the imputer to the training data."""
+        # Check dependencies
+        pypots = self._check_dependencies()
+
+        # Validate model
+        self._validate_model()
+
+        # Convert input to required format
+        X_array, X_mask = self._prepare_input(X)
+
+        # Get the dimension/feature size from input data
+        n_features = X_array.shape[2] if X_array.ndim == 3 else X_array.shape[1]
+
+        # Prepare model parameters
+        params = self._prepare_model_params(n_features)
+
+        # Dynamically get model class from PyPOTS
+        model_cls = getattr(pypots.imputation, self.model)
+
+        # Initialize the model
         self._imputer = model_cls(**params)
 
         # Skip if inside readthedocs build
-        if os.environ.get("READTHEDOCS") == "True":
-            self._is_fitted
-            return self
+        # if os.environ.get("READTHEDOCS") == "True":
+        #     self._is_fitted = True
+        #     return self
 
         # Fit the model
         train_data = {"X": X_array, "missing_mask": X_mask}
@@ -156,7 +235,18 @@ class PyPOTSImputer(BaseTransformer):
         return self._restore_output(X, imputed_data)
 
     def _prepare_input(self, X):
-        """Prepare input data for PyPOTS models."""
+        """Prepare input data for PyPOTS models.
+
+        Parameters
+        ----------
+        X : pd.Series, pd.DataFrame, or np.ndarray
+            Input data to prepare.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The prepared data array and missing mask.
+        """
         if isinstance(X, pd.Series):
             X_array = X.to_numpy().reshape(-1, 1)
         elif isinstance(X, pd.DataFrame):
@@ -181,16 +271,38 @@ class PyPOTSImputer(BaseTransformer):
         return X_array, X_mask
 
     def _restore_output(self, X, imputed_data):
-        """Restore output to the original format."""
+        """Restore output to the original format.
+
+        Parameters
+        ----------
+        X : pd.Series, pd.DataFrame, or np.ndarray
+            Original input data.
+        imputed_data : np.ndarray
+            Imputed data from PyPOTS model.
+
+        Returns
+        -------
+        pd.Series, pd.DataFrame, or np.ndarray
+            Imputed data in the same format as X.
+        """
         if isinstance(X, pd.Series):
-            return pd.Series(imputed_data.flatten(), index=X.index)
+            return pd.Series(imputed_data.squeeze(), index=X.index)
         elif isinstance(X, pd.DataFrame):
             return pd.DataFrame(imputed_data[0], index=X.index, columns=X.columns)
         else:
+            # Return in the same shape as input
+            if X.ndim == 1:
+                return imputed_data.squeeze()
             return imputed_data
 
     def get_fitted_params(self):
-        """Get fitted parameters."""
+        """Get fitted parameters.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary of fitted parameters.
+        """
         if not self._is_fitted:
             raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
 
