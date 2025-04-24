@@ -83,7 +83,6 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         te_value : float
             Estimated Transfer Entropy from X_src -> X_tgt.
         """
-        
         # flatten the arrays to 1D for easy processing
         x = X_src.values.flatten()
         y = X_tgt.values.flatten()
@@ -104,7 +103,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
 
         # Binning
         # This is the starting version, in future we can add more estimators
-        
+
         # we use digitize method to basically assign each discrete value a label
         if self.estimator == "binning":
             x_lagged_binned = np.digitize(
@@ -131,7 +130,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             H1 = self._conditional_entropy(p_yfuture_ylag, p_ylag)
             H2 = self._conditional_entropy(p_yfuture_ylag_xlag, p_ylag_xlag)
             te_value = np.abs(H1 - H2)
-            return te_value # return the float value
+            return te_value  # return the float value
 
         else:
             raise NotImplementedError(
@@ -176,7 +175,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         bins = max(1, np.max(x) + 1)
         hist, _ = np.histogram(x, bins=bins)
         return hist / np.sum(hist) if np.sum(hist) > 0 else hist
-    
+
     def _conditional_entropy(self, joint, marginal):
         """Calculate conditional entropy H(Y|X) = H(X,Y) - H(X)."""
         eps = 1e-10
@@ -185,7 +184,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
             return 0.0
 
         # to ensure the values are in the range of [eps, 1.0]
-        joint = np.clip(joint, eps, 1.0) # ()
+        joint = np.clip(joint, eps, 1.0)  # ()
         marginal = np.clip(marginal, eps, 1.0)
 
         # find joint entropy and marginal entropy
