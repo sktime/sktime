@@ -11,7 +11,6 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-from sktime.utils.validation import check_random_state
 
 
 class PyPOTSImputer(BaseTransformer):
@@ -170,8 +169,8 @@ class PyPOTSImputer(BaseTransformer):
         params.update(self.model_params)
 
         # Handle random state
-        if self.random_state is not None:
-            params["random_state"] = check_random_state(self.random_state)
+        # if self.random_state is not None:
+        #     params["random_state"] = check_random_state(self.random_state)
 
         # Check required parameters
         required_params = self._required_model_params.get(self.model, [])
