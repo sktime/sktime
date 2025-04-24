@@ -155,7 +155,7 @@ sktime.
         A learning task focused on labeling the timepoints of a time series. This includes the related tasks of outlier detection, anomaly detection, change point detection and segmentation.
 
     Panel time series
-        A form of time series data where the same time series are observed observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
+        A form of time series data where the same time series are observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
         :term:`multivariate time series`. Accordingly, the data varies across time, observational unit and series (i.e. variables).
 
     Univariate time series
