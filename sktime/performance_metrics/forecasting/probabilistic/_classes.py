@@ -430,7 +430,7 @@ def _groupby_dot(df, weights):
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
-    """Pinball loss aka quantile loss for quantile/interval predictions.
+    r"""Pinball loss aka quantile loss for quantile/interval predictions.
 
     Can be used for both quantile and interval predictions.
 
@@ -796,7 +796,7 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
 
 
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
-    """Average absolute constraint violations for interval predictions.
+    r"""Average absolute constraint violations for interval predictions.
 
     Applies to interval predictions.
 
@@ -810,7 +810,7 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
     .. math::
 
-        L(y, I) := 
+        L(y, I) :=
         \begin{cases}
         a - y, & \text{if } y < a \\
         y - b, & \text{if } y > b \\
