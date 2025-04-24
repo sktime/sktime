@@ -9,6 +9,7 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+from sktime.utils.parallel import parallelize
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -153,16 +154,32 @@ class EnbPIForecaster(BaseForecaster):
         self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
         bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
 
-        self.forecasters = []
-        self._preds = []
-        # Fit Models per Bootstrap Sample
-        for bs_ts in bootstrapped_ts:
-            bs_df = pd.DataFrame(bs_ts, index=y.index)
-            forecaster = clone(self.forecaster_)
+        # Define function to fit forecaster and get predictions for a bootstrap sample
+        def _fit_forecaster_bootstrap(bs_ts, meta):
+            X = meta.get("X", None)
+            y_index = meta.get("y_index", None)
+            fh = meta.get("fh", None)
+            forecaster_ = meta.get("forecaster_", None)
+
+            bs_df = pd.DataFrame(bs_ts, index=y_index)
+            forecaster = clone(forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
-            self.forecasters.append(forecaster)
-            prediction = forecaster.predict(fh=y.index, X=X)
-            self._preds.append(prediction)
+            prediction = forecaster.clone().fit_predict(y=bs_df, fh=y_index, X=X)
+
+            return {"forecaster": forecaster, "prediction": prediction}
+
+        meta = {"X": X, "y_index": y.index, "fh": fh, "forecaster_": self.forecaster_}
+
+        results = parallelize(
+            fun=_fit_forecaster_bootstrap,
+            iter=bootstrapped_ts,
+            meta=meta,
+            backend="loky",
+            backend_params={"n_jobs": -1},
+        )
+
+        self.forecasters = [result["forecaster"] for result in results]
+        self._preds = [result["prediction"] for result in results]
 
         return self
 
