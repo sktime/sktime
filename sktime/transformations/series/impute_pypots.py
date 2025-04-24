@@ -37,6 +37,7 @@ class PyPOTSImputer(BaseTransformer):
     >>> from sktime.transformations.series.impute_pypots import PyPOTSImputer
     >>> from sktime.datasets import load_airline
     >>> from sktime.split import temporal_train_test_split
+    >>> import numpy np
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = PyPOTSImputer(model="SAITS")
@@ -67,14 +68,14 @@ class PyPOTSImputer(BaseTransformer):
         n_epochs: int = 100,
         batch_size: int = 32,
         patience: int = 10,
-        random_state: Optional[int] = None,
+        # random_state: Optional[int] = None,
     ):
         self.model = model
         self.model_params = model_params if model_params is not None else {}
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.patience = patience
-        self.random_state = random_state
+        # self.random_state = random_state
         super().__init__()
         self._is_fitted = False
         self._imputer = None
