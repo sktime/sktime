@@ -1546,6 +1546,37 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class can_return_indices(_BaseTag):
+    """Capability: the bootstrap can return the bootstrapped time series' index.
+
+    - String name: ``"can_return_indices"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the estimator can return the index of the
+    bootstrapped time series.
+
+    If the tag is ``True``, the transformer can return the index of the
+    bootstrapped time series. In this case, the bootstrap transformer
+    should have the parameter ``return_indices``. If ``return_indices`` is
+    ``True``, the transformer will return the indices of the bootstrapped
+    time series as extra column.
+
+    If the tag is ``False``, the transformer cannot return the index of the
+    bootstrapped time series.
+    """
+
+    _tags = {
+        "tag_name": "can_return_index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can the bootsrap return the index of bootstraped time series?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
