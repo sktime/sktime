@@ -3,7 +3,8 @@
 __author__ = ["Spinachboul", "kartik-555"]
 __all__ = ["PyPOTSImputer"]
 
-from typing import Any, Optional, dict
+import os
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -33,11 +34,11 @@ class PyPOTSImputer(BaseTransformer):
 
     Attributes
     ----------
-    _supported_models : List[str]
+    _supported_models : list[str]
         List of supported PyPOTS models.
-    _default_model_params : Dict[str, Dict[str, Any]]
+    _default_model_params : dict[str, dict[str, Any]]
         Default parameters for each supported model.
-    _required_model_params : Dict[str, List[str]]
+    _required_model_params : dict[str, list[str]]
         Required parameters for each supported model.
 
     Example
@@ -137,7 +138,7 @@ class PyPOTSImputer(BaseTransformer):
         if self.model not in self._supported_models:
             raise ValueError(
                 f"Unknown model: {self.model}."
-                "Available models are: {self._supported_models}"
+                f"Available models are: {self._supported_models}"
             )
 
     def _prepare_model_params(self, n_features: int) -> dict[str, Any]:
@@ -150,7 +151,7 @@ class PyPOTSImputer(BaseTransformer):
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             The prepared model parameters.
         """
         # Start with common parameters
@@ -206,14 +207,13 @@ class PyPOTSImputer(BaseTransformer):
         self._imputer = model_cls(**params)
 
         # Skip if inside readthedocs build
-        # if os.environ.get("READTHEDOCS") == "True":
-        #     self._is_fitted = True
-        #     return self
+        if os.environ.get("READTHEDOCS") == "True":
+            self._is_fitted = True
+            return self
 
         # Fit the model
         train_data = {"X": X_array, "missing_mask": X_mask}
         self._imputer.fit(train_data)
-
         self._is_fitted = True
         return self
 
@@ -300,7 +300,7 @@ class PyPOTSImputer(BaseTransformer):
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary of fitted parameters.
         """
         if not self._is_fitted:
