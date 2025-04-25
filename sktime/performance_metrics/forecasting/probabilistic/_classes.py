@@ -586,7 +586,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
 
 class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
-    """Empirical coverage percentage for interval predictions.
+    r"""Empirical coverage percentage for interval predictions.
 
     Applies to interval predictions.
 
