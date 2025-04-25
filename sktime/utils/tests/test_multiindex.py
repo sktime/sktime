@@ -150,8 +150,8 @@ def test_is_hierarchical():
     )
     df_not_hier.index = pd.MultiIndex.from_tuples(df_not_hier.index)
 
-    result_true = is_hierarchical(df_hier.index, raise_if_false=True)
-    result_false = is_hierarchical(df_not_hier.index, raise_if_false=True)
+    result_true = is_hierarchical(df_hier.index)
+    result_false = is_hierarchical(df_not_hier.index)
 
     assert result_true
     assert not result_false
