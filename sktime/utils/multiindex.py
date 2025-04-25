@@ -111,7 +111,7 @@ def apply_split(y, iloc_ix):
     >>> y = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0), (1, 1)])
     >>> iloc_ix = np.array([1, 0])
     >>> apply_split(y, iloc_ix)
-    array([2, 3, 0, 1], dtype=int64)
+    array([2, 3, 0, 1], ...)
     """
     if not isinstance(y, pd.MultiIndex):
         zeros = [0] * len(y)
