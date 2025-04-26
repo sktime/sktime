@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.utils import check_random_state
-from tsbootstrap import MovingBlockBootstrap
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
@@ -138,6 +137,8 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
+        from tsbootstrap.block_bootstrap import MovingBlockBootstrap
+
         self.bootstrap_transformer_ = (
             clone(bootstrap_transformer)
             if bootstrap_transformer is not None
@@ -240,9 +241,10 @@ class EnbPIForecaster(BaseForecaster):
 
     def _check_train_residual_stationarity(self, coverage, residuals):
         """
-        Check if the residuals of the training set are stationary. This is important for
-        the EnbPI algorithm to work correctly, as there is an explicit assumption that
-        the train out-of-bag residuals are must be stationary.
+        Check if the residuals of the training set are stationary.
+
+        This is important for the EnbPI algorithm to work correctly, as there is an
+        explicit assumption that the train out-of-bag residuals are must be stationary.
         """
         for i, cov in enumerate(coverage):
             train_residuals = pd.DataFrame(data=residuals[i], index=self._y.index)
@@ -292,7 +294,7 @@ class EnbPIForecaster(BaseForecaster):
         deps = cls.get_class_tag("python_dependencies")
 
         if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockBootstrap
+            from tsbootstrap.block_bootstrap import BlockBootstrap
 
             params = [
                 {},
