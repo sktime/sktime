@@ -16,5 +16,6 @@ y = df.loc[:,['GDP_new','BSI_new','GPI_new','SPI_new']]
 x = df.loc[:,['IP_new','NDM_new','DM_new','OILP_new','CON_new','RT_new']]
 forecaster = DynamicFactor()  
 forecaster.fit(df)  
-fh = ForecastingHorizon([1,2,3],is_relative=False)
+fh = ForecastingHorizon([1,2,3],is_relative=True)
 y_pred = forecaster.predict(fh=fh)  
+

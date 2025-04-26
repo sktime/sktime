@@ -215,10 +215,14 @@ class DynamicFactor(_StatsModelsAdapter):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        # start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        if not fh.is_relative:
+
+        if fh.is_relative:
+            start = fh.to_absolute(self.cutoff)[0]
+            end = fh.to_absolute(self.cutoff)[-1]
+        else:
             start = fh.min()
             end = fh.max()
+        
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
         
