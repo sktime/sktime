@@ -98,3 +98,12 @@ def test_apply_split():
 
     assert isinstance(result, np.ndarray)
     assert np.array_equal(result, expected)
+
+    # another test case from the docstring
+    y = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0), (1, 1)])
+    iloc_ix = np.array([1, 0])
+    result2 = apply_split(y, iloc_ix)
+    expected2 = np.array([2, 3, 0, 1])
+
+    assert isinstance(result2, np.ndarray)
+    assert np.array_equal(result2, expected2)
