@@ -1,21 +1,28 @@
 #%%
 from sktime.utils._testing.series import _make_series
 from sktime.forecasting.dynamic_factor import DynamicFactor
+from sktime.datasets import load_macroeconomic
+from sktime.forecasting.base import ForecastingHorizon
 import pandas as pd
 import numpy as np
-import statsmodels.tsa.api as sm
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error as mse
-from sktime.forecasting.base import ForecastingHorizon
-df = pd.read_csv('/home/haixi/Documents/projects/data/LCDMA_March_2025/balanced_can_md.csv')
-df = (df.set_index(pd.DatetimeIndex(df['Date']))
-       .loc[:,['GDP_new','BSI_new','GPI_new','SPI_new','IP_new','NDM_new','DM_new','OILP_new','CON_new','RT_new']]
-     )
-df.index = df.index.to_period('M')
-y = df.loc[:,['GDP_new','BSI_new','GPI_new','SPI_new']]
-x = df.loc[:,['IP_new','NDM_new','DM_new','OILP_new','CON_new','RT_new']]
-forecaster = DynamicFactor()  
-forecaster.fit(df)  
-fh = ForecastingHorizon([1,2,3],is_relative=True)
-y_pred = forecaster.predict(fh=fh)  
+# Load the longley dataset
+df = load_macroeconomic()
+y_train = df.loc[:'2007Q4', ['realgdp', 'realcons', 'realinv']].copy()
+y_test = df.loc['2008Q1':, ['realgdp', 'realcons', 'realinv']].copy()
+X_train = df.loc[:'2007Q4', ['unemp', 'pop', 'infl','cpi']].copy()
+X_test = df.loc['2008Q1':, ['unemp', 'pop', 'infl','cpi']].copy()
 
+# Create a forecasting horizon
+fh_out = ForecastingHorizon([2, 3,4,5,6,7], is_relative=True)
+# Fit the Dynamic Factor model
+forecaster = DynamicFactor(enforce_stationarity=False)
+forecaster.fit(y_train, X=X_train)
+y_pred_out = forecaster.predict(fh=fh_out, X=X_test)
+
+# Create a forecasting horizon
+fh_in = ForecastingHorizon([2, 3,4,5,6,7], is_relative=False)
+# Fit the Dynamic Factor model
+forecaster = DynamicFactor(enforce_stationarity=False)
+forecaster.fit(y_train, X=X_train)
+y_pred_in = forecaster.predict(fh=fh_in, X=X_train)
+# %%
