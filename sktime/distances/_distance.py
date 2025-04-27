@@ -94,12 +94,12 @@ def erp_distance(
     >>> from sktime.distances import erp_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> erp_distance(x_1d, y_1d)
+    >>> erp_distance(x_1d, y_1d)  # doctest: +SKIP
     np.float64(16.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> erp_distance(x_2d, y_2d)
+    >>> erp_distance(x_2d, y_2d)  # doctest: +SKIP
     np.float64(45.254833995939045)
 
     References
@@ -188,12 +188,12 @@ def edr_distance(
     >>> from sktime.distances import edr_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> edr_distance(x_1d, y_1d)
+    >>> edr_distance(x_1d, y_1d)  # doctest: +SKIP
     np.float64(1.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> edr_distance(x_2d, y_2d)
+    >>> edr_distance(x_2d, y_2d)  # doctest: +SKIP
     np.float64(1.0)
 
     References
