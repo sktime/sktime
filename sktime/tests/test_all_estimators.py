@@ -26,12 +26,7 @@ from sktime.dists_kernels.base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.registry import (
-    all_estimators,
-    get_base_class_list,
-    get_base_class_lookup,
-    scitype,
-)
+from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
@@ -1204,19 +1199,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
-    def test_baseclasses_last_in_mro_order(self, estimator_class):
-        """Check that base classes appear last in the MRO."""
-        base_classes = get_base_class_list()
-        base_classes = [cls for cls in base_classes if issubclass(estimator_class, cls)]
-
-        msg = "Base classes should always appear last in the MRO"
-        for base_class in base_classes:
-            last_class = [
-                cls
-                for cls in estimator_class.mro()
-                if not issubclass(base_class, cls) or cls is base_class
-            ][-1]
-            assert last_class is base_class, msg + f" ({base_class})"
+    def test_right_most_superclass_inherits_from_baseobject(self, estimator_class):
+        """Check that the right most superclass is a subclass of BaseObject."""
+        msg = "The right most superclass should inherit from BaseObject"
+        while estimator_class is not BaseObject:
+            assert issubclass(estimator_class, BaseObject), msg
+            estimator_class = estimator_class.__bases__[-1]
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
