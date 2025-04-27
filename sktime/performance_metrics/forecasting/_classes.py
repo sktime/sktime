@@ -74,7 +74,7 @@ __all__ = [
     "MeanAsymmetricError",
     "MeanLinexError",
     "RelativeLoss",
-    "WeightedCompositeMetric",
+    "WeightedAverageMetric",
 ]
 
 
@@ -4198,15 +4198,16 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         return [params1, params2]
 
 
-class WeightedCompositeMetric(BaseForecastingErrorMetric):
+class WeightedAverageMetric(BaseForecastingErrorMetric):
     def __init__(
         self,
         metrics=[],
         weights=[],
+        normalize=True,
     ):
-        """Initialize WeightedCompositeMetric.
+        """Initialize WeightedAverageMetric.
 
-        WeightedCompositeMetric is a wrapper for combining multiple
+        WeightedAverageMetric is a wrapper for combining multiple
         forecasting error metrics into a single metric using weighted
         averaging.
 
@@ -4216,17 +4217,20 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
             List of metrics to be used in the ensemble.
         weights : list of float
             List of weights for each metric in the ensemble.
+        normalize : bool, default=True
+            If True, the weights are used, otherwise
+            no weights are used.
 
         Examples
         --------
         >>> from sktime.performance_metrics.forecasting import \
-        WeightedCompositeMetric, MeanAbsoluteError, MeanSquaredError
+        WeightedAverageMetric, MeanAbsoluteError, MeanSquaredError
         >>> import numpy as np
         >>> y_true = np.array([3, -2, 2, 8, 2])
         >>> y_pred = np.array([1, 0.0, 2, 8, 2])
         >>> mae = MeanAbsoluteError()
         >>> mse = MeanSquaredError()
-        >>> ensemble_metric = WeightedCompositeMetric(
+        >>> ensemble_metric = WeightedAverageMetric(
         ...     metrics=[mae, mse],
         ...     weights=[0.5, 0.5]
         ... )
@@ -4237,8 +4241,9 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
         super().__init__()
         self.metrics = metrics
         self.weights = weights
+        self.normalize = normalize
 
-    def evaluate(self, y_true, y_pred, **kwargs):
+    def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the ensemble metric.
 
         Parameters
@@ -4256,7 +4261,8 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
             The weighted ensemble metric value.
         """
         total = 0.0
-        for metric, weight in zip(self.metrics, self.weights):
+        weights = self.weights if self.normalize else [1.0] * len(self.metrics)
+        for metric, weight in zip(self.metrics, weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
 
