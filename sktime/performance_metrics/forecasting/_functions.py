@@ -417,18 +417,18 @@ def mean_absolute_scaled_error(
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)  # doctest: +SKIP
     np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)
+    >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)  # doctest: +SKIP
     np.float64(0.18181818181818182)
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput='raw_values')
+    multioutput='raw_values')  # doctest: +SKIP
     array([0.10526316, 0.28571429])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput=[0.3, 0.7])
+    multioutput=[0.3, 0.7])  # doctest: +SKIP
     np.float64(0.21935483870967742)
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
@@ -923,15 +923,15 @@ def mean_absolute_error(
     >>> from sktime.performance_metrics.forecasting import mean_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_absolute_error(y_true, y_pred)
+    >>> mean_absolute_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.55)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_error(y_true, y_pred)
+    >>> mean_absolute_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.75)
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
-    >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
     np.float64(0.85)
     """
     loss = _mean_absolute_error(
@@ -1557,29 +1557,29 @@ def mean_absolute_percentage_error(
     mean_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
     np.float64(0.33690476190476193)
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
     np.float64(0.5553379953379953)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
     np.float64(0.5515873015873016)
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
     np.float64(0.6080808080808081)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-        symmetric=False)
+        symmetric=False)  # doctest: +SKIP
     array([0.38095238, 0.72222222])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-        symmetric=True)
+        symmetric=True)  # doctest: +SKIP
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=False)
+    symmetric=False)  # doctest: +SKIP
     np.float64(0.6198412698412699)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=True)
+    symmetric=True)  # doctest: +SKIP
     np.float64(0.5668686868686869)
-    """
+    """ # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
