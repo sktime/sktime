@@ -4195,3 +4195,82 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         params1 = {}
         params2 = {"relative_loss_function": mean_squared_error}
         return [params1, params2]
+
+
+class WeightedCompositeMetric(BaseForecastingErrorMetric):
+    def __init__(self, metrics, weights):
+        """Initialize WeightedCompositeMetric.
+
+        WeightedCompositeMetric is a wrapper for combining multiple
+        forecasting error metrics into a single metric using weighted
+        averaging. This allows for a more comprehensive evaluation of
+        forecasting performance by considering multiple aspects of the
+        forecast errors.
+
+        Parameters
+        ----------
+        metrics : list of BaseForecastingErrorMetric
+            List of metrics to be used in the ensemble.
+        weights : list of float
+            List of weights for each metric in the ensemble.
+
+        Examples
+        --------
+        >>> from sktime.performance_metrics.forecasting import \
+        WeightedCompositeMetric, MeanAbsoluteError, MeanSquaredError
+        >>> import numpy as np
+        >>> y_true = np.array([3, -0.5, 2, 7, 2])
+        >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+        >>> mae = MeanAbsoluteError()
+        >>> mse = MeanSquaredError()
+        >>> ensemble_metric = WeightedCompositeMetric(
+        ...     metrics=[mae, mse],
+        ...     weights=[0.5, 0.5]
+        ... )
+        >>> ensemble_metric.evaluate(y_true, y_pred)
+        np.float64(1.2)
+
+        """
+        self.metrics = metrics
+        self.weights = weights
+
+    def evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the ensemble metric.
+
+        Parameters
+        ----------
+        y_true : array-like
+            True values.
+        y_pred : array-like
+            Predicted values.
+        **kwargs : dict
+            Additional arguments to be passed to the individual metrics.
+
+        Returns
+        -------
+        float
+            The weighted ensemble metric value.
+        """
+        total = 0.0
+        for metric, weight in zip(self.metrics, self.weights):
+            total += weight * metric.evaluate(y_true, y_pred, **kwargs)
+        return total
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        return [
+            {
+                "metrics": [
+                    MeanAbsoluteError(),
+                    MeanSquaredError(),
+                    MedianAbsoluteError(),
+                ],
+                "weights": [0.5, 0.3, 0.2],
+            },
+            {
+                "metrics": [
+                    MeanAbsoluteError(),
+                ],
+                "weights": [0.4],
+            },
+        ]

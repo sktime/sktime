@@ -32,6 +32,7 @@ __all__ = [
     "MeanAsymmetricError",
     "MeanLinexError",
     "RelativeLoss",
+    "WeightedCompositeMetric",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "mean_squared_scaled_error",
@@ -77,6 +78,7 @@ from sktime.performance_metrics.forecasting._classes import (
     MedianSquaredPercentageError,
     MedianSquaredScaledError,
     RelativeLoss,
+    WeightedCompositeMetric,
     make_forecasting_scorer,
 )
 from sktime.performance_metrics.forecasting._functions import (
