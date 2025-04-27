@@ -74,6 +74,7 @@ __all__ = [
     "MeanAsymmetricError",
     "MeanLinexError",
     "RelativeLoss",
+    "WeightedCompositeMetric",
 ]
 
 
@@ -4198,14 +4199,13 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
 
 
 class WeightedCompositeMetric(BaseForecastingErrorMetric):
-    def __init__(self, metrics, weights):
+
+    def __init__(self, metrics=[], weights=[],):
         """Initialize WeightedCompositeMetric.
 
         WeightedCompositeMetric is a wrapper for combining multiple
         forecasting error metrics into a single metric using weighted
-        averaging. This allows for a more comprehensive evaluation of
-        forecasting performance by considering multiple aspects of the
-        forecast errors.
+        averaging. 
 
         Parameters
         ----------
@@ -4219,8 +4219,8 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
         >>> from sktime.performance_metrics.forecasting import \
         WeightedCompositeMetric, MeanAbsoluteError, MeanSquaredError
         >>> import numpy as np
-        >>> y_true = np.array([3, -0.5, 2, 7, 2])
-        >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+        >>> y_true = np.array([3, -2, 2, 8, 2])
+        >>> y_pred = np.array([1, 0.0, 2, 8, 2])
         >>> mae = MeanAbsoluteError()
         >>> mse = MeanSquaredError()
         >>> ensemble_metric = WeightedCompositeMetric(
@@ -4231,6 +4231,7 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
         np.float64(1.2)
 
         """
+        super().__init__()
         self.metrics = metrics
         self.weights = weights
 
@@ -4251,11 +4252,12 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
         float
             The weighted ensemble metric value.
         """
+
         total = 0.0
         for metric, weight in zip(self.metrics, self.weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
-
+    
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         return [
