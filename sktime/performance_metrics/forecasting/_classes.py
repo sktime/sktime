@@ -4199,13 +4199,16 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
 
 
 class WeightedCompositeMetric(BaseForecastingErrorMetric):
-
-    def __init__(self, metrics=[], weights=[],):
+    def __init__(
+        self,
+        metrics=[],
+        weights=[],
+    ):
         """Initialize WeightedCompositeMetric.
 
         WeightedCompositeMetric is a wrapper for combining multiple
         forecasting error metrics into a single metric using weighted
-        averaging. 
+        averaging.
 
         Parameters
         ----------
@@ -4252,12 +4255,11 @@ class WeightedCompositeMetric(BaseForecastingErrorMetric):
         float
             The weighted ensemble metric value.
         """
-
         total = 0.0
         for metric, weight in zip(self.metrics, self.weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         return [
