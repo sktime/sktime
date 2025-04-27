@@ -17,7 +17,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.performance_metrics.forecasting._common import (
+from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
 )
