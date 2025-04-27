@@ -430,7 +430,28 @@ def _groupby_dot(df, weights):
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
-    """Pinball loss aka quantile loss for quantile/interval predictions.
+    r"""Pinball loss aka quantile loss for quantile/interval predictions.
+
+    Can be used for both quantile and interval predictions.
+
+    For a quantile prediction :math:`\widehat{y}
+    at quantile point :math:`\alpha`,
+    and a ground truth value :math:`y`, the pinball loss is defined as
+    :math:`L_\alpha(y, \widehat{y}) := (y - \widehat{y}) \cdot (\alpha - H(y - \widehat{y}))`,
+    where :math:`H` is the Heaviside step function defined as
+    :math:`H(x) = 1` if :math:`x \ge 0` and :math:`H(x) = 0` otherwise.
+
+    For a symmetric prediction interval :math:`I = [\widehat{y}_{\alpha}, \widehat{y}_{1 - \alpha}]`,
+    the pinball loss is defined as
+    :math:`L_\alpha(y, I) := L_\alpha(y, \widehat{y}_{\alpha}) + L_{1 - \alpha}(y, \widehat{y}_{1 - \alpha})`,
+    or, in terms of coverage :math:`c = 1 - 2\alpha`, as
+    :math:`L_c(y, I) := L_{1/2 - c/2}(y, a) + L_{1/2 + c/2}(y, b)`,
+    if we write :math:`I = [a, b]`.
+
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
+    * ``score_average`` controls averaging over quantiles/intervals.
 
     Parameters
     ----------
@@ -491,7 +512,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     >>> pl = PinballLoss(multioutput=np.array([0.3, 0.7]))
     >>> pl(y_true, y_pred)
     np.float64(0.3742000000000001)
-    """
+    """  # noqa: E501
 
     _tags = {
         "scitype:y_pred": "pred_quantiles",
@@ -565,7 +586,28 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
 
 class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
-    """Empirical coverage percentage for interval predictions.
+    r"""Empirical coverage percentage for interval predictions.
+
+    Applies to interval predictions.
+
+    Should be used together with ``ConstraintViolation`` if reported.
+
+    Up to a constant, ``PinballLoss`` is a weighted sum of ``ConstraintViolation`` and
+    ``EmpiricalCoverage``.
+
+    For an interval prediction :math:`I = [a, b]` and a ground truth value :math:`y`,
+    the empirical coverage loss is defined as
+
+    :math:`L(y, I) := 1, \text{if } y \in I, 0 \text{ otherwise}`.
+
+    When averaged over test samples, variables, or coverages, the average
+    is the same as the empirical coverage percentage, i.e., the percentage of
+    predictions that contain the true value, among the values averaged over.
+
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
+    * ``score_average`` controls averaging over quantiles/intervals.
 
     Parameters
     ----------
@@ -656,6 +698,20 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 class IntervalWidth(_BaseProbaForecastingErrorMetric):
     """Interval width for interval predictions, sometimes also known as sharpness.
 
+    Applies to interval predictions.
+
+    Also known as "sharpness".
+
+    For an interval prediction :math:`I = [a, b]` and a ground truth value :math:`y`,
+    the interval width is defined as
+
+    :math:`W(y, I) := b - a`.
+
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
+    * ``score_average`` controls averaging over quantiles/intervals.
+
     Parameters
     ----------
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
@@ -740,7 +796,31 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
 
 
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
-    """Percentage of interval constraint violations for interval predictions.
+    r"""Average absolute constraint violations for interval predictions.
+
+    Applies to interval predictions.
+
+    Should be used together with ``EmpiricalCoverage`` if reported.
+
+    Up to a constant, ``PinballLoss`` is a weighted sum of ``ConstraintViolation`` and
+    ``EmpiricalCoverage``.
+
+    For an interval prediction :math:`I = [a, b]` and a ground truth value :math:`y`,
+    the constraint violation loss is defined as
+
+    .. math::
+
+        L(y, I) :=
+        \begin{cases}
+        a - y, & \text{if } y < a \\
+        y - b, & \text{if } y > b \\
+        0, & \text{otherwise}
+        \end{cases}
+
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
+    * ``score_average`` controls averaging over quantiles/intervals.
 
     Parameters
     ----------
