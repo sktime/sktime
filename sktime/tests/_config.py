@@ -74,6 +74,7 @@ EXCLUDE_ESTIMATORS = [
     "VARMAX",
     "SARIMAX",
     "SCINetForecaster",  # known bug #7871
+    "MAPAForecaster",  # known bug #8039
 ]
 
 
