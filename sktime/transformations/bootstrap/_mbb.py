@@ -191,7 +191,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "can_return_indices": True,
+        "bootstrap_transformer_return_indices_as_extra_column": True,
     }
 
     def __init__(
@@ -516,7 +516,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "can_return_indices": True,
+        "bootstrap_transformer_return_indices_as_extra_column": True,
     }
 
     def __init__(

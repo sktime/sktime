@@ -31,9 +31,14 @@ class EnbPIForecaster(BaseForecaster):
     The forecaster is similar to the the bagging forecaster and performs
     internally the following steps:
     For training:
-        1. Uses a tsbootstrap transformer to generate bootstrap samples
+        1. Uses a bootstrap transformer to generate bootstrap samples
            and returning the corresponding indices of the original time
-           series
+           series. Note that the bootstrap transformer must be able to
+           return the indices of the original time series as and additional
+           column. I.e. the tag
+           "bootstrap_transformer_return_indices_as_extra_column" must be True
+           and the parameter return_indices of the bootstrap transformer
+           must be set to True.
         2. Fit a forecaster on the first n - max(fh) values of each
            bootstrap sample
         3. Uses each forecaster to predict the last max(fh) values of each
@@ -59,6 +64,10 @@ class EnbPIForecaster(BaseForecaster):
         The base forecaster to fit to each bootstrap sample.
     bootstrap_transformer : tsbootstrap.BootstrapTransformer
         The transformer to fit to the target series to generate bootstrap samples.
+        This transformer must be able to return the indices of the original
+        time series as an additional column. I.e. the tag
+        "bootstrap_transformer_return_indices_as_extra_column"
+        must be True and the parameter "return_indices" must be set to True.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
     aggregation_function : str, default="mean"
@@ -145,11 +154,11 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_ = bootstrap_transformer
 
         if self.bootstrap_transformer is None:
-            # todo: 0.38.0 remove this warning
+            # todo: 0.39.0 remove this warning
             warn(
                 "The default value for the bootstrap_transformer will change to the"
-                "sktime MovingBlockBootstrap in version 0.38.0."
-                "For obtaining the current default behaviour after 0.37.0, pass "
+                "sktime MovingBlockBootstrap in version 0.39.0."
+                "For obtaining the current default behaviour after 0.39.0, pass "
                 "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap()), "
                 "with moving block bootstrap from tsbootstrap.",
                 obj=self,
@@ -157,12 +166,14 @@ class EnbPIForecaster(BaseForecaster):
             )
             from tsbootstrap import MovingBlockBootstrap
 
-            # todo: 0.38.0 replace with Moving Block Bootstrap from sktime. And set
+            # todo: 0.39.0 replace with Moving Block Bootstrap from sktime. And set
             # the return_indices=True
             self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
 
         if (
-            not self.bootstrap_transformer_.get_tags()["can_return_indices"]
+            not self.bootstrap_transformer_.get_tags()[
+                "bootstrap_transformer_return_indices_as_extra_column"
+            ]
             or not self.bootstrap_transformer_.return_indices
         ):
             raise ValueError(
