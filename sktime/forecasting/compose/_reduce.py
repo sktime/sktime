@@ -231,7 +231,7 @@ class _Reducer(_BaseWindowForecaster):
             "benheid",
         ],
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -254,7 +254,9 @@ class _Reducer(_BaseWindowForecaster):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
@@ -1992,7 +1994,9 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
@@ -2762,7 +2766,7 @@ class YfromX(_ReducerMixin, BaseForecaster):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,

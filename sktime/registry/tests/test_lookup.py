@@ -216,7 +216,9 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
-@pytest.mark.parametrize("tag_name", ["capability:pred_int", "handles-missing-data"])
+@pytest.mark.parametrize(
+    "tag_name", ["capability:pred_int", "capability:missing_values"]
+)
 @pytest.mark.parametrize("tag_value", [True, False])
 def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""

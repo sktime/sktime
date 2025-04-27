@@ -32,7 +32,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -1177,7 +1177,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -1717,8 +1717,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.detrend import Deseasonalizer, Detrender
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.forecasting.trend import STLForecaster
+    >>> from sktime.forecasting.trend import STLForecaster, TrendForecaster
     >>> import optuna
     >>> from  optuna.distributions import CategoricalDistribution
 
@@ -1741,7 +1740,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
-    ...             (NaiveForecaster(), ThetaForecaster())
+    ...             (NaiveForecaster(), TrendForecaster())
     ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(
@@ -1760,7 +1759,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
