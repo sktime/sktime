@@ -1579,7 +1579,7 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)  # doctest: +SKIP
     np.float64(0.5668686868686869)
-    """ # noqa: E501
+    """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
@@ -1699,7 +1699,7 @@ def median_absolute_percentage_error(
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=True)  # doctest: +SKIP
     np.float64(0.5066666666666666)
-    """ # noqa: E501
+    """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
