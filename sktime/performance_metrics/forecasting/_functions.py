@@ -70,10 +70,11 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
 
 def _handle_output(obj, multioutput):
     """Handle output of metric function."""
-    if multioutput == "raw_values":
-        obj = _coerce_to_1d_numpy(obj)
-    elif multioutput == "uniform_average":
-        obj = _coerce_to_scalar(obj)
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            obj = _coerce_to_1d_numpy(obj)
+        elif multioutput == "uniform_average":
+            obj = _coerce_to_scalar(obj)
     return obj
 
 
