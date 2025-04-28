@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
@@ -131,8 +131,8 @@ class ConformalIntervals(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        "X_inner_mtype": MTYPE_LIST_SERIES,
-        "y_inner_mtype": MTYPE_LIST_SERIES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
     ALLOWED_METHODS = [
