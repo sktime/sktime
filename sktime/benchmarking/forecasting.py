@@ -124,6 +124,8 @@ def forecasting_validation(
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "cpus_per_task": int, default=1, sets the number of cpus that get
+                assigned to each task
 
 
     cv_global:  sklearn splitter, or sktime instance splitter, optional, default=None
@@ -340,6 +342,8 @@ class ForecastingBenchmark(BaseBenchmark):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "cpus_per_task": int, default=1, sets the number of cpus that get
+                assigned to each task
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
