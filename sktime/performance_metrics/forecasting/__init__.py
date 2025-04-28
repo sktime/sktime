@@ -78,7 +78,6 @@ from sktime.performance_metrics.forecasting._classes import (
     MedianSquaredPercentageError,
     MedianSquaredScaledError,
     RelativeLoss,
-    WeightedAverageMetric,
     make_forecasting_scorer,
 )
 from sktime.performance_metrics.forecasting._functions import (
@@ -103,4 +102,7 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_percentage_error,
     median_squared_scaled_error,
     relative_loss,
+)
+from sktime.performance_metrics.forecasting._weighted_average_metric import (
+    WeightedAverageMetric,
 )

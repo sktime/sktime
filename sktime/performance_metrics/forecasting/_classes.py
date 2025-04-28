@@ -74,7 +74,6 @@ __all__ = [
     "MeanAsymmetricError",
     "MeanLinexError",
     "RelativeLoss",
-    "WeightedAverageMetric",
 ]
 
 
@@ -4196,91 +4195,3 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         params1 = {}
         params2 = {"relative_loss_function": mean_squared_error}
         return [params1, params2]
-
-
-class WeightedAverageMetric(BaseForecastingErrorMetric):
-    def __init__(
-        self,
-        metrics=[],
-        weights=[],
-        normalize=True,
-    ):
-        """Initialize WeightedAverageMetric.
-
-        WeightedAverageMetric is a wrapper for combining multiple
-        forecasting error metrics into a single metric using weighted
-        averaging.
-
-        Parameters
-        ----------
-        metrics : list of BaseForecastingErrorMetric
-            List of metrics to be used in the ensemble.
-        weights : list of float
-            List of weights for each metric in the ensemble.
-        normalize : bool, default=True
-            If True, the weights are used, otherwise
-            no weights are used.
-
-        Examples
-        --------
-        >>> from sktime.performance_metrics.forecasting import \
-        WeightedAverageMetric, MeanAbsoluteError, MeanSquaredError
-        >>> import numpy as np
-        >>> y_true = np.array([3, -2, 2, 8, 2])
-        >>> y_pred = np.array([1, 0.0, 2, 8, 2])
-        >>> mae = MeanAbsoluteError()
-        >>> mse = MeanSquaredError()
-        >>> ensemble_metric = WeightedAverageMetric(
-        ...     metrics=[mae, mse],
-        ...     weights=[0.5, 0.5]
-        ... )
-        >>> ensemble_metric.evaluate(y_true, y_pred)
-        np.float64(1.2)
-
-        """
-        super().__init__()
-        self.metrics = metrics
-        self.weights = weights
-        self.normalize = normalize
-
-    def _evaluate(self, y_true, y_pred, **kwargs):
-        """Evaluate the ensemble metric.
-
-        Parameters
-        ----------
-        y_true : array-like
-            True values.
-        y_pred : array-like
-            Predicted values.
-        **kwargs : dict
-            Additional arguments to be passed to the individual metrics.
-
-        Returns
-        -------
-        float
-            The weighted ensemble metric value.
-        """
-        total = 0.0
-        weights = self.weights if self.normalize else [1.0] * len(self.metrics)
-        for metric, weight in zip(self.metrics, weights):
-            total += weight * metric.evaluate(y_true, y_pred, **kwargs)
-        return total
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        return [
-            {
-                "metrics": [
-                    MeanAbsoluteError(),
-                    MeanSquaredError(),
-                    MedianAbsoluteError(),
-                ],
-                "weights": [0.5, 0.3, 0.2],
-            },
-            {
-                "metrics": [
-                    MeanAbsoluteError(),
-                ],
-                "weights": [0.4],
-            },
-        ]
