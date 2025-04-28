@@ -1,5 +1,9 @@
-from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric, MeanAbsoluteError, MeanSquaredError, MedianAbsoluteError
-
+from sktime.performance_metrics.forecasting._classes import (
+    BaseForecastingErrorMetric,
+    MeanAbsoluteError,
+    MeanSquaredError,
+    MedianAbsoluteError,
+)
 __author__ = ["benheid"]
 __all__ = [
     "WeightedAverageMetric",
