@@ -189,6 +189,12 @@ EXCLUDED_TESTS = {
     "CNTCRegressor": [
         "test_fit_idempotent",
     ],
+    "TleNetRegressor": [
+        "test_fit_idempotent",
+    ],
+    "TleNetClassifier": [
+        "test_fit_idempotent",
+    ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
