@@ -305,11 +305,11 @@ def mean_asymmetric_error(
     >>> mean_asymmetric_error(y_true, y_pred, left_error_function='absolute', \
     right_error_function='squared')  # doctest: +SKIP
     np.float64(0.7083333333333334)
-    >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([0.5, 1. ])
-    >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    np.float64(0.85)  # doctest: +SKIP
-    """
+    >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
+    np.float64(0.85)
+    """ # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
@@ -1016,7 +1016,7 @@ def mean_squared_error(
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_squared_error(y_true, y_pred)
+    >>> mean_squared_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.4125)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
@@ -2058,20 +2058,24 @@ def mean_relative_absolute_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> mean_relative_absolute_error(y_true, y_pred, \
-    y_pred_benchmark=y_pred_benchmark)
+    >>> mean_relative_absolute_error(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark
+    ... )  # doctest: +SKIP
     np.float64(0.9511111111111111)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> mean_relative_absolute_error(y_true, y_pred, \
-    y_pred_benchmark=y_pred_benchmark)
+    >>> mean_relative_absolute_error(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark
+    ... )  # doctest: +SKIP
     np.float64(0.8703703703703702)
-    >>> mean_relative_absolute_error(y_true, y_pred, \
-    y_pred_benchmark=y_pred_benchmark, multioutput='raw_values')
+    >>> mean_relative_absolute_error(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark, multioutput='raw_values'
+    ... )  # doctest: +SKIP
     array([0.51851852, 1.22222222])
-    >>> mean_relative_absolute_error(y_true, y_pred, \
-    y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
+    >>> mean_relative_absolute_error(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7]
+    ... )  # doctest: +SKIP
     np.float64(1.0111111111111108)
     """
     y_pred_benchmark = _get_kwarg(
