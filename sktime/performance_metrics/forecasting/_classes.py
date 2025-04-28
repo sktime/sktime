@@ -12,6 +12,7 @@ from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
 import pandas as pd
+from scipy.stats import gmean
 from sklearn.utils import check_array
 
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
@@ -23,7 +24,6 @@ from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_series,
 )
 from sktime.performance_metrics.forecasting._functions import (
-    geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
     geometric_mean_squared_error,
@@ -2454,7 +2454,22 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Geometric mean absolute error (GMAE).
+    r"""Geometric mean absolute error (GMAE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Geometric Mean Absolute Error,
+    :math:`\left( \prod_{i=1}^n |y_i - \widehat{y}_i| \right)^{\frac{1}{n}}`.
+    (the time indices are not used)
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    jackknife pseudo-samples of the GMAE at that time index,
+    :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
+    where :math:`\bar{\varepsilon}` is the GMAE over all time indices,
+    and :math:`\varepsilon_i` is the GMAE with the i-th time index removed.
 
     GMAE output is non-negative floating point. The best value is approximately
     zero, rather than zero.
@@ -2538,7 +2553,152 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     np.float64(0.7000014418652152)
     """
 
-    func = geometric_mean_absolute_error
+    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        self.multioutput = multioutput
+
+    def _handle_multioutput(self, df, multioutput):
+        """Handle multioutput format for error metrics.
+
+        Parameters
+        ----------
+        df : array or float
+            Array of errors for each output or single error value
+        multioutput : string or array
+            Defines aggregation of multiple output values
+
+        Returns
+        -------
+        result : float or array
+            Aggregated metric
+        """
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return df
+            elif multioutput == "uniform_average":
+                # Convert to array and take mean along correct axis
+                values = np.asarray(df)
+                return np.mean(values)
+        else:
+            # If multioutput is array-like, use it as weights
+            values = np.asarray(df)
+            multioutput = np.asarray(multioutput)
+            return np.dot(values, multioutput)
+
+    def _evaluate(self, y_true, y_pred, sample_weight=None, **kwargs):
+        """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
+
+        This private method contains core logic for computing the GMAE metric.
+        By default, it uses `_evaluate_by_index` to compute the
+        arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+        sample_weight : array-like of shape (n_samples,), optional
+            Sample weights
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            - If self.multioutput="uniform_average", returns the
+                average GMAE metric over variables.
+            - If self.multioutput="raw_values", returns an
+                array of GMAE values for each variable.
+        """
+        abs_errors = np.abs(y_true - y_pred).astype(np.float64)
+        min_error = np.finfo(float).tiny  # Avoid zero values
+        abs_errors = np.maximum(abs_errors, min_error)
+
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight).flatten()  # Ensure 1D weights
+            if abs_errors.ndim > 1:
+                # Reshape sample_weight to match the shape of abs_errors if needed
+                sample_weight = sample_weight.reshape(-1, 1)
+            weighted_log_errors = sample_weight * np.log(abs_errors)
+            log_mean = np.sum(weighted_log_errors) / np.sum(sample_weight)
+            gmae = np.exp(log_mean)
+        else:
+            gmae = gmean(abs_errors, axis=0)
+        return self._handle_multioutput(gmae, self.multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+        raw_values = (y_true - y_pred).abs()
+
+        n = raw_values.shape[0]
+        gmae = gmean(raw_values, axis=0)
+
+        gmae_jackknife = (raw_values ** (-1 / n) * gmae) ** (1 + 1 / (n - 1))
+        pseudo_values = n * gmae - (n - 1) * gmae_jackknife
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+
+            if multioutput == "uniform_average":
+                return pseudo_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return pseudo_values.dot(multioutput)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [{}]
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
