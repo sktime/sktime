@@ -9,7 +9,6 @@ __all__ = [
     "WeightedAverageMetric",
 ]
 
-
 class WeightedAverageMetric(BaseForecastingErrorMetric):
     def __init__(
         self,
@@ -77,7 +76,7 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         for metric, weight in zip(self.metrics, weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
-    
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
