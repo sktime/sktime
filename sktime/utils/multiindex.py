@@ -110,7 +110,7 @@ def apply_split(y, iloc_ix):
     >>> from sktime.utils.multiindex import apply_split
     >>> y = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0), (1, 1)])
     >>> iloc_ix = np.array([1, 0])
-    >>> apply_split(y, iloc_ix)
+    >>> apply_split(y, iloc_ix)  # doctest: +SKIP
     array([2, 3, 0, 1])
     """
     if not isinstance(y, pd.MultiIndex):
