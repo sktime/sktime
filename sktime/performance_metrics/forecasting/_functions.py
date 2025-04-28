@@ -692,11 +692,13 @@ def mean_squared_scaled_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train,  square_root=True)  # doctest: +SKIP
     np.float64(0.15679361328058636)
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput='raw_values', square_root=True)  # doctest: +SKIP
+    >>> mean_squared_scaled_error(
+    ...     y_true, y_pred, y_train=y_train, multioutput='raw_values', square_root=True
+    ... )  # doctest: +SKIP
     array([0.11215443, 0.20203051])
-    >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput=[0.3, 0.7], square_root=True)  # doctest: +SKIP
+    >>> mean_squared_scaled_error(
+    ...     y_true, y_pred, y_train=y_train, multioutput=[0.3, 0.7], square_root=True
+    ... )  # doctest: +SKIP
     np.float64(0.17451891814894502)
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
@@ -822,11 +824,13 @@ def median_squared_scaled_error(
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)  # doctest: +SKIP
     np.float64(0.1472819539849714)
-    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput='raw_values', square_root=True)  # doctest: +SKIP
+    >>> median_squared_scaled_error(
+    ...     y_true, y_pred, y_train=y_train, multioutput='raw_values', square_root=True
+    ... )  # doctest: +SKIP
     array([0.08687445, 0.20203051])
-    >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput=[0.3, 0.7], square_root=True)  # doctest: +SKIP
+    >>> median_squared_scaled_error(
+    ...     y_true, y_pred, y_train=y_train, multioutput=[0.3, 0.7], square_root=True
+    ... )  # doctest: +SKIP
     np.float64(0.16914781383660782)
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
