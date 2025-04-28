@@ -37,6 +37,15 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
     --------
@@ -133,6 +142,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
@@ -144,6 +154,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
+            verbose,
         )
 
     @functools.cached_property
@@ -210,6 +221,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -231,6 +243,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
         else:
@@ -263,6 +276,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -288,6 +302,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
 
@@ -321,6 +336,15 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
     --------
@@ -414,6 +438,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        verbose: bool = True,
     ) -> None:
         super().__init__(
             model_params,
@@ -424,6 +449,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
+            verbose,
         )
 
     @functools.cached_property
@@ -506,6 +532,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -526,6 +553,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
         else:
@@ -557,6 +585,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -579,6 +608,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
 
@@ -614,6 +644,15 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
     --------
@@ -711,6 +750,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.deterministic = deterministic
@@ -723,6 +763,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
+            verbose,
         )
 
     @functools.cached_property
@@ -789,6 +830,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
                 {
@@ -808,6 +850,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
             ]
@@ -839,6 +882,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
                 {
@@ -859,6 +903,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
             ]
@@ -893,6 +938,15 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
     --------
@@ -988,6 +1042,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        verbose: bool = True,
     ) -> None:
         super().__init__(
             model_params,
@@ -998,6 +1053,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
+            verbose,
         )
 
     @functools.cached_property
@@ -1075,6 +1131,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -1096,6 +1153,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
         else:
@@ -1127,6 +1185,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -1149,6 +1208,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "verbose": False,
                 },
             ]
 
