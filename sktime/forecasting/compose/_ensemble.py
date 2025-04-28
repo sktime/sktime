@@ -56,27 +56,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Strategy used to compute weights for the ensemble members.
 
         - ``"feature-importance"``:
-            this strategy implements a form of **stacking**.
-            It trains a meta-regression model (controlled by `regressor`)
-            on out-of-sample predictions generated from the constituent
-            `forecasters`.
-            the input features for the meta-model are the predictions of the
-            base forecasters on a held-out test set, and the target is the actual
-            time series value (`y_test`). the final weights assigned to each base
-            forecaster in the ensemble are derived from the fitted `coef_` attribute
-            (for linear meta-models) or `feature_importances_` attribute
-            (for tree-based meta-models) of the meta-regressor.
+            Implements stacking [1]_ where a meta-regressor is trained
+            on base forecaster predictions to derive weights from `feature_importances_`
+            or `coef_` attributes.
             use the ``feature_importances_`` or ``coef_`` from
             given ``regressor`` as optimal weights.
         - ``"inverse-variance"``:
-            weights are computed based on the inverse of the prediction error
-            variance for each forecaster, evaluated on a held-out portion of the
-            training data (determined by `test_size`).
-            forecasters with lower prediction variance (more consistent performance)
-            receive higher weights. A `regressor` will not be used with this method.
-            use the inverse variance of the forecasting error
-            (based on the internal train-test-split) to compute optimal
-            weights, a given ``regressor`` will be omitted.
+            Weights forecasters by the inverse of their prediction
+            error variance on held-out data, giving higher weight to more consistent
+            forecasters. No regressor is used.
 
     regressor : sklearn-like regressor, optional, default=None.
         Used only when ``method="feature-importance"``, defines the meta-model.
