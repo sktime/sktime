@@ -309,7 +309,7 @@ def mean_asymmetric_error(
     array([0.5, 1. ])
     >>> mean_asymmetric_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
     np.float64(0.85)
-    """ # noqa: E501
+    """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
