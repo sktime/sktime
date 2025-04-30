@@ -25,8 +25,9 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
     ----------
     cls : class
         Placeholder record to be replaced.
-    module_name : str
+    module_name : str or list of str
         Name of the module to import from.
+        If a list, imports are attempted in the order given.
     obj_name : str, optional, default = name of cls
         Name of the object to import.
         If None, the name of ``cls`` is used.
@@ -61,16 +62,46 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
         if not load_condition:
             return cls
 
-        try:
-            # parse import_str to get the module and class name
-            module = __import__(module_name, fromlist=[_obj_name])
-            imported_cls = getattr(module, _obj_name)
+        if isinstance(module_name, str):
+            module_name = [module_name]
 
-            return imported_cls
-        except Exception:  # noqa: S110
-            pass
+        for module in module_name:
+            # attempt to import the object from the module
+            imported_cls = _attempt_import(module, _obj_name)
+
+            if imported_cls is not None:
+                # if successful, return the imported class
+                return imported_cls
 
         # on failure, we also return the placeholder record itself
         return cls
 
     return decorator
+
+
+def _attempt_import(module_name, obj_name=None):
+    """Attempt to import an object from a module.
+
+    Parameters
+    ----------
+    module_name : str
+        Name of the module to import from.
+    obj_name : str, optional, default = None
+        Name of the object to import.
+        If None, the name of ``cls`` is used.
+
+    Returns
+    -------
+    imported_cls : class or None
+        The imported class if successful, otherwise None.
+    """
+    try:
+        # parse import_str to get the module and class name
+        module = __import__(module_name, fromlist=[obj_name])
+        imported_cls = getattr(module, obj_name)
+
+        return imported_cls
+    except Exception:  # noqa: S110
+        pass
+
+    return None
