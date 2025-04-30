@@ -4,7 +4,7 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.anomaly_detectors.capa")
+@_placeholder_record(["skchange.anomaly_detectors", "skchange.anomaly_detectors.capa"])
 class CAPA(BaseDetector):
     """CAPA = Collective and point anomaly detection, from skchange.
 
