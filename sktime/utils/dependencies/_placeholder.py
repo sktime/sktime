@@ -62,7 +62,8 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
         if not load_condition:
             return cls
 
-        if isinstance(module_name, str):
+        if isinstance(module_name, str):  # noqa: F823
+            # false positive for flake8, does not understand decorators
             module_name = [module_name]
 
         for module in module_name:
