@@ -16,7 +16,6 @@ X_test = df.loc['2008Q1':, ['unemp', 'pop', 'infl','cpi']].copy()
 fh_out = ForecastingHorizon([2, 3,4,5,6,7], is_relative=True)
 # Fit the Dynamic Factor model
 forecaster = DynamicFactor(enforce_stationarity=False)
-forecaster._tags['capability:insample'] = True
 
 forecaster.fit(y_train, X=X_train)
 y_pred_out = forecaster.predict(fh=fh_out, X=X_test)

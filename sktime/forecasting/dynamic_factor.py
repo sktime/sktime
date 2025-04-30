@@ -138,7 +138,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "capability:insample": False,
+        "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
