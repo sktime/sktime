@@ -10,7 +10,7 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class VARReduce(BaseForecaster):
-    """ Generalized VAR forecaster using tabularized regression.
+    """Generalized VAR forecaster using tabularized regression.
 
     As special cases, can be used to construct classical L1 (Lasso) or
     elastic VAR forecasting models.
