@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TapNetNetwork(BaseDeepNetwork):
@@ -51,7 +51,7 @@ class TapNetNetwork(BaseDeepNetwork):
     34(4), 6845-6852, 2020
     """
 
-    _tags = {"python_dependencies": ["tensorflow", "keras-self-attention"]}
+    _tags = {"python_dependencies": ["tensorflow"]}
 
     def __init__(
         self,
@@ -68,7 +68,6 @@ class TapNetNetwork(BaseDeepNetwork):
         random_state=1,
         padding="same",
     ):
-        _check_soft_dependencies("keras-self-attention", severity="error")
         _check_dl_dependencies(severity="error")
 
         super().__init__()
@@ -156,8 +155,9 @@ class TapNetNetwork(BaseDeepNetwork):
         output_layer : a keras layer
         """
         import tensorflow as tf
-        from keras_self_attention import SeqSelfAttention
         from tensorflow import keras
+
+        from sktime.libs._keras_self_attention import SeqSelfAttention
 
         input_layer = keras.layers.Input(input_shape)
 

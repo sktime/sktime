@@ -64,18 +64,18 @@ class VECM(_StatsModelsAdapter):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from sktime.forecasting.vecm import VECM
-    >>> from sktime.split import temporal_train_test_split
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> index = pd.date_range(start="2005", end="2006-12", freq="ME")
+    >>> import numpy as np  # doctest: +SKIP
+    >>> import pandas as pd  # doctest: +SKIP
+    >>> from sktime.forecasting.vecm import VECM  # doctest: +SKIP
+    >>> from sktime.split import temporal_train_test_split  # doctest: +SKIP
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> index = pd.date_range(start="2005", end="2006-12", freq="ME")  # doctest: +SKIP
     >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
-    ... columns=list("AB"),
-    ... index=pd.PeriodIndex(index))
-    >>> train, test = temporal_train_test_split(df)
+    ... columns=list("AB"),  # doctest: +SKIP
+    ... index=pd.PeriodIndex(index))  # doctest: +SKIP
+    >>> train, test = temporal_train_test_split(df)  # doctest: +SKIP
     >>> sktime_model = VECM()  # doctest: +SKIP
-    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
+    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])  # doctest: +SKIP
     >>> _ = sktime_model.fit(train, fh=fh)  # doctest: +SKIP
     >>> fc2 = sktime_model.predict(fh=fh)  # doctest: +SKIP
     """

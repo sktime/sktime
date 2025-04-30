@@ -17,6 +17,97 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.37.0 - 2025-04-12
+---------------------------
+
+Maintenance release with scheduled deprecations and change actions.
+
+For the last non-maintenance content update, see 0.36.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``keras-self-attention`` (deep learning soft dependency) is no longer a soft dependency.
+  The package has been abandoned and is now vendored in ``sktime``.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting and transformation pipelines can now be built with an ``scikit-learn``
+estimator directly, without needing to wrap in ``TabularToSeriesAdaptor``.
+
+The behaviour is the same as before, but the ``TabularToSeriesAdaptor`` is now optional.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* deprecated: the ``handles-missing-data`` tag is deprecated and renamed to ``capability:missing_values``,
+  to be consistent with other estimator types. The old tag name ``handles-missing-data`` can be used until 1.0.0,
+  when it will be removed, but will raise a deprecation warning.
+* removed: the deprecated ``HierarchyEnsembleForecaster.fitted_list`` parameter has been removed.
+  Users should use ``get_fitted_params`` or ``forecasters_`` instead.
+
+Time Series Anomalies, Changepoints, Segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* removed: the deprecated ``annotation`` module has been removed. Users should replace
+  imports from ``sktime.annotation`` with imports from ``sktime.detection``.
+* removed: the deprecated ``Y`` argument in detector methods has been removed.
+  Instead, users should use the ``y`` argument.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``_safe_import`` to allow multiple inheritance from multiple mock classes (:pr:`8061`) :user:`fkiraly`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] refactor ``datatypes`` registry to ``scikit-base`` records (:pr:`7816`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] remove accidental ``univariate-only`` tags from forecasters (:pr:`8180`) :user:`fkiraly`
+* [ENH] start rename of ``handles-missing-data`` tag to ``capability:missing_values`` (:pr:`7917`) :user:`fkiraly`
+* [ENH] automatic transformer coercion in explicit forecasting pipeline specification syntax (:pr:`8153`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] automatic transformer coercion in explicit transformer pipeline specification syntax (:pr:`8160`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] ``0.37.0`` deprecations and change actions (:pr:`8148`) :user:`fkiraly`
+* [MNT] skip some known failing tests (:pr:`8152`) :user:`fkiraly`
+* [MNT] docstring example fixes and test skips (:pr:`8159`) :user:`fkiraly`
+* [MNT] temporary skip ``SCINetForecaster`` (:pr:`8171`) :user:`fkiraly`
+* [MNT] remove ``tsbootstrap`` soft dependency from ``all_extras_pandas2`` dependency set (:pr:`8174`) :user:`fkiraly`
+* [MNT] vendor abandoned ``keras-self-attention`` library (:pr:`8155`) :user:`fkiraly`
+* [MNT] skip tests with ``ray`` parallelization fixtures (:pr:`8188`) :user:`fkiraly`
+* [MNT] skip ``VECM`` doctest due to ``pandas 1`` incompatibility (:pr:`8187`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] fix ``scitype`` return in case ``coerce_to_list=False`` and ``force_single_scitype=False`` if two or more types are detected (:pr:`8133`) :user:`fkiraly`
+* [BUG] Stop Importing Modules if Raised an Exception in ``_safe_import`` (:pr:`8182`) :user:`jgyasu`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`jgyasu`
+
+
 Version 0.36.1 - 2025-04-04
 ---------------------------
 
@@ -26,7 +117,7 @@ Highlights
 * ``Time-LLM`` forecaster (:pr:`7663`) :user:`jgyasu`
 * ``TimeMoE`` forecaster (:pr:`7869`) :user:`PranavBhatP`
 * support for ``chronos-bolt`` in ``ChronosForecaster`` (:pr:`7718`) :user:`PranavBhatP`
-* ``simdkalman``-based Kalman filtransformers (:pr:`8030`) :user:`oseiskar`
+* ``simdkalman``-based Kalman filter transformers (:pr:`8030`) :user:`oseiskar`
 * ``ray`` parallelization backend (:pr:`8031`) :user:`LHoelper`
 * ``HierarchyEnsembleForecaster`` can now select different parallelization backends (:pr:`7954`) :user:`LHolper`
 * ``ADIDA`` intermittency forecaster from ``statsforecast`` (:pr:`7754`) :user:`vedantag17`
