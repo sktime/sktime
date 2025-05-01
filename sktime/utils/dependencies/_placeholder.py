@@ -46,7 +46,8 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
             _obj_name = cls.__name__
         else:
             _obj_name = obj_name
-
+        # same for module_name and condition
+        _module_name = module_name
         load_condition = condition
 
         deps_satisfied = _check_estimator_deps(cls, severity="none")
@@ -62,11 +63,10 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
         if not load_condition:
             return cls
 
-        if isinstance(module_name, str):  # noqa: F823
-            # false positive for flake8, does not understand decorators
-            module_name = [module_name]
+        if isinstance(_module_name, str):
+            _module_name = [_module_name]
 
-        for module in module_name:
+        for module in _module_name:
             # attempt to import the object from the module
             imported_cls = _attempt_import(module, _obj_name)
 
