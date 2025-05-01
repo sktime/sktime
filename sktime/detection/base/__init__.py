@@ -2,6 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base classes for detection tasks in sktime."""
 
-__all__ = ["BaseDetector", "BaseSeriesAnnotator"]
+__all__ = ["BaseDetector"]
 
-from sktime.detection.base._base import BaseDetector, BaseSeriesAnnotator
+from sktime.detection.base._base import BaseDetector

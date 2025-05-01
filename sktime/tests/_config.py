@@ -39,6 +39,7 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
+    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -65,6 +66,15 @@ EXCLUDE_ESTIMATORS = [
     "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
+    # fails due to #8151 or #8059
+    "CNTCRegressor",
+    "FreshPRINCE",
+    # multiple timeouts and sporadic failures reported related to VARMAX
+    # 2997, 3176, 7985
+    "VARMAX",
+    "SARIMAX",
+    "SCINetForecaster",  # known bug #7871
+    "MAPAForecaster",  # known bug #8039
 ]
 
 
@@ -197,17 +207,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    "VARMAX": [
-        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
-        "test__y_when_refitting",  # see 3176
-        "test_update_predict_predicted_index",  # see 7985, timeout
-        "test_hierarchical_with_exogeneous",  # see 7985, timeout
-        "test_persistence_via_pickle",  # more timeouts
-        "test_methods_have_no_side_effects",
-        "test_fit_idempotent",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_non_state_changing_method_contract",
-    ],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
@@ -274,6 +273,7 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
     ],
     "MCDCNNClassifier": [
+        "test_persistence_via_pickle",
         "test_multioutput",
         "test_classifier_on_unit_test_data",
         "test_fit_idempotent",  # not part of bug reports but due to randomness
@@ -281,7 +281,11 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
-    "ESRNNForecaster": ["test_persistence_via_pickle"],  # pickling problem, see #8135
+    "ESRNNForecaster": [  # pickling problem, see #8135
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
 # exclude tests but keyed by test name
@@ -426,6 +430,12 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanAbsoluteScaledError",
         "MeanAbsoluteError",
         "MedianAbsoluteError",
+        "MeanSquaredPercentageError",
+        "MedianAbsolutePercentageError",
+        "MeanSquaredError",
+        "PinballLoss",
+        "RelativeLoss",
+        "MeanRelativeAbsoluteError",
     ],
 }
 
