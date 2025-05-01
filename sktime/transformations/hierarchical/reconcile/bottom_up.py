@@ -36,9 +36,9 @@ class BottomUpReconciler(_ReconcilerTransformer):
     >>> from sktime.transformations.hierarchical.reconcile import (
     ...     BottomUpReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = _make_hierarchical()
-    >>> pipe = BottomUpReconciler() * ExponentialSmoothing()
+    >>> pipe = BottomUpReconciler() * NaiveForecaster()
     >>> pipe = pipe.fit(y)
     >>> y_pred = pipe.predict(fh=[1, 2, 3])
     """

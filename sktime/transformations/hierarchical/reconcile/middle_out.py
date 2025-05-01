@@ -79,10 +79,10 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     >>> from sktime.transformations.hierarchical.reconcile import (
     ...     MiddleOutReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> y = _make_hierarchical(hierarchy_levels=(2, 2, 4))
-    >>> pipe = MiddleOutReconciler(middle_level=1) * ExponentialSmoothing()
+    >>> pipe = MiddleOutReconciler(middle_level=1) * NaiveForecaster()
     >>> pipe = pipe.fit(y)
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
