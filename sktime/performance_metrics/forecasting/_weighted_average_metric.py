@@ -17,6 +17,9 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         metrics=[],
         weights=[],
         normalize=True,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        by_index=False,
     ):
         """Initialize WeightedAverageMetric.
 
@@ -33,6 +36,32 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         normalize : bool, default=True
             If True, the weights are used, otherwise
             no weights are used.
+        multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+                (n_outputs,), default='uniform_average'
+            Defines whether and how to aggregate metric for across variables.
+
+            * If 'uniform_average' (default), errors are mean-averaged across variables.
+            * If array-like, errors are weighted averaged across variables,
+            values as weights.
+            * If 'raw_values', does not average errors across variables,
+            columns are retained.
+
+        multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+            Defines how to aggregate metric for hierarchical data (with levels).
+
+            * If 'uniform_average' (default), errors are mean-averaged across levels.
+            * If 'uniform_average_time', metric is applied to all data,
+            ignoring level index.
+            * If 'raw_values', does not average errors across levels, hierarchy is
+            retained.
+
+        by_index : bool, default=False
+            Determines averaging over time points in direct call to metric object.
+
+            * If False, direct call to the metric object averages over time points,
+            equivalent to a call of the``evaluate`` method.
+            * If True, direct call to the metric object evaluates the metric at each
+            time point, equivalent to a call of the ``evaluate_by_index`` method.
 
         Examples
         --------
@@ -51,10 +80,21 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         np.float64(1.2)
 
         """
-        super().__init__()
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
         self.metrics = metrics
         self.weights = weights
         self.normalize = normalize
+
+        for metric in self.metrics:
+            metric.set_params(
+                multioutput=multioutput,
+                multilevel=multilevel,
+                by_index=by_index,
+            )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the ensemble metric.
