@@ -6,13 +6,9 @@ __author__ = ["fkiraly"]
 __all__ = ["TransformerPipeline"]
 
 from sktime.base._meta import _HeterogenousMetaEstimator
+from sktime.registry import is_scitype, scitype
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
-from sktime.utils.sklearn import (
-    is_sklearn_classifier,
-    is_sklearn_clusterer,
-    is_sklearn_regressor,
-)
 
 
 class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
@@ -147,9 +143,10 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
 
         super().__init__()
+
+        self.steps_ = self._check_steps(steps)
 
         # abbreviate for readability
         ests = self.steps_
@@ -189,7 +186,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # removes missing data iff can handle missing data,
         #   and there is an estimator in the chain that removes it
         self._tagchain_is_linked_set(
-            "handles-missing-data", "capability:missing_values:removes", ests
+            "capability:missing_values", "capability:missing_values:removes", ests
         )
         # can handle unequal length iff all estimators can handle unequal length
         #   up to a potential estimator which turns the series equal length
@@ -206,6 +203,66 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     @_steps.setter
     def _steps(self, value):
         self.steps = value
+
+    def _check_steps(self, estimators):
+        """Check Steps.
+
+        Parameters
+        ----------
+        estimators : list of estimators, or list of (name, estimator) pairs
+
+        Returns
+        -------
+        step : list of (name, estimator) pairs, estimators are cloned (not references)
+            if estimators was a list of (str, estimator) tuples, then just cloned
+            if was a list of estimators, then str are generated via _get_estimator_names
+
+        Raises
+        ------
+        TypeError if names in ``estimators`` are not unique
+        TypeError if estimators in ``estimators`` are not all transformers
+        """
+        from sktime.registry._scitype_coercion import all_coercible_to, coerce_scitype
+
+        self_name = type(self).__name__
+        if not isinstance(estimators, list):
+            msg = (
+                f"steps in {self_name} must be list of estimators, "
+                f"or (string, estimator) pairs, "
+                f"the two can be mixed; but, found steps of type {type(estimators)}"
+            )
+            raise TypeError(msg)
+
+        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
+        names, estimators = zip(*estimator_tuples)
+
+        # validate names
+        self._check_names(names)
+
+        ALLOWED_SCITYPES = ["transformer"]
+        COERCIBLE_SCITYPES = all_coercible_to("transformer")
+        COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
+        ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)
+
+        est_scitypes = [scitype(x) for x in estimators]
+
+        if not all([x in ACCEPTED_SCITYPES for x in est_scitypes]):
+            raise TypeError(f"estimators passed to {self_name} must be transformers")
+
+        # coerce to transformer if needed
+
+        def _coerce_to_trafo(x, x_st):
+            if x_st not in ["transformer"]:
+                return coerce_scitype(x, to_scitype="transformer", from_scitype=x_st)
+            return x
+
+        if not all([x in ALLOWED_SCITYPES for x in est_scitypes]):
+            est_plus_scitype = zip(estimators, est_scitypes)
+            coerced_estimators = [_coerce_to_trafo(*x) for x in est_plus_scitype]
+            estimator_tuples = list(zip(names, coerced_estimators))
+
+        # Shallow copy
+        return estimator_tuples
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
@@ -226,28 +283,28 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         """
         from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.clustering.compose import SklearnClustererPipeline
-        from sktime.registry import coerce_scitype
+        from sktime.registry._scitype_coercion import coerce_scitype
         from sktime.regression.compose import SklearnRegressorPipeline
 
-        # we only coerce transformations on the right, otherwise we would end up
-        # coercing forecasters, clusterers, etc into transformer pipeline
-        # in a case where a forecaster or clusterer pipeline is intended
-        other = coerce_scitype(
-            other, "transformer", from_scitype=["transformer", "transformer_tabular"]
-        )
+        # if sklearn transformer, coerce
+        if is_scitype(other, "transformer_tabular"):
+            other = coerce_scitype(
+                other, to_scitype="transformer", from_scitype="transformer_tabular"
+            )
 
         # if sklearn classifier, use sklearn classifier pipeline
-        if is_sklearn_classifier(other):
+        if is_scitype(other, "classifier_tabular"):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
 
         # if sklearn clusterer, use sklearn clusterer pipeline
-        if is_sklearn_clusterer(other):
+        if is_scitype(other, "clusterer_tabular"):
             return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
-        if is_sklearn_regressor(other):
+        if is_scitype(other, "regressor_tabular"):
             return SklearnRegressorPipeline(regressor=other, transformers=self.steps)
 
+        # otherwise, concatenate to a flat TransformerPipeline
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -301,8 +358,6 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         -------
         self: reference to self
         """
-        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
-
         Xt = X
         for _, transformer in self.steps_:
             Xt = transformer.fit_transform(X=Xt, y=y)
@@ -420,7 +475,12 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # construct with names and provoke multiple naming clashes
         params3 = {"steps": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
 
-        return [params1, params2, params3]
+        # with sklearn transformers
+        from sklearn.preprocessing import StandardScaler
+
+        params4 = {"steps": [("foo", t1), ("bar", StandardScaler())]}
+
+        return [params1, params2, params3, params4]
 
     def _to_dim(self, x):
         """Translate scitype:transform-input or output tag to data dimension.

@@ -130,7 +130,7 @@ class MyForecaster(BaseForecaster):
         # if not None, raises exception if X.index, y.index level -1 is not of that type
         #
         # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
@@ -225,7 +225,7 @@ class MyForecaster(BaseForecaster):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):

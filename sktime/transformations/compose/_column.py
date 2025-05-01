@@ -127,7 +127,7 @@ class ColumnEnsembleTransformer(
         "y_inner_mtype": PANDAS_MTYPES,
         "fit_is_empty": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "visual_block_kind": "parallel",
     }
 
@@ -167,7 +167,7 @@ class ColumnEnsembleTransformer(
                 "transform-returns-same-time-index",
                 "capability:unequal_length",
                 "capability:unequal_length:removes",
-                "handles-missing-data",
+                "capability:missing_values",
                 "capability:missing_values:removes",
                 "scitype:transform-output",
                 "scitype:transform-labels",
@@ -191,7 +191,9 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set(
                 "capability:unequal_length:removes", False, True, l_transformers
             )
-            self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_transformers
+            )
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
             )
@@ -439,7 +441,7 @@ class ColumnwiseTransformer(BaseTransformer):
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",

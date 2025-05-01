@@ -110,7 +110,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     _tags = {
         "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,

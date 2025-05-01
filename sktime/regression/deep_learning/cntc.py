@@ -69,7 +69,7 @@ class CNTCRegressor(BaseDeepRegressor):
             "AurumnPegasus",
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(

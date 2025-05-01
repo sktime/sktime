@@ -105,7 +105,7 @@ class Imputer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "skip-inverse-transform": True,
         "capability:inverse_transform": True,
         "univariate-only": False,

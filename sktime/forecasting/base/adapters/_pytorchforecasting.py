@@ -77,7 +77,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,

@@ -27,7 +27,7 @@ class EnbPI:
         if aggregation_fun == "mean":
             self.aggregation_fun = lambda x: np.mean(x, 0)
         elif aggregation_fun == "median":
-            self._aggregation_fun = lambda x: np.median(x, 0)
+            self.aggregation_fun = lambda x: np.median(x, 0)
 
     def conformal_interval(
         self,

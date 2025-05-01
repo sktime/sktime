@@ -102,7 +102,7 @@ class HolidayFeatures(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
         "univariate-only": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,

@@ -62,7 +62,7 @@ class DistanceFeatures(BaseTransformer):
         "skip-inverse-transform": False,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:missing_values:removes": False,
         # we leave remember_data as False, since updating self._X in update
         # would increase the number of columns in the transform return

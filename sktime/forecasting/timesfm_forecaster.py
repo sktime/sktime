@@ -177,7 +177,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
@@ -222,7 +222,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 0.37.0: Regularly check whether timesfm version can be updated
+                # todo 0.38.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
         else:

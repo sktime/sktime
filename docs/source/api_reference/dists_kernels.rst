@@ -79,6 +79,14 @@ Composition
     KernelFromDist
     DistFromKernel
 
+.. currentmodule:: sktime.dists_kernels.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConstantPwTrafoPanel
+
 Simple Time Series Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

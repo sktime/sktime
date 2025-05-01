@@ -171,7 +171,7 @@ class MyTransformer(BaseTransformer):
         # if False, may raise exception when passed unequal length Panel/Hierarchical
         #
         # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
         #

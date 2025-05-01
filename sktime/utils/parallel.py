@@ -218,6 +218,12 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 para_dict["ray"] = _parallelize_ray
 
 
+# list of backends where we skip tests during CI
+SKIP_FIXTURES = [
+    "ray",  # unstable, sporadic crashes in CI, see bug 8149
+]
+
+
 def _get_parallel_test_fixtures(naming="estimator"):
     """Return fixtures for parallelization tests.
 
@@ -275,5 +281,8 @@ def _get_parallel_test_fixtures(naming="estimator"):
                 },
             }
         )
+
+    fixtures = [x for x in fixtures if x["backend"] not in SKIP_FIXTURES]
+    # remove backends in SKIP_FIXTURES from fixtures
 
     return fixtures
