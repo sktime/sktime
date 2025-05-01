@@ -536,7 +536,9 @@ class BasePanelMixin(BaseEstimator):
             )
 
         est_type = self.get_tag("object_type")  # classifier or regressor
-        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
             raise TypeError(
                 f"{est_type}s do not support categorical features in exogeneous X."
             )
