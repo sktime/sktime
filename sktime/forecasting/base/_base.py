@@ -106,7 +106,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
-        "capability:categorical_in_X": False,
+        "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogeneous X?
     }
 
