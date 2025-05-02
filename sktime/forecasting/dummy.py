@@ -124,46 +124,54 @@ class ForecastKnownValues(BaseForecaster):
         # no fitting, we already know the forecast values
         return self
 
-    def _predict(self, fh, X):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
+        fh : ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+            Exogenous time series (not used in this forecaster).
 
         Returns
         -------
-        y_pred : Point predictions
+        y_pred : pd.DataFrame
+            Point predictions with MultiIndex for panel data.
         """
         reindex_params = {"method": self.method, "limit": self.limit}
         if self.fill_value is not None:
             reindex_params["fill_value"] = self.fill_value
 
+        # Convert forecasting horizon to absolute indices
         fh_abs = fh.to_absolute_index(self.cutoff)
 
+        # Ensure fh_abs is a MultiIndex matching y_known's structure
+        if isinstance(self._y_known.index, pd.MultiIndex):
+            levels = self._y_known.index.names
+            level_values = [self._y_known.index.get_level_values(lvl).unique() for lvl in levels[:-1]]
+            # Create all combinations of non-date levels with fh_abs dates
+            fh_multi = pd.MultiIndex.from_product(
+                level_values + [fh_abs], names=levels
+            )
+        else:
+            fh_multi = fh_abs
+
         try:
-            y_pred = self._y_known.reindex(fh_abs, **reindex_params)
-            y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
-        # TypeError happens if indices are incompatible types
-        except TypeError:
+            # Reindex y_known to the full MultiIndex
+            y_pred = self._y_known.reindex(fh_multi, **reindex_params)
+            # If reindexing creates a single-level index, restore MultiIndex
+            if not isinstance(y_pred.index, pd.MultiIndex):
+                y_pred = y_pred.reindex(fh_multi, **reindex_params)
+            # Ensure columns match
+            y_pred = y_pred.reindex(columns=self._y.columns, **reindex_params)
+        except (TypeError, ValueError):
+            # Fallback if reindexing fails
             if self.fill_value is None:
-                y_pred = pd.DataFrame(index=fh_abs, columns=self._y.columns)
+                y_pred = pd.DataFrame(index=fh_multi, columns=self._y.columns)
             else:
                 y_pred = pd.DataFrame(
-                    self.fill_value, index=fh_abs, columns=self._y.columns
+                    self.fill_value, index=fh_multi, columns=self._y.columns
                 )
 
         return y_pred
