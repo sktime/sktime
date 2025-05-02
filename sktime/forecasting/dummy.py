@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["fkiraly", "robkuebler"]
+__author__ = ["fkiraly", "RobKuebler"]
 
 import pandas as pd
 
