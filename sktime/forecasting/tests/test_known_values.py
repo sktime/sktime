@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-"""Tests for hierarchical reconciler forecasters."""
+"""Tests for ForecastKnownValues."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["RobKuebler"]
