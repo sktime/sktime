@@ -344,7 +344,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultiRocket",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
-        "OnlineEnsembleForecaster",
         "OptionalPassthrough",
         "PAA",
         "PAAlegacy",
