@@ -74,7 +74,7 @@ def test_singleindex(fh, y_known) -> None:
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("fill_value", [None, 1.0])
-def test_fail_if_y_known_is_multiindex_but_y_is_not(fh, fill_value, y_known) -> None:
+def test_fallback_if_y_known_is_multiindex_but_y_is_not(fh, fill_value, y_known) -> None:
     """Test singleindex y_known."""
     f = ForecastKnownValues(y_known=y_known, fill_value=fill_value)
     f.fit(y_known.loc["A", "X"])
