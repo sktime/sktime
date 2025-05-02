@@ -58,6 +58,7 @@ from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
+from sktime.utils.logging import log_exceptions
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -318,6 +319,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    @log_exceptions
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -375,6 +377,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
+
         self.reset()
 
         # check and convert X/y
@@ -403,6 +406,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return self
 
+    @log_exceptions
     def predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
