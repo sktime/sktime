@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "robkuebler"]
 
 import pandas as pd
 
@@ -155,16 +155,19 @@ class ForecastKnownValues(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
+            idx = self._y.index
+            if isinstance(idx, pd.MultiIndex):
+                fh_abs = pd.MultiIndex.from_product([
+                    *[idx.get_level_values(i).unique() for i in range(idx.nlevels-1)],
+                    fh_abs
+                ], names=idx.names)
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
             y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
-        # TypeError happens if indices are incompatible types
-        except TypeError:
-            if self.fill_value is None:
-                y_pred = pd.DataFrame(index=fh_abs, columns=self._y.columns)
-            else:
-                y_pred = pd.DataFrame(
-                    self.fill_value, index=fh_abs, columns=self._y.columns
-                )
+        # ValueError happens if indices are incompatible types
+        except ValueError:
+            y_pred = pd.DataFrame(
+                self.fill_value, index=fh_abs, columns=self._y.columns
+            )
 
         return y_pred
 
