@@ -64,7 +64,6 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         ],
         # estimator type
         # --------------
-        "object_type": "forecaster",
         "y_inner_mtype": [
             "pd-multiindex",
             "pd_multiindex_hier",
