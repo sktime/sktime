@@ -61,7 +61,7 @@ class ForecastKnownValues(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "RobKuebler"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
