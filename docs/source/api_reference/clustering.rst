@@ -89,6 +89,19 @@ observations of locations in space.
 
     STDBSCAN
 
+Compose
+-------
+
+.. currentmodule:: sktime.clustering.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClustererAsTransformer
+    ClustererPipeline
+    SklearnClustererPipeline
+
 Base
 ----
 

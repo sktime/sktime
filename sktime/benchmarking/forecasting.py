@@ -22,6 +22,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
+from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.utils.unique_str import _make_strings_unique
 from sktime.utils.warnings import warn
 
@@ -82,8 +83,8 @@ def forecasting_validation(
     estimator : BaseForecaster object
         Estimator to benchmark.
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate for each task if specified.
+    backend : string, by default "None".
+        Parallelization backend to use.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -91,6 +92,7 @@ def forecasting_validation(
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
         but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -115,6 +117,15 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     cv_global:  sklearn splitter, or sktime instance splitter, optional, default=None
         If ``cv_global`` is passed, then global benchmarking is applied, as follows:
@@ -286,8 +297,9 @@ class ForecastingBenchmark(BaseBenchmark):
     ----------
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate for each task if specified.
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -295,6 +307,7 @@ class ForecastingBenchmark(BaseBenchmark):
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
         but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the
@@ -320,6 +333,15 @@ class ForecastingBenchmark(BaseBenchmark):
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
     """
@@ -408,6 +430,7 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_global: Optional[BaseSplitter] = None,
         error_score: str = "raise",
         strategy: str = "refit",
+        cv_global_temporal: Optional[SingleWindowSplitter] = None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -455,6 +478,13 @@ class ForecastingBenchmark(BaseBenchmark):
             in sequence provided
             "no-update_params" = fit to first training window, re-used without
             fit or update
+        cv_global_temporal:  SingleWindowSplitter, default=None
+            ignored if cv_global is None. If passed, it splits the Panel temporally
+            before the instance split from cv_global is applied. This avoids
+            temporal leakage in the global evaluation across time series.
+            Has to be a SingleWindowSplitter.
+            cv is applied on the test set of the combined application of
+            cv_global and cv_global_temporal.
 
         Returns
         -------
@@ -483,6 +513,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "scorers": scorers,
             "cv_global": cv_global,
             "error_score": error_score,
+            "cv_global_temporal": cv_global_temporal,
         }
         self._add_task(
             task_id,
@@ -551,6 +582,7 @@ class ForecastingBenchmark(BaseBenchmark):
             cv_global=task.cv_global,
             strategy=task.strategy,
             return_model=False,
+            cv_global_temporal=task.cv_global_temporal,
         )
 
         folds = {}
