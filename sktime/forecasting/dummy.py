@@ -157,10 +157,16 @@ class ForecastKnownValues(BaseForecaster):
         try:
             idx = self._y.index
             if isinstance(idx, pd.MultiIndex):
-                fh_abs = pd.MultiIndex.from_product([
-                    *[idx.get_level_values(i).unique() for i in range(idx.nlevels-1)],
-                    fh_abs
-                ], names=idx.names)
+                fh_abs = pd.MultiIndex.from_product(
+                    [
+                        *[
+                            idx.get_level_values(i).unique()
+                            for i in range(idx.nlevels - 1)
+                        ],
+                        fh_abs,
+                    ],
+                    names=idx.names,
+                )
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
             y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
         # ValueError happens if indices are incompatible types
