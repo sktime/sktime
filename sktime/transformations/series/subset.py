@@ -4,8 +4,14 @@
 
 __author__ = ["fkiraly"]
 
+from copy import deepcopy
+
 import pandas as pd
 
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.transformations.base import BaseTransformer
 
 
@@ -189,6 +195,7 @@ class ColumnSelect(BaseTransformer):
         Xt : pd.DataFrame
             transformed version of X
         """
+        X, Xoldnames, Xnewnames = _coerce_variable_name(deepcopy(X))
         columns = self.columns
         integer_treatment = self.integer_treatment
         index_treatment = self.index_treatment
@@ -202,16 +209,31 @@ class ColumnSelect(BaseTransformer):
 
         if integer_treatment == "col" and pd.api.types.is_integer_dtype(columns):
             columns = [x for x in columns if x < len(X.columns)]
-            col_idx = X.columns[columns]
-            return X[col_idx]
+            Xoldnames = [Xoldnames[x] for x in columns]
+            Xnewnames = [Xnewnames[x] for x in columns]
+            Xt = X[Xnewnames]
+            Xt = _restore_variable_name(Xt, Xoldnames, Xnewnames)
+            return Xt
 
-        in_cols = columns.isin(X.columns)
+        in_cols = columns.isin(Xoldnames)
         col_X_and_cols = columns[in_cols]
 
         if index_treatment == "remove":
-            Xt = X[col_X_and_cols]
+            col_X_and_cols_idx = [Xoldnames.index(c) for c in col_X_and_cols]
+            Xoldnames = [Xoldnames[i] for i in col_X_and_cols_idx]
+            Xnewnames = [Xnewnames[i] for i in col_X_and_cols_idx]
+            Xt = X[Xnewnames]
+            Xt = _restore_variable_name(Xt, Xoldnames, Xnewnames)
         elif index_treatment == "keep":
+            columns_ = list(columns)
+            columns = [
+                columns[i] if not in_cols[i] else Xnewnames[Xoldnames.index(columns[i])]
+                for i in range(len(columns))
+            ]
+            Xoldnames = columns_
+            Xnewnames = list(columns)
             Xt = X.reindex(columns=columns)
+            Xt = _restore_variable_name(Xt, Xoldnames, Xnewnames)
         else:
             raise ValueError(
                 f'index_treatment must be one of "remove", "keep", but found'
