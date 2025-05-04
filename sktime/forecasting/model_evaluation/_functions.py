@@ -9,7 +9,7 @@ import re
 import time
 import warnings
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
-def _check_scores(metrics) -> Dict[str, List]:
+def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
     Parameters
@@ -64,7 +64,7 @@ def _check_scores(metrics) -> Dict[str, List]:
         # If None is passed, return an empty dictionary
         # The default metric will be assigned by the calling function
         return {}
-        
+
     if not isinstance(metrics, list):
         metrics = [metrics]
 
@@ -74,11 +74,11 @@ def _check_scores(metrics) -> Dict[str, List]:
         re.sub(r"\(.*?\)", "", str(metric)).rstrip("_") for metric in metrics
     ]
     unique_scorer = _HeterogenousMetaEstimator()._make_strings_unique(cleaned_scorer)
-    
+
     for metric, clean_name in zip(metrics, unique_scorer):
         metric = check_scoring(metric)
         metric.name = clean_name  # Use cleaned unique name as base name
-        
+
         # collect predict type
         if hasattr(metric, "get_tag"):
             scitype = metric.get_tag(
@@ -86,12 +86,12 @@ def _check_scores(metrics) -> Dict[str, List]:
             )
         else:  # If no scitype exists then metric is a point forecast type
             scitype = "pred"
-            
+
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
         else:
             metrics_type[scitype].append(metric)
-            
+
     return metrics_type
 
 
