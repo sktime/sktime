@@ -12,7 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.registry import is_scitype, scitype
+from sktime.registry import is_scitype
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -93,7 +93,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
         ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)
 
-        est_scitypes = [scitype(x) for x in estimators]
+        est_scitypes = []
+        for x in estimators:
+            # Check if it's a forecaster 
+            if is_scitype(x, "forecaster"):
+                est_scitypes.append("forecaster")
 
         if not all([x in ACCEPTED_SCITYPES for x in est_scitypes]):
             raise TypeError(
