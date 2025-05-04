@@ -36,6 +36,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g
 
 __all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
+import inspect
 from copy import deepcopy
 from itertools import product
 
@@ -2995,69 +2996,64 @@ class _BaseGlobalForecaster(BaseForecaster):
 
         return pred_dist
 
-    # @classmethod
-    # def _implementation_counts(cls) -> dict:
-    #     """Functions need at least n overrides to be counted as implemented.
+    @classmethod
+    def _implementation_counts(cls) -> dict:
+        """Functions need at least n overrides to be counted as implemented.
 
-    #     A function needs to be specified only if n!=1.
+        A function needs to be specified only if n!=1.
 
-    #     Returns
-    #     -------
-    #     dict
-    #         key is function name, and the value is n.
-    #     """
-    #     return {
-    #         "_predict_proba": 2,
-    #         "_predict_var": 2,
-    #         "_predict_interval": 2,
-    #         "_predict_quantiles": 2,
-    #     }
+        Returns
+        -------
+        dict
+            key is function name, and the value is n.
+        """
+        return {}
 
-    # @classmethod
-    # def _has_implementation_of(cls, method):
-    #     """Check if method has a concrete implementation in this class.
+    @classmethod
+    def _has_implementation_of(cls, method):
+        """Check if method has a concrete implementation in this class.
 
-    #     This assumes that having an implementation is equivalent to
-    #         at least n overrides of `method` in the method resolution order.
+        This assumes that having an implementation is equivalent to
+            at least n overrides of `method` in the method resolution order.
 
-    #     Parameters
-    #     ----------
-    #     method : str
-    #         name of method to check implementation of
+        Parameters
+        ----------
+        method : str
+            name of method to check implementation of
 
-    #     Returns
-    #     -------
-    #     bool, whether method has implementation in cls
-    #         True if cls.method has been overridden at least n times in
-    #         the inheritance tree (according to method resolution order)
-    #         n is different for each function. If a function has been overridden
-    #         in _BaseGlobalForecaster and is going to be overridden in
-    #         specific forecaster again, n should be 2.
-    #         n should be specified in return of self._implementation_counts if n!=1.
-    #     """
-    #     # walk through method resolution order and inspect methods
-    #     #   of classes and direct parents, "adjacent" classes in mro
-    #     mro = inspect.getmro(cls)
-    #     # collect all methods that are not none
-    #     methods = [getattr(c, method, None) for c in mro]
-    #     methods = [m for m in methods if m is not None]
-    #     implementation_counts = cls._implementation_counts()
-    #     if method in implementation_counts.keys():
-    #         n = implementation_counts[method]
-    #     else:
-    #         n = 1
-    #     _n = 0
-    #     for i in range(len(methods) - 1):
-    #         # the method has been overridden once iff
-    #         #  at least two of the methods collected are not equal
-    #         #  equivalently: some two adjacent methods are not equal
-    #         overridden = methods[i] != methods[i + 1]
-    #         if overridden:
-    #             _n += 1
-    #         if _n >= n:
-    #             return True
+        Returns
+        -------
+        bool, whether method has implementation in cls
+            True if cls.method has been overridden at least n times in
+            the inheritance tree (according to method resolution order)
+            n is different for each function. If a function has been overridden
+            in _BaseGlobalForecaster and is going to be overridden in
+            specific forecaster again, n should be 2.
+            n should be specified in return of self._implementation_counts if n!=1.
+        """
+        # walk through method resolution order and inspect methods
+        #   of classes and direct parents, "adjacent" classes in mro
+        mro = inspect.getmro(cls)
+        # collect all methods that are not none
+        methods = [getattr(c, method, None) for c in mro]
+        methods = [m for m in methods if m is not None]
+        implementation_counts = cls._implementation_counts()
+        if method in implementation_counts.keys():
+            n = implementation_counts[method]
+        else:
+            n = 1
+        _n = 0
+        for i in range(len(methods) - 1):
+            # the method has been overridden once iff
+            #  at least two of the methods collected are not equal
+            #  equivalently: some two adjacent methods are not equal
+            overridden = methods[i] != methods[i + 1]
+            if overridden:
+                _n += 1
+            if _n >= n:
+                return True
 
-    #     return False
+        return False
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
