@@ -169,8 +169,8 @@ class ForecastKnownValues(BaseForecaster):
                 )
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
             y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
-        # ValueError happens if indices are incompatible types
-        except ValueError:
+        # TypeError happens if indices are incompatible types
+        except TypeError:
             y_pred = pd.DataFrame(
                 self.fill_value, index=fh_abs, columns=self._y.columns
             )
