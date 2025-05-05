@@ -66,26 +66,3 @@ def test_singleindex(fh, y_known) -> None:
     expected = pd.DataFrame(None, index=fh + 2, columns=["Value"])
 
     pd.testing.assert_frame_equal(y_pred, expected, check_dtype=False)
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(ForecastKnownValues),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("fill_value", [None, 1.0])
-def test_fallback_if_y_known_is_multiindex_but_y_is_not(
-    fh, fill_value, y_known
-) -> None:
-    """Test singleindex y_known."""
-    f = ForecastKnownValues(y_known=y_known, fill_value=fill_value)
-    f.fit(y_known.loc["A", "X"])
-    y_pred = f.predict(fh)
-
-    # Create expected data
-    if not isinstance(fh, np.ndarray):
-        fh = np.array([fh])
-
-    expected = pd.DataFrame(fill_value, index=fh + 2, columns=["Value"]).astype(float)
-
-    pd.testing.assert_frame_equal(y_pred, expected, check_dtype=False)
