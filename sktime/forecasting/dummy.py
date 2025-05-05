@@ -160,9 +160,9 @@ class ForecastKnownValues(BaseForecaster):
                 unique_levels = idx.droplevel(-1).unique()
                 fh_abs = pd.MultiIndex.from_tuples(
                     ((*level, time) for level in unique_levels for time in fh_abs),
-                    name=idx.names
+                    name=idx.names,
                 )
-                
+
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
             y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
         # TypeError happens if indices are incompatible types
