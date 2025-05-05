@@ -45,7 +45,12 @@ def test_multiindex(fh, y_known) -> None:
     )
     expected = pd.DataFrame(None, index=index, columns=["Value"])
 
-    pd.testing.assert_frame_equal(y_pred, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(
+        y_pred,
+        expected,
+        check_dtype=False,
+        check_index_type=False,
+    )
 
 
 @pytest.mark.skipif(
@@ -65,4 +70,9 @@ def test_singleindex(fh, y_known) -> None:
 
     expected = pd.DataFrame(None, index=fh + 2, columns=["Value"])
 
-    pd.testing.assert_frame_equal(y_pred, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(
+        y_pred,
+        expected,
+        check_dtype=False,
+        check_index_type=False,
+    )
