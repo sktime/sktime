@@ -6,6 +6,7 @@ __author__ = ["vedantag17"]
 
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
@@ -158,7 +159,6 @@ class GreykiteForecaster(BaseForecaster):
             raise ValueError(
                 "The forecasting horizon `fh` must be provided in the `fit` method."
             )
-        self._fh = fh
 
         if isinstance(y.index, pd.PeriodIndex):
             y.index = y.index.to_timestamp()
@@ -173,7 +173,11 @@ class GreykiteForecaster(BaseForecaster):
 
         # Create the forecast configuration if not already provided.
         fc = self._create_forecast_config(y)
-        fc.forecast_horizon = len(self._fh)
+        if hasattr(fh, "to_numpy"):
+            steps = fh.to_numpy()
+        else:
+            steps = np.array(list(fh), dtype=int)
+        fc.forecast_horizon = int(steps.max())
 
         # Fit the model using Greykite's forecast_pipeline.
         from greykite.framework.templates.forecaster import Forecaster
@@ -190,14 +194,23 @@ class GreykiteForecaster(BaseForecaster):
         if self._forecaster is None:
             raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
 
-        # Use stored forecasting horizon from Sktime.
-        fh = self._fh
+        if fh is None:
+            fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
-        # Use only the first len(fh) predictions.
-        y_pred = pd.Series(
-            forecast_df["forecast"].values[: len(fh)],
-            index=forecast_df[self._forecaster.forecast.time_col][: len(fh)],
-        )
+        if hasattr(fh, "to_numpy"):
+            steps = fh.to_numpy()
+        else:
+            steps = np.array(list(fh), dtype=int)
+        # compute zero-based positions
+        positions = (steps - 1).astype(int)
+
+        time_col = self._forecaster.forecast.time_col
+        times = forecast_df[time_col].values
+        preds = forecast_df["forecast"].values
+        selected_times = times[positions]
+        selected_preds = preds[positions]
+
+        y_pred = pd.Series(selected_preds, index=selected_times)
         self._forecast = forecast_df
         return y_pred
 
