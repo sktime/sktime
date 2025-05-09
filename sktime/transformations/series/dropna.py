@@ -50,7 +50,7 @@ class DropNA(BaseTransformer):
     >>> transformer = DropNA(axis=0, how='any')
     >>> X_transformed = transformer.fit_transform(X)
     >>> print(X_transformed)
-       a    b
+         a    b
     0  1.0  5.0
     3  4.0  8.0
     """
@@ -67,7 +67,7 @@ class DropNA(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]
