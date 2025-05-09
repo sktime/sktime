@@ -38,9 +38,9 @@ Prerequisite: local python environment
 
 Local testing requires a developer setup
 of ``sktime``. If you do not have this already, we recommend you to create a new
-virtual environment along with an editable development version of ``sktime``.
+virtual environment and install an editable development version of ``sktime``.
 
-For a full guide, please read the following link `Full developer setup for contributors and extension developers
+For a full guide on how to obtain a developer setup, read the following link `Full developer setup for contributors and extension developers
 <https://www.sktime.net/en/latest/installation.html#full-developer-setup-for-contributors-and-extension-developers>`__ .
 
 If you have an environment setup already, ensure you have an editable development version of sktime with developer dependencies.
