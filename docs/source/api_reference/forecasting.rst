@@ -562,7 +562,7 @@ Pre-trained and foundation models
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
-.. f
+
     PatchTSTForecaster
 
 .. currentmodule:: sktime.forecasting.chronos
