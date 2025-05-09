@@ -1,6 +1,6 @@
-"""Tests for HPfilter wrapper annotation estimator."""
+"""Tests for the HampelFilter."""
 
-__author__ = ["ken-maeda"]
+__author__ = ["RobKuebler"]
 
 import numpy as np
 import pandas as pd
