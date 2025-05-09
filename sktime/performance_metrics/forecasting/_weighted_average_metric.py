@@ -33,9 +33,9 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
             List of metrics to be used in the ensemble.
         weights : list of float
             List of weights for each metric in the ensemble.
+            if None, all metrics are equally weighted.
         normalize : bool, default=True
-            If True, the weights are used, otherwise
-            no weights are used.
+            If True, the weights are normalized to sum to 1.
         multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
                 (n_outputs,), default='uniform_average'
             Defines whether and how to aggregate metric for across variables.
@@ -115,6 +115,7 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         """
         total = 0.0
         weights = self.weights if self.normalize else [1.0] * len(self.metrics)
+        weights = weights / sum(weights) if self.normalize else weights
         for metric, weight in zip(self.metrics, weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
@@ -154,6 +155,7 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         """
         total = 0.0
         weights = self.weights if self.normalize else [1.0] * len(self.metrics)
+        weights = weights / sum(weights) if self.normalize else weights
         for metric, weight in zip(self.metrics, weights):
             total += weight * metric.evaluate_by_index(y_true, y_pred, **kwargs)
         return total
