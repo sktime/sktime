@@ -1,271 +1,444 @@
 [project]
 name = "sktime"
-version = "0.23.0"
+version = "0.37.0"
 description = "A unified framework for machine learning with time series"
-authors = [
-    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
-]
-maintainers = [
-    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
-    {name = "Franz Király"},
-    {name = "Jonathan Bechtel"},
-    {name = "Kiril Ralinovski"},
-    {name = "Marc Rovira"},
-    {name = "Sagar Mishra"},
-    {name = "Ugochukwu Onyeka"},
-]
 readme = "README.md"
 keywords = [
-    "data-science",
-    "machine-learning",
-    "data-mining",
-    "time-series",
-    "scikit-learn",
-    "forecasting",
-    "time-series-analysis",
-    "time-series-classification",
-    "time-series-regression",
+  "data-mining",
+  "data-science",
+  "forecasting",
+  "machine-learning",
+  "scikit-learn",
+  "time-series",
+  "time-series-analysis",
+  "time-series-classification",
+  "time-series-regression",
 ]
+license = { file = "LICENSE" }
+# sktime is governed by the Community Council, see docs/source/get_involved/governance
+# use the email or sktime discord (governance channel) to get in touch
+maintainers = [
+  { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
+  { name = "Felix Hirwa Nshuti" },
+  { name = "Franz Király" },
+  { name = "Marc Rovira" },
+  { name = "Ugochukwu Onyeka" },
+]
+# sktime has a large number of contributors,
+# for full credits see contributors.md
+authors = [
+    { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
+]
+requires-python = ">=3.9,<3.14"
 classifiers = [
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
-    "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development",
 ]
-requires-python = ">=3.8,<3.12"
+# core dependencies of sktime
+# this set should be kept minimal!
 dependencies = [
-    "numpy>=1.21.0,<1.27",
-    "pandas>=1.1.0,<2.2.0",
-    "packaging",
-    "scikit-base<0.6.0",
-    "scikit-learn>=0.24.0,<1.4.0",
-    "scipy<2.0.0,>=1.2.0",
+  "joblib<1.5,>=1.2.0",  # required for parallel processing
+  "numpy>=1.21,<2.3",  # required for framework layer and base class logic
+  "packaging",  # for estimator specific dependency parsing
+  "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
+  "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
+  "scikit-learn>=0.24,<1.7.0",  # required for estimators and framework layer
+  "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
 [project.optional-dependencies]
+# there are the following dependency sets:
+# - all_extras_pandas2, all_extras - all soft dependencies
+# - single-task soft dependencies, e.g., forecasting, classification, etc.
+# - dev - the developer dependency set, for contributors to sktime
+# - CI related, e.g., binder, docs, tests. Not for users of sktime.
+#
+# soft dependencies are not required for the core functionality of sktime
+# but are required by popular estimators, e.g., prophet, tbats, etc.
+
+# all soft dependencies
+#
+# users can install via "pip install sktime[all_extras]"
+# or "pip install sktime[all_extras_pandas2]", to install only pandas 2 compatible deps
+#
+all_extras = [
+  'arch>=5.6,<7.1.0; python_version < "3.13"',
+  'autots<0.7,>=0.6.1',
+  'cloudpickle; python_version < "3.13"',
+  'dash!=2.9.0; python_version < "3.13"',
+  'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
+  'dtaidistance<2.4; python_version < "3.13"',
+  'dtw-python; python_version < "3.13"',
+  'esig==0.9.7; python_version < "3.10"',
+  'filterpy>=1.4.5; python_version < "3.11"',
+  'gluonts>=0.9; python_version < "3.13"',
+  'h5py; python_version < "3.12"',
+  'hmmlearn>=0.2.7; python_version < "3.11"',
+  'holidays; python_version < "3.13"',
+  'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
+  'mne; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'optuna<4.4',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
+  'prophet>=1.1; python_version < "3.12"',
+  'pycatch22<0.4.6; python_version < "3.13"',
+  'pyod>=0.8; python_version < "3.11"',
+  "pyts<0.14.0; python_version < '3.12'",
+  'ray >=2.40.0; python_version < "3.13"',
+  'scikit-optimize; python_version < "3.13"',
+  'scikit_posthocs>=0.6.5; python_version < "3.13"',
+  'seaborn>=0.11; python_version < "3.13"',
+  'seasonal; python_version < "3.13"',
+  'simdkalman',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  "skpro>=2,<2.10.0",
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
+  'statsmodels>=0.12.1; python_version < "3.13"',
+  'stumpy>=1.5.1; python_version < "3.11"',
+  'tbats>=1.1; python_version < "3.12"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
+  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tsfresh>=0.17; python_version < "3.12"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
+  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
+  'xarray; python_version < "3.13"',
+]
+
+# all soft dependencies compatible with pandas 2
+all_extras_pandas2 = [
+  'arch>=5.6,<7.1.0; python_version < "3.13"',
+  'autots<0.7,>=0.6.1; python_version < "3.13"',
+  'cloudpickle; python_version < "3.13"',
+  'dash!=2.9.0; python_version < "3.13"',
+  'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
+  'dtaidistance<2.4; python_version < "3.13"',
+  'dtw-python; python_version < "3.13"',
+  'esig==0.9.7; python_version < "3.10"',
+  'filterpy>=1.4.5; python_version < "3.11"',
+  'gluonts>=0.9; python_version < "3.13"',
+  'h5py; python_version < "3.12"',
+  'hmmlearn>=0.2.7; python_version < "3.11"',
+  'holidays; python_version < "3.13"',
+  'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
+  'mne; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'optuna<4.4',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
+  'prophet>=1.1; python_version < "3.12"',
+  'pycatch22<0.4.6; python_version < "3.13"',
+  'pyod>=0.8; python_version < "3.11"',
+  'ray >=2.40.0; python_version < "3.13"',
+  'scikit_posthocs>=0.6.5; python_version < "3.13"',
+  'seaborn>=0.11; python_version < "3.13"',
+  'seasonal; python_version < "3.13"',
+  'simdkalman',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  'skpro>=2,<2.10.0',
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
+  'statsmodels>=0.12.1; python_version < "3.13"',
+  'stumpy>=1.5.1; python_version < "3.11"',
+  'tbats>=1.1; python_version < "3.12"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
+  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tsfresh>=0.17; python_version < "3.12"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
+  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
+  'xarray; python_version < "3.13"',
+]
+
+# single-task dependencies, e.g., forecasting, classification, etc.
+# manually curated and intentionally smaller to avoid dependency conflicts
+# names are identical with the names of the modules and estimator type strings
+# dependency sets are selected to cover the most popular estimators in each module
+# (this is a subjective choice, and may change over time as the ecosystem evolves,
+# removals are rare and always accompanied by a deprecation warning)
+#
+# users can install via "pip install sktime[forecasting,transformations]" etc
+#
 alignment = [
-    "dtw-python>=1.3,<1.4",
-    "numba>=0.53,<0.58",
+  'dtaidistance<2.4; python_version < "3.13"',
+  'dtw-python>=1.3,<1.6; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
 ]
 annotation = [
-    "attrs>=23,<23.2",
-    "hmmlearn>=0.2.7,<0.4",
-    "numba>=0.53,<0.58",
-    "pyod>=0.8.0,<1.2",
+  'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
-    "esig>=0.9.7,<0.10",
-    "mrsqm>=0.0.3,<0.1",
-    "numba>=0.53,<0.58",
-    "tensorflow>=2,<=2.14",
-    "tsfresh>=0.17,<0.21",
+  'esig<0.10,>=0.9.7; python_version < "3.11"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
-    "numba>=0.53,<0.58",
-    "tslearn>=0.5.2,<0.6.3",
+  'networkx<3.5',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+  'ts2vg<1.3; python_version < "3.13"',
+]
+detection = [
+  'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 forecasting = [
-    "pmdarima>=1.8,!=1.8.1,<2.1",
-    "prophet>=1.1,<1.2",
-    "statsforecast>=0.5.2,<1.7",
-    "statsmodels>=0.12.1,<0.15",
-    "tbats>=1.1,<1.2",
+  'arch>=5.6,<7.1; python_version < "3.13"',
+  'autots<0.7,>=0.6.1; python_version < "3.13"',
+  'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
+  'prophet<1.2,>=1.1; python_version < "3.13"',
+  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  "skpro>=2,<2.10.0",
+  'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
+  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
 networks = [
-    "keras-self-attention>=0.51,<0.52",
-    "tensorflow>=2,<=2.14",
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 param_est = [
-    "seasonal>=0.3.1,<0.4",
-    "statsmodels>=0.12.1,<0.15",
+  'seasonal<0.4,>=0.3.1; python_version < "3.13"',
+  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 regression = [
-    "numba>=0.53,<0.58",
-    "tensorflow>=2,<=2.14",
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 transformations = [
-    "esig>=0.9.7,<0.10",
-    "filterpy>=1.4.5,<1.5",
-    "holidays>=0.29,<0.34",
-    "mne>=1.5,<1.6",
-    "numba>=0.53,<0.58",
-    "pycatch22>=0.4,<0.5",
-    "pykalman>=0.9.5,<0.10",
-    "statsmodels>=0.12.1,<0.15",
-    "stumpy>=1.5.1,<1.13",
-    "tsfresh>=0.17,<0.21",
-]
-all_extras = [
-    "attrs",
-    "cloudpickle",
-    "dash!=2.9.0",
-    "dask",
-    "dtw-python",
-    "esig==0.9.7; python_version < '3.10'",
-    "filterpy>=1.4.5; python_version < '3.11'",
-    "gluonts>=0.9.0",
-    "h5py",
-    "hmmlearn>=0.2.7; python_version < '3.11'",
-    "holidays",
-    "keras-self-attention; python_version < '3.11'",
-    "kotsu>=0.3.1",
-    "matplotlib>=3.3.2",
-    "mne",
-    "numba>=0.53,<0.58",
-    "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
-    "prophet>=1.1",
-    "pycatch22",
-    "pykalman>=0.9.5; python_version < '3.11'",
-    "pyod>=0.8.0; python_version < '3.11'",
-    "scikit-optimize",
-    "scikit_posthocs>=0.6.5",
-    "seaborn>=0.11.0",
-    "seasonal",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
-    "statsmodels>=0.12.1",
-    "stumpy>=1.5.1; python_version < '3.11'",
-    "tbats>=1.1.0",
-    "tensorflow; python_version < '3.11'",
-    "tsfresh>=0.17.0",
-    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
-    "xarray",
+  'esig<0.10,>=0.9.7; python_version < "3.11"',
+  'filterpy<1.5,>=1.4.5; python_version < "3.13"',
+  'holidays>=0.29,<0.59; python_version < "3.13"',
+  'mne>=1.5,<1.9; python_version < "3.13"',
+  'numba<0.62,>=0.53; python_version < "3.13"',
+  'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
+  'simdkalman',
+  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'stumpy<1.13,>=1.5.1; python_version < "3.12"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
+  'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 
-all_extras_pandas2 = [
-    "attrs",
-    "cloudpickle",
-    "dash!=2.9.0",
-    "dask<2023.7.1",
-    "dtw-python",
-    "esig==0.9.7; python_version < '3.10'",
-    "filterpy>=1.4.5; python_version < '3.11'",
-    "gluonts>=0.9.0",
-    "h5py",
-    "hmmlearn>=0.2.7; python_version < '3.11'",
-    "holidays",
-    "keras-self-attention; python_version < '3.11'",
-    "kotsu>=0.3.1",
-    "matplotlib>=3.3.2",
-    "mne",
-    "numba>=0.53,<0.58",
-    "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
-    "prophet>=1.1",
-    "pycatch22",
-    "pykalman>=0.9.5; python_version < '3.11'",
-    "pyod>=0.8.0; python_version < '3.11'",
-    "scikit_posthocs>=0.6.5",
-    "seaborn>=0.11.0",
-    "seasonal",
-    "statsforecast>=0.5.2,<1.6.0; python_version < '3.11'",
-    "statsmodels>=0.12.1",
-    "stumpy>=1.5.1; python_version < '3.11'",
-    "tbats>=1.1.0",
-    "tensorflow; python_version < '3.11'",
-    "tsfresh>=0.17.0",
-    "tslearn>=0.5.2,<0.6.0; python_version < '3.11'",
-    "xarray",
-]
-
-cython_extras = [
-    "mrseql",
-    "mrsqm; python_version < '3.11'",
-    "numba<0.58",
-]
-
+# dev - the developer dependency set, for contributors to sktime
 dev = [
-    "backoff",
-    "httpx",
-    "pre-commit",
-    "pytest",
-    "pytest-cov",
-    "pytest-randomly",
-    "pytest-timeout",
-    "pytest-xdist",
-    "wheel",
+  "backoff",
+  "httpx",
+  "pre-commit",
+  "pytest",
+  "pytest-randomly",
+  "pytest-timeout",
+  "pytest-xdist",
+  "wheel",
 ]
 
-mlflow = [
-    "mlflow",
-]
-
-mlflow_tests = [
-    "boto3",
-    "botocore",
-    "mlflow",
-    "moto",
-]
-
-binder = [
-    "jupyter",
-    "pandas<2.0.0",
-]
-
+# CI related soft dependency sets - not for users of sktime, only for developers
+# docs and tests are standard dep sets for development use
+# they are stable and subject to deprecation policies
+# contributors should use the dev dependency set for contributing to sktime, see above
 docs = [
-    "jupyter",
-    "myst-parser",
-    "nbsphinx>=0.8.6",
-    "numpydoc",
-    "pydata-sphinx-theme",
-    "sphinx-copybutton",
-    "sphinx-issues<4.0.0",
-    "sphinx-gallery<0.15.0",
-    "sphinx-design<0.6.0",
-    "sphinx-version-warning",
-    "Sphinx<8.0.0,!=7.2.0",
-    "tabulate",
+  "jupyter",
+  "myst-parser",
+  "nbsphinx>=0.8.6",
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "Sphinx!=7.2.0,<9.0.0",
+  "sphinx-copybutton",
+  "sphinx-design<0.7.0",
+  "sphinx-gallery<0.20.0",
+  "sphinx-issues<6.0.0",
+  "tabulate",
+]
+tests = [
+  "pytest>=7.4,<8.4",
+  "pytest-randomly>=3.15,<3.17",
+  "pytest-timeout>=2.1,<2.4",
+  "pytest-xdist>=3.3,<3.7",
 ]
 
+# CI related soft dependency sets - not for users of sktime, only for developers
+# these are for special uses and may be changed or removed at any time
+binder = [
+  "jupyter",
+  "pandas<2.0.0",
+  "skchange",
+]
+cython_extras = [
+  "mrseql < 0.0.3",
+  'mrsqm; python_version < "3.11"',
+  "numba<0.62",
+]
+datasets = [
+  "rdata",
+  "requests",
+]
 dl = [
-    "tensorflow",
+  'FrEIA; python_version < "3.12"',
+  'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
+  'peft>=0.10.0,<0.14.0; python_version < "3.12"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
+  "torch; (sys_platform != 'darwin' or python_version != '3.13')",
+  'transformers[torch]<4.41.0; python_version < "3.12"',
+  'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
+  "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  'lightning>=2.0; python_version < "3.12"',
+  'gluonts>=0.14.3; python_version < "3.12"',
+  'einops>0.7.0; python_version < "3.12"',
+  'huggingface-hub>=0.23.0; python_version < "3.12"',
+  'hydra-core; python_version < "3.13"',
 ]
-
+mlflow = [
+  "mlflow",
+]
+mlflow_tests = [
+  "boto3",
+  "botocore",
+  "mlflow",
+  "moto",
+]
+numpy1 = [
+  "numpy<2.0.0",
+]
 pandas1 = [
-    "pandas<2.0.0",
+  "pandas<2.0.0",
+]
+compatibility_tests = [
+  'catboost; python_version < "3.13"',
 ]
 
 [project.urls]
-Homepage = "https://www.sktime.net"
-Repository = "https://github.com/sktime/sktime"
+"API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
 Documentation = "https://www.sktime.net"
 Download = "https://pypi.org/project/sktime/#files"
-"API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
+Homepage = "https://www.sktime.net"
 "Release Notes" = "https://www.sktime.net/en/stable/changelog.html"
-
-[project.license]
-file = "LICENSE"
+Repository = "https://github.com/sktime/sktime"
 
 [build-system]
-requires = ["setuptools>61", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
-
-[tool.nbqa.exclude]
-black = "^docs/source/examples/"
-flake8 = "^docs/source/examples/"
-isort = "^docs/source/examples/"
-
-[tool.setuptools]
-zip-safe = true
+requires = [
+  "setuptools>61",
+]
 
 [tool.setuptools.package-data]
 sktime = [
-    "*.csv",
-    "*.csv.gz",
-    "*.arff",
-    "*.arff.gz",
-    "*.txt",
-    "*.ts",
-    "*.tsv",
+  "utils/_estimator_html_repr.css",
+  "*.csv",
+  "*.csv.gz",
+  "*.arff",
+  "*.arff.gz",
+  "*.txt",
+  "*.ts",
+  "*.tsv",
 ]
 
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
+
+[tool.ruff]
+line-length = 88
+exclude = [".git", "sktime/_contrib/*", "examples/blog_posts/*"]
+target-version = "py39"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = [
+  # https://pypi.org/project/pycodestyle
+  "D",
+  "E",
+  "W",
+  # https://pypi.org/project/pyflakes
+  "F",
+  # https://pypi.org/project/flake8-bandit
+  "S",
+  # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  "UP",
+  "I002",    # Missing required imports
+  "UP008",   # Super calls with redundant arguments passed.
+  "G010",    # Deprecated log warn.
+  "PLR1722", # Use sys.exit() instead of exit() and quit().
+  "PT014",   # pytest-duplicate-parametrize-test-cases.
+  "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
+  "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
+  "PT018",   # Checks for assertions that combine multiple independent condition
+  "RUF001", # Checks for non unicode string literals
+  "RUF002", # Checks for non unicode string literals
+  "RUF003", # Checks for non unicode string literals
+]
+extend-select = [
+  "I", # isort
+  "C4", # https://pypi.org/project/flake8-comprehensions
+]
+ignore=[
+  "E203", # Whitespace-before-punctuation.
+  "E402", # Module-import-not-at-top-of-file.
+  "E731", # Do not assign a lambda expression, use a def.
+  "RET504", # Unnecessary variable assignment before `return` statement.
+  "S101", # Use of `assert` detected.
+  "RUF100", # https://docs.astral.sh/ruff/rules/unused-noqa/
+  "C408", # Unnecessary dict call - rewrite as a literal.
+  "UP031", # Use format specifier instead of %
+  "S102", # Use of excec
+  "C414", # Unnecessary `list` call within `sorted()`
+  "S301", # pickle and modules that wrap it can be unsafe
+  "C416", # Unnecessary list comprehension - rewrite as a generator
+  "S310", # Audit URL open for permitted schemes
+  "S202", # Uses of `tarfile.extractall()`
+  "S307", # Use of possibly insecure function
+  "C417", # Unnecessary `map` usage (rewrite using a generator expression)
+  "S605", # Starting a process with a shell, possible injection detected
+  "E741", # Ambiguous variable name
+  "S107", # Possible hardcoded password
+  "S105", # Possible hardcoded password
+  "PT018", # Checks for assertions that combine multiple independent condition
+  "S602", # sub process call with shell=True unsafe
+  "C419", # Unnecessary list comprehension, some are flagged yet are not
+  "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
+  "S113", # Probable use of httpx call without timeout
+]
+allowed-confusables=["σ"]
+
+[tool.ruff.lint.per-file-ignores]
+
+"setup.py" = ["S101"]
+"**/__init__.py" = [
+  "F401", # unused import
+]
+"**/tests/**" = [
+  "D",
+  "S605",  # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
+  "S607",  # Starting a process with a partial executable path
+  "RET504",  # todo:Unnecessary variable assignment before `return` statement
+  "PT004",  # Fixture `tmpdir_unittest_fixture` does not return anything, add leading underscore
+  "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+  "PT012",  # `pytest.raises()` block should contain a single simple statement
+  "PT019",  # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
+  "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
+]
+"sktime/libs/uni2ts/*.py" = [
+  "F722", # Checks for forward annotations that include invalid syntax.
+  "F821", # Checks for uses of undefined names.
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D106", # Missing docstring in public nested class
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

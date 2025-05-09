@@ -35,8 +35,22 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.pandas import df_map
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_PANEL = [
+    "nested_univ",
+    "numpy3D",
+    "numpyflat",
+    "pd-multiindex",
+    "pd-wide",
+    "pd-long",
+    "df-list",
+    "gluonts_ListDataset_panel",
+    "gluonts_PandasDataset_panel",
+    "polars_panel",
+]
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -71,7 +85,7 @@ def _cell_is_series_or_array(cell):
 
 
 def _nested_cell_mask(X):
-    return X.applymap(_cell_is_series_or_array)
+    return df_map(X)(_cell_is_series_or_array)
 
 
 def are_columns_nested(X):
@@ -235,8 +249,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     else:
         raise ValueError(
-            f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}"
+            f"Expected input is pandas Series or pandas DataFrame, but found: {type(X)}"
         )
 
     if return_numpy:
@@ -710,7 +723,7 @@ convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_ind
 def from_multi_index_to_nested(
     multi_ind_dataframe, instance_index=None, cells_as_numpy=False
 ):
-    """Convert a pandas DataFrame witha multi-index to a nested DataFrame.
+    """Convert a pandas DataFrame with multi-index to a nested DataFrame.
 
     Parameters
     ----------
@@ -738,7 +751,7 @@ def from_multi_index_to_nested(
     x_nested = pd.DataFrame()
 
     # Loop the dimensions (columns) of multi-index DataFrame
-    for _label, _series in multi_ind_dataframe.items():  # noqa
+    for _label, _series in multi_ind_dataframe.items():
         # for _label in multi_ind_dataframe.columns:
         #    _series = multi_ind_dataframe.loc[:, _label]
         # Slice along the instance dimension to return list of series for each case
@@ -820,7 +833,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         X_col = X_col.infer_objects()
 
         # create the right MultiIndex and assign to X_mi
-        idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
+        idx_df = df_map(X[[c]])(lambda x: x.index).explode(c)
         index = pd.MultiIndex.from_arrays([idx_df.index, idx_df[c].values])
         index = index.set_names([instance_index, time_index])
         X_col.index = index
@@ -844,7 +857,11 @@ def from_nested_to_multi_index_adp(obj, store=None):
         time_index = store["index_names"][1]
     else:
         instance_index = obj.index.names[0]
-        time_index = "timepoints"
+        ser = obj.iloc[0, 0]
+        if hasattr(ser, "index"):
+            time_index = ser.index.names[0]
+        else:
+            time_index = None
 
     res = from_nested_to_multi_index(
         X=obj, instance_index=instance_index, time_index=time_index
@@ -886,7 +903,7 @@ def from_nested_to_3d_numpy(X):
     # If all the columns are nested in structure
     if nested_col_mask.count(True) == len(nested_col_mask):
         X_3d = np.stack(
-            X.applymap(_convert_series_cell_to_numpy)
+            df_map(X)(_convert_series_cell_to_numpy)
             .apply(lambda row: np.stack(row), axis=1)
             .to_numpy()
         )
@@ -987,7 +1004,7 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
     obj = _coerce_df_dtypes(obj)
 
-    instance_index = set(obj.index.get_level_values(0))
+    instance_index = obj.index.get_level_values(0).unique()
 
     Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
@@ -1120,4 +1137,81 @@ if _check_soft_dependencies("dask", severity="none"):
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_pd_as_panel(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
+        convert_polars_to_pd_as_panel
+    )
+
+    def convert_pd_to_polars_as_panel(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
+        convert_pd_to_polars_as_panel
+    )
+
+    _extend_conversions(
+        "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_listDataset_to_pandas,
+        convert_pandas_multiindex_to_pandasDataset,
+        convert_pandas_to_listDataset,
+        convert_pandasDataset_to_pandas,
+    )
+
+    # Utilizing functions defined in _adapter/gluonts.py
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj)
+
+    def convert_pandas_multiindex_to_gluonts_pandasDataset(obj, store=None):
+        return convert_pandas_multiindex_to_pandasDataset(obj)
+
+    def convert_gluonts_pandasDataset_to_pandas_multiindex(obj, store=None):
+        return convert_pandasDataset_to_pandas(obj)
+
+    # Storing functions in convert_dict
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
+
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
+
+    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
+        convert_pandas_multiindex_to_gluonts_pandasDataset
+    )
+
+    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_pandasDataset_to_pandas_multiindex
+    )
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_ListDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+
+    _extend_conversions(
+        "gluonts_PandasDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
     )

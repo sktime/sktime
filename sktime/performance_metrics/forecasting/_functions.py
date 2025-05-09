@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import sklearn
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
@@ -17,6 +18,9 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.stats import _weighted_geometric_mean
+
+if sklearn.__version__ >= "1.4.0":
+    from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
 
 __author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
@@ -93,9 +97,9 @@ def mean_linex_error(
         Forecasted values.
     a : int or float
         Controls whether over- or under- predictions receive an approximately
-        linear or exponential penalty. If `a` > 0 then negative errors
+        linear or exponential penalty. If ``a`` > 0 then negative errors
         (over-predictions) are penalized approximately linearly and positive errors
-        (under-predictions) are penalized approximately exponentially. If `a` < 0
+        (under-predictions) are penalized approximately exponentially. If ``a`` < 0
         the reverse is true.
     b : int or float
         Multiplicative penalty to apply to calculated errors.
@@ -191,8 +195,8 @@ def mean_asymmetric_error(
     Output is non-negative floating point. The best value is 0.0.
 
     Error values that are less than the asymmetric threshold have
-    `left_error_function` applied. Error values greater than or equal to
-    asymmetric threshold  have `right_error_function` applied.
+    ``left_error_function`` applied. Error values greater than or equal to
+    asymmetric threshold  have ``right_error_function`` applied.
 
     Many forecasting loss functions (like those discussed in [1]_) assume that
     over- and under- predictions should receive an equal penalty. However, this
@@ -200,10 +204,10 @@ def mean_asymmetric_error(
     Asymmetric loss functions are useful when the cost of under- and over-
     prediction are not the same.
 
-    Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
-    and `right_error_function` to 'absolute` results in a greater penalty
+    Setting ``asymmetric_threshold`` to zero, ``left_error_function`` to 'squared'
+    and ``right_error_function`` to 'absolute` results in a greater penalty
     applied to over-predictions (y_true - y_pred < 0). The opposite is true
-    for `left_error_function` set to 'absolute' and `right_error_function`
+    for ``left_error_function`` set to 'absolute' and ``right_error_function``
     set to 'squared`.
 
     The left_error_penalty and right_error_penalty can be used to add differing
@@ -219,9 +223,9 @@ def mean_asymmetric_error(
         Forecasted values.
     asymmetric_threshold : float, default = 0.0
         The value used to threshold the asymmetric loss function. Error values
-        that are less than the asymmetric threshold have `left_error_function`
+        that are less than the asymmetric threshold have ``left_error_function``
         applied. Error values greater than or equal to asymmetric threshold
-        have `right_error_function` applied.
+        have ``right_error_function`` applied.
     left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
     right_error_function : {'squared', 'absolute'}, default='absolute'
@@ -229,7 +233,7 @@ def mean_asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -257,8 +261,8 @@ def mean_asymmetric_error(
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "aboslute", but
-    choosing different values for `left_error_penalty` and `right_error_penalty`
+    Setting ``left_error_function`` and ``right_error_function`` to "absolute", but
+    choosing different values for ``left_error_penalty`` and ``right_error_penalty``
     results in the "lin-lin" error function discussed in [2]_.
 
     References
@@ -393,6 +397,7 @@ def mean_absolute_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_absolute_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -520,6 +525,7 @@ def median_absolute_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_absolute_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = [3, -0.5, 2, 7]
@@ -583,11 +589,11 @@ def mean_squared_scaled_error(
 ):
     """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
-    If `square_root` is False then calculates MSSE, otherwise calculates RMSSE if
-    `square_root` is True. Both MSSE and RMSSE output is non-negative floating
+    If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
+    ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MASE loss metric.  Like MASE and other
+    This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -649,6 +655,7 @@ def mean_squared_scaled_error(
     References
     ----------
     M5 Competition Guidelines.
+
     https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
 
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -656,6 +663,7 @@ def mean_squared_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -721,11 +729,11 @@ def median_squared_scaled_error(
 ):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
 
-    If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
-    `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
+    If ``square_root`` is False then calculates MdSSE, otherwise calculates RMdSSE if
+    ``square_root`` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
-    This is a squared varient of the MdASE loss metric. Like MASE and other
+    This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
     forecast methods on a single series or between series.
 
@@ -777,6 +785,7 @@ def median_squared_scaled_error(
     References
     ----------
     M5 Competition Guidelines.
+
     https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
 
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -784,6 +793,7 @@ def median_squared_scaled_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_squared_scaled_error
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -891,6 +901,7 @@ def mean_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -920,7 +931,7 @@ def mean_squared_error(
 ):
     """Mean squared error (MSE) or root mean squared error (RMSE).
 
-    If `square_root` is False then calculates MSE and if `square_root` is True
+    If ``square_root`` is False then calculates MSE and if ``square_root`` is True
     then RMSE is calculated.  Both MSE and RMSE are both non-negative floating
     point. The best value is 0.0.
 
@@ -978,6 +989,7 @@ def mean_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -998,18 +1010,24 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
     0.8936491673103708
     """
-    # Scikit-learn argument `squared` returns MSE when True and RMSE when False
-    # Scikit-time argument `square_root` returns RMSE when True and MSE when False
-    # Therefore need to pass the opposite of square_root as squared argument
-    # to the scikit-learn function being wrapped
-    squared = not square_root
-    return _mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=horizon_weight,
-        multioutput=multioutput,
-        squared=squared,
-    )
+    metric_args = (y_true, y_pred)
+    metric_kwargs = {"sample_weight": horizon_weight, "multioutput": multioutput}
+
+    if not square_root:
+        metric_function = _mean_squared_error
+    elif sklearn.__version__ < "1.4.0":
+        # Scikit-learn argument `squared` returns MSE when True and RMSE when False
+        # Scikit-time argument `square_root` returns RMSE when True and MSE when False
+        # Therefore need to pass the opposite of square_root as squared argument
+        # to the scikit-learn function being wrapped
+        metric_function = _mean_squared_error
+        metric_kwargs["squared"] = False
+    else:
+        # sklearn 1.4 introduced ``root_mean_squared_error`` function, so we can
+        # use that directly to avoid DeprecationWarning from sklearn 1.6
+        metric_function = _root_mean_squared_error
+
+    return metric_function(*metric_args, **metric_kwargs)
 
 
 def median_absolute_error(
@@ -1071,6 +1089,7 @@ def median_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1100,7 +1119,7 @@ def median_squared_error(
 ):
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
-    If `square_root` is False then calculates MdSE and if `square_root` is True
+    If ``square_root`` is False then calculates MdSE and if ``square_root`` is True
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
@@ -1110,7 +1129,7 @@ def median_squared_error(
     penalize large errors more than MAE or MdAE.
 
     Taking the median instead of the mean of the squared errors makes
-    this metric more robust to error outliers relative to a meean based metric
+    this metric more robust to error outliers relative to a mean based metric
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
 
@@ -1163,6 +1182,7 @@ def median_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import median_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1223,7 +1243,7 @@ def geometric_mean_absolute_error(
     Like MAE and MdAE, GMAE is measured in the same units as the input data.
     Because GMAE takes the absolute value of the forecast error rather than
     squaring it, MAE penalizes large errors to a lesser degree than squared error
-    varients like MSE, RMSE or GMSE or RGMSE.
+    variants like MSE, RMSE or GMSE or RGMSE.
 
     Parameters
     ----------
@@ -1265,9 +1285,9 @@ def geometric_mean_absolute_error(
     The geometric mean uses the product of values in its calculation. The presence
     of a zero value will result in the result being zero, even if all the other
     values of large. To partially account for this in the case where elements
-    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    of ``y_true`` and ``y_pred`` are equal (zero error), the resulting zero error
     values are replaced in the calculation with a small value. This results in
-    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    the smallest value the metric can take (when ``y_true`` equals ``y_pred``)
     being close to but not exactly zero.
 
     References
@@ -1324,7 +1344,7 @@ def geometric_mean_squared_error(
 ):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 
-    If `square_root` is False then calculates GMSE and if `square_root` is True
+    If ``square_root`` is False then calculates GMSE and if ``square_root`` is True
     then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
     point. The best value is approximately zero, rather than zero.
 
@@ -1378,9 +1398,9 @@ def geometric_mean_squared_error(
     The geometric mean uses the product of values in its calculation. The presence
     of a zero value will result in the result being zero, even if all the other
     values of large. To partially account for this in the case where elements
-    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    of ``y_true`` and ``y_pred`` are equal (zero error), the resulting zero error
     values are replaced in the calculation with a small value. This results in
-    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    the smallest value the metric can take (when ``y_true`` equals ``y_pred``)
     being close to but not exactly zero.
 
     References
@@ -1450,7 +1470,7 @@ def mean_absolute_percentage_error(
 ):
     """Mean absolute percentage error (MAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MAPE and if `symmetric` is True
+    If ``symmetric`` is False then calculates MAPE and if ``symmetric`` is True
     then calculates symmetric mean absolute percentage error (sMAPE). Both
     MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
 
@@ -1458,9 +1478,9 @@ def mean_absolute_percentage_error(
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -1507,6 +1527,7 @@ def mean_absolute_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
     mean_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1564,7 +1585,7 @@ def median_absolute_percentage_error(
 ):
     """Median absolute percentage error (MdAPE) or symmetric version.
 
-    If `symmetric` is False then calculates MdAPE and if `symmetric` is True
+    If ``symmetric`` is False then calculates MdAPE and if ``symmetric`` is True
     then calculates symmetric median absolute percentage error (sMdAPE). Both
     MdAPE and sMdAPE output is non-negative floating point. The best value is 0.0.
 
@@ -1576,9 +1597,9 @@ def median_absolute_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -1625,6 +1646,7 @@ def median_absolute_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_absolute_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1685,8 +1707,8 @@ def mean_squared_percentage_error(
 ):
     """Mean squared percentage error (MSPE) or square root version.
 
-    If `square_root` is False then calculates MSPE and if `square_root` is True
-    then calculates root mean squared percentage error (RMSPE). If `symmetric`
+    If ``square_root`` is False then calculates MSPE and if ``square_root`` is True
+    then calculates root mean squared percentage error (RMSPE). If ``symmetric``
     is True then calculates sMSPE or sRMSPE. Output is non-negative floating
     point. The best value is 0.0.
 
@@ -1696,9 +1718,9 @@ def mean_squared_percentage_error(
     the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -1750,6 +1772,7 @@ def mean_squared_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -1812,8 +1835,8 @@ def median_squared_percentage_error(
 ):
     """Median squared percentage error (MdSPE)  or square root version.
 
-    If `square_root` is False then calculates MdSPE and if `square_root` is True
-    then calculates root median squared percentage error (RMdSPE). If `symmetric`
+    If ``square_root`` is False then calculates MdSPE and if ``square_root`` is True
+    then calculates root median squared percentage error (RMdSPE). If ``symmetric``
     is True then calculates sMdSPE or sRMdSPE. Output is non-negative floating
     point. The best value is 0.0.
 
@@ -1827,9 +1850,9 @@ def median_squared_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -1881,6 +1904,7 @@ def median_squared_percentage_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_squared_percentage_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -1996,6 +2020,7 @@ def mean_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import mean_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -2104,6 +2129,7 @@ def median_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         median_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2217,6 +2243,7 @@ def geometric_mean_relative_absolute_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         geometric_mean_relative_absolute_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2281,7 +2308,7 @@ def geometric_mean_relative_squared_error(
 ):
     """Geometric mean relative squared error (GMRSE).
 
-    If `square_root` is False then calculates GMRSE and if `square_root` is True
+    If ``square_root`` is False then calculates GMRSE and if ``square_root`` is True
     then calculates root geometric mean relative squared error (RGMRSE).
 
     In relative error metrics, relative errors are first calculated by
@@ -2344,6 +2371,7 @@ def geometric_mean_relative_squared_error(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
         geometric_mean_relative_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
@@ -2430,7 +2458,7 @@ def relative_loss(
     comparing the loss of 3rd party forecasts or surveys of professional
     forecasters.
 
-    Only metrics that do not require y_train are curretnly supported.
+    Only metrics that do not require y_train are currently supported.
 
     Parameters
     ----------
@@ -2542,9 +2570,9 @@ def _asymmetric_error(
         Forecasted values.
     asymmetric_threshold : float, default = 0.0
         The value used to threshold the asymmetric loss function. Error values
-        that are less than the asymmetric threshold have `left_error_function`
+        that are less than the asymmetric threshold have ``left_error_function``
         applied. Error values greater than or equal to asymmetric threshold
-        have `right_error_function` applied.
+        have ``right_error_function`` applied.
     left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
     right_error_function : {'squared', 'absolute'}, default='absolute'
@@ -2552,7 +2580,7 @@ def _asymmetric_error(
         asymmetric threshold.
     left_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values less than
-        the asymetric threshold.
+        the asymmetric threshold.
     right_error_penalty : int or float, default=1.0
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
@@ -2560,7 +2588,7 @@ def _asymmetric_error(
     Returns
     -------
     asymmetric_errors : float
-        Array of assymetric errors.
+        Array of asymmetric errors.
 
     References
     ----------

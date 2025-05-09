@@ -1,4 +1,5 @@
 """ShapeletTransformClassifier test code."""
+
 import pytest
 
 from sktime.classification.shapelet_based import ShapeletTransformClassifier

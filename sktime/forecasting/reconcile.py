@@ -3,13 +3,9 @@
 """Implements reconciled forecasters for hierarchical data."""
 
 __all__ = ["ReconcilerForecaster"]
-__author__ = [
-    "ciaran-g",
-]
+__author__ = ["ciaran-g"]
 
 # todo: top down historical proportions? -> new _get_g_matrix_prop(self)
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -22,10 +18,11 @@ from sktime.transformations.hierarchical.reconcile import (
     _get_s_matrix,
     _parent_child_df,
 )
+from sktime.utils.warnings import warn
 
 
 class ReconcilerForecaster(BaseForecaster):
-    """Hierarchical reconcilation forecaster.
+    """Hierarchical reconciliation forecaster.
 
     Reconciliation is applied to make the forecasts in a hierarchy of
     time-series sum together appropriately.
@@ -44,13 +41,22 @@ class ReconcilerForecaster(BaseForecaster):
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
             "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
-            * "mint_cov" - sample covariance
-            * "mint_shrink" - covariance with shrinkage
-            * "ols" - ordinary least squares
-            * "wls_var" - weighted least squares (variance)
-            * "wls_str" - weighted least squares (structural)
-            * "bu" - bottom-up
-            * "td_fcst" - top down based on forecast proportions
+
+            * ``"mint_cov"`` - sample covariance
+            * ``"mint_shrink"`` - covariance with shrinkage
+            * ``"ols"`` - ordinary least squares
+            * ``"wls_var"`` - weighted least squares (variance)
+            * ``"wls_str"`` - weighted least squares (structural)
+            * ``"bu"`` - bottom-up
+            * ``"td_fcst"`` - top down based on forecast proportions
+
+    return_totals : bool
+        Whether the predictions returned by ``predict`` and predict-like methods
+        should include the total values in the hierarchy, stored at the ``__total``
+        index levels.
+
+        * If True, prediction data frames include total values at ``__total`` levels
+        * If False, prediction data frames are returned without ``__total`` levels
 
     See Also
     --------
@@ -83,9 +89,15 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd.Series",
@@ -107,10 +119,12 @@ class ReconcilerForecaster(BaseForecaster):
 
     TRFORM_LIST = Reconciler().METHOD_LIST
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
+    RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink"):
+    def __init__(self, forecaster, method="mint_shrink", return_totals=True):
         self.forecaster = forecaster
         self.method = method
+        self.return_totals = return_totals
 
         super().__init__()
 
@@ -152,7 +166,7 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        # if transformer just fit pipline and return
+        # if transformer just fit pipeline and return
         if np.isin(self.method, self.TRFORM_LIST):
             self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
             self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -214,12 +228,23 @@ class ReconcilerForecaster(BaseForecaster):
         if base_fc.index.nlevels < 2:
             warn(
                 "Reconciler is intended for use with y.index.nlevels > 1. "
-                "Returning predictions unchanged."
+                "Returning predictions unchanged.",
+                obj=self,
             )
             return base_fc
 
         # if Forecaster() * Reconciler() then base_fc is already reconciled
         if np.isin(self.method, self.TRFORM_LIST):
+            if not self.return_totals:
+                n = base_fc.index.get_slice_bound(label="__total", side="left")
+                if len(base_fc[:n]) == 0:
+                    base_fc = base_fc[n:]
+                else:
+                    base_fc = base_fc[:n]
+                level_values = base_fc.index.get_level_values(-2)
+                base_fc = base_fc[~(level_values == "__total")]
+                return base_fc
+
             return base_fc
 
         base_fc = base_fc.groupby(level=-1)
@@ -234,6 +259,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         recon_fc = pd.concat(recon_fc, axis=0)
         recon_fc = recon_fc.sort_index()
+
+        if not self.return_totals:
+            n = recon_fc.index.get_slice_bound(label="__total", side="left")
+            if len(recon_fc[:n]) == 0:
+                recon_fc = recon_fc[n:]
+            else:
+                recon_fc = recon_fc[:n]
+            level_values = recon_fc.index.get_level_values(-2)
+            recon_fc = recon_fc[~(level_values == "__total")]
+            return recon_fc
 
         return recon_fc
 
@@ -395,8 +430,9 @@ class ReconcilerForecaster(BaseForecaster):
         params : dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 
@@ -405,7 +441,9 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
+                "return_totals": totals,
             }
             for x in cls.METHOD_LIST
+            for totals in cls.RETURN_TOTALS_LIST
         ]
         return params_list

@@ -1,7 +1,5 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import List, Tuple
-
 import numpy as np
 
 from sktime.utils.numba.njit import njit
@@ -10,7 +8,7 @@ from sktime.utils.numba.njit import njit
 @njit(cache=True)
 def compute_min_return_path(
     cost_matrix: np.ndarray, bounding_matrix: np.ndarray
-) -> List[Tuple]:
+) -> list[tuple]:
     """Compute the minimum cost path through the cost matrix.
 
     The return path is computed by finding a path through the cost matrix by taking
@@ -71,7 +69,7 @@ def compute_min_return_path(
 @njit(cache=True)
 def compute_twe_return_path(
     cost_matrix: np.ndarray, bounding_matrix: np.ndarray
-) -> List[Tuple]:
+) -> list[tuple]:
     """Compute the twe cost path through the cost matrix.
 
     The return path is computed by finding a path through the cost matrix by taking
@@ -137,7 +135,7 @@ def compute_lcss_return_path(
     epsilon: float,
     bounding_matrix: np.ndarray,
     cost_matrix: np.ndarray,
-) -> List[Tuple]:
+) -> list[tuple]:
     """Compute the path from lcss cost matrix.
 
     Parameters

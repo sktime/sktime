@@ -8,7 +8,7 @@ from sktime.pipeline.step import Step, StepResult
 from sktime.transformations.series.exponent import ExponentTransformer
 
 
-def test_get_result_none_predessor():
+def test_get_result_none_predecessor():
     step = Step(None, "X", None, None, {})
     step.buffer = pd.DataFrame([1, 2, 3])
     result = step.get_result(True, "transform", ["transform"], {})
@@ -17,18 +17,18 @@ def test_get_result_none_predessor():
     assert result.mode == ""
 
 
-def test_get_results_predessors():
+def test_get_results_predecessors():
     skobject_mock = MagicMock()
     skobject_mock.is_fitted = False
-    predessor_mock = MagicMock()
-    # predessor_mock.get_allowed_method.return_value = ["transform"]
-    predessor_mock.get_result.return_value = StepResult(
+    predecessor_mock = MagicMock()
+    # predecessor_mock.get_allowed_method.return_value = ["transform"]
+    predecessor_mock.get_result.return_value = StepResult(
         pd.DataFrame([1, 2, 3]), mode=""
     )
     skobject_mock.transform.return_value = pd.DataFrame([2, 3, 4])
 
     step = Step(
-        skobject_mock, "mock", {"X": [predessor_mock]}, "transform", {"test": 24}
+        skobject_mock, "mock", {"X": [predecessor_mock]}, "transform", {"test": 24}
     )
     result = step.get_result(True, None, ["transform"], {"additional_kwarg": "42"})
 

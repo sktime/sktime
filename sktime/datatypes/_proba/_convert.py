@@ -33,7 +33,8 @@ __all__ = ["convert_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA
+# this needs to be refactored with the convert module
+MTYPE_LIST_PROBA = ["pred_interval", "pred_quantiles"]
 
 ##############################################################
 # methods to convert one machine type to another machine type
@@ -108,9 +109,9 @@ def convert_interval_to_quantiles(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_interval_to_quantiles(y_pred=obj)
 
 
-convert_dict[
-    ("pred_interval", "pred_quantiles", "Proba")
-] = convert_interval_to_quantiles
+convert_dict[("pred_interval", "pred_quantiles", "Proba")] = (
+    convert_interval_to_quantiles
+)
 
 
 def convert_pred_quantiles_to_interval(y_pred, inplace=False):
@@ -165,6 +166,6 @@ def convert_quantiles_to_interval(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_quantiles_to_interval(y_pred=obj)
 
 
-convert_dict[
-    ("pred_quantiles", "pred_interval", "Proba")
-] = convert_quantiles_to_interval
+convert_dict[("pred_quantiles", "pred_interval", "Proba")] = (
+    convert_quantiles_to_interval
+)

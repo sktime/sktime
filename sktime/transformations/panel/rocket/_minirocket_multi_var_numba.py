@@ -4,8 +4,8 @@ __author__ = ["angus924", "michaelfeil"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import prange, vectorize
@@ -394,6 +394,9 @@ def _fit_biases_multi_var(
 
 def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_kernel):
     num_kernels = 84
+
+    if num_features < 84:
+        num_features = 84
 
     num_features_per_kernel = num_features // num_kernels
     true_max_dilations_per_kernel = min(

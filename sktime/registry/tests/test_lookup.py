@@ -5,36 +5,20 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.base import BaseObject
 from sktime.registry import all_estimators, all_tags, scitype
-from sktime.registry._base_classes import (
-    BASE_CLASS_LOOKUP,
-    BASE_CLASS_SCITYPE_LIST,
-    TRANSFORMER_MIXIN_SCITYPE_LIST,
-)
+from sktime.registry._base_classes import get_base_class_lookup, get_obj_scitype_list
 from sktime.registry._lookup import _check_estimator_types
 
-VALID_SCITYPES_SET = set(
-    BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
-)
-
-# some scitypes have no associated tags yet
-SCITYPES_WITHOUT_TAGS = [
-    "series-annotator",
-    "clusterer",
-    "object",
-    "splitter",
-    "network",
-]
-
 # shorthands for easy reading
-b = BASE_CLASS_SCITYPE_LIST
+b = get_obj_scitype_list(include_baseobjs=True)
+BASE_CLASS_SCITYPE_LIST = b
+
 n = len(b)
 
 # selected examples of "search for two types at once to avoid quadratic scaling"
 double_estimator_scitypes = [[b[i], b[(i + 3) % n]] for i in range(n)]
 # fixtures search by individual scitypes, "None", and some pairs
-estimator_scitype_fixture = [None] + BASE_CLASS_SCITYPE_LIST + double_estimator_scitypes
+estimator_scitype_fixture = [None] + b + double_estimator_scitypes
 
 
 def _to_list(obj):
@@ -42,7 +26,7 @@ def _to_list(obj):
     if not isinstance(obj, list):
         return [obj]
     else:
-        return obj
+        return obj.copy()
 
 
 def _get_type_tuple(estimator_scitype):
@@ -57,11 +41,13 @@ def _get_type_tuple(estimator_scitype):
     estimator_classes : tuple of sktime base classes,
         corresponding to scitype strings in estimator_scitypes
     """
+    scitypes = _to_list(estimator_scitype)
     if estimator_scitype is not None:
-        estimator_classes = tuple(
-            BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
-        )
+        lookup = get_base_class_lookup(include_baseobjs=True)
+        estimator_classes = tuple(lookup[scitype] for scitype in scitypes)
     else:
+        from skbase.base import BaseObject
+
         estimator_classes = (BaseObject,)
 
     return estimator_classes
@@ -101,14 +87,10 @@ def test_all_tags(estimator_scitype):
     assert isinstance(tags, list)
 
     # there should be at least one tag returned
-    # exception: scitypes which we know don't have tags associated
-    est_list = (
-        estimator_scitype
-        if isinstance(estimator_scitype, list)
-        else [estimator_scitype]
-    )
-    if not set(est_list).issubset(SCITYPES_WITHOUT_TAGS):
-        assert len(tags) > 0
+    # even scitypes without tags should return those for "object"
+    assert len(tags) > 0
+
+    VALID_SCITYPES_SET = set(get_obj_scitype_list() + get_obj_scitype_list(mixin=True))
 
     # checks return type specification (see docstring)
     for tag in tags:
@@ -121,6 +103,11 @@ def test_all_tags(estimator_scitype):
             assert isinstance(tag[2][0], str)
             assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
+
+    # check some tags that all object types should have
+    tags_strs = [tag[0] for tag in tags]
+    assert "python_dependencies" in tags_strs
+    assert "python_version" in tags_strs
 
 
 @pytest.mark.parametrize("return_names", [True, False])
@@ -229,31 +216,45 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
-@pytest.mark.parametrize("pred_int", [True, False])
-def test_all_estimators_tag_filter(pred_int):
+@pytest.mark.parametrize(
+    "tag_name", ["capability:pred_int", "capability:missing_values"]
+)
+@pytest.mark.parametrize("tag_value", [True, False])
+def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""
-    NOPROBA_EXAMPLE = "TrendForecaster"
-    PROBA_EXAMPLE = "ARIMA"
+    FALSE_EXAMPLE = "TrendForecaster"  # tag_value known False for both tag_name
+    TRUE_EXAMPLE = "ARIMA"  # tag_value known True for both tag_name
 
-    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    res = all_estimators("forecaster", filter_tags={tag_name: tag_value})
     names, ests = zip(*res)
 
-    if pred_int:
-        assert PROBA_EXAMPLE in names
-        assert NOPROBA_EXAMPLE not in names
-        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    if tag_value:
+        assert TRUE_EXAMPLE in names
+        assert FALSE_EXAMPLE not in names
+        assert [est.get_class_tag(tag_name) for est in ests]
     else:
-        assert PROBA_EXAMPLE not in names
-        assert NOPROBA_EXAMPLE in names
-        assert [not est.get_class_tag("capability:pred_int") for est in ests]
+        assert TRUE_EXAMPLE not in names
+        assert FALSE_EXAMPLE in names
+        assert [not est.get_class_tag(tag_name) for est in ests]
+
+    for est in ests:  # not done as comprehension to make this easier to read
+        est_type = scitype(est, force_single_scitype=False, coerce_to_list=True)
+        assert "forecaster" in est_type
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
     base_class = _check_estimator_types(estimator_scitype)[0]
-    inferred_scitype = scitype(base_class)
+    all_scitypes = scitype(base_class, force_single_scitype=False, coerce_to_list=True)
+    inferred_scitype = all_scitypes[0]
 
-    assert (
-        inferred_scitype == estimator_scitype
-    ), "one of scitype, _check_estimator_types is incorrect, these should be inverses"
+    # stepout for detector due to rename in scitype
+    # todo 1.0.0 - remove this stepout entirely
+    if estimator_scitype == "series-annotator":
+        assert "series-annotator" in all_scitypes
+        return None
+
+    assert inferred_scitype == estimator_scitype, (
+        "one of scitype, _check_estimator_types is incorrect, these should be inverses"
+    )

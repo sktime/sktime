@@ -17,6 +17,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import FitInTransform
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.panel.tsfresh import (
@@ -26,6 +27,7 @@ from sktime.transformations.panel.tsfresh import (
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
@@ -35,10 +37,14 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
 
 
 def inner_X_scitypes(est):
@@ -53,6 +59,10 @@ def inner_X_scitypes(est):
     return X_inner_scitypes
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_supported():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -63,7 +73,7 @@ def test_series_in_series_out_supported():
         "X_inner_mtype" supports "Series
 
     X input to fit/transform has Series scitype
-    X ouput from fit/transform should be Series
+    X output from fit/transform should be Series
     """
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
@@ -85,6 +95,10 @@ def test_series_in_series_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -117,6 +131,10 @@ def test_series_in_series_out_supported_fit_in_transform():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_not_supported_but_panel():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -151,6 +169,10 @@ def test_series_in_series_out_not_supported_but_panel():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_panel_in_panel_out_supported():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -183,7 +205,12 @@ def test_panel_in_panel_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
-def test_panel_in_panel_out_not_supported_but_series():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_panel_in_panel_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
     Setting: transformer has tags
@@ -198,6 +225,7 @@ def test_panel_in_panel_out_not_supported_but_series():
     # one example for a transformer which supports Series internally but not Panel
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -217,6 +245,10 @@ def test_panel_in_panel_out_not_supported_but_series():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_primitives_out_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -251,7 +283,12 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
-def test_panel_in_primitives_out_not_supported_fit_in_transform():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     """Test that fit/transform runs and returns the correct output type.
 
     Setting: transformer has tags
@@ -266,6 +303,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     # one example for a transformer which supports Series internally but not Panel
     cls = SummaryTransformer
     est = cls.create_test_instance()
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -288,8 +326,9 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_module_changed("sktime.transformations")
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
+    reason="run test only if anything in sktime.transformations module has changed",
 )
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
@@ -327,8 +366,9 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_module_changed("sktime.transformations")
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
+    reason="run test only if anything in sktime.transformations module has changed",
 )
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     """Test that fit/transform runs and returns the correct output type.
@@ -366,7 +406,12 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     assert len(Xt) == 7
 
 
-def test_hierarchical_in_hierarchical_out_not_supported_but_series():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
     Setting: transformer has tags
@@ -381,6 +426,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series():
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -399,9 +445,14 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series():
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -435,10 +486,16 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
-def test_vectorization_multivariate_no_row_vectorization():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_vectorization_multivariate_no_row_vectorization(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
     This test should trigger column (variable) vectorization, but not row vectorization.
@@ -456,6 +513,7 @@ def test_vectorization_multivariate_no_row_vectorization():
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing multivariate functionality)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -477,7 +535,12 @@ def test_vectorization_multivariate_no_row_vectorization():
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-def test_vectorization_multivariate_and_hierarchical():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_vectorization_multivariate_and_hierarchical(backend):
     """Test that fit/transform runs and returns the correct output type.
 
     This test should trigger both column (variable) and row (hierarchy) vectorization.
@@ -495,6 +558,7 @@ def test_vectorization_multivariate_and_hierarchical():
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -518,7 +582,12 @@ def test_vectorization_multivariate_and_hierarchical():
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-def test_vectorization_multivariate_no_row_vectorization_empty_fit():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
     This test should trigger column (variable) vectorization, but not row vectorization.
@@ -536,6 +605,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit():
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = FitInTransform(cls.create_test_instance())
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing multivariate functionality)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -557,7 +627,12 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit():
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-def test_vectorization_multivariate_and_hierarchical_empty_fit():
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     """Test that fit/transform runs and returns the correct output type.
 
     This test should trigger both column (variable) and row (hierarchy) vectorization.
@@ -575,6 +650,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit():
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = FitInTransform(cls.create_test_instance())
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -598,6 +674,10 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit():
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_vectorize_reconstruct_unique_columns():
     """Tests that vectorization on multivariate output yields unique columns.
 
@@ -630,6 +710,10 @@ def test_vectorize_reconstruct_unique_columns():
     assert set(Xt.columns) == {0, 1}
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_vectorize_reconstruct_correct_hierarchy():
     """Tests correct transform return index in hierarchical case for primitives output.
 
@@ -656,3 +740,130 @@ def test_vectorize_reconstruct_correct_hierarchy():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == Xt.index).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_wrong_y_is_not_passed_to_transformer():
+    """Tests that y incompatible with internal type is not passed to transformer.
+
+    Failure case of bug #6417.
+    """
+    from datetime import datetime
+
+    import numpy as np
+    import pandas as pd
+
+    from sktime.pipeline import make_pipeline
+    from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    from sktime.transformations.compose import FitInTransform
+    from sktime.transformations.panel.interpolate import TSInterpolator
+    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
+
+    # this test requires the KalmanFilterTransformerFP to be runnable
+    if not _check_estimator_deps(KalmanFilterTransformerFP, severity="none"):
+        return None
+
+    # Define the multi-index
+    index = pd.MultiIndex.from_tuples(
+        [
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.877500", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.903000", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.453400", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.478800", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+        ],
+        names=["instance", "Time"],
+    )
+
+    X = pd.DataFrame(
+        {"LeftControllerVelocity_0": [-0.01, -0.01, 0.06, 0.06]}, index=index
+    )
+    y = np.array([1, 0.5])
+
+    # noise filter only, this is a reduced MRE
+    noise_filter_only = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    noise_filter_only.fit(X, y)
+
+    # in pipeline, this is the full MRE from bug #6417
+    noise_filter = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    interpolator = TSInterpolator(4000)
+    regressor = KNeighborsTimeSeriesRegressor()
+
+    model = make_pipeline(noise_filter, interpolator, regressor)
+    model.fit(X, y)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_series_to_primitives_hierarchical():
+    """Test that the correct index is returned for hierarchical Series-to-Primitives.
+
+    Tests the vectorization case and the plain case.
+
+    Setting: transformer has tags
+        "scitype:transform-input" = "Series"
+        "scitype:transform-output" = "Panel"
+
+        Case 1: "X_inner_mtype" does not support Hierarchical, vectorizes
+        Case 2: "X_inner_mtype" does support Hierarchical, does not vectorize
+
+    X input to fit/transform has Hierarchical mtype
+    X output from fit/transform should be Table with hierarchical index, one level less
+    """
+    # case 1
+    # example of Series-to-Primitives not supporting Hierarchical
+    cls_vectorizes = SummaryTransformer
+    est = cls_vectorizes.create_test_instance()
+    # ensure cls is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of cls, but we need to choose another example)
+    assert "Series" in inner_X_scitypes(est)
+    assert "Panel" not in inner_X_scitypes(est)
+    assert "Hierarchical" not in inner_X_scitypes(est)
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Primitives"
+
+    X = _make_hierarchical()
+    Xt = est.fit_transform(X)
+    ix = Xt.index
+
+    # check that Xt.index is the same as X.index with time level dropped and made unique
+    assert (X.index.droplevel(-1).unique() == ix).all()
+
+    # case 2
+    from sktime.clustering.dbscan import TimeSeriesDBSCAN
+    from sktime.registry import coerce_scitype
+
+    # example of Series-to-Primitives supporting Hierarchical
+    clust = TimeSeriesDBSCAN.create_test_instance()
+    est = coerce_scitype(clust, "transformer")
+
+    # ensure est is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of est, but we need to choose another example)
+    assert "Hierarchical" in inner_X_scitypes(est)
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Primitives"
+
+    X = _make_hierarchical()
+    Xt = est.fit_transform(X)
+    ix = Xt.index
+
+    # check that Xt.index is the same as X.index with time level dropped and made unique
+    assert (X.index.droplevel(-1).unique() == ix).all()

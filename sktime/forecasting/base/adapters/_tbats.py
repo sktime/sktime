@@ -17,12 +17,14 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
+        # cotterpl for tbats package
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "python_dependencies": "tbats",
+        "capability:missing_values": False,
+        "python_dependencies": ["tbats", "numpy<2"],
     }
 
     def __init__(

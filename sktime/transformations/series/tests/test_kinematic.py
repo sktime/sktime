@@ -1,14 +1,21 @@
 """Tests for the kinematic transformers."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.kinematic import KinematicFeatures
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KinematicFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_kinematic_expected_output():
     """Test expected output in docstring example."""
     traj3d = pd.DataFrame(columns=["x", "y", "z"])

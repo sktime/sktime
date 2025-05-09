@@ -3,11 +3,17 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
+import pytest
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.dobin import DOBIN
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DOBIN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_default():
     """Test with default parameters and high dimensional data."""
     X = np.array(
@@ -95,6 +101,10 @@ def test_fit_default():
     assert np.allclose(basis_expected, basis_actual)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DOBIN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_median_standardization():
     """Test with median standardisation and different parameters."""
     X = np.array(
@@ -150,6 +160,10 @@ def test_fit_median_standardization():
     assert np.allclose(basis_expected, basis_actual)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DOBIN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_pca_reduction():
     """Test when n_obs is less than n_dim and PCA is applied initially."""
     X = np.array(
@@ -179,6 +193,10 @@ def test_pca_reduction():
     assert np.allclose(abs(X_expected), abs(X_actual), rtol=0.001)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DOBIN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_zero_variance():
     """Test for column with zero variance."""
     X = np.array(

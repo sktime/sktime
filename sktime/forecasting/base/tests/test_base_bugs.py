@@ -1,4 +1,5 @@
 """Regression tests for bugfixes related to base class related functionality."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
@@ -10,15 +11,17 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_module_changed("sktime.forecasting.base")
+    or not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    reason="run only if base module has changed",
 )
 def test_heterogeneous_get_fitted_params():
     """Regression test for bugfix #4574, related to get_fitted_params."""
@@ -60,6 +63,10 @@ def test_heterogeneous_get_fitted_params():
     reconciler.get_fitted_params()  # triggers an error pre-fix
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
 def test_predict_residuals_conversion():
     """Regression test for bugfix #4766, related to predict_residuals internal type."""
     from sktime.datasets import load_longley

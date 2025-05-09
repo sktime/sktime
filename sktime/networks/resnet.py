@@ -1,25 +1,21 @@
 """Residual Network (ResNet) (minus the final output layer)."""
 
-__author__ = ["James Large", "Withington", "nilesh05apr"]
+__author__ = ["James-Large", "Withington", "nilesh05apr"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetNetwork(BaseDeepNetwork):
     """Establish the network structure for a ResNet.
 
-    Adapted from the implementations used in [1]
+    Adapted from the implementation in
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
     Parameters
     ----------
     random_state : int, optional (default = 0)
         The random seed to use random activities.
-
-    Notes
-    -----
-    Adpated from the implementation source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
     References
     ----------
@@ -34,7 +30,10 @@ class ResNetNetwork(BaseDeepNetwork):
     1578--1585}, year={2017}, organization={IEEE} }
     """
 
-    _tags = {"python_dependencies": ["tensorflow", "keras-self-attention"]}
+    _tags = {
+        "authors": ["hfawaz", "James-Large", "Withington", "nilesh05apr"],
+        "python_dependencies": ["tensorflow"],
+    }
 
     def __init__(self, random_state=0):
         _check_dl_dependencies(severity="error")
@@ -148,3 +147,29 @@ class ResNetNetwork(BaseDeepNetwork):
         gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
 
         return input_layer, gap_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {"random_state": 42}
+        return [params1, params2]

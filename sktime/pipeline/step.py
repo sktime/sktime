@@ -1,4 +1,5 @@
 """Implementation of the graphpipeline step."""
+
 import inspect
 from copy import deepcopy
 
@@ -46,8 +47,8 @@ class Step:
     input_edges : dict
         A dict with string keys to string values. Identifying the
         predcessors.  The keys of the edges dict specify to which argument
-        of fit/predict/.. the output of the predessors (the value of the
-        dict specifies the predessors name) shuold be passed.
+        of fit/predict/.. the output of the predecessors (the value of the
+        dict specifies the predecessors name) should be passed.
     method : str
         The method that should be called on the skobject. If None, the pipeline
          selects the method based on the method
@@ -73,9 +74,10 @@ class Step:
         self.input_edges = input_edges
         self.params = params
 
-    def reset(self):
+    def reset(self, reset_buffer=True):
         """Reset the step."""
-        self.buffer = None
+        if reset_buffer:
+            self.buffer = None
         self.mode = ""
 
     def get_allowed_method(self):
@@ -212,7 +214,7 @@ class Step:
                     self.mode = result.mode
                 if result.result is not None:
                     all_none = False
-            if len(results) != 0 and not results[0] is None:
+            if len(results) != 0 and results[0] is not None:
                 if len(results) > 1:
                     input_data[step_name] = pd.concat(
                         results, axis=1, keys=transformer_names

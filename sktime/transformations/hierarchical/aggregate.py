@@ -1,14 +1,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements a transfromer to generate hierarcical data from bottom level."""
+"""Implements a transformer to generate hierarchical data from bottom level."""
 
 __author__ = ["ciaran-g"]
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 # todo: add any necessary sktime internal imports here
 
@@ -50,6 +49,12 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -65,7 +70,7 @@ class Aggregator(BaseTransformer):
         "capability:inverse_transform": False,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -93,14 +98,16 @@ class Aggregator(BaseTransformer):
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
             return X
         # check the tests are ok
         if not _check_index_no_total(X):
             warn(
-                "Found elemnts in the index of X named '__total'. Removing "
-                "these levels and aggregating."
+                "Found elements in the index of X named '__total'. Removing "
+                "these levels and aggregating.",
+                obj=self,
             )
             X = self._inverse_transform(X)
 
@@ -166,13 +173,15 @@ class Aggregator(BaseTransformer):
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
-                "Returning X unchanged."
+                "Returning X unchanged.",
+                obj=self,
             )
             return X
         if _check_index_no_total(X):
             warn(
-                "Inverse is inteded to be used with aggregated data. "
-                "Returning X unchanged."
+                "Inverse is intended to be used with aggregated data. "
+                "Returning X unchanged.",
+                obj=self,
             )
         else:
             for i in range(X.index.nlevels - 1):
@@ -188,12 +197,14 @@ class Aggregator(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"flatten_single_levels": True}
+        param1 = {"flatten_single_levels": True}
+        param2 = {"flatten_single_levels": False}
 
-        return params
+        return [param1, param2]
 
 
 def _check_index_no_total(X):
@@ -239,7 +250,7 @@ def _flatten_single_indexes(X):
             # get idex of these nodes
             agg_ids = list(tmp[tmp > 1].dropna().index)
 
-            # add the aggregate label down the the length of the orginal index
+            # add the aggregate label down the the length of the original index
 
             # only add if >=1 elements in list and not at the 2nd aggregate level
             add_indicator1 = (i < (len(ind_df.columns) - 1)) & (len(agg_ids) >= 1)

@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
+
 from __future__ import annotations
 
 __author__ = ["KishManani"]
@@ -18,15 +19,15 @@ from sktime.transformations.base import BaseTransformer
 class TimeSince(BaseTransformer):
     """Compute element-wise time elapsed between time index and a reference start time.
 
-    Creates a column(s) which represents: `t` - `start`, where `start` is
-    a reference time and `t` is the time index. The type of `start` must be
-    compatible with the index of `X` used in `.fit()` and `.transform()`.
+    Creates a column(s) which represents: ``t`` - ``start``, where ``start`` is
+    a reference time and ``t`` is the time index. The type of ``start`` must be
+    compatible with the index of ``X`` used in ``.fit()`` and ``.transform()``.
 
     The output can be converted to an integer representing the number of periods
-    elapsed since the start time by setting `to_numeric=True`. The period is
-    determined by the frequency of the index. For example, if the `freq` of
+    elapsed since the start time by setting ``to_numeric=True``. The period is
+    determined by the frequency of the index. For example, if the ``freq`` of
     the index is "MS" or "M" then the output is the integer number of months
-    between `t` and `start`.
+    between ``t`` and ``start``.
 
     Parameters
     ----------
@@ -34,24 +35,25 @@ class TimeSince(BaseTransformer):
         a "start time" can be one of the following types:
 
         * int: Start time to compute the time elapsed, use when index is integer.
-        * time-like: `Period` or `datetime`
+        * time-like: ``Period`` or ``datetime``
             Start time to compute the time elapsed.
         * str: String is converted to datetime or period, depending on the index type, \
             to give the start time.
 
     to_numeric : string, optional (default=True)
-        Return the integer number of periods elapsed since `start`; the period
+        Return the integer number of periods elapsed since ``start``; the period
         is defined by the frequency of the data. Converts datetime types to
         pd.Period before calculating time differences.
     freq : 'str', optional, default=None
         Only used when X has a pd.DatetimeIndex without a specified frequency.
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
+
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`.
+        Keep original columns in X passed to ``.transform()``.
     positive_only :  boolean, optional, default=False
-        Clips negative values to zero when `to_numeric` is True.
+        Clips negative values to zero when ``to_numeric`` is True.
 
     Examples
     --------
@@ -60,19 +62,25 @@ class TimeSince(BaseTransformer):
     >>> X = load_airline()
 
         Create a single column with time elapsed since start date of time series.
-        The output is in units of integer number of months, same as the index `freq`.
+        The output is in units of integer number of months, same as the index ``freq``.
 
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
         Create multiple columns with different start times. The output is in units
-        of integer number of months, same as the index `freq`.
+        of integer number of months, same as the index ``freq``.
 
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["KishManani"],
+        "maintainers": ["KishManani"],
+        # estimator type
+        # --------------
         # what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # what scitype is returned: Primitives, Series, Panel
@@ -92,7 +100,7 @@ class TimeSince(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
     }
 
@@ -232,7 +240,7 @@ class TimeSince(BaseTransformer):
                     # (e.g., "MS" -> "M"). We must strip the freq str of any
                     # integer multiplier (e.g., "15T" -> "T"). This is needed so that
                     # `get_period_alias` returns the correct result.
-                    # If `get_period_alias` recieves a freq str with a multiplier
+                    # If `get_period_alias` receives a freq str with a multiplier
                     # (e.g., "15T") it returns `None` which causes errors downstream.
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
@@ -301,7 +309,7 @@ class TimeSince(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -309,8 +317,9 @@ class TimeSince(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [
             {"start": None, "to_numeric": True},

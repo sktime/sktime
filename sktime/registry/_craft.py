@@ -70,11 +70,8 @@ def craft(spec):
     """
     register = dict(all_estimators())  # noqa: F841
 
-    for x in _extract_class_names(spec):
-        exec(f"{x} = register['{x}']")
-
     try:
-        obj = eval(spec)
+        obj = eval(spec, globals(), register)
     except Exception:
         from textwrap import indent
 
@@ -85,8 +82,9 @@ def build_obj():
         """
             + spec_fun
         )
-        exec(spec_fun, locals())
-        obj = eval("build_obj()")
+
+        exec(spec_fun, register, register)
+        obj = eval("build_obj()", register, register)
 
     return obj
 
@@ -165,7 +163,8 @@ def imports(spec):
             )
         cls = register[x]
 
-        import_str = f"from {cls.__module__} import {x}"
+        import_module = _get_public_import(cls.__module__)
+        import_str = f"from {import_module} import {x}"
         import_strs += [import_str]
 
     if len(import_strs) == 0:
@@ -174,3 +173,15 @@ def imports(spec):
         imports_str = "\n".join(sorted(import_strs))
 
     return imports_str
+
+
+def _get_public_import(module_path: str) -> str:
+    """Get the public import path from full import path.
+
+    Removes everything from the first private submodule (starting with '_') onwards.
+    """
+    parts = module_path.split(".")
+    for i, part in enumerate(parts):
+        if part.startswith("_"):
+            return ".".join(parts[:i])  # Keep only part before first private submodule
+    return module_path  # Return the original path if no private submodules are found

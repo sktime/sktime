@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.alignment.base import BaseAligner
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class AlignerDTW(BaseAligner):
@@ -18,41 +17,62 @@ class AlignerDTW(BaseAligner):
     Behaviour: computes the full alignment between X[0] and X[1]
         assumes pairwise alignment (only two series) and univariate
         if multivariate series are passed:
-            alignment is computed on univariate series with variable_to_align;
-            if this is not set, defaults to the first variable of X[0]
+        alignment is computed on univariate series with variable_to_align;
+        if this is not set, defaults to the first variable of X[0]
         raises an error if variable_to_align is not present in X[0] or X[1]
 
     Parameters
     ----------
     dist_method : str, optional, default = "euclidean"
         distance function to use, a distance on real n-space
-            one of the functions in `scipy.spatial.distance.cdist`
+        one of the functions in ``scipy.spatial.distance.cdist``
     step_pattern : str, optional, or dtw_python stepPattern object, optional
         step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
-                and dozens of other more non-standard step patterns;
-                list can be displayed by calling help(stepPattern) in dtw
+        and dozens of other more non-standard step patterns;
+        list can be displayed by calling help(stepPattern) in dtw
     window_type : string, the chosen windowing function
         "none", "itakura", "sakoechiba", or "slantedband"
-            "none" (default) - no windowing
-            "sakoechiba" - a band around main diagonal
-            "slantedband" - a band around slanted diagonal
-            "itakura" - Itakura parallelogram
-    open_begin, open_end : boolean, optional, default=False
+        "none" (default) - no windowing
+        "sakoechiba" - a band around main diagonal
+        "slantedband" - a band around slanted diagonal
+        "itakura" - Itakura parallelogram
+    open_begin : boolean, optional, default=False
+    open_end: boolean, optional, default=False
         whether to perform open-ended alignments
-            open_begin = whether alignment open ended at start (low index)
-            open_end = whether alignment open ended at end (high index)
+        open_begin = whether alignment open ended at start (low index)
+        open_end = whether alignment open ended at end (high index)
     variable_to_align : string, default = first variable in X[0] as passed to fit
         which variable to use for univariate alignment
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw_python import AlignerDTW
+    >>> X = [
+    ...     pd.DataFrame({'col1': np.random.randn(100)}),
+    ...     pd.DataFrame({'col1': np.random.randn(100)})
+    ... ]
+    >>> aligner = AlignerDTW(dist_method='euclidean', step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    AlignerDTW(...)
+    >>> alignment_df = aligner.get_alignment()
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
+        "python_dependencies": "dtw-python",
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "partial",
-        "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(
@@ -203,39 +223,59 @@ class AlignerDTW(BaseAligner):
 class AlignerDTWfromDist(BaseAligner):
     """Aligner interface for dtw-python using pairwise transformer.
 
-        uses transformer for computation of distance matrix passed to alignment
-
-    Components
-    ----------
-    dist_trafo: estimator following the pairwise transformer template
-        i.e., instance of concrete class implementing template BasePairwiseTransformer
+    Uses transformer for computation of distance matrix passed to alignment.
 
     Parameters
     ----------
+    dist_trafo: estimator following the pairwise transformer template
+        i.e., instance of concrete class implementing template BasePairwiseTransformer
     step_pattern : str, optional, default = "symmetric2",
-            or dtw_python stepPattern object, optional
+        or dtw_python stepPattern object, optional
         step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
-                and dozens of other more non-standard step patterns;
-                list can be displayed by calling help(stepPattern) in dtw
+        and dozens of other more non-standard step patterns;
+        list can be displayed by calling help(stepPattern) in dtw
     window_type: str  optional, default = "none"
         the chosen windowing function
         "none", "itakura", "sakoechiba", or "slantedband"
-            "none" (default) - no windowing
-            "sakoechiba" - a band around main diagonal
-            "slantedband" - a band around slanted diagonal
-            "itakura" - Itakura parallelogram
-    open_begin, open_end: boolean, optional, default=False
+        "none" (default) - no windowing
+        "sakoechiba" - a band around main diagonal
+        "slantedband" - a band around slanted diagonal
+        "itakura" - Itakura parallelogram
+    open_begin : boolean, optional, default=False
+    open_end: boolean, optional, default=False
         whether to perform open-ended alignments
-            open_begin = whether alignment open ended at start (low index)
-            open_end = whether alignment open ended at end (high index)
+        open_begin = whether alignment open ended at start (low index)
+        open_end = whether alignment open ended at end (high index)
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw_python import AlignerDTWfromDist
+    >>> from sktime.dists_kernels import ScipyDist
+    >>> X = [
+    ...     pd.DataFrame({'col1': np.random.randn(100)}),
+    ...     pd.DataFrame({'col1': np.random.randn(100)})
+    ... ]
+    >>> dist_trafo = ScipyDist()
+    >>> aligner = AlignerDTWfromDist(dist_trafo=dist_trafo, step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    AlignerDTWfromDist(...)
+    >>> alignment_df = aligner.get_alignment()
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
+        "python_dependencies": "dtw-python",
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
-        "python_dependencies": "dtw-python",
     }
 
     def __init__(
@@ -246,16 +286,6 @@ class AlignerDTWfromDist(BaseAligner):
         open_begin=False,
         open_end=False,
     ):
-        """Construct instance."""
-        # added manually since dtw-python has an import alias
-        # default check from super.__init__ does not allow aliases
-        _check_soft_dependencies(
-            "dtw-python",
-            package_import_alias={"dtw-python": "dtw"},
-            severity="error",
-            obj=self,
-            suppress_import_stdout=True,
-        )
         super().__init__()
 
         self.dist_trafo = dist_trafo

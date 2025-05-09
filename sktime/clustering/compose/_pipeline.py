@@ -1,4 +1,5 @@
 """Pipeline with a clusterer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -92,6 +93,11 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -119,7 +125,9 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
         missing = clusterer.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -143,6 +151,13 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         }
         self.set_tags(**tags_to_set)
 
+        tags_to_clone = [
+            "capability:out_of_sample",
+            "capability:predict",
+            "capability:predict_proba",
+        ]
+        self.clone_tags(clusterer, tags_to_clone)
+
     @property
     def _transformers(self):
         return self.transformers_._steps
@@ -150,6 +165,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -307,7 +332,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
 
@@ -442,7 +467,7 @@ class SklearnClustererPipeline(ClustererPipeline):
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -459,6 +484,24 @@ class SklearnClustererPipeline(ClustererPipeline):
             "capability:multithreading": False,
         }
         self.set_tags(**tags_to_set)
+
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.

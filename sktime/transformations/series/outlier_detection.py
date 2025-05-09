@@ -24,13 +24,13 @@ class HampelFilter(BaseTransformer):
     Parameters
     ----------
     window_length : int, optional (default=10)
-        Lenght of the sliding window
-    n_sigma : int, optional
-        Defines how strong a point must outly to be an "outlier", by default 3
-    k : float, optional
+        Length of the sliding window
+    n_sigma : int, optional (default=3)
+        Defines how strong a point must outly to be an "outlier"
+    k : float, optional (default = 1.4826)
         A constant scale factor which is dependent on the distribution,
         for Gaussian it is approximately 1.4826, by default 1.4826
-    return_bool : bool, optional
+    return_bool : bool, optional (default=False)
         If True, outliers are filled with True and non-outliers with False.
         Else, outliers are filled with np.nan.
 
@@ -41,7 +41,7 @@ class HampelFilter(BaseTransformer):
     References
     ----------
     .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
-       Journal of the American Statistical Association, 69, 382–393, 1974
+       Journal of the American Statistical Association, 69, 382-393, 1974
 
     Examples
     --------
@@ -53,6 +53,7 @@ class HampelFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -62,7 +63,7 @@ class HampelFilter(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
     }
@@ -154,7 +155,7 @@ class HampelFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -162,17 +163,21 @@ class HampelFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"window_length": 3}
+        param1 = {"window_length": 3}
+        param2 = {}
+        param3 = {"window_length": 5, "n_sigma": 2, "k": 1.7, "return_bool": True}
+        return [param1, param2, param3]
 
 
 def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
     for i in cv.split(Z):
         cv_window = i[0]
-        cv_median = np.nanmedian(Z[cv_window])
-        cv_sigma = k * np.nanmedian(np.abs(Z[cv_window] - cv_median))
+        cv_median = np.nanmedian(Z.iloc[cv_window])
+        cv_sigma = k * np.nanmedian(np.abs(Z.iloc[cv_window] - cv_median))
 
         is_start_window = cv_window[-1] == cv.window_length - 1
         is_end_window = cv_window[-1] == len(Z) - 1
@@ -188,7 +193,8 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
             idx_range = [cv_window[0] + half_window_length]
 
         for idx in idx_range:
-            Z.iloc[idx] = _compare(
+            loc_idx = Z.index[idx]  # convert to loc to avoid write on copy
+            Z.loc[loc_idx] = _compare(
                 value=Z.iloc[idx],
                 cv_median=cv_median,
                 cv_sigma=cv_sigma,

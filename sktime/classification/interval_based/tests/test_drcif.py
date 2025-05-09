@@ -1,4 +1,5 @@
 """DrCIF test code."""
+
 import pytest
 
 from sktime.classification.interval_based import DrCIF

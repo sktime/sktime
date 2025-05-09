@@ -14,6 +14,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.panel import check_X
 
@@ -41,7 +42,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {"passthrough", "drop"}
-            Estimator must support `fit` and `transform`. Special-cased
+            Estimator must support ``fit`` and ``transform``. Special-cased
             strings "drop" and "passthrough" are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
@@ -52,19 +53,19 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             by name.  A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
-            A callable is passed the input data `X` and can return any of the
+            A callable is passed the input data ``X`` and can return any of the
             above.
     remainder : {"drop", "passthrough"} or estimator, default "drop"
-        By default, only the specified columns in `transformations` are
+        By default, only the specified columns in ``transformations`` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``"drop"``).
         By specifying ``remainder="passthrough"``, all remaining columns that
-        were not specified in `transformations` will be automatically passed
+        were not specified in ``transformations`` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformations.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support ``fit`` and ``transform``.
     sparse_threshold : float, default = 0.3
         If the output of the different transformations contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
@@ -87,7 +88,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     ----------
     transformers_ : list
         The collection of fitted transformations as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
+        (name, fitted_transformer, column). ``fitted_transformer`` can be an
         estimator, "drop", or "passthrough". In case there were no columns
         selected, this will be the unfitted transformer.
         If there are remaining columns, the final element is a tuple of the
@@ -101,12 +102,15 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         Keys are transformer names and values are the fitted transformer
         objects.
     sparse_output_ : bool
-        Boolean flag indicating wether the output of ``transform`` is a
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
-        of the individual transformations and the `sparse_threshold` keyword.
+        of the individual transformations and the ``sparse_threshold`` keyword.
     """
 
-    _tags = {"python_dependencies": "scipy"}
+    _tags = {
+        "authors": ["mloning", "sajaysurya", "fkiraly"],
+        "python_dependencies": ["scipy", "scikit-learn<1.4"],
+    }
 
     def __init__(
         self,
@@ -117,6 +121,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+        self.preserve_dataframe = preserve_dataframe
+
         warn(
             "ColumnTransformer is not fully compliant with the sktime interface "
             "and will be replaced by sktime.transformations.ColumnEnsembleTransformer "
@@ -127,6 +133,20 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
+
+        if not sklearn_lneq_14:
+            raise ModuleNotFoundError(
+                "ColumnTransformer is not fully compliant with the sktime interface "
+                "and distributed only for reasons of downwards compatibility. "
+                "ColumnTransformer requires scikit-learn<1.4 "
+                "to be present in the python environment, with version, "
+                "due to reliance on sklearn.compose.ColumnTransformer, "
+                "and is not compatible with scikit-learn>=1.4. "
+                "Please use sktime.transformations.ColumnEnsembleTransformer instead, "
+                "if you have scikit-learn>=1.4 installed."
+            )
+
         super().__init__(
             transformers=transformers,
             remainder=remainder,
@@ -135,7 +155,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             transformer_weights=transformer_weights,
         )
         BaseTransformer.__init__(self)
-        self.preserve_dataframe = preserve_dataframe
+
         self._is_fitted = False
 
     def _hstack(self, Xs):
@@ -175,8 +195,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame)."
                 )
 
     @classmethod
@@ -188,19 +208,36 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        TRANSFORMERS = [
-            ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+        TRANSFORMERS_1 = [
+            ("transformer1", ExponentTransformer(power=2)),
+            ("transformer2", ExponentTransformer(power=3)),
+        ]
+        TRANSFORMERS_2 = [
+            ("transformer1", ExponentTransformer(power=1)),
+            ("transformer2", Detrender()),
         ]
 
-        return {
-            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-        }
+        return [
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_1
+                ]
+            },
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_2
+                ],
+                "remainder": "passthrough",
+                "preserve_dataframe": False,
+            },
+        ]
 
     def fit(self, X, y=None):
         """Fit the transformer."""
@@ -270,6 +307,7 @@ class ColumnConcatenator(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def _transform(self, X, y=None):
@@ -293,12 +331,15 @@ class ColumnConcatenator(BaseTransformer):
         Xst = pd.DataFrame(X.stack())
         Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
 
-        # the above has the right structure, but the wrong indes
+        # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
-        inst_idx = Xt.index.get_level_values(0)
+        levels = list(range(Xt.index.nlevels - 1))
+        inst_arr = [Xt.index.get_level_values(level) for level in levels]
+        inst_idx = pd.MultiIndex.from_arrays(inst_arr)
+
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
         t_idx = np.concatenate(t_idx)
 
-        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index = pd.MultiIndex.from_arrays(inst_arr + [t_idx])
         Xt.index.names = X.index.names
         return Xt

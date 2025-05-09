@@ -6,10 +6,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.series import _make_series
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("n_timepoints", [49, 1])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [2, 10])
@@ -53,6 +58,10 @@ def test_pivot_sp(sp, index_type, n_timepoints, anchor_side):
             assert not np.isnan(df_pivot.iloc[-1, -1])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("n_timepoints", [49, 1])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [2, 10])
@@ -81,6 +90,10 @@ def test_unpivot_sp(sp, index_type, n_timepoints, anchor_side):
     assert np.all(df_unpivot == df)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
 @pytest.mark.parametrize("n_timepoints", [50, 2])
 @pytest.mark.parametrize("index_type", ["period", "datetime", "range", "int"])
 @pytest.mark.parametrize("sp", [3, 10])

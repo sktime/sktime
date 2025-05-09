@@ -3,8 +3,6 @@
 __all__ = ["ThetaForecaster", "ThetaModularForecaster"]
 __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -17,9 +15,10 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.theta import ThetaLinesTransformer
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.warnings import warn
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -90,12 +89,18 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
         "scitype:y": "univariate",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
@@ -126,7 +131,10 @@ class ThetaForecaster(ExponentialSmoothing):
         """
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
-            warn("`sp` is ignored when `deseasonalise`=False")
+            warn(
+                "`sp` in ThetaForecaster is ignored when `deseasonalise`=False",
+                obj=self,
+            )
 
         if self.deseasonalize:
             self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
@@ -223,7 +231,7 @@ class ThetaForecaster(ExponentialSmoothing):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -233,7 +241,7 @@ class ThetaForecaster(ExponentialSmoothing):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
+        pred_int = BaseForecaster._predict_interval(self, fh=fh, X=X, coverage=coverage)
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -297,22 +305,24 @@ class ThetaForecaster(ExponentialSmoothing):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
         """
         params0 = {}
         params1 = {"sp": 2, "deseasonalize": True}
         params2 = {"deseasonalize": False}
+        params3 = {"initial_level": 0.5}
 
-        return [params0, params1, params2]
+        return [params0, params1, params2, params3]
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
@@ -345,12 +355,12 @@ class ThetaModularForecaster(BaseForecaster):
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
     <sktime.transformations.series.theta>` by modifying the local curvature of
-    the time series using Theta-coefficient values - `theta_values` parameter.
-    Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
+    the time series using Theta-coefficient values - ``theta_values`` parameter.
+    Thansformation gives a pd.DataFrame of shape ``len(input series) * len(theta)``.
 
     The resulting transformed series (Theta-lines) are extrapolated separately.
     The forecasts are then aggregated into one prediction - aunivariate series,
-    of `len(fh)`.
+    of ``len(fh)``.
 
     Parameters
     ----------
@@ -361,8 +371,8 @@ class ThetaModularForecaster(BaseForecaster):
         Theta-lines where theta_value equals 0, and ExponentialSmoothing - where
         theta_value is different from 0.
     theta_values: sequence of float, default=(0,2)
-        Theta-coefficients to use in transformation. If `forecasters` parameter
-        is passed, must be the same length as `forecasters`.
+        Theta-coefficients to use in transformation. If ``forecasters`` parameter
+        is passed, must be the same length as ``forecasters``.
     aggfunc: str, default="mean"
         Must be one of ["mean", "median", "min", "max", "gmean"].
         Calls :func:`_aggregate` of
@@ -409,10 +419,11 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
-        "univariate-only": False,
+        "authors": ["GuzalBulatova", "fkiraly"],
+        "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "python_version": ">3.7",
     }
 
@@ -492,16 +503,16 @@ class ThetaModularForecaster(BaseForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If
             no special parameters are defined for a value, will return
-            `"default"` set.
+            ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test
-            instance, i.e., `MyClass(**params)` or `MyClass(**params[i])`
-            creates a valid test instance. `create_test_instance` uses the first
-            (or only) dictionary in `params`.
+            instance, i.e., ``MyClass(**params)`` or ``MyClass(**params[i])``
+            creates a valid test instance. ``create_test_instance`` uses the first
+            (or only) dictionary in ``params``.
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
@@ -515,7 +526,7 @@ class ThetaModularForecaster(BaseForecaster):
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
 
-        # params1 and params2 invoke ExpoentialSmoothing which requires statsmodels
+        # params1 and params2 invoke ExponentialSmoothing which requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             params = [params0, params1, params2]
         else:

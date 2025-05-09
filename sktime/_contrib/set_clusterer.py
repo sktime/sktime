@@ -1,4 +1,5 @@
 """Set classifier function."""
+
 __author__ = ["TonyBagnall"]
 
 
@@ -11,7 +12,7 @@ def set_clusterer(cls, resample_id=None):
 
     Basic way of creating the clusterer to build using the default settings. This
     set up is to help with batch jobs for multiple problems to facilitate easy
-    reproducability through run_clustering_experiment. You can set up bespoke
+    reproducibility through run_clustering_experiment. You can set up bespoke
     clusterers and pass them to run_clustering_experiment if you prefer. It also
     serves to illustrate the base clusterer parameters
 

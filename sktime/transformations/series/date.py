@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
+
 __author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 
@@ -34,7 +35,7 @@ _RAW_DUMMIES = [
 
 
 class DateTimeFeatures(BaseTransformer):
-    """DateTime feature extraction for use in e.g. tree based models.
+    """DateTime feature extraction, e.g., for use as exogenous data in forecasting.
 
     DateTimeFeatures uses a date index column and generates date features
     identifying e.g. year, week of the year, day of the week.
@@ -73,16 +74,68 @@ class DateTimeFeatures(BaseTransformer):
     manual_selection: str, optional (default=None)
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
-        a specified ts_freq.
-        Examples for possible values:
+        a specified ts_freq. All columns returned are integer based. Dates are presented
+        in DD-MM-YYYY format below.
+        Supported values:
         * None
+        * quarter_of_year
+            1-based index
+            1-(Jan to Mar), 2-(Apr to Jun), 3-(Jul to Sep), 4-(Oct to Dec)
+        * month_of_year
+            1-based offset to January
+            1-January,2-February,...,12-December
+        * week_of_year
+            1-based offset to the first week of an ISO year
         * day_of_year
-        * day_of_month
+            1-based offset to first of January
+            1 is 01-01-YYYY, 2 is 02-01-YYYY and so on.
+        * month_of_quarter
+            1-based index to first month of each quarter(Jan,Apr,Jul,Oct)
+            For the first quarter: 1-January, 2-February, 3-March
+        * week_of_quarter
+            1-based offset to first week of the quarter.
+            The first/last week of the quarter may or may not include 7 days. All other
+            weeks have 7 days.
+            A week is taken to start on Monday.
+            If the month begins on a Monday, then the first seven days upto the next
+            Monday is week 1.
+            Otherwise, week 1 is from the 1st of that month upto the first Monday.
+            Example:
+                If 01-01-YYYY is a Monday,
+                Week 1 : Mon,Tue,Wed,Thu,Fri,Sat,Sun(07-01-YYYY)
+                Week 2 : Mon(08-01-YYYY),Tue,...,Sun
+                If 01-01-YYYY is a Thursday,
+                Week 1 : Thu,Fri,Sat,Sun(04-01-YYYY)
+                Week 2 : Mon(05-01-YYYY),Tue,...,Sun
         * day_of_quarter
+            1-based index
+        * week_of_month
+            1-based index
+            1 indicates the first week of the month.
+            First week includes the first 7 days of the month(01-MM-YYYY to 07-MM-YYYY)
+            2 indicates the second week of the month.
+            Second week includes the next 7 days(08-MM-YYYY to 14-MM-YYYY) and so on.
+        * day_of_month
+            1-based offset to first day of each month
+            1 is 01-MM-YYYY, 2 is 02-MM-YYYY and so on.
+        * day_of_week
+            0-based offset to Monday
+            0-Monday,1-Tuesday,...,6-Sunday
+        * hour_of_week
+            0-based offset to Monday(00:00:00+00:00)
+        * hour_of_day
+            0-based offset to 00:00:00+00:00
+        * minute_of_hour
+            0-based offset to 00:00:00
+        * second_of_minute
+            0-based offset to 00:00:00
+        * millisecond_of_second
+            0-based offset to 00:00:00.0000
         * is_weekend
+            1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`.
+        Keep original columns in X passed to ``.transform()``.
 
     Examples
     --------
@@ -90,12 +143,12 @@ class DateTimeFeatures(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
 
-    Returns columns `y`, `year`, `month_of_year`
+    Returns columns ``y``, ``year``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M")
     >>> y_hat = transformer.fit_transform(y)
 
-    Returns columns `y`, `month_of_year`
+    Returns columns ``y``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
     >>> y_hat = transformer.fit_transform(y)
@@ -117,6 +170,13 @@ class DateTimeFeatures(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["danbartl", "KishManani", "VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -135,7 +195,6 @@ class DateTimeFeatures(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
     def __init__(
@@ -241,8 +300,9 @@ class DateTimeFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"feature_scope": "minimal"}
         params2 = {"feature_scope": "efficient", "keep_original_columns": True}
@@ -364,9 +424,9 @@ def _prep_dummies(DUMMIES):
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    DUMMIES.loc[
-        DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
-    ] = "is_weekend"
+    DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
+        "is_weekend"
+    )
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)

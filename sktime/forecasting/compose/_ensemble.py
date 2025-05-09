@@ -47,6 +47,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+
     method : str, optional, default="feature-importance"
         Strategy used to compute weights. Available choices:
 
@@ -57,6 +58,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -104,9 +106,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "scitype:y": "univariate",
     }
 
@@ -119,14 +122,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         random_state=None,
         n_jobs=None,
     ):
-        super().__init__(
-            forecasters=forecasters,
-            n_jobs=n_jobs,
-        )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
+
+        super().__init__(
+            forecasters=forecasters,
+            n_jobs=n_jobs,
+        )
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -144,7 +148,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        _, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
         if X is not None:
@@ -225,7 +229,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -270,15 +274,20 @@ def _get_weights(regressor):
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
 
-    Overview: Input one series of length `n` and EnsembleForecaster performs
-    fitting and prediction for each estimator passed in `forecasters`. It then
-    applies `aggfunc` aggregation function by row to the predictions dataframe
+    Overview: Input one series of length ``n`` and EnsembleForecaster performs
+    fitting and prediction for each estimator passed in ``forecasters``. It then
+    applies ``aggfunc`` aggregation function by row to the predictions dataframe
     and returns final prediction - one series.
 
     Parameters
     ----------
-    forecasters : list of (str, estimator) tuples
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
+
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -310,22 +319,49 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
 
+        fc = self._parse_fc_multiplicities(forecasters)
+
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs, fc_alt=fc)
+
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
-        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+
+    def _parse_fc_multiplicities(self, forecasters):
+        """Parse forecasters with multiplicities.
+
+        Turns tuples (name, estimator, count) into list of (name, estimator) tuples.
+        """
+        fc = []
+        for forecaster in forecasters:
+            if len(forecaster) <= 2:
+                # Handle the (str, est) tuple
+                fc.append(forecaster)
+            elif len(forecaster) == 3:
+                # Handle the (str, est, num_replicates) tuple
+                name, estimator, num_replicates = forecaster
+                fc.extend([(name, estimator)] * num_replicates)
+            else:
+                msg = (
+                    "Error in EnsembleForecaster construction: "
+                    "forecasters argument must be as list of "
+                    "estimator, (str, estimator) or (str, estimator, count) tuples."
+                )
+                raise ValueError(msg)
+        return fc
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -343,8 +379,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters = self._check_forecasters()
-        self._fit_forecasters(forecasters, y, X, fh)
+        self._fit_forecasters(None, y, X, fh)
         return self
 
     def _predict(self, fh, X):
@@ -362,10 +397,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             will be of same mtype as y in _fit
             Ensembled predictions
         """
-        names, _ = self._check_forecasters()
+        names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = y_pred.groupby(level=1, axis=1).agg(
-            _aggregate, self.aggfunc, self.weights
+        y_pred = (
+            y_pred.T.groupby(level=1)
+            .agg(
+                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
+                self.aggfunc,
+                self.weights,
+            )
+            .T
         )
         return y_pred
 
@@ -377,7 +418,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -389,13 +430,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # univariate case
         FORECASTER = NaiveForecaster()
-        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
         # test multivariate case, i.e., ensembling multiple variables at same time
         FORECASTER = DirectReductionForecaster.create_test_instance()
-        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        return params
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        return [params0, params1, params2]
 
 
 def _aggregate(y, aggfunc, weights):

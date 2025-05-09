@@ -16,23 +16,24 @@ from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
 class TrendForecaster(BaseForecaster):
     r"""Trend based forecasts of time series data, regressing values on index.
 
-    Uses a `sklearn` regressor specified by the `regressor` parameter
+    Uses an ``sklearn`` regressor specified by the ``regressor`` parameter
     to perform regression on time series values against their corresponding indices,
     providing trend-based forecasts:
 
-    In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
+    In ``fit``, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
     where :math:`v_i` are values and :math:`t_i` are time stamps,
-    fits an `sklearn` model :math:`v_i = f(t_i) + \epsilon_i`, where `f` is
-    the model fitted when `regressor.fit` is passed `X` = vector of :math:`t_i`,
-    and `y` = vector of :math:`v_i`.
+    fits an ``sklearn`` model :math:`v_i = f(t_i) + \epsilon_i`, where :math:`f` is
+    the model fitted when ``regressor.fit`` is passed ``X`` = vector of :math:`t_i`,
+    and ``y`` = vector of :math:`v_i`.
 
-    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(t_*)`,
-    where :math:`f` is the function as fitted above in `fit`.
+    In ``predict``, for a new time point :math:`t_*`, predicts :math:`f(t_*)`,
+    where :math:`f` is the function as fitted above in ``fit``.
 
-    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+    Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
+    with default parameters.
 
-    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
-    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
+    of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
     coefficients are in units of (full) periods since start of 1970.
 
     Parameters
@@ -40,6 +41,11 @@ class TrendForecaster(BaseForecaster):
     regressor : estimator object, default = None
         Define the regression model type. If not set, will default to
          sklearn.linear_model.LinearRegression
+
+    Attributes
+    ----------
+    regressor_ : sklearn regressor estimator object
+        The fitted regressor object. Clone of ``regressor``.
 
     Examples
     --------
@@ -53,9 +59,11 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
+        "maintainers": ["tensorflow-as-tf"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, regressor=None):
@@ -124,15 +132,16 @@ class TrendForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.ensemble import RandomForestRegressor
 

@@ -1,4 +1,5 @@
 """Test trend forecasters."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly"]
@@ -9,11 +10,17 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
 from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_get_X_numpy():
     """Test _get_X_numpy_int_from_pandas converts to int/float as expected."""
     y = load_airline()
@@ -69,6 +76,10 @@ def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def _test_trend(degree, with_intercept):
     """Check trend, helper function."""
     y = make_forecasting_problem()
@@ -82,6 +93,10 @@ def _test_trend(degree, with_intercept):
     np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("degree", [1, 3])
 @pytest.mark.parametrize("with_intercept", [True, False])
 def test_trend(degree, with_intercept):
@@ -90,11 +105,19 @@ def test_trend(degree, with_intercept):
 
 
 # zero trend does not work without intercept
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_zero_trend():
     """Test PolynomialTrendForecaster with degree zero."""
     _test_trend(degree=0, with_intercept=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PolynomialTrendForecaster, _get_X_numpy_int_from_pandas),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_constant_trend():
     """Test expected output from constant trend."""
     y = pd.Series(np.arange(30))
@@ -106,6 +129,12 @@ def test_constant_trend():
     np.testing.assert_array_almost_equal(y, y_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [PolynomialTrendForecaster, TrendForecaster, _get_X_numpy_int_from_pandas]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_trendforecaster_with_datetimeindex():
     """Test PolyonmialTrendForecaster with DatetimeIndex, see #4131."""
     df = load_airline()
@@ -116,3 +145,29 @@ def test_trendforecaster_with_datetimeindex():
 
     f = TrendForecaster()
     f.fit(df)
+
+
+def test_predict_var():
+    """Unit test for predict_interval method in PolynomialTrendForecaster.
+    We only need to test _predict_var() since the residuals are assumed normal.
+    The test:
+    Create series IID N(0,1), do a quadratic fit, and confirm Var(residuals) ~ 1
+    """
+    N = 500
+    data = np.random.normal(0, 1, N)
+    date_index = pd.date_range(start="1970-01-01", periods=N, freq="D")
+    df = pd.DataFrame(data, index=date_index, columns=["x"])
+    df.at[date_index[42], "x"] = 1
+    df.at[date_index[43], "x"] = -1
+
+    forecaster = PolynomialTrendForecaster(degree=2, prediction_intervals=False)
+    forecaster.fit(df)
+    residuals = forecaster.predict_residuals(y=df)
+    s = np.std(residuals)
+    y = df / s
+
+    forecaster = PolynomialTrendForecaster(degree=2, prediction_intervals=True)
+    forecaster.fit(y)
+    fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
+    a = forecaster.predict_var(fh=fh)
+    np.testing.assert_allclose(a.iloc[0, 0], 1.0, rtol=0.05)

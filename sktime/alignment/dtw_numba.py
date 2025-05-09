@@ -110,18 +110,24 @@ class AlignerDtwNumba(BaseAligner):
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.alignment.dtw_numba import AlignerDtwNumba
     >>>
-    >>> X0 = _make_series()  # doctest: +SKIP
-    >>> X1 = _make_series()  # doctest: +SKIP
+    >>> X0 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
+    >>> X1 = _make_series(return_mtype="pd.DataFrame")  # doctest: +SKIP
     >>> d = AlignerDtwNumba(weighted=True, derivative=True)  # doctest: +SKIP
     >>> align = d.fit([X0, X1]).get_alignment()  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "capability:unequal_length": False,  # can align sequences of unequal length?
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -250,7 +256,7 @@ class AlignerDtwNumba(BaseAligner):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for aligners.
 
         Returns
@@ -258,8 +264,9 @@ class AlignerDtwNumba(BaseAligner):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params0 = {}
         params1 = {"weighted": True}

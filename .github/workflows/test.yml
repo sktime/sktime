@@ -8,22 +8,51 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-quality:
+    name: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
+      - name: repository checkout step
+        uses: actions/checkout@v4
+
+      - name: python environment step
+        uses: actions/setup-python@v5
         with:
-          output: " "
-      - name: List changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v3.0.0
+          python-version: "3.11"
+
+      - name: install pre-commit
+        run: python3 -m pip install pre-commit
+
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          extra_args: --files ${{ steps.file_changes.outputs.files}}
-      - name: Check for missing init files
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tr '\n' ' ')
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+
+      - name: Print changed files
+        run: |
+          echo "Changed files:" && echo "$CHANGED_FILES" | tr ' ' '\n'
+
+      - name: Run pre-commit on changed files
+        run: |
+          if [ -n "$CHANGED_FILES" ]; then
+            pre-commit run --color always --files $CHANGED_FILES --show-diff-on-failure
+          else
+            echo "No changed files to check."
+          fi
+
+      - name: check missing __init__ files
+
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
@@ -33,7 +62,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,binder,dev,mlflow,dl]
+      - name: Run example notebooks
+        run: build_tools/run_examples.sh
+        shell: bash
+
+  run-blogpost-examples:
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Install dependencies
@@ -41,16 +87,35 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .[all_extras,binder,dev,mlflow]
       - name: Run example notebooks
-        run: build_tools/run_examples.sh
+        run: build_tools/run_blogposts.sh
         shell: bash
 
-  test-nodevdeps:
+  detect-package-change:
     needs: code-quality
+    name: detect package changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      sktime: ${{ steps.filter.outputs.sktime }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sktime:
+              - sktime/**
+              - pyproject.toml
+
+  test-nodevdeps:
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -65,12 +130,13 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: code-quality
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -84,7 +150,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+        run: make test_softdeps
 
   test-nosoftdeps-full:
     needs: test-nosoftdeps
@@ -97,7 +163,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -112,7 +178,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps_full
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
     needs: test-nosoftdeps
@@ -120,7 +186,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
@@ -134,11 +200,11 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_mlflow
+        run: make test_mlflow
 
   test-cython-estimators:
     needs: test-nosoftdeps
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -147,14 +213,15 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OS packages
-        run: brew install libomp
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
@@ -164,68 +231,61 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
+        run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
-
-  test-windows:
+  detect:
     needs: test-nosoftdeps
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false  # to not fail all combinations if just one fail
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-
+    name: detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      datasets: ${{ steps.filter.outputs.datasets }}
+      pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: actions/checkout@v4
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          channels: anaconda, conda-forge,
+          filters: |
+            datasets:
+              - sktime/base/**
+              - sktime/datasets/**
+            pyproject:
+              - pyproject.toml
 
-      - run: conda --version
-      - run: which python
+  test-base:
+    needs: test-nosoftdeps
+    name: base
+    uses: ./.github/workflows/test_base.yml
+    secrets: inherit
 
-      - name: Fix windows paths
-        if: ${{ runner.os == 'Windows' }}
-        run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+  test-module:
+    needs: test-nosoftdeps
+    name: module
+    uses: ./.github/workflows/test_module.yml
+    secrets: inherit
 
-      - name: Install conda libpython
-        run: conda install -c anaconda libpython
+  test-other:
+    needs: test-nosoftdeps
+    name: other
+    uses: ./.github/workflows/test_other.yml
+    secrets: inherit
 
-      - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras_pandas2,dev]
+  test-datasets:
+    needs: detect
+    name: datasets
+    if: ${{ needs.detect.outputs.datasets == 'true' }}
+    uses: ./.github/workflows/test_datasets.yml
+    secrets: inherit
 
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Show available branches
-        run: git branch -a
-
-      - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          python -m pytest
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
-
-  test-unix:
+  test-full:
     needs: test-nosoftdeps
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macos-13, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -235,16 +295,19 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras_pandas2,dev] --no-cache-dir
+        shell: bash
+        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
@@ -253,17 +316,14 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
+        run: make test_without_datasets
 
   test-unix-pandas1:
     needs: test-nosoftdeps
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -273,7 +333,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -282,7 +342,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,pandas1] --no-cache-dir
+          python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
@@ -291,7 +351,4 @@ jobs:
         run: git branch -a
 
       - name: Run tests
-        run: make test
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
+        run: make test_without_datasets

@@ -13,6 +13,7 @@ __author__ = [
     "jasonlines",
     "achieveordie",
     "ciaran-g",
+    "jonathanbechtel",
 ]
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "load_macroeconomic",
     "load_unit_test_tsf",
     "load_covid_3month",
+    "load_tecator",
 ]
 
 import os
@@ -53,17 +55,23 @@ from sktime.datasets._data_io import (
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
-    load_tsf_to_dataframe,
+    _reduce_memory_usage,
 )
+from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
 def load_UCR_UEA_dataset(
-    name, split=None, return_X_y=True, return_type=None, extract_path=None
+    name,
+    split=None,
+    return_X_y=True,
+    return_type=None,
+    extract_path=None,
+    y_dtype="str",
 ):
     """Load dataset from UCR UEA time series archive.
 
@@ -84,24 +92,35 @@ def load_UCR_UEA_dataset(
     split : None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By default it
         loads both into a single dataset, otherwise it looks only for files of the
-        format <name>_TRAIN.ts or <name>_TEST.ts.
+        format ``<name>_TRAIN.ts`` or ``<name>_TEST.ts``.
+
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+
     return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
         Memory data format specification to return X in, None = "nested_univ" type.
         str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        * for list of mtypes, see ``datatypes.MTYPE_REGISTER``
+        * for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
         commonly used specifications:
-            "nested_univ: nested pd.DataFrame, pd.Series in cells
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+
+        * "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+        * "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+        * "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        * "nested_univ: nested pd.DataFrame, pd.Series in cells
+
         Exception is raised if the data cannot be stored in the requested type.
+
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
-        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
+        looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
+
+        e.g. ``C:/Temp`` or relative, e.g. ``Temp`` or ``./Temp``.
+    y_dtype: str, optional(default='str')
+        This dtype of the target variable.
+
 
     Returns
     -------
@@ -119,7 +138,76 @@ def load_UCR_UEA_dataset(
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
-    return _load_dataset(name, split, return_X_y, return_type, extract_path)
+    return _load_dataset(
+        name, split, return_X_y, return_type, extract_path, y_dtype=y_dtype
+    )
+
+
+def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float"):
+    """Load the Tecator time series regression problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.\
+    y_dtype: float, optional(default='float')
+        This dtype of the target variable.
+
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification ``return_type``
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The target values for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_tecator
+    >>> X, y = load_tecator()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      100
+    Train cases:        172
+    Test cases:         43
+
+    The purpose of this dataset is to measure the fat content of meat based off its near
+      infrared absorbance spectrum.
+    The absorbance spectrum is measured in the wavelength range of 850 nm to 1050 nm.
+    The fat content is measured by standard chemical analysis methods.
+    The dataset contains 215 samples of meat, each with 100 spectral measurements.
+    For more information see:
+    https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+
+    References
+    ----------
+    [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
+    , Analytical Chemistry 64 (1992), p 545-551.
+    [2] H.H.Thodberg, "Ace of Bayes: Application of Neural Networks with Pruning"
+    Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
+    """
+    name = "Tecator"
+    return _load_dataset(
+        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
+    )
 
 
 def load_plaid(split=None, return_X_y=True, return_type=None):
@@ -149,7 +237,7 @@ def load_plaid(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -189,7 +277,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -257,7 +345,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -315,7 +403,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -498,7 +586,7 @@ def load_arrow_head(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -563,7 +651,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -627,7 +715,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -636,6 +724,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     Raises
     ------
     ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
+
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -667,6 +756,21 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
 
 # forecasting data sets
+def _coerce_to_monthly_period_index(ix):
+    """Coerce a date index to a monthly period index.
+
+    Parameters
+    ----------
+    ix : pd.Index
+
+    Returns
+    -------
+    pd.PeriodIndex, with frequency "M", and name "Period"
+        coerced index ix
+    """
+    return pd.PeriodIndex(ix, freq="M", name="Period")
+
+
 def load_shampoo_sales():
     """Load the shampoo sales univariate time series dataset for forecasting.
 
@@ -701,7 +805,7 @@ def load_shampoo_sales():
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of shampoo sales"
     return y
 
@@ -780,7 +884,7 @@ def load_lynx():
 
     Notes
     -----
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This
+    The annual numbers of lynx trappings for 1821-1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
     Bay Company. The dataset was
@@ -802,9 +906,9 @@ def load_lynx():
 
     .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
     work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new
+    annual Canadian lynx trappings for the years 1821-1934 and a new
     analysis. Journal of the Royal Statistical Society
-    series A, 140, 411–431.
+    series A, 140, 411-431.
     """
     name = "Lynx"
     fname = name + ".csv"
@@ -853,7 +957,7 @@ def load_airline():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of airline passengers"
     return y
 
@@ -944,7 +1048,7 @@ def load_gun_point_segmentation():
     name = "GunPoint"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -984,7 +1088,7 @@ def load_electric_devices_segmentation():
     name = "ElectricDevices"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -1033,7 +1137,7 @@ def load_PBS_dataset():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of scripts"
     return y
 
@@ -1060,7 +1164,7 @@ def load_macroeconomic():
     Frequency:          Quarterly
     Number of cases:    1
 
-    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
+    This data is kindly wrapped via ``statsmodels.datasets.macrodata``.
 
     References
     ----------
@@ -1129,7 +1233,7 @@ def load_solar(
     """Get national solar estimates for GB from Sheffield Solar PV_Live API.
 
     This function calls the Sheffield Solar PV_Live API to extract national solar data
-    for the GB eletricity network. Note that these are estimates of the true solar
+    for the GB electricity network. Note that these are estimates of the true solar
     generation, since the true values are "behind the meter" and essentially
     unknown.
 
@@ -1149,6 +1253,11 @@ def load_solar(
     api_version : string or None, default="v4"
         API version to call. If None then a stored sample of the data is loaded.
 
+    Returns
+    -------
+    y : pd.Series
+        The solar generation time-series, as requested by parameters, see above
+
     References
     ----------
     .. [1] https://www.solar.sheffield.ac.uk/pvlive/
@@ -1163,7 +1272,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30T")
+    y = y.asfreq("30MIN")
     y = y.squeeze("columns")
     if api_version is None:
         return y
@@ -1226,7 +1335,7 @@ def load_solar(
                 return y
 
 
-def load_covid_3month(split=None, return_X_y=True):
+def load_covid_3month(split=None, return_X_y=True, y_dtype="float"):
     """Load dataset of last three months confirmed covid cases.
 
     Parameters
@@ -1238,6 +1347,8 @@ def load_covid_3month(split=None, return_X_y=True):
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
+    y_dtype: float, optional(default='float')
+        This dtype of the target variable.
 
     Returns
     -------
@@ -1270,7 +1381,7 @@ def load_covid_3month(split=None, return_X_y=True):
     =Covid3Month
     """
     name = "Covid3Month"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, y_dtype=y_dtype)
 
 
 def load_forecastingdata(
@@ -1300,7 +1411,7 @@ def load_forecastingdata(
     return_type : str - "pd_multiindex_hier", "default_tsf" (default), or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
-        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
         - "default_tsf" = container that faithfully mirrors tsf format from the original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.
@@ -1311,7 +1422,7 @@ def load_forecastingdata(
         examples/AA_datatypes_and_datasets.ipynb
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
         e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
@@ -1344,15 +1455,12 @@ def load_forecastingdata(
         # valid dataset names for classification, regression, forecasting datasets repo
         if name not in list(tsf_all_datasets):
             raise ValueError(
-                {name}
-                + " is not a valid dataset name. \
-                    List of valid dataset names can be found at \
-                    sktime.datasets.tsf_dataset_names.tsf_all_datasets"
+                f"Error in load_forecastingdata, Invalid dataset name = {name}."
             )
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-        # This also tests the validitiy of the URL, can't rely on the html
+        # This also tests the validity of the URL, can't rely on the html
         # status code as it always returns 200
         try:
             _download_and_extract(
@@ -1370,3 +1478,291 @@ def load_forecastingdata(
     return load_tsf_to_dataframe(
         path_to_file, replace_missing_vals, value_column_name, return_type
     )
+
+
+def load_m5(
+    extract_path=None,
+    include_events=False,
+    merged=True,
+    test=False,
+):
+    r"""Fetch M5 dataset from https://zenodo.org/records/12636070 .
+
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
+    in the standard .csv format and loaded into an sktime-compatible in-memory
+    format (pd_multiindex_hier). For additional information on the dataset,
+    including its structure and contents, refer to `Notes` section.
+
+    Parameters
+    ----------
+    extract_path : str, optional (default=None)
+        If provided, the path should use the appropriate path separators for the
+        operating system.(e.g., forward slashes '/' for Unix-based systems,
+        backslashes '\\' for Windows).
+        If `extract_path` is provided:
+            - Check if the required files are present at the given `extract_path`.
+            - If files are not found, check if the directory "m5-forecasting-accuracy"
+              exists within the `extract_path`. Useful when the funciton has already
+              run previously with the same path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder in the `extract_path`.
+            - If the directory exists, takes the path to the existing directory.
+
+        if `extract_path` is None:
+            - Check if the directory "m5-forecasting-accuracy" exists within the module
+              level.
+            - If the directory exists, takes path to current directory.
+              Useful when the funciton has already run previously without any path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder at the module level.
+
+    include_events : bool, optional (default=False)
+        If `True`, the resulting dataset will include additional columns
+        related to events. Including these columns allows for a richer
+        dataset that can be used to analyze the impact of events on sales.
+        If `False`, the dataset will exclude these columns, providing a
+        more streamlined version of the data.
+
+    merged : bool, optional (default=True)
+        Determines the format of the output:
+        - If `True`, the function returns a single merged dataset.
+        - If `False`, the function returns three separate datasets
+           `sales_train_validation`, `sell_prices`, and `calendar`.
+
+    test : bool, optional (default=False)
+        Loads a smaller part of the dataset which doesn't include events
+        for testing purposes. This should not be used in standard usage
+        but might be useful for developers running tests.
+
+    Returns
+    -------
+    pd.DataFrame or tuple of pd.DataFrame
+        - If `merged_dataset` is `True`
+            data : pd.DataFrame of sktime type pd_multiindex_hier
+                The preprocessed dataframe containing the time series.
+
+        - If `merged_dataset` is `False`, returns a tuple of three dataframes:
+            sales_train_validation : pd.DataFrame of sktime type pd_multiindex_hier
+            sell_prices : pd.DataFrame
+            calander : pd.DataFrame
+
+    Dataset Description
+    -------------------
+    - **Number of Rows**: Approximately 58 million rows (for the full dataset).
+    - **Number of Columns**: Varies based on `include_events` parameter.
+      - Without events: 9 columns.
+      - With events: 13 columns.
+
+    Notes
+    -----
+    The dataset consists of three main files:
+    - sales_train_validation.csv: daily sales data for each product and store
+    - sell_prices.csv: price data for each product and store
+    - calendar.csv: calendar information including events
+
+    The dataframe will have a multi-index with the following levels:
+    - state_id
+    - store_id
+    - cat_id
+    - dept_id
+    - date
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_m5  # doctest: +SKIP
+    >>> data = load_m5()  # doctest: +SKIP
+    >>> data.head()  # doctest: +SKIP
+    """
+    required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
+
+    if extract_path is not None:
+        if all(
+            os.path.exists(os.path.join(extract_path, file)) for file in required_files
+        ):
+            # checks if the required files are present at given extract_path
+            path_to_data_dir = extract_path
+
+        else:
+            if not os.path.exists(
+                os.path.join(extract_path, "m5-forecasting-accuracy")
+            ):
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+                _download_and_extract(
+                    "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                    extract_path=extract_path,
+                )
+
+            else:
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+    else:
+        extract_path = MODULE
+        if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
+            path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+            _download_and_extract(
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                extract_path=extract_path,
+            )
+        else:
+            path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
+
+    sales_train_validation = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
+    )
+
+    sell_prices = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sell_prices.csv")
+    )
+
+    calendar = _reduce_memory_usage(pd.read_csv(path_to_data_dir + "/calendar.csv"))
+
+    def create_series_data(df, cal, sp, include_events=False, test=False):
+        """Create the series data.
+
+        Parameters
+        ----------
+        df : pd.Dataframe
+            takes the sales_train_validation dataframe by default.
+        cal : pd.Dataframe
+            takes the calendar dataframe by default.
+        sp : pd.Dataframe
+            takes the sell_prices dataframe by default.
+        include_events : bool, optional (default=False)
+            Includes the event names and types in the dataset if `True`.
+        test : bool, optional (default = False)
+            useful when running the tests
+
+        Returns
+        -------
+        df4 : pd.Dataframe
+            the merged dataframe
+        """
+        if test:
+            df = df[:1]
+        # melt
+        df1 = pd.melt(
+            df,
+            id_vars=[
+                "id",
+                "item_id",
+                "dept_id",
+                "cat_id",
+                "store_id",
+                "state_id",
+            ],
+            var_name="day",
+            value_name="sales",
+        ).dropna()
+
+        # add calender info
+        df2 = df1.merge(cal, left_on="day", right_on="d", how="left")
+
+        # select useful columns
+        if include_events:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
+                    "event_name_1",
+                    "event_name_2",
+                    "event_type_1",
+                    "event_type_2",
+                ]
+            ]
+        else:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
+                ]
+            ]
+
+        df4 = df3.merge(sp, on=["store_id", "item_id", "wm_yr_wk"], how="left")
+
+        df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
+        df4["date"] = pd.DatetimeIndex(df4["date"])
+        df4["date"] = df4["date"].dt.to_period("D")
+        df4.drop(columns=["item_id"], inplace=True)
+
+        return df4
+
+    if merged:
+        if test:
+            data = create_series_data(
+                sales_train_validation,
+                calendar,
+                sell_prices,
+                include_events=False,
+                test=True,
+            )
+            data.set_index(
+                ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+            )
+            return data
+
+        if include_events:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=True
+            )
+
+        else:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=False
+            )
+
+        data.set_index(
+            ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+        )
+
+        data = data.sort_index()
+
+        return data
+
+    else:
+        start_date = pd.to_datetime("2011-01-29")
+        date_range = pd.date_range(start=start_date, periods=1941)
+        date_df = pd.DataFrame(date_range, columns=["date"])
+
+        sales_train_validation = sales_train_validation.melt(
+            id_vars=["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"],
+            var_name="d",
+            value_name="sales",
+        )
+
+        sales_train_validation["d"] = (
+            sales_train_validation["d"].str.extract(r"(\d+)").astype(int)
+        )
+        date_df["d"] = range(1, 1942)
+        sales_train_validation = sales_train_validation.merge(date_df, on="d")
+
+        sales_train_validation = sales_train_validation.drop(columns=["d"])
+
+        sales_train_validation.set_index(
+            ["state_id", "store_id", "dept_id", "cat_id", "item_id", "date"],
+            inplace=True,
+        )
+        return sales_train_validation, sell_prices, calendar

@@ -1,4 +1,5 @@
 """Functions to test the functions in experiments.py."""
+
 import pytest
 
 from sktime.benchmarking.experiments import (
@@ -8,11 +9,13 @@ from sktime.benchmarking.experiments import (
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("numba", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_run_clustering_experiment(tmp_path):
@@ -44,7 +47,8 @@ def test_run_clustering_experiment(tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not run_test_module_changed("sktime.benchmarking")
+    or not _check_soft_dependencies("numba", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_run_classification_experiment(tmp_path):

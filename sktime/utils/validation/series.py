@@ -311,5 +311,5 @@ def check_consistent_index_type(a, b):
     else:
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
-        if not type(a) is type(b):  # noqa
+        if type(a) is not type(b):
             raise TypeError(msg)

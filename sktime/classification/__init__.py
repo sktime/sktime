@@ -1,4 +1,5 @@
 """Classifier Base."""
+
 __all__ = [
     "BaseClassifier",
 ]

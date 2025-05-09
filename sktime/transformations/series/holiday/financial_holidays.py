@@ -1,9 +1,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformer to add binary column based on financial market holidays."""
+
 import pandas
 
 from sktime.transformations.base import BaseTransformer
 
+__all__ = ["FinancialHolidaysTransformer"]
 __author__ = ["yarnabrina"]
 
 
@@ -67,6 +69,13 @@ class FinancialHolidaysTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "yarnabrina",
+        "maintainers": "yarnabrina",
+        "python_dependencies": ["holidays"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -78,9 +87,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "enforce_index_type": [pandas.DatetimeIndex, pandas.PeriodIndex],
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
-        "python_version": ">=3.8",
-        "python_dependencies": ["holidays"],
+        "capability:missing_values": True,
     }
 
     def __init__(self, market, years=None, expand=True, observed=True, name=None):
@@ -146,19 +153,21 @@ class FinancialHolidaysTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
+
+        Raises
+        ------
+        ValueError
+            If an unknown parameter_set is provided.
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
 
-        params = [{"market": "XNYS"}]
+        params = [{"market": "XNYS"}, {"market": "ECB"}]
 
         return params
-
-
-__all__ = ["FinancialHolidaysTransformer"]

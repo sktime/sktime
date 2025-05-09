@@ -52,12 +52,12 @@ def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_universe=None):
     anchor_mtype : mtype string in convert_dict
     convert_dict : conversion dictionary with entries of converter signature
         see docstring of datatypes._convert
-    mtype_universe : iterable of mtype strings in convert_dict, coercable to list or set
+    mtype_universe : iterable of mtype strings in convert_dict, coercible to list or set
 
     Returns
     -------
     reference to convert_dict
-    CAVEAT: convert_dict passed to this function gets mutated, this is a referene
+    CAVEAT: convert_dict passed to this function gets mutated, this is a reference
     """
     keys = convert_dict.keys()
     scitype = list(keys)[0][2]

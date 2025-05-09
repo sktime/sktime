@@ -1,11 +1,17 @@
 """Testing multiindex utilities."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.utils.multiindex import flatten_multiindex, rename_multiindex
+from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.multiindex import apply_split, flatten_multiindex, rename_multiindex
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
 def test_flatten_multiindex():
     """Test flatten_multiindex contract."""
     mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
@@ -18,6 +24,10 @@ def test_flatten_multiindex():
     assert (expected == flat).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
 def test_rename_multiindex():
     """Test rename_multiindex contract."""
     mi = pd.MultiIndex.from_tuples([("a", 1), ("a", 42), ("b", 1), ("c", 0)])
@@ -70,3 +80,21 @@ def test_rename_multiindex():
 
     assert isinstance(orig, pd.Index)
     assert (expected_orig == orig).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_split():
+    """Test apply_split() and check shapes"""
+    mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
+
+    iloc_ix = [1]
+
+    result = apply_split(mi, iloc_ix)
+
+    expected = np.array([2, 3])
+
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, expected)
