@@ -162,8 +162,8 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler = StandardScaler()
     >>> scaler.set_output(transform="pandas") # doctest: +SKIP
     >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
-    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns
+    >>> df = scaler.transform(dataset_path)  # doctest: +SKIP
+    >>> df.columns = dataset_path.columns # doctest: +SKIP
     >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "full",
@@ -190,7 +190,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler.set_output(transform="pandas") # doctest: +SKIP
     >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
     >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns
+    >>> df.columns = dataset_path.columns # doctest: +SKIP
     >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     config = {
@@ -224,10 +224,10 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     ... )
     >>> from sklearn.preprocessing import StandardScaler
     >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
-    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
+    >>> scaler.set_output(transform="pandas")  # doctest: +SKIP
+    >>> scaler = scaler.fit(dataset_path.values)  # doctest: +SKIP
     >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns
+    >>> df.columns = dataset_path.columns # doctest: +SKIP
     >>> forecaster = PatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast",
     ...     fit_strategy = "zero-shot",
