@@ -210,8 +210,15 @@ class _BenchmarkingResults:
         self.storage_backend = get_storage_backend(self.path)
         self.results = self.storage_backend(self.path).load()
 
+    def update(self, new_result):
+        """Update the results with a new result."""
+        self.results.append(new_result)
+        # todo: this should also update the storage backend!
+
     def save(self):
         """Save the results to a file."""
+        if self.path is None:
+            return  # if no path is given, do not save
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -438,16 +445,21 @@ class ForecastingBenchmark(BaseBenchmark):
         ----------
         data : Union[Callable, tuple]
             Can be
+
             - a function which returns a dataset, like from `sktime.datasets`.
             - a tuple contianing two data container that are sktime comptaible.
             - single data container that is sktime compatible (only endogenous data).
+
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
+
         scorers : a list of BaseMetric objects
             Each BaseMetric output will be included in the results.
+
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
 
@@ -466,18 +478,21 @@ class ForecastingBenchmark(BaseBenchmark):
                 forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
+
         error_score : "raise" or numeric, default=np.nan
             Value to assign to the score if an exception occurs in estimator fitting.
             If set to "raise", the exception is raised. If a numeric value is given,
             FitFailedWarning is raised.
+
         strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-            defines the ingestion mode when the forecaster sees new data when window
-            expands
-            "refit" = forecaster is refitted to each training window
-            "update" = forecaster is updated with training window data,
-            in sequence provided
-            "no-update_params" = fit to first training window, re-used without
-            fit or update
+            defines the ingestion mode when the forecaster is updated with new data
+
+            * "refit" = forecaster is refitted to each training window
+            * "update" = forecaster is updated with training window data,
+              in sequence provided
+            * "no-update_params" = fit to first training window,
+              re-used without fit or update
+
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
             before the instance split from cv_global is applied. This avoids
@@ -514,6 +529,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "cv_global": cv_global,
             "error_score": error_score,
             "cv_global_temporal": cv_global_temporal,
+            "strategy": strategy,
         }
         self._add_task(
             task_id,
@@ -526,43 +542,75 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        results_path : str
+        results_path : str or None
             Path to save the results to.
+            If None, will not save the results.
+
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "none", will skip validation if results already exist.
-            If "all", will run validation for all tasks and models.
-            If list of str, will run validation for tasks and models in list.
+
+            * If "none", will skip validation if results already exist.
+            * If "all", will run validation for all tasks and models.
+            * If list of str, will run validation for tasks and models in list.
+        """
+        results = self._generate_results(
+            results_path=results_path,
+            force_rerun=force_rerun,
+        )
+        return results.to_dataframe()
+
+    def _generate_results(self, results_path: str, force_rerun: str = "none"):
+        """Generate results for the benchmark.
+
+        Saves a ResultObject
         """
         results = _BenchmarkingResults(path=results_path)
 
-        for task_id, task in self.tasks.entities.items():
-            for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(task_id, estimator_id) and (
-                    force_rerun == "none"
-                    or (
-                        isinstance(force_rerun, list)
-                        and estimator_id not in force_rerun
-                    )
-                ):
-                    logging.info(
-                        f"Skipping validation - model: "
-                        f"{task_id} - {estimator_id}"
-                        ", as found prior result in results."
-                    )
-                    continue
-
-                logging.info(f"Running validation - model: {task_id} - {estimator_id}")
-                folds = self._run_validation(task, estimator)
-                results.results.append(
-                    ResultObject(
-                        task_id=task_id,
-                        model_id=estimator_id,
-                        folds=folds,
-                    )
+        for task_id, estimator_id, task, estimator in self._generate_experiments():
+        
+            if results.contains(task_id, estimator_id) and (
+                force_rerun == "none"
+                or (
+                    isinstance(force_rerun, list)
+                    and estimator_id not in force_rerun
                 )
+            ):
+                logging.info(
+                    f"Skipping validation - model: "
+                    f"{task_id} - {estimator_id}"
+                    ", as found prior result in results."
+                )
+                continue
 
+            logging.info(f"Running validation - model: {task_id} - {estimator_id}")
+
+            folds = self._run_validation(task, estimator)
+            results.update(
+                ResultObject(
+                    task_id=task_id,
+                    model_id=estimator_id,
+                    folds=folds,
+                )
+            )
         results.save()
-        return results.to_dataframe()
+        return results
+
+    def _generate_experiments(self):
+        """Generate experiments for the benchmark.
+
+        Returns a list of tuples with:
+
+        * task_id: str
+        * estimator_id: str
+        * task: TaskObject
+        * estimator: estimator object
+        """
+        tasks = self.tasks.entities
+        estimators = self.estimators.entities
+        exps = []
+        for task_id, task in tasks.items():
+            for estimator_id, estimator in estimators.items():
+                exps.append((task_id, estimator_id, task, estimator))
+        return exps
 
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
         cv_splitter = task.cv_splitter
