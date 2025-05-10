@@ -557,6 +557,14 @@ Pre-trained and foundation models
 
     MomentFMForecaster
 
+.. currentmodule:: sktime.forecasting.patch_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSTForecaster
+
 .. currentmodule:: sktime.forecasting.chronos
 
 .. autosummary::
