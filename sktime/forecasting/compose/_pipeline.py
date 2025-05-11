@@ -12,7 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.registry import is_scitype
+from sktime.registry import is_scitype, scitype
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -104,6 +104,8 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
+
+        est_scitypes = [scitype(x) for x in estimators]
 
         forecaster_ind = forecaster_indicator.index(True)
         self._forecaster_index = forecaster_ind
