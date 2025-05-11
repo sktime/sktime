@@ -23,7 +23,7 @@ from sktime.forecasting.compose import (
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
-    from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
+from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
