@@ -191,9 +191,6 @@ class GreykiteForecaster(BaseForecaster):
 
         Uses the stored results and returns predictions as a pandas Series.
         """
-        if self._forecaster is None:
-            raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
-
         if fh is None:
             fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
