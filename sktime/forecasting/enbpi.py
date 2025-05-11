@@ -158,7 +158,7 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_ = bootstrap_transformer
 
         if self.bootstrap_transformer is None:
-            # todo: 0.39.0 remove this warning
+            # todo 0.39.0: remove this warning
             warn(
                 "The default value for the bootstrap_transformer will change to the"
                 "sktime MovingBlockBootstrap in version 0.39.0."
@@ -170,7 +170,7 @@ class EnbPIForecaster(BaseForecaster):
             )
             from tsbootstrap import MovingBlockBootstrap
 
-            # todo: 0.39.0 replace with Moving Block Bootstrap from sktime. And set
+            # todo 0.39.0: replace with Moving Block Bootstrap from sktime. And set
             # the return_indices=True
             self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
 
