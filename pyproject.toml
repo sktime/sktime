@@ -51,7 +51,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib<1.5,>=1.2.0",  # required for parallel processing
+  "joblib>=1.2.0,<1.6",  # required for parallel processing
   "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
