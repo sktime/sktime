@@ -29,26 +29,29 @@ class EnbPIForecaster(BaseForecaster):
     tutorial from this blogpost [2].
 
     The forecaster is similar to the the bagging forecaster and performs
-    internally the following steps:
+    internally the following steps.
+
     For training:
+
         1. Uses a bootstrap transformer to generate bootstrap samples
            and returning the corresponding indices of the original time
            series. Note that the bootstrap transformer must be able to
-           return the indices of the original time series as and additional
-           column. I.e. the tag
-           "bootstrap_transformer_return_indices_as_extra_column" must be True
-           and the parameter return_indices of the bootstrap transformer
-           must be set to True.
+           return indices of the original time series as and additional column.
+           I.e., the ``bootstrap_transformer`` must have the
+           ``capability:bootstrap_indices`` tag, and its parameter
+           ``return_indices`` must be set to True.
         2. Fit a forecaster on the first n - max(fh) values of each
            bootstrap sample
         3. Uses each forecaster to predict the last max(fh) values of each
            bootstrap sample
 
     For Prediction:
+
         1. Average the predictions of each fitted forecaster using the
            aggregation function
 
     For Probabilistic Forecasting:
+
         1. Calculate the point forecast by average the prediction of each
            fitted forecaster using the aggregation function
         2. Passes the indices of the bootstrapped samples, the predictions
@@ -65,9 +68,10 @@ class EnbPIForecaster(BaseForecaster):
     bootstrap_transformer : tsbootstrap.BootstrapTransformer
         The transformer to fit to the target series to generate bootstrap samples.
         This transformer must be able to return the indices of the original
-        time series as an additional column. I.e. the tag
-        "bootstrap_transformer_return_indices_as_extra_column"
-        must be True and the parameter "return_indices" must be set to True.
+        time series as an additional column. I.e., the ``bootstrap_transformer``
+        must have the
+        ``capability:bootstrap_indices`` tag, and its parameter
+        ``return_indices`` must be set to True.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
     aggregation_function : str, default="mean"
@@ -170,14 +174,17 @@ class EnbPIForecaster(BaseForecaster):
             # the return_indices=True
             self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
 
+        bs_tags = self.bootstrap_transformer_.get_tags()
         if (
-            not self.bootstrap_transformer_.get_tags()[
-                "bootstrap_transformer_return_indices_as_extra_column"
-            ]
+            not bs_tags.get("capability:bootstrap_index", False)
             or not self.bootstrap_transformer_.return_indices
         ):
             raise ValueError(
-                "The bootstrap_transformer needs to be able to return indices"
+                "Error in EnbPIForecaster: "
+                "The bootstrap_transformer needs to be able to "
+                "return bootstrap indices, i.e., it must have the tag "
+                "'capability:bootstrap_index' and the parameter "
+                "'return_indices' must be set to True."
             )
 
     def _fit(self, X, y, fh=None):

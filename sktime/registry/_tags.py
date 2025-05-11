@@ -1546,30 +1546,27 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
-class bootstrap_transformer_return_indices_as_extra_column(_BaseTag):
-    """Capability: the bootstrap can return the bootstrapped time series' index.
+class capability__bootstrap_index(_BaseTag):
+    """Capability: the transformer is a bootstrap that can return bootstrap indices.
 
-    - String name: ``"bootstrap_transformer_return_indices_as_extra_column"``
+    - String name: ``"capability:bootstrap_index"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
 
-    The tag specifies whether the estimator can return the index of the
-    bootstrapped time series.
+    The tag specifies whether the transformer is a bootstrap transformer.
+    In this case, it should have the parameter ``return_indices``,
+    and ``return_indices=True`` will ensure that ``transform`` returns ``iloc`` indices
+    of the bootstrapped time series, in reference to the input data ``X``,
+    as an additional column.
 
-    If the tag is ``True``, the transformer can return the index of the
-    bootstrapped time series. In this case, the bootstrap transformer
-    should have the parameter ``return_indices``. If ``return_indices`` is
-    ``True``, the transformer will return the indices of the bootstrapped
-    time series as extra column.
-
-    If the tag is ``False``, the transformer cannot return the index of the
-    bootstrapped time series.
+    If the tag is ``False``, the transformer is not a bootstrap transformer,
+    and a parameter ``return_indices``, as described above, is not available.
     """
 
     _tags = {
-        "tag_name": "can_return_index",
+        "tag_name": "capability:bootstrap_index",
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can the bootsrap return the index of bootstraped time series?",
@@ -2714,12 +2711,6 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
-    ),
-    (
-        "bootstrap_transformer_return_indices_as_extra_column",
-        ["transformer"],
-        "bool",
-        "The bootstrapper can return indices of the bootstrapped samples",
     ),
 ]
 
