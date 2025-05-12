@@ -37,6 +37,9 @@ class AlignerDTW(BaseAligner):
         "sakoechiba" - a band around main diagonal
         "slantedband" - a band around slanted diagonal
         "itakura" - Itakura parallelogram
+    window_size: int, optional, default=None
+        size of the window if a windowing function is used
+        if None and window_type="sakoechiba", defaults to 10% of series length
     open_begin : boolean, optional, default=False
     open_end: boolean, optional, default=False
         whether to perform open-ended alignments
@@ -270,6 +273,9 @@ class AlignerDTWfromDist(BaseAligner):
         "sakoechiba" - a band around main diagonal
         "slantedband" - a band around slanted diagonal
         "itakura" - Itakura parallelogram
+    window_size: int, optional, default=None
+        size of the window if a windowing function is used
+        if None and window_type="sakoechiba", defaults to 10% of series length
     open_begin : boolean, optional, default=False
     open_end: boolean, optional, default=False
         whether to perform open-ended alignments
