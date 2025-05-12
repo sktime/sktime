@@ -520,8 +520,12 @@ class SkforecastRecursive(BaseForecaster):
         - ``subsample``
         - ``random_state``
         - ``dtype``
+    store_in_sample_residuals : bool, default ``False``
+        If ``True``, stores the in-sample residuals when fitting the forecaster. This is
+        required if you want to use predict_quantiles later. If ``False``, predict_quantiles
+        will raise an error unless you call set_in_sample_residuals() manually.
 
-        Argument ``method`` is passed internally to the fucntion ``numpy.percentile``.
+        Argument ``method`` is passed internally to the function ``numpy.percentile``.
 
     References
     ----------
@@ -610,6 +614,7 @@ class SkforecastRecursive(BaseForecaster):
         differentiation: Optional[int] = None,
         fit_kwargs: Optional[dict] = None,
         binner_kwargs: Optional[dict] = None,
+        store_in_sample_residuals: bool = False,
     ) -> None:
         self.regressor = regressor
         self.lags = lags
@@ -620,6 +625,7 @@ class SkforecastRecursive(BaseForecaster):
         self.differentiation = differentiation
         self.fit_kwargs = fit_kwargs
         self.binner_kwargs = binner_kwargs
+        self.store_in_sample_residuals = store_in_sample_residuals
 
         super().__init__()
 
@@ -656,6 +662,7 @@ class SkforecastRecursive(BaseForecaster):
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
             binner_kwargs=self.binner_kwargs,
+            store_in_sample_residuals=self.store_in_sample_residuals,
         )
 
     @staticmethod
