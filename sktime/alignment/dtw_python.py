@@ -136,12 +136,6 @@ class AlignerDTW(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
-        # If sakoi-cheba window is used, window_size must be set or given a default
-        # value equal to 10 % of the length of the series
-        if self.window_type == "sakoechiba":
-            if self.window_size is None:
-                self.window_size = int(0.1 * len(X[0]))
-
         # these variables from self are accessed
         dist_method = self.dist_method
         step_pattern = self.step_pattern
@@ -150,6 +144,12 @@ class AlignerDTW(BaseAligner):
         open_begin = self.open_begin
         open_end = self.open_end
         var_to_align = self.variable_to_align
+
+        # If sakoi-cheba window is used, window_size must be set or given a default
+        # value equal to 10 % of the length of the series
+        if window_type == "sakoechiba":
+            if window_size is None:
+                window_size = int(0.1 * len(X[0]))
 
         # shorthands for 1st and 2nd series
         XA = X[0]
@@ -356,12 +356,6 @@ class AlignerDTWfromDist(BaseAligner):
         # soft dependency import of dtw
         from dtw import dtw
 
-        # If sakoi-cheba window is used, window_size must be set or given a default
-        # value equal to 10 % of the length of the series
-        if self.window_type == "sakoechiba":
-            if self.window_size is None:
-                self.window_size = int(0.1 * len(X[0]))
-
         # these variables from self are accessed
         dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
@@ -369,6 +363,12 @@ class AlignerDTWfromDist(BaseAligner):
         window_size = self.window_size
         open_begin = self.open_begin
         open_end = self.open_end
+
+        # If sakoi-cheba window is used, window_size must be set or given a default
+        # value equal to 10 % of the length of the series
+        if window_type == "sakoechiba":
+            if window_size is None:
+                window_size = int(0.1 * len(X[0]))
 
         # shorthands for 1st and 2nd sequence
         XA = X[0]
