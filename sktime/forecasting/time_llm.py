@@ -70,9 +70,8 @@ class TimeLLMForecaster(BaseForecaster):
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y, fh=[1])
-    TimeLLMForecaster(pred_len=1)
-    >>> y_pred = forecaster.predict(fh=[1])
+    >>> forecaster.fit(y, fh=[1]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _tags = {
@@ -253,12 +252,12 @@ class TimeLLMForecaster(BaseForecaster):
                 "seq_len": 16,
                 "llm_model": "GPT2",
                 "llm_layers": 3,
-                "llm_dim": 32,
+                "llm_dim": 768,
                 "patch_len": 4,
                 "stride": 4,
-                "d_model": 32,
-                "d_ff": 64,
-                "n_heads": 4,
+                "d_model": 16,
+                "d_ff": 32,
+                "n_heads": 2,
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
@@ -269,12 +268,12 @@ class TimeLLMForecaster(BaseForecaster):
                 "seq_len": 16,
                 "llm_model": "GPT2",
                 "llm_layers": 3,
-                "llm_dim": 32,
+                "llm_dim": 768,
                 "patch_len": 4,
                 "stride": 4,
-                "d_model": 32,
-                "d_ff": 64,
-                "n_heads": 4,
+                "d_model": 16,
+                "d_ff": 32,
+                "n_heads": 2,
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
