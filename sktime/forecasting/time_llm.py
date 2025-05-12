@@ -259,7 +259,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "d_ff": 32,
                 "n_heads": 2,
                 "dropout": 0.1,
-                "device": None,
+                "device": "cuda",
                 "prompt_domain": False,
             },
             {
@@ -275,7 +275,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "d_ff": 32,
                 "n_heads": 2,
                 "dropout": 0.1,
-                "device": None,
+                "device": "cuda",
                 "prompt_domain": False,
             },
         ]
