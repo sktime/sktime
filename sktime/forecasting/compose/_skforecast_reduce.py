@@ -636,6 +636,10 @@ class SkforecastRecursive(BaseForecaster):
 
         self._clone_estimators()
 
+        # Dynamically set the capability tag based on store_in_sample_residuals
+        if self.store_in_sample_residuals:
+            self.set_tags(**{"capability:pred_int:insample": True})
+
     def _clone_estimators(self: "SkforecastRecursive"):
         """Clone the regressor and transformers."""
         from sklearn.base import clone
@@ -662,7 +666,6 @@ class SkforecastRecursive(BaseForecaster):
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
             binner_kwargs=self.binner_kwargs,
-            store_in_sample_residuals=self.store_in_sample_residuals,
         )
 
     @staticmethod
@@ -933,8 +936,13 @@ class SkforecastRecursive(BaseForecaster):
             "lags": [1, 3],
             "differentiation": 2,
         }
+        param3 = {
+            "regressor": LinearRegression(),
+            "lags": 2,
+            "store_in_sample_residuals": True,
+        }
 
-        return [param1, param2]
+        return [param1, param2, param3]
 
 
 __all__ = ["SkforecastAutoreg", "SkforecastRecursive"]
