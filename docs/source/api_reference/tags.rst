@@ -151,6 +151,7 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform
     capability__inverse_transform__exact
     capability__inverse_transform__range
+    capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
 
