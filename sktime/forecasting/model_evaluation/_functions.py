@@ -444,20 +444,28 @@ def evaluate(
     ----------
     forecaster : sktime BaseForecaster descendant (concrete forecaster)
         sktime forecaster to benchmark
+
     cv : sktime BaseSplitter descendant
         determines split of ``y`` and possibly ``X`` into test and train folds
         y is always split according to ``cv``, see above
-        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
-        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
+        * if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        * if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
     X : sktime time series container, of same mtype as y
         Exogenous time series used in the evaluation experiment
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+
+        * "refit" = forecaster is refitted to each training window
+        * "update" = forecaster is updated with training window data,
+          in sequence provided
+        * "no-update_params" = fit to first training window,
+          re-used without fit or update
+
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test
         arguments and accept y_train as keyword argument.
@@ -541,6 +549,7 @@ def evaluate(
                 forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
+
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
             before the instance split from cv_global is applied. This avoids
