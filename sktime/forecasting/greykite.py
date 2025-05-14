@@ -3,7 +3,6 @@
 
 __author__ = ["vedantag17"]
 
-
 from typing import Optional
 
 import numpy as np
@@ -75,6 +74,7 @@ class GreykiteForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:pickle": False,
+        "capability:in-sample": False,
         "python_dependencies": ["greykite"],  # Required Python dependencies.
     }
 
@@ -82,14 +82,12 @@ class GreykiteForecaster(BaseForecaster):
         self,
         forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
         date_format: Optional[str] = None,
-        forecast_horizon: Optional[int] = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):
         super().__init__()
         self.forecast_config = forecast_config
         self.date_format = date_format
-        self.forecast_horizon = forecast_horizon
         self.model_template = model_template
         self.coverage = coverage
 
@@ -139,7 +137,6 @@ class GreykiteForecaster(BaseForecaster):
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
-            forecast_horizon=self.forecast_horizon,
             coverage=self.coverage,
             evaluation_metric_param=EvaluationMetricParam(),
             evaluation_period_param=EvaluationPeriodParam(),
@@ -163,7 +160,7 @@ class GreykiteForecaster(BaseForecaster):
         if isinstance(y.index, pd.PeriodIndex):
             y.index = y.index.to_timestamp()
         # Convert y into a DataFrame with columns "ts" and "y".
-        df = pd.DataFrame({"ts": y.index, "y": y.values}).reset_index(drop=True)
+        df = pd.DataFrame({"ts": y.index, "y": y.values})
 
         # If exogenous variables X are provided, merge them into the DataFrame.
         if X is not None:
@@ -208,7 +205,6 @@ class GreykiteForecaster(BaseForecaster):
         selected_preds = preds[positions]
 
         y_pred = pd.Series(selected_preds, index=selected_times)
-        self._forecast = forecast_df
         return y_pred
 
     def get_fitted_params(self):
@@ -246,12 +242,10 @@ class GreykiteForecaster(BaseForecaster):
         """
         return [
             {
-                "forecast_horizon": 24,
                 "model_template": "SILVERKITE",
                 "date_format": None,
             },
             {
-                "forecast_horizon": 12,
                 "model_template": "SILVERKITE",
                 "date_format": None,
             },
