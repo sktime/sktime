@@ -62,7 +62,7 @@ class STRAY(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.annotation.stray import STRAY
+    >>> from sktime.detection.stray import STRAY
     >>> from sktime.datasets import load_airline
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import numpy as np
@@ -76,7 +76,13 @@ class STRAY(BaseTransformer):
     """
 
     _tags = {
-        "handles-missing-data": True,
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        "maintainers": "KatieBuc",
+        # estimator type
+        # --------------
+        "capability:missing_values": True,
         "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
         "skip-inverse-transform": True,

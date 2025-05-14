@@ -42,7 +42,6 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.detection.base import BaseDetector
-from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
@@ -274,12 +273,12 @@ class GGS:
         # Keep track of what change_points have changed,
         # so that we don't have to adjust ones which we know are constant
         last_pass = {}
-        this_pass = {b: 0 for b in bp}
+        this_pass = dict.fromkeys(bp, 0)
         for i in new_index:
             this_pass[i] = 1
         for _ in range(self.max_shuffles):
             last_pass = dict(this_pass)
-            this_pass = {b: 0 for b in bp}
+            this_pass = dict.fromkeys(bp, 0)
             switch_any = False
             ordering = list(range(1, len(bp) - 1))
             rng.shuffle(ordering)
@@ -370,12 +369,17 @@ class GGS:
 class GreedyGaussianSegmentation(BaseDetector):
     """Greedy Gaussian Segmentation Estimator.
 
+    Implementation based on [1]_.
+
+    - source code adapted based on: https://github.com/cvxgrp/GGS
+    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
     The method approximates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
     distribution. It uses a dynamic programming search algorithm with
-    a heuristic that allows finding approximate solution in linear time with
-    respect to the data length and always yields locally optimal choice.
+    a heuristic that allows finding approximate solutions in linear time with
+    respect to the data length and always yields a locally optimal choice.
 
     Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
     to the data by computing the approximate solution to the combinatorial
@@ -388,33 +392,22 @@ class GreedyGaussianSegmentation(BaseDetector):
 
     Parameters
     ----------
-    k_max: int, default=10
+    k_max : int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
-    lamb: : float, default=1.0
+    lamb : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
-        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
-        is introduced to reduce issues for high-dimensional problems. Setting
-        ``lamb`` to zero will ignore regularization, whereas large values of
-        lambda will favour simpler models.
-    max_shuffles: int, default=250
+        (inverse) covariance regularization. A higher lambda favors simpler models.
+    max_shuffles : int, default=250
         Maximum number of shuffles
-    verbose: bool, default=False
-        If ``True`` verbose output is enabled.
-    random_state: int or np.random.RandomState, default=None
+    verbose : bool, default=False
+        If ``True``, verbose output is enabled.
+    random_state : int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
 
     Attributes
     ----------
     change_points_: array_like, default=[]
-        Locations of change points as integer indexes. By convention change points
-        include the identity segmentation, i.e. first and last index + 1 values.
-
-    Notes
-    -----
-    Based on the work from [1]_.
-
-    - source code adapted based on: https://github.com/cvxgrp/GGS
-    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+        Locations of change points as integer indexes.
 
     References
     ----------
@@ -425,6 +418,11 @@ class GreedyGaussianSegmentation(BaseDetector):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "lmmentel",
+        # estimator type
+        # --------------
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
@@ -438,14 +436,12 @@ class GreedyGaussianSegmentation(BaseDetector):
         verbose: bool = False,
         random_state: int = None,
     ):
-        # this is ugly and necessary only because of dumb `test_constructor`
         self.k_max = k_max
         self.lamb = lamb
         self.max_shuffles = max_shuffles
         self.verbose = verbose
         self.random_state = random_state
 
-        _check_estimator_deps(self)
         super().__init__()
 
         self._adaptee = GGS(
@@ -472,19 +468,25 @@ class GreedyGaussianSegmentation(BaseDetector):
         """
         return self._adaptee._intermediate_ll
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit method for compatibility with sklearn-type estimator interface.
 
         Parameters
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of timeseries values, or 2D array with index along the first
-            dimension and columns representing features of the timeseries. If pd.Series,
-            the values of the timeseries are the values of the series. If pd.DataFrame,
-            each column represents a feature of the timeseries.
-        y: array_like
+            1D array of time series values, or 2D array with index along the first
+            dimension and columns representing features of the time series.
+            If pd.Series, the values of the time series are the values of the series.
+            If pd.DataFrame, each column represents a feature of the time series.
+        y: array_like, optional
             Placeholder for compatibility with sklearn-api, not used, default=None.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
+        # Perform initialization and prepare the model
         return self
 
     def _predict(self, X) -> npt.ArrayLike:
@@ -493,17 +495,13 @@ class GreedyGaussianSegmentation(BaseDetector):
         Parameters
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of timeseries values, or 2D array with index along the first
-            dimension and columns representing features of the timeseries. If pd.Series,
-            the values of the timeseries are the values of the series. If pd.DataFrame,
-            each column represents a feature of the timeseries.
+            1D array of time series values, or 2D array with index along the first
+            dimension and columns representing features of the time series.
 
         Returns
         -------
         y_pred : array_like
-            1D array with predicted segmentation of the same size as the first
-            dimension of X. The numerical values represent distinct segments
-            labels for each of the data points.
+            1D array of segment labels indexed by segment.
         """
         if isinstance(X, pd.Series):
             X = X.values[:, np.newaxis]
@@ -513,9 +511,12 @@ class GreedyGaussianSegmentation(BaseDetector):
             X = X[:, np.newaxis]
         elif len(X.shape) > 2:
             raise ValueError("X must not have more than two dimensions.")
+
+        # Initialize and find change points
         self._adaptee.initialize_intermediates()
         self.change_points_ = self._adaptee.find_change_points(X)
 
+        # Assign labels based on detected change points
         labels = np.zeros(X.shape[0], dtype=np.int32)
         for i, (start, stop) in enumerate(
             zip(self.change_points_[:-1], self.change_points_[1:])
@@ -529,17 +530,13 @@ class GreedyGaussianSegmentation(BaseDetector):
         Parameters
         ----------
         X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of timeseries values, or 2D array with index along the first
-            dimension and columns representing features of the timeseries. If pd.Series,
-            the values of the timeseries are the values of the series. If pd.DataFrame,
-            each column represents a feature of the timeseries.
+            1D array of time series values, or 2D array with index along the first
+            dimension and columns representing features of the time series.
 
         Returns
         -------
         y_pred : array_like
-            1D array with predicted segmentation of the same size as the first
-            dimension of X. The numerical values represent distinct segments
-            labels for each of the data points.
+            1D array of segment labels indexed by segment
         """
         return self.fit(X, None).predict(X)
 

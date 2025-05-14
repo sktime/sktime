@@ -118,7 +118,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
         missing = regressor.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -149,6 +151,16 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -407,7 +419,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -432,6 +444,16 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.

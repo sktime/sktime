@@ -38,11 +38,18 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     >>>
     >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5, novelty=True)
     >>> pipeline.fit(x)
+    DetectorPipeline(...)
     >>> y_hat = pipeline.transform(x)
     """
 
-    # Change the `task` and `learning_type` as needed
-    _tags = {"learning_type": "unsupervised"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
+        "learning_type": "unsupervised",
+    }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self

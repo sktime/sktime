@@ -98,6 +98,7 @@ Quantile and interval forecasts
     PinballLoss
     EmpiricalCoverage
     ConstraintViolation
+    IntervalWidth
 
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -114,8 +115,55 @@ Distribution forecasts
     SquaredDistrLoss
 
 
-Time series segmentation
+Detection tasks
+---------------
+
+Detection metrics can be applied to compare ground truth events with detected events,
+and ground truth segments with detected segments.
+
+Detection metrics are typically designed for either:
+
+* point events, i.e., annotated time stamps, or
+* segments, i.e., annotated time intervals.
+
+The metrics in ``sktime`` can be used for both types of detection tasks:
+
+* segmentation metrics interpret point events as segment boundaries, separating consecutive segments
+* point event metrics are applied to segments by considering their boundaries as point events
+
+
+Event detection - anomalies, outliers
+-------------------------------------
+
+.. currentmodule:: sktime.performance_metrics.detection
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: function.rst
+
+    DirectedChamfer
+    DirectedHausdorff
+    DetectionCount
+    WindowedF1Score
+    TimeSeriesAUPRC
+
+Segment detection
+-----------------
+
+.. currentmodule:: sktime.performance_metrics.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    RandIndex
+
+
+Legacy detection metrics
 ------------------------
+
+These metrics do not follow the standard API and will be deprecated in the future.
 
 .. currentmodule:: sktime.performance_metrics.annotation
 

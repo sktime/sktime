@@ -25,7 +25,7 @@ Community Council
      - :user:`onyekaugochukwu`
 
 For further information on past and future council elections,
-refer to the `elections repository <www.github.com/sktime/elections>`_.
+refer to the `elections repository <https://www.github.com/sktime/elections>`_.
 
 Community Council Observers
 ---------------------------
@@ -73,12 +73,16 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Eric J Berger
+     - :user:`ericjb`
    * - Felipe Angelim Vieira
      - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
+   * - Jan Beitner
+     - :user:`jdb78`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
    * - Jonathan Bechtel

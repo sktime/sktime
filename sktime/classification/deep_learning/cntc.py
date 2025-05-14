@@ -12,6 +12,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class CNTCClassifier(BaseDeepClassifier):
     """Contextual Time-series Neural Classifier (CNTC), as described in [1].
 
+    Adapted from the implementation from Fullah et. al
+    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
+
     Parameters
     ----------
     n_epochs       : int, default = 2000
@@ -37,11 +40,6 @@ class CNTCClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
-
-    Notes
-    -----
-    Adapted from the implementation from Fullah et. al
-    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
 
     References
     ----------
@@ -73,9 +71,15 @@ class CNTCClassifier(BaseDeepClassifier):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "AmaduFullah",
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "AurumnPegasus",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(

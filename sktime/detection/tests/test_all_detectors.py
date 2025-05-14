@@ -5,6 +5,7 @@ __all__ = []
 
 import pandas as pd
 
+from sktime.detection._datatypes._check import _is_valid_detection
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils.validation.detection import check_learning_type, check_task
@@ -54,9 +55,21 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         X_test = make_detection_problem(
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
-        y_test = estimator.predict(X_test)
-        assert isinstance(y_test, pd.DataFrame)
-        assert isinstance(y_test.index, pd.RangeIndex)
+        y_pred = estimator.predict(X_test)
+
+        detector_type = estimator.get_tag("task")
+        if detector_type in ["anomaly_detection", "change_point_detection"]:
+            expected_y_pred_type = "points"
+        elif detector_type == "segmentation":
+            expected_y_pred_type = "segments"
+        else:
+            raise ValueError(
+                f"Unknown task tag of {estimator_instance}: {detector_type}, "
+                "expected one of ['anomaly_detection', 'change_point_detection', "
+                f"'segmentation'], but found {detector_type}"
+            )
+
+        assert _is_valid_detection(y_pred, type=expected_y_pred_type), y_pred
 
     def test_transform_output_type(self, estimator_instance):
         """Test output type for the transform method."""
@@ -84,10 +97,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_pred = estimator_instance.predict_points(X_test)
-        assert isinstance(y_pred, pd.DataFrame)
-        assert isinstance(y_pred.index, pd.RangeIndex)
-        assert "ilocs" in y_pred.columns
-        assert pd.api.types.is_integer_dtype(y_pred["ilocs"].dtype), y_pred
+        assert _is_valid_detection(y_pred, type="points"), y_pred
 
     def test_predict_segments(self, estimator_instance):
         X_train = make_detection_problem(
@@ -101,12 +111,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_pred = estimator_instance.predict_segments(X_test)
-        assert isinstance(y_pred, pd.DataFrame)
-        assert isinstance(y_pred.index, pd.RangeIndex)
-        assert "ilocs" in y_pred.columns
-        ilocs_dtype = y_pred["ilocs"].dtype
-        assert isinstance(y_pred["ilocs"].dtype, pd.IntervalDtype)
-        assert pd.api.types.is_integer_dtype(ilocs_dtype.subtype)
+        assert _is_valid_detection(y_pred, type="segments"), y_pred
 
     def test_detector_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""

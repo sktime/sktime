@@ -2,6 +2,7 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCRegressor"]
+import numpy as np
 from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
@@ -11,6 +12,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 class CNTCRegressor(BaseDeepRegressor):
     """Contextual Time-series Neural Regressor (CNTC), as described in [1].
+
+    Adapted from the implementation from Fullah et. al
+    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
 
     Parameters
     ----------
@@ -38,11 +42,6 @@ class CNTCRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
 
-    Notes
-    -----
-    Adapted from the implementation from Fullah et. al
-    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
-
     References
     ----------
     .. [1] Network originally defined in:
@@ -63,9 +62,14 @@ class CNTCRegressor(BaseDeepRegressor):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "AmaduFullah",
+            "James-Large",
+            "Withington",
+            "AurumnPegasus",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(
@@ -244,4 +248,43 @@ class CNTCRegressor(BaseDeepRegressor):
         """
         X2 = self.prepare_input(X)
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
+        preds = np.squeeze(preds, axis=-1)
         return preds
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param1 = {
+            "n_epochs": 10,
+            "random_state": 0,
+        }
+
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "kernel_sizes": (2, 2),
+            "random_state": 42,
+        }
+        test_params = [param1, param2]
+
+        return test_params

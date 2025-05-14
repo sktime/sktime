@@ -70,7 +70,6 @@ These tags are typically used for typing, packaging and documentation purposes.
     authors
     python_version
     python_dependencies
-    python_dependencies_alias
     env_marker
     requires_cython
 
@@ -200,3 +199,4 @@ The tags below have limited use in retrieval or inspection of objects.
 
     x_inner_mtype
     y_inner_mtype
+    visual_block_kind

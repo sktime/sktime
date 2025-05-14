@@ -19,16 +19,16 @@ State:
     fitted state flag       - check_is_fitted()
 """
 
-# todo 0.37.0: remove BaseSeriesAnnotator
 __author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
-__all__ = ["BaseDetector", "BaseSeriesAnnotator"]
+__all__ = ["BaseDetector"]
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
+from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.validation.series import check_series
-from sktime.utils.warnings import warn
 
 
 class BaseDetector(BaseEstimator):
@@ -72,9 +72,8 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
-        "object_type": ["series-annotator", "detector"],  # type of object
+        "object_type": ["detector", "series-annotator"],  # type of object
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
@@ -133,8 +132,7 @@ class BaseDetector(BaseEstimator):
         else:
             return NotImplemented
 
-    # todo 0.37.0: remove the Y parameter and related handling
-    def fit(self, X, y=None, Y=None):
+    def fit(self, X, y=None):
         """Fit to training data.
 
         Parameters
@@ -184,19 +182,6 @@ class BaseDetector(BaseEstimator):
             self._is_fitted = True
             return self
 
-        if Y is not None:
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                "Until the 0.37.0 release, the Y parameter will be used if "
-                "no y parameter is provided, ensuring backwards compatibility.",
-                stacklevel=2,
-            )
-
-        if Y is not None and y is None:
-            y = Y
-
         self._X = X
         self._y = y
 
@@ -204,18 +189,6 @@ class BaseDetector(BaseEstimator):
 
         if _method_has_arg(self._fit, "y"):
             self._fit(X=X, y=y)
-        elif _method_has_arg(self._fit, "Y"):
-            self._fit(X=X, Y=y)
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                f"The class {self.__class__.__name__} uses the Y parameter "
-                "internally in _fit, this should be replaced with y by a maintainer. "
-                f"Until the 0.37.0 release, this will raise no exceptions, "
-                "ensuring backwards compatibility.",
-                stacklevel=2,
-            )
         else:
             self._fit(X=X_inner)
 
@@ -348,7 +321,7 @@ class BaseDetector(BaseEstimator):
 
         return pd.DataFrame(scores)
 
-    def update(self, X, y=None, Y=None):
+    def update(self, X, y=None):
         """Update model with new data and optional ground truth labels.
 
         Parameters
@@ -375,19 +348,6 @@ class BaseDetector(BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
-        if Y is not None:
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                "Until the 0.37.0 release, the Y parameter will be used if "
-                "no y parameter is provided, ensuring backwards compatibility.",
-                stacklevel=2,
-            )
-
-        if y is None and Y is not None:
-            y = Y
-
         self._X = X_inner.combine_first(self._X)
 
         if y is not None:
@@ -395,8 +355,6 @@ class BaseDetector(BaseEstimator):
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
-        elif _method_has_arg(self._update, "Y"):
-            self._update(X=X_inner, Y=y)
         else:
             self._update(X=X_inner)
 
@@ -464,8 +422,7 @@ class BaseDetector(BaseEstimator):
 
         return y
 
-    # todo 0.37.0: remove Y argument
-    def fit_predict(self, X, y=None, Y=None):
+    def fit_predict(self, X, y=None):
         """Fit to data, then predict it.
 
         Fits model to X and Y with given detection parameters
@@ -526,10 +483,9 @@ class BaseDetector(BaseEstimator):
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, y=y, Y=Y).predict(X)
+        return self.fit(X, y=y).predict(X)
 
-    # todo 0.37.0: remove Y argument
-    def fit_transform(self, X, y=None, Y=None):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
         Fits model to X and Y with given detection parameters
@@ -560,7 +516,7 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y_sparse = self.fit_predict(X, y=y, Y=Y)
+        y_sparse = self.fit_predict(X, y=y)
         y_dense = self.sparse_to_dense(y_sparse, index=X.index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
@@ -578,8 +534,7 @@ class BaseDetector(BaseEstimator):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
             elif isinstance(y, pd.DataFrame):
-                y_index = y.index
-                y_index = pd.DataFrame(y_index, columns=columns)
+                y_index = pd.DataFrame(y.index, columns=columns)
                 y = y.reset_index(drop=True)
                 y = pd.concat([y_index, y], axis=1)
 
@@ -609,11 +564,33 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        return X
-        # this causes errors, we need to investigate
-        # X_inner_mtype = self.get_tag("X_inner_mtype")
-        # X_inner = convert_to(X, X_inner_mtype)
-        # return X_inner
+        ALLOWED_SCITYPES = ["Series", "Panel"]
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
+        )
+        self._X_metadata = X_metadata
+        if not X_valid:
+            msg_start = (
+                f"Unsupported input data type in {self.__class__.__name__}, input X"
+            )
+            allowed_msg = (
+                "Allowed scitypes for X in detection are "
+                f"{', '.join(ALLOWED_SCITYPES)}, "
+                "for instance a pandas.DataFrame with sktime compatible time indices."
+                " See the detection tutorial examples/07_detection.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                check_is_error_msg(
+                    X_msg,
+                    var_name=msg_start,
+                    allowed_msg=allowed_msg,
+                    raise_exception=True,
+                )
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
+        return X_inner
 
     def _fit(self, X, y=None):
         """Fit to training data.
@@ -922,17 +899,15 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
-        if isinstance(y_sparse, pd.DataFrame):
-            y_sparse = y_sparse.iloc[:, 0]
-        if not isinstance(y_sparse, pd.Series):
-            y_sparse = pd.Series(y_sparse, dtype="int64")
-        if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
-            # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
-            return y_dense
-        else:
+        if not isinstance(y_sparse, pd.DataFrame):
+            y_sparse = pd.DataFrame(y_sparse, dtype="int64")
+        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype != "interval":
             # Anomaly/changepoint detection case
             y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
+            return y_dense
+        else:
+            # Segmentation case
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
 
     @staticmethod
@@ -953,7 +928,7 @@ class BaseDetector(BaseEstimator):
             y_sparse and 0 otherwise.
         """
         y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
-        y_dense[y_sparse.values] = 1
+        y_dense[y_sparse.values.flatten()] = 1
         return y_dense
 
     @staticmethod
@@ -975,24 +950,26 @@ class BaseDetector(BaseEstimator):
             according to ``y_sparse``. Indexes that do not fall within any index are
             labelled -1.
         """
-        if y_sparse.index.is_overlapping:
+        if len(y_sparse) == 0:
+            return pd.DataFrame(0, index=index, dtype="int64", columns=["labels"])
+
+        seg_index = y_sparse.set_index("ilocs").index
+        index_rg = pd.RangeIndex(len(index))
+
+        if seg_index.is_overlapping:
             raise NotImplementedError(
                 "Cannot convert overlapping segments to a dense format yet."
             )
 
-        interval_indexes = y_sparse.index.get_indexer(index)
+        interval_ixs = seg_index.get_indexer(index_rg)
 
-        # Negative indexes do not fall within any interval so they are ignored
-        interval_labels = y_sparse.iloc[
-            interval_indexes[interval_indexes >= 0]
-        ].to_numpy()
-
-        # -1 is used to represent points do not fall within a segment
-        labels_dense = interval_indexes.copy()
-        labels_dense[labels_dense >= 0] = interval_labels
-
-        y_dense = pd.Series(labels_dense, index=index)
-        return y_dense
+        if "labels" not in y_sparse.columns:
+            y_dense = pd.DataFrame({"labels": interval_ixs}, index=index_rg)
+            return y_dense
+        else:
+            y_dense = y_sparse.labels.loc[interval_ixs]
+            y_dense = y_dense.reset_index(drop=True)
+            return pd.DataFrame({"labels": y_dense}, index=index_rg)
 
     @staticmethod
     def dense_to_sparse(y_dense):
@@ -1047,21 +1024,27 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            An empty series with a RangeIndex.
+        pd.DataFrame
+            A empty DataFrame with a RangeIndex.
         """
-        return pd.Series(index=pd.RangeIndex(0), dtype="int64")
+        return pd.DataFrame(index=pd.RangeIndex(0), dtype="int64", columns=["ilocs"])
 
     @staticmethod
     def _empty_segments():
-        """Return an empty sparse series in segmentation format.
+        """Return an empty sparse DataFrame in segmentation format.
 
         Returns
         -------
-        pd.Series
-            An empty series with an IntervalIndex.
+        pd.DataFrame
+            A empty DataFrame with an IntervalIndex.
         """
-        return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
+        empty_segs = pd.DataFrame(
+            pd.IntervalIndex([]),
+            index=pd.RangeIndex(0),
+            dtype="int64",
+            columns=["ilocs"],
+        )
+        return empty_segs
 
     @staticmethod
     def change_points_to_segments(y_sparse, start=None, end=None):
@@ -1136,63 +1119,22 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        pd.Series
-            A series containing the indexes of the start of each segment.
-            Index is RangeIndex, and values are iloc references to the start of each
-            segment.
+        pd.Index
+            An Index array containing the indexes of the start of each segment.
 
         Examples
         --------
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
-        >>> segments = pd.Series(
-        ...     [3, -1, 2],
-        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
-        ... )
+        >>> segments =  pd.DataFrame({
+                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+            })
         >>> BaseDetector.segments_to_change_points(segments)
-        0    2
-        1    5
-        2    7
-        dtype: int64
+        Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """
         if len(y_sparse) == 0:
             return BaseDetector._empty_sparse()
-        change_points = pd.Series(y_sparse.index.left)
+        change_points = y_sparse.set_index("ilocs").index.left
         return change_points
-
-
-class BaseSeriesAnnotator(BaseDetector):
-    """Base class for time series detectors - DEPRECATED - use BaseDetector instead."""
-
-    def __init__(self):
-        super().__init__()
-        warn(
-            "Warning: BaseSeriesAnnotator is deprecated. "
-            "Extension developers should use BaseDetector instead, "
-            "from sktime.detection.base, this is a replacement with "
-            "equivalent functionality. "
-            "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
-            stacklevel=2,
-        )
-
-
-# todo 0.37.0: remove this
-def _method_has_arg(method, arg="y"):
-    """Return if transformer.method has a parameter, and whether it has a default.
-
-    Parameters
-    ----------
-    method : callable
-        method to check
-    arg : str, optional, default="y"
-        parameter name to check
-
-    Returns
-    -------
-    has_param : bool
-        whether the method ``method`` has a parameter with name ``arg``
-    """
-    from inspect import signature
-
-    method_params = list(signature(method).parameters.keys())
-    return arg in method_params

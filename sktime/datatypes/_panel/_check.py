@@ -156,8 +156,10 @@ class PanelDfList(ScitypePanel):
         "name": "df-list",  # any string
         "name_python": "panel_df_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "list of pd.DataFrame",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -317,8 +319,10 @@ class PanelNp3D(ScitypePanel):
         "name": "numpy3D",  # any string
         "name_python": "panel_np_3d",  # lower_snake_case
         "name_aliases": [],
+        "description": "3D np.array of format (n_instances, n_columns, n_timepoints)",
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
@@ -472,8 +476,10 @@ class PanelPdMultiIndex(ScitypePanel):
         "name": "pd-multiindex",  # any string
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with multi-index (instances, timepoints)",
         "python_version": None,
-        "python_dependencies": "numpy",
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -743,8 +749,10 @@ class PanelNestedDf(ScitypePanel):
         "name": "nested_univ",  # any string
         "name_python": "panel_pd_nested",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with one column per variable, pd.Series in cells",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -891,11 +899,17 @@ class PanelNumpyFlat(ScitypePanel):
         "name": "numpyflat",  # any string
         "name_python": "panel_np_flat",  # lower_snake_case
         "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "2D np.array of format (n_instances, n_columns*n_timepoints)"
+        ),
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
+        "internal_only": True,
     }
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
@@ -1004,8 +1018,10 @@ class PanelDask(ScitypePanel):
         "name": "dask_panel",  # any string
         "name_python": "panel_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "dask",
+        "python_type": "dask.dataframe",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1078,8 +1094,10 @@ class PanelPolarsEager(ScitypePanel):
         "name": "polars_panel",  # any string
         "name_python": "panel_polars",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars.DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "polars",
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1184,7 +1202,58 @@ def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pan
 
 
 class PanelGluontsList(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonTS representation of univariate and multivariate time series.
+
+    Name: ``"gluonts_ListDataset_panel"``
+
+    Short description:
+
+    A ``list`` of ``dict``,
+    with list index = instances, ``dict['target']`` rows = time points,
+    ``dict['target']`` cols = variables, and ``dict['start']`` marking the interval.
+    Identical to ``gluonts.dataset.common.ListDataset``.
+
+    Long description:
+
+    The ``"gluonts_ListDataset_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a ``list`` of ``dict``.
+      Each ``dict`` must contain a key ``"target"``which
+      maps to a 1D ``numpy.ndarray`` for a univariate, and
+      2D ``numpy.ndarray`` for a multivariate time series.
+      Optionally, it may also contain a key ``"start"``
+      that maps to a ``pandas.Period`` object.
+      eg: ``pandas.Period("2024-01-01", freq="D")`` for a time series starting
+      on 2024-01-01 and sampled daily.
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]['target']`` correspond to
+      different, distinct time points, at which
+      instance ``i`` is observed.
+    * time index: the time index is implicit and by-convention.
+      The ``j``-th element (for an integer ``j``) of instance ``i`` is interpreted
+      as an observation at the time point ``j``.
+      If ``"start"`` key is present, the time index for
+      the ``j``-th element of instance ``i`` is ``obj[i]['start'] + j``.
+    * variables: columns of ``obj[i]['target']`` correspond to different variables
+      available for instance ``i``.
+    * variable names: ``numpy`` mtypes cannot represent variable names. If required,
+      then variable names are assigned ``"value_{k}``
+      where ``k`` is the feature column index.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can not represent panels of unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
 
     Parameters
     ----------
@@ -1219,8 +1288,10 @@ class PanelGluontsList(ScitypePanel):
         "name": "gluonts_ListDataset_panel",  # any string
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts list based panel of time series",
         "python_version": None,
-        "python_dependencies": "gluonts",
+        "python_dependencies": None,
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1257,7 +1328,7 @@ class PanelGluontsList(ScitypePanel):
             or "target" not in obj[0]
             or len(obj[0]["target"]) <= 1
         ):
-            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            msg = f"{var_name} must be a listDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
         # Check if there are no time series in the ListDataset
@@ -1369,8 +1440,10 @@ class PanelGluontsPandas(ScitypePanel):
         "name": "gluonts_PandasDataset_panel",  # any string
         "name_python": "panel_gluonts_pandas",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts PandasDataset based panel of time series",
         "python_version": None,
         "python_dependencies": "gluonts",
+        "python_type": "gluonts.PandasDataset",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
         "capability:missing_values": True,
@@ -1408,8 +1481,10 @@ class PanelGluontsPandas(ScitypePanel):
             return _ret(False, msg, None, return_metadata)
 
         if not hasattr(obj._data_entries.iterable, "iterable"):
-            msg = f"{var_name} must be formed with a multiindex DataFrame to "
-            +"be a valid `pandasDataset_panel`"
+            msg = (
+                f"{var_name} must be formed with a multiindex DataFrame to "
+                "be a valid `pandasDataset_panel`"
+            )
             return _ret(False, msg, None, return_metadata)
 
         # Convert to a pandas DF for easier checks
@@ -1459,3 +1534,153 @@ class PanelGluontsPandas(ScitypePanel):
             metadata["has_nans"] = False
 
         return _ret(True, None, metadata, return_metadata)
+
+
+class PanelPdWide(ScitypePanel):
+    """Data type: panel of time series in pandas wide format.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "pd-wide",  # any string
+        "name_python": "panel_pd_wide",  # lower_snake_case
+        "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "pd.DataFrame in wide format, cols = (instance*timepoints)"
+        ),
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
+        "capability:multivariate": False,
+        "capability:unequally_spaced": False,
+        "capability:missing_values": True,
+        "internal_only": True,
+        "skip_in_checks": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        # no checker defined, only used in conversions
+        pass
+
+
+class PanelPdLong(ScitypePanel):
+    """Data type: panel of time series in pandas long format.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "pd-long",  # any string
+        "name_python": "panel_pd_long",  # lower_snake_case
+        "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "pd.DataFrame in long format, cols = (index, time_index, column)"
+        ),
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+        "internal_only": True,
+        "skip_in_checks": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        # no checker defined, only used in conversions
+        pass

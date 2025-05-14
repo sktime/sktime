@@ -85,7 +85,7 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": PANDAS_MTYPES,
@@ -332,7 +332,7 @@ class BaggingForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        from skpro.proba.empirical import Empirical
+        from skpro.distributions.empirical import Empirical
 
         # generate replicates of exogenous data for bootstrap
         X_inner = self._gen_X_bootstraps(X)

@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.base._base import _safe_clone
+from sktime.utils._estimator_html_repr import _VisualBlock
 
 
 class _HeterogenousMetaEstimator:
@@ -29,6 +31,8 @@ class _HeterogenousMetaEstimator:
     # the fitted estimators should be in a different attribute, _steps_fitted_attr
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
+
+    _tags = {"visual_block_kind": "serial"}
 
     def get_params(self, deep=True):
         """Get parameters of estimator.
@@ -109,7 +113,8 @@ class _HeterogenousMetaEstimator:
         if deep and hasattr(self, attr):
             estimators = getattr(self, attr)
             estimators = [(x[0], x[1]) for x in estimators]
-            out.update(estimators)
+            estimator_dict = {name: estimator for name, estimator in estimators}
+            out.update(estimator_dict)
             for name, estimator in estimators:
                 # checks estimator has the method we want to call
                 cond1 = hasattr(estimator, public_method)
@@ -166,7 +171,7 @@ class _HeterogenousMetaEstimator:
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got " f"{invalid_names!r}"
+                f"Estimator names must not contain __: got {invalid_names!r}"
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
@@ -278,8 +283,7 @@ class _HeterogenousMetaEstimator:
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
             msg += (
-                f"All estimators in {attr_name!r} must be of type "
-                f"{cls_type.__name__}."
+                f"All estimators in {attr_name!r} must be of type {cls_type.__name__}."
             )
         else:
             raise TypeError("cls_type must be a class or tuple of classes")
@@ -347,7 +351,7 @@ class _HeterogenousMetaEstimator:
             name = type(obj).__name__
 
         if clone_est:
-            return (name, est.clone())
+            return (name, _safe_clone(est))
         else:
             return (name, est)
 
@@ -402,7 +406,7 @@ class _HeterogenousMetaEstimator:
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
-            ests = [e.clone() for e in ests]
+            ests = [_safe_clone(e) for e in ests]
         unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
@@ -730,6 +734,20 @@ class _HeterogenousMetaEstimator:
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
 
+    def _sk_visual_block_(self):
+        steps = getattr(self, self._steps_attr)
+
+        names, estimators = zip(*steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind", tag_value_default="serial"),
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
+
 
 def flatten(obj):
     """Flatten nested list/tuple structure.
@@ -745,6 +763,7 @@ def flatten(obj):
 
     Examples
     --------
+    >>> from sktime.base._meta import flatten
     >>> flatten([1, 2, [3, (4, 5)], 6])
     [1, 2, 3, 4, 5, 6]
     """
@@ -771,6 +790,7 @@ def unflatten(obj, template):
 
     Examples
     --------
+    >>> from sktime.base._meta import unflatten
     >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
     [1, 2, [3, (4, 5)], 6]
     """
@@ -932,7 +952,7 @@ class _ColumnEstimator:
         if isinstance(estimators, cls):
             ycols = [str(col) for col in X.columns]
             colrange = range(len(ycols))
-            est_list = [estimators.clone() for _ in colrange]
+            est_list = [_safe_clone(estimators) for _ in colrange]
             return list(zip(ycols, est_list, colrange))
 
         if (
@@ -956,8 +976,7 @@ class _ColumnEstimator:
         for est in ests:
             if not isinstance(est, cls):
                 raise ValueError(
-                    f"The estimator {est.__class__.__name__} should be of type "
-                    f"{cls}."
+                    f"The estimator {est.__class__.__name__} should be of type {cls}."
                 )
 
         index_flat = flatten(indices)

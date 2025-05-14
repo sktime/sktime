@@ -64,6 +64,17 @@ Density-based
 
     TimeSeriesDBSCAN
 
+Graph- or network-based
+-----------------------
+
+.. currentmodule:: sktime.clustering.kvisibility
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesKvisibility
+
 Spatio-temporal clustering
 --------------------------
 
@@ -77,6 +88,19 @@ observations of locations in space.
     :template: class.rst
 
     STDBSCAN
+
+Compose
+-------
+
+.. currentmodule:: sktime.clustering.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClustererAsTransformer
+    ClustererPipeline
+    SklearnClustererPipeline
 
 Base
 ----

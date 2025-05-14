@@ -7,6 +7,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+from copy import deepcopy
 from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
@@ -124,25 +125,37 @@ class BaseForecastingErrorMetric(BaseMetric):
         * If 'uniform_average_time', metric is applied to all data,
           ignoring level index.
         * If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
     _tags = {
+        "object_type": ["metric_forecasting", "metric"],
+        "scitype:y_pred": "pred",  # point forecasts
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
-        "reserved_params": ["multioutput", "multilevel"],
+        "reserved_params": ["multioutput", "multilevel", "by_index"],
     }
 
     def __init__(
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        by_index=False,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
+        self.by_index = by_index
 
         if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
@@ -228,6 +241,8 @@ class BaseForecastingErrorMetric(BaseMetric):
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """  # noqa: E501
+        if self.by_index:
+            return self.evaluate_by_index(y_true, y_pred, **kwargs)
         return self.evaluate(y_true, y_pred, **kwargs)
 
     def _apply_sample_weight_to_kwargs(self, y_true, y_pred, **kwargs):
@@ -648,10 +663,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig = deepcopy(y_pred_orig)
                 y_pred_orig.X.index = y_true.index
             else:
+                y_pred_orig = y_pred_orig.copy()
                 y_pred_orig.index = y_true.index
         if not same_cols:
             warn(
@@ -660,10 +676,11 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            y_pred_orig = y_pred_orig.copy()
             if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig = deepcopy(y_pred_orig)
                 y_pred_orig.X.columns = y_true.columns
             else:
+                y_pred_orig = y_pred_orig.copy()
                 y_pred_orig.columns = y_true.columns
         # check multioutput arg
         # todo: add this back when variance_weighted is supported
@@ -710,7 +727,7 @@ class BaseForecastingErrorMetric(BaseMetric):
                 return y.X_multiindex
 
             valid, msg, metadata = check_is_scitype(
-                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
+                y, scitype=SCITYPES, return_metadata=[], var_name=var_name
             )
             if not valid:
                 raise TypeError(msg)
@@ -882,13 +899,16 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         lower_is_better=True,
+        by_index=False,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
         self.func = func
         self.name = name
         self.lower_is_better = lower_is_better
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput, multilevel=multilevel, by_index=by_index
+        )
 
         self.set_tags(**{"lower_is_better": lower_is_better})
 
@@ -900,7 +920,15 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
         func = self.func
 
-        return self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+        score = self._evaluate_func(func=func, y_true=y_true, y_pred=y_pred, **params)
+
+        if _is_average(self.multioutput) and not isinstance(score, float):
+            if isinstance(self.multioutput, np.ndarray):
+                score = np.dot(score, self.multioutput)
+            elif self.multioutput == "uniform_average":
+                score = np.mean(score)
+
+        return score
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1050,6 +1078,14 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MedianAbsoluteScaledError
@@ -1077,18 +1113,18 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mase = MeanAbsoluteScaledError()
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.18333333333333335
+    np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mase = MeanAbsoluteScaledError(multioutput='raw_values')
     >>> mase(y_true, y_pred, y_train=y_train)
     array([0.10526316, 0.28571429])
     >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mase(y_true, y_pred, y_train=y_train)
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
 
     func = mean_absolute_scaled_error
@@ -1098,9 +1134,12 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
+        by_index=False,
     ):
         self.sp = sp
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput, multilevel=multilevel, by_index=by_index
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1171,6 +1210,14 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteScaledError
@@ -1198,18 +1245,18 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
     >>> y_pred = np.array([2.5, 0.0, 2, 8])
     >>> mdase = MedianAbsoluteScaledError()
     >>> mdase(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdase(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> mdase = MedianAbsoluteScaledError(multioutput='raw_values')
     >>> mdase(y_true, y_pred, y_train=y_train)
     array([0.10526316, 0.28571429])
     >>> mdase = MedianAbsoluteScaledError(multioutput=[0.3, 0.7])
     >>> mdase( y_true, y_pred, y_train=y_train)
-    0.21935483870967742
+    np.float64(0.21935483870967742)
     """
 
     func = median_absolute_scaled_error
@@ -1219,9 +1266,14 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
+        by_index=False,
     ):
         self.sp = sp
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1293,6 +1345,14 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteScaledError
@@ -1317,18 +1377,18 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> rmsse = MeanSquaredScaledError(square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    0.20568833780186058
+    np.float64(0.20568833780186058)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    0.15679361328058636
+    np.float64(0.15679361328058636)
     >>> rmsse = MeanSquaredScaledError(multioutput='raw_values', square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     array([0.11215443, 0.20203051])
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    0.17451891814894502
+    np.float64(0.17451891814894502)
     """
 
     func = mean_squared_scaled_error
@@ -1339,10 +1399,15 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         sp=1,
         square_root=False,
+        by_index=False,
     ):
         self.sp = sp
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1414,6 +1479,14 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteScaledError
@@ -1438,18 +1511,18 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> rmdsse = MedianSquaredScaledError(square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> rmdsse(y_true, y_pred, y_train=y_train)
-    0.1472819539849714
+    np.float64(0.1472819539849714)
     >>> rmdsse = MedianSquaredScaledError(multioutput='raw_values', square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
     array([0.08687445, 0.20203051])
     >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
-    0.16914781383660782
+    np.float64(0.16914781383660782)
     """
 
     func = median_squared_scaled_error
@@ -1460,10 +1533,15 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         multilevel="uniform_average",
         sp=1,
         square_root=False,
+        by_index=False,
     ):
         self.sp = sp
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1535,6 +1613,14 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MedianAbsoluteError
@@ -1554,17 +1640,17 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mae = MeanAbsoluteError()
     >>> mae(y_true, y_pred)
-    0.55
+    np.float64(0.55)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mae(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mae = MeanAbsoluteError(multioutput='raw_values')
     >>> mae(y_true, y_pred)
     array([0.5, 1. ])
     >>> mae = MeanAbsoluteError(multioutput=[0.3, 0.7])
     >>> mae(y_true, y_pred)
-    0.85
+    np.float64(0.85)
     """
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
@@ -1651,6 +1737,14 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteError
@@ -1670,17 +1764,17 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdae = MedianAbsoluteError()
     >>> mdae(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdae(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mdae = MedianAbsoluteError(multioutput='raw_values')
     >>> mdae(y_true, y_pred)
     array([0.5, 1. ])
     >>> mdae = MedianAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdae(y_true, y_pred)
-    0.85
+    np.float64(0.85)
     """
 
     func = median_absolute_error
@@ -1791,6 +1885,14 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteError
@@ -1810,14 +1912,14 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mse = MeanSquaredError()
     >>> mse(y_true, y_pred)
-    0.4125
+    np.float64(0.4125)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mse(y_true, y_pred)
-    0.7083333333333334
+    np.float64(0.7083333333333334)
     >>> rmse = MeanSquaredError(square_root=True)
     >>> rmse(y_true, y_pred)
-    0.8227486121839513
+    np.float64(0.8227486121839513)
     >>> rmse = MeanSquaredError(multioutput='raw_values')
     >>> rmse(y_true, y_pred)
     array([0.41666667, 1.        ])
@@ -1826,10 +1928,10 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     array([0.64549722, 1.        ])
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7])
     >>> rmse(y_true, y_pred)
-    0.825
+    np.float64(0.825)
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmse(y_true, y_pred)
-    0.8936491673103708
+    np.float64(0.8936491673103708)
     """  # noqa: E501
 
     def __init__(
@@ -1837,9 +1939,14 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -1999,6 +2106,13 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
     def __init__(
@@ -2006,11 +2120,16 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
         self.multioutput = multioutput
 
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         r"""
@@ -2129,21 +2248,47 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
 
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
-    """Median squared error (MdSE) or root median squared error (RMdSE).
+    r"""Median squared error (MdSE) or root median squared error (RMdSE).
 
     If ``square_root`` is False then calculates MdSE and if ``square_root`` is True
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
+    The Median Squared Error (MdSE) is calculated as:
+
+    .. math::
+        \\text{MdSE} = \text{median}\left((y_{i} - \\widehat{y}_{i})^2\right)_{i=1}^{n}
+
+    where:
+    - \\( y_i \\) are the true values,
+    - \\( \\hat{y}_i \\) are the predicted values,
+    - \\( n \\) is the number of observations.
+
+    If ``square_root`` is set to True,
+    the Root Median Squared Error Percentage (RMdSE) is computed:
+
+    .. math::
+        \\text{RMdSE} = \\sqrt{ \\text{MdSE} }
+
     Like MSE, MdSE is measured in squared units of the input data. RMdSE is
-    on the same scale as the input data like RMSE. Because MdSE and RMdSE
-    square the forecast error rather than taking the absolute value, they
-    penalize large errors more than MAE or MdAE.
+    on the same scale as the input data, like RMSE.
 
     Taking the median instead of the mean of the squared errors makes
     this metric more robust to error outliers relative to a meean based metric
     since the median tends to be a more robust measure of central tendency in
     the presence of outliers.
+
+    Because the median commutes with monotonic transformations, MdSE and RMdSE
+    do not penalize large errors more than the MdAE.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the squared error at that time index,
+        :math:`(y_i - \widehat{y}_i)^2`,
+    * if ``square_root`` is True, the absolute error at that time index,
+      the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
@@ -2170,6 +2315,14 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsoluteError
@@ -2189,16 +2342,16 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdse = MedianSquaredError()
     >>> mdse(y_true, y_pred)
-    0.25
+    np.float64(0.25)
     >>> rmdse = MedianSquaredError(square_root=True)
     >>> rmdse(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdse(y_true, y_pred)
-    0.625
+    np.float64(0.625)
     >>> rmdse(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mdse = MedianSquaredError(multioutput='raw_values')
     >>> mdse(y_true, y_pred)
     array([0.25, 1.  ])
@@ -2207,10 +2360,10 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     array([0.5, 1. ])
     >>> mdse = MedianSquaredError(multioutput=[0.3, 0.7])
     >>> mdse(y_true, y_pred)
-    0.7749999999999999
+    np.float64(0.7749999999999999)
     >>> rmdse = MedianSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdse(y_true, y_pred)
-    0.85
+    np.float64(0.85)
     """
 
     func = median_squared_error
@@ -2220,9 +2373,61 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        if self.square_root:
+            raw_values = np.sqrt(raw_values)
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2281,6 +2486,14 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     mean_absolute_error
@@ -2312,17 +2525,17 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> gmae = GeometricMeanAbsoluteError()
     >>> gmae(y_true, y_pred)
-    0.000529527232030127
+    np.float64(0.000529527232030127)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> gmae(y_true, y_pred)
-    0.5000024031086919
+    np.float64(0.5000024031086919)
     >>> gmae = GeometricMeanAbsoluteError(multioutput='raw_values')
     >>> gmae(y_true, y_pred)
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmae = GeometricMeanAbsoluteError(multioutput=[0.3, 0.7])
     >>> gmae(y_true, y_pred)
-    0.7000014418652152
+    np.float64(0.7000014418652152)
     """
 
     func = geometric_mean_absolute_error
@@ -2367,6 +2580,14 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     mean_absolute_error
@@ -2398,18 +2619,18 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> gmse = GeometricMeanSquaredError()
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
-    2.80399089461488e-07
+    np.float64(2.80399089461488e-07)
     >>> rgmse = GeometricMeanSquaredError(square_root=True)
     >>> rgmse(y_true, y_pred)  # doctest: +SKIP
-    0.000529527232030127
+    np.float64(0.000529527232030127)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> gmse = GeometricMeanSquaredError()
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
-    0.5000000000115499
+    np.float64(0.5000000000115499)
     >>> rgmse = GeometricMeanSquaredError(square_root=True)
     >>> rgmse(y_true, y_pred)  # doctest: +SKIP
-    0.5000024031086919
+    np.float64(0.5000024031086919)
     >>> gmse = GeometricMeanSquaredError(multioutput='raw_values')
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
     array([2.30997255e-11, 1.00000000e+00])
@@ -2418,10 +2639,10 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
     >>> gmse(y_true, y_pred)  # doctest: +SKIP
-    0.7000000000069299
+    np.float64(0.7000000000069299)
     >>> rgmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rgmse(y_true, y_pred)  # doctest: +SKIP
-    0.7000014418652152
+    np.float64(0.7000014418652152)
     """
 
     func = geometric_mean_squared_error
@@ -2431,9 +2652,12 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput, multilevel=multilevel, by_index=by_index
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2521,6 +2745,14 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MedianAbsolutePercentageError
@@ -2540,16 +2772,16 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
     >>> mape(y_true, y_pred)
-    0.33690476190476193
+    np.float64(0.33690476190476193)
     >>> smape = MeanAbsolutePercentageError(symmetric=True)
     >>> smape(y_true, y_pred)
-    0.5553379953379953
+    np.float64(0.5553379953379953)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mape(y_true, y_pred)
-    0.5515873015873016
+    np.float64(0.5515873015873016)
     >>> smape(y_true, y_pred)
-    0.6080808080808081
+    np.float64(0.6080808080808081)
     >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mape(y_true, y_pred)
     array([0.38095238, 0.72222222])
@@ -2558,10 +2790,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     array([0.71111111, 0.50505051])
     >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mape(y_true, y_pred)
-    0.6198412698412699
+    np.float64(0.6198412698412699)
     >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smape(y_true, y_pred)
-    0.5668686868686869
+    np.float64(0.5668686868686869)
     """
 
     func = mean_absolute_percentage_error
@@ -2571,9 +2803,14 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -2681,6 +2918,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute percentage error at that time index,
+    :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
+    or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
+    the symmetric version, if ``symmetric`` is True, for all time indices
+    :math:`t_1, \dots, t_n` in the input.
+
     Parameters
     ----------
     symmetric : bool, default = False
@@ -2706,6 +2950,14 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsolutePercentageError
@@ -2725,16 +2977,16 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
     >>> mdape(y_true, y_pred)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> smdape = MedianAbsolutePercentageError(symmetric=True)
     >>> smdape(y_true, y_pred)
-    0.18181818181818182
+    np.float64(0.18181818181818182)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdape(y_true, y_pred)
-    0.5714285714285714
+    np.float64(0.5714285714285714)
     >>> smdape(y_true, y_pred)
-    0.39999999999999997
+    np.float64(0.39999999999999997)
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mdape(y_true, y_pred)
     array([0.14285714, 1.        ])
@@ -2743,10 +2995,10 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdape(y_true, y_pred)
-    0.7428571428571428
+    np.float64(0.7428571428571428)
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
-    0.5066666666666666
+    np.float64(0.5066666666666666)
     """  # noqa: E501
 
     func = median_absolute_percentage_error
@@ -2756,9 +3008,62 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        numer_values = (y_true - y_pred).abs()
+
+        if self.symmetric:
+            denom_values = (y_true.abs() + y_pred.abs()) / 2
+        else:
+            denom_values = y_true.abs()
+
+        raw_values = numer_values / denom_values
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        return raw_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2829,6 +3134,14 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsolutePercentageError
@@ -2849,16 +3162,16 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mspe = MeanSquaredPercentageError(symmetric=False)
     >>> mspe(y_true, y_pred)
-    0.23776218820861678
+    np.float64(0.23776218820861678)
     >>> smspe = MeanSquaredPercentageError(square_root=True, symmetric=False)
     >>> smspe(y_true, y_pred)
-    0.48760864246710883
+    np.float64(0.48760864246710883)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mspe(y_true, y_pred)
-    0.5080309901738473
+    np.float64(0.5080309901738473)
     >>> smspe(y_true, y_pred)
-    0.7026794936195895
+    np.float64(0.7026794936195895)
     >>> mspe = MeanSquaredPercentageError(multioutput='raw_values', symmetric=False)
     >>> mspe(y_true, y_pred)
     array([0.34013605, 0.67592593])
@@ -2868,11 +3181,11 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     array([0.58321184, 0.82214714])
     >>> mspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mspe(y_true, y_pred)
-    0.5751889644746787
+    np.float64(0.5751889644746787)
     >>> smspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], \
     symmetric=False, square_root=True)
     >>> smspe(y_true, y_pred)
-    0.7504665536595034
+    np.float64(0.7504665536595034)
     """
 
     func = mean_squared_percentage_error
@@ -2883,10 +3196,15 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2961,6 +3279,14 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanAbsolutePercentageError
@@ -2981,16 +3307,16 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdspe = MedianSquaredPercentageError(symmetric=False)
     >>> mdspe(y_true, y_pred)
-    0.027777777777777776
+    np.float64(0.027777777777777776)
     >>> smdspe = MedianSquaredPercentageError(square_root=True, symmetric=False)
     >>> smdspe(y_true, y_pred)
-    0.16666666666666666
+    np.float64(0.16666666666666666)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mdspe(y_true, y_pred)
-    0.5102040816326531
+    np.float64(0.5102040816326531)
     >>> smdspe(y_true, y_pred)
-    0.5714285714285714
+    np.float64(0.5714285714285714)
     >>> mdspe = MedianSquaredPercentageError(multioutput='raw_values', symmetric=False)
     >>> mdspe(y_true, y_pred)
     array([0.02040816, 1.        ])
@@ -3000,11 +3326,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     array([0.14285714, 1.        ])
     >>> mdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdspe(y_true, y_pred)
-    0.7061224489795918
+    np.float64(0.7061224489795918)
     >>> smdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], \
     symmetric=False, square_root=True)
     >>> smdspe(y_true, y_pred)
-    0.7428571428571428
+    np.float64(0.7428571428571428)
     """
 
     func = median_squared_percentage_error
@@ -3015,10 +3341,15 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
+        by_index=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3076,6 +3407,14 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MedianRelativeAbsoluteError
@@ -3096,18 +3435,18 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> mrae = MeanRelativeAbsoluteError()
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.9511111111111111
+    np.float64(0.9511111111111111)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8703703703703702
+    np.float64(0.8703703703703702)
     >>> mrae = MeanRelativeAbsoluteError(multioutput='raw_values')
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([0.51851852, 1.22222222])
     >>> mrae = MeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    1.0111111111111108
+    np.float64(1.0111111111111108)
     """
 
     _tags = {
@@ -3151,6 +3490,14 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanRelativeAbsoluteError
@@ -3171,18 +3518,18 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> mdrae = MedianRelativeAbsoluteError()
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    1.0
+    np.float64(1.0)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.6944444444444443
+    np.float64(0.6944444444444443)
     >>> mdrae = MedianRelativeAbsoluteError(multioutput='raw_values')
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([0.55555556, 0.83333333])
     >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.7499999999999999
+    np.float64(0.7499999999999999)
     """
 
     _tags = {
@@ -3227,6 +3574,14 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanRelativeAbsoluteError
@@ -3248,18 +3603,18 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrae = GeometricMeanRelativeAbsoluteError()
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.0007839273064064755
+    np.float64(0.0007839273064064755)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.5578632807409556
+    np.float64(0.5578632807409556)
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput='raw_values')
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([4.97801163e-06, 1.11572158e+00])
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
     >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.7810066018326863
+    np.float64(0.7810066018326863)
     """
 
     _tags = {
@@ -3311,6 +3666,14 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     MeanRelativeAbsoluteError
@@ -3332,18 +3695,18 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrse = GeometricMeanRelativeSquaredError()
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.0008303544925949156
+    np.float64(0.0008303544925949156)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.622419372049448
+    np.float64(0.622419372049448)
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput='raw_values')
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([4.09227746e-06, 1.24483465e+00])
     >>> gmrse = GeometricMeanRelativeSquaredError(multioutput=[0.3, 0.7])
     >>> gmrse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8713854839582426
+    np.float64(0.8713854839582426)
     """
 
     _tags = {
@@ -3359,9 +3722,14 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         square_root=False,
+        by_index=False,
     ):
         self.square_root = square_root
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3450,6 +3818,14 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     mean_linex_error
@@ -3476,26 +3852,26 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> asymmetric_error = MeanAsymmetricError()
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
-    0.5
+    np.float64(0.5)
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
-    0.4625
+    np.float64(0.4625)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> asymmetric_error = MeanAsymmetricError()
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
-    0.75
+    np.float64(0.75)
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
-    0.7083333333333334
+    np.float64(0.7083333333333334)
     >>> asymmetric_error = MeanAsymmetricError(multioutput='raw_values')
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     array([0.5, 1. ])
     >>> asymmetric_error = MeanAsymmetricError(multioutput=[0.3, 0.7])
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
-    0.85
+    np.float64(0.85)
     """
 
     func = mean_asymmetric_error
@@ -3509,6 +3885,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         right_error_function="absolute",
         left_error_penalty=1.0,
         right_error_penalty=1.0,
+        by_index=False,
     ):
         self.asymmetric_threshold = asymmetric_threshold
         self.left_error_function = left_error_function
@@ -3516,7 +3893,11 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         self.left_error_penalty = left_error_penalty
         self.right_error_penalty = right_error_penalty
 
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3597,6 +3978,14 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     See Also
     --------
     mean_asymmetric_error
@@ -3622,27 +4011,27 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.19802627763937575
+    np.float64(0.19802627763937575)
     >>> linex_error = MeanLinexError(b=2)
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.3960525552787515
+    np.float64(0.3960525552787515)
     >>> linex_error = MeanLinexError(a=-1)
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.2391800623225643
+    np.float64(0.2391800623225643)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> linex_error = MeanLinexError()
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.2700398392309829
+    np.float64(0.2700398392309829)
     >>> linex_error = MeanLinexError(a=-1)
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.49660966225813563
+    np.float64(0.49660966225813563
     >>> linex_error = MeanLinexError(multioutput='raw_values')
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     array([0.17220024, 0.36787944])
     >>> linex_error = MeanLinexError(multioutput=[0.3, 0.7])
     >>> linex_error(y_true, y_pred)  # doctest: +SKIP
-    0.30917568000716666
+    np.float64(0.30917568000716666)
     """
 
     func = mean_linex_error
@@ -3653,10 +4042,15 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         b=1.0,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        by_index=False,
     ):
         self.a = a
         self.b = b
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3732,6 +4126,14 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    by_index : bool, default=False
+        Determines averaging over time points in direct call to metric object.
+
+        * If False, direct call to the metric object averages over time points,
+          equivalent to a call of the``evaluate`` method.
+        * If True, direct call to the metric object evaluates the metric at each
+          time point, equivalent to a call of the ``evaluate_by_index`` method.
+
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -3747,22 +4149,22 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_mae = RelativeLoss()
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8148148148148147
+    np.float64(0.8148148148148147)
     >>> relative_mse = RelativeLoss(relative_loss_function=mean_squared_error)
     >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.5178095088655261
+    np.float64(0.5178095088655261)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_mae = RelativeLoss()
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.8490566037735847
+    np.float64(0.8490566037735847)
     >>> relative_mae = RelativeLoss(multioutput='raw_values')
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([0.625     , 1.03448276])
     >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
-    0.927272727272727
+    np.float64(0.927272727272727)
     """
 
     _tags = {
@@ -3778,9 +4180,14 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         relative_loss_function=mean_absolute_error,
+        by_index=False,
     ):
         self.relative_loss_function = relative_loss_function
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        super().__init__(
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

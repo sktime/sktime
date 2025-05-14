@@ -102,29 +102,35 @@ class SubLOF(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.annotation.lof import SubLOF
-    >>> model = SubLOF(3, window_size=5)
+    >>> from sktime.detection.lof import SubLOF
+    >>> model = SubLOF(3, window_size=5, novelty=True)
     >>> x = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0, 0, 100, 0, 0, 0.3, -1, 0, 100, 0.2])
     >>> model.fit_transform(x)
-    0     0
-    1     0
-    2     1
-    3     0
-    4     0
-    5     0
-    6     0
-    7     1
-    8     0
-    9     0
-    10    0
-    11    0
-    12    0
-    13    1
-    14    0
-    dtype: int64
+        labels
+    0        0
+    1        0
+    2        1
+    3        0
+    4        0
+    5        0
+    6        0
+    7        1
+    8        0
+    9        0
+    10       0
+    11       0
+    12       0
+    13       1
+    14       0
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Alex-JG3",
+        "maintainers": "Alex-JG3",
+        # estimator type
+        # --------------
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
         "univariate-only": False,
@@ -158,7 +164,7 @@ class SubLOF(BaseDetector):
         self.models = None
         super().__init__()
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit the LOF model to ``X``.
 
         Parameters
