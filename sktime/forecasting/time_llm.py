@@ -102,6 +102,7 @@ class TimeLLMForecaster(BaseForecaster):
         dropout=0.1,
         device: Optional[str] = None,
         prompt_domain=False,
+        return_to_cpu=False,
     ):
         self.task_name = task_name
         self.pred_len = pred_len
@@ -117,6 +118,7 @@ class TimeLLMForecaster(BaseForecaster):
         self.dropout = dropout
         self.device = device
         self.prompt_domain = prompt_domain
+        self.return_to_cpu = return_to_cpu
 
         super().__init__()
 
@@ -166,6 +168,9 @@ class TimeLLMForecaster(BaseForecaster):
         self.model_ = self.model_.to(torch.bfloat16)
 
         self.last_values = y
+
+        if self.return_to_cpu:
+            self.model_.to("cpu")
 
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
@@ -261,6 +266,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
+                "return_to_cpu": True,
             },
             {
                 "task_name": "short_term_forecast",
@@ -277,6 +283,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
+                "return_to_cpu": True,
             },
         ]
 
