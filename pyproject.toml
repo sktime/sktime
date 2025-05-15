@@ -51,7 +51,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib<1.5,>=1.2.0",  # required for parallel processing
+  "joblib>=1.2.0,<1.6",  # required for parallel processing
   "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
@@ -266,7 +266,7 @@ docs = [
 tests = [
   "pytest>=7.4,<8.4",
   "pytest-randomly>=3.15,<3.17",
-  "pytest-timeout>=2.1,<2.4",
+  "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.7",
 ]
 
