@@ -773,7 +773,7 @@ class capability__categorical_in_X(_BaseTag):
 
     _tags = {
         "tag_name": "capability:categorical_in_X",
-        "parent_type": ["forecaster", "transformer"],
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
         "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
