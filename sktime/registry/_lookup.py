@@ -68,17 +68,17 @@ def all_estimators(
 
     filter_tags: dict of (str or list of str or re.Pattern), str, or list of str, optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
-        
+
         If dict, ``filter_tags`` subsets the returned estimators as follows:
-        
+
         * each key/value pair is statement in "and"/conjunction
         * key is tag name to sub-set on
         * value str or list of string are tag values
         * condition is "key must be equal to value, or in set(value)"
-        
+
         If str, equivalent to {filter_tags: True}, i.e., returns estimators where the specified tag is True.
-        
-        If list of str, equivalent to {x: True for x in filter_tags}, i.e., returns estimators where all 
+
+        If list of str, equivalent to {x: True for x in filter_tags}, i.e., returns estimators where all
         specified tags are True.
 
         In detail, he return will be filtered to keep exactly the classes
@@ -209,8 +209,10 @@ def all_estimators(
             filter_tags = {}
         elif isinstance(filter_tags, str):
             filter_tags = {filter_tags: True}
-        elif isinstance(filter_tags, list) and all(isinstance(x, str) for x in filter_tags):
-            filter_tags = {x: True for x in filter_tags}
+        elif isinstance(filter_tags, list) and all(
+            isinstance(x, str) for x in filter_tags
+        ):
+            filter_tags = dict.fromkeys(filter_tags, True)
         else:
             filter_tags = filter_tags.copy()
 
