@@ -1495,6 +1495,7 @@ def mean_absolute_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     symmetric=False,
+    by_forecast=False,
     **kwargs,
 ):
     """Mean absolute percentage error (MAPE) or symmetric version.
@@ -1533,6 +1534,10 @@ def mean_absolute_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    by_forecast : bool, default=False
+        Calculates by_forecast version of metric if True.
+        Do not set as True along with symmetric.
 
     Returns
     -------
@@ -1587,9 +1592,11 @@ def mean_absolute_percentage_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
+    if symmetric and by_forecast:
+        return ValueError
 
     output_errors = np.average(
-        np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric, by_forecast=by_forecast)),
         weights=horizon_weight,
         axis=0,
     )
@@ -1611,6 +1618,7 @@ def median_absolute_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     symmetric=False,
+    by_forecast=False,
     **kwargs,
 ):
     """Median absolute percentage error (MdAPE) or symmetric version.
@@ -1653,6 +1661,10 @@ def median_absolute_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    by_forecast : bool, default=False
+        Calculates by_forecast version of metric if True.
+        Do not set as True along with symmetric.
 
     Returns
     -------
@@ -1705,14 +1717,16 @@ def median_absolute_percentage_error(
     np.float64(0.5066666666666666)
     """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if symmetric and by_forecast:
+        return ValueError
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)), axis=0
+            np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric, by_forecast=by_forecast)), axis=0
         )
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric)),
+            np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric, by_forecast=by_forecast)),
             sample_weight=horizon_weight,
         )
 
@@ -1734,6 +1748,7 @@ def mean_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=False,
+    by_forecast=False,
     **kwargs,
 ):
     """Mean squared percentage error (MSPE) or square root version.
@@ -1780,6 +1795,10 @@ def mean_squared_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    by_forecast : bool, default=False
+        Calculates by_forecast version of metric if True.
+        Do not set as True along with symmetric.
 
     Returns
     -------
@@ -1836,8 +1855,11 @@ def mean_squared_percentage_error(
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
+    if symmetric and by_forecast:
+        return ValueError
+
     output_errors = np.average(
-        np.square(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        np.square(_percentage_error(y_true, y_pred, symmetric=symmetric, by_forecast=by_forecast)),
         weights=horizon_weight,
         axis=0,
     )
@@ -1863,6 +1885,7 @@ def median_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=False,
+    by_forecast=False,
     **kwargs,
 ):
     """Median squared percentage error (MdSPE)  or square root version.
@@ -1913,6 +1936,10 @@ def median_squared_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    by_forecast : bool, default=False
+        Calculates by_forecast version of metric if True.
+        Do not set as True along with symmetric.
 
     Returns
     -------
@@ -1967,7 +1994,9 @@ def median_squared_percentage_error(
     np.float64(0.7428571428571428)
     """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
+    if symmetric and by_forecast:
+        return ValueError
+    perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric, by_forecast=by_forecast)
     if horizon_weight is None:
         output_errors = np.median(np.square(perc_err), axis=0)
     else:
@@ -2738,7 +2767,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     return (y_true - y_pred) / denominator
 
 
-def _percentage_error(y_true, y_pred, symmetric=False):
+def _percentage_error(y_true, y_pred, symmetric=False, by_forecast=False):
     """Percentage error.
 
     Parameters
@@ -2771,6 +2800,8 @@ def _percentage_error(y_true, y_pred, symmetric=False):
             * np.abs(y_true - y_pred)
             / np.maximum(np.abs(y_true) + np.abs(y_pred), EPS)
         )
+    elif by_forecast:
+        percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_pred), EPS)
     else:
         percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
     return percentage_error
