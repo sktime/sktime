@@ -54,7 +54,7 @@ class TimeLLMForecaster(BaseForecaster):
     return_model_to_cpu : bool, default=False
         Parameter to set whether or not to return the model
         to CPU after training. This is useful for freeing up GPU
-        memory after training or inference.
+        memory after training.
 
     References
     ----------
