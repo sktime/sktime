@@ -1,0 +1,508 @@
+"""Interface for the momentfm deep learning time series forecaster."""
+
+import warnings
+
+import numpy as np
+import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.classification.base import BaseClassifier
+from sktime.split import temporal_train_test_split
+
+if _check_soft_dependencies("torch", severity="none"):
+    from torch.cuda import empty_cache
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
+
+
+if _check_soft_dependencies("accelerate", severity="none"):
+    pass
+
+if _check_soft_dependencies("transformers", severity="none"):
+    from sktime.libs.momentfm import MOMENTPipeline
+
+class MomentFMClassifier(BaseClassifier):
+    """
+    Interface for forecasting with the deep learning time series model momentfm.
+
+    MomentFM is a collection of open source foundation models for the general
+    purpose of time series analysis. The Moment Foundation Model is a pre-trained
+    model that is capable of accomplishing various time series tasks, such as:
+        - Classification
+
+    This interface with MomentFM focuses on the classification task, in which the
+    foundation model uses a user fine tuned 'classification head' to classify a time series
+    This model does NOT have zero shot capabilities and requires fine-tuning
+    to achieve performance on user inputted data.
+
+    NOTE: This model can only handle time series with a sequence length of 512 or less.
+
+    For more information: see
+    https://github.com/moment-timeseries-foundation-model/moment
+
+    For information regarding licensing and use of the momentfm model please visit:
+    https://huggingface.co/AutonLab/MOMENT-1-large
+
+    pretrained_model_name_or_path : str
+        Path to the pretrained Momentfm model. Default is AutonLab/MOMENT-1-large
+
+    n_channels : int
+        Used to specify the number of channels in the input data.
+
+    num_classes : int
+        Used to specify the number of potential classes when outputting predictions
+        from the model.
+
+    head_dropout : float
+        Dropout value of classification head of the model. Values range between [0.0, 1.0]
+        Default = 0.1
+
+    batch_size : int
+        size of batches to train the model on
+        default = 32
+
+    eval_batch_size : int or "all"
+        size of batches to evaluate the model on. If the string "all" is
+        specified, then we process the entire validation set as a single batch
+        default = 32
+
+    epochs : int
+        Number of epochs to fit tune the model on
+        default = 1
+
+    max_lr : float
+        Maximum learning rate that the learning rate scheduler will use
+        default = 1e-4
+
+    device : str
+        torch device to use
+        default = "auto"
+        If set to auto, it will automatically use whatever device that
+        `accelerate` detects.
+
+    pct_start : float
+        percentage of total iterations where the learning rate rises during
+        one epoch
+        default = 0.3
+
+    max_norm : float
+        Float value used to clip gradients during training
+        default = 5.0
+
+    train_val_split : float
+        float value between 0 and 1 to determine portions of training
+        and validation splits
+        default = 0.2
+
+    config : dict, default = {}
+        If desired, user can pass in a config detailing all momentfm parameters
+        that they wish to set in dictionary form, so that parameters do not need
+        to be individually set. If a parameter inside a config is a
+        duplicate of one already passed in individually, it will be overwritten.
+
+    criterion : criterion, default = torch.nn.MSELoss
+        Criterion to use during training.
+
+    return_model_to_cpu : bool, default = False
+        After fitting and training, will return the `momentfm` model to the cpu.
+
+    References
+    ----------
+    Paper: https://arxiv.org/abs/2402.03885
+    Github: https://github.com/moment-timeseries-foundation-model/moment/tree/main
+
+    Examples
+    --------
+    >>> from sktime.forecasting.hf_momentfm_forecaster import MomentFMForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = MomentFMForecaster(seq_len = 2)
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
+    """
+
+    def __init__(
+        self,
+        pretrained_model_name_or_path="AutonLab/MOMENT-1-large",
+        num_channels = 1,
+        n_classes = 5,
+        seq_len=8,
+        head_dropout=0.1,
+        batch_size=32,
+        eval_batch_size=32,
+        epochs=1,
+        max_lr=1e-4,
+        device="auto",
+        pct_start=0.3,
+        max_norm=5.0,
+        train_val_split=0.2,
+        config=None,
+        return_model_to_cpu=False,
+    ):
+        super().__init__()
+        self.pretrained_model_name_or_path = pretrained_model_name_or_path
+        self.num_channels = num_channels
+        self.n_classes = n_classes
+        self.seq_len = seq_len
+        self.head_dropout = head_dropout
+        self.batch_size = batch_size
+        self.eval_batch_size = eval_batch_size
+        self.epochs = epochs
+        self.max_lr = max_lr
+        self.device = device
+        self.pct_start = pct_start
+        self.max_norm = max_norm
+        self.train_val_split = train_val_split
+        self.config = config
+        self._config = config if config is not None else {}
+        self.return_model_to_cpu = return_model_to_cpu
+
+    def _fit(self, X, y):
+        """MomentFMClassifier fit method.
+
+        Parameters
+        ----------
+
+        X : This is the set of time series data that the model will fine-tune on.
+            Can either be 2D or 3D numpy array. Each time series must be of
+            length 512 or less, and the number of rows designates the number of
+            time series in the dataset. If the time series is longer than 512,
+            then we will use the most recent 512 time steps.
+                2D: (num_timeseries, seq_len)
+                3D: (num_timeseries, num_channels, seq_len)
+
+        y : 1D numpy array of shape (num_timeseries,)
+            This is the set of labels/classes. If the classes are strings,
+            they will be converted to integers, and then converted back during
+            prediction/inferences.
+
+        """
+        from torch.nn import CrossEntropyLoss
+        from accelerate import Accelerator
+        from torch.optim import Adam
+        from torch.optim.lr_scheduler import OneCycleLR
+        from torch.utils.data import DataLoader
+
+        self._pretrained_model_name_or_path = self._config.get(
+            "pretrained_model_name_or_path", self.pretrained_model_name_or_path
+        )
+
+        # device initialization
+        self._device = self._config.get("device", self.device)
+
+        # check availability of user specified device
+        self._device = _check_device(self._device)
+        # initialize accelerator
+        accelerator = Accelerator()
+        if self._device == "auto":
+            self._device = accelerator.device
+
+        cur_epoch = 0
+        max_epoch = self.epochs
+
+        self.model = MOMENTPipeline.from_pretrained(
+            self._pretrained_model_name_or_path,
+            model_kwargs={
+                "task_name": "classification",
+                "n_channels": self.num_channels,
+                "num_class": self.n_classes,
+                "dropout": self.head_dropout,
+                "device": self._device,
+            },
+        )
+        self.model.init()
+        # preparing the datasets
+        y_train, y_test, X_train, X_test = temporal_train_test_split(
+            y, X, train_size=1 - self.train_val_split, test_size=self.train_val_split
+        )
+
+        train_dataset = MomentFMClassifierPytorchDataset(
+            y=y_train,
+            X=X_train,
+            device=self._device,
+        )
+
+        train_dataloader = DataLoader(
+            train_dataset, batch_size=self.batch_size, shuffle=True
+        )
+        if not y_test.shape[0] == 0:
+            val_dataset = MomentFMClassifierPytorchDataset(
+                y=y_test,
+                X=X_test,
+                device=self._device,
+            )
+
+            if self.eval_batch_size == "all":
+                self._eval_batch_size = len(val_dataset)
+            else:
+                self._eval_batch_size = self.eval_batch_size
+
+            val_dataloader = DataLoader(
+                val_dataset, batch_size=self._eval_batch_size, shuffle=True
+            )
+        else:
+            val_dataloader = None
+
+        criterion = CrossEntropyLoss
+        optimizer = Adam(self.model.parameters(), lr=self.max_lr)
+        # Enable mixed precision training
+
+        # Create a OneCycleLR scheduler
+        total_steps = len(train_dataloader) * max_epoch
+        scheduler = OneCycleLR(
+            optimizer,
+            max_lr=self.max_lr,
+            total_steps=total_steps,
+            pct_start=self.pct_start,
+        )
+
+        # Gradient clipping value
+        max_norm = self.max_norm
+
+        # self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
+        #     accelerator.prepare(
+        #         self.model, optimizer, train_dataloader, val_dataloader, scheduler
+        #     )
+        # )
+
+        # while cur_epoch < max_epoch:
+        #     cur_epoch = _run_epoch(
+        #         cur_epoch,
+        #         accelerator,
+        #         criterion,
+        #         optimizer,
+        #         scheduler,
+        #         self.model,
+        #         max_norm,
+        #         train_dataloader,
+        #         val_dataloader,
+        #     )
+
+        # if self.return_model_to_cpu:
+        #     self.model.to("cpu")
+        #     empty_cache()
+
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        return self
+
+    def _predict(self, X, y):
+        """Predict method to forecast labels for the input data.
+
+        Parameters
+        ----------
+
+
+        """
+
+        if self.return_model_to_cpu:
+            self.model.to("cpu")
+            empty_cache()
+
+        return df_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params_set = []
+        params1 = {"seq_len": 8, "return_model_to_cpu": True, "train_val_split": 0.0}
+        params_set.append(params1)
+        params2 = {
+            "batch_size": 16,
+            "seq_len": 8,
+            "return_model_to_cpu": True,
+            "train_val_split": 0.0,
+        }
+        params_set.append(params2)
+
+        return params_set
+
+
+def _run_epoch(
+    cur_epoch,
+    accelerator,
+    criterion,
+    optimizer,
+    scheduler,
+    model,
+    max_norm,
+    train_dataloader,
+    val_dataloader,
+):
+    import torch.cuda.amp
+    from tqdm import tqdm
+
+    from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
+
+    losses = []
+    for data in tqdm(train_dataloader, total=len(train_dataloader)):
+        # Move the data to the GPU
+        timeseries = data["historical_y"]
+        input_mask = data["input_mask"]
+        forecast = data["future_y"]
+        with torch.cuda.amp.autocast():
+            output = model(x_enc=timeseries, mask=input_mask)
+        loss = criterion(output.forecast, forecast)
+
+        accelerator.backward(loss)
+
+        # Clip gradients
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+
+        losses.append(loss.item())
+
+    losses = np.array(losses)
+    average_loss = np.average(losses)
+    tqdm.write(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
+
+    # Step the learning rate scheduler
+    scheduler.step()
+
+    # Evaluate the model on the test split
+    if val_dataloader:
+        trues, preds, histories, losses = [], [], [], []
+        model.eval()
+        with torch.no_grad():
+            for data in tqdm(val_dataloader, total=len(val_dataloader)):
+                # Move the data to the specified device
+                timeseries = data["historical_y"]
+                input_mask = data["input_mask"]
+                forecast = data["future_y"]
+
+                with torch.cuda.amp.autocast():
+                    output = model(x_enc=timeseries, mask=input_mask)
+
+                loss = criterion(output.forecast, forecast)
+                losses.append(loss.item())
+
+                trues.append(forecast.detach().cpu().numpy())
+                preds.append(output.forecast.detach().cpu().numpy())
+                histories.append(timeseries.detach().cpu().numpy())
+
+        losses = np.array(losses)
+        average_loss = np.average(losses)
+        model.train()
+
+        trues = np.concatenate(trues, axis=0)
+        preds = np.concatenate(preds, axis=0)
+        histories = np.concatenate(histories, axis=0)
+
+        metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+        tqdm.write(
+            f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}Test MAE: {metrics.mae:.3f}"
+        )
+    cur_epoch += 1
+    return cur_epoch
+
+
+def _check_device(device):
+    if device == "auto":
+        return device
+    mps = False
+    cuda = False
+    if device == "mps":
+        from torch.backends.mps import is_available, is_built
+
+        if not is_available():
+            if not is_built():
+                print(
+                    "MPS not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                print(
+                    "MPS not available because the current MacOS version is not 12.3+ "
+                    "and/or you do not have an MPS-enabled device on this machine."
+                )
+        else:
+            _device = "mps"
+            mps = True
+    elif device == "gpu" or device == "cuda":
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = "cuda"
+            cuda = True
+    elif "cuda" in device:  # for specific cuda devices like cuda:0 etc
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = device
+            cuda = True
+    if mps or cuda:
+        return _device
+    else:
+        _device = "cpu"
+
+    return _device
+
+class MomentFMClassifierPytorchDataset(Dataset):
+    """Customized Pytorch dataset for the momentfm model."""
+
+    def __init__(self, y, X, device):
+        from torch import from_numpy
+        self.y = from_numpy(y) if isinstance(y, np.ndarray) else y
+        self.X = from_numpy(X) if isinstance(X, np.ndarray) else X
+        self.seq_len = 512
+        self.shape = y.shape
+        self.device = device
+
+        if X.shape[-1] > self.seq_len:
+            if len(self.shape) == 2:
+                self.X = X[:, -self.seq_len:]
+            elif len(self.shape) == 3:
+                self.X = X[:, :, -self.seq_len:]
+        elif X.shape[-1] < self.seq_len:
+            self.pad_length = self.seq_len - X.shape[-1]
+
+    def __len__(self):
+        """Return length of dataset."""
+        # todo: need to fix this for multi-channel data
+        return len(self.X) - self.seq_len + 1
+
+    def __getitem__(self, i):
+        """Return dataset items from index i."""
+        from torch import ones, cat, zeros
+        # batches must be returned in format (B, C, S)
+        # where B = batch_size, C = channels, S = sequence_length
+
+        historical_X = self.X[i]
+        labels = self.y[i]
+
+        if self.pad_length > 0:
+            self.input_mask = cat((ones(self.X.shape[-1]), zeros(self.pad_length)))
+            pad_shape = list(historical_X.shape)
+            pad_shape[-1] = self.pad_length
+            pad = zeros(pad_shape)
+            historical_X = cat((historical_X, pad), dim=-1)
+        else:
+            self.input_mask = ones(self.seq_len).to(self.device)
+
+        return {
+            "labels": labels,
+            "historical_X": historical_X,
+            "input_mask": self.input_mask,
+        }
