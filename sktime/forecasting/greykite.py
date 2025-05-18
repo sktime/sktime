@@ -31,9 +31,6 @@ class GreykiteForecaster(BaseForecaster):
         is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
-    forecast_horizon : int, optional
-        The number of periods to forecast. If None, it will be set via the
-        forecasting horizon.
     model_template : str, optional
         Name of the model template to use (default: "SILVERKITE").
     coverage : float, optional
@@ -61,7 +58,7 @@ class GreykiteForecaster(BaseForecaster):
 
     References
     ----------
-    .. [1] https://linkedin.github.io/greykite/docs/0.1.0/html/pages/stepbystep/0400_configuration.html
+    .. [1] https://linkedin.github.io/greykite/docs/1.0.0/html/pages/stepbystep/0400_configuration.html
 
     """
 
@@ -75,7 +72,7 @@ class GreykiteForecaster(BaseForecaster):
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:pickle": False,
         "capability:in-sample": False,
-        "python_dependencies": ["greykite"],  # Required Python dependencies.
+        "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
     }
 
     def __init__(
@@ -231,10 +228,6 @@ class GreykiteForecaster(BaseForecaster):
         params : dict
             A dictionary containing parameters to construct a valid test instance of
             the GreykiteForecaster. The dictionary includes:
-                - forecast_horizon: int
-                    Number of periods to forecast (default is 24).
-                - freq: str
-                    Frequency of the time series data (default is 'D' for daily).
                 - model_template: str
                     Name of the model template to use (default is 'SILVERKITE').
                 - date_format: str or None
