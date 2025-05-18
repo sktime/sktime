@@ -130,8 +130,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     criterion : criterion, default = torch.nn.MSELoss
         Criterion to use during training.
 
-    return_model_to_cpu : bool, default = False
-        After fitting and training, will return the `momentfm` model to the cpu.
+    return_model_to_cpu : bool, default=False
+        Parameter to set whether or not to return the model
+        to CPU after training. This is useful for freeing up GPU
+        memory after training or inference.
 
     References
     ----------
