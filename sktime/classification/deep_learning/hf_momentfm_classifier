@@ -126,6 +126,10 @@ class MomentFMClassifier(BaseClassifier):
     >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
     """
 
+    _tags = {
+        "capability:multivariate": True,
+    }
+
     def __init__(
         self,
         pretrained_model_name_or_path="AutonLab/MOMENT-1-large",
@@ -177,9 +181,9 @@ class MomentFMClassifier(BaseClassifier):
                 3D: (num_timeseries, num_channels, seq_len)
 
         y : 1D numpy array of shape (num_timeseries,)
-            This is the set of labels/classes. If the classes are strings,
-            they will be converted to integers, and then converted back during
-            prediction/inferences.
+            This is the set of labels/classes. If the classes are integers
+            of range [1, num_classes], then they will be converted to
+            [0, num_classes - 1] for the model.
 
         """
         from torch.nn import CrossEntropyLoss
@@ -221,6 +225,13 @@ class MomentFMClassifier(BaseClassifier):
             y, X, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
 
+        #if we need to transform the labels, do it here
+        y_train, y_test, mapping, inverse_mapping = _transform_labels(
+            y_train, y_test)
+
+        self.mapping = mapping
+        self.inverse_mapping = inverse_mapping
+
         train_dataset = MomentFMClassifierPytorchDataset(
             y=y_train,
             X=X_train,
@@ -230,7 +241,7 @@ class MomentFMClassifier(BaseClassifier):
         train_dataloader = DataLoader(
             train_dataset, batch_size=self.batch_size, shuffle=True
         )
-        if not y_test.shape[0] == 0:
+        if not X_test.shape[0] == 0:
             val_dataset = MomentFMClassifierPytorchDataset(
                 y=y_test,
                 X=X_test,
@@ -248,7 +259,7 @@ class MomentFMClassifier(BaseClassifier):
         else:
             val_dataloader = None
 
-        criterion = CrossEntropyLoss
+        criterion = CrossEntropyLoss()
         optimizer = Adam(self.model.parameters(), lr=self.max_lr)
         # Enable mixed precision training
 
@@ -264,47 +275,99 @@ class MomentFMClassifier(BaseClassifier):
         # Gradient clipping value
         max_norm = self.max_norm
 
-        # self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
-        #     accelerator.prepare(
-        #         self.model, optimizer, train_dataloader, val_dataloader, scheduler
-        #     )
-        # )
+        self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
+            accelerator.prepare(
+                self.model, optimizer, train_dataloader, val_dataloader, scheduler
+            )
+        )
 
-        # while cur_epoch < max_epoch:
-        #     cur_epoch = _run_epoch(
-        #         cur_epoch,
-        #         accelerator,
-        #         criterion,
-        #         optimizer,
-        #         scheduler,
-        #         self.model,
-        #         max_norm,
-        #         train_dataloader,
-        #         val_dataloader,
-        #     )
-
-        # if self.return_model_to_cpu:
-        #     self.model.to("cpu")
-        #     empty_cache()
-
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        return self
-
-    def _predict(self, X, y):
-        """Predict method to forecast labels for the input data.
-
-        Parameters
-        ----------
-
-
-        """
+        while cur_epoch < max_epoch:
+            cur_epoch = _run_epoch(
+                cur_epoch,
+                accelerator,
+                criterion,
+                optimizer,
+                scheduler,
+                self.model,
+                max_norm,
+                train_dataloader,
+                val_dataloader,
+            )
 
         if self.return_model_to_cpu:
             self.model.to("cpu")
             empty_cache()
 
-        return df_pred
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.train_dataloader = train_dataloader
+        self.val_dataloader = val_dataloader
+        return self
+
+    def _predict(self, X):
+        """Predict method to forecast labels for the input data.
+
+        Parameters
+        ----------
+
+        X : 2D or 3D numpy array
+            This is the set of time series data that the model will predict on.
+            Can either be 2D or 3D numpy array. Each time series must be of
+            length 512 or less, and the number of rows designates the number of
+            time series in the dataset. If the time series is longer than 512,
+            then we will use the most recent 512 time steps.
+                2D: (num_timeseries, seq_len)
+                3D: (num_timeseries, num_channels, seq_len)
+
+        Returns
+        -------
+
+        y_pred : 1D numpy array
+            numpy array of shape (num_timeseries,) correponding to the
+            predicted classes.
+
+        """
+        from torch import from_numpy
+
+        # if length of time series is greater than 512, then we will
+        # use the most recent 512 time steps
+        if X.shape[-1] > self.seq_len:
+            if len(X.shape) == 2:
+                self.X = X[:, -self.seq_len:]
+            elif len(X.shape) == 3:
+                self.X = X[:, :, -self.seq_len:]
+            input_mask = np.ones(X.shape[-1])
+
+        # if length of time series is less than 512, then we will pad
+        if X.shape[-1] < 512:
+            pad_length = 512 - X.shape[-1]
+            pad_shape = list(X.shape)
+            pad_shape[-1] = pad_length
+            pad = np.zeros(pad_shape)
+            X_ = np.concatenate((X, pad), axis=-1)
+            input_mask = np.concatenate(
+                (np.ones(X.shape[-1]), np.zeros(pad_length))
+            )
+        else:
+            X_ = X
+            input_mask = np.ones(X.shape[-1])
+
+        # Move the data to the specified device
+        X_ = from_numpy(X_).to(self._device)
+        input_mask = from_numpy(input_mask).to(self._device)
+
+        outputs = self.model(x_enc=X_, mask=input_mask)
+        logits = outputs.logits
+
+        # Get the predicted class
+        _, indices = logits.max(1)
+        if self.inverse_mapping is not None:
+            indices = indices.cpu().numpy()
+            y_pred = np.vectorize(self.inverse_mapping.get)(indices)
+        else:
+            y_pred = indices.cpu().numpy()
+
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -325,13 +388,13 @@ class MomentFMClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 8, "return_model_to_cpu": True, "train_val_split": 0.0}
+        params1 = {"return_model_to_cpu": True, "train_val_split": 0.0}
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
-            "seq_len": 8,
             "return_model_to_cpu": True,
             "train_val_split": 0.0,
+            "num_classes": 2,
         }
         params_set.append(params2)
 
@@ -352,17 +415,15 @@ def _run_epoch(
     import torch.cuda.amp
     from tqdm import tqdm
 
-    from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
-
     losses = []
     for data in tqdm(train_dataloader, total=len(train_dataloader)):
         # Move the data to the GPU
-        timeseries = data["historical_y"]
+        timeseries = data["historical_X"]
         input_mask = data["input_mask"]
-        forecast = data["future_y"]
+        labels = data["labels"]
         with torch.cuda.amp.autocast():
             output = model(x_enc=timeseries, mask=input_mask)
-        loss = criterion(output.forecast, forecast)
+        loss = criterion(output.logits, labels)
 
         accelerator.backward(loss)
 
@@ -383,36 +444,21 @@ def _run_epoch(
 
     # Evaluate the model on the test split
     if val_dataloader:
-        trues, preds, histories, losses = [], [], [], []
         model.eval()
         with torch.no_grad():
+            running_loss = 0.0
             for data in tqdm(val_dataloader, total=len(val_dataloader)):
                 # Move the data to the specified device
-                timeseries = data["historical_y"]
+                timeseries = data["historical_X"]
                 input_mask = data["input_mask"]
-                forecast = data["future_y"]
-
+                labels = data["labels"]
                 with torch.cuda.amp.autocast():
                     output = model(x_enc=timeseries, mask=input_mask)
-
-                loss = criterion(output.forecast, forecast)
-                losses.append(loss.item())
-
-                trues.append(forecast.detach().cpu().numpy())
-                preds.append(output.forecast.detach().cpu().numpy())
-                histories.append(timeseries.detach().cpu().numpy())
-
-        losses = np.array(losses)
-        average_loss = np.average(losses)
-        model.train()
-
-        trues = np.concatenate(trues, axis=0)
-        preds = np.concatenate(preds, axis=0)
-        histories = np.concatenate(histories, axis=0)
-
-        metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+                loss = criterion(output.logits, labels)
+                running_loss += loss.item()
+        avg_loss = running_loss / len(val_dataloader)
         tqdm.write(
-            f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}Test MAE: {metrics.mae:.3f}"
+            f"Epoch {cur_epoch}: Loss {avg_loss:.3f}"
         )
     cur_epoch += 1
     return cur_epoch
@@ -459,6 +505,35 @@ def _check_device(device):
 
     return _device
 
+def _transform_labels(y, y_test=None):
+    """Transform labels to be in the range [0, num_classes - 1].
+    If the labels are already in this range, return them as is.
+
+    Returns
+    -------
+    y : np.ndarray
+        Transformed labels.
+    y_test : np.ndarray
+        Transformed test labels.
+    mapping : dict
+        Mapping from original labels to transformed labels.
+    inverse_mapping : dict
+        Mapping from transformed labels to original labels.
+    """
+    labels = np.unique(y)
+
+    if np.array(list(range(len(labels))) == labels).all():
+        return y, None, None, None
+
+    mapping = {l:i for i, l in enumerate(labels)}
+    inverse_mapping = {i:l for i, l in enumerate(labels)}
+    y = np.vectorize(mapping.get)(y)
+
+    if y_test is not None:
+        y_test = np.vectorize(mapping.get)(y_test)
+
+    return y, y_test, mapping, inverse_mapping
+
 class MomentFMClassifierPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -478,10 +553,13 @@ class MomentFMClassifierPytorchDataset(Dataset):
         elif X.shape[-1] < self.seq_len:
             self.pad_length = self.seq_len - X.shape[-1]
 
+        if len(self.y.shape) == 2:
+            #in case its (n, 1) change it to (n,)
+            self.y = self.y.squeeze()
+
     def __len__(self):
         """Return length of dataset."""
-        # todo: need to fix this for multi-channel data
-        return len(self.X) - self.seq_len + 1
+        return self.X.shape[0]
 
     def __getitem__(self, i):
         """Return dataset items from index i."""
@@ -489,20 +567,20 @@ class MomentFMClassifierPytorchDataset(Dataset):
         # batches must be returned in format (B, C, S)
         # where B = batch_size, C = channels, S = sequence_length
 
-        historical_X = self.X[i]
-        labels = self.y[i]
+        historical_X = self.X[i, :, :].to(self.device)
+        labels = self.y[i].long().to(self.device)
 
         if self.pad_length > 0:
             self.input_mask = cat((ones(self.X.shape[-1]), zeros(self.pad_length)))
             pad_shape = list(historical_X.shape)
             pad_shape[-1] = self.pad_length
-            pad = zeros(pad_shape)
+            pad = zeros(pad_shape).to(self.device)
             historical_X = cat((historical_X, pad), dim=-1)
         else:
             self.input_mask = ones(self.seq_len).to(self.device)
 
         return {
             "labels": labels,
-            "historical_X": historical_X,
-            "input_mask": self.input_mask,
+            "historical_X": historical_X.float(),
+            "input_mask": self.input_mask.float(),
         }
