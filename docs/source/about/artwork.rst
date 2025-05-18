@@ -8,5 +8,5 @@ High-quality logos are available in the `docs/source/images/ <https://github.com
 
 The logos were designed by `Miguel Garcia Cabrera <https://www.flickr.com/photos/miguelgarciacabrera/>`_.
 
-.. image:: ../images/sktime-logo-no-text.png
+.. image:: ../images/sktime-logo-no-text.svg
     :align: center

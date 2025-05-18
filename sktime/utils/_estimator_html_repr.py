@@ -268,46 +268,26 @@ class _HTMLDocumentationLinkMixin:
     This mixin relies on three attributes:
     - `_doc_link_module`: it corresponds to the root module (e.g. `sktime`). Using this
       mixin, the default value is `sktime`.
-    - `_doc_link_template`: it corresponds to the template used to generate the
-      link to the API documentation. Using this mixin, the default value is
-      `"https://www.sktime.net/en/v{sktime_version}/api_reference/auto_generated/
-      {path_reduced}.html"`.
-    - `_doc_link_url_param_generator`: it corresponds to a function that generates the
-      parameters to be used in the template when the estimator module and name are not
-      sufficient.
 
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
     """
 
     _doc_link_module = "sktime"
-    _doc_link_url_param_generator = None
 
-    def _get_version(self):
-        module = importlib.import_module(self._doc_link_module)
-        return parse_version(module.__version__).base_version
+    @classmethod
+    def _generate_doc_link(cls):
+        module = importlib.import_module(cls._doc_link_module)
+        version = parse_version(module.__version__).base_version
+        modpath = str(cls)[8:-2]
+        path = _get_reduced_path(modpath)
 
-    @property
-    def _doc_link_template(self):
-        sktime_version = self._get_version()
-        return getattr(
-            self,
-            "__doc_link_template",
-            (
-                f"https://www.sktime.net/en/v{sktime_version}"
-                "/api_reference/auto_generated/{reduced_path}.html"
-            ),
-        )
-
-    @_doc_link_template.setter
-    def _doc_link_template(self, value):
-        setattr(self, "__doc_link_template", value)
+        return f"https://www.sktime.net/en/v{version}/api_reference/auto_generated/{path}.html"
 
     def _get_doc_link(self):
         """Generate a link to the API documentation for a given base object.
 
-        This method generates the link to the estimator's documentation page
-        by using the template defined by the attribute `_doc_link_template`.
+        For compatibility with sklearn it's an instance method.
 
         Returns
         -------
@@ -319,14 +299,9 @@ class _HTMLDocumentationLinkMixin:
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
-        if self._doc_link_url_param_generator is None:
-            modpath = str(self.__class__)[8:-2]
-            reduced_path = _get_reduced_path(modpath)
-
-            return self._doc_link_template.format(reduced_path=reduced_path)
-        return self._doc_link_template.format(
-            **self._doc_link_url_param_generator(self)
-        )
+        # TODO: add check if link is well-structured
+        # TODO: add fallback to stable version (?)
+        return self.__class__._generate_doc_link()
 
     @property
     def _repr_html_(self):
