@@ -73,15 +73,23 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     }
 
     def __init__(
-        self, forecasters, ensemble_algorithm=None, backend=None, backend_params=None
+        self,
+        forecasters,
+        ensemble_algorithm=None,
+        n_jobs="deprecated",
+        backend=None,
+        backend_params=None,
     ):
-        # self.n_jobs = n_jobs
+        self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
         self.backend = backend
         self.backend_params = backend_params
 
         super().__init__(
-            forecasters=forecasters, backend=backend, backend_params=backend_params
+            forecasters=forecasters,
+            n_jobs=n_jobs,
+            backend=backend,
+            backend_params=backend_params,
         )
 
     def _fit(self, y, X, fh):
