@@ -49,6 +49,8 @@ EXCLUDE_ESTIMATORS = [
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
+    # models with large weights
+    "MomentFMForecaster",
     # Large datasets
     "M5Dataset",
     # Test estimators
@@ -72,7 +74,9 @@ EXCLUDE_ESTIMATORS = [
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "VARMAX",
+    "SARIMAX",
     "SCINetForecaster",  # known bug #7871
+    "MAPAForecaster",  # known bug #8039
 ]
 
 

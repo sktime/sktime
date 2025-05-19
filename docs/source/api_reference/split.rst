@@ -44,19 +44,20 @@ They have tag ``"split_type"="temporal"``.
 .. currentmodule:: sktime.split
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    SlidingGreedySplitter
-    ExpandingWindowSplitter
-    ExpandingCutoffSplitter
-    ExpandingGreedySplitter
-    ExpandingSlidingWindowSplitter
-    TemporalTrainTestSplitter
-
+    cutoff.CutoffSplitter
+    cutoff.CutoffFhSplitter
+    singlewindow.SingleWindowSplitter
+    slidingwindow.SlidingWindowSplitter
+    slidinggreedy.SlidingGreedySplitter
+    expandingwindow.ExpandingWindowSplitter
+    expandingcutoff.ExpandingCutoffSplitter
+    expandinggreedy.ExpandingGreedySplitter
+    expandingslidingwindow.ExpandingSlidingWindowSplitter
+    temporal_train_test_split.TemporalTrainTestSplitter
 
 Time index splitter composition
 -------------------------------
@@ -75,11 +76,12 @@ more complex time index based splitting strategies.
 .. currentmodule:: sktime.split
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    SameLocSplitter
-    TestPlusTrainSplitter
+    sameloc.SameLocSplitter
+    testplustrain.TestPlusTrainSplitter
 
 
 Instance splitters
@@ -93,7 +95,8 @@ Instance splitters have tag ``"split_type"="instance"``.
 .. currentmodule:: sktime.split
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    InstanceSplitter
+    instance.InstanceSplitter
