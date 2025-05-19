@@ -130,7 +130,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     criterion : criterion, default = torch.nn.MSELoss
         Criterion to use during training.
 
-    return_model_to_cpu : bool, default=False
+    to_cpu_after_fit : bool, default=False
         Parameter to set whether or not to return the model
         to CPU after training. This is useful for freeing up GPU
         memory after training or inference.
@@ -197,7 +197,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         transformer_backbone="google/flan-t5-large",
         criterion=None,
         config=None,
-        return_model_to_cpu=False,
+        to_cpu_after_fit=False,
     ):
         super().__init__()
         from torch.nn import MSELoss
@@ -223,7 +223,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.criterion = criterion
         self._criterion = self.criterion if self.criterion else MSELoss()
         self._moment_seq_len = 512
-        self.return_model_to_cpu = return_model_to_cpu
+        self.to_cpu_after_fit = to_cpu_after_fit
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
@@ -376,7 +376,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 val_dataloader,
             )
 
-        if self.return_model_to_cpu:
+        if self.to_cpu_after_fit:
             self.model.to("cpu")
             empty_cache()
 
@@ -488,7 +488,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         df_pred = df_pred.loc[dateindex]
         df_pred.index.names = y_index_names
 
-        if self.return_model_to_cpu:
+        if self.to_cpu_after_fit:
             self.model.to("cpu")
             empty_cache()
 
@@ -513,12 +513,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
+        params1 = {"seq_len": 2, "to_cpu_after_fit": True, "train_val_split": 0.0}
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
             "seq_len": 2,
-            "return_model_to_cpu": True,
+            "to_cpu_after_fit": True,
             "train_val_split": 0.0,
         }
         params_set.append(params2)

@@ -51,7 +51,7 @@ class TimeLLMForecaster(BaseForecaster):
         Dropout rate.
     device : str, default='cuda' if available else 'cpu'
         Device to run model on.
-    return_model_to_cpu : bool, default=False
+    to_cpu_after_fit : bool, default=False
         Parameter to set whether or not to return the model
         to CPU after training. This is useful for freeing up GPU
         memory after training.
@@ -106,7 +106,7 @@ class TimeLLMForecaster(BaseForecaster):
         dropout=0.1,
         device: Optional[str] = None,
         prompt_domain=False,
-        return_model_to_cpu=False,
+        to_cpu_after_fit=False,
     ):
         self.task_name = task_name
         self.pred_len = pred_len
@@ -122,7 +122,7 @@ class TimeLLMForecaster(BaseForecaster):
         self.dropout = dropout
         self.device = device
         self.prompt_domain = prompt_domain
-        self.return_model_to_cpu = return_model_to_cpu
+        self.to_cpu_after_fit = to_cpu_after_fit
 
         super().__init__()
 
@@ -173,7 +173,7 @@ class TimeLLMForecaster(BaseForecaster):
 
         self.last_values = y
 
-        if self.return_model_to_cpu:
+        if self.to_cpu_after_fit:
             self.model_.to("cpu")
 
     def _get_unique_time_llm_key(self):
@@ -270,7 +270,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-                "return_model_to_cpu": True,
+                "to_cpu_after_fit": True,
             },
             {
                 "task_name": "short_term_forecast",
@@ -287,7 +287,7 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-                "return_model_to_cpu": True,
+                "to_cpu_after_fit": True,
             },
         ]
 
