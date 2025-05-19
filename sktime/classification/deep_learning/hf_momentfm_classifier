@@ -1,4 +1,4 @@
-"""Interface for the momentfm deep learning time series forecaster."""
+"""Interface for the momentfm deep learning time series classifier."""
 
 import warnings
 
@@ -28,7 +28,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 class MomentFMClassifier(BaseClassifier):
     """
-    Interface for forecasting with the deep learning time series model momentfm.
+    Interface for classification with the deep learning time series model momentfm.
 
     MomentFM is a collection of open source foundation models for the general
     purpose of time series analysis. The Moment Foundation Model is a pre-trained
@@ -105,10 +105,7 @@ class MomentFMClassifier(BaseClassifier):
         to be individually set. If a parameter inside a config is a
         duplicate of one already passed in individually, it will be overwritten.
 
-    criterion : criterion, default = torch.nn.MSELoss
-        Criterion to use during training.
-
-    return_model_to_cpu : bool, default = False
+    to_cpu_after_fit : bool, default = False
         After fitting and training, will return the `momentfm` model to the cpu.
 
     References
@@ -118,16 +115,30 @@ class MomentFMClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.forecasting.hf_momentfm_forecaster import MomentFMForecaster
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecaster = MomentFMForecaster(seq_len = 2)
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
+    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import MomentFMClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_type = "numpy3d")
+    >>> X_test, _ = load_unit_test(split="test", return_type = "numpy3d")
+    >>> classifier = MomentFMClassifier(n_classes=2, epochs=1, batch_size=16)
+    >>> classifier.fit(X_train, y_train) # doctest: +SKIP
+    >>> y_pred = classifier.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        "authors": ["julian-fong"],
+        "maintainers": ["julian-fong"],
+        "X_inner_mtype": "numpy3D",
+        "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
+        "python_dependencies": [
+            "torch",
+            "tqdm",
+            "huggingface-hub",
+            # "momentfm",
+            "accelerate",
+            "transformers",
+        ],
+        "python_version": ">= 3.10",
     }
 
     def __init__(
@@ -146,7 +157,7 @@ class MomentFMClassifier(BaseClassifier):
         max_norm=5.0,
         train_val_split=0.2,
         config=None,
-        return_model_to_cpu=False,
+        to_cpu_after_fit=False,
     ):
         super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
@@ -164,7 +175,7 @@ class MomentFMClassifier(BaseClassifier):
         self.train_val_split = train_val_split
         self.config = config
         self._config = config if config is not None else {}
-        self.return_model_to_cpu = return_model_to_cpu
+        self.to_cpu_after_fit = to_cpu_after_fit
 
     def _fit(self, X, y):
         """MomentFMClassifier fit method.
@@ -294,7 +305,7 @@ class MomentFMClassifier(BaseClassifier):
                 val_dataloader,
             )
 
-        if self.return_model_to_cpu:
+        if self.to_cpu_after_fit:
             self.model.to("cpu")
             empty_cache()
 
@@ -305,7 +316,7 @@ class MomentFMClassifier(BaseClassifier):
         return self
 
     def _predict(self, X):
-        """Predict method to forecast labels for the input data.
+        """Predict method to classify labels for the input data.
 
         Parameters
         ----------
@@ -353,7 +364,7 @@ class MomentFMClassifier(BaseClassifier):
             input_mask = np.ones(X.shape[-1])
 
         # Move the data to the specified device
-        X_ = from_numpy(X_).to(self._device)
+        X_ = from_numpy(X_).to(self._device).float()
         input_mask = from_numpy(input_mask).to(self._device)
 
         outputs = self.model(x_enc=X_, mask=input_mask)
@@ -388,11 +399,11 @@ class MomentFMClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"return_model_to_cpu": True, "train_val_split": 0.0}
+        params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0}
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
-            "return_model_to_cpu": True,
+            "to_cpu_after_fit": True,
             "train_val_split": 0.0,
             "num_classes": 2,
         }
