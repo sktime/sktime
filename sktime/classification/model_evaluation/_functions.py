@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating classification models."""
 
-__author__ = ["ksharma6"]
+__author__ = ["ksharma6", "jgyasu"]
 __all__ = ["evaluate"]
 
 import time
