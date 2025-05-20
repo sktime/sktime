@@ -356,10 +356,10 @@ def evaluate(
         >>> from sktime.classification.model_evaluation import evaluate
         >>> from sklearn.model_selection import KFold
         >>> from sktime.classification.dummy import DummyClassifier
-        >>> y = load_unit_test()
+        >>> X, y = load_unit_test()
         >>> classifier = DummyClassifier(strategy="prior")
         >>> cv = KFold(n_splits=3, shuffle=False)
-        >>> results = evaluate(classifier=classifier, cv=cv, y=y)
+        >>> results = evaluate(classifier=classifier, cv=cv, X=X, y=y)
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
