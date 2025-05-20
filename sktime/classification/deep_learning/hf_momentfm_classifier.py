@@ -1,9 +1,10 @@
 """Interface for the momentfm deep learning time series classifier."""
 
-import warnings
+import os
 
 import numpy as np
-import pandas as pd
+
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.base import BaseClassifier
@@ -26,6 +27,7 @@ if _check_soft_dependencies("accelerate", severity="none"):
 if _check_soft_dependencies("transformers", severity="none"):
     from sktime.libs.momentfm import MOMENTPipeline
 
+
 class MomentFMClassifier(BaseClassifier):
     """
     Interface for classification with the deep learning time series model momentfm.
@@ -36,8 +38,8 @@ class MomentFMClassifier(BaseClassifier):
         - Classification
 
     This interface with MomentFM focuses on the classification task, in which the
-    foundation model uses a user fine tuned 'classification head' to classify a time series
-    This model does NOT have zero shot capabilities and requires fine-tuning
+    foundation model uses a user fine tuned 'classification head' to classify a time
+    series. This model does NOT have zero shot capabilities and requires fine-tuning
     to achieve performance on user inputted data.
 
     NOTE: This model can only handle time series with a sequence length of 512 or less.
@@ -54,12 +56,13 @@ class MomentFMClassifier(BaseClassifier):
     n_channels : int
         Used to specify the number of channels in the input data.
 
-    num_classes : int
+    n_classes : int
         Used to specify the number of potential classes when outputting predictions
         from the model.
 
     head_dropout : float
-        Dropout value of classification head of the model. Values range between [0.0, 1.0]
+        Dropout value of classification head of the model. Values range between
+        [0.0, 1.0]
         Default = 0.1
 
     batch_size : int
@@ -115,7 +118,8 @@ class MomentFMClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import MomentFMClassifier
+    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import \
+    ... MomentFMClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_type = "numpy3d")
     >>> X_test, _ = load_unit_test(split="test", return_type = "numpy3d")
@@ -144,8 +148,8 @@ class MomentFMClassifier(BaseClassifier):
     def __init__(
         self,
         pretrained_model_name_or_path="AutonLab/MOMENT-1-large",
-        num_channels = 1,
-        n_classes = 5,
+        num_channels=1,
+        n_classes=5,
         seq_len=8,
         head_dropout=0.1,
         batch_size=32,
@@ -182,7 +186,6 @@ class MomentFMClassifier(BaseClassifier):
 
         Parameters
         ----------
-
         X : This is the set of time series data that the model will fine-tune on.
             Can either be 2D or 3D numpy array. Each time series must be of
             length 512 or less, and the number of rows designates the number of
@@ -197,8 +200,8 @@ class MomentFMClassifier(BaseClassifier):
             [0, num_classes - 1] for the model.
 
         """
-        from torch.nn import CrossEntropyLoss
         from accelerate import Accelerator
+        from torch.nn import CrossEntropyLoss
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
@@ -236,9 +239,8 @@ class MomentFMClassifier(BaseClassifier):
             y, X, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
 
-        #if we need to transform the labels, do it here
-        y_train, y_test, mapping, inverse_mapping = _transform_labels(
-            y_train, y_test)
+        # if we need to transform the labels, do it here
+        y_train, y_test, mapping, inverse_mapping = _transform_labels(y_train, y_test)
 
         self.mapping = mapping
         self.inverse_mapping = inverse_mapping
@@ -309,10 +311,6 @@ class MomentFMClassifier(BaseClassifier):
             self.model.to("cpu")
             empty_cache()
 
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
         return self
 
     def _predict(self, X):
@@ -320,7 +318,6 @@ class MomentFMClassifier(BaseClassifier):
 
         Parameters
         ----------
-
         X : 2D or 3D numpy array
             This is the set of time series data that the model will predict on.
             Can either be 2D or 3D numpy array. Each time series must be of
@@ -332,7 +329,6 @@ class MomentFMClassifier(BaseClassifier):
 
         Returns
         -------
-
         y_pred : 1D numpy array
             numpy array of shape (num_timeseries,) correponding to the
             predicted classes.
@@ -344,9 +340,9 @@ class MomentFMClassifier(BaseClassifier):
         # use the most recent 512 time steps
         if X.shape[-1] > self.seq_len:
             if len(X.shape) == 2:
-                self.X = X[:, -self.seq_len:]
+                self.X = X[:, -self.seq_len :]
             elif len(X.shape) == 3:
-                self.X = X[:, :, -self.seq_len:]
+                self.X = X[:, :, -self.seq_len :]
             input_mask = np.ones(X.shape[-1])
 
         # if length of time series is less than 512, then we will pad
@@ -356,9 +352,7 @@ class MomentFMClassifier(BaseClassifier):
             pad_shape[-1] = pad_length
             pad = np.zeros(pad_shape)
             X_ = np.concatenate((X, pad), axis=-1)
-            input_mask = np.concatenate(
-                (np.ones(X.shape[-1]), np.zeros(pad_length))
-            )
+            input_mask = np.concatenate((np.ones(X.shape[-1]), np.zeros(pad_length)))
         else:
             X_ = X
             input_mask = np.ones(X.shape[-1])
@@ -377,6 +371,10 @@ class MomentFMClassifier(BaseClassifier):
             y_pred = np.vectorize(self.inverse_mapping.get)(indices)
         else:
             y_pred = indices.cpu().numpy()
+
+        if self.to_cpu_after_fit:
+            self.model.to("cpu")
+            empty_cache()
 
         return y_pred
 
@@ -399,13 +397,13 @@ class MomentFMClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0}
-        params_set.append(params1)
+        # params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "n_classes": 2}
+        # params_set.append(params1)
         params2 = {
             "batch_size": 16,
             "to_cpu_after_fit": True,
             "train_val_split": 0.0,
-            "num_classes": 2,
+            "n_classes": 2,
         }
         params_set.append(params2)
 
@@ -432,6 +430,7 @@ def _run_epoch(
         timeseries = data["historical_X"]
         input_mask = data["input_mask"]
         labels = data["labels"]
+
         with torch.cuda.amp.autocast():
             output = model(x_enc=timeseries, mask=input_mask)
         loss = criterion(output.logits, labels)
@@ -468,9 +467,7 @@ def _run_epoch(
                 loss = criterion(output.logits, labels)
                 running_loss += loss.item()
         avg_loss = running_loss / len(val_dataloader)
-        tqdm.write(
-            f"Epoch {cur_epoch}: Loss {avg_loss:.3f}"
-        )
+        tqdm.write(f"Epoch {cur_epoch}: Loss {avg_loss:.3f}")
     cur_epoch += 1
     return cur_epoch
 
@@ -516,8 +513,10 @@ def _check_device(device):
 
     return _device
 
+
 def _transform_labels(y, y_test=None):
     """Transform labels to be in the range [0, num_classes - 1].
+
     If the labels are already in this range, return them as is.
 
     Returns
@@ -534,22 +533,25 @@ def _transform_labels(y, y_test=None):
     labels = np.unique(y)
 
     if np.array(list(range(len(labels))) == labels).all():
-        return y, None, None, None
+        return y, y_test, None, None
 
-    mapping = {l:i for i, l in enumerate(labels)}
-    inverse_mapping = {i:l for i, l in enumerate(labels)}
+    mapping = {l: i for i, l in enumerate(labels)}
+
+    inverse_mapping = {i: l for i, l in enumerate(labels)}
     y = np.vectorize(mapping.get)(y)
 
-    if y_test is not None:
+    if y_test is not None and len(y_test) > 0:
         y_test = np.vectorize(mapping.get)(y_test)
 
     return y, y_test, mapping, inverse_mapping
+
 
 class MomentFMClassifierPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
     def __init__(self, y, X, device):
         from torch import from_numpy
+
         self.y = from_numpy(y) if isinstance(y, np.ndarray) else y
         self.X = from_numpy(X) if isinstance(X, np.ndarray) else X
         self.seq_len = 512
@@ -558,14 +560,14 @@ class MomentFMClassifierPytorchDataset(Dataset):
 
         if X.shape[-1] > self.seq_len:
             if len(self.shape) == 2:
-                self.X = X[:, -self.seq_len:]
+                self.X = X[:, -self.seq_len :]
             elif len(self.shape) == 3:
-                self.X = X[:, :, -self.seq_len:]
+                self.X = X[:, :, -self.seq_len :]
         elif X.shape[-1] < self.seq_len:
             self.pad_length = self.seq_len - X.shape[-1]
 
         if len(self.y.shape) == 2:
-            #in case its (n, 1) change it to (n,)
+            # in case its (n, 1) change it to (n,)
             self.y = self.y.squeeze()
 
     def __len__(self):
@@ -574,7 +576,7 @@ class MomentFMClassifierPytorchDataset(Dataset):
 
     def __getitem__(self, i):
         """Return dataset items from index i."""
-        from torch import ones, cat, zeros
+        from torch import cat, ones, zeros
         # batches must be returned in format (B, C, S)
         # where B = batch_size, C = channels, S = sequence_length
 
