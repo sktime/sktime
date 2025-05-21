@@ -1546,6 +1546,27 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class capability__hierarchical_reconciliation(_BaseTag):
+    """Property: transformer reconciles hierarchical series.
+
+    - String name: ``"capability:hierarchical_reconciliation"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations that reconcile hierarchical series.
+    """
+
+    _tags = {
+        "tag_name": "capability:hierarchical_reconciliation",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer reconcile hierarchical series?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
