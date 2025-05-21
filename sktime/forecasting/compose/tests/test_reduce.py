@@ -897,4 +897,4 @@ def test_pooled_recursive_reduction():
     last_win = np.array([[3, 4], [7, 8]])
     lr_pred = lr.predict(last_win)
 
-    return np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
+    assert np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
