@@ -1,6 +1,7 @@
 """Interface for the momentfm deep learning time series classifier."""
 
 import os
+from copy import deepcopy
 
 import numpy as np
 
@@ -52,13 +53,6 @@ class MomentFMClassifier(BaseClassifier):
 
     pretrained_model_name_or_path : str
         Path to the pretrained Momentfm model. Default is AutonLab/MOMENT-1-large
-
-    n_channels : int
-        Used to specify the number of channels in the input data.
-
-    n_classes : int
-        Used to specify the number of potential classes when outputting predictions
-        from the model.
 
     head_dropout : float
         Dropout value of classification head of the model. Values range between
@@ -118,12 +112,13 @@ class MomentFMClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import \
-    ... MomentFMClassifier
+    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import (
+    ... MomentFMClassifier,
+    ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_type = "numpy3d")
     >>> X_test, _ = load_unit_test(split="test", return_type = "numpy3d")
-    >>> classifier = MomentFMClassifier(n_classes=2, epochs=1, batch_size=16)
+    >>> classifier = MomentFMClassifier(epochs=1, batch_size=16)
     >>> classifier.fit(X_train, y_train) # doctest: +SKIP
     >>> y_pred = classifier.predict(X_test) # doctest: +SKIP
     """
@@ -148,9 +143,6 @@ class MomentFMClassifier(BaseClassifier):
     def __init__(
         self,
         pretrained_model_name_or_path="AutonLab/MOMENT-1-large",
-        num_channels=1,
-        n_classes=5,
-        seq_len=8,
         head_dropout=0.1,
         batch_size=32,
         eval_batch_size=32,
@@ -165,9 +157,6 @@ class MomentFMClassifier(BaseClassifier):
     ):
         super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
-        self.num_channels = num_channels
-        self.n_classes = n_classes
-        self.seq_len = seq_len
         self.head_dropout = head_dropout
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
@@ -206,10 +195,11 @@ class MomentFMClassifier(BaseClassifier):
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
 
+        self.y_dtype = y.dtype
+
         self._pretrained_model_name_or_path = self._config.get(
             "pretrained_model_name_or_path", self.pretrained_model_name_or_path
         )
-
         # device initialization
         self._device = self._config.get("device", self.device)
 
@@ -227,8 +217,8 @@ class MomentFMClassifier(BaseClassifier):
             self._pretrained_model_name_or_path,
             model_kwargs={
                 "task_name": "classification",
-                "n_channels": self.num_channels,
-                "num_class": self.n_classes,
+                "n_channels": X.shape[1] if len(X.shape) == 3 else 1,
+                "num_class": self.n_classes_,
                 "dropout": self.head_dropout,
                 "device": self._device,
             },
@@ -336,29 +326,34 @@ class MomentFMClassifier(BaseClassifier):
         """
         from torch import from_numpy
 
+        X_ = deepcopy(X)
+
         # if length of time series is greater than 512, then we will
         # use the most recent 512 time steps
-        if X.shape[-1] > self.seq_len:
-            if len(X.shape) == 2:
-                self.X = X[:, -self.seq_len :]
+        if X_.shape[-1] > 512:
+            if len(X_.shape) == 2:
+                X_ = X_[:, -512:]
             elif len(X.shape) == 3:
-                self.X = X[:, :, -self.seq_len :]
-            input_mask = np.ones(X.shape[-1])
+                X_ = X_[:, :, -512:]
+            input_mask = np.ones(X_.shape[-1])
 
         # if length of time series is less than 512, then we will pad
-        if X.shape[-1] < 512:
-            pad_length = 512 - X.shape[-1]
-            pad_shape = list(X.shape)
+        if X_.shape[-1] < 512:
+            pad_length = 512 - X_.shape[-1]
+            pad_shape = list(X_.shape)
             pad_shape[-1] = pad_length
             pad = np.zeros(pad_shape)
-            X_ = np.concatenate((X, pad), axis=-1)
+            X_ = np.concatenate((X_, pad), axis=-1)
             input_mask = np.concatenate((np.ones(X.shape[-1]), np.zeros(pad_length)))
         else:
-            X_ = X
-            input_mask = np.ones(X.shape[-1])
+            input_mask = np.ones(X_.shape[-1])
+
+        self.model.eval()
+        self.model.to(self._device)
 
         # Move the data to the specified device
         X_ = from_numpy(X_).to(self._device).float()
+
         input_mask = from_numpy(input_mask).to(self._device)
 
         outputs = self.model(x_enc=X_, mask=input_mask)
@@ -366,6 +361,7 @@ class MomentFMClassifier(BaseClassifier):
 
         # Get the predicted class
         _, indices = logits.max(1)
+
         if self.inverse_mapping is not None:
             indices = indices.cpu().numpy()
             y_pred = np.vectorize(self.inverse_mapping.get)(indices)
@@ -375,6 +371,9 @@ class MomentFMClassifier(BaseClassifier):
         if self.to_cpu_after_fit:
             self.model.to("cpu")
             empty_cache()
+
+        # convert the dtype of y_pred to the same as y
+        y_pred = y_pred.astype(self.y_dtype)
 
         return y_pred
 
@@ -397,13 +396,12 @@ class MomentFMClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        # params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "n_classes": 2}
-        # params_set.append(params1)
+        params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "batch_size": 64}
+        params_set.append(params1)
         params2 = {
-            "batch_size": 16,
+            "batch_size": 128,
             "to_cpu_after_fit": True,
             "train_val_split": 0.0,
-            "n_classes": 2,
         }
         params_set.append(params2)
 
