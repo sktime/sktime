@@ -235,6 +235,10 @@ class TimeLLMForecaster(BaseForecaster):
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )
         X_tensor = X_tensor.to(torch.float32)
+
+        self.model_.eval()
+        self.model_.to(self.device_)
+
         res = self.model_.forward(
             X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
         )
@@ -248,6 +252,9 @@ class TimeLLMForecaster(BaseForecaster):
         )
 
         y_pred = y_pred.astype("float64")
+
+        if self.to_cpu_after_fit:
+            self.model_.to("cpu")
 
         return y_pred
 
