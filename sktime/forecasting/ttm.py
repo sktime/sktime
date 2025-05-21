@@ -20,10 +20,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import Trainer, TrainingArguments
-
-
 class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
@@ -35,41 +31,111 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
     the notion of the first-ever "tiny" pre-trained models for Time-Series Forecasting.
 
+    **Fit Strategies: Full, Minimal, and Zero-shot**
+
+    This model supports three fit strategies: *zero-shot* for direct predictions without
+    training, *minimal* fine-tuning for lightweight adaptation to new data, and *full*
+    fine-tuning for comprehensive model training. The selected strategy is determined
+    by the model's fit_strategy parameter
+
+    **Initialization Process**:
+
+    1. **Model Path**: The ``model_path`` parameter points to a local folder or
+       huggingface repo that contains both *configuration files*
+       and *pretrained weights*.
+
+    2. **Default Configuration**: The model loads its default configuration from the
+       *configuration files*.
+
+    3. **Custom Configuration**: Users can provide a custom configuration via the
+       ``config`` parameter during model initialization.
+
+    4. **Configuration Override**: If custom configuration is provided,
+       it overrides the default configuration.
+
+    5. **Forecasting Horizon**: If the forecasting horizon (``fh``) specified during
+       ``fit`` exceeds the default ``config.prediction_length``,
+       the configuration is updated to reflect ``max(fh)``.
+
+    6. **Model Architecture**: The final configuration is used to construct the
+       *model architecture*.
+
+    7. **Pretrained Weights**: *pretrained weights* are loded from the ``model_path``,
+       these weights are then aligned and loaded into the *model architechture*.
+
+    8. **Weight Alignment**: However sometimes, *pretrained weights* do not align with
+       the *model architechture*, because the config was changed which created a
+       *model architechture* of different size than the default one.
+       This causes some of the weights in *model architechture* to be reinitialized
+       randomly instead of using the pre-trained weights.
+
+    **Training Strategies**:
+
+    - **Zero-shot Forecasting**: When all the *pre-trained weights* are correctly
+      aligned with the *model architechture*, fine-tuing part is bypassed and
+      the model preforms zero-short forecasting.
+
+    - **Minimal Fine-tuning**: When not all the *pre-trained weights* are correctly
+      aligned with the *model architechture*, rather some weights are re-initialized,
+      these re-initialized weights are fine-tuned on the provided data.
+
+    - **Full Fine-tuning**:  The model is *fully fine-tuned* on new data, updating *all
+      parameters*. This approach offers maximum adaptation to the dataset but requires
+      more computational resources.
+
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
         Path to the Huggingface model to use for forecasting.
         This can be either:
+
         - The name of a Huggingface repository (e.g., "ibm/TTM")
+
         - A local path to a folder containing model files in a format supported
           by transformers. In this case, ensure that the directory contains all
           necessary files (e.g., configuration, tokenizer, and model weights).
+
+        - If this parameter is *None*, fit_strategy should be *full* to allow
+          full fine tuning of the model loaded from pretrained/provided config,
+          else ValueError is raised.
+
     revision: str, default="main"
         Revision of the model to use:
+
         - "main": For loading model with context_length of 512
           and prediction_length of 96.
+
         - "1024_96_v1": For loading model with context_length of 1024
           and prediction_length of 96.
+
+        This param becomes irrelevant when model_path is None
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
+
     config : dict, default={}
         Configuration to use for the model. See the ``transformers``
         documentation for details.
+
     training_args : dict, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
         for details.
         Note that the ``output_dir`` argument is required.
+
     compute_metrics : list, default=None
         List of metrics to compute during training. See ``transformers.Trainer``
         for details.
+
     callbacks : list, default=[]
         List of callbacks to use during training. See ``transformers.Trainer``
+
     broadcasting : bool, default=False
         if True, multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
+
     use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
         package ``tsfm_public.models.tinytimemixer``. This is useful if you
@@ -80,13 +146,25 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         on pypi.
         To install the source package, follow the instructions here [4]_.
 
+    fit_strategy : str, default="minimal"
+        Strategy to use for fitting (fine-tuning) the model. This can be one of
+        the following:
+        - "zero-shot": Uses pre-trained model as it is. If model path is *None*
+          with this strategy, ValueError is raised.
+        - "minimal": Fine-tunes only a small subset of the model parameters,
+          allowing for quick adaptation with limited computational resources.
+          If model path is *None* with this strategy, ValueError is raised.
+        - "full": Fine-tunes all model parameters, which may result in better
+          performance but requires more computational power and time. Allows
+          model path to be *None*.
+
     References
     ----------
     .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
     .. [2] Ekambaram, V., Jati, A., Dayama, P., Mukherjee, S.,
-    Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
-    Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
-    Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
+           Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
+           Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
+           Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
     .. [3] https://github.com/ibm-granite/granite-tsfm/blob/main/notebooks/tutorial/ttm_tutorial.ipynb
     .. [4] https://github.com/ibm-granite/granite-tsfm/tree/ttm
 
@@ -96,6 +174,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> # performs zero-shot forecasting, as default config (unchanged) is used
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
@@ -111,6 +190,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>>
     >>> # global forecasting on multi-index dataset
     >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path=None,
+    ...     fit_strategy="full",
     ...     config={
     ...             "context_length": 8,
     ...             "prediction_length": 2
@@ -122,7 +203,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # model initialized with random weights due to None model_path
+    >>> # and trained with the full strategy.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -143,7 +225,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
@@ -165,6 +247,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         use_source_package=False,
+        fit_strategy="minimal",
     ):
         super().__init__()
         self.model_path = model_path
@@ -178,6 +261,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.fit_strategy = fit_strategy
 
         if self.broadcasting:
             self.set_tags(
@@ -218,6 +302,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        from transformers import Trainer, TrainingArguments
+
         if self.use_source_package:
             from tsfm_public.models.tinytimemixer import (
                 TinyTimeMixerConfig,
@@ -229,11 +315,25 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerForPrediction,
             )
 
-        # Get the Configuration
-        config = TinyTimeMixerConfig.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-        )
+        # Initialize to self.config, then adjust accordingly
+        config = self.config
+        if self.model_path is None:
+            if self.fit_strategy != "full":
+                raise ValueError(
+                    "Invalid configuration: 'model_path' is set to None."
+                    "This requires 'fit_strategy' to be 'full'."
+                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
+                )
+            # Load tinytimemixer config
+            config = TinyTimeMixerConfig()
+            # call to initialize attributes like num_patchess
+            config.check_and_init_preprocessing()
+        else:
+            # Get the pretrained model Configuration
+            config = TinyTimeMixerConfig.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+            )
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -249,7 +349,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         patch_length = _config.get("patch_length")
         patch_stride = _config.get("patch_stride")
         patch_size = context_length / num_patches
-        if patch_size != patch_length or patch_stride != patch_stride:
+        if patch_size != patch_length or patch_size != patch_stride:
             # update the config here
             patch_size = max(1, int(patch_size))
             _config["patch_length"] = patch_size
@@ -281,43 +381,67 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         config = config.from_dict(_config)
 
-        # Get the Model
-        # self.model, info = PatchTSTForPrediction.from_pretrained(
-        # "ibm-granite/granite-timeseries-patchtst",
-        self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        if self.model_path is not None:
+            # Load the the pretrained model with updated config
+            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+            )
+        else:
+            # Initialize model with default config
+            self.model = TinyTimeMixerForPrediction(config=config)
 
-        if len(info["mismatched_keys"]) == 0:
-            return  # No need to fit
+        if self.fit_strategy == "zero-shot":
+            if len(info["mismatched_keys"]) > 0:
+                raise ValueError(
+                    "Fit strategy is 'zero-shot', but the model weights in the"
+                    "configuration are mismatched compared to the pretrained model."
+                    "Please ensure they match."
+                )
+            return
+        elif self.fit_strategy == "minimal":
+            if len(info["mismatched_keys"]) == 0:
+                return  # No need to fit
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
+            # Adjust requires_grad property of model weights based on info
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+        elif self.fit_strategy == "full":
+            for param in self.model.parameters():
+                param.requires_grad = True
+        else:
+            raise ValueError("Unknown fit strategy")
 
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight.requires_grad = True
-
-        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
 
         train = PyTorchDataset(
             y=y_train,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
-        test = PyTorchDataset(
-            y=y_test,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
+
+        eval = None
+        if self.validation_split is not None:
+            eval = PyTorchDataset(
+                y=y_eval,
+                context_length=config.context_length,
+                prediction_length=config.prediction_length,
+            )
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
@@ -327,7 +451,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             model=self.model,
             args=training_args,
             train_dataset=train,
-            eval_dataset=test,
+            eval_dataset=eval,
             compute_metrics=self.compute_metrics,
             callbacks=self.callbacks,
         )
@@ -473,7 +597,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 8,
+                    "context_length": 3,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
@@ -528,9 +652,9 @@ def _same_index(data):
     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
         lambda x: x.index.get_level_values(-1)
     )
-    assert data.map(
-        lambda x: x.equals(data.iloc[0])
-    ).all(), "All series must has the same index"
+    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
+        "All series must has the same index"
+    )
     return data.iloc[0], len(data.iloc[0])
 
 

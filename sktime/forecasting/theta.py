@@ -100,7 +100,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
@@ -241,7 +241,7 @@ class ThetaForecaster(ExponentialSmoothing):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = BaseForecaster._predict_interval(self, fh, X, coverage)
+        pred_int = BaseForecaster._predict_interval(self, fh=fh, X=X, coverage=coverage)
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -320,8 +320,9 @@ class ThetaForecaster(ExponentialSmoothing):
         params0 = {}
         params1 = {"sp": 2, "deseasonalize": True}
         params2 = {"deseasonalize": False}
+        params3 = {"initial_level": 0.5}
 
-        return [params0, params1, params2]
+        return [params0, params1, params2, params3]
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
@@ -419,10 +420,10 @@ class ThetaModularForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["GuzalBulatova", "fkiraly"],
-        "univariate-only": False,
+        "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "python_version": ">3.7",
     }
 

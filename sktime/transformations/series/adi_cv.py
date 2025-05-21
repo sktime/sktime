@@ -84,6 +84,12 @@ class ADICVTransformer(BaseTransformer):
     """  # noqa: E501
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["shlok191", "sbhobbes"],
+        "maintainers": ["shlok191"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -95,9 +101,7 @@ class ADICVTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
-        "handles-missing-data": False,
-        "authors": ["shlok191"],
-        "maintainers": ["shlok191"],
+        "capability:missing_values": False,
     }
 
     def __init__(

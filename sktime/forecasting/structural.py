@@ -211,7 +211,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": False,
     }
 

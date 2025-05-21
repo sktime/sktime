@@ -12,7 +12,6 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.proba.empirical import Empirical
 from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
@@ -86,7 +85,7 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": PANDAS_MTYPES,
@@ -145,7 +144,7 @@ class BaggingForecaster(BaseForecaster):
         -------
         fresh clone of the transformer to set to self.bootstrap_transformer_
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if transformer is None:
             from sktime.transformations.bootstrap import STLBootstrapTransformer
@@ -163,7 +162,7 @@ class BaggingForecaster(BaseForecaster):
 
         if t_inp != "Series" or t_out != "Panel":
             raise TypeError(msg)
-        if scitype(transformer) != "transformer":
+        if not is_scitype(transformer, "transformer"):
             raise TypeError(msg)
 
         if hasattr(transformer, "clone"):
@@ -187,14 +186,14 @@ class BaggingForecaster(BaseForecaster):
         -------
         fresh clone of the forecaster to set to self.forecaster_
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if forecaster is None:
             from sktime.forecasting.ets import AutoETS
 
             return AutoETS(sp=self.sp, random_state=self.random_state)
 
-        if not scitype(forecaster) == "forecaster":
+        if not is_scitype(forecaster, "forecaster"):
             raise TypeError(
                 "Error in BaggingForecaster: "
                 "forecaster in BaggingForecaster should be an sktime forecaster"
@@ -333,6 +332,8 @@ class BaggingForecaster(BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
+        from skpro.distributions.empirical import Empirical
+
         # generate replicates of exogenous data for bootstrap
         X_inner = self._gen_X_bootstraps(X)
 

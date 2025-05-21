@@ -18,10 +18,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies(["pykan", "torch"], severity="none"):
-    from kan import KAN
-
-
 class PyKANForecaster(BaseForecaster):
     """
     PyKANForecaster uses Kolmogorov Arnold Network [1] to forecast time series data.
@@ -63,7 +59,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch"],
+        "python_dependencies": ["pykan", "torch", "matplotlib"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -73,7 +69,7 @@ class PyKANForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
@@ -130,6 +126,8 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from kan import KAN
+
         output_size = max(fh.to_relative(self.cutoff)._values)
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
@@ -181,7 +179,7 @@ class PyKANForecaster(BaseForecaster):
                     device=self.device,
                     **self._model_params,
                 ).initialize_from_another_model(model, ds_new["train_input"])
-            results = model.fit(ds_new, device=self.device, **self._fit_params)
+            results = model.fit(ds_new, **self._fit_params)
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
@@ -218,6 +216,8 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        from kan import KAN
+
         model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
         model.load_state_dict(self._state_dict)
         if X is not None:

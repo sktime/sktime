@@ -11,6 +11,7 @@ from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
 
@@ -54,6 +55,50 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if passed, applies ``default`` forecaster on the nodes/levels
         not mentioned in the ``forecaster`` argument.
 
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel evaluate if specified and ``strategy="refit"``.
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
+
     Examples
     --------
     >>> from sktime.forecasting.compose import HierarchyEnsembleForecaster
@@ -61,19 +106,20 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> y = _bottom_hier_datagen(
-    ...         no_bottom_nodes=7,
-    ...         no_levels=2,
-    ...         random_seed=123
+    ...     no_bottom_nodes=7,
+    ...     no_levels=2,
+    ...     random_seed=123,
     ... )
 
     >>> # Example of by = 'level'
     >>> forecasters = [
     ...     ('naive', NaiveForecaster(), 0),
-    ...     ('trend', TrendForecaster(), 1)
+    ...     ('trend', TrendForecaster(), 1),
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(
-    ...                 forecasters=forecasters,
-    ...                 by='level', default = PolynomialTrendForecaster(degree=2)
+    ...     forecasters=forecasters,
+    ...     by='level',
+    ...     default=PolynomialTrendForecaster(degree=2),
     ... )
     >>> forecaster.fit(y, fh=[1, 2, 3])
     HierarchyEnsembleForecaster(...)
@@ -94,38 +140,45 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "authors": ["VyomkeshVyas"],
+        "authors": ["VyomkeshVyas", "sanskarmodi8"],
         "maintainers": ["VyomkeshVyas"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     BY_LIST = ["level", "node"]
 
     _steps_attr = "_forecasters"
 
-    def __init__(self, forecasters, by="level", default=None):
+    def __init__(
+        self, forecasters, by="level", default=None, backend=None, backend_params=None
+    ):
         self.forecasters = forecasters
         self.by = by
         self.default = default
-        super().__init__(forecasters=forecasters)
+
+        self.backend = backend
+        self.backend_params = backend_params
+        super().__init__(forecasters=None)
 
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",
                 "ignores-exogeneous-X",
-                "handles-missing-data",
+                "capability:missing_values",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
             l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
-            self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_forecasters
+            )
 
     @property
     def _forecasters(self):
@@ -175,7 +228,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        # Creating  aggregated levels in data
+        # Creating aggregated levels in data
         if _check_index_no_total(y):
             z = self._aggregate(y)
         else:
@@ -188,35 +241,50 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         x = X
 
         # check forecasters
-        self.forecasters_ = self._check_forecasters(y, z)
-        self.fitted_list = []
+        forecasters_ = self._check_forecasters(y, z)
+        self.forecasters_ = self._ensure_clone(forecasters_)
+        self.fitted_list_ = []
 
         if y.index.nlevels == 1:
-            frcstr = self.forecasters_[0][1].clone()
+            frcstr = self.forecasters_[0][1]
             frcstr.fit(y, fh=fh, X=X)
-            self.fitted_list.append([frcstr, y.index])
+            self.fitted_list_.append([frcstr, y.index])
             return self
+
+        meta = {"X": x, "z": z, "fh": fh}
 
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
-            for _, forecaster, level in self.forecasters_:
-                if level in hier_dict.keys():
-                    frcstr = forecaster.clone()
-                    df = z[z.index.droplevel(-1).isin(hier_dict[level])]
-                    if X is not None:
-                        x = X.loc[df.index]
-                    frcstr.fit(df, fh=fh, X=x)
-                    self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
+            meta["hier_dict"] = hier_dict
 
+            fcstr_list = parallelize(
+                _level_fit,
+                iter=self.forecasters_,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )
+
+            for i in range(len(fcstr_list)):
+                self.fitted_list_.append(
+                    [fcstr_list[i][0], fcstr_list[i][1].index.droplevel(-1).unique()]
+                )
+                name, _, level = self.forecasters_[i]
+                self.forecasters_[i] = (name, fcstr_list[i][0], level)
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
-            for key, nodes in node_dict.items():
-                frcstr = frcstr_dict[key].clone()
-                df = z[z.index.droplevel(-1).isin(nodes)]
-                if X is not None:
-                    x = X.loc[df.index]
-                frcstr.fit(df, fh=fh, X=x)
-                self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
+            meta["fcstr_dict"] = frcstr_dict
+
+            fcstr_list = parallelize(
+                _node_fit,
+                node_dict.items(),
+                meta=meta,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )
+
+            for fcstr, df in fcstr_list:
+                self.fitted_list_.append([fcstr, df.index.droplevel(-1).unique()])
         return self
 
     def _get_hier_dict(self, z):
@@ -315,7 +383,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         diff_nodes = z.index.droplevel(-1).unique().difference(nodes)
         if self.default and len(diff_nodes) > 0:
-            frcstr_dict[counter] = self.default
+            frcstr_dict[counter] = self.default.clone()
             node_dict[counter] = diff_nodes
 
         return node_dict, frcstr_dict
@@ -342,7 +410,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
+        for forecaster, ind in self.fitted_list_:
             if z.index.nlevels == 1:
                 forecaster.update(z, X=x, update_params=update_params)
             else:
@@ -377,18 +445,20 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        preds = []
-
         if X is not None:
             if _check_index_no_total(X):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
-            if X is not None and X.index.nlevels > 1:
-                x = X[X.index.droplevel(-1).isin(ind)]
-            pred = forecaster.predict(fh=fh, X=x)
-            preds.append(pred)
+        meta = {"x": x, "fh": fh}
+
+        preds = parallelize(
+            _predict_one_forecaster,
+            self.fitted_list_,
+            meta,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
         preds = pd.concat(preds, axis=0)
         preds.sort_index(inplace=True)
@@ -594,6 +664,21 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return forecasters
 
+    def _ensure_clone(self, forecasters):
+        """Ensure that forecasters are cloned.
+
+        This should be done by _check_forecasters, but the function is hard to
+        understand and debug. This function is a safety net to ensure that
+        all forecasters are cloned.
+
+        This function, and _check_forecasters, should be refactored to be more
+        readable and maintainable.
+        """
+        forecasters_ = []
+        for name, forecaster, level_nd in forecasters:
+            forecasters_.append((name, forecaster.clone(), level_nd))
+        return forecasters_
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -631,3 +716,98 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params3 = {"forecasters": NaiveForecaster()}
 
         return [params1, params2, params3]
+
+
+def _level_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=level was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the self.forecasters_ list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        hier_dict: dict
+            The level dictionary as created by the get_hier_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    _, forecaster, level = params
+    z = meta["z"]
+    X = meta["X"]
+    hier_dict = meta["hier_dict"]
+    if level in hier_dict.keys():
+        frcstr = forecaster
+        df = z[z.index.droplevel(-1).isin(hier_dict[level])]
+        if X is not None:
+            X = X.loc[df.index]
+        frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def _node_fit(params, meta):
+    """Fit a single forecaster.
+
+    Called from _fit if by=node was set to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (str, estimator, int or list of tuple/s)
+        If called from the _fit function this will contain the node_dict from the
+        get_node_dict function
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least) the
+        following keys:
+        z: pd.Series
+            The aggregated target time series
+        X: pd.DataFrame, None
+            The aggregated input data
+        fcstr_dict: dict
+            The forecaster dictionary as created by the get_node_dict function
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    key, node = params
+    z = meta["z"]
+    X = meta["X"]
+    frcstr = meta["fcstr_dict"][key]
+    df = z[z.index.droplevel(-1).isin(node)]
+    if X is not None:
+        X = X.loc[df.index]
+    frcstr.fit(df, fh=meta["fh"], X=X)
+    return frcstr, df
+
+
+def _predict_one_forecaster(params, meta):
+    """Predict a single forecaster.
+
+    Called from _predict to allow for parallelization.
+
+    Parameters
+    ----------
+    params: tuples
+        (estimator, str)
+        If called from the _predict function this will contain the self.fitted list
+    meta: dict
+        Meta dictionary for parallelization. Needs to contain (at least)
+        the following keys:
+        X: pd.DataFrame, None
+            The aggregated input data
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+    """
+    X = meta["x"]
+    fh = meta["fh"]
+    if X is not None and X.index.nlevels > 1:
+        X = X[X.index.droplevel(-1).isin(params[1])]
+    pred = params[0].predict(fh=fh, X=X)
+    return pred

@@ -29,7 +29,7 @@ class _AugmenterTags:
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": False,
@@ -111,6 +111,8 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.series.augmenter import ReverseAugmenter
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = ReverseAugmenter()
     >>> Xt = augmenter.fit_transform(X)

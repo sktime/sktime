@@ -57,28 +57,23 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
     todo: describe your custom time series classifier here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-
-    Components
-    ----------
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
+        #
         # packaging info
         # --------------
         "authors": ["author1", "author2"],  # authors, GitHub handles
@@ -100,8 +95,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
-        # this is either "numpy3D", "pd-multiindex" or "nested_univ" (nested df). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,  # ability to handle multivariate X
         "capability:multioutput": False,  # ability to predict multiple columns in y
         "capability:unequal_length": False,
@@ -113,31 +109,31 @@ class MyTimeSeriesClassifier(BaseClassifier):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
-        self.paramc = paramc
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
-        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
+        self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite

@@ -9,12 +9,19 @@ from sktime.registry import coerce_scitype
 
 
 class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Compositor that utilizes varying forecasters by time series data's nature.
+    """Choosing a forecaster based on category or cluster of time series.
+
+    Programmatic generalization of "cluster then apply forecaster" approach,
+    or the Syntetos/Boylan heuristic to apply forecaster by categories
+    smooth, erratic, intermittent, lumpy.
 
     Applies a series-to-primitives transformer on a given time series. Based on the
     generated value from the transformer, one of multiple forecasters provided by
     the user in the form of a dictionary (key => category, value => forecaster) is
     selected. Finally, the chosen forecaster is fit to the data for future predictions.
+
+    To apply a global forecaster per category, use the ``GroupbyCategoryForecaster``
+    compositor instead.
 
     Parameters
     ----------
@@ -22,9 +29,12 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         dict of forecasters with the key corresponding to categories generated
         by the given transformer and the value corresponding to a sktime forecaster.
 
-    transformer : sktime transformer, default = ADICVTransformer()
+    transformer : sktime transformer or clusterer, default = ADICVTransformer()
         A series-to-primitives sk-time transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
+
+        If a clusterer is used, it must suport cluster assignment,
+        i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
         generated category in the first column of the returned values when
@@ -35,6 +45,9 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         the transformer does not match any of the given forecasters.
 
     pooling : str, optional, default = "local", one of {"local", "global"}
+        The pooling strategy to use for the forecasters. If "local", the forecasters
+        are fit and predicted independently for each category. If "global", the
+        forecasters are fit and predicted on the entire dataset.
 
     Raises
     ------
@@ -93,9 +106,8 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
-
-    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -111,13 +123,13 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         # saving arguments to object storage
         if transformer is not None:
-            transformer_ = transformer
+            self.transformer = transformer
         else:
             from sktime.transformations.series.adi_cv import ADICVTransformer
 
-            transformer_ = ADICVTransformer(features=["class"])
+            self.transformer = ADICVTransformer(features=["class"])
 
-        self.transformer_ = coerce_scitype(transformer_, "transformer")
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
         for forecaster in forecasters.values():
             assert isinstance(forecaster, BaseForecaster)
@@ -132,7 +144,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "ignores-exogeneous-X": True,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,
@@ -187,6 +199,14 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
+
+    @property
+    def _steps(self):
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+
+    @property
+    def steps_(self):
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -392,8 +412,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             fallback forecaster with the category: "fallback_forecaster"
         """
         return list(self.forecasters.items()) + [
-            "fallback_forecaster",
-            self.fallback_forecaster,
+            ("fallback_forecaster", self.fallback_forecaster)
         ]
 
     @_forecasters.setter
