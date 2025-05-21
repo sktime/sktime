@@ -1,14 +1,13 @@
 """Test data loaders that download from external sources."""
 
-import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
 import pytest
-from packaging.specifiers import SpecifierSet
 
 from sktime.datasets import (
+    _load_fpp3,
     load_forecastingdata,
     load_fpp3,
     load_m5,
@@ -17,10 +16,17 @@ from sktime.datasets import (
 )
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
 TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+TSF_SUBSAMPLE_SMALL = [
+    "wind_4_seconds_dataset",
+    "m4_hourly_dataset",
+    "solar_10_minutes_dataset",
+    "australian_electricity_demand_dataset",
+]
 
 
 @pytest.mark.datadownload
@@ -68,6 +74,23 @@ def test_load_forecastingdata():
     assert metadata["contain_equal_length"] is False
 
 
+@pytest.mark.datadownload
+def test_load_forecastingdata_check_freq_for_hier_data():
+    """Test loading downloaded dataset from forecasting.org."""
+    file = "UnitTest"
+    loaded_datasets, _ = load_forecastingdata(
+        name=file, return_type="pd_multiindex_hier"
+    )
+    assert loaded_datasets.index.levels[-1].freq == "YS-JAN"
+
+
+@pytest.mark.datadownload
+@pytest.mark.parametrize("name", TSF_SUBSAMPLE_SMALL)
+def test_load_forecastingdata_hier(name):
+    """Test loading downloaded dataset from forecasting.org."""
+    load_forecastingdata(name=name, return_type="pd_multiindex_hier")
+
+
 @pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #5462")
 @pytest.mark.datadownload
 @pytest.mark.parametrize("name", TSF_SUBSAMPLE)
@@ -80,9 +103,9 @@ def test_check_link_downloadable(name):
     response = urlopen(req)
 
     # Check if the response status code is 200 (OK)
-    assert (
-        response.status == 200
-    ), f"URL is not valid or does not exist. Error code {response.status}."
+    assert response.status == 200, (
+        f"URL is not valid or does not exist. Error code {response.status}."
+    )
 
     # Check if the response headers indicate that the content is downloadable
     content_type = response.headers.get("Content-Type")
@@ -104,12 +127,26 @@ def test_load_forecasting_data_invalid_name(name):
 
 
 @pytest.mark.skipif(
-    sys.version.split(" ")[0] in SpecifierSet("<3.9"),
-    reason="rdata loader does not work on python 3.8",
+    not _check_soft_dependencies("rdata", severity="none"),
+    reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
-def test_load_fpp3():
+def test_load_fpp3_private():
     """Test loading downloaded dataset from ."""
+
+    for dataset_name in [
+        "aus_accommodation",
+        "pedestrian",
+        "ansett",
+    ]:  ## datasets from fpp3, tsibble and tsibbledata respectively
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=False)
+        _ = _load_fpp3(dataset_name, temp_folder=None, robust=True)
+
+
+@pytest.mark.datadownload
+def test_load_fpp3_public():
+    """Test loading downloaded dataset from ."""
+
     olympic_running = load_fpp3("olympic_running")
 
     assert isinstance(olympic_running, pd.DataFrame)

@@ -212,16 +212,32 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        TRANSFORMERS = [
-            ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+        TRANSFORMERS_1 = [
+            ("transformer1", ExponentTransformer(power=2)),
+            ("transformer2", ExponentTransformer(power=3)),
+        ]
+        TRANSFORMERS_2 = [
+            ("transformer1", ExponentTransformer(power=1)),
+            ("transformer2", Detrender()),
         ]
 
-        return {
-            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-        }
+        return [
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_1
+                ]
+            },
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_2
+                ],
+                "remainder": "passthrough",
+                "preserve_dataframe": False,
+            },
+        ]
 
     def fit(self, X, y=None):
         """Fit the transformer."""
@@ -317,10 +333,13 @@ class ColumnConcatenator(BaseTransformer):
 
         # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
-        inst_idx = Xt.index.get_level_values(0)
+        levels = list(range(Xt.index.nlevels - 1))
+        inst_arr = [Xt.index.get_level_values(level) for level in levels]
+        inst_idx = pd.MultiIndex.from_arrays(inst_arr)
+
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
         t_idx = np.concatenate(t_idx)
 
-        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index = pd.MultiIndex.from_arrays(inst_arr + [t_idx])
         Xt.index.names = X.index.names
         return Xt

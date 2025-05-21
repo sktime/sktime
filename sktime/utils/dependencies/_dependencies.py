@@ -1,7 +1,5 @@
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
-__author__ = ["fkiraly", "mloning"]
-
 import sys
 import warnings
 from functools import lru_cache
@@ -16,7 +14,6 @@ from packaging.version import InvalidVersion, Version
 
 def _check_soft_dependencies(
     *packages,
-    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
@@ -26,18 +23,30 @@ def _check_soft_dependencies(
 
     Parameters
     ----------
-    packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
+    packages : str or list/tuple of str nested up to two levels
         str should be package names and/or package version specifications to check.
         Each str must be a PEP 440 compatible specifier string, for a single package.
         For instance, the PEP 440 compatible package name such as ``"pandas"``;
         or a package requirement specifier string such as ``"pandas>1.2.3"``.
         arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
-        ``_check_soft_dependencies("package1")``
-        ``_check_soft_dependencies("package1", "package2")``
-        ``_check_soft_dependencies(("package1", "package2"))``
-        ``_check_soft_dependencies(["package1", "package2"])``
 
-    package_import_alias : ignored, present only for backwards compatibility
+        * ``_check_soft_dependencies("package1")``
+        * ``_check_soft_dependencies("package1", "package2")``
+        * ``_check_soft_dependencies(("package1", "package2"))``
+        * ``_check_soft_dependencies(["package1", "package2"])``
+        * ``_check_soft_dependencies(("package1", "package2"), "package3")``
+        * ``_check_soft_dependencies(["package1", "package2"], "package3")``
+        * ``_check_soft_dependencies((["package1", "package2"], "package3"))``
+
+        The first level is interpreted as conjunction, the second level as disjunction,
+        that is, conjunction = "and", disjunction = "or".
+
+        In case of more than a single arg, an outer level of "and" (brackets)
+        is added, that is,
+
+        ``_check_soft_dependencies("package1", "package2")``
+
+        is the same as ``_check_soft_dependencies(("package1", "package2"))``
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
@@ -80,23 +89,28 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    # todo 0.33.0: remove this warning
-    if package_import_alias != "deprecated":
-        warnings.warn(
-            "In sktime _check_soft_dependencies, the package_import_alias argument "
-            "is deprecated and no longer has any effect. "
-            "The argument will be removed in version 0.33.0, so users of the "
-            "_check_soft_dependencies utility should not pass this argument anymore.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
-    if not all(isinstance(x, str) for x in packages):
+
+    def _is_str_or_tuple_of_strs(obj):
+        """Check that obj is a str or list/tuple nesting up to 1st level of str.
+
+        Valid examples:
+
+        * "pandas"
+        * ("pandas", "scikit-learn")
+        * ["pandas", "scikit-learn"]
+        """
+        if isinstance(obj, (tuple, list)):
+            return all(isinstance(x, str) for x in obj)
+
+        return isinstance(obj, str)
+
+    if not all(_is_str_or_tuple_of_strs(x) for x in packages):
         raise TypeError(
-            "packages argument of _check_soft_dependencies must be str or tuple of "
-            f"str, but found packages argument of type {type(packages)}"
+            "packages argument of _check_soft_dependencies must be str or tuple/list "
+            "of str or of tuple/list of str, "
+            f"but found packages argument of type {type(packages)}"
         )
 
     if obj is None:
@@ -120,7 +134,20 @@ def _check_soft_dependencies(
             f"or None, but found msg of type {type(msg)}"
         )
 
-    for package in packages:
+    def _get_pkg_version_and_req(package):
+        """Get package version and requirement object from package string.
+
+        Parameters
+        ----------
+        package : str
+
+        Returns
+        -------
+        package_version_req: SpecifierSet
+            version requirement object from package string
+        pkg_env_version: Version
+            version object of package in python environment
+        """
         try:
             req = Requirement(package)
             if normalize_reqs:
@@ -141,27 +168,70 @@ def _check_soft_dependencies(
         if normalize_reqs:
             pkg_env_version = _normalize_version(pkg_env_version)
 
+        return package_version_req, pkg_env_version
+
+    # each element of the list "package" must be satisfied
+    for package_req in packages:
+        # for elemehts, two cases can happen:
+        #
+        # 1. package is a string, e.g., "pandas". Then this must be present.
+        # 2. package is a tuple or list, e.g., ("pandas", "scikit-learn").
+        #    Then at least one of these must be present.
+        if not isinstance(package_req, (tuple, list)):
+            package_req = (package_req,)
+        else:
+            package_req = tuple(package_req)
+
+        def _is_version_req_satisfied(pkg_env_version, pkg_version_req):
+            if pkg_env_version is None:
+                return False
+            if pkg_version_req != SpecifierSet(""):
+                return pkg_env_version in pkg_version_req
+            else:
+                return True
+
+        pkg_version_reqs = []
+        pkg_env_versions = []
+        nontrivital_bound = []
+        req_sat = []
+
+        for package in package_req:
+            pkg_version_req, pkg_env_version = _get_pkg_version_and_req(package)
+            pkg_version_reqs.append(pkg_version_req)
+            pkg_env_versions.append(pkg_env_version)
+            nontrivital_bound.append(pkg_version_req != SpecifierSet(""))
+            req_sat.append(_is_version_req_satisfied(pkg_env_version, pkg_version_req))
+
+        def _quote(x):
+            return f"'{x}'"
+
+        package_req_strs = [_quote(x) for x in package_req]
+        # example: ["'scipy<1.7.0'"] or ["'scipy<1.7.0'", "'numpy'"]
+
+        package_str_q = " or ".join(package_req_strs)
+        # example: "'scipy<1.7.0'"" or "'scipy<1.7.0' or 'numpy'""
+
+        package_str = " or ".join(f"`pip install {r}`" for r in package_req)
+        # example: "pip install scipy<1.7.0 or pip install numpy"
+
         # if package not present, make the user aware of installation reqs
-        if pkg_env_version is None:
+        if all(pkg_env_version is None for pkg_env_version in pkg_env_versions):
             if obj is None and msg is None:
                 msg = (
-                    f"{package!r} not found. "
-                    f"{package!r} is a soft dependency and not included in the "
-                    f"base sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{class_name} requires package {package_str_q} to be present "
+                    f"in the python environment, but {package_str_q} was not found. "
                 )
             elif msg is None:  # obj is not None, msg is None
                 msg = (
-                    f"{class_name} requires package {package!r} to be present "
-                    f"in the python environment, but {package!r} was not found. "
-                    f"{package!r} is a soft dependency and not included in the base "
-                    f"sktime installation. Please run: `pip install {package}` to "
-                    f"install the {package} package. "
-                    f"To install all soft dependencies, run: `pip install "
-                    f"sktime[all_extras]`"
+                    f"{class_name} requires package {package_str_q} to be present "
+                    f"in the python environment, but {package_str_q} was not found. "
+                    f"{package_str_q} is a dependency of {class_name} and required "
+                    f"to construct it. "
                 )
+            msg = msg + (
+                f"To install the requirement {package_str_q}, please run: "
+                f"{package_str} "
+            )
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
 
@@ -169,11 +239,17 @@ def _check_soft_dependencies(
             return False
 
         # now we check compatibility with the version specifier if non-empty
-        if package_version_req != SpecifierSet(""):
+        if not any(req_sat):
+            reqs_not_satisfied = [
+                x for x in zip(package_req, pkg_env_versions, req_sat) if x[2] is False
+            ]
+            actual_vers = [f"{x[0]} {x[1]}" for x in reqs_not_satisfied]
+            pkg_env_version_str = ", ".join(actual_vers)
+
             msg = (
-                f"{class_name} requires package '{package}' to be present "
-                f"in the python environment, with version {package_version_req}, "
-                f"but incompatible version {pkg_env_version} was found. "
+                f"{class_name} requires package {package_str_q} to be present "
+                f"in the python environment, with versions as specified, "
+                f"but incompatible version {pkg_env_version_str} was found. "
             )
             if obj is not None:
                 msg = msg + (
@@ -182,9 +258,9 @@ def _check_soft_dependencies(
                 )
 
             # raise error/warning or return False if version is incompatible
-            if pkg_env_version not in package_version_req:
-                _raise_at_severity(msg, severity, caller="_check_soft_dependencies")
-                return False
+
+            _raise_at_severity(msg, severity, caller="_check_soft_dependencies")
+            return False
 
     # if package can be imported and no version issue was caught for any string,
     # then obj is compatible with the requirements and we should return True
@@ -235,10 +311,10 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     Parameters
     ----------
     msg: str, optional, default= default message (msg below)
-        error message to be returned when `ModuleNotFoundError` is raised.
+        error message to be returned when ``ModuleNotFoundError`` is raised.
     severity: str, either of "error", "warning" or "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFound` if mlflow-related packages are not found.
+        "error" - raises a ``ModuleNotFound`` if mlflow-related packages are not found.
         "warning" - raises a warning message if any mlflow-related package is not
             installed also returns False. In case all packages are present,
             returns True.
@@ -262,7 +338,10 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
             "or `pip install sktime[mlflow]` to install the package."
         )
 
-    return _check_soft_dependencies("mlflow", msg=msg, severity=severity)
+    # we allow mlflow and mlflow-skinny, at least one must be present
+    MLFLOW_DEPS = [["mlflow", "mlflow-skinny"]]
+
+    return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
 
 
 @lru_cache
@@ -328,7 +407,9 @@ def _get_pkg_version(package_name):
     return pkg_env_version
 
 
-def _check_python_version(obj, package=None, msg=None, severity="error"):
+def _check_python_version(
+    obj, package=None, msg=None, severity="error", prereleases=True
+):
     """Check if system python version is compatible with requirements of obj.
 
     Parameters
@@ -351,6 +432,13 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         * "none" - does not raise exception or warning
           function returns False if one of packages is not installed, otherwise True
 
+    prereleases: str, default = True
+        Whether prerelease versions are considered compatible.
+        If True, allows prerelease versions to be considered compatible.
+        If False, always considers prerelease versions as incompatible, i.e., always
+        raises error, warning, or returns False, if the system python version is a
+        prerelease.
+
     Returns
     -------
     compatible : bool, whether obj is compatible with system python version
@@ -368,7 +456,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         return True
 
     try:
-        est_specifier = SpecifierSet(est_specifier_tag)
+        est_specifier = SpecifierSet(est_specifier_tag, prereleases=prereleases)
     except InvalidSpecifier:
         msg_version = (
             f"wrong format for python_version tag, "
@@ -394,6 +482,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
             f"{class_name} requires python version to be {est_specifier},"
             f" but system python version is {sys.version}."
         )
+
+        if "rc" in sys_version:
+            msg += " This is due to the release candidate status of your system Python."
 
         if package is not None:
             msg += (
@@ -536,7 +627,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
+        pkg_deps_ok = _check_soft_dependencies(pkg_deps, severity=severity, obj=obj)
         compatible = compatible and pkg_deps_ok
 
     return compatible

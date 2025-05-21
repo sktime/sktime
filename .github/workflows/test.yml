@@ -19,18 +19,40 @@ jobs:
     steps:
       - name: repository checkout step
         uses: actions/checkout@v4
+
       - name: python environment step
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: install pre-commit
         run: python3 -m pip install pre-commit
-      - id: changed-files
-        name: identify modified files
-        uses: tj-actions/changed-files@v45
-      - name: run pre-commit hooks on modified files
-        run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tr '\n' ' ')
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+
+      - name: Print changed files
+        run: |
+          echo "Changed files:" && echo "$CHANGED_FILES" | tr ' ' '\n'
+
+      - name: Run pre-commit on changed files
+        run: |
+          if [ -n "$CHANGED_FILES" ]; then
+            pre-commit run --color always --files $CHANGED_FILES --show-diff-on-failure
+          else
+            echo "No changed files to check."
+          fi
+
       - name: check missing __init__ files
+
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
@@ -46,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow]
+          python -m pip install .[all_extras,binder,dev,mlflow,dl]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
@@ -237,7 +259,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --matrixdesign=False --timeout=600" test_softdeps_full
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
     needs: test-nosoftdeps
@@ -292,11 +314,6 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   detect:
     needs: test-nosoftdeps
     name: detect changes
@@ -349,7 +366,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-13, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -385,17 +402,12 @@ jobs:
       - name: Run tests
         run: make test_without_datasets
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   test-unix-pandas1:
     needs: test-nosoftdeps
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -424,8 +436,3 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}

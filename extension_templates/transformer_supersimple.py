@@ -62,7 +62,7 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
     """
@@ -95,7 +95,7 @@ class MyTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     # todo: add any hyper-parameters and components to constructor

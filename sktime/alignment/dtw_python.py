@@ -37,6 +37,9 @@ class AlignerDTW(BaseAligner):
         "sakoechiba" - a band around main diagonal
         "slantedband" - a band around slanted diagonal
         "itakura" - Itakura parallelogram
+    window_size: int, optional, default=None
+        size of the window if a windowing function is used
+        if None and window_type="sakoechiba", defaults to 10% of series length
     open_begin : boolean, optional, default=False
     open_end: boolean, optional, default=False
         whether to perform open-ended alignments
@@ -44,6 +47,38 @@ class AlignerDTW(BaseAligner):
         open_end = whether alignment open ended at end (high index)
     variable_to_align : string, default = first variable in X[0] as passed to fit
         which variable to use for univariate alignment
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw_python import AlignerDTW
+    >>> X = [
+    ...     pd.DataFrame({'col1': np.random.randn(100)}),
+    ...     pd.DataFrame({'col1': np.random.randn(100)})
+    ... ]
+    >>> aligner = AlignerDTW(dist_method='euclidean', step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    AlignerDTW(...)
+    >>> alignment_df = aligner.get_alignment()
+
+    Advanced usage example with open-ended alignment:
+    >>> aligner_advanced = AlignerDTW(
+    ...     dist_method='cityblock',
+    ...     window_type='sakoechiba',
+    ...     window_size=10,
+    ...     step_pattern='asymmetric',
+    ...     open_begin=True,
+    ...     open_end=True,
+    ... )
+    >>> X_advanced = [
+    ...     pd.DataFrame({'col1': np.random.randn(150)}),
+    ...     pd.DataFrame({'col1': np.random.randn(150)})
+    ... ]
+    >>> aligner_advanced.fit(X_advanced)
+    AlignerDTW(...)
+    >>> alignment_df_advanced = aligner_advanced.get_alignment()
     """
 
     _tags = {
@@ -65,6 +100,7 @@ class AlignerDTW(BaseAligner):
         dist_method="euclidean",
         step_pattern="symmetric2",
         window_type="none",
+        window_size=None,
         open_begin=False,
         open_end=False,
         variable_to_align=None,
@@ -77,6 +113,7 @@ class AlignerDTW(BaseAligner):
         self.dist_method = dist_method
         self.step_pattern = step_pattern
         self.window_type = window_type
+        self.window_size = window_size
         self.open_begin = open_begin
         self.open_end = open_end
         self.variable_to_align = variable_to_align
@@ -106,9 +143,16 @@ class AlignerDTW(BaseAligner):
         dist_method = self.dist_method
         step_pattern = self.step_pattern
         window_type = self.window_type
+        window_size = self.window_size
         open_begin = self.open_begin
         open_end = self.open_end
         var_to_align = self.variable_to_align
+
+        # If sakoi-cheba window is used, window_size must be set or given a default
+        # value equal to 10 % of the length of the series
+        if window_type == "sakoechiba":
+            if window_size is None:
+                window_size = int(0.1 * len(X[0]))
 
         # shorthands for 1st and 2nd series
         XA = X[0]
@@ -137,6 +181,7 @@ class AlignerDTW(BaseAligner):
             dist_method=dist_method,
             step_pattern=step_pattern,
             window_type=window_type,
+            window_args={"window_size": window_size},
             open_begin=open_begin,
             open_end=open_end,
             keep_internals=True,
@@ -201,8 +246,9 @@ class AlignerDTW(BaseAligner):
         """Test parameters for AlignerDTWdist."""
         params1 = {}
         params2 = {"step_pattern": "symmetric1"}
+        params3 = {"window_type": "sakoechiba"}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class AlignerDTWfromDist(BaseAligner):
@@ -227,11 +273,46 @@ class AlignerDTWfromDist(BaseAligner):
         "sakoechiba" - a band around main diagonal
         "slantedband" - a band around slanted diagonal
         "itakura" - Itakura parallelogram
+    window_size: int, optional, default=None
+        size of the window if a windowing function is used
+        if None and window_type="sakoechiba", defaults to 10% of series length
     open_begin : boolean, optional, default=False
     open_end: boolean, optional, default=False
         whether to perform open-ended alignments
         open_begin = whether alignment open ended at start (low index)
         open_end = whether alignment open ended at end (high index)
+
+    Examples
+    --------
+    Basic usage example:
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.alignment.dtw_python import AlignerDTWfromDist
+    >>> from sktime.dists_kernels import ScipyDist
+    >>> X = [
+    ...     pd.DataFrame({'col1': np.random.randn(100)}),
+    ...     pd.DataFrame({'col1': np.random.randn(100)})
+    ... ]
+    >>> dist_trafo = ScipyDist()
+    >>> aligner = AlignerDTWfromDist(dist_trafo=dist_trafo, step_pattern='symmetric2')
+    >>> aligner.fit(X)
+    AlignerDTWfromDist(...)
+    >>> alignment_df = aligner.get_alignment()
+
+    Advanced usage example with custom distance transformation:
+    >>> dist_trafo_custom = ScipyDist('cityblock')
+    >>> aligner_custom = AlignerDTWfromDist(
+    ...     dist_trafo=dist_trafo_custom,
+    ...     window_type='sakoechiba',
+    ...     window_size=10,
+    ... )
+    >>> X_custom = [
+    ...     pd.DataFrame({'col1': np.random.randn(200)}),
+    ...     pd.DataFrame({'col1': np.random.randn(200)})
+    ... ]
+    >>> aligner_custom.fit(X_custom)
+    AlignerDTWfromDist(...)
+    >>> alignment_df_custom = aligner_custom.get_alignment()
     """
 
     _tags = {
@@ -251,6 +332,7 @@ class AlignerDTWfromDist(BaseAligner):
         dist_trafo,
         step_pattern="symmetric2",
         window_type="none",
+        window_size=None,
         open_begin=False,
         open_end=False,
     ):
@@ -260,6 +342,7 @@ class AlignerDTWfromDist(BaseAligner):
         self.dist_trafo_ = self.dist_trafo.clone()
         self.step_pattern = step_pattern
         self.window_type = window_type
+        self.window_size = window_size
         self.open_begin = open_begin
         self.open_end = open_end
 
@@ -283,8 +366,15 @@ class AlignerDTWfromDist(BaseAligner):
         dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
         window_type = self.window_type
+        window_size = self.window_size
         open_begin = self.open_begin
         open_end = self.open_end
+
+        # If sakoi-cheba window is used, window_size must be set or given a default
+        # value equal to 10 % of the length of the series
+        if window_type == "sakoechiba":
+            if window_size is None:
+                window_size = int(0.1 * len(X[0]))
 
         # shorthands for 1st and 2nd sequence
         XA = X[0]
@@ -298,6 +388,7 @@ class AlignerDTWfromDist(BaseAligner):
             distmat,
             step_pattern=step_pattern,
             window_type=window_type,
+            window_args={"window_size": window_size},
             open_begin=open_begin,
             open_end=open_end,
             keep_internals=True,
@@ -364,5 +455,6 @@ class AlignerDTWfromDist(BaseAligner):
 
         params1 = {"dist_trafo": ScipyDist()}
         params2 = {"dist_trafo": ScipyDist("cityblock"), "step_pattern": "symmetric1"}
+        params3 = {"dist_trafo": ScipyDist(), "window_type": "sakoechiba"}
 
-        return [params1, params2]
+        return [params1, params2, params3]

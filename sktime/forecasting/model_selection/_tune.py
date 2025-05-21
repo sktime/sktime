@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements grid search functionality to tune forecasters."""
 
-__author__ = ["mloning", "fkiraly", "aiwalter"]
 __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
@@ -33,7 +32,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -85,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.33.0: check if this is still necessary
+        # todo 0.38.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -454,13 +453,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -505,6 +505,15 @@ class ForecastingGridSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -793,6 +802,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -837,6 +847,15 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -1053,6 +1072,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -1093,6 +1113,15 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Attributes
     ----------
@@ -1148,7 +1177,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -1688,42 +1717,41 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.detrend import Deseasonalizer, Detrender
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.forecasting.trend import STLForecaster
+    >>> from sktime.forecasting.trend import STLForecaster, TrendForecaster
     >>> import optuna
     >>> from  optuna.distributions import CategoricalDistribution
 
     >>> y = load_shampoo_sales()
     >>> y_train, y_test = temporal_train_test_split(y=y, test_size=6)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False).to_relative(
-    >>> cutoff=y_train.index[-1]
+    ...         cutoff=y_train.index[-1]
     ...     )
     >>> cv = ExpandingWindowSplitter(fh=fh, initial_window=24, step_length=1)
     >>> forecaster = TransformedTargetForecaster(
-    >>> steps=[
-    ...     ("detrender", Detrender()),
-    ...     ("deseasonalizer", Deseasonalizer()),
-    ...     ("scaler", TabularToSeriesAdaptor(RobustScaler())),
-    ...     ("minmax2", TabularToSeriesAdaptor(MinMaxScaler((1, 10)))),
-    ...     ("forecaster", NaiveForecaster()),
-    ...     ]
+    ...     steps=[
+    ...             ("detrender", Detrender()),
+    ...             ("scaler", RobustScaler()),
+    ...             ("minmax2", MinMaxScaler((1, 10))),
+    ...             ("forecaster", NaiveForecaster()),
+    ...         ]
     ...     )
     >>> param_grid = {
-    ...     "scaler__transformer__with_scaling": CategoricalDistribution(
-    ...          (True, False)
-    ...     ),
-    "forecaster": CategoricalDistribution(
-    ...     (STLForecaster(), ThetaForecaster())
-    ...     ),
+    ...     "scaler__with_scaling": CategoricalDistribution(
+    ...             (True, False)
+    ...         ),
+    ...     "forecaster": CategoricalDistribution(
+    ...             (NaiveForecaster(), TrendForecaster())
+    ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(
-    ...     forecaster=forecaster,
-    ...     param_grid=param_grid,
-    ...     cv=cv,
-    ...     n_evals=10,
+    ...         forecaster=forecaster,
+    ...         param_grid=param_grid,
+    ...         cv=cv,
+    ...         n_evals=10,
     ...     )
     >>> gscv.fit(y)
-    >>> print(f"{gscv.best_params_=}")
+    ForecastingOptunaSearchCV(...)
+    >>> print(f"{gscv.best_params_=}")  # doctest: +SKIP
     """
 
     _tags = {
@@ -1731,7 +1759,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

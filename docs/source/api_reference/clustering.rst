@@ -1,4 +1,3 @@
-
 .. _clustering_ref:
 
 Time series clustering
@@ -15,8 +14,8 @@ A full table with tag based search is also available on the
 (select "clustering" in the "Estimator type" dropdown).
 
 
-Clustering models
------------------
+Partitioning based
+------------------
 
 .. currentmodule:: sktime.clustering.k_means
 
@@ -43,6 +42,9 @@ Clustering models
 
     TimeSeriesKShapes
 
+Spectral and kernel clustering
+------------------------------
+
 .. currentmodule:: sktime.clustering.kernel_k_means
 
 .. autosummary::
@@ -50,6 +52,55 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKernelKMeans
+
+Density-based
+-------------
+
+.. currentmodule:: sktime.clustering.dbscan
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesDBSCAN
+
+Graph- or network-based
+-----------------------
+
+.. currentmodule:: sktime.clustering.kvisibility
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesKvisibility
+
+Spatio-temporal clustering
+--------------------------
+
+Spatio-temporal clusterers assume that the time series are, or include,
+observations of locations in space.
+
+.. currentmodule:: sktime.clustering.spatio_temporal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STDBSCAN
+
+Compose
+-------
+
+.. currentmodule:: sktime.clustering.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClustererAsTransformer
+    ClustererPipeline
+    SklearnClustererPipeline
 
 Base
 ----
@@ -68,4 +119,4 @@ Base
     :toctree: auto_generated/
     :template: class.rst
 
-    TimeSeriesLloyds
+    BaseTimeSeriesLloyds

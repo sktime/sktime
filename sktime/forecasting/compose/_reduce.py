@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Composition functionality for reduction approaches to forecasting."""
+"""Reduction approaches to forecasting."""
 
 __author__ = [
     "mloning",
@@ -24,6 +24,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
     "YfromX",
 ]
 
@@ -36,11 +37,12 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.registry import scitype
+from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
+from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
@@ -126,63 +128,16 @@ def _sliding_window_transform(
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
 
+    kwargs = {"y": y, "window_length": window_length, "X": X}
     if pooling == "global":
-        n_cut = -window_length
+        kwargs = {"transformers": transformers}
+        _sliding_window_trans_f = _sliding_window_transform_global
+    else:  # if pooling == "local":
+        kwargs = {"fh": fh, "windows_identical": windows_identical}
+        _sliding_window_trans_f = _sliding_window_transform_local
 
-        if len(transformers) == 1:
-            tf_fit = transformers[0].fit(y)
-        else:
-            feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
-            tf_fit = FeatureUnion(feat).fit(y)
-        X_from_y = tf_fit.transform(y)
+    yt, Xt = _sliding_window_trans_f(y=y, X=X, window_length=window_length, **kwargs)
 
-        X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
-        yt = _cut_df(y, n_obs=n_cut)
-
-        if X is not None:
-            X_cut = _cut_df(X, n_obs=n_cut)
-            Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
-        else:
-            Xt = X_from_y_cut
-    else:
-        z = _concat_y_X(y, X)
-        n_timepoints, n_variables = z.shape
-
-        fh = _check_fh(fh)
-        fh_max = fh[-1]
-
-        if window_length + fh_max >= n_timepoints:
-            raise ValueError(
-                "The `window_length` and `fh` are incompatible with the length of `y`"
-            )
-
-        # Get the effective window length accounting for the forecasting horizon.
-        effective_window_length = window_length + fh_max
-        Zt = np.zeros(
-            (
-                n_timepoints + effective_window_length,
-                n_variables,
-                effective_window_length + 1,
-            )
-        )
-
-        # Transform data.
-        for k in range(effective_window_length + 1):
-            i = effective_window_length - k
-            j = n_timepoints + effective_window_length - k
-            Zt[i:j, :, k] = z
-
-        # Truncate data, selecting only full windows, discarding incomplete ones.
-        if windows_identical is True:
-            Zt = Zt[effective_window_length:-effective_window_length]
-        else:
-            Zt = Zt[effective_window_length:-window_length]
-        # Return transformed feature and target variables separately. This
-        # excludes contemporaneous values of the exogenous variables. Including them
-        # would lead to unequal-length data, with more time points for
-        # exogenous series than the target series, which is currently not supported.
-        yt = Zt[:, 0, window_length + fh]
-        Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
     # If the scitype is tabular regression, we have to convert X into a 2d array.
     if scitype == "tabular-regressor" and transformers is None:
@@ -190,6 +145,73 @@ def _sliding_window_transform(
 
     assert Xt.ndim == 2 or Xt.ndim == 3
     assert yt.ndim == 2
+
+    return yt, Xt
+
+
+def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
+    """Transform time series data using sliding window for local pooling."""
+    z = _concat_y_X(y, X)
+    n_timepoints, n_variables = z.shape
+
+    fh = _check_fh(fh)
+    fh_max = fh[-1]
+
+    if window_length + fh_max >= n_timepoints:
+        raise ValueError(
+            "The `window_length` and `fh` are incompatible with the length of `y`"
+        )
+
+    # Get the effective window length accounting for the forecasting horizon.
+    effective_window_length = window_length + fh_max
+    Zt = np.zeros(
+        (
+            n_timepoints + effective_window_length,
+            n_variables,
+            effective_window_length + 1,
+        )
+    )
+
+    # Transform data.
+    for k in range(effective_window_length + 1):
+        i = effective_window_length - k
+        j = n_timepoints + effective_window_length - k
+        Zt[i:j, :, k] = z
+
+    # Truncate data, selecting only full windows, discarding incomplete ones.
+    if windows_identical is True:
+        Zt = Zt[effective_window_length:-effective_window_length]
+    else:
+        Zt = Zt[effective_window_length:-window_length]
+    # Return transformed feature and target variables separately. This
+    # excludes contemporaneous values of the exogenous variables. Including them
+    # would lead to unequal-length data, with more time points for
+    # exogenous series than the target series, which is currently not supported.
+    yt = Zt[:, 0, window_length + fh]
+    Xt = Zt[:, :, :window_length]
+
+    return yt, Xt
+
+
+def _sliding_window_transform_global(y, window_length, X, transformers):
+    """Transform time series data using sliding window for global pooling."""
+    n_cut = -window_length
+
+    if len(transformers) == 1:
+        tf_fit = transformers[0].fit(y)
+    else:
+        feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
+        tf_fit = FeatureUnion(feat).fit(y)
+    X_from_y = tf_fit.transform(y)
+
+    X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
+    yt = _cut_df(y, n_obs=n_cut)
+
+    if X is not None:
+        X_cut = _cut_df(X, n_obs=n_cut)
+        Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
+    else:
+        Xt = X_from_y_cut
 
     return yt, Xt
 
@@ -209,7 +231,7 @@ class _Reducer(_BaseWindowForecaster):
             "benheid",
         ],
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -232,7 +254,9 @@ class _Reducer(_BaseWindowForecaster):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
@@ -722,7 +746,7 @@ class _DirectReducer(_Reducer):
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
                 if est_type == "regressor":
-                    y_pred[i] = y_pred_est
+                    y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
@@ -1631,13 +1655,12 @@ def _infer_scitype(estimator):
     if is_sklearn_estimator(estimator):
         return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        inferred_skt_scitype = scitype(estimator, raise_on_unknown=False)
-        if inferred_skt_scitype in ["object", "estimator"]:
+        if is_scitype(estimator, ["object", "estimator"]):
             return "tabular-regressor"
-        if inferred_skt_scitype == "regressor":
+        if is_scitype(estimator, "regressor"):
             return "time-series-regressor"
         else:
-            return inferred_skt_scitype
+            return scitype(estimator, raise_on_unknown=False)
 
 
 def _check_strategy(strategy):
@@ -1828,10 +1851,6 @@ class _ReducerMixin:
         return fh_idx
 
 
-# TODO (release 0.33.0)
-# change the default of `windows_identical` to `False`
-# update the docstring for parameter `windows_identical`
-# remove the corresponding warning and simplify __init__
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
@@ -1879,18 +1898,31 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     ----------
     estimator : sklearn regressor, must be compatible with sklearn interface
         tabular regression algorithm used in reduction algorithm
+
     window_length : int, optional, default=10
         window length used in the reduction algorithm
+
     transformers : currently not used
+
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
         "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
         "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
-    impute : str or None, optional, method string passed to Imputer
-        default="bfill", admissible strings are of Imputer.method parameter, see there
-        if None, no imputation is done when applying Lag transformer to obtain inner X
+
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method to use for missing values in the lagged data
+
+        * default="bfill"
+        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
+          To pass further parameters, pass the ``Imputer`` transformer directly,
+          as described below.
+        * if sktime transformer, this transformer is applied to the lagged data.
+          This needs to be a transformer that removes missing data, and can be
+          an ``Imputer``.
+        * if None, no imputation is done when applying ``Lag`` transformer
+
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -1898,7 +1930,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
-    windows_identical : bool, optional, default=True
+
+    windows_identical : bool, optional, default=False
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
 
@@ -1911,8 +1944,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         * `False` : Window size differs for each forecasting horizon. Window
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
-
-        Default value will change to `False` in version 0.33.0.
     """
 
     _tags = {
@@ -1932,7 +1963,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
-        windows_identical="changing_value",
+        windows_identical=False,
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1942,22 +1973,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self.windows_identical = windows_identical
-        if windows_identical == "changing_value":
-            warn(
-                "In `DirectReductionForecaster`, the default value of parameter "
-                "`windows_identical` will change to `False` in version 0.33.0. "
-                "Before the introduction of `windows_identical`, the parameter "
-                "defaulted implicitly to `True` when `X_treatment` was set to "
-                "`shifted`, and to `False` when `X_treatment` was set to "
-                "`concurrent`. To keep current behaviour and to silence this "
-                "warning, set `windows_identical` explicitly.",
-            )
-            if X_treatment == "shifted":
-                self._windows_identical = True
-            else:
-                self._windows_identical = False
-        else:
-            self._windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
 
@@ -1979,13 +1994,15 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
-        if (self.X_treatment == "shifted") and (self._windows_identical is True):
+        if (self.X_treatment == "shifted") and (self.windows_identical is True):
             return self._fit_multioutput(y=y, X=X, fh=fh)
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
@@ -1993,7 +2010,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
         if self.X_treatment == "shifted":
-            if self._windows_identical is True:
+            if self.windows_identical is True:
                 return self._predict_multioutput(X=X, fh=fh)
             else:
                 return self._predict_multiple(X=self._X, fh=fh)
@@ -2085,7 +2102,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
-        windows_identical = self._windows_identical
+        windows_identical = self.windows_identical
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2308,11 +2325,22 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     ----------
     estimator : sklearn regressor, must be compatible with sklearn interface
         tabular regression algorithm used in reduction algorithm
+
     window_length : int, optional, default=10
         window length used in the reduction algorithm
-    impute : str or None, optional, method string passed to Imputer
-        default="bfill", admissible strings are of Imputer.method parameter, see there
-        if None, no imputation is done when applying Lag transformer to obtain inner X
+
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method to use for missing values in the lagged data
+
+        * default="bfill"
+        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
+          To pass further parameters, pass the ``Imputer`` transformer directly,
+          as described below.
+        * if sktime transformer, this transformer is applied to the lagged data.
+          This needs to be a transformer that removes missing data, and can be
+          an ``Imputer``.
+        * if None, no imputation is done when applying ``Lag`` transformer
+
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -2365,6 +2393,21 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
+        if isinstance(impute_method, str):
+            from sktime.transformations.series.impute import Imputer
+
+            self._impute_method = Imputer(method=impute_method)
+        elif impute_method is None:
+            self._impute_method = None
+        elif scitype(impute_method) == "transformer":
+            self._impute_method = impute_method.clone()
+        else:
+            raise ValueError(
+                f"Error in ReducerTransform, "
+                f"impute_method must be str, None, or sktime transformer, "
+                f"but found {impute_method}"
+            )
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -2388,16 +2431,16 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
-        impute_method = self.impute_method
+        impute_method = self._impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
+
         if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+            lagger_y_to_X = lagger_y_to_X * impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
 
         Xt = lagger_y_to_X.fit_transform(y)
@@ -2475,7 +2518,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2499,13 +2541,15 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                y_plus_preds = y_plus_preds.asfreq(self.fh.freq)
-
+                y_plus_preds = apply_method_per_series(
+                    y_plus_preds, "asfreq", self.fh.freq
+                )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
-            if self.impute_method is not None:
-                lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+            if self._impute_method is not None:
+                lag_plus = lag_plus * self._impute_method.clone()
 
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
@@ -2527,22 +2571,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # otherwise proceed as per direct reduction algorithm
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
-            # 2D numpy array with col index = (var) and 1 row
-            y_pred_list.append(y_pred_i)
 
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+            y_pred_list.append(y_pred_new)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
-        y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
-        y_pred = slice_at_ix(y_pred, fh_idx)
+        y_pred = pd.concat(y_pred_list).sort_index()
+        y_pred = y_pred.loc[fh_idx]
 
         return y_pred
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
-        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2556,8 +2598,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.transform(y)
 
         lag_plus = Lag(lags=1, index_out="extend")
-        if self.impute_method is not None:
-            lag_plus = lag_plus * Imputer(method=self.impute_method)
+
+        if self._impute_method is not None:
+            lag_plus = lag_plus * self._impute_method.clone()
 
         Xtt = lag_plus.fit_transform(Xt)
 
@@ -2604,14 +2647,51 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.transformations.series.impute import Imputer
+
         est = LinearRegression()
+        forecaster_imputer = Imputer(
+            method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
+        )
+
         params1 = {
             "estimator": est,
             "window_length": 3,
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
+        params2 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": None,  # None is the default
+        }
+        params3 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": forecaster_imputer,  # test imputation with forecaster
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": forecaster_imputer,
+        }
+        params5 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+            "impute_method": "pad",
+        }
+        params6 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "global",
+            "impute_method": "pad",
+        }
 
-        return params1
+        return [params1, params2, params3, params4, params5, params6]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
@@ -2657,8 +2737,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX
@@ -2686,7 +2766,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,
