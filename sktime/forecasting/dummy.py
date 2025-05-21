@@ -160,7 +160,7 @@ class ForecastKnownValues(BaseForecaster):
                 unique_levels = idx.droplevel(-1).unique()
                 fh_abs = pd.MultiIndex.from_tuples(
                     ((*level, time) for level in unique_levels for time in fh_abs),
-                    name=idx.names,
+                    names=idx.names,
                 )
 
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
