@@ -55,8 +55,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if passed, applies ``default`` forecaster on the nodes/levels
         not mentioned in the ``forecaster`` argument.
 
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel evaluate if specified and ``strategy="refit"``.
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -64,6 +65,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         - "dask": uses ``dask``, requires ``dask`` package in environment
         - "dask_lazy": same as "dask",
           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
@@ -87,6 +89,15 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
 
     Examples
     --------
@@ -136,7 +147,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     BY_LIST = ["level", "node"]
@@ -158,14 +169,16 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",
                 "ignores-exogeneous-X",
-                "handles-missing-data",
+                "capability:missing_values",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
             l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
-            self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_forecasters
+            )
 
     @property
     def _forecasters(self):
@@ -198,26 +211,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         from sktime.transformations.hierarchical.aggregate import Aggregator
 
         return Aggregator().fit_transform(y)
-
-    @property
-    def fitted_list(self):
-        """Deprecated attribute.
-
-        TODO 0.37.0: Remove this property entirely.
-        """
-        import warnings
-
-        warnings.warn(
-            """The fitted_list property of HierarchyEnsembleForecaster is deprecated
-            and will be removed in sktime 0.37.0.
-            Please use the get_fitted_params method,
-            or the attribute forecasters_ instead.
-            Given a fitted instance f, a read call to f.fitted_list can be replaced
-            by f.get_fitted_params()['forecasters'] or f.forecasters_.
-            """,
-            DeprecationWarning,
-        )
-        return self.fitted_list_
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -417,7 +410,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 X = self._aggregate(X)
         x = X
 
-        for forecaster, ind in self.fitted_list:
+        for forecaster, ind in self.fitted_list_:
             if z.index.nlevels == 1:
                 forecaster.update(z, X=x, update_params=update_params)
             else:
@@ -461,7 +454,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         preds = parallelize(
             _predict_one_forecaster,
-            self.fitted_list,
+            self.fitted_list_,
             meta,
             backend=self.backend,
             backend_params=self.backend_params,

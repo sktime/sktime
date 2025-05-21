@@ -58,6 +58,7 @@ Pipeline building - Structural
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
+    ColumnSelect
     FitInTransform
     InvertTransform
     YtoX
@@ -76,6 +77,12 @@ Pipeline building - Broadcasting and apply-map
     TransformByLevel
 
 .. currentmodule:: sktime.transformations.panel.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnTransformer
 
 .. currentmodule:: sktime.transformations.series.func_transform
 
@@ -193,9 +200,12 @@ Shapelets, wavelets, and convolution
     :template: class.rst
 
     Rocket
+    RocketPyts
     MiniRocket
     MiniRocketMultivariate
     MiniRocketMultivariateVariable
+    MultiRocket
+    MultiRocketMultivariate
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
@@ -216,6 +226,14 @@ Distance-based features
 
     MatrixProfile
 
+.. currentmodule:: sktime.transformations.panel.compose_distance
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DistanceFeatures
+
 Dictionary-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -226,6 +244,9 @@ Dictionary-based features
     :template: class.rst
 
     SFA
+    SFAFast
+    PAAlegacy
+    SAXlegacy
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,6 +382,7 @@ Detrending and Decomposition
 .. currentmodule:: sktime.transformations.series.detrend
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
@@ -368,7 +390,7 @@ Detrending and Decomposition
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-    MSTL
+    mstl.MSTL
 
 .. currentmodule:: sktime.transformations.series.vmd
 
@@ -430,6 +452,7 @@ Filtering and denoising
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+    KalmanFilterTransformerSIMD
 
 .. currentmodule:: sktime.transformations.series.theta
 
@@ -501,6 +524,23 @@ Binning, sampling and segmentation
 
     IntervalSegmenter
     RandomIntervalSegmenter
+    SlidingWindowSegmenter
+
+.. currentmodule:: sktime.transformations.panel.random_intervals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RandomIntervals
+
+.. currentmodule:: sktime.transformations.panel.supervised_intervals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SupervisedIntervals
 
 .. currentmodule:: sktime.transformations.series.dilation_mapping
 
@@ -525,15 +565,6 @@ Binning, sampling and segmentation
     :template: class.rst
 
     SAX
-
-.. currentmodule:: sktime.transformations.panel.dictionary_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PAAlegacy
-    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -568,12 +599,13 @@ Seasonality and Date-Time Features
 .. currentmodule:: sktime.transformations.series.holiday
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
     HolidayFeatures
-    CountryHolidaysTransformer
-    FinancialHolidaysTransformer
+    country_holidays.CountryHolidaysTransformer
+    financial_holidays.FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
@@ -798,6 +830,7 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+    TSBootstrapAdapter
     RepeatBootstrapTransformer
 
 Panel-to-Series transformers
@@ -831,6 +864,14 @@ Outlier detection, changepoint detection
     :template: class.rst
 
     ClaSPTransformer
+
+.. currentmodule:: sktime.transformations.series.dobin
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DOBIN
 
 Hierarchical transformers
 -------------------------

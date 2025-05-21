@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.36.0"
+version = "0.37.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -51,7 +51,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib<1.5,>=1.2.0",  # required for parallel processing
+  "joblib>=1.2.0,<1.6",  # required for parallel processing
   "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
@@ -80,7 +80,7 @@ all_extras = [
   'autots<0.7,>=0.6.1',
   'cloudpickle; python_version < "3.13"',
   'dash!=2.9.0; python_version < "3.13"',
-  "dask<2024.8.1; extra == 'dataframe'",
+  'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
   'esig==0.9.7; python_version < "3.10"',
@@ -89,21 +89,22 @@ all_extras = [
   'h5py; python_version < "3.12"',
   'hmmlearn>=0.2.7; python_version < "3.11"',
   'holidays; python_version < "3.13"',
-  'keras-self-attention; python_version < "3.11"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'optuna<4.3',
+  'optuna<4.4',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
   'pycatch22<0.4.6; python_version < "3.13"',
   'pyod>=0.8; python_version < "3.11"',
   "pyts<0.14.0; python_version < '3.12'",
+  'ray >=2.40.0; python_version < "3.13"',
   'scikit-optimize; python_version < "3.13"',
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
+  'simdkalman',
   'skforecast<0.15,>=0.12.1; python_version < "3.13"',
   "skpro>=2,<2.10.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
@@ -111,7 +112,7 @@ all_extras = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
@@ -124,7 +125,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1; python_version < "3.13"',
   'cloudpickle; python_version < "3.13"',
   'dash!=2.9.0; python_version < "3.13"',
-  "dask<2025.1.1; extra == 'dataframe'",
+  'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
   'esig==0.9.7; python_version < "3.10"',
@@ -133,19 +134,20 @@ all_extras_pandas2 = [
   'h5py; python_version < "3.12"',
   'hmmlearn>=0.2.7; python_version < "3.11"',
   'holidays; python_version < "3.13"',
-  'keras-self-attention; python_version < "3.11"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'optuna<4.3',
+  'optuna<4.4',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
   'pycatch22<0.4.6; python_version < "3.13"',
   'pyod>=0.8; python_version < "3.11"',
+  'ray >=2.40.0; python_version < "3.13"',
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'seasonal; python_version < "3.13"',
+  'simdkalman',
   'skforecast<0.15,>=0.12.1; python_version < "3.13"',
   'skpro>=2,<2.10.0',
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
@@ -153,8 +155,7 @@ all_extras_pandas2 = [
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
-  'tensorflow<2.17,>=2; python_version < "3.13"',
-  'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
@@ -183,7 +184,7 @@ annotation = [
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
@@ -209,8 +210,7 @@ forecasting = [
   'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
 networks = [
-  'keras-self-attention<0.52,>=0.51; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
@@ -218,7 +218,7 @@ param_est = [
 ]
 regression = [
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -227,6 +227,7 @@ transformations = [
   'mne>=1.5,<1.9; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
+  'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
@@ -265,12 +266,12 @@ docs = [
 tests = [
   "pytest>=7.4,<8.4",
   "pytest-randomly>=3.15,<3.17",
-  "pytest-timeout>=2.1,<2.4",
+  "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.7",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
-# these are for specual uses and may be changed or removed at any time
+# these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
   "pandas<2.0.0",
@@ -289,15 +290,17 @@ dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
-  'tensorflow<2.17,>=2; python_version < "3.13"',
-  'torch; python_version < "3.12"',
+  'tensorflow<2.20,>=2; python_version < "3.13"',
+  "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0,<1.2.0; python_version < "3.13"',
+  "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
+  'accelerate',
+  'tqdm',
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
