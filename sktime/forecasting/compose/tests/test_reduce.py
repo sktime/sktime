@@ -836,7 +836,7 @@ def test_recursive_reduction_with_X():
     manual_input = np.hstack([last_window, X_new.values])
     manual_pred = manual_lr.predict(manual_input)
 
-    np.allclose(y_pred, manual_pred)
+    assert np.allclose(y_pred, manual_pred)
 
 
 @pytest.mark.skipif(
@@ -867,7 +867,7 @@ def test_pooled_direct_reduction():
     last_win = np.array([[3, 4], [7, 8]])
     lr_pred = lr.predict(last_win)
 
-    return np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
+    assert np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
 
 
 @pytest.mark.skipif(
