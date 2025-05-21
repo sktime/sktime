@@ -415,7 +415,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 param.requires_grad = False
 
             # Adjust requires_grad property of model weights based on info
-            for key, _, _ in info["mismatched_keys"]:
+            for key in info["mismatched_keys"]:
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
