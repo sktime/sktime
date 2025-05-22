@@ -1552,11 +1552,12 @@ def mean_absolute_percentage_error(
     Returns
     -------
     loss : float
-        MAPE, sMAPE, or by-forecast MAPE loss.
-        If multioutput is 'raw_values', then the loss is returned for each output
-        separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the weighted
-        average loss of all output errors is returned.
+        MAPE or sMAPE loss.
+
+        * If multioutput is 'raw_values', then MAPE or sMAPE is returned for each
+          output separately.
+        * If multioutput is 'uniform_average' or an ndarray of weights, then the
+          weighted average MAPE or sMAPE of all output errors is returned.
 
     See Also
     --------
