@@ -1579,18 +1579,18 @@ def mean_absolute_percentage_error(
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
-    0.33690476190476193
+    np.float64(0.33690476190476193)
     >>> # Univariate sMAPE
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
-    0.5553379953379953
+    np.float64(0.5553379953379953)
     >>> # Multivariate MAPE
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.5515873015873016
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
+    np.float64(0.5515873015873016)
     >>> # Multivariate sMAPE
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
-    0.6080808080808081
+    np.float64(0.6080808080808081)
     >>> # Raw output per dimension
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', symmetric=False)
     array([0.38095238, 0.72222222])
@@ -1598,9 +1598,9 @@ def mean_absolute_percentage_error(
     array([0.71111111, 0.50505051])
     >>> # Weighted multioutput
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], symmetric=False)  # doctest: +SKIP
-    0.6198412698412699
+    np.float64(0.6198412698412699)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True)  # doctest: +SKIP
-    0.5668686868686869
+    np.float64(0.5668686868686869)
     >>> # Univariate MAPE relative to predicted values
     >>> mean_absolute_percentage_error(y_true, y_pred, relative_to='y_pred')  # doctest: +SKIP
     """  # noqa: E501
