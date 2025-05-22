@@ -82,12 +82,28 @@ from sktime.performance_metrics.forecasting._functions import (
     relative_loss,
 )
 from sktime.performance_metrics.forecasting._gmae import GeometricMeanAbsoluteError
+from sktime.performance_metrics.forecasting._gmrelae import (
+    GeometricMeanRelativeAbsoluteError,
+)
+from sktime.performance_metrics.forecasting._gmrelse import (
+    GeometricMeanRelativeSquaredError,
+)
+from sktime.performance_metrics.forecasting._gmse import GeometricMeanSquaredError
 from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+from sktime.performance_metrics.forecasting._mape import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
+from sktime.performance_metrics.forecasting._masyme import MeanAsymmetricError
 from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
+from sktime.performance_metrics.forecasting._medape import MedianAbsolutePercentageError
 from sktime.performance_metrics.forecasting._medase import MedianAbsoluteScaledError
+from sktime.performance_metrics.forecasting._medrelae import MedianRelativeAbsoluteError
 from sktime.performance_metrics.forecasting._medse import MedianSquaredError
+from sktime.performance_metrics.forecasting._medspe import MedianSquaredPercentageError
 from sktime.performance_metrics.forecasting._medsse import MedianSquaredScaledError
+from sktime.performance_metrics.forecasting._mlinex import MeanLinexError
+from sktime.performance_metrics.forecasting._mrelae import MeanRelativeAbsoluteError
 from sktime.performance_metrics.forecasting._mse import MeanSquaredError
 from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercentage
+from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
+from sktime.performance_metrics.forecasting._rell import RelativeLoss
