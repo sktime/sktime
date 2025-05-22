@@ -17,6 +17,7 @@ from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.multiindex import apply_split
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -403,9 +404,15 @@ def evaluate(
         """
         splitter = InstanceSplitter(cv)
 
-        genx = splitter.split_series(X)
+        genx = splitter.split(X)
 
-        yield from genx
+        for train_idx, test_idx in genx:
+            y_train = apply_split(y, train_idx)
+            y_test = apply_split(y, test_idx)
+            X_train = X.iloc[train_idx]
+            X_test = X.iloc[test_idx]
+
+            yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv)
