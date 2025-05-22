@@ -231,6 +231,7 @@ Base class
     :template: class.rst
 
     BasePairwiseTransformer
+    TransferEntropy
 
 Standalone ``numba`` distances
 ------------------------------
