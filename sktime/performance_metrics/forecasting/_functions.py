@@ -1498,7 +1498,7 @@ def mean_absolute_percentage_error(
     relative_to="y_true",
     **kwargs,
 ):
-    """Mean absolute percentage error (MAPE), symmetric MAPE (sMAPE).
+    """Mean absolute percentage error (MAPE) or symmetric MAPE (sMAPE).
 
     - If ``symmetric`` is False, calculates MAPE (mean absolute percentage error).
       By default, this is relative to the true values.
