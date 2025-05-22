@@ -407,8 +407,8 @@ def evaluate(
         genx = splitter.split(X)
 
         for train_idx, test_idx in genx:
-            y_train = apply_split(y, train_idx)
-            y_test = apply_split(y, test_idx)
+            y_train = y.iloc[apply_split(y, train_idx)]
+            y_test = y.iloc[apply_split(y, test_idx)]
             X_train = X.iloc[train_idx]
             X_test = X.iloc[test_idx]
 
