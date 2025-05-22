@@ -403,11 +403,9 @@ def evaluate(
         """
         splitter = InstanceSplitter(cv)
 
-        geny = splitter.split(y)
-        genx = splitter.split(X)
+        genx = splitter.split_series(X)
 
-        for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
-            yield y_train, y_test, X_train, X_test
+        yield from genx
 
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv)
