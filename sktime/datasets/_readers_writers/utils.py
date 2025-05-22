@@ -10,7 +10,9 @@ __all__ = [
 ]
 
 import os
+import pathlib
 import textwrap
+from typing import Union
 
 
 def _alias_mtype_check(return_type):
@@ -78,7 +80,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                        f"invalid classLabel value in file {full_file_path_and_name}"
                     )
                 if token_len == 2 and meta_data["class_labels"]:
                     raise OSError(
@@ -92,8 +94,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid targetlabel value in file "
-                        f"{full_file_path_and_name}"
+                        f"invalid targetlabel value in file {full_file_path_and_name}"
                     )
                 if token_len > 2:
                     raise OSError(
@@ -124,7 +125,7 @@ def _write_header(
     dirt = f"{str(path)}/{str(problem_name)}/"
     try:
         os.makedirs(dirt)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists
     # create ts file in the path
     file = open(f"{dirt}{str(problem_name)}{fold}.ts", "w")
@@ -210,7 +211,7 @@ def write_results_to_uea_format(
         output_path = f"{output_path}/{estimator_name}/Predictions/{dataset_name}/"
     try:
         os.makedirs(output_path)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists, so just ignore this
 
     if split == "TRAIN" or split == "train":
@@ -269,3 +270,34 @@ def write_results_to_uea_format(
                     file.write("," + str(j))
             file.write("\n")
     file.close()
+
+
+def get_path(path: Union[str, pathlib.Path], suffix: str) -> str:
+    """Automatic inference of file ending in data loaders for single file types.
+
+    This function checks if the provided path has a specified suffix. If not,
+    it checks if a file with the same name exists. If not, it adds the specified
+    suffix to the path.
+
+    Parameters
+    ----------
+    path: str or pathlib.Path
+        The full pathname or filename.
+    suffix: str
+        The expected file extension.
+
+    Returns
+    -------
+    resolved_path: str
+        The filename with required extension
+    """
+    p_ = pathlib.Path(path).expanduser().resolve()
+    resolved_path = str(p_)
+
+    # Checks if the path has any extension
+    if not p_.suffix:
+        # Checks if a file with the same name exists
+        if not os.path.exists(resolved_path):
+            # adds the specified extension to the path
+            resolved_path += suffix
+    return resolved_path

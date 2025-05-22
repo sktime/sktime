@@ -10,14 +10,15 @@ import textwrap
 import numpy as np
 import pandas as pd
 
+from sktime.datasets._readers_writers.utils import get_path
 from sktime.transformations.base import BaseTransformer
 
-# ==================================================================================================
+# ========================================================================
 # Utils function to read  arff file
-# ==================================================================================================
+# ========================================================================
 
 
-# TODO: original author didnt add test for this function
+# TODO: original author didn't add test for this function
 # Refactor the nested loops
 def load_from_arff_to_dataframe(
     full_file_path_and_name,
@@ -59,6 +60,9 @@ def load_from_arff_to_dataframe(
     data_started = False
     is_multi_variate = False
     is_first_case = True
+
+    full_file_path_and_name = get_path(full_file_path_and_name, ".arff")
+
     # Parse the file
     # print(full_file_path_and_name)
     with open(full_file_path_and_name, encoding="utf-8") as f:
@@ -131,9 +135,9 @@ def load_from_arff_to_dataframe(
     return x_data
 
 
-# ==================================================================================================
+# ================================================================================
 # Utils function to write results from tabular transformation to arff file
-# ==================================================================================================
+# ================================================================================
 
 
 # Research function?
@@ -202,7 +206,7 @@ def write_tabular_transformation_to_arff(
     dirt = f"{str(path)}/{str(problem_name)}-{type(transformation).__name__}/"
     try:
         os.makedirs(dirt)
-    except os.error:
+    except OSError:
         pass  # raises os.error if path already exists
     # create arff file in the path
     file = open(

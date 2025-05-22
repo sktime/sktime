@@ -1,8 +1,9 @@
 """Alignment path plotting utilities."""
+
 import numpy as np
 
 from sktime.distances._distance import distance_alignment_path, pairwise_distance
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 

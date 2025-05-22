@@ -1,10 +1,28 @@
 """Rotation Forest test code."""
+
 import numpy as np
+import pytest
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RotationForest),
+    reason="run test if softdeps are present and incrementally (if requested)",
+)
+@parametrize_with_checks([RotationForest()])
+def test_sklearn_compatible_estimator(estimator, check):
+    """Run sklearn estimator compatibility checks."""
+    check(estimator)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(RotationForest),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_contracted_rotf():
     """Test of RotF contracting and train estimate on unit test data."""
     # load unit test data

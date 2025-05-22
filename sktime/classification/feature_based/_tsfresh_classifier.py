@@ -37,7 +37,7 @@ class TSFreshClassifier(BaseClassifier):
     verbose : int, default=0
         level of output printed to the console (for information only)
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     chunksize : int or None, default=None
         Number of series processed in each parallel TSFresh job, should be optimised
@@ -59,18 +59,38 @@ class TSFreshClassifier(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
+
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import TSFreshClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = TSFreshClassifier(
+    ...     estimator=RandomForestClassifier(n_estimators=5),
+    ...     default_fc_parameters="efficient",
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    TSFreshClassifier(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        "python_version": "<3.10",
-        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -133,9 +153,11 @@ class TSFreshClassifier(BaseClassifier):
             )
         )
         self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
+            (
+                RandomForestClassifier(n_estimators=200)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 
@@ -149,6 +171,7 @@ class TSFreshClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+        self._Xt_colnames = X_t.columns
 
         if X_t.shape[1] == 0:
             warn(
@@ -182,7 +205,9 @@ class TSFreshClassifier(BaseClassifier):
         if self._return_majority_class:
             return np.full(X.shape[0], self.classes_[self._majority_class])
 
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+        X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
@@ -207,7 +232,9 @@ class TSFreshClassifier(BaseClassifier):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            X_t = self._transformer.transform(X)
+            X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
@@ -220,7 +247,7 @@ class TSFreshClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -231,8 +258,9 @@ class TSFreshClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {

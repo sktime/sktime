@@ -61,9 +61,16 @@ class VectorizedDF:
     SERIES_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     def __init__(
-        self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
+        self,
+        X,
+        y=None,
+        iterate_as="Series",
+        is_scitype="Panel",
+        iterate_cols=False,
+        remember_data=True,
     ):
-        self.X = X
+        if remember_data:
+            self.X = X
 
         if is_scitype is None:
             _, _, metadata = check_is_scitype(
@@ -89,9 +96,15 @@ class VectorizedDF:
         self._check_iterate_cols(iterate_cols)
         self.iterate_cols = iterate_cols
 
+        self.remember_data = remember_data
+
         self.converter_store = dict()
 
-        self.X_multiindex = self._init_conversion(X)
+        X_multiindex = self._init_conversion(X)
+        self.X_mi_columns = X_multiindex.columns
+        self.X_mi_index = X_multiindex.index
+        if remember_data:
+            self.X_multiindex = X_multiindex
         self.iter_indices = self._init_iter_indices()
 
         self.shape = self._iter_shape()
@@ -148,14 +161,14 @@ class VectorizedDF:
         iterate_as = self.iterate_as
         is_scitype = self.is_scitype
         iterate_cols = self.iterate_cols
-        X = self.X_multiindex
+        X_ix = self.X_mi_index
 
         if iterate_as == is_scitype:
             row_ix = None
         elif iterate_as == "Series":
-            row_ix = X.index.droplevel(-1).unique()
+            row_ix = X_ix.droplevel(-1).unique()
         elif iterate_as == "Panel":
-            row_ix = X.index.droplevel([-1, -2]).unique()
+            row_ix = X_ix.droplevel([-1, -2]).unique()
         else:
             raise RuntimeError(
                 f"unexpected value found for attribute self.iterate_as: {iterate_as}"
@@ -163,7 +176,7 @@ class VectorizedDF:
             )
 
         if iterate_cols:
-            col_ix = X.columns
+            col_ix = self.X_mi_columns
         else:
             col_ix = None
 
@@ -172,7 +185,7 @@ class VectorizedDF:
     @property
     def index(self):
         """Defaults to pandas index of X converted to pandas type."""
-        return self.X_multiindex.index
+        return self.X_mi_index
 
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
@@ -257,11 +270,14 @@ class VectorizedDF:
                 yield group_name, None, _enforce_index_freq(inst)
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
+        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
 
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
         else:
+            if isinstance(iter_levels, (list, tuple)) and len(iter_levels) == 1:
+                # single level, groupby expects scalar
+                iter_levels = iter_levels[0]
             for name, group in self.X_multiindex.groupby(level=iter_levels, sort=False):
                 yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
 
@@ -285,7 +301,7 @@ class VectorizedDF:
                 iter_levels = 2
             elif iterate_as == "Series":
                 iter_levels = 1
-        return list(range(self.X_multiindex.index.nlevels - iter_levels))
+        return list(range(self.X_mi_index.nlevels - iter_levels))
 
     def _iter_shape(self, iterate_as=None, iterate_cols=None):
         """Get the number of groups and columns to iterate over.
@@ -306,11 +322,11 @@ class VectorizedDF:
             iterate_cols = self.iterate_cols
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
+        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
 
         return (
             1 if is_self_iter else self.X_multiindex.groupby(level=iter_levels).ngroups,
-            len(self.X_multiindex.columns) if iterate_cols else 1,
+            len(self.X_mi_columns) if iterate_cols else 1,
         )
 
     def as_list(self):
@@ -383,7 +399,7 @@ class VectorizedDF:
         row_ix, col_ix = self.get_iter_indices()
         force_flat = False
         if row_ix is None and col_ix is None:
-            X_mi_reconstructed = self.X_multiindex
+            X_mi_reconstructed = pd.DataFrame(df_list[0])
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
@@ -409,7 +425,7 @@ class VectorizedDF:
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
-        X_orig_row_index = self.X_multiindex.index
+        X_orig_row_index = self.X_mi_index
 
         flatten = col_multiindex == "flat" or (col_multiindex == "none" and force_flat)
         if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
@@ -506,13 +522,17 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-            Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        backend : string, by default "None".
+            Parallelization backend to use for runs.
+            Runs parallel evaluate if specified and ``strategy="refit"``.
 
             - "None": executes loop sequentally, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
             - "dask_lazy": same as "dask", but returns delayed object instead
+            - "ray": uses ``ray``, requires ``ray`` package in environment
 
             Parameter is passed to ``utils.parallel.parallelize``.
 
@@ -528,6 +548,12 @@ class VectorizedDF:
               which is directly controlled by ``backend``
             - "dask": any valid keys for ``dask.compute`` can be passed,
               e.g., ``scheduler``
+            - "ray": Prevents ray from shutting down after parallelization when setting
+                the "shutdown_ray" key with value "False". Takes a "logger_name" and
+                a "mute_warnings" key for configuration.
+                Additionally takes a "ray_remote_args" dictionary that contains valid
+                keys for ray_init. E.g:
+                backend_params={"shutdown_ray":False, "ray_remote_args":{"num_cpus":2}}
 
         kwargs : will be passed to invoked methods of estimator(s) in ``estimator``
 
@@ -675,6 +701,7 @@ def _enforce_index_freq(item: pd.Series) -> pd.Series:
     Parameters
     ----------
     item : pd.Series
+
     Returns
     -------
     pd.Series

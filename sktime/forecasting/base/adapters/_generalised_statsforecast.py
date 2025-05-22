@@ -1,36 +1,44 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+
 from inspect import signature
-from typing import Dict
 from warnings import warn
 
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.adapters.forward import _clone_fitted_params
 
-__all__ = ["_GeneralisedStatsForecastAdapter"]
-__author__ = ["yarnabrina"]
+__all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
+__author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "arnaujc91"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
-        "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
+        "capability:missing_values": False,
     }
 
     def __init__(self):
         super().__init__()
 
         self._forecaster = None
+        self._fitted_forecaster = None
         pred_supported = self._check_supports_pred_int()
         self._support_pred_int_in_sample = pred_supported["int_in_sample"]
         self._support_pred_int = pred_supported["int"]
@@ -160,7 +168,16 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if X_fit_input is not None:
             X_fit_input = X.to_numpy(copy=False)
 
-        self._forecaster.fit(y_fit_input, X=X_fit_input)
+        # StatsForecast occasionally switch to a different model when fitting based on
+        # the data. This means that the model is not guaranteed to be the same as the
+        # one that was instantiated, and that one will be marked as un-fitted, making it
+        # unsuitable for further processing. Hence, we keep track of the fitted model as
+        # well, and use that exclusively from now onwards.
+        # Refer to issue #7969 and PR #7983 for more details.
+        self._fitted_forecaster = self._forecaster.fit(y_fit_input, X=X_fit_input)
+
+        # clone fitted parameters to self
+        _clone_fitted_params(self, self._fitted_forecaster, overwrite=False)
 
         return self
 
@@ -173,7 +190,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         level_arguments = None if levels is None else [100 * level for level in levels]
 
         if fh_type == "in-sample":
-            predict_method = self._forecaster.predict_in_sample
+            predict_method = self._fitted_forecaster.predict_in_sample
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict_in_sample`
             level_kw = (
@@ -182,7 +199,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             predictions = predict_method(**level_kw)
             point_predictions = predictions["fitted"]
         elif fh_type == "out-of-sample":
-            predict_method = self._forecaster.predict
+            predict_method = self._fitted_forecaster.predict
             # Before v1.5.0 (from statsforecast) not all foreasters
             # have a "level" keyword argument in `predict`
             level_kw = {"level": level_arguments} if self._support_pred_int else {}
@@ -227,12 +244,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             if isinstance(upper_interval_predictions, pandas.Series):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
-            interval_predictions[
-                (var_name, level, "lower")
-            ] = lower_interval_predictions[horizon_positions]
-            interval_predictions[
-                (var_name, level, "upper")
-            ] = upper_interval_predictions[horizon_positions]
+            interval_predictions[(var_name, level, "lower")] = (
+                lower_interval_predictions[horizon_positions]
+            )
+            interval_predictions[(var_name, level, "upper")] = (
+                upper_interval_predictions[horizon_positions]
+            )
 
         return interval_predictions
 
@@ -357,7 +374,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self) -> Dict[str, bool]:
+    def _check_supports_pred_int(self) -> dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 
@@ -450,6 +467,7 @@ class StatsForecastBackAdapter:
         self.prediction_intervals = None
 
     def __repr__(self):
+        """Representation dunder."""
         return "StatsForecastBackAdapter"
 
     def new(self):
@@ -504,7 +522,7 @@ class StatsForecastBackAdapter:
             self.prediction_intervals = ConformalIntervals(h=h)
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
 
         pred_int = self.estimator.predict_interval(
             fh=range(1, h + 1), X=X, coverage=coverage
@@ -532,13 +550,14 @@ class StatsForecastBackAdapter:
             return {"fitted": fitted}
 
         level = sorted(level)
-        coverage = [round(1 - (_l / 100), 2) for _l in level]
+        coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
             fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
         )
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        """Convert prediction intervals into a StatsForecast-format dictionary."""
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         pred_int_no_lev = pred_int.droplevel(0, axis=1)
@@ -574,14 +593,14 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.var import VAR
+        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.forecasting.theta import ThetaForecaster
-            from sktime.forecasting.var import VAR
-
+        stm_ests = [ThetaForecaster, VAR]
+        if _check_estimator_deps(stm_ests, severity="none"):
             params = [
                 {
                     "estimator": ThetaForecaster(),

@@ -6,10 +6,8 @@ __all__ = ["plot_cluster_algorithm"]
 import numpy as np
 import pandas as pd
 
-from sktime.clustering.base import TimeSeriesInstances
-from sktime.clustering.partitioning import TimeSeriesLloyds
 from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _plot(cluster_values, center, axes):
@@ -28,7 +26,7 @@ def _get_cluster_values(cluster_indexes: np.ndarray, X: np.ndarray, k: int):
     return ts_in_center
 
 
-def plot_series(X: TimeSeriesInstances):
+def plot_series(X):
     _check_soft_dependencies("matplotlib")
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
@@ -57,7 +55,7 @@ def plot_series(X: TimeSeriesInstances):
     plt.show()
 
 
-def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: int):
+def plot_cluster_algorithm(model, X, k: int):
     """Plot the results from a univariate partitioning algorithm.
 
     Parameters

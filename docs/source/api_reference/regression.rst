@@ -9,8 +9,37 @@ All regressors in ``sktime`` can be listed using the ``sktime.registry.all_estim
 using ``estimator_types="regressor"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "regresser" in the "Estimator type" dropdown).
+
+
 Composition
 -----------
+
+.. currentmodule:: sktime.regression.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RegressorPipeline
+    SklearnRegressorPipeline
+    MultiplexRegressor
+
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.regression.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSRGridSearchCV
+
+Ensembles
+---------
 
 .. currentmodule:: sktime.regression.compose
 
@@ -26,14 +55,21 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNRegressor
-    MCDCNNRegressor
-    SimpleRNNRegressor
-    ResNetRegressor
-    TapNetRegressor
+    cnn.CNNRegressor
+    cntc.CNTCRegressor
+    fcn.FCNRegressor
+    inceptiontime.InceptionTimeRegressor
+    lstmfcn.LSTMFCNRegressor
+    macnn.MACNNRegressor
+    mcdcnn.MCDCNNRegressor
+    mlp.MLPRegressor
+    resnet.ResNetRegressor
+    rnn.SimpleRNNRegressor
+    tapnet.TapNetRegressor
 
 Distance-based
 --------------
@@ -77,6 +113,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVRTslearn
     RocketRegressor
 
 Base

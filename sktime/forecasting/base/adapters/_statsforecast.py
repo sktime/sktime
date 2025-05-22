@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
-__author__ = ["FedericoGarza"]
+__author__ = ["AzulGarza"]
 __all__ = ["_StatsForecastAdapter"]
 
 
@@ -15,9 +15,11 @@ class _StatsForecastAdapter(BaseForecaster):
     """Base class for interfacing StatsForecast."""
 
     _tags = {
+        "authors": ["AzulGarza"],
+        "maintainers": ["AzulGarza"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?

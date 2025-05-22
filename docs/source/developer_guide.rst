@@ -14,11 +14,11 @@ Welcome to sktime's developer guide!
 
 New developers should:
 
-* sign up to the developer Discord (see link in README) and say hello in the ``#contributors`` channel
-* install a development version of ``sktime``, see :ref:`installation`
+* sign up to the developer Discord (see link in README) and say hello in the ``#intro`` channel
+* install a local developer setup of ``sktime``, see :ref:`installation`
 * set up CI tests locally and ensure they know how to check them remotely, see :ref:`continuous_integration`
 * get familiar with the git workflow (:ref:`git_workflow`) and coding standards (:ref:`coding_standards`)
-* feel free, at any point in time, to post questions on Discord, or ask core developers for help (see here for a `list of core developers <https://www.sktime.net/en/stable/about/team.html>`_)
+* feel free, at any point in time, to post questions on Discord, or ask core developers for help (see here for a `list of core developers <https://www.sktime.net/en/latest/about/team.html>`_)
 
 * feel free to join the collaborative coding sessions for pair programming or getting help on developer set-up
 

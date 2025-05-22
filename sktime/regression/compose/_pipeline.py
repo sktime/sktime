@@ -1,4 +1,5 @@
 """Pipeline with a regressor."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -117,7 +118,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
         missing = regressor.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -148,6 +151,16 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -276,8 +289,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -286,9 +300,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         params1 = {"transformers": [t1, t2], "regressor": r}
 
-        if _check_soft_dependencies("numba", severity="none"):
-            from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-
+        if _check_estimator_deps(KNeighborsTimeSeriesRegressor, severity="none"):
             c = KNeighborsTimeSeriesRegressor()
 
             # construct without names
@@ -407,7 +419,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -432,6 +444,16 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.

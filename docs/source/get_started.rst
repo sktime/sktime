@@ -62,11 +62,11 @@ tabular regression algorithms. Likewise one approach to the time series annotati
 observations that are too far from these predictions as anomalies. ``sktime`` typically incorporates these type of :term:`reductions <reduction>` through the use of composable classes that
 let users adapt one learning task to solve another related one.
 
-For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`user guide <user_guide>`.
+For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`notebook examples <examples>`.
 
 Quickstart
 ----------
-The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`user_guide` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
+The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`examples` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
 
 Forecasting
 ~~~~~~~~~~~
@@ -75,9 +75,9 @@ Forecasting
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+    >>> from sktime.split import temporal_train_test_split
 
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
@@ -117,7 +117,8 @@ Time Series Regression
 
     >>> X_train, y_train = load_covid_3month(split="train")
     >>> y_train = y_train.astype("float")
-    >>> X_test, _ = load_covid_3month(split="test")
+    >>> X_test, y_test = load_covid_3month(split="test")
+    >>> y_test = y_test.astype("float")
     >>> regressor = KNeighborsTimeSeriesRegressor()
     >>> regressor.fit(X_train, y_train)
     >>> y_pred = regressor.predict(X_test)
@@ -150,7 +151,7 @@ Time Series Annotation
 
 .. code-block:: python
 
-    >>> from sktime.annotation.adapters import PyODAnnotator
+    >>> from sktime.detection.adapters import PyODAnnotator
     >>> from pyod.models.iforest import IForest
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

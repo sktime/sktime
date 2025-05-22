@@ -33,78 +33,107 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
+
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
 from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
     todo: describe your custom time series classifier here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-
-    Components
-    ----------
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
+        #
+        # packaging info
+        # --------------
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # specify one or multiple authors and maintainers
+        # remove maintainer tag if maintained by sktime core team
+        #
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # PEP 440 python dependencies specifier,
+        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
+        # delete if no python dependencies or version limitations
+        #
+        # estimator tags
+        # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
-        "capability:multivariate": False,
+        "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
+        "capability:multivariate": False,  # ability to handle multivariate X
+        "capability:multioutput": False,  # ability to predict multiple columns in y
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -129,13 +158,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            class labels for fitting
+            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
@@ -152,31 +187,32 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict labels for sequences in X.
 
         private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
 
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y : should be of mtype in self.get_tag("y_inner_mtype")
+            1D iterable, of shape [n_instances]
+            or 2D iterable, of shape [n_instances, n_dimensions]
+            predicted class labels
             indices correspond to instance indices in X
+            if self.get_tag("capaility:multioutput") = False, should be 1D
+            if self.get_tag("capaility:multioutput") = True, should be 2D
         """
 
         # implement here
@@ -185,7 +221,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> np.ndarray:
+    def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         private _predict_proba containing the core logic, called from predict_proba
@@ -200,9 +236,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 

@@ -60,7 +60,7 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
     """
@@ -86,6 +86,8 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="transformer", as_dataframe=True)
         #
@@ -169,9 +171,29 @@ class MyTransformer(BaseTransformer):
         # if False, may raise exception when passed unequal length Panel/Hierarchical
         #
         # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -180,6 +202,8 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

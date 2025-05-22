@@ -1,6 +1,6 @@
 """class that implements a graph pipeline."""
+
 import warnings
-import weakref
 from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
@@ -31,20 +31,20 @@ class Pipeline(BaseEstimator):
     is not linear. I.e., the each element of the pipeline can be the input of multiple
     other steps and not only one successors.
 
-    `fit(y, X, *args)` - changes state by running `fit` on all sktime estimators and
+    ``fit(y, X, *args)`` - changes state by running ``fit`` on all sktime estimators and
         transformers in the pipeline. Note that depending on the sktime estimators and
         transformers that are added to the pipeline, different keywords are required.
         E.g., if a forecaster is part of the pipeline, a forecast horizon (fh) should be
         provided.
-    `predict(X, *args)` - Results in calling predict on the estimators in the pipeline
+    ``predict(X, *args)`` - Results in calling predict on the estimators in the pipeline
         and transform or the specified method on the other skobjects in the pipeline.
         Depending on the skobject added to the pipeline, you might need to pass
         additional parameters to predict.
-    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
-        with `predict_interval` or `predict_quantiles` substituted for `predict`.
-    `predict_var`, `predict_proba` - are currently not supported
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
-    `add_step(skobject, name, edges, method, **kwargs)` - adds a skobject to the
+    ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
+        with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``.
+    ``predict_var``, ``predict_proba`` - are currently not supported
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
+    ``add_step(skobject, name, edges, method, **kwargs)`` - adds a skobject to the
         pipeline and setting the name as identifier and the steps specified with
         edges as input steps (predecessors). Thereby the method that should be
         called can be overridden using the method kwarg. Further provided kwargs
@@ -55,7 +55,7 @@ class Pipeline(BaseEstimator):
     param steps : A list of dicts that specify the steps of the pipeline. Further
         steps can be added by using add_step method.
         The dict requires the following keys:
-            * skobject: `sktime` object, the skobject that should be added to the
+            * skobject: ``sktime`` object, the skobject that should be added to the
                  pipeline
             * name: str, the name of the step that is created
             * edges: dict, a dict with string keys to string values. Identifying the
@@ -75,11 +75,11 @@ class Pipeline(BaseEstimator):
         mapping the python object id to skobject ids.
     attribute id_to_obj : a dict with integer keys and weak references of
         skobjects as values. The values are the weak references of the skobjects
-        provided to the `add_step` method. We store the weak references to
+        provided to the ``add_step`` method. We store the weak references to
         avoid that the id of the object is reassigned if the user deletes all it
         references to the object.
     attribute model_dict : a dict with integer keys and skobject values.
-        This is a mapping of the id of the skobjects provided to `add_step`
+        This is a mapping of the id of the skobjects provided to ``add_step``
         to the cloned skobject.
     attribute counter : integer, counts the number of steps in the pipeline.
     attribute steps : a dict with string keys and step object values.
@@ -183,6 +183,17 @@ class Pipeline(BaseEstimator):
         self.steps = steps
         self._steps = steps if steps is not None else []
 
+        object_types = [step["skobject"].get_tag("object_type") for step in self._steps]
+        if len(set(object_types)) == 1:
+            self.set_tags(**{"object_type": object_types[0]})
+        elif len(set(object_types) - {"transformer"}) == 1:
+            self.set_tags(
+                **{"object_type": list(set(object_types) - {"transformer"})[0]}
+            )
+        else:
+            # Mixture of different object types
+            pass
+
         for step_information in self._steps:
             if "method" not in step_information:
                 step_information["method"] = None
@@ -194,12 +205,10 @@ class Pipeline(BaseEstimator):
         self.counter += 1
         # Check if not already an skobject cloned from the provided
         # skobject is part of the pipeline
-        if (id(skobject) not in self.id_to_obj) or self.id_to_obj[
-            id(skobject)
-        ]() is None:
-            # In this case set a weakref of that skobject to id_to_obj to prevent that
+        if id(skobject) not in self.id_to_obj:
+            # In this case store that skobject to id_to_obj to prevent that
             # the garbage collector reassigns the id.
-            self.id_to_obj[id(skobject)] = weakref.ref(skobject)
+            self.id_to_obj[id(skobject)] = skobject
             self.id_to_true_id[id(skobject)] = self.counter
         return self.id_to_true_id[id(skobject)]
 
@@ -283,7 +292,7 @@ class Pipeline(BaseEstimator):
 
         Parameters
         ----------
-        skobject: `sktime` object, the skobject that should be added to the pipeline
+        skobject: ``sktime`` object, the skobject that should be added to the pipeline
         name: str, the name of the step that is created
         edges: dict, a dict with string keys to string values. Identifying the
             predcessors.  The keys of the edges dict specify to which argument
@@ -358,7 +367,7 @@ class Pipeline(BaseEstimator):
             self._last_step_name = name
         self._assembled = True
 
-    def fit(self, X, y=None, **kwargs):
+    def fit(self, X=None, y=None, **kwargs):
         """Fit graph pipeline to training data.
 
         Parameters
@@ -377,6 +386,8 @@ class Pipeline(BaseEstimator):
         """
         self._assembled = False
         self._initiate_call(X, y, kwargs)
+
+        assert (X is not None) or (y is not None), "Either X or y must be provided."
         self._y = y
         self._X = X
 
@@ -417,7 +428,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-        `transform`
+        ``transform``
         """
         return self.fit(X, y, **kwargs).transform(X, y, **kwargs)
 
@@ -436,7 +447,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-         `transform`
+         ``transform``
         """
         self._initiate_call(X, y, kwargs)
         self._method_allowed("transform")
@@ -452,7 +463,7 @@ class Pipeline(BaseEstimator):
             .result
         )
 
-    def predict(self, X, y=None, **kwargs):
+    def predict(self, X=None, y=None, **kwargs):
         """Perform a prediction.
 
         I.e. calls predict or transform on each element in the  graph pipeline.
@@ -469,7 +480,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-        `transform` or `predict`
+        ``transform`` or ``predict``
         """
         self._initiate_call(X, y, kwargs)
         self._method_allowed("predict")
@@ -503,7 +514,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-        `transform`, `predict`, or `predict_interval`
+        ``transform``, ``predict``, or ``predict_interval``
         """
         self._initiate_call(X, y, kwargs)
         self._method_allowed("predict_interval")
@@ -538,7 +549,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-        `transform`, `predict`, or `predict_quantiles`
+        ``transform``, ``predict``, or ``predict_quantiles``
         """
         self._initiate_call(X, y, kwargs)
         self._method_allowed("predict_quantiles")
@@ -573,7 +584,7 @@ class Pipeline(BaseEstimator):
         Raises
         ------
         MethodNotImplementedError if a step in the pipeline does not implement
-         `transform`,  `predict`, or `predict_residuals`
+         ``transform``,  ``predict``, or ``predict_residuals``
         """
         # If no y is passed, use the data passed to fit.
         inner_X = X if y is not None else self._X
@@ -588,10 +599,18 @@ class Pipeline(BaseEstimator):
     def _initiate_call(self, X, y, kwargs):
         if not self._assembled:
             self._assemble_steps()
-        for step in self.assembled_steps.values():
-            step.reset()
-        self.assembled_steps["X"].buffer = X
-        self.assembled_steps["y"].buffer = y
+        for key, step in self.assembled_steps.items():
+            # Empty the buffer of all steps except for the dummy
+            # steps X and y (input steps)
+            if key in ["X", "y"]:
+                step.reset(reset_buffer=False)
+            else:
+                step.reset()
+        # Overwrite the buffer of X and y if data are provided
+        if X is not None:
+            self.assembled_steps["X"].buffer = X
+        if y is not None:
+            self.assembled_steps["y"].buffer = y
         self.kwargs.update(kwargs)
 
     def _method_allowed(self, method):
@@ -620,3 +639,73 @@ class Pipeline(BaseEstimator):
             params={},
         )
         self.assembled_steps[edg] = step
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        return [
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "X"},
+                    },
+                    {
+                        "skobject": BoxCoxTransformer(),
+                        "name": "box",
+                        "edges": {"X": "exp"},
+                    },
+                ]
+            },
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "X"},
+                    },
+                    {
+                        "skobject": KNeighborsTimeSeriesClassifier(),
+                        "name": "knnclassifier",
+                        "edges": {"X": "exp", "y": "y"},
+                    },
+                ]
+            },
+            {
+                "steps": [
+                    {
+                        "skobject": ExponentTransformer(),
+                        "name": "exp",
+                        "edges": {"X": "y"},
+                    },
+                    {
+                        "skobject": NaiveForecaster(),
+                        "name": "naive",
+                        "edges": {"X": "exp", "y": "y"},
+                    },
+                ]
+            },
+        ]

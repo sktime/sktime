@@ -9,6 +9,11 @@ All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_esti
 using ``estimator_types="classifier"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "classifier" in the "Estimator type" dropdown).
+
+
 Composition
 -----------
 
@@ -21,6 +26,18 @@ Composition
     ClassifierPipeline
     ColumnEnsembleClassifier
     SklearnClassifierPipeline
+    MultiplexClassifier
+
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.classification.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSCGridSearchCV
 
 Ensembles
 ---------
@@ -41,18 +58,24 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    cnn.CNNClassifier
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    lstmfcn.LSTMFCNClassifier
+    macnn.MACNNClassifier
+    mcdcnn.MCDCNNClassifier
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    tapnet.TapNetClassifier
 
 Dictionary-based
 ----------------
@@ -63,6 +86,7 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
+    BOSSVSClassifierPyts
     BOSSEnsemble
     ContractableBOSS
     IndividualBOSS
@@ -82,6 +106,8 @@ Distance-based
 
     ElasticEnsemble
     KNeighborsTimeSeriesClassifier
+    KNeighborsTimeSeriesClassifierPyts
+    KNeighborsTimeSeriesClassifierTslearn
     ProximityForest
     ProximityStump
     ProximityTree
@@ -164,6 +190,7 @@ Kernel-based
     :template: class.rst
 
     TimeSeriesSVC
+    TimeSeriesSVCTslearn
     Arsenal
     RocketClassifier
 
@@ -177,11 +204,20 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    ShapeletLearningClassifierPyts
+    ShapeletLearningClassifierTslearn
     MrSEQL
     MrSQM
 
-sklearn
--------
+
+sklearn classifiers
+-------------------
+
+This section contains classifiers which are not time series classifiers but
+simple tabular classifiers in ``sklearn`` compatible API.
+
+They are used internally in time series classifiers, but can also be used
+directly in a tabular setting.
 
 .. currentmodule:: sktime.classification.sklearn
 

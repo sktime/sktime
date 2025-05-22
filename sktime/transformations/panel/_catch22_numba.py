@@ -10,7 +10,7 @@ from sktime.utils.numba.njit import njit
 
 
 @njit(fastmath=True, cache=True)
-def _histogram_mode(X, num_bins, smin, smax):
+def _histogram_mode(X: np.ndarray, num_bins, smin, smax):
     bin_width = (smax - smin) / num_bins
 
     if bin_width == 0:
@@ -107,7 +107,7 @@ def _outlier_include(X):
     return np.median(medians[: trim_limit + 1])
 
 
-def _autocorr(X, X_fft):
+def _autocorr(X: np.ndarray, X_fft):
     ca = np.fft.ifft(_multiply_complex_arr(X_fft))
     return _get_acf(X, ca)
 
@@ -121,7 +121,7 @@ def _multiply_complex_arr(X_fft):
 
 
 @njit(fastmath=True, cache=True)
-def _get_acf(X, ca):
+def _get_acf(X: np.ndarray, ca):
     acf = np.zeros(len(X))
     if ca[0].real != 0:
         for i in range(len(X)):
@@ -130,7 +130,7 @@ def _get_acf(X, ca):
 
 
 @njit(fastmath=True, cache=True)
-def _summaries_welch_rect(X, centroid, X_fft):
+def _summaries_welch_rect(X: np.ndarray, centroid, X_fft):
     new_length = int(len(X_fft) / 2) + 1
     p = np.zeros(new_length)
     pi2 = 2 * math.pi
@@ -172,7 +172,7 @@ def _complex_magnitude(c):
 
 
 @njit(fastmath=True, cache=True)
-def _local_simple_mean(X, train_length):
+def _local_simple_mean(X: np.ndarray, train_length):
     res = np.zeros(len(X) - train_length)
     for i in range(len(res)):
         nsum = 0
@@ -192,7 +192,7 @@ def _ac_first_zero(X_ac):
 
 
 @njit(fastmath=True, cache=True)
-def _fluct_prop(X, og_length, dfa):
+def _fluct_prop(X: np.ndarray, og_length, dfa):
     a = np.zeros(50, dtype=np.int_)
     a[0] = 5
     n_tau = 1
@@ -270,7 +270,7 @@ def _fluct_prop(X, og_length, dfa):
 
 
 @njit(fastmath=True, cache=True)
-def _linear_regression(X, y, n, lag):
+def _linear_regression(X: np.ndarray, y, n, lag):
     sumx = 0
     sumx2 = 0
     sumxy = 0
@@ -487,26 +487,38 @@ def _spline_fit(X):
 
 
 @njit(fastmath=True, cache=True)
-def _normalise_series(X, mean):
+def _normalise_series(X: np.ndarray, mean):
     std = np.std(X)
     if std > 0:
         return (X - mean) / std
     return X
 
 
-def _DN_HistogramMode_5(X, smin, smax):
+def _perform_fft(series, smean):
+    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+    return np.fft.fft(series - smean, n=nfft)
+
+
+@njit(fastmath=True, cache=True)
+def _DN_HistogramMode_5(series, smin, smax, smean, std, outlier_series, ac, acfz):
     # Mode of z-scored distribution (5-bin histogram).
+    X = series
     return _histogram_mode(X, 5, smin, smax)
 
 
-def _DN_HistogramMode_10(X, smin, smax):
+@njit(fastmath=True, cache=True)
+def _DN_HistogramMode_10(series, smin, smax, smean, std, outlier_series, ac, acfz):
     # Mode of z-scored distribution (10-bin histogram).
+    X = series
     return _histogram_mode(X, 10, smin, smax)
 
 
 @njit(fastmath=True, cache=True)
-def _SB_BinaryStats_diff_longstretch0(X, smean):
+def _SB_BinaryStats_diff_longstretch0(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Longest period of consecutive values above the mean.
+    X = series
     mean_binary = np.zeros(len(X))
     for i in range(len(X)):
         if X[i] - smean > 0:
@@ -515,20 +527,26 @@ def _SB_BinaryStats_diff_longstretch0(X, smean):
     return _long_stretch(mean_binary, 1)
 
 
-def _DN_OutlierInclude_p_001_mdrmd(X):
+@njit(fastmath=True, cache=True)
+def _DN_OutlierInclude_p_001_mdrmd(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Time intervals between successive extreme events above the mean.
-    return _outlier_include(X)
+    return _outlier_include(outlier_series)
 
 
 @njit(fastmath=True, cache=True)
-def _DN_OutlierInclude_n_001_mdrmd(X):
-    # Time intervals between successive extreme events below the mean.
-    return _outlier_include(-X)
+def _DN_OutlierInclude_n_001_mdrmd(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
+    # Time intervals between successive extreme events below the mean.")
+    return _outlier_include(-outlier_series)
 
 
 @njit(fastmath=True, cache=True)
-def _CO_f1ecac(X_ac):
+def _CO_f1ecac(series, smin, smax, smean, std, outlier_series, ac, acfz):
     # First 1/e crossing of autocorrelation function.
+    X_ac = ac
     threshold = 0.36787944117144233  # 1 / np.exp(1)
     for i in range(1, len(X_ac)):
         if (X_ac[i - 1] - threshold) * (X_ac[i] - threshold) < 0:
@@ -537,27 +555,41 @@ def _CO_f1ecac(X_ac):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_FirstMin_ac(X_ac):
+def _CO_FirstMin_ac(series, smin, smax, smean, std, outlier_series, ac, acfz):
     # First minimum of autocorrelation function.
+    X_ac = ac
     for i in range(1, len(X_ac) - 1):
         if X_ac[i] < X_ac[i - 1] and X_ac[i] < X_ac[i + 1]:
             return i
     return len(X_ac)
 
 
-def _SP_Summaries_welch_rect_area_5_1(X, X_fft):
+def _SP_Summaries_welch_rect_area_5_1(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Total power in lowest fifth of frequencies in the Fourier power spectrum.
+    X = series
+    smean = smean
+    X_fft = _perform_fft(X, smean)
     return _summaries_welch_rect(X, False, X_fft)
 
 
-def _SP_Summaries_welch_rect_centroid(X, X_fft):
+def _SP_Summaries_welch_rect_centroid(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Centroid of the Fourier power spectrum.
+    X = series
+    smean = smean
+    X_fft = _perform_fft(X, smean)
     return _summaries_welch_rect(X, True, X_fft)
 
 
 @njit(fastmath=True, cache=True)
-def _FC_LocalSimple_mean3_stderr(X):
+def _FC_LocalSimple_mean3_stderr(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Mean error from a rolling 3-sample mean forecasting.
+    X = series
     if len(X) - 3 < 3:
         return 0
     res = _local_simple_mean(X, 3)
@@ -565,8 +597,9 @@ def _FC_LocalSimple_mean3_stderr(X):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_trev_1_num(X):
-    # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t.
+def _CO_trev_1_num(series, smin, smax, smean, std, outlier_series, ac, acfz):
+    # Time-reversibility statistic, ((x_t+1 - x_t)^3)_t.
+    X = series
     y = np.zeros(len(X) - 1)
     for i in range(len(y)):
         y[i] = np.power(X[i + 1] - X[i], 3)
@@ -574,7 +607,10 @@ def _CO_trev_1_num(X):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_HistogramAMI_even_2_5(X, smin, smax):
+def _CO_HistogramAMI_even_2_5(series, smin, smax, smean, std, outlier_series, ac, acfz):
+    X = series
+    smin = smin
+    smax = smax
     # Automutual information, m = 2, τ = 5.
     new_min = smin - 0.1
     new_max = smax + 0.1
@@ -602,8 +638,11 @@ def _CO_HistogramAMI_even_2_5(X, smin, smax):
 
 
 @njit(fastmath=True, cache=True)
-def _IN_AutoMutualInfoStats_40_gaussian_fmmi(X_ac):
+def _IN_AutoMutualInfoStats_40_gaussian_fmmi(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # First minimum of the automutual information function.
+    X_ac = ac
     tau = int(min(40, np.ceil(len(X_ac) / 2)))
 
     diffs = np.zeros(tau - 1)
@@ -621,8 +660,9 @@ def _IN_AutoMutualInfoStats_40_gaussian_fmmi(X_ac):
 
 
 @njit(fastmath=True, cache=True)
-def _MD_hrv_classic_pnn40(X):
+def _MD_hrv_classic_pnn40(series, smin, smax, smean, std, outlier_series, ac, acfz):
     # Proportion of successive differences exceeding 0.04σ (Mietus 2002).
+    X = series
     diffs = np.zeros(len(X) - 1)
     for i in range(len(diffs)):
         diffs[i] = np.abs(X[i + 1] - X[i]) * 1000
@@ -636,8 +676,11 @@ def _MD_hrv_classic_pnn40(X):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_BinaryStats_mean_longstretch1(X):
+def _SB_BinaryStats_mean_longstretch1(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Longest period of successive incremental decreases.
+    X = series
     diff_binary = np.zeros(len(X) - 1)
     for i in range(len(diff_binary)):
         if X[i + 1] - X[i] >= 0:
@@ -647,9 +690,12 @@ def _SB_BinaryStats_mean_longstretch1(X):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_MotifThree_quantile_hh(X):
+def _SB_MotifThree_quantile_hh(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Shannon entropy of two successive letters in equiprobable 3-letter
     # symbolization.
+    X = series
     indices = np.argsort(X)
     bins = np.zeros(len(X))
     q1 = int(len(X) / 3)
@@ -700,13 +746,15 @@ def _SB_MotifThree_quantile_hh(X):
     return -nsum
 
 
-def _FC_LocalSimple_mean1_tauresrat(X, acfz):
+def _FC_LocalSimple_mean1_tauresrat(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Change in correlation length after iterative differencing.
+    X = series
     if len(X) < 2:
         return 0
     res = _local_simple_mean(X, 1)
     mean = np.mean(res)
-
     nfft = int(np.power(2, np.ceil(np.log(len(res)) / np.log(2))))
     fft = np.fft.fft(res - mean, n=nfft)
     ac = _autocorr(res, fft)
@@ -715,9 +763,12 @@ def _FC_LocalSimple_mean1_tauresrat(X, acfz):
 
 
 @njit(fastmath=True, cache=True)
-def _CO_Embed2_Dist_tau_d_expfit_meandiff(X, acfz):
+def _CO_Embed2_Dist_tau_d_expfit_meandiff(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Exponential fit to successive distances in 2-d embedding space.
-    tau = acfz
+    X = series
+    tau = int(acfz)
     if tau > len(X) / 10:
         tau = int(len(X) / 10)
 
@@ -767,9 +818,12 @@ def _CO_Embed2_Dist_tau_d_expfit_meandiff(X, acfz):
 
 
 @njit(fastmath=True, cache=True)
-def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(X):
+def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Proportion of slower timescale fluctuations that scale with DFA (50%
     # sampling).
+    X = series
     cs = np.zeros(int(len(X) / 2))
     cs[0] = X[0]
     for i in range(1, len(cs)):
@@ -779,8 +833,11 @@ def _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(X):
 
 
 @njit(fastmath=True, cache=True)
-def _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(X):
+def _SC_FluctAnal_2_rsrangefit_50_1_logi(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Proportion of slower timescale fluctuations that scale with linearly rescaled
+    X = series
     # range fits.
     cs = np.zeros(len(X))
     cs[0] = X[0]
@@ -791,9 +848,12 @@ def _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(X):
 
 
 @njit(fastmath=True, cache=True)
-def _SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
+def _SB_TransitionMatrix_3ac_sumdiagcov(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Trace of covariance of transition matrix between symbols in 3-letter
     # alphabet.
+    X = series
     ds = np.zeros(int((len(X) - 1) / acfz + 1))
     for i in range(len(ds)):
         ds[i] = X[i * acfz]
@@ -835,8 +895,11 @@ def _SB_TransitionMatrix_3ac_sumdiagcov(X, acfz):
 
 
 @njit(fastmath=True, cache=True)
-def _PD_PeriodicityWang_th0_01(X):
+def _PD_PeriodicityWang_th0_01(
+    series, smin, smax, smean, std, outlier_series, ac, acfz
+):
     # Periodicity measure of (Wang et al. 2007).
+    X = series
     y_spline = _spline_fit(X)
 
     y_sub = np.zeros(len(X))
@@ -879,3 +942,13 @@ def _PD_PeriodicityWang_th0_01(X):
         break
 
     return out
+
+
+def _catch24_mean(series, smin, smax, smean, std, outlier_series, ac, acfz):
+    # Catch24 mean method
+    return smean
+
+
+def _catch24_std(series, smin, smax, smean, std, outlier_series, ac, acfz):
+    # Catch24 standard deviation method.
+    return std

@@ -2,7 +2,7 @@
 
 __author__ = ["chrisholder"]
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import pytest
@@ -16,8 +16,8 @@ from sktime.distances.tests._shared_tests import (
     _test_metric_parameters,
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _ran_once = False
 
@@ -149,7 +149,8 @@ def _validate_distance_result(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -201,7 +202,8 @@ def test_distance(dist: MetricInfo) -> None:
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_metric_parameters():
@@ -210,7 +212,8 @@ def test_metric_parameters():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_incorrect_parameters():
@@ -219,7 +222,8 @@ def test_incorrect_parameters():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_distance_factory_1d():

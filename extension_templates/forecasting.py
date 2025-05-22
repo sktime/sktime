@@ -43,15 +43,16 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyForecaster(BaseForecaster):
     """Custom forecaster. todo: write docstring.
 
@@ -63,13 +64,8 @@ class MyForecaster(BaseForecaster):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
@@ -82,6 +78,8 @@ class MyForecaster(BaseForecaster):
     #   y_inner_mtype should be changed to pd.DataFrame
     # other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="forecaster", as_dataframe=True)
         #
@@ -132,7 +130,7 @@ class MyForecaster(BaseForecaster):
         # if not None, raises exception if X.index, y.index level -1 is not of that type
         #
         # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
@@ -152,6 +150,30 @@ class MyForecaster(BaseForecaster):
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
+        #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
         #
@@ -161,36 +183,39 @@ class MyForecaster(BaseForecaster):
         # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -200,7 +225,7 @@ class MyForecaster(BaseForecaster):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):

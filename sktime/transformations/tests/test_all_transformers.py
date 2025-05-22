@@ -5,9 +5,11 @@ __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import pandas as pd
+import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -78,6 +80,12 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 return "Panel"
             if X_scitype in ["Panel", "Hierarchical"]:
                 return "Hierarchical"
+        if trafo_input == "Panel" and trafo_output == "Series":
+            if X_scitype == "Hierarchical":
+                # Could be Hierarchical or Panel, depending on the
+                # depth of the hierarchy
+                return ["Panel", "Hierarchical"]
+            return "Series"
 
     def test_fit_transform_output(self, estimator_instance, scenario):
         """Test that transform output is of expected scitype."""
@@ -138,10 +146,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             if X_scitype == "Series" and Xt_scitype == "Series":
                 if estimator_instance.get_tag("transform-returns-same-time-index"):
                     assert X.shape[0] == Xt.shape[0]
-            if X_scitype == "Panel" and Xt_scitype == "Panel":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
-            if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
 
         # panel-to-panel transformers
         if trafo_input == "Panel" and trafo_output == "Panel":
@@ -195,6 +199,51 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             # then compare for identity
             inside_mask = (X >= inv_range[0]) * (X <= inv_range[1])
             _assert_array_almost_equal(X[inside_mask], Xit[inside_mask])
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that error is raised when categorical is not supported in X."""
+        X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if isinstance(estimator_instance, SFAFast):
+            pass
+        elif not estimator_instance.get_tag("capability:categorical_in_X"):
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit_transform(X, y)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that error is raised when categorical data is passed in y."""
+        X = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+        y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if isinstance(estimator_instance, SFAFast):
+            pass
+        elif estimator_instance.get_tag("requires_y"):
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit_transform(X, y)
+
+    def test_categorical_X_passes(self, estimator_instance):
+        """Test that error is not raised when categorical is supported in X.
+
+        Not testing composites such as pipelines as they may raise error if estimators
+        used within do not support categorical.
+        """
+        X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if isinstance(estimator_instance, SFAFast):
+            pass
+        elif (
+            estimator_instance.get_tag("capability:categorical_in_X")
+            and not estimator_instance.is_composite()
+        ):
+            estimator_instance.fit_transform(X, y)
 
 
 # todo: add testing of inverse_transform

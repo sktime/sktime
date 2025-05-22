@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class SimpleRNNRegressor(BaseDeepRegressor):
@@ -47,11 +47,28 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, Y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    SimpleRNNRegressor(...)
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
-        num_epochs=100,
+        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -65,8 +82,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
-        self.num_epochs = num_epochs
+
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -78,6 +95,9 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
 
@@ -107,7 +127,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -183,7 +203,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             X,
             y,
             batch_size=self.batch_size,
-            epochs=self.num_epochs,
+            epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
         )
@@ -197,7 +217,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             Reserved values for classifiers:
                 "results_comparison" - used for identity testing in some classifiers
                     should contain parameter settings comparable to "TSC bakeoff"
@@ -207,12 +227,13 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
-            "num_epochs": 50,
+            "n_epochs": 50,
             "batch_size": 2,
             "units": 5,
             "use_bias": False,

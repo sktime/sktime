@@ -1,6 +1,5 @@
 """Isolated numba imports for clasp."""
 
-
 __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np
@@ -111,7 +110,8 @@ def _compute_distances_iterative(X, m, k):
         )
         dist[trivialMatchRange[0] : trivialMatchRange[1]] = np.inf
 
-        idx = np.argpartition(dist, k)
+        _k = min(k, len(dist) - 1)
+        idx = np.argpartition(dist, _k)
 
         knns[order, :] = idx[:k]
         dot_prev = dot_rolled

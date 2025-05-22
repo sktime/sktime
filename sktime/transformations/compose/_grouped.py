@@ -12,42 +12,45 @@ __all__ = ["TransformByLevel"]
 class TransformByLevel(_DelegatedTransformer):
     """Transform by instance or panel.
 
-    Used to apply multiple copies of `transformer` by instance or by panel.
+    Used to apply multiple copies of ``transformer`` by instance or by panel.
 
-    If `groupby="global"`, behaves like `transformer`.
-    If `groupby="local"`, fits a clone of `transformer` per time series instance.
-    If `groupby="panel"`, fits a clone of `transformer` by panel (first non-time level).
+    If ``groupby="global"``, behaves like ``transformer``.
+    If ``groupby="local"``, fits a clone of ``transformer`` per time series instance.
+    If ``groupby="panel"``, fits a clone of ``transformer`` by panel (first non-time
+    level).
 
-    The fitted transformers can be accessed in the `transformers_` attribute,
-    if more than one clone is fitted, otherwise in the `transformer_` attribute.
+    The fitted transformers can be accessed in the ``transformers_`` attribute,
+    if more than one clone is fitted, otherwise in the ``transformer_`` attribute.
 
     Parameters
     ----------
     transformer : sktime transformer used in TransformByLevel
-        A "blueprint" transformer, state does not change when `fit` is called.
+        A "blueprint" transformer, state does not change when ``fit`` is called.
     groupby : str, one of ["local", "global", "panel"], optional, default="local"
-        level on which data are grouped to fit clones of `transformer`
+        level on which data are grouped to fit clones of ``transformer``
         "local" = unit/instance level, one reduced model per lowest hierarchy level
         "global" = top level, one reduced model overall, on pooled data ignoring levels
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
     raise_warnings : bool, optional, default=True
-        whether to warn the user if `transformer` is instance-wise
-        in this case wrapping the `transformer` om `TransformByLevel` does not change
+        whether to warn the user if ``transformer`` is instance-wise
+        in this case wrapping the ``transformer`` om ``TransformByLevel`` does not
+        change
         the estimator logic, compared to not wrapping it.
         Wrapping this way can make sense in some cases of tuning,
-        in which case `warn=False` can be set to suppress the warning raised.
+        in which case ``warn=False`` can be set to suppress the warning raised.
 
     Attributes
     ----------
-    transformer_ : sktime transformer, present only if `groupby` is "global"
-        clone of `transformer` used for fitting and transformation
+    transformer_ : sktime transformer, present only if ``groupby`` is "global"
+        clone of ``transformer`` used for fitting and transformation
     transformers_ : pd.DataFrame of sktime transformer, present otherwise
-        entries are clones of `transformer` used for fitting and transformation
+        entries are clones of ``transformer`` used for fitting and transformation
 
     Examples
     --------
+    >>> from sktime.transformations.compose import TransformByLevel
     >>> from sktime.transformations.hierarchical.reconcile import Reconciler
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
@@ -57,8 +60,9 @@ class TransformByLevel(_DelegatedTransformer):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
@@ -119,7 +123,7 @@ class TransformByLevel(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

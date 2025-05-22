@@ -123,3 +123,43 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         output_layer = keras.layers.concatenate([x, y])
 
         return input_layer, output_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = [
+            # Advanced model version
+            {
+                "kernel_sizes": (8, 5, 3),  # Keep standard kernel sizes
+                "filter_sizes": (128, 256, 128),  # Keep standard kernel counts
+                "lstm_size": 8,
+                "dropout": 0.25,  # Maintain lower dropout rate for attention model
+                "attention": True,
+            },
+            # Simpler model version
+            {
+                "kernel_sizes": (4, 2, 1),  # Reduce kernel sizes
+                "filter_sizes": (32, 64, 32),  # Reduc filter sizes for cheaper model
+                "lstm_size": 8,  # Keeping LSTM output size fixed
+                "dropout": 0.75,  # Maintain higher dropout rate for non attention model
+                "attention": False,
+            },
+            {},
+        ]
+
+        return params

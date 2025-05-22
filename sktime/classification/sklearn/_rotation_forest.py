@@ -10,19 +10,17 @@ __all__ = ["RotationForest"]
 import time
 
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.base._base import _clone_estimator
-from sktime.exceptions import NotFittedError
 from sktime.utils.validation import check_n_jobs
 
 
-class RotationForest(BaseEstimator):
+class RotationForest(ClassifierMixin, BaseEstimator):
     """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
@@ -45,10 +43,10 @@ class RotationForest(BaseEstimator):
         The proportion of cases to be removed per group.
     base_estimator : BaseEstimator or None, default="None"
         Base estimator for the ensemble. By default, uses the sklearn
-        `DecisionTreeClassifier` using entropy as a splitting measure.
+        ``DecisionTreeClassifier`` using entropy as a splitting measure.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding ``n_estimators``.
-        Default of `0` means ``n_estimators`` is used.
+        Default of ``0`` means ``n_estimators`` is used.
     contract_max_n_estimators : int, default=500
         Max number of estimators to build when ``time_limit_in_minutes`` is set.
     save_transformed_data : bool, default=False
@@ -56,12 +54,12 @@ class RotationForest(BaseEstimator):
         ``_get_train_probs``.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
-        `-1` means using all processors.
+        ``-1`` means using all processors.
     random_state : int, RandomState instance or None, default=None
-        If `int`, random_state is the seed used by the random number generator;
-        If `RandomState` instance, random_state is the random number generator;
-        If `None`, the random number generator is the `RandomState` instance used
-        by `np.random`.
+        If ``int``, random_state is the seed used by the random number generator;
+        If ``RandomState`` instance, random_state is the random number generator;
+        If ``None``, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     Attributes
     ----------
@@ -75,7 +73,7 @@ class RotationForest(BaseEstimator):
         The number of attributes in the training set.
     transformed_data_ : list of shape (n_estimators) of ndarray
         The transformed training dataset for all classifiers. Only saved when
-        ``save_transformed_data`` is `True`.
+        ``save_transformed_data`` is ``True``.
     estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
 
@@ -100,13 +98,13 @@ class RotationForest(BaseEstimator):
 
     Examples
     --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
     >>> from sktime.classification.sklearn import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> X_train = from_nested_to_3d_numpy(X_train)
-    >>> X_test = from_nested_to_3d_numpy(X_test)
+    >>>
+    >>> X, y = load_iris(return_X_y=True, as_frame=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>>
     >>> clf = RotationForest(n_estimators=10)
     >>> clf.fit(X_train, y_train)
     RotationForest(...)
@@ -159,18 +157,16 @@ class RotationForest(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_".
         """
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
-        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
+        from joblib import Parallel, delayed
 
+        X, y = self._validate_data(
+            X,
+            y,
+            dtype=[np.float32, np.float64],
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.n_instances_, self.n_atts_ = X.shape
@@ -268,6 +264,7 @@ class RotationForest(BaseEstimator):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        check_is_fitted(self)
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -289,27 +286,22 @@ class RotationForest(BaseEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        if not self._is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
+        from joblib import Parallel, delayed
+
+        check_is_fitted(self)
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
             return np.repeat([[1]], X.shape[0], axis=0)
 
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
-        X = self._validate_data(X=X, reset=False)
+        X = self._validate_data(
+            X,
+            dtype=[np.float32, np.float64],
+            reset=False,
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
 
         # replace missing values with 0 and remove useless attributes
         X = X[:, self._useful_atts]
@@ -333,21 +325,17 @@ class RotationForest(BaseEstimator):
         return output
 
     def _get_train_probs(self, X, y):
-        if not self._is_fitted:
-            raise NotFittedError(
-                f"This instance of {self.__class__.__name__} has not "
-                f"been fitted yet; please call `fit` first."
-            )
-        if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
-            X = np.reshape(X, (X.shape[0], -1))
-        elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
-            X = X.to_numpy()
-        elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
-            raise ValueError(
-                "RotationForest is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
-            )
+        from joblib import Parallel, delayed
+
+        check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            dtype=[np.float32, np.float64],
+            reset=False,
+            ensure_2d=True,
+            allow_nd=True,
+            force_all_finite=True,
+        )
         X = self._validate_data(X=X, reset=False)
 
         # handle the single-class-label case

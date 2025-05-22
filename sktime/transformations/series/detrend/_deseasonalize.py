@@ -17,14 +17,15 @@ from sktime.utils.validation.forecasting import check_sp
 class Deseasonalizer(BaseTransformer):
     """Remove seasonal components from a time series.
 
-    Applies `statsmodels.tsa.seasonal.seasonal_compose` and removes the `seasonal`
-    component in `transform`. Adds seasonal component back again in `inverse_transform`.
+    Applies ``statsmodels.tsa.seasonal.seasonal_compose`` and removes the ``seasonal``
+    component in ``transform``. Adds seasonal component back again in
+    ``inverse_transform``.
     Seasonality removal can be additive or multiplicative.
 
-    `fit` computes :term:`seasonal components <Seasonality>` and
-    stores them in `seasonal_` attribute.
+    ``fit`` computes :term:`seasonal components <Seasonality>` and
+    stores them in ``seasonal_`` attribute.
 
-    `transform` aligns seasonal components stored in `seasonal_` with
+    ``transform`` aligns seasonal components stored in ``seasonal_`` with
     the time index of the passed :term:`series <Time series>` and then
     subtracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
@@ -51,6 +52,7 @@ class Deseasonalizer(BaseTransformer):
     multiplicative models see
     `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
+
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
     Examples
@@ -63,6 +65,12 @@ class Deseasonalizer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "eyalshafran", "aiwalter"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -75,7 +83,6 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -83,7 +90,7 @@ class Deseasonalizer(BaseTransformer):
         allowed_models = ("additive", "multiplicative")
         if model not in allowed_models:
             raise ValueError(
-                f"`model` must be one of {allowed_models}, " f"but found: {model}"
+                f"`model` must be one of {allowed_models}, but found: {model}"
             )
         self.model = model
         self._X = None
@@ -168,7 +175,7 @@ class Deseasonalizer(BaseTransformer):
         return Xt
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Parameters
         ----------
@@ -216,7 +223,7 @@ class Deseasonalizer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -224,8 +231,9 @@ class Deseasonalizer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {}
 
@@ -241,11 +249,11 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     has a seasonal component it applies seasonal decomposition provided by `statsmodels
     <https://www.statsmodels.org>`
     to compute the seasonal component.
-    If the test is negative `_seasonal` is set
-    to all ones (if `model` is "multiplicative")
-    or to all zeros (if `model` is "additive").
+    If the test is negative ``_seasonal`` is set
+    to all ones (if ``model`` is "multiplicative")
+    or to all zeros (if ``model`` is "additive").
 
-    Transform aligns seasonal components stored in `seasonal_` with
+    Transform aligns seasonal components stored in ``seasonal_`` with
     the time index of the passed series and then
     subtracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
@@ -267,7 +275,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     seasonal_ : array of length sp
         Seasonal components.
     is_seasonal_ : bool
-        Return value of `seasonality_test`. True when data is
+        Return value of ``seasonality_test``. True when data is
         seasonal and False otherwise.
 
     See Also
@@ -280,6 +288,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     multiplicative models see
     `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
+
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
     Examples
@@ -307,8 +316,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         is_seasonal = self.seasonality_test_(y, sp=self.sp)
         if not isinstance(is_seasonal, (bool, np.bool_)):
             raise ValueError(
-                f"Return type of `func` must be boolean, "
-                f"but found: {type(is_seasonal)}"
+                f"Return type of `func` must be boolean, but found: {type(is_seasonal)}"
             )
         return is_seasonal
 
@@ -363,16 +371,25 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 class STLTransformer(BaseTransformer):
     """Remove seasonal components from a time-series using STL.
 
-    Interfaces STL from statsmodels as an sktime transformer.
+    Interfaces ``statsmodels.tsa.seasonal.STL`` as an sktime transformer.
 
-    The STLTransformer is a descriptive transformer to remove seasonality
-    from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. Components are returned in addition if return_components=True
-    STLTransformer can not inverse_transform on indices not seen in fit().
-    This means that for pipelining, the Deseasonalizer or Detrender must be
-    used instead of STLTransformer.
+    ``STLTransformer`` can be used to perform deseasonalization or decomposition:
 
-    Important note: the returned series has seasonality removed, but not trend.
+    If ``return_components=False``, it will return the deseasonalized series, i.e.,
+    the trend component from ``statsmodels`` ``STL``.
+
+    If ``return_components=True``, it will transform the series into a decomposition
+    of component, returning the trend, seasonal, and residual components.
+
+    ``STLTransformer`` performs ``inverse_transform`` by summing any components,
+    and can be used for pipelining in a ``TransformedTargetForecaster``.
+
+    Important: for separate forecasts of trend and seasonality, and an
+    inverse transform that respects seasonality, ensure
+    that ``return_components=True`` is set, otherwise the inverse will just
+    return the trend component.
+
+    An alternative for pipeline-style composition is ``STLForecaster``.
 
     Parameters
     ----------
@@ -414,7 +431,7 @@ class STLTransformer(BaseTransformer):
         the two are linearly interpolated. Higher values reduce estimation
         time.
     return_components : bool, default=False
-        if False, will return only the STL transformed series
+        if False, will return only the trend component
         if True, will return the transformed series, as well as three components
             as variables in the returned multivariate series (DataFrame cols)
             "transformed" - the transformed series
@@ -575,7 +592,7 @@ class STLTransformer(BaseTransformer):
         # for inverse transform, we sum up the columns
         # this will be close if return_components=True
         row_sums = X.sum(axis=1)
-        row_sums.columns = self.fit_column_names
+        row_sums.columns = self._X.columns
         return row_sums
 
     def _make_return_object(self, X, stl):
@@ -610,8 +627,9 @@ class STLTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # test case 1: all default parameters
         params1 = {}

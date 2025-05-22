@@ -11,13 +11,6 @@ import pandas as pd
 from sktime.datasets import load_airline, load_longley, load_lynx, load_shampoo_sales
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    CutoffSplitter,
-    ExpandingWindowSplitter,
-    SingleWindowSplitter,
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
 from sktime.performance_metrics.forecasting import (
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
@@ -58,6 +51,13 @@ from sktime.performance_metrics.forecasting import (
     relative_loss,
 )
 from sktime.registry import all_estimators
+from sktime.split import (
+    CutoffSplitter,
+    ExpandingWindowSplitter,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
 from sktime.transformations.series.detrend import Deseasonalizer, Detrender
 from sktime.utils.plotting import plot_series
 

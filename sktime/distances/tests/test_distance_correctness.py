@@ -3,6 +3,7 @@
 Compare the distance calculations on the 1D and 2D (d,m) format input against the
 results generated with tsml, in distances.tests.TestDistances.
 """
+
 __author__ = ["chrisholder", "TonyBagnall", "fkiraly"]
 
 import pytest
@@ -10,8 +11,8 @@ from numpy.testing import assert_almost_equal
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.distances._distance import _METRIC_INFOS
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 distance_parameters = {
     "dtw": [0.0, 0.1, 1.0],  # window
@@ -64,7 +65,8 @@ basic_motions_distances = {
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("uni_multi", ["uni", "multi"])

@@ -15,13 +15,17 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.datasets._readers_writers.utils import _alias_mtype_check, _write_header
+from sktime.datasets._readers_writers.utils import (
+    _alias_mtype_check,
+    _write_header,
+    get_path,
+)
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
-# ==================================================================================================
+# ===================================================================================
 # Function to read  .ts file
-# ==================================================================================================
+# ===================================================================================
 
 
 # TODO: Highle deeply nested function, refactor
@@ -29,6 +33,8 @@ def load_from_tsfile_to_dataframe(
     full_file_path_and_name,
     return_separate_X_and_y=True,
     replace_missing_vals_with="NaN",
+    encoding="utf-8",
+    y_dtype="str",
 ):
     """Load data from a .ts file into a Pandas DataFrame.
 
@@ -43,6 +49,8 @@ def load_from_tsfile_to_dataframe(
     replace_missing_vals_with: str
        The value that missing values in the text file should be replaced
        with prior to parsing.
+    encoding: str
+        encoding is the name of the encoding used to read file using the open function.
 
     Returns
     -------
@@ -72,8 +80,11 @@ def load_from_tsfile_to_dataframe(
     instance_list = []
     class_val_list = []
     line_num = 0
+
+    full_file_path_and_name = get_path(full_file_path_and_name, ".ts")
+
     # Parse the file
-    with open(full_file_path_and_name, encoding="utf-8") as file:
+    with open(full_file_path_and_name, encoding=encoding) as file:
         for line in file:
             # Strip white space from start/end of line and change to
             # lowercase for use below
@@ -104,7 +115,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len != 2:
                         raise OSError(
-                            "timestamps tag requires an associated Boolean " "value"
+                            "timestamps tag requires an associated Boolean value"
                         )
                     elif tokens[1] == "true":
                         timestamps = True
@@ -123,7 +134,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len != 2:
                         raise OSError(
-                            "univariate tag requires an associated Boolean  " "value"
+                            "univariate tag requires an associated Boolean  value"
                         )
                     elif tokens[1] == "true":
                         # univariate = True
@@ -144,7 +155,7 @@ def load_from_tsfile_to_dataframe(
                     token_len = len(tokens)
                     if token_len == 1:
                         raise OSError(
-                            "classlabel tag requires an associated Boolean  " "value"
+                            "classlabel tag requires an associated Boolean  value"
                         )
                     if tokens[1] == "true":
                         class_labels = True
@@ -589,9 +600,11 @@ def load_from_tsfile_to_dataframe(
         elif metadata_started and data_started and len(instance_list) == 0:
             raise OSError("file contained metadata but no data")
         # Create a DataFrame from the data parsed above
-        data = pd.DataFrame(dtype=np.float32)
-        for dim in range(0, num_dimensions):
-            data["dim_" + str(dim)] = instance_list[dim]
+        data_dict = {
+            f"dim_{dim}": pd.Series(instance_list[dim]) for dim in range(num_dimensions)
+        }
+        data = pd.DataFrame(data_dict)
+
         # Check if we should return any associated class labels separately
         if class_labels:
             if return_separate_X_and_y:
@@ -610,6 +623,8 @@ def load_from_tsfile(
     replace_missing_vals_with="NaN",
     return_y=True,
     return_data_type="nested_univ",
+    encoding="utf-8",
+    y_dtype="str",
 ):
     """Load time series .ts file into X and (optionally) y.
 
@@ -637,6 +652,11 @@ def load_from_tsfile(
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
         Exception is raised if the data cannot be stored in the requested type.
+    encoding: str
+        encoding is the name of the encoding used to read file using the open function.
+    y_dtype : str, optional, default 'float'
+        cast y to this dtype before returning, accepted arguments are
+        'str', 'int', and 'float'.
 
     Returns
     -------
@@ -674,8 +694,19 @@ def load_from_tsfile(
         full_file_path_and_name=full_file_path_and_name,
         return_separate_X_and_y=True,
         replace_missing_vals_with=replace_missing_vals_with,
+        encoding=encoding,
+        y_dtype=y_dtype,
     )
-
+    if isinstance(y_dtype, np.dtype):
+        y = y.astype(y_dtype)
+    elif y_dtype == "str":
+        y = y.astype(str)
+    elif y_dtype == "int":
+        y = y.astype(np.int8)
+    elif y_dtype == "float":
+        y = y.astype(np.float32)
+    else:
+        raise ValueError(f"Invalid y_dtype: {y_dtype}")
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
     if return_y:
@@ -795,7 +826,7 @@ def write_dataframe_to_tsfile(
                 series = data.iloc[i, j]
                 for k in range(0, series.size - 1):
                     file.write(f"{series[k]},")
-                file.write(f"{series[series.size-1]}:")
+                file.write(f"{series[series.size - 1]}:")
             file.write(f"{class_value_list[i]}\n")
 
 

@@ -46,10 +46,12 @@ from sktime.transformations.base import BaseTransformer
 
 # todo: add any necessary sktime internal imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTransformer(BaseTransformer):
     """Custom transformer. todo: write docstring.
 
@@ -63,13 +65,8 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
@@ -94,6 +91,8 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="transformer", as_dataframe=True)
         #
@@ -149,10 +148,15 @@ class MyTransformer(BaseTransformer):
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
+        # requires_X = does X need to be passed in fit?
+        "requires_X": True,
+        # valid values: False (no), True = exception is raised if no X is seen in _fit
+        #   requires_y setting is independent of requires_X
+        #
         # requires_y = does y need to be passed in fit?
         "requires_y": False,
         # valid values: False (no), True = exception is raised if no y is seen in _fit
-        #   y can be passed or not in _transform for either value of requires_y
+        #   requires_X setting is independent of requires_y
         #
         # remember_data = whether all data seen is remembered as self._X
         "remember_data": False,
@@ -210,7 +214,7 @@ class MyTransformer(BaseTransformer):
         #
         # skip-inverse-transform = is inverse-transform skipped when called?
         "skip-inverse-transform": False,
-        # if False, capability:inverse_transform tag behaviour is as per devault
+        # if False, capability:inverse_transform tag behaviour is as per default
         # if True, inverse_transform is the identity transform and raises no exception
         #   this is useful for transformers where inverse_transform
         #   may be called but should behave as the identity, e.g., imputers
@@ -229,7 +233,7 @@ class MyTransformer(BaseTransformer):
         # used for search index and validity checking, does not raise direct exception
         #
         # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
         #
@@ -239,6 +243,29 @@ class MyTransformer(BaseTransformer):
         # valid values: boolean True (yes), False (no)
         # used for search index and validity checking, does not raise direct exception
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -249,8 +276,8 @@ class MyTransformer(BaseTransformer):
         # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     # in case of inheritance, concrete class should typically set tags
@@ -258,28 +285,31 @@ class MyTransformer(BaseTransformer):
     #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.est2 = MyDefaultEstimator()
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -289,7 +319,7 @@ class MyTransformer(BaseTransformer):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):

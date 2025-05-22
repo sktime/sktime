@@ -5,7 +5,6 @@ __author__ = ["ciaran-g"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
 
@@ -73,6 +72,13 @@ class ClearSky(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": ["statsmodels", "joblib", "scipy"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -94,10 +100,8 @@ class ClearSky(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         "capability:unequal_length:removes": True,  # ?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": True,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": ["statsmodels", "scipy"],
     }
 
     def __init__(
@@ -133,6 +137,8 @@ class ClearSky(BaseTransformer):
         -------
         self: reference to self
         """
+        from joblib import Parallel, delayed
+
         # check that the data is formatted correctly etc
         self.freq = _check_index(X)
         # now get grid of model
@@ -262,7 +268,7 @@ class ClearSky(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -270,8 +276,9 @@ class ClearSky(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
             "quantile_prob": 0.95,

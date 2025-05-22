@@ -4,8 +4,8 @@ __author__ = ["angus924"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import prange, vectorize
@@ -19,7 +19,7 @@ if _check_soft_dependencies("numba", severity="none"):
 
 
 @njit(
-    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa
+    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa: E501
     fastmath=True,
     parallel=False,
     cache=True,
@@ -380,6 +380,9 @@ def _fit_biases_multi(
 def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
     num_kernels = 84
 
+    if num_features < 84:
+        num_features = 84
+
     num_features_per_kernel = num_features // num_kernels
     true_max_dilations_per_kernel = min(
         num_features_per_kernel, max_dilations_per_kernel
@@ -471,7 +474,7 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
 
 @njit(
-    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa
+    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa: E501
     fastmath=True,
     parallel=True,
     cache=True,
@@ -822,17 +825,17 @@ def _transform_multi(X, parameters):
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        )
                 else:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(
-                            C[padding:-padding],
-                            biases[feature_index_start + feature_count],
-                        ).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(
+                                C[padding:-padding],
+                                biases[feature_index_start + feature_count],
+                            ).mean()
+                        )
 
                 feature_index_start = feature_index_end
 

@@ -1,4 +1,5 @@
 """Tests for FittedParamExtractor."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
@@ -8,15 +9,15 @@ import pytest
 
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class([ExponentialSmoothing, FittedParamExtractor]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("param_names", ["initial_level"])
 def test_FittedParamExtractor(param_names):

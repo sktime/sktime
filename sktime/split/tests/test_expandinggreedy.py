@@ -3,12 +3,18 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.split import ExpandingGreedySplitter
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_greedy_splitter_lengths():
     """Test that ExpandingGreedySplitter returns the correct lengths."""
     y = np.arange(10)
@@ -18,6 +24,10 @@ def test_expanding_greedy_splitter_lengths():
     assert lengths == [(4, 2), (6, 2), (8, 2)]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_greedy_splitter_dates():
     """Test that ExpandingGreedySplitter splits on dates correctly."""
     ts = _make_series(index_type="period")
@@ -42,6 +52,10 @@ def test_expanding_greedy_splitter_dates():
     assert test_ends == [last_date - 4, last_date - 2, last_date]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_greedy_splitter_hierarchy():
     """Test that ExpandingGreedySplitter handles uneven hierarchical data."""
     y_panel = _make_hierarchical(
@@ -70,6 +84,10 @@ def test_expanding_greedy_splitter_hierarchy():
     assert last_test_dates_actual.eq(last_test_dates_expected).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_greedy_splitter_consecutive():
     """Test that ExpandingGreedySplitter results in consecutive test periods."""
     y_panel = _make_hierarchical(
@@ -93,3 +111,26 @@ def test_expanding_greedy_splitter_consecutive():
     )
 
     assert has_consecutive_index.all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expanding_greedy_splitter_forecast_horizon():
+    """Test that ExpandingGreedySplitter's forecast horizon is properly handled."""
+    ts = np.arange(10)
+
+    # Test with integer test_size
+    cv_int_test = ExpandingGreedySplitter(test_size=2, folds=3)
+    assert len(cv_int_test.fh) == 2
+    assert all(cv_int_test.fh == np.array([1, 2]))
+    _ = list(cv_int_test.split(ts))  # Call to split should not affect fh initialization
+    assert len(cv_int_test.fh) == 2
+
+    # Test with float test_size
+    cv_float_test = ExpandingGreedySplitter(test_size=0.2, folds=2)
+    assert cv_float_test.fh is None
+    _ = list(cv_float_test.split(ts))  # Call split to should initialize fh
+    assert len(cv_float_test.fh) == 2
+    assert all(cv_float_test.fh == np.array([1, 2]))

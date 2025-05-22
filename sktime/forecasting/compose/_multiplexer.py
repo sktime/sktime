@@ -35,7 +35,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     forecasters : list of sktime forecasters, or
         list of tuples (str, estimator) of sktime forecasters
         MultiplexForecaster can switch ("multiplex") between these forecasters.
-        These are "blueprint" forecasters, states do not change when `fit` is called.
+        These are "blueprint" forecasters, states do not change when ``fit`` is called.
     selected_forecaster: str or None, optional, Default=None.
         If str, must be one of the forecaster names.
             If no names are provided, must coincide with auto-generated name strings.
@@ -50,7 +50,8 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     _forecasters : list of (str, forecaster) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
-        the string `_[i]` is appended where `[i]` is count of occurrence up until then
+        the string ``_[i]`` is appended where ``[i]`` is count of occurrence up until
+        then
 
     Examples
     --------
@@ -77,8 +78,9 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -118,7 +120,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         )
         self._set_forecaster()
 
-        self.clone_tags(self.forecaster_)
+        self._set_delegated_tags()
         self.set_tags(**{"fit_is_empty": False})
         # this ensures that we convert in the inner estimator, not in the multiplexer
         self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
@@ -146,17 +148,19 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     def __or__(self, other):
         """Magic | (or) method, return (right) concatenated MultiplexForecaster.
 
-        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a forecaster, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` forecaster, must inherit from BaseForecaster
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` forecaster, must inherit from BaseForecaster
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexForecaster object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        MultiplexForecaster object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-MultiplexForecaster ``sktime`` forecasters
 
         Raises
         ------
@@ -173,17 +177,19 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     def __ror__(self, other):
         """Magic | (or) method, return (left) concatenated MultiplexForecaster.
 
-        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a forecaster, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` forecaster, must inherit from BaseForecaster
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` forecaster, must inherit from BaseForecaster
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexForecaster object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        MultiplexForecaster object, concatenation of ``self`` (last) with ``other``
+        (first).
+            not nested, contains only non-MultiplexForecaster ``sktime`` forecasters
         """
         return self._dunder_concat(
             other=other,
@@ -212,7 +218,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

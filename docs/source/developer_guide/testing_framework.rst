@@ -68,7 +68,8 @@ See below for more details, or the `pytest documentation on the topic`_.
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
 
-* ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
+* ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``, which
+  constructs instances from parameter settings in estimator classes' ``get_test_params``.
 
 * ``scenario`` objects, which encodes data inputs and method call sequences to ``estimator_instance`` (explained in further detail below).
 

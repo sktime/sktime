@@ -10,9 +10,9 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y_airline = load_airline()
 y_airline_df = pd.concat([y_airline, y_airline], axis=1)
@@ -30,6 +30,10 @@ y_simple_expected_diff = {
 }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("na_handling", Differencer.VALID_NA_HANDLING_STR)
 def test_differencer_produces_expected_results(na_handling):
     """Test that Differencer produces expected results on a simple DataFrame."""
@@ -40,6 +44,39 @@ def test_differencer_produces_expected_results(na_handling):
     _assert_array_almost_equal(y_transformed, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("na_handling", Differencer.VALID_NA_HANDLING_STR)
+@pytest.mark.parametrize("lags", lags_to_test)
+def test_differencer_transform_memory(na_handling, lags):
+    """Test that Differencer remembers data seen in fit.
+
+    We will create three transformed data, with the same lags, and different
+    na_handling. All should be the same, because:
+
+    * the Differencer should remember data seen in fit
+    * the values affected by na_handling are cut off at the start of the series
+    """
+    y_airline = load_airline()
+    y_airline_start = y_airline[:-24]
+    y_airline_end = y_airline[-24:]
+
+    transformer = Differencer(na_handling=na_handling, lags=lags)
+    transformer.fit(y_airline_start)
+    yt_separate = transformer.transform(y_airline_end)
+    yt_together_trafo = transformer.transform(y_airline)[-24:]
+    yt_together_fit = transformer.fit_transform(y_airline)[-24:]
+
+    _assert_array_almost_equal(yt_separate, yt_together_trafo)
+    _assert_array_almost_equal(yt_separate, yt_together_fit)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
@@ -56,6 +93,10 @@ def test_differencer_same_series(y, lags, index_type):
     _assert_array_almost_equal(y.loc[y_reconstructed.index], y_reconstructed)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("na_handling", ["keep_na", "fill_zero"])
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
@@ -78,6 +119,10 @@ def test_differencer_remove_missing_false(y, lags, na_handling, index_type):
     _assert_array_almost_equal(y, y_reconstructed)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
@@ -108,8 +153,8 @@ def test_differencer_prediction(y, lags, index_type):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="requires Prophet forecaster in the example",
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_differencer_cutoff():
     """Tests a special case that triggers freq inference.
@@ -119,8 +164,7 @@ def test_differencer_cutoff():
     on line "fh = ForecastingHorizon(etc" in Differencer._check_inverse_transform_index
     """
     from sktime.datasets import load_longley
-    from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.forecasting.fbprophet import Prophet
+    from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
     from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
@@ -131,14 +175,12 @@ def test_differencer_cutoff():
     fh = [1, 2]
     train_model, _ = temporal_train_test_split(y, fh=fh)
     X_train = X[X.index.isin(train_model.index)]
-    train_model.index = train_model.index.to_timestamp(freq="A")
-    X_train.index = X_train.index.to_timestamp(freq="A")
 
     # pipeline
     pipe = TransformedTargetForecaster(
         steps=[
             ("differencer", Differencer(na_handling="fill_zero")),
-            ("myforecaster", Prophet()),
+            ("myforecaster", YfromX.create_test_instance()),
         ]
     )
 
@@ -159,12 +201,17 @@ def test_differencer_cutoff():
         cv=cv,
         param_grid=param_grid,
         verbose=1,
+        error_score="raise",
     )
 
     # fit
     gscv.fit(train_model, X=X_train)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
 def test_inverse_train_data_fill_zero(lags, index_type):
@@ -176,6 +223,10 @@ def test_inverse_train_data_fill_zero(lags, index_type):
     _assert_array_almost_equal(result, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_differencer_inverse_does_not_memorize():
     """Tests that differencer inverse always computes inverse via cumsum.
 
@@ -218,3 +269,48 @@ def test_differencer_inverse_does_not_memorize():
 
     # model output should not be similar to train input
     assert not np.allclose(y_train[1:].to_numpy(), model_ins.to_numpy())
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_dropna_pipeline():
+    """Test that Differencer works in a pipeline with a forecaster.
+
+    Failure case of #7076.
+    """
+    from sklearn.linear_model import ElasticNetCV
+
+    from sktime.datasets import load_longley
+    from sktime.forecasting.compose import (
+        ForecastingPipeline,
+        TransformedTargetForecaster,
+        YfromX,
+    )
+
+    # Load the data
+    y, X = load_longley()
+
+    # Create separate transformers for y and X
+    transformer = Differencer(na_handling="drop_na")
+
+    # Define the TransformedTargetForecaster for y
+    pipe_y = TransformedTargetForecaster(
+        steps=[
+            ("transform_y", transformer),
+            ("forecaster", YfromX(estimator=ElasticNetCV(max_iter=50000))),
+        ]
+    )
+
+    # Create the ForecastingPipeline for y and X
+    pipe_yX = ForecastingPipeline(
+        steps=[("transform_X", transformer), ("pipe_y", pipe_y)]
+    )
+
+    # Fit the pipeline to your data
+    pipe_yX.fit(y=y.iloc[:-1], X=X.iloc[:-1, :])
+
+    # Predict
+    y_pred = pipe_yX.predict(fh=[1], X=X.iloc[-1:, :])
+    assert len(y_pred) == 1

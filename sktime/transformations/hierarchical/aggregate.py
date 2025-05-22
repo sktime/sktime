@@ -49,6 +49,12 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -64,7 +70,7 @@ class Aggregator(BaseTransformer):
         "capability:inverse_transform": False,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -191,12 +197,14 @@ class Aggregator(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"flatten_single_levels": True}
+        param1 = {"flatten_single_levels": True}
+        param2 = {"flatten_single_levels": False}
 
-        return params
+        return [param1, param2]
 
 
 def _check_index_no_total(X):

@@ -53,6 +53,10 @@ def test_tsf_predict_proba():
 
 # Compare results from different but equivalent implementations
 # @pytest.mark.parametrize("n_intervals", ["log", 1, 3])
+@pytest.mark.skipif(
+    not run_test_for_class(ComposableTimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.xfail(reason="SeriesToPrimitivesTransformer will be deprecated, see 2179")
 @pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 3])

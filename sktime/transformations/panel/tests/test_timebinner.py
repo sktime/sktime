@@ -1,4 +1,5 @@
 """Tests for TimeBinner."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -54,8 +55,8 @@ def test_timebinner3():
     """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
-    def aggfunc(ser):
-        return np.quantile(ser, q=0.25)
+    def aggfunc(series):
+        return np.quantile(series, q=0.25)
 
     freq = 5
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")

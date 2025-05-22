@@ -2,7 +2,6 @@
 
 __author__ = ["fkiraly"]
 
-import numpy as np
 from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
@@ -62,12 +61,20 @@ class TimeSeriesDBSCAN(BaseClusterer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         # required by the update_data utility
         # otherwise, we could pass through to the distance directly
+        "capability:out_of_sample": False,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
@@ -98,6 +105,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "capability:missing_values",
             ]
             self.clone_tags(distance, tags_to_clone)
+
+        # numba distance in sktime (indexed by string)
+        # cannot support unequal length data, and require numpy3D input
+        if isinstance(distance, str):
+            tags_to_set = {
+                "X_inner_mtype": "numpy3D",
+                "capability:unequal_length": False,
+            }
+            self.set_tags(**tags_to_set)
 
         self.dbscan_ = None
 
@@ -159,40 +175,6 @@ class TimeSeriesDBSCAN(BaseClusterer):
             )
             return self.clone().fit(all_X).labels_
 
-    def _predict_proba(self, X):
-        """Predicts labels probabilities for sequences in X.
-
-        Default behaviour is to call _predict and set the predicted class probability
-        to 1, other class probabilities to 0. Override if better estimates are
-        obtainable.
-
-        Parameters
-        ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        """
-        preds = self._predict(X)
-        n_instances = len(preds)
-        n_clusters = max(preds) + 1
-        dists = np.zeros((X.shape[0], n_clusters))
-        for i in range(n_instances):
-            # preds[i] can be -1 for DBSCAN
-            if preds[i] > -1:
-                dists[i, preds[i]] = 1
-        return dists
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -214,11 +196,12 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         from sktime.dists_kernels import AggrDist, DtwDist, EditDist
 
-        params1 = {"distance": DtwDist()}
-        params2 = {"distance": EditDist()}
-
         # distance capable of unequal length
+        # also has no soft dependencies
         dist = AggrDist.create_test_instance()
-        params3 = {"distance": dist}
+        params1 = {"distance": dist}
+
+        params2 = {"distance": DtwDist()}
+        params3 = {"distance": EditDist()}
 
         return [params1, params2, params3]

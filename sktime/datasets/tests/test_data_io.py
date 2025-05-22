@@ -36,7 +36,9 @@ def test_load_provided_dataset(return_X_y, return_type):
         X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "
@@ -60,7 +62,9 @@ def test_load_basic_motions(return_X_y, return_type):
         X = load_basic_motions("TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    valid, check_msg, _ = check_is_mtype(
+        X, return_type, return_metadata=True, msg_return_dict="list"
+    )
     msg = (
         "load_basic_motions return has unexpected type on "
         f"return_X_y = {return_X_y}, return_type = {return_type}. "
@@ -78,6 +82,16 @@ def test_load_UCR_UEA_dataset():
     X, y = load_UCR_UEA_dataset(name="UnitTest")
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
     assert X.shape == (42, 1) and y.shape == (42,)
+
+
+def test_load_UCR_UEA_local():
+    """Tests load_UCR_UEA_dataset looks for local file if extract_path is set.
+
+    A FileNotFoundError indicates the function looked for the file and everything up
+    to that point went fine.
+    """
+    with pytest.raises(FileNotFoundError):
+        load_UCR_UEA_dataset(name="UnitTest", extract_path=" ")
 
 
 _CHECKS = {
@@ -146,6 +160,6 @@ def test_list_available_datasets(origin_repo):
     available_datasets = _list_available_datasets(
         extract_path=None, origin_repo=origin_repo
     )
-    assert (
-        dataset_name in available_datasets
-    ), f"{dataset_name} dataset should be available."  # noqa: E501
+    assert dataset_name in available_datasets, (
+        f"{dataset_name} dataset should be available."
+    )  # noqa: E501
