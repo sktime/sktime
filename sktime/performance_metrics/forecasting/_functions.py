@@ -1573,7 +1573,8 @@ def mean_absolute_percentage_error(
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+    >>> from sktime.performance_metrics.forecasting import \
+    mean_absolute_percentage_error
     >>> # Univariate MAPE
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
