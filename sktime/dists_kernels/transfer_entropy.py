@@ -1,4 +1,32 @@
-"""Transfer Entropy calculation matrix between time series."""
+"""Transfer Entropy calculation matrix between time series.
+
+This module implements Transfer Entropy (TE) as a pairwise distance
+(or directional similarity) measure between time series. TE is useful
+for detecting causal or directional dependencies.
+
+References
+----------
+1. Schreiber, T. (2000). Measuring information transfer. *Physical Review Letters*.
+   https://arxiv.org/abs/nlin/0001042
+2. Kraskov, A., Stögbauer, H., & Grassberger, P. (2004). Estimating mutual information.
+   *Physical Review E*, 69(6), 066138. https://arxiv.org/pdf/cond-mat/0305641
+3. Lizier, J. T. (2014). JIDT: An information-theoretic toolkit.
+   https://github.com/jlizier/jidt
+
+Formula
+-------
+The Transfer Entropy from X to Y is defined as:
+
+    TE(X → Y) = H(Y_t | Y_{t-1}) - H(Y_t | Y_{t-1}, X_{t-1})
+
+Where:
+- H(·|·) denotes conditional Shannon entropy,
+- Y_t is the current value of the target time series,
+- Y_{t-1} is the past value (lagged) of the target,
+- X_{t-1} is the past value (lagged) of the source.
+
+This implementation uses a histogram-based estimator by default.
+"""
 
 __authors__ = ["Spinachboul"]
 
@@ -11,7 +39,16 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 class TransferEntropy(BasePairwiseTransformerPanel):
     """
-    Transfer Entropy-based pairwise distance for panel data.
+    Transfer Entropy-based pairwise distance for panel time series data.
+
+    Transfer Entropy (TE) is an information-theoretic measure of directed
+    information transfer between two random processes. It quantifies how much knowing
+    the past of one process (source) improves the prediction of another process,
+    beyond what the target's own past provides.
+
+    This implementation currently supports a binning-based estimation of TE using joint
+    and conditional probability histograms. The result is a non-symmetric matrix
+    where TE(X → Y) ≠ TE(Y → X).
 
     Parameters
     ----------
@@ -20,17 +57,17 @@ class TransferEntropy(BasePairwiseTransformerPanel):
     lag_target : int, default=1
         Number of lagged timesteps for the target time series.
     estimator : str, default="binning"
-        Method to estimate probability distributions ("binning" supported).
+        Method to estimate probability distributions.
     n_bins : int, default=10
-        Number of bins used if estimator="binning".
+        Number of histogram bins if estimator="binning".
     significance_test : bool, default=False
-        Whether to perform statistical testing with surrogate data.
+        If True, enables significance testing using surrogate time series.
     """
 
     _tags = {
-        "symmetric": False,  # TE is directional: TE(X -> Y) != TE(Y -> X)
+        "symmetric": False,
         "X_inner_mtype": "df-list",
-        "pwtrafo_type": "distance",  # could also be "similarity" if TE is flipped
+        "pwtrafo_type": "distance",
     }
 
     def __init__(
@@ -50,7 +87,21 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         super().__init__()
 
     def _transform(self, X, X2=None):
-        """Compute the pairwise Transfer Entropy matrix."""
+        """
+        Compute the pairwise Transfer Entropy matrix.
+
+        Parameters
+        ----------
+        X : list of pd.DataFrame
+            Panel of time series data (n_instances, n_timesteps, n_variables).
+        X2 : list of pd.DataFrame or None
+            Second panel for asymmetric comparison. If None, use X.
+
+        Returns
+        -------
+        te_matrix : np.ndarray
+            Matrix of TE(X_i → X_j) values of shape (n_instances_X, n_instances_X2).
+        """
         n = len(X)
         m = len(X2) if X2 is not None else n
 
@@ -69,42 +120,36 @@ class TransferEntropy(BasePairwiseTransformerPanel):
 
     def _get_transfer_entropy(self, X_src, X_tgt):
         """
-        Core function to compute Transfer Entropy from X_src to X_tgt.
+        Compute Transfer Entropy from source to target time series.
+
+        TE(X → Y) = H(Y_t | Y_{t-1}) - H(Y_t | Y_{t-1}, X_{t-1})
 
         Parameters
         ----------
         X_src : pd.DataFrame
-            Source time series.
+            Source time series (n_timesteps, n_variables).
         X_tgt : pd.DataFrame
-            Target time series.
+            Target time series (n_timesteps, n_variables).
 
         Returns
         -------
         te_value : float
-            Estimated Transfer Entropy from X_src -> X_tgt.
+            Estimated Transfer Entropy from X_src to X_tgt.
         """
-        # flatten the arrays to 1D for easy processing
         x = X_src.values.flatten()
         y = X_tgt.values.flatten()
 
-        # Basic input checking
         min_length = max(self.lag_source, self.lag_target) + 1
         if len(x) < min_length or len(y) < min_length:
             return np.nan
 
-        # we need lagged vectors for getting the past information on x and y
         x_lagged = np.array([x[i - self.lag_source] for i in range(min_length, len(x))])
         y_lagged = np.array([y[i - self.lag_target] for i in range(min_length, len(y))])
         y_future = np.array([y[i] for i in range(min_length, len(y))])
 
-        # Check if any of the lagged vectors are empty
         if len(x_lagged) == 0 or len(y_lagged) == 0 or len(y_future) == 0:
             return np.nan
 
-        # Binning
-        # This is the starting version, in future we can add more estimators
-
-        # we use digitize method to basically assign each discrete value a label
         if self.estimator == "binning":
             x_lagged_binned = np.digitize(
                 x_lagged, np.histogram_bin_edges(x, bins=self.n_bins)
@@ -116,50 +161,67 @@ class TransferEntropy(BasePairwiseTransformerPanel):
                 y_future, np.histogram_bin_edges(y, bins=self.n_bins)
             )
 
-            # Joint histograms
             p_yfuture_ylag = self._joint_prob(y_future_binned, y_lagged_binned)
             p_yfuture_ylag_xlag = self._joint_prob_3d(
                 y_future_binned, y_lagged_binned, x_lagged_binned
             )
 
-            # Marginals
             p_ylag = self._marginal_prob(y_lagged_binned)
             p_ylag_xlag = self._joint_prob(y_lagged_binned, x_lagged_binned)
 
-            # Calculate TE based on conditional entropies
             H1 = self._conditional_entropy(p_yfuture_ylag, p_ylag)
             H2 = self._conditional_entropy(p_yfuture_ylag_xlag, p_ylag_xlag)
             te_value = np.abs(H1 - H2)
-            return te_value  # return the float value
+            return te_value
 
         else:
             raise NotImplementedError(
                 f"Estimator {self.estimator} not implemented yet."
             )
 
-    # Helper functions
     def _joint_prob(self, x, y):
-        """Estimate 2D joint probability."""
+        """
+        Estimate 2D joint probability.
+
+        Parameters
+        ----------
+        x : np.ndarray
+        y : np.ndarray
+
+        Returns
+        -------
+        p_xy : np.ndarray
+            2D joint probability distribution.
+        """
         if len(x) == 0 or len(y) == 0:
             return np.array([[0.0]])
 
-        # Add 1 to ensure bins include max value
         bins = (max(1, np.max(x) + 1), max(1, np.max(y) + 1))
         hist, _, _ = np.histogram2d(x, y, bins=bins)
         return hist / np.sum(hist) if np.sum(hist) > 0 else hist
 
     def _joint_prob_3d(self, x, y, z):
-        """Estimate 3D joint probability by flattening triples."""
+        """
+        Estimate 3D joint probability distribution.
+
+        Parameters
+        ----------
+        x, y, z : np.ndarray
+
+        Returns
+        -------
+        p_xyz : np.ndarray
+            3D joint probability distribution.
+        """
         if len(x) == 0 or len(y) == 0 or len(z) == 0:
             return np.array([[[0.0]]])
 
         xyz = np.vstack((x, y, z)).T
         unique, counts = np.unique(xyz, axis=0, return_counts=True)
 
-        # Add 1 to ensure bins include max value
-        max_x = max(1, np.max(x) + 1) if len(x) > 0 else 1
-        max_y = max(1, np.max(y) + 1) if len(y) > 0 else 1
-        max_z = max(1, np.max(z) + 1) if len(z) > 0 else 1
+        max_x = max(1, np.max(x) + 1)
+        max_y = max(1, np.max(y) + 1)
+        max_z = max(1, np.max(z) + 1)
 
         hist = np.zeros((max_x, max_y, max_z))
         for (i, j, k), c in zip(unique, counts):
@@ -167,35 +229,64 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         return hist / np.sum(hist) if np.sum(hist) > 0 else hist
 
     def _marginal_prob(self, x):
-        """Estimate 1D marginal probability."""
+        """
+        Estimate 1D marginal probability distribution.
+
+        Parameters
+        ----------
+        x : np.ndarray
+
+        Returns
+        -------
+        p_x : np.ndarray
+            1D marginal probability distribution.
+        """
         if len(x) == 0:
             return np.array([0.0])
 
-        # Add 1 to ensure bins include max value
         bins = max(1, np.max(x) + 1)
         hist, _ = np.histogram(x, bins=bins)
         return hist / np.sum(hist) if np.sum(hist) > 0 else hist
 
     def _conditional_entropy(self, joint, marginal):
-        """Calculate conditional entropy H(Y|X) = H(X,Y) - H(X)."""
+        """
+        Calculate conditional entropy H(Y|X) = H(X,Y) - H(X).
+
+        Parameters
+        ----------
+        joint : np.ndarray
+            Joint probability distribution p(x, y).
+        marginal : np.ndarray
+            Marginal distribution p(x).
+
+        Returns
+        -------
+        float
+            Conditional entropy in nats.
+        """
         eps = 1e-10
-        # return 0 if arrays are all zeros
         if np.sum(joint) == 0 or np.sum(marginal) == 0:
             return 0.0
 
-        # to ensure the values are in the range of [eps, 1.0]
-        joint = np.clip(joint, eps, 1.0)  # ()
+        joint = np.clip(joint, eps, 1.0)
         marginal = np.clip(marginal, eps, 1.0)
 
-        # find joint entropy and marginal entropy
         H_joint = -np.sum(joint * np.log(joint))
         H_marginal = -np.sum(marginal * np.log(marginal))
-        # the difference in the conditional entropy
         return H_joint - H_marginal
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return default test parameters."""
+        """
+        Return default test parameters.
+
+        Used for automated testing of the transformer.
+
+        Returns
+        -------
+        list of dict
+            List of parameter dictionaries.
+        """
         params1 = {
             "lag_source": 1,
             "lag_target": 1,
