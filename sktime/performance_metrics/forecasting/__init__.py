@@ -8,29 +8,31 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-__author__ = ["mloning", "tch", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly", "aiwalter", "markussagen"]
+
 __all__ = [
     "make_forecasting_scorer",
-    "MeanAbsoluteScaledError",
-    "MedianAbsoluteScaledError",
-    "MeanSquaredScaledError",
-    "MedianSquaredScaledError",
-    "MeanAbsoluteError",
-    "MeanSquaredError",
-    "MedianAbsoluteError",
-    "MedianSquaredError",
     "GeometricMeanAbsoluteError",
     "GeometricMeanSquaredError",
-    "MeanAbsolutePercentageError",
-    "MedianAbsolutePercentageError",
-    "MeanSquaredPercentageError",
-    "MedianSquaredPercentageError",
-    "MeanRelativeAbsoluteError",
-    "MedianRelativeAbsoluteError",
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
+    "MeanAbsoluteError",
+    "MeanAbsolutePercentageError",
+    "MeanAbsoluteScaledError",
     "MeanAsymmetricError",
     "MeanLinexError",
+    "MeanRelativeAbsoluteError",
+    "MeanSquaredError",
+    "MeanSquaredErrorPercentage",
+    "MeanSquaredPercentageError",
+    "MeanSquaredScaledError",
+    "MedianAbsoluteError",
+    "MedianAbsolutePercentageError",
+    "MedianAbsoluteScaledError",
+    "MedianRelativeAbsoluteError",
+    "MedianSquaredError",
+    "MedianSquaredPercentageError",
+    "MedianSquaredScaledError",
     "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -55,30 +57,7 @@ __all__ = [
     "relative_loss",
 ]
 
-from sktime.performance_metrics.forecasting._classes import (
-    GeometricMeanAbsoluteError,
-    GeometricMeanRelativeAbsoluteError,
-    GeometricMeanRelativeSquaredError,
-    GeometricMeanSquaredError,
-    MeanAbsoluteError,
-    MeanAbsolutePercentageError,
-    MeanAbsoluteScaledError,
-    MeanAsymmetricError,
-    MeanLinexError,
-    MeanRelativeAbsoluteError,
-    MeanSquaredError,
-    MeanSquaredPercentageError,
-    MeanSquaredScaledError,
-    MedianAbsoluteError,
-    MedianAbsolutePercentageError,
-    MedianAbsoluteScaledError,
-    MedianRelativeAbsoluteError,
-    MedianSquaredError,
-    MedianSquaredPercentageError,
-    MedianSquaredScaledError,
-    RelativeLoss,
-    make_forecasting_scorer,
-)
+from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
@@ -102,3 +81,13 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.performance_metrics.forecasting._gmae import GeometricMeanAbsoluteError
+from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
+from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
+from sktime.performance_metrics.forecasting._medase import MedianAbsoluteScaledError
+from sktime.performance_metrics.forecasting._medse import MedianSquaredError
+from sktime.performance_metrics.forecasting._medsse import MedianSquaredScaledError
+from sktime.performance_metrics.forecasting._mse import MeanSquaredError
+from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercentage
+from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
