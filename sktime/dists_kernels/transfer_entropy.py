@@ -10,26 +10,13 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class TransferEntropy(BasePairwiseTransformerPanel):
-    r"""
+    """
     Transfer Entropy-based pairwise distance for panel time series data.
 
     Transfer Entropy (TE) is an information-theoretic measure of directed
     information transfer between two random processes. It quantifies how much knowing
     the past of one process (source) improves the prediction of another process,
     beyond what the target's own past provides.
-
-    The Transfer Entropy from X to Y is defined as:
-
-    ..math::
-
-        TE(X \\rightarrow Y) = H(Y_t \\mid Y_{t-1}) - H(Y_t \\mid Y_{t-1}, X_{t-1})
-
-    Where:
-
-    - :math:`H(\\cdot \\mid \\cdot)` is the conditional entroy.
-    - :math:`Y_t` is the current value of the target time series.
-    - :math:`Y_{t-1}` is the previous value of the target time series.
-    - :math:`X_{t-1}` is the previous value of the source time series.
 
     This implementation currently supports a binning-based estimation of TE using joint
     and conditional probability histograms. The result is a non-symmetric matrix
