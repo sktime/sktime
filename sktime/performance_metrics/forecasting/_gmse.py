@@ -9,9 +9,8 @@ the lower the better.
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
-  geometric_mean_squared_error,
+    geometric_mean_squared_error,
 )
-
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):

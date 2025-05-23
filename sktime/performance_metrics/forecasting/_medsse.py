@@ -8,8 +8,8 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import (
-    _ScaledMetricTags,
     BaseForecastingErrorMetricFunc,
+    _ScaledMetricTags,
 )
 from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
