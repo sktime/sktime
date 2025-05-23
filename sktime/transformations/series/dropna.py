@@ -67,7 +67,7 @@ class DropNA(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]

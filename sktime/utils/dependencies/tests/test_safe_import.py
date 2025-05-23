@@ -1,4 +1,4 @@
-__author__ = ["jgyasu"]
+__author__ = ["jgyasu", "fkiraly"]
 
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
@@ -71,3 +71,14 @@ def test_multiple_inheritance_from_mock():
         """
 
         pass
+
+
+def test_soft_dependency_chains():
+    """Test soft dependency chains.
+
+    This test checks if a module can be imported safely even if it is
+    dependent on another soft dependency, e.g., gluonts.torch.PyTorchPredictor
+    depends on lightning.
+    """
+    result = _safe_import("gluonts.torch.PyTorchPredictor")
+    assert result is not None

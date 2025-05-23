@@ -154,13 +154,13 @@ class IGTS:
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
     ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
     ... variances=0.5)
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
-    >>> from sktime.annotation.igts import InformationGainSegmentation
+    >>> from sktime.detection.igts import InformationGainSegmentation
     >>> igts = InformationGainSegmentation(k_max=3, step=2)
     >>> y = igts.fit_predict(X_scaled)
     """
@@ -368,7 +368,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(
     ... lengths=[10, 10, 10, 10],
@@ -376,7 +376,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     ... variances=0.5,
     ... )
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X) # doctest: +SKIP
-    >>> from sktime.annotation.igts import InformationGainSegmentation # doctest: +SKIP
+    >>> from sktime.detection.igts import InformationGainSegmentation # doctest: +SKIP
     >>> igts = InformationGainSegmentation(k_max=3, step=2) # doctest: +SKIP
     >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
