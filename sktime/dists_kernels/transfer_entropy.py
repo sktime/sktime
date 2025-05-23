@@ -1,32 +1,4 @@
-"""Transfer Entropy calculation matrix between time series.
-
-This module implements Transfer Entropy (TE) as a pairwise distance
-(or directional similarity) measure between time series. TE is useful
-for detecting causal or directional dependencies.
-
-References
-----------
-1. Schreiber, T. (2000). Measuring information transfer. *Physical Review Letters*.
-   https://arxiv.org/abs/nlin/0001042
-2. Kraskov, A., Stögbauer, H., & Grassberger, P. (2004). Estimating mutual information.
-   *Physical Review E*, 69(6), 066138. https://arxiv.org/pdf/cond-mat/0305641
-3. Lizier, J. T. (2014). JIDT: An information-theoretic toolkit.
-   https://github.com/jlizier/jidt
-
-Formula
--------
-The Transfer Entropy from X to Y is defined as:
-
-    TE(X → Y) = H(Y_t | Y_{t-1}) - H(Y_t | Y_{t-1}, X_{t-1})
-
-Where:
-- H(·|·) denotes conditional Shannon entropy,
-- Y_t is the current value of the target time series,
-- Y_{t-1} is the past value (lagged) of the target,
-- X_{t-1} is the past value (lagged) of the source.
-
-This implementation uses a histogram-based estimator by default.
-"""
+"""Transfer Entropy calculation matrix between time series."""
 
 __authors__ = ["Spinachboul"]
 
@@ -38,13 +10,26 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class TransferEntropy(BasePairwiseTransformerPanel):
-    """
+    r"""
     Transfer Entropy-based pairwise distance for panel time series data.
 
     Transfer Entropy (TE) is an information-theoretic measure of directed
     information transfer between two random processes. It quantifies how much knowing
     the past of one process (source) improves the prediction of another process,
     beyond what the target's own past provides.
+
+    The Transfer Entropy from X to Y is defined as:
+
+    ..math::
+
+        TE(X \\rightarrow Y) = H(Y_t \\mid Y_{t-1}) - H(Y_t \\mid Y_{t-1}, X_{t-1})
+
+    Where:
+
+    - :math:`H(\\cdot \\mid \\cdot)` is the conditional entroy.
+    - :math:`Y_t` is the current value of the target time series.
+    - :math:`Y_{t-1}` is the previous value of the target time series.
+    - :math:`X_{t-1}` is the previous value of the source time series.
 
     This implementation currently supports a binning-based estimation of TE using joint
     and conditional probability histograms. The result is a non-symmetric matrix
@@ -88,7 +73,7 @@ class TransferEntropy(BasePairwiseTransformerPanel):
 
     def _transform(self, X, X2=None):
         """
-        Compute the pairwise Transfer Entropy matrix.
+        Compute Transfer Entropy matrix for a panel of time series.
 
         Parameters
         ----------
