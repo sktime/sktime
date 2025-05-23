@@ -15,9 +15,7 @@ from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
-from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.multiindex import apply_split
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -402,15 +400,17 @@ def evaluate(
         X_train : i-th train split of y as per cv.
         X_test : i-th test split of y as per cv.
         """
-        splitter = InstanceSplitter(cv)
+        instance_idx = X.index.get_level_values(0).unique()
 
-        genx = splitter.split(X)
+        for train_instance_idx, test_instance_idx in cv.split(instance_idx):
+            train_instances = instance_idx[train_instance_idx]
+            test_instances = instance_idx[test_instance_idx]
 
-        for train_idx, test_idx in genx:
-            y_train = y.iloc[apply_split(y, train_idx)]
-            y_test = y.iloc[apply_split(y, test_idx)]
-            X_train = X.iloc[train_idx]
-            X_test = X.iloc[test_idx]
+            X_train = X.loc[X.index.get_level_values(0).isin(train_instances)]
+            X_test = X.loc[X.index.get_level_values(0).isin(test_instances)]
+
+            y_train = y.iloc[train_instance_idx]
+            y_test = y.iloc[test_instance_idx]
 
             yield y_train, y_test, X_train, X_test
 
