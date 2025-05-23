@@ -82,7 +82,7 @@ Geometric errors
 .. autosummary::
     :toctree: auto_generated/
     :template: class_with_call.rst
-    
+
     GeometricMeanAbsoluteError
     GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
