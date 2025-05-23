@@ -6,6 +6,9 @@ __author__ = ["mloning", "hyang1996", "kejsitake", "fkiraly"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.stats.stattools import jarque_bera
+from statsmodels.tsa.stattools import breakvar_heteroskedasticity_test
 
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
@@ -357,6 +360,21 @@ class _PmdArimaAdapter(BaseForecaster):
             return self._forecaster.arima_res_._results.params
         else:
             raise NotImplementedError()
+
+    def acorr_ljungbox(self):
+        res = self.predict_residuals().to_numpy()
+        d = self.get_fitted_params()["order"][1]
+        return acorr_ljungbox(res[d:])
+
+    def jarque_bera(self):
+        res = self.predict_residuals().to_numpy()
+        d = self.get_fitted_params()["order"][1]
+        return jarque_bera(res[d:])
+
+    def breakvar_heteroskedasticity_test(self):
+        res = self.predict_residuals().to_numpy()
+        d = self.get_fitted_params()["order"][1]
+        return breakvar_heteroskedasticity_test(res[d:])
 
     def _get_fitted_param_names(self):
         """Return parameter names under `arima_res_`."""
