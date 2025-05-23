@@ -106,6 +106,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -440,6 +441,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
