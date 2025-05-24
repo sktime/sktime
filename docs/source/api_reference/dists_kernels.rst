@@ -84,17 +84,17 @@ Composition
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
-    
+
     ConstantPwTrafoPanel
-    
+
 .. currentmodule:: sktime.dists_kernels.transfer_entropy
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
-    
+
     TransferEntropy
-    
+
 
 Simple Time Series Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
