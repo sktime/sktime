@@ -11,47 +11,39 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
-from sktime.utils.validation.forecasting import check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
 def _check_scores(metrics) -> dict:
-    """Validate and coerce to BaseMetric and segregate them based on predict type.
+    """Validate sklearn metrics by retrieving them using sklearn get_scorer utility.
 
     Parameters
     ----------
-    metrics : sktime accepted metrics object or a list of them or None
+    metrics : sklearn accepted metrics object or a list of them or None
 
     Return
     ------
-    metrics_type : Dict
-        The key is metric types and its value is a list of its corresponding metrics.
+    metrics_type : List
+        List of validated metrics, if None, default to accuracy score.
     """
     if not isinstance(metrics, list):
         metrics = [metrics]
 
-    metrics_type = {}
+    validated_metrics = []
     for metric in metrics:
-        metric = check_scoring(metric)
-        # collect predict type
-        if hasattr(metric, "get_tag"):
-            scitype = metric.get_tag(
-                "scitype:y_pred", raise_error=False, tag_value_default="pred"
-            )
-        else:  # If no scitype exists then metric is a point forecast type
-            scitype = "pred"
-        if scitype not in metrics_type.keys():
-            metrics_type[scitype] = [metric]
-        else:
-            metrics_type[scitype].append(metric)
-    return metrics_type
+        if metric is None:
+            metric = "accuracy"
+        metric = get_scorer(metric)
+        validated_metrics.append(metric)
+    return validated_metrics
 
 
 def _get_column_order_and_datatype(
@@ -117,8 +109,6 @@ def _evaluate_fold(x, meta):
     y_pred = pd.NA
     temp_result = dict()
     y_preds_cache = dict()
-    old_naming = True
-    old_name_mapping = {}
 
     try:
         # fit
@@ -139,10 +129,6 @@ def _evaluate_fold(x, meta):
         # compute other metrics
         for scitype in scoring:
             method = getattr(classifier, pred_type[scitype])
-            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-                scoring.get(scitype)
-            ):
-                old_naming = False
             for metric in scoring.get(scitype):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
@@ -154,11 +140,6 @@ def _evaluate_fold(x, meta):
                     time_key = f"{scitype}_{argval}_time"
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
-                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
-                        f"test_{metric.name}"
-                    )
-                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
@@ -215,11 +196,7 @@ def _evaluate_fold(x, meta):
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     result = result.astype({"cutoff": cutoff_dtype})
-    if old_naming:
-        result = result.rename(columns=old_name_mapping)
-    column_order = _get_column_order_and_datatype(
-        scoring, return_data, cutoff_dtype, old_naming=old_naming
-    )
+    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
     result = result.reindex(columns=column_order.keys())
 
     return result, classifier
