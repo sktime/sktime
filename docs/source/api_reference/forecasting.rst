@@ -283,6 +283,7 @@ Exponential smoothing based forecasters
     :template: class.rst
 
     ThetaForecaster
+    ThetaModularForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -498,6 +499,9 @@ Deep learning based forecasters
 
     NeuralForecastRNN
     NeuralForecastLSTM
+    NeuralForecastTCN
+    NeuralForecastGRU
+    NeuralForecastDilatedRNN
 
 .. currentmodule:: sktime.forecasting.pytorchforecasting
 
@@ -545,6 +549,14 @@ Pre-trained and foundation models
 
     HFTransformersForecaster
 
+.. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMForecaster
+
 .. currentmodule:: sktime.forecasting.chronos
 
 .. autosummary::
@@ -569,6 +581,14 @@ Pre-trained and foundation models
 
     TimesFMForecaster
 
+.. currentmodule:: sktime.forecasting.timemoe
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeMoEForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
@@ -576,6 +596,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     TinyTimeMixerForecaster
+
+.. currentmodule:: sktime.forecasting.time_llm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeLLMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
@@ -612,7 +640,19 @@ Ensembles and stacking
 
 .. currentmodule:: sktime.forecasting.autots
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     AutoTS
+
+.. currentmodule:: sktime.forecasting.mapa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MAPAForecaster
 
 Hierarchical reconciliation
 ---------------------------

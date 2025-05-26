@@ -131,7 +131,7 @@ class BaseTransformer(BaseEstimator):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
@@ -160,11 +160,12 @@ class BaseTransformer(BaseEstimator):
         # "off" - output of _transform, _inverse_transform is directly returned
         # valid mtype string - output is converted to specified mtype
         "backend:parallel": None,  # parallelization backend for broadcasting
-        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  {None, "dask", "loky", "multiprocessing", "threading","ray"}
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
+        #  "ray": uses ``ray``, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
     }
 
@@ -1368,8 +1369,17 @@ class BaseTransformer(BaseEstimator):
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
             elif self.get_tags()["scitype:transform-input"] == "Panel":
-                # Input has always to be Panel
-                X_output_mtype = "pd.DataFrame"
+                # Converting Panel to Series
+                if X_input_scitype == "Hierarchical":
+                    # Input was Hierarchical, but output has dropped one level.
+                    # One level Hierarchical should be converted to Panel, but
+                    # deeper Hierarchical should be converted to Hierarchical.
+                    # Choose the simplest structure of the two.
+                    X_output_mtype = ["pd-multiindex", "pd_multiindex_hier"]
+                    output_scitype = ["Panel", "Hierarchical"]
+                else:
+                    # Input must have been Panel, output should be Series
+                    X_output_mtype = "pd.DataFrame"
             else:
                 # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype

@@ -140,7 +140,7 @@ def plot_series(
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
     # colors
-    if colors is None or not _check_colors(colors, n_series):
+    if colors is None:
         colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
