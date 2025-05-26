@@ -13,10 +13,10 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-
+import logging
 from sktime.transformations.base import BaseTransformer
 
-
+logger = logging.getLogger("WhiteNoiseAugmenter")
 class _AugmenterTags:
     _tags = {
         # packaging info
@@ -83,14 +83,46 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
     _allowed_statistics = [np.std]
 
-    def __init__(self, scale=1.0, random_state=42):
+    def __init__(self, scale=1.0, random_state=42, columns=None):
         self.scale = scale
         self.random_state = random_state
+        self.columns = columns
         super().__init__()
 
     def _transform(self, X, y=None):
         from scipy.stats import norm
+        if isinstance(X, pd.DataFrame):
+            X_transformed = X.copy()  
 
+            if self.columns is None:
+                columns_to_augment = X.columns 
+            elif isinstance(self.columns, str):
+                columns_to_augment = [self.columns] 
+            else:
+                columns_to_augment = self.columns 
+            for column in columns_to_augment:
+                if column not in X.columns:
+                    logger.warning(f"Column '{column}' not found in DataFrame. Skipping.")
+                    continue
+
+                X_numeric = X[column].to_numpy()
+
+                if self.scale in self._allowed_statistics:
+                    scale = self.scale(X_numeric)
+                elif isinstance(self.scale, (int, float)):
+                    scale = self.scale
+                else:
+                    raise TypeError(
+                        "Type of parameter 'scale' must be a non-negative float value."
+                    )
+
+                noise = norm.rvs(0, scale, size=len(X_numeric), random_state=self.random_state)
+                X_transformed[column] = X_numeric + noise  
+
+            return X_transformed  
+        elif isinstance(X, pd.DataFrame):
+            X = X.squeeze().to_numpy()
+            logger.info("Input converted from pandas DataFrame to NumPy array for WhiteNoiseAugmenter.")
         if self.scale in self._allowed_statistics:
             scale = self.scale(X)
         elif isinstance(self.scale, (int, float)):
@@ -99,6 +131,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             raise TypeError(
                 "Type of parameter 'scale' must be a non-negative float value."
             )
+        
         return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
 
 
