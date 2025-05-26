@@ -58,6 +58,9 @@ class ReconcilerForecaster(BaseForecaster):
         * If True, prediction data frames include total values at ``__total`` levels
         * If False, prediction data frames are returned without ``__total`` levels
 
+    alpha: float default=0
+        Optional regularization parameter to avoid singular covariance matrix
+
     See Also
     --------
     Aggregator
@@ -121,10 +124,11 @@ class ReconcilerForecaster(BaseForecaster):
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
     RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink", return_totals=True):
+    def __init__(self, forecaster, method="mint_shrink", return_totals=True, alpha=0):
         self.forecaster = forecaster
         self.method = method
         self.return_totals = return_totals
+        self.alpha = alpha
 
         super().__init__()
 
@@ -402,6 +406,7 @@ class ReconcilerForecaster(BaseForecaster):
             np.dot(
                 inv(
                     np.dot(np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix))
+                    + self.alpha * np.eye(self.s_matrix.shape[1])
                 ),
                 np.dot(np.transpose(self.s_matrix), cov_mat),
             )
@@ -425,6 +430,13 @@ class ReconcilerForecaster(BaseForecaster):
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
 
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for clusterers.
+
         Returns
         -------
         params : dict, default = {}
@@ -441,9 +453,11 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
+                "alpha": alpha,
                 "return_totals": totals,
             }
             for x in cls.METHOD_LIST
             for totals in cls.RETURN_TOTALS_LIST
+            for alpha in [0, 1]
         ]
         return params_list
