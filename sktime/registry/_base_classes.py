@@ -305,7 +305,7 @@ class metric_forecasting(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.performance_metrics.forecasting._base import (
+        from sktime.performance_metrics.forecasting._classes import (
             BaseForecastingErrorMetric,
         )
 

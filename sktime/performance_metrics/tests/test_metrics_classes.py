@@ -1,4 +1,4 @@
-"""Tests for classes in forecasting module."""
+"""Tests for classes in _classes module."""
 
 import numpy as np
 import pandas as pd
@@ -7,9 +7,9 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
+    _classes,
     make_forecasting_scorer,
 )
-from sktime.performance_metrics.forecasting._base import _DynamicForecastingErrorMetric
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.parallel import _get_parallel_test_fixtures
@@ -95,7 +95,7 @@ def test_custom_metric(greater_is_better):
         greater_is_better=greater_is_better,
     )
 
-    assert isinstance(fc_scorer, _DynamicForecastingErrorMetric)
+    assert isinstance(fc_scorer, _classes._DynamicForecastingErrorMetric)
 
     score = fc_scorer(y, y)
     assert isinstance(score, float)
