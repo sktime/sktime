@@ -179,66 +179,6 @@ def plot_series(
 
 
 def plot_interval(ax, interval_df):
-    """Plot prediction intervals on an existing matplotlib axes.
-
-    This function overlays prediction intervals on an existing plot to visualize
-    forecast uncertainty.
-
-    Parameters
-    ----------
-    ax : matplotlib.axes.Axes
-        The axes to add the prediction intervals to.
-    interval_df : pd.DataFrame
-        A multi-index DataFrame containing prediction intervals.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The matplotlib axes with the prediction intervals added.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> from sktime.utils.plotting import plot_interval
-
-    >>> data = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(data, test_size=12)
-
-    >>> forecaster = NaiveForecaster(strategy="last")
-    >>> forecaster.fit(y_train)
-
-    >>> fh = np.arange(1, 13)  # Forecasting for the next 12 months
-    >>> interval_df = forecaster.predict_interval(fh)
-
-    >>> y_train.index = y_train.index.to_timestamp()
-    >>> y_test.index = y_test.index.to_timestamp()
-    >>> interval_df.index = interval_df.index.to_timestamp()
-
-    >>> fig, ax = plt.subplots(figsize=(10, 5))
-    >>> ax.plot(
-            y_train.index,
-            y_train,
-            label='Training Data',
-            color='blue')  # doctest: +SKIP
-    >>> ax.plot(
-            y_test.index,
-            y_test,
-            label='Actual Test Data',
-            color='orange')  # doctest: +SKIP
-
-    >>> plot_interval(ax, interval_df)  # doctest: +SKIP
-
-    >>> ax.set_title('Predictions with Confidence Intervals')  # doctest: +SKIP
-    >>> ax.set_xlabel('Date')  # doctest: +SKIP
-    >>> ax.set_ylabel('Passengers')  # doctest: +SKIP
-    >>> plt.legend()  # doctest: +SKIP
-    >>> plt.show()  # doctest: +SKIP
-    """
     import seaborn as sns
 
     var_name = interval_df.columns.levels[0][0]
@@ -488,11 +428,8 @@ def plot_windows(cv, y, title="", ax=None):
     subject to an sktime time series splitter.
 
     x-axis: time, ranging from start to end of ``y``
-
     y-axis: window number, starting at 0
-
     plot elements: training split (orange) and test split (blue)
-
         dots indicate index in the training or test split
         will be plotted on top of each other if train/test split is not disjoint
 
@@ -513,14 +450,6 @@ def plot_windows(cv, y, title="", ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
-
-    Examples
-    --------
-    >>> from sktime.split import ExpandingWindowSplitter
-    >>> from sktime.utils.plotting import plot_windows
-
-    >>> cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=24)
-    >>> plot_windows(cv, y.iloc[:50])  # doctest: +SKIP
     """
     from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -603,12 +532,12 @@ def plot_calibration(y_true, y_pred, ax=None):
     e.g., via ``alpha`` in ``predict_quantiles``.
 
     Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
-    and let :math:`\widehat{y}_{i,j}`, for :math:`i = 1, \dots, N, j = 1, \dots, k`
+    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dots k`
     be quantile predictions at quantile point :math:`p_j`,
     of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
 
     We compute the calibration indicators :math:`c_{i, j},`
-    as :math:`c_{i, j} = 1, \text{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
+    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
     and calibration fractions as
 
     .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
@@ -617,13 +546,10 @@ def plot_calibration(y_true, y_pred, ax=None):
     to be close to :math:`p_j`.
 
     x-axis: interval from 0 to 1, quantile points
-
     y-axis: interval from 0 to 1, calibration fractions
-
     plot elements: calibration curve of the quantile predictions (blue) and the ideal
-    calibration curve (orange), the curve with equation y = x.
+        calibration curve (orange), the curve with equation y = x.
         Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
-
         Ideal curve is the curve with equation y = x,
         containing points :math:`(p_i, p_i)`.
 
@@ -644,25 +570,6 @@ def plot_calibration(y_true, y_pred, ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.utils.plotting import plot_calibration
-
-    >>> y_train = load_airline()[0:24]  # train on 24 months, 1949 and 1950
-    >>> y_test = load_airline()[24:36]  # ground truth for 12 months in 1951
-
-    >>> # try to forecast 12 months ahead, from y_train
-    >>> fh = np.arange(1, 13)
-
-    >>> forecaster = ThetaForecaster(sp=12)
-    >>> forecaster.fit(y_train, fh=fh)  # doctest: +SKIP
-
-    >>> pred_quantiles = forecaster.predict_quantiles(alpha=[0.1, 0.25, 0.5, 0.75, 0.9])
-    >>> plot_calibration(y_true=y_test.loc[pred_quantiles.index], y_pred=pred_quantiles)  # doctest: +SKIP
     """  # noqa: E501
     from sktime.utils.dependencies import _check_soft_dependencies
 
