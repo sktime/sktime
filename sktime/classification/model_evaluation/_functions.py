@@ -55,7 +55,7 @@ def _check_scores(metrics) -> dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
@@ -69,7 +69,7 @@ def _get_column_order_and_datatype(
     for scitype in metric_types:
         for metric in metric_types.get(scitype):
             pred_args = _get_pred_args_from_metric(scitype, metric)
-            if pred_args == {} or old_naming:
+            if pred_args == {}:
                 time_key = f"{scitype}_time"
                 result_key = f"test_{metric.name}"
                 y_pred_key = f"y_{scitype}"
@@ -351,14 +351,14 @@ def evaluate(
 
     Examples
     --------
-        >>> from sktime.datasets import load_unit_test
-        >>> from sktime.classification.model_evaluation import evaluate
-        >>> from sklearn.model_selection import KFold
-        >>> from sktime.classification.dummy import DummyClassifier
-        >>> X, y = load_unit_test()
-        >>> classifier = DummyClassifier(strategy="prior")
-        >>> cv = KFold(n_splits=3, shuffle=False)
-        >>> results = evaluate(classifier=classifier, cv=cv, X=X, y=y)
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.classification.model_evaluation import evaluate
+    >>> from sklearn.model_selection import KFold
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> X, y = load_unit_test()
+    >>> classifier = DummyClassifier(strategy="prior")
+    >>> cv = KFold(n_splits=3, shuffle=False)
+    >>> results = evaluate(classifier=classifier, cv=cv, X=X, y=y)
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
