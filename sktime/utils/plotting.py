@@ -204,32 +204,33 @@ def plot_interval(ax, interval_df):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.utils.plotting import plot_interval
 
     >>> data = load_airline()
     >>> y_train, y_test = temporal_train_test_split(data, test_size=12)
 
     >>> forecaster = NaiveForecaster(strategy="last")
-    >>> forecaster.fit(y_train)
+    >>> _ = forecaster.fit(y_train)
 
-    >>> fh = np.arange(1, 13)  # Forecasting for the next 12 months
-    >>> interval_df = forecaster.predict_interval(fh)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> interval_df = forecaster.predict_interval(fh=fh)
 
     >>> y_train.index = y_train.index.to_timestamp()
     >>> y_test.index = y_test.index.to_timestamp()
     >>> interval_df.index = interval_df.index.to_timestamp()
 
-    >>> fig, ax = plt.subplots(figsize=(10, 5))
+    >>> fig, ax = plt.subplots(figsize=(10, 5))  # doctest: +SKIP
     >>> ax.plot(
-            y_train.index,
-            y_train,
-            label='Training Data',
-            color='blue')  # doctest: +SKIP
+    ...     y_train.index,
+    ...     y_train,
+    ...     label='Training Data',
+    ...     color='blue')  # doctest: +SKIP
     >>> ax.plot(
-            y_test.index,
-            y_test,
-            label='Actual Test Data',
-            color='orange')  # doctest: +SKIP
+    ...     y_test.index,
+    ...     y_test,
+    ...     label='Actual Test Data',
+    ...     color='orange')  # doctest: +SKIP
 
     >>> plot_interval(ax, interval_df)  # doctest: +SKIP
 
@@ -518,8 +519,12 @@ def plot_windows(cv, y, title="", ax=None):
     --------
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.utils.plotting import plot_windows
+    >>> from sktime.datasets import load_airline
+    >>> import numpy as np
 
+    >>> fh = np.arange(1, 13)
     >>> cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=24)
+    >>> y = load_airline()
     >>> plot_windows(cv, y.iloc[:50])  # doctest: +SKIP
     """
     from sktime.utils.dependencies import _check_soft_dependencies
@@ -650,18 +655,19 @@ def plot_calibration(y_true, y_pred, ax=None):
     >>> import numpy as np
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.utils.plotting import plot_calibration
 
     >>> y_train = load_airline()[0:24]  # train on 24 months, 1949 and 1950
     >>> y_test = load_airline()[24:36]  # ground truth for 12 months in 1951
 
     >>> # try to forecast 12 months ahead, from y_train
-    >>> fh = np.arange(1, 13)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
 
     >>> forecaster = ThetaForecaster(sp=12)
-    >>> forecaster.fit(y_train, fh=fh)  # doctest: +SKIP
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
 
-    >>> pred_quantiles = forecaster.predict_quantiles(alpha=[0.1, 0.25, 0.5, 0.75, 0.9])
+    >>> pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.25, 0.5, 0.75, 0.9])  # doctest: +SKIP
     >>> plot_calibration(y_true=y_test.loc[pred_quantiles.index], y_pred=pred_quantiles)  # doctest: +SKIP
     """  # noqa: E501
     from sktime.utils.dependencies import _check_soft_dependencies
