@@ -3517,6 +3517,15 @@
         "code",
         "design"
       ]
+    },
+    {
+      "login": "Satoshi-Sh",
+      "name": "Satoshi Shirosaka",
+      "avatar_url":"https://avatars.githubusercontent.com/Satoshi-Sh",
+      "profile":"https://github.com/Satoshi-Sh",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
