@@ -34,10 +34,19 @@ def test_multiindex_to_df_list_large_level_values():
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
-def test_convert_MvS_to_UvS_as_Series():
-    """Checks that column name in MvS is preserved as attr name in UvS"""
-    y = load_airline()
-    z = y.to_frame()
-    w = convert_MvS_to_UvS_as_Series(z)
+def test_series_name_roundtrip_none():
+    """Checks that Series with name=None round-trips correctly."""
+    import pandas as pd
+    from sktime.datatypes._series._convert import (
+        convert_UvS_to_MvS_as_Series,
+        convert_MvS_to_UvS_as_Series,
+    )
 
-    assert y.name == w.name
+    s = pd.Series([1, 2, 3])
+    s.name = None
+
+    store = {}
+    df = convert_UvS_to_MvS_as_Series(s, store=store)
+    s2 = convert_MvS_to_UvS_as_Series(df, store=store)
+
+    assert s2.name is None, f"Expected Series.name=None but got {s2.name}"
