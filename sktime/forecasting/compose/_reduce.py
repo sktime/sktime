@@ -749,6 +749,7 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "handles-missing-data": False,
     }
 
     def _transform(self, y, X=None):
@@ -1249,6 +1250,11 @@ class DirectTabularRegressionForecaster(_DirectReducer):
             )
         self.set_tags(**{"X_inner_mtype": mtypes_x})
         self.set_tags(**{"y_inner_mtype": mtypes_y})
+        self.set_tags(
+            **{
+                "handles-missing-data": False,
+            }
+        )
 
     _estimator_scitype = "tabular-regressor"
 

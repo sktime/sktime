@@ -22,7 +22,7 @@ class _ProphetAdapter(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
     }

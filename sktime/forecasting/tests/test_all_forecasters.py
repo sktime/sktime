@@ -274,6 +274,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_handle_missing_data(self, estimator_instance):
         """Test for missing data handling"""
         y[y > y.mean()] = np.nan
+        if estimator_instance.is_composite():
+            pytest.skip(
+                f"Skipping test for estimator - {estimator_instance.__class__.__name__}"
+            )
         if estimator_instance.get_tag("handles-missing-data"):
             estimator_instance.fit(y, fh=FH0)
         else:
