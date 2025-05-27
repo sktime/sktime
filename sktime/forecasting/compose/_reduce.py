@@ -2721,7 +2721,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     In order to deal with missing data, combine this with ``Imputer``.
 
     To construct an custom direct reducer,
-    combine with ``ToX``, ``Lag``, or ``ReducerTransform``.
+    combine with ``YtoX``, ``Lag``, or ``ReducerTransform``.
 
     Parameters
     ----------
