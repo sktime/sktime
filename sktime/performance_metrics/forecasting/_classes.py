@@ -4103,8 +4103,9 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    relative_loss_function : function
-        Function to use in calculation relative loss.
+    relative_loss_function : function or BaseForecastingErrorMetric
+        Either a bare loss function (e.g. `mean_absolute_error(y_true, y_pred)`)
+        or a `sktime` Metric object (e.g. `MeanAbsoluteError()`).
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -4143,6 +4144,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     --------
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import RelativeLoss
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -4152,6 +4154,12 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     np.float64(0.8148148148148147)
     >>> relative_mse = RelativeLoss(relative_loss_function=mean_squared_error)
     >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    np.float64(0.5178095088655261)
+    >>> relative_mae_obj = RelativeLoss(relative_loss_function=MeanAbsoluteError())
+    >>> relative_mae_obj(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    np.float64(0.8148148148148147)
+    >>> relative_mse_obj = RelativeLoss(relative_loss_function=MeanSquaredError())
+    >>> relative_mse_obj(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.5178095088655261)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
@@ -4183,6 +4191,30 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         by_index=False,
     ):
         self.relative_loss_function = relative_loss_function
+        # allow passing in either a function or a Metric object
+        from sktime.performance_metrics.base import BaseMetric
+
+        if isinstance(relative_loss_function, BaseMetric):
+            self._metric_obj = relative_loss_function
+
+            def _wrapped(y_true, y_pred, **params):
+                if params.pop("by_index", False):
+                    return self._metric_obj.evaluate_by_index(
+                        y_true=y_true,
+                        y_pred=y_pred,
+                        **params,
+                    )
+                return self._metric_obj.evaluate(
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    **params,
+                )
+
+            self.func = _wrapped
+        else:
+            self._metric_obj = None
+            self.func = relative_loss_function
+
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -4194,4 +4226,5 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         """Retrieve test parameters."""
         params1 = {}
         params2 = {"relative_loss_function": mean_squared_error}
-        return [params1, params2]
+        params3 = {"relative_loss_function": MeanAbsoluteError()}
+        return [params1, params2, params3]

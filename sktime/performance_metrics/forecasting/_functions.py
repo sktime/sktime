@@ -17,6 +17,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
+from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
@@ -2570,10 +2571,9 @@ def relative_loss(
              (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
-    relative_loss_function : function, default=mean_absolute_error
-        Function to use in calculation relative loss. The function must comply
-        with API interface of sktime forecasting performance metrics. Metrics
-        requiring y_train or y_pred_benchmark are not supported.
+    relative_loss_function : function or BaseForecastingErrorMetric, default=mean_absolute_error
+        Either a bare loss function (e.g., `mean_absolute_error(y_true,y_pred)`)
+        or a `sktime` Metric object (e.g., `MeanAbsoluteError()`).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2633,15 +2633,37 @@ def relative_loss(
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    loss_preds = relative_loss_function(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
-    )
-    loss_benchmark = relative_loss_function(
-        y_true,
-        y_pred_benchmark,
-        horizon_weight=horizon_weight,
-        multioutput=multioutput,
-    )
+    # allow either a bare function or a MetricObject instance
+    if isinstance(relative_loss_function, BaseMetric):
+        eval_kwargs = {}
+        if horizon_weight is not None:
+            eval_kwargs["horizon_weight"] = horizon_weight
+
+        loss_preds = relative_loss_function.evaluate(
+            y_true=y_true,
+            y_pred=y_pred,
+            **eval_kwargs,
+        )
+        loss_benchmark = relative_loss_function.evaluate(
+            y_true=y_true,
+            y_pred=y_pred_benchmark,
+            **eval_kwargs,
+        )
+    else:
+        # original behavior: bare function call
+        loss_preds = relative_loss_function(
+            y_true,
+            y_pred,
+            horizon_weight=horizon_weight,
+            multioutput=multioutput,
+        )
+        loss_benchmark = relative_loss_function(
+            y_true,
+            y_pred_benchmark,
+            horizon_weight=horizon_weight,
+            multioutput=multioutput,
+        )
+
     loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
     return _handle_output(loss, multioutput)
 
