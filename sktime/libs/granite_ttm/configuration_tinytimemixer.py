@@ -101,7 +101,7 @@ class TinyTimeMixerConfig(PretrainedConfig):
         adaptive_patching_levels (`int`, *optional*, defaults to 0):
             If adaptive_patching_levels is i, then we will have i levels with each level
              having n_layers.
-            Level id starts with 0. num_patches at level i will be multipled by (2^i)
+            Level id starts with 0. num_patches at level i will be multiplied by (2^i)
             and num_features at level i will be divided by (2^i).
             For Ex. if adaptive_patching_levels is 3 - then we will have 3 levels:
                 level 2: num_features//(2^2), num_patches*(2^2)

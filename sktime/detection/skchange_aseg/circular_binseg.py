@@ -22,7 +22,7 @@ class CircularBinarySegmentation(BaseDetector):
     is stationary, while the alternative hypothesis is that there is a collective
     anomaly within the outer interval.
 
-    Efficently implemented using numba.
+    Efficiently implemented using numba.
 
     Parameters
     ----------

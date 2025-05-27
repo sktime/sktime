@@ -1936,7 +1936,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         or a different number of observations.
 
         * `True` : Uniform window of length (total observations - maximum
-          forecasting horizon). Note: Currently, there are no missings arising
+          forecasting horizon). Note: Currently, there are no missing arising
           from window length due to backwards imputation in
           `ReductionTransformer`. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
@@ -2721,7 +2721,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     In order to deal with missing data, combine this with ``Imputer``.
 
     To construct an custom direct reducer,
-    combine with ``YtoX``, ``Lag``, or ``ReducerTransform``.
+    combine with ``ToX``, ``Lag``, or ``ReducerTransform``.
 
     Parameters
     ----------

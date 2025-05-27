@@ -1480,7 +1480,7 @@ Documentation
 
 * [DOC] Add SVG version of the sktime logo with no text  (:pr:`7024`) :user:`wirrywoo`
 * [DOC] Improve documentation for ``TinyTimeMixer`` (:pr:`7009`) :user:`geetu040`
-* [DOC] fix broken links in continous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
+* [DOC] fix broken links in continuous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
 * [DOC] split list of transformation pipeline components into subcategories (:pr:`7075`) :user:`fkiraly`
 
 Fixes
@@ -1736,7 +1736,7 @@ Contents
 * [MNT] update versions of ``pre-commit`` hooks (:pr:`6947`) :user:`yarnabrina`
 * [MNT] 0.32.0 release action - revert temporary skip ``get_test_params`` number check for 0.21.1 and 0.22.0 release (:pr:`5114`) :user:`fkiraly`
 * [MNT] Bump ``skforecast`` to ``0.13`` version allowing support for python ``3.12`` (:pr:`6946`) :user:`yarnabrina`
-* [BUG] Fix ``Xt_msg`` type in ``tranformations.base`` (:pr:`6944`) :user:`hliebert`
+* [BUG] Fix ``Xt_msg`` type in ``transformations.base`` (:pr:`6944`) :user:`hliebert`
 
 Contributors
 ~~~~~~~~~~~~
@@ -8468,7 +8468,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
-* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
+* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformance fix (:pr:`3121`) :user:`fkiraly`
 * [BUG] fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
 * [BUG] fix ``check_equal_time_index`` with numpy arrays as input (:pr:`3160`, :pr:`3167`) :user:`benHeid`
 * [BUG] fix broken ``AutoEnsembleForecaster`` inverse variance method (:pr:`3208`) :user:`AnH0ang`
@@ -9838,7 +9838,7 @@ Refactored
 *  [ENH] renamed ``fit-in-transform`` and ``fit-in-predict`` to ``fit_is_empty`` (:pr:`2250`) :user:`fkiraly`
 *  [ENH] refactoring `test_all_classifiers` to test class architecture (:pr:`2257`) :user:`fkiraly`
 *  [ENH] test parameter refactor: all classifiers (:pr:`2288`) :user:`MatthewMiddlehurst`
-*  [ENH] test paraneter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
+*  [ENH] test parameter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``RocketClassifier`` (:pr:`2166`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``TimeSeriesForestClassifier`` (:pr:`2277`) :user:`lielleravid`
 *  [ENH] ``FeatureUnion`` refactor - moved to ``transformations``, tags, dunder method (:pr:`2231`) :user:`fkiraly`

@@ -1583,7 +1583,7 @@ class capability__update(_BaseTag):
         "tag_name": "capability:update",
         "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
-        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -2399,7 +2399,7 @@ class visual_block_kind(_BaseTag):
         "tag_name": "visual_block_kind",
         "parent_type": "estimator",
         "tag_type": ("str", ["single", "serial", "parallel"]),
-        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
+        "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
     }
 

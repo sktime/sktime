@@ -21,7 +21,7 @@ class AutoTS(BaseForecaster):
     ----------
     model_name : str, optional (default="fast")
         The name of the model. NOTE: Overwrites the model_list parameter.
-        For using only one model oder a default model_list.
+        For using only one model or a default model_list.
     model_list : str
         The list of models to use.
         str alias or list of names of model objects to use now can be a dictionary

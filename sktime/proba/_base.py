@@ -53,7 +53,7 @@ class BaseDistribution(BaseObject):
             "defaulting to sktime.proba if skpro is not present, "
             "otherwise redirecting imports to skpro objects. "
             "To silence this message, ensure skpro is installed in the environment."
-            "If using the sktime.proba module direclty, "
+            "If using the sktime.proba module directly, "
             "in addition, replace any imports from "
             "sktime.proba with imports from skpro.distributions.",
             obj=self,

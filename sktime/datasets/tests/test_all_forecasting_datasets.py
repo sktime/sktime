@@ -58,7 +58,7 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         elif isinstance(y, np.ndarray):
             is_one_series = y.ndim == 1 or y.shape[1] == 1
         else:
-            raise ValueError(f'Unexpeced type "{type(y)}" for y')
+            raise ValueError(f'Unexpected type "{type(y)}" for y')
         assert is_one_series == expected
 
     def test_tag_n_panels(self, estimator_instance):

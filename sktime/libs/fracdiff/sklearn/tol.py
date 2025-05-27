@@ -50,7 +50,7 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
     """
     Return length of window determined from tolerance to memory loss.
 
-    Minimum lenght of window that makes the absolute value of the sum of fracdiff
+    Minimum length of window that makes the absolute value of the sum of fracdiff
     coefficients from `window_ + 1`-th term is smaller than `tol_memory`.
     If `window` is not None, ignored.
 

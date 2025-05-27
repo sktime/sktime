@@ -159,7 +159,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         - future exogenous columns (``futr_exog_list``) - used from ``__init__``
         - historical exogenous columns (``hist_exog_list``) - not supported
-        - statis exogenous columns (``stat_exog_list``) - not supported
+        - status exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 

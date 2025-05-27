@@ -156,7 +156,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
 
-        If a clusterer is used, it must suport cluster assignment,
+        If a clusterer is used, it must support cluster assignment,
         i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the

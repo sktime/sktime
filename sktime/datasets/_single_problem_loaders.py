@@ -1502,7 +1502,7 @@ def load_m5(
         If `extract_path` is provided:
             - Check if the required files are present at the given `extract_path`.
             - If files are not found, check if the directory "m5-forecasting-accuracy"
-              exists within the `extract_path`. Useful when the funciton has already
+              exists within the `extract_path`. Useful when the function has already
               run previously with the same path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder in the `extract_path`.
@@ -1512,7 +1512,7 @@ def load_m5(
             - Check if the directory "m5-forecasting-accuracy" exists within the module
               level.
             - If the directory exists, takes path to current directory.
-              Useful when the funciton has already run previously without any path.
+              Useful when the function has already run previously without any path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder at the module level.
 

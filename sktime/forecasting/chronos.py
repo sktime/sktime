@@ -366,7 +366,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         self._initialize_model_type()
 
     def _initialize_model_type(self):
-        """Intialise model type and configuration based on model's architecture."""
+        """Initialise model type and configuration based on model's architecture."""
         from transformers import AutoConfig
 
         try:

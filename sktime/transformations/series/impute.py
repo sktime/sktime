@@ -59,7 +59,7 @@ class Imputer(BaseTransformer):
         Value to consider as `np.nan`` and impute, passed to ``DataFrame.replace``
         If str, int, float, all entries equal to ``missing_values`` will be imputed,
         in addition to ``np.nan.``
-        If regex, all entrie matching regex will be imputed, in addition to ``np.nan.``
+        If regex, all entries matching regex will be imputed, in addition to ``np.nan.``
         If list, must be list of str, int, float, or regex.
         Values matching any list element by above rules will be imputed,
         in addition to ``np.nan``.

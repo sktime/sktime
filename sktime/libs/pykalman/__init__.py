@@ -47,7 +47,7 @@ DAMAGE.
 
 __authors__ = [
     "duckworthd",  # main author original pykalman package
-    "mbalatsko",  # update ot python 3.11 and later, temporary maintainer
+    "mbalatsko",  # update to python 3.11 and later, temporary maintainer
     "gliptak",  # minor updates
     "nils-werner",  # minor updates
     "jonathanng",  # minor docs fix

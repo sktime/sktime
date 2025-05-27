@@ -33,7 +33,7 @@ class TestFracdiff:
             Fracdiff(1),
         ]
     )
-    def test_sklearn_compatible_esimator(self, estimator, check):
+    def test_sklearn_compatible_estimator(self, estimator, check):
         try:
             check(estimator)
         except Exception as e:

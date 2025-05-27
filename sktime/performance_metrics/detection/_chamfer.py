@@ -29,7 +29,7 @@ class DirectedChamfer(BaseDetectionMetric):
     normalize : bool, default=False
         If True, the Chamfer distance is normalized by the number of detected events,
         i.e., divided by :math:`n`.
-        If unnormalized, making too many detections will be penalized, wherease
+        If unnormalized, making too many detections will be penalized, whereas
         the normalized distance penalizes only the average distance to the
         closest true events, regardless of the number of detections.
     """
