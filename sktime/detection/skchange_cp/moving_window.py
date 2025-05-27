@@ -4,7 +4,9 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.change_detectors.moving_window")
+@_placeholder_record(
+    ["skchange.change_detectors", "skchange.change_detectors.moving_window"]
+)
 class MovingWindow(BaseDetector):
     """Moving window algorithm for multiple changepoint detection, from skchange.
 
