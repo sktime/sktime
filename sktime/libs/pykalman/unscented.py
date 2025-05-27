@@ -94,8 +94,8 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
     sigma2 = linalg.cholesky(sigma).T
 
     # Calculate scaling factor for all off-center points
-    lambda = (alpha * alpha) * (n_dim + kappa) - n_dim
-    c = n_dim + lambda
+    scaling_lambda = (alpha * alpha) * (n_dim + kappa) - n_dim
+    c = n_dim + scaling_lambda
 
     # calculate the sigma points; that is,
     #   mu
@@ -108,10 +108,10 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
 
     # Calculate weights
     weights_mean = np.ones(2 * n_dim + 1)
-    weights_mean[0] = lambda / c
+    weights_mean[0] = scaling_lambda / c
     weights_mean[1:] = 0.5 / c
     weights_cov = np.copy(weights_mean)
-    weights_cov[0] = lambda / c + (1 - alpha * alpha + beta)
+    weights_cov[0] = scaling_lambda / c + (1 - alpha * alpha + beta)
 
     return SigmaPoints(points.T, weights_mean, weights_cov)
 
