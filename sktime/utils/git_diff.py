@@ -5,6 +5,7 @@ __all__ = []
 
 import importlib.util
 import inspect
+import os
 import subprocess
 from functools import lru_cache
 
@@ -88,6 +89,21 @@ def is_class_changed(cls):
     """
     module_str = get_module_from_class(cls)
     return is_module_changed(module_str)
+
+def is_file_changed(file_path):
+    """Check if a file has changed according to git."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "origin/main...HEAD"],
+            stdout=subprocess.PIPE,
+            check=True,
+            text=True
+        )
+        changed_files = result.stdout.strip().split("\n")
+        changed_files = [f.strip() for f in changed_files if f.strip()]
+        return file_path in [os.path.abspath(f) for f in changed_files]
+    except Exception:
+        return False
 
 
 def get_changed_lines(file_path, only_indented=True):
