@@ -43,6 +43,7 @@ class ForecastKnownValues(BaseForecaster):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> y_known = pd.DataFrame(range(100))
     >>> y_train = y_known[:24]
     >>>

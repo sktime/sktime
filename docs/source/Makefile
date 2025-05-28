@@ -2,9 +2,9 @@
 
 # You can set these variables from the command line.
 SPHINXBUILD        = sphinx-build
-SPHINXOPTS         =
+SPHINXOPTS         = -j auto
 SPHINXAUTOBUILD    = sphinx-autobuild
-SPHINXAUTOOPTS     =
+SPHINXAUTOOPTS     = -j auto
 SOURCEDIR          = .
 BUILDDIR           = ../build
 SKTIMEDIR          = ../../sktime

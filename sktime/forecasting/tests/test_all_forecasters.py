@@ -278,7 +278,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             pytest.skip(
                 f"Skipping test for estimator - {estimator_instance.__class__.__name__}"
             )
-        if estimator_instance.get_tag("handles-missing-data"):
+        if estimator_instance.get_tag("capability:missing_values"):
             estimator_instance.fit(y, fh=FH0)
         else:
             cls_name = estimator_instance.__class__.__name__

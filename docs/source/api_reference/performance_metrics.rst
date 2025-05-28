@@ -98,6 +98,7 @@ Quantile and interval forecasts
     PinballLoss
     EmpiricalCoverage
     ConstraintViolation
+    IntervalWidth
 
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +138,7 @@ Event detection - anomalies, outliers
 .. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: function.rst
 
@@ -144,6 +146,7 @@ Event detection - anomalies, outliers
     DirectedHausdorff
     DetectionCount
     WindowedF1Score
+    TimeSeriesAUPRC
 
 Segment detection
 -----------------

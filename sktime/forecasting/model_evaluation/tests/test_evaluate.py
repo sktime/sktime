@@ -171,9 +171,6 @@ def test_evaluate_common_configs(
     CV, fh, window_length, step_length, strategy, scoring, backend
 ):
     """Test evaluate common configs."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
@@ -222,10 +219,6 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         if strategy not in ["update", "no-update_params"]:
             # if strategy in ["update","no-update_params"], it won't run parallelly
             return None
-
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     hierarchy_levels = (4, 4)
     timepoints = 5
@@ -279,6 +272,63 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     # check scoring
     actual = out.loc[:, f"test_{scoring.name}"]
     assert np.all(np.abs(actual) < 1e-3)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_evaluate_global_mode_with_temporal_split():
+    hierarchy_levels = (4, 4)
+    timepoints = 15
+    data = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels,
+        max_timepoints=timepoints,
+        min_timepoints=timepoints,
+        n_columns=2,
+    )
+    for col in data.columns:
+        data[col] = np.ones(timepoints * np.prod(hierarchy_levels))
+    X = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+
+    params = {
+        "trainer_params": {
+            # the training process is not deterministic
+            # train 10 epoches to make sure loss is low enough
+            "max_epochs": 1,
+        },
+        "model_params": {
+            "cell_type": "GRU",
+            "rnn_layers": 1,
+            "hidden_size": 2,
+            "log_interval": -1,
+        },
+        "dataset_params": {
+            "max_encoder_length": 3,
+        },
+        "random_log_path": True,  # fix parallel file access error in CI
+    }
+    forecaster = PytorchForecastingDeepAR(**params)
+    cv_global = InstanceSplitter(KFold(2))
+    out = evaluate(
+        forecaster,
+        SlidingWindowSplitter(fh=1, window_length=6),
+        y,
+        X=X,
+        scoring=[MeanAbsoluteError()],
+        error_score="raise",
+        cv_global=cv_global,
+        cv_global_temporal=SingleWindowSplitter(fh=range(1, 11), window_length=5),
+    )
+    # Two instance splits, and 2 temporal splits for each instance split
+    assert len(out) == 2 * 4
 
 
 @pytest.mark.skipif(
@@ -426,9 +476,6 @@ def test_evaluate_error_score(
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_hierarchical(backend):
     """Check that evaluate works with hierarchical data."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
 
     y = _make_hierarchical(
         random_state=0, hierarchy_levels=(2, 2), min_timepoints=12, max_timepoints=12
