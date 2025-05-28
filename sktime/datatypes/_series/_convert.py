@@ -72,19 +72,18 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
     obj = _coerce_df_dtypes(obj)
 
-    name = obj.name if obj.name is not None else 0 
+    name = obj.name if obj.name is not None else 0
     if isinstance(store, dict):
-        store["name"] = obj.name 
+        store["name"] = obj.name
 
     res = pd.DataFrame(obj)
-    res.columns = [name] 
+    res.columns = [name]
 
     if (
         isinstance(store, dict)
         and "columns" in store.keys()
         and len(store["columns"]) == 1
     ):
-        
         res.columns = store["columns"]
 
     return res
@@ -111,7 +110,6 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     if isinstance(store, dict) and "name" in store.keys():
         y.name = store["name"]
     else:
-        
         y.name = None if colname == 0 else colname
 
     return y

@@ -6,7 +6,10 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series, convert_UvS_to_MvS_as_Series
+from sktime.datatypes._series._convert import (
+    convert_MvS_to_UvS_as_Series,
+    convert_UvS_to_MvS_as_Series,
+)
 from sktime.tests.test_switch import run_test_module_changed
 
 
