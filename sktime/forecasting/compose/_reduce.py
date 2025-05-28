@@ -1430,7 +1430,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "capability:missing_values": False
+        "capability:missing_values": False,
     }
 
     _estimator_scitype = "time-series-regressor"
