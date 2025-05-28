@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements EnbPIForecaster."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -9,6 +11,8 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+from sktime.param_est.stationarity import StationarityKPSS
+from sktime.utils.parallel import parallelize
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -111,6 +115,7 @@ class EnbPIForecaster(BaseForecaster):
         bootstrap_transformer=None,
         random_state=None,
         aggregation_function="mean",
+        stationarity_estimator=None,
     ):
         self.forecaster = forecaster
         self.forecaster_ = (
@@ -128,15 +133,22 @@ class EnbPIForecaster(BaseForecaster):
                 f"Aggregation function {self.aggregation_function} not supported. "
                 f"Please choose either 'mean' or 'median'."
             )
+        self.stationarity_estimator = stationarity_estimator
 
         super().__init__()
 
-        from tsbootstrap import MovingBlockBootstrap
+        from tsbootstrap.block_bootstrap import MovingBlockBootstrap
 
         self.bootstrap_transformer_ = (
             clone(bootstrap_transformer)
             if bootstrap_transformer is not None
             else MovingBlockBootstrap()
+        )
+
+        self.stationarity_estimator_ = (
+            stationarity_estimator.clone()
+            if stationarity_estimator is not None
+            else StationarityKPSS()
         )
 
     def _fit(self, X, y, fh=None):
@@ -153,16 +165,32 @@ class EnbPIForecaster(BaseForecaster):
         self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
         bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
 
-        self.forecasters = []
-        self._preds = []
-        # Fit Models per Bootstrap Sample
-        for bs_ts in bootstrapped_ts:
-            bs_df = pd.DataFrame(bs_ts, index=y.index)
-            forecaster = clone(self.forecaster_)
+        # Define function to fit forecaster and get predictions for a bootstrap sample
+        def _fit_forecaster_bootstrap(bs_ts, meta):
+            X = meta.get("X", None)
+            y_index = meta.get("y_index", None)
+            fh = meta.get("fh", None)
+            forecaster_ = meta.get("forecaster_", None)
+
+            bs_df = pd.DataFrame(bs_ts, index=y_index)
+            forecaster = clone(forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
-            self.forecasters.append(forecaster)
-            prediction = forecaster.predict(fh=y.index, X=X)
-            self._preds.append(prediction)
+            prediction = forecaster.clone().fit_predict(y=bs_df, fh=y_index, X=X)
+
+            return {"forecaster": forecaster, "prediction": prediction}
+
+        meta = {"X": X, "y_index": y.index, "fh": fh, "forecaster_": self.forecaster_}
+
+        results = parallelize(
+            fun=_fit_forecaster_bootstrap,
+            iter=bootstrapped_ts,
+            meta=meta,
+            backend="loky",
+            backend_params={"n_jobs": -1},
+        )
+
+        self.forecasters = [result["forecaster"] for result in results]
+        self._preds = [result["prediction"] for result in results]
 
         return self
 
@@ -185,15 +213,20 @@ class EnbPIForecaster(BaseForecaster):
         train_targets = self._y.copy()
         train_targets.index = pd.RangeIndex(len(train_targets))
         intervals = []
+        residuals = []
         for cov in coverage:
-            conformal_intervals = EnbPI(self.aggregation_function).conformal_interval(
+            conformal_intervals, train_residuals = EnbPI(
+                self.aggregation_function
+            ).conformal_interval(
                 bootstrap_indices=self.indexes,
                 bootstrap_train_preds=np.stack(self._preds),
                 bootstrap_test_preds=np.stack(preds),
                 train_targets=train_targets.values,
                 error=1 - cov,
+                return_residuals=True,
             )
             intervals.append(conformal_intervals.reshape(-1, 2))
+            residuals.append(train_residuals.ravel())
 
         cols = pd.MultiIndex.from_product(
             [self._y.columns, coverage, ["lower", "upper"]]
@@ -202,7 +235,27 @@ class EnbPIForecaster(BaseForecaster):
         pred_int = pd.DataFrame(
             np.concatenate(intervals, axis=1), index=fh_absolute_idx, columns=cols
         )
+        self._check_train_residual_stationarity(coverage, residuals)
+
         return pred_int
+
+    def _check_train_residual_stationarity(self, coverage, residuals):
+        """
+        Check if the residuals of the training set are stationary.
+
+        This is important for the EnbPI algorithm to work correctly, as there is an
+        explicit assumption that the train out-of-bag residuals are must be stationary.
+        """
+        for i, cov in enumerate(coverage):
+            train_residuals = pd.DataFrame(data=residuals[i], index=self._y.index)
+            param_estimator = self.stationarity_estimator_.clone()
+            param_estimator.fit(train_residuals)
+            is_stationary = param_estimator.stationary_
+            if not is_stationary:
+                warnings.warn(
+                    f"Residuals for the out-of-bag training set are not stationary. "
+                    f"Prediction intervals may be unreliable for coverage {cov}."
+                )
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -241,7 +294,7 @@ class EnbPIForecaster(BaseForecaster):
         deps = cls.get_class_tag("python_dependencies")
 
         if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockBootstrap
+            from tsbootstrap.block_bootstrap import BlockBootstrap
 
             params = [
                 {},
