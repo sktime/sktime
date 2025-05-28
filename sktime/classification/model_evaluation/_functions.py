@@ -5,13 +5,13 @@
 __author__ = ["ksharma6", "jgyasu"]
 __all__ = ["evaluate"]
 
+import inspect
 import time
 import warnings
 from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import get_scorer
 from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
@@ -22,28 +22,102 @@ from sktime.utils.parallel import parallelize
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_scores(metrics) -> dict:
-    """Validate sklearn metrics by retrieving them using sklearn get_scorer utility.
+def _is_proba_classification_score(metric) -> bool:
+    """
+    Check if metric function is intended for probabilistic classification.
+
+    This function attempts to identify if the input `metric` is a classification
+    score that expects predicted probabilities rather than class labels.
+    It performs this check using:
+
+    1. A set of known probability-based metric names.
+    2. Inspection of the function's signature for indicative argument names.
+    3. A test call using sample `y_true` and `y_pred_proba` arrays to check
+    compatibility.
 
     Parameters
     ----------
-    metrics : sklearn accepted metrics object or a list of them or None
+    metric : callable or str
+        A metric function or its name to check.
 
-    Return
-    ------
-    metrics_type : List
-        List of validated metrics, if None, default to accuracy score.
+    Returns
+    -------
+    bool
+        True if the metric appears to be for probabilistic classification;
+        False otherwise.
     """
+    PROBA_METRICS = {"brier_score_loss", "log_loss", "roc_auc_score"}
+
+    metric_name = getattr(metric, "__name__", str(metric))
+    if metric_name in PROBA_METRICS:
+        return True
+
+    try:
+        sig = inspect.signature(metric)
+        params = list(sig.parameters.keys())
+
+        proba_indicators = ["y_prob", "y_pred_proba", "probas_pred"]
+        if any(indicator in params for indicator in proba_indicators):
+            return True
+    except (ValueError, TypeError):
+        pass
+
+    try:
+        y_true_sample = np.array([0, 1])
+        y_pred_proba_sample = np.array([[0.8, 0.2], [0.3, 0.7]])
+
+        metric(y_true_sample, y_pred_proba_sample)
+        return True
+    except (TypeError, ValueError, AttributeError):
+        pass
+
+    return False
+
+
+def _check_scores(metrics) -> dict:
+    """
+    Validate sklearn classification metrics and segregate them based on prediction type.
+
+    Categorizes metrics based on whether they require deterministic predictions ('pred')
+    or probabilistic predictions ('pred_proba'). This function is designed for
+    time series classification using sklearn metrics, which don't have tags
+    like sktime metrics.
+
+    Parameters
+    ----------
+    metrics : sklearn metric function, list of sklearn metric functions, or None
+        The classification metrics to validate and categorize
+
+    Returns
+    -------
+    metrics_type : dict
+        Dictionary where keys are metric types ('pred' or 'pred_proba') and
+        values are lists of corresponding metrics
+    """
+    if metrics is None:
+        return {}
+
     if not isinstance(metrics, list):
         metrics = [metrics]
 
-    validated_metrics = []
+    metrics_type = {}
+
     for metric in metrics:
         if metric is None:
-            metric = "accuracy"
-        metric = get_scorer(metric)
-        validated_metrics.append(metric)
-    return validated_metrics
+            from sklearn.metrics import accuracy_score
+
+            metric = accuracy_score
+        if not callable(metric):
+            raise ValueError(f"Metric {metric} is not callable")
+
+        scitype = "pred_proba" if _is_proba_classification_score(metric) else "pred"
+
+        if scitype not in metrics_type:
+            metrics_type[scitype] = [metric]
+        else:
+            metrics_type[scitype].append(metric)
+
+    return metrics_type
 
 
 def _get_column_order_and_datatype(
