@@ -1850,7 +1850,7 @@ class ForecastX(BaseForecaster):
         return [params1, params2, params3, params4]
 
 
-class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
+class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator, BaseForecaster):
     """Permutation compositor for permuting forecasting pipeline steps.
 
     The compositor can be used to permute the sequence of any meta-forecaster,
@@ -1951,6 +1951,10 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     @property
     def _steps(self):
         return getattr(self.estimator_, self.steps_arg)
+
+    @_steps.setter
+    def _steps(self, val):
+        setattr(self.estimator_, self.steps_arg, val)
 
     @property
     def steps_(self):
