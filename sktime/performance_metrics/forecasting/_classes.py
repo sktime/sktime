@@ -2753,6 +2753,14 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If True, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
 
+
+
+    relative_to : str, optional, default='y_true'
+        Specifies the reference values for normalizing the percentage error.
+        Can be either:
+        - 'y_true': normalize errors relative to the true values (default),
+        - 'y_pred': normalize errors relative to the predicted values.
+     
     See Also
     --------
     MedianAbsolutePercentageError
@@ -2804,8 +2812,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true"
     ):
         self.symmetric = symmetric
+        self.relative_to=relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -2840,13 +2850,19 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
+        if self.symmetric and self.relative_to != "y_true":
+            raise ValueError("relative_to cannot be used with symmetric=True")
+
+
         multioutput = self.multioutput
         symmetric = self.symmetric
-
+        relative=self.relative_to
         numer_values = (y_true - y_pred).abs()
 
         if symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
+        elif relative == "y_pred":
+            denom_values = y_pred.abs()    
         else:
             denom_values = y_true.abs()
 
@@ -2883,7 +2899,8 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = { "relative_to": "y_pred"}
+        return [params1, params2,params3]
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
@@ -2950,6 +2967,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    relative_to : str, optional, default='y_true'
+        Specifies the reference values for normalizing the percentage error.
+        Can be either:
+        - 'y_true': normalize errors relative to the true values (default),
+        - 'y_pred': normalize errors relative to the predicted values.
+
+             
     by_index : bool, default=False
         Determines averaging over time points in direct call to metric object.
 
@@ -3009,8 +3033,10 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true",
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -3045,12 +3071,19 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
+        if self.symmetric and self.relative_to != "y_true":
+            raise ValueError(
+                "relative_to cannot be used with symmetric=True."
+            )
+
         multioutput = self.multioutput
 
         numer_values = (y_true - y_pred).abs()
 
         if self.symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
+        elif self.relative_to !="y_true":
+            denom_values = y_pred.abs()    
         else:
             denom_values = y_true.abs()
 
@@ -3086,7 +3119,8 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2,params3]
 
 
 class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
@@ -3133,6 +3167,13 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
           metric is applied to all data, ignoring level index.
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
+
+    relative_to : str, optional, default='y_true'
+        Specifies the reference values for normalizing the percentage error.
+        Can be either:
+        - 'y_true': normalize errors relative to the true values (default),
+        - 'y_pred': normalize errors relative to the predicted values.
+      
 
     by_index : bool, default=False
         Determines averaging over time points in direct call to metric object.
@@ -3197,9 +3238,11 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         symmetric=False,
         square_root=False,
         by_index=False,
+        relative_to="y_true",
     ):
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -3227,7 +3270,8 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2,params3]
 
 
 class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
@@ -3278,6 +3322,14 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
           metric is applied to all data, ignoring level index.
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
+
+
+    relative_to : str, optional, default='y_true'
+        Specifies the reference values for normalizing the percentage error.
+        Can be either:
+        - 'y_true': normalize errors relative to the true values (default),
+        - 'y_pred': normalize errors relative to the predicted values.
+     
 
     by_index : bool, default=False
         Determines averaging over time points in direct call to metric object.
@@ -3342,9 +3394,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         symmetric=False,
         square_root=False,
         by_index=False,
+        relative_to="y_true",
     ):
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -3372,7 +3426,8 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2,params3]
 
 
 class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
