@@ -76,6 +76,7 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
     --------
     >>> import numpy as np
     >>> from sktime.libs.fracdiff.sklearn.tol import window_from_tol_memory
+    >>> from sktime.libs.fracdiff import fdiff_coef
     >>> window_from_tol_memory(0.5, 0.2)
     9
     >>> np.sum(fdiff_coef(0.5, 10000)[9:])
