@@ -22,38 +22,39 @@ class VAR(_StatsModelsAdapter):
 
     Parameters
     ----------
-    maxlags: int or None (default=None)
-        Maximum number of lags to check for order selection,
-        defaults to 12 * (nobs/100.)**(1./4)
-    method : str (default="ols")
-        Estimation method to use
-    verbose : bool (default=False)
-        Print order selection output to the screen
-    trend : str {"c", "ct", "ctt", "n"} (default="c")
-        "c" - add constant
-        "ct" - constant and trend
-        "ctt" - constant, linear and quadratic trend
-        "n" - co constant, no trend
-        Note that these are prepended to the columns of the dataset.
-    missing: str, optional (default='none')
-        A string specifying if data is missing
-    freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
-        A frequency specification for either ``dates`` or the row labels from
-        the endog / exog data.
-    dates: array_like, optional (default=None)
-        An array like object containing dates.
-    ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
-        Information criterion to use for VAR order selection.
-        aic : Akaike
-        fpe : Final prediction error
-        hqic : Hannan-Quinn
-        bic : Bayesian a.k.a. Schwarz
-    random_state : int, RandomState instance or None, optional ,
-        default=None - If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by np.random.
-
+    maxlags : int or None, optional (default=None)
+        Maximum number of lags to check for order selection.
+        If None, defaults to 12 * (nobs / 100)^(1/4).
+    method : str, optional (default="ols")
+        Estimation method to use. Options include:
+        - "ols": Ordinary Least Squares
+        - "mle": Maximum Likelihood Estimation
+    verbose : bool, optional (default=False)
+        Whether to print order selection output during fitting.
+    trend : str, optional (default="c")
+        Specifies the deterministic trend term to include:
+        - "c" : constant (default)
+        - "ct" : constant and linear trend
+        - "ctt" : constant, linear and quadratic trend
+        - "n" : no constant, no trend
+    missing : str, optional (default="none")
+        How to handle missing data. Options:
+        - "none": no missing data
+        - "drop": drop missing observations
+        - "raise": raise error if missing data found
+    dates : array-like, optional (default=None)
+        Array-like of dates corresponding to the time series.
+    freq : str, tuple, datetime.timedelta, DateOffset, or None, optional (default=None)
+        Frequency of the time series data.
+    ic : str or None, optional (default=None)
+        Information criterion to use for lag order selection.
+        Valid values are:
+        - "aic": Akaike Information Criterion
+        - "fpe": Final Prediction Error
+        - "hqic": Hannan-Quinn Criterion
+        - "bic": Bayesian Information Criterion
+    random_state : int, RandomState instance, or None, optional (default=None)
+        Random seed or RandomState instance for reproducibility.
     References
     ----------
     [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
