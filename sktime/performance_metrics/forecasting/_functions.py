@@ -1630,6 +1630,7 @@ def median_absolute_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     symmetric=False,
+    by_forecast=False,
     relative_to="y_true",
     **kwargs,
 ):
@@ -1673,6 +1674,10 @@ def median_absolute_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    by_forecast : bool, default=False
+    If True, normalizes the percentage error by forecast values (y_pred).
+    Cannot be used at the same time as symmetric=True.
 
     relative_to : {'y_true', 'y_pred'}, default='y_true'
         Determines the denominator of the percentage error.
@@ -1730,6 +1735,15 @@ def median_absolute_percentage_error(
     symmetric=True)  # doctest: +SKIP
     np.float64(0.5066666666666666)
     """  # noqa: E501
+    if symmetric and by_forecast:
+        raise ValueError(
+            "'by_forecast=True' cannot be used with 'symmetric=True'. "
+            "Choose only one normalization mode."
+        )
+    if by_forecast:
+        relative_to = "y_pred"
+
+
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
@@ -1745,7 +1759,7 @@ def median_absolute_percentage_error(
         output_errors = _weighted_percentile(
             np.abs(
                 _percentage_error(
-                    y_pred, y_true, symmetric=symmetric, relative_to=relative_to
+                    y_true, y_pred, symmetric=symmetric, relative_to=relative_to
                 )
             ),
             sample_weight=horizon_weight,
