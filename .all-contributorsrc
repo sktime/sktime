@@ -3526,6 +3526,15 @@
       "contributions": [
         "maintenance"
       ]
+    },
+    {
+      "login": "jobs-git",
+      "name": "James Guana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13552004?v=4",
+      "profile": "https://github.com/jobs-git",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
