@@ -17,7 +17,6 @@ from sklearn.model_selection import KFold
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.parallel import parallelize
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -127,6 +126,8 @@ def _get_column_order_and_datatype(
     y_metadata = {
         "y_train": "object",
         "y_test": "object",
+        "X_train": "object",
+        "X_test": "object",
     }
     fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
     for scitype in metric_types:
@@ -252,6 +253,8 @@ def _evaluate_fold(x, meta):
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
+        temp_result["X_train"] = [X_train]
+        temp_result["X_test"] = [X_test]
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     column_order = _get_column_order_and_datatype(scoring, return_data)
@@ -456,18 +459,18 @@ def evaluate(
         _evaluate_fold_kwargs["classifier"] = classifier
         results.append(result)
 
-    if backend == "dask":
-        backend_in = "dask_lazy"
-    else:
-        backend_in = backend
+    # if backend == "dask":
+    #     backend_in = "dask_lazy"
+    # else:
+    #     backend_in = backend
 
-    results = parallelize(
-        fun=_evaluate_fold,
-        iter=enumerate(yx_splits),
-        meta=_evaluate_fold_kwargs,
-        backend=backend_in,
-        backend_params=backend_params,
-    )
+    # results = parallelize(
+    #     fun=_evaluate_fold,
+    #     iter=enumerate(yx_splits),
+    #     meta=_evaluate_fold_kwargs,
+    #     backend=backend_in,
+    #     backend_params=backend_params,
+    # )
 
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"]:
