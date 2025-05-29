@@ -200,12 +200,11 @@ def plot_interval(ax, interval_df):
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.utils.plotting import plot_interval
+    >>> from sktime.utils.plotting import plot_series, plot_interval
 
     >>> data = load_airline()
     >>> y_train, y_test = temporal_train_test_split(data, test_size=12)
@@ -220,26 +219,20 @@ def plot_interval(ax, interval_df):
     >>> y_test.index = y_test.index.to_timestamp()
     >>> interval_df.index = interval_df.index.to_timestamp()
 
-    >>> fig, ax = plt.subplots(figsize=(10, 5))  # doctest: +SKIP
-    >>> ax.plot(
-    ...     y_train.index,
-    ...     y_train,
-    ...     label='Training Data',
-    ...     color='blue')  # doctest: +SKIP
-    >>> ax.plot(
-    ...     y_test.index,
-    ...     y_test,
-    ...     label='Actual Test Data',
-    ...     color='orange')  # doctest: +SKIP
-
+    >>> fig, ax = plot_series(
+    ...     y_train, y_test, labels=["Train", "Test"],
+    ...     pred_interval=interval_df,
+    ... )  # doctest: +SKIP
     >>> plot_interval(ax, interval_df)  # doctest: +SKIP
 
     >>> ax.set_title('Predictions with Confidence Intervals')  # doctest: +SKIP
     >>> ax.set_xlabel('Date')  # doctest: +SKIP
     >>> ax.set_ylabel('Passengers')  # doctest: +SKIP
-    >>> plt.legend()  # doctest: +SKIP
-    >>> plt.show()  # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("seaborn")
+
     import seaborn as sns
 
     var_name = interval_df.columns.levels[0][0]
@@ -654,7 +647,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     --------
     >>> import numpy as np
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.utils.plotting import plot_calibration
 
@@ -664,7 +657,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     >>> # try to forecast 12 months ahead, from y_train
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
 
-    >>> forecaster = ThetaForecaster(sp=12)
+    >>> forecaster = NaiveForecaster(strategy="last")
     >>> forecaster.fit(y_train)  # doctest: +SKIP
 
     >>> pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.25, 0.5, 0.75, 0.9])  # doctest: +SKIP
@@ -672,7 +665,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     """  # noqa: E501
     from sktime.utils.dependencies import _check_soft_dependencies
 
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
     import pandas as pd
 
