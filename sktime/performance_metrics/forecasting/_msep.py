@@ -21,7 +21,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
     .. math::
         \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
-                            { \\sum_{i=1}^{n} \\frac{y_i}{n} }
+                            { \left| \\sum_{i=1}^{n} \\frac{y_i}{n} \right| }
 
     where:
     - \\( y_i \\) are the true values,
@@ -100,7 +100,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         raw_values = (y_true - y_pred) ** 2
         raw_values = self._get_weighted_df(raw_values, **kwargs)
         num = raw_values.mean()
-        denom = y_true.mean()
+        denom = y_true.mean().abs()
 
         msqe = num / denom
 
