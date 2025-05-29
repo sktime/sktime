@@ -121,12 +121,9 @@ def _check_scores(metrics) -> dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None
+    metric_types: dict, return_data: bool = True
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
-    others_metadata = {
-        "cutoff": cutoff_dtype,
-    }
     y_metadata = {
         "y_train": "object",
         "y_test": "object",
@@ -148,7 +145,6 @@ def _get_column_order_and_datatype(
             metrics_metadata[result_key] = "float"
             if return_data:
                 y_metadata[y_pred_key] = "object"
-    fit_metadata.update(others_metadata)
     if return_data:
         fit_metadata.update(y_metadata)
     metrics_metadata.update(fit_metadata)
@@ -173,13 +169,11 @@ def _evaluate_fold(x, meta):
     scoring = meta["scoring"]
     return_data = meta["return_data"]
     error_score = meta["error_score"]
-    cutoff_dtype = meta["cutoff_dtype"]
 
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
     pred_time = np.nan
-    cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
     temp_result = dict()
     y_preds_cache = dict()
@@ -228,9 +222,6 @@ def _evaluate_fold(x, meta):
                 score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
-        # get cutoff
-        cutoff = classifier.cutoff
-
     except Exception as e:
         if error_score == "raise":
             raise e
@@ -246,8 +237,8 @@ def _evaluate_fold(x, meta):
                 In evaluate, fitting of classifier {type(classifier).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
-                Fit failed for the {i}-th data split, on training data y_train with
-                cutoff {cutoff}, and len(y_train)={len(y_train)}.
+                Fit failed for the {i}-th data split, on training data y_train
+                , and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed classifier with parameters: {classifier}.
                 """,
@@ -255,22 +246,15 @@ def _evaluate_fold(x, meta):
                 stacklevel=2,
             )
 
-    if pd.isnull(cutoff):
-        cutoff_ind = cutoff
-    else:
-        cutoff_ind = cutoff[0]
-
     # Storing the remaining evaluate detail
     temp_result["fit_time"] = [fit_time]
 
-    temp_result["cutoff"] = [cutoff_ind]
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
-    result = result.astype({"cutoff": cutoff_dtype})
-    column_order = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    column_order = _get_column_order_and_datatype(scoring, return_data)
     result = result.reindex(columns=column_order.keys())
 
     return result, classifier
@@ -306,7 +290,6 @@ def evaluate(
 
     * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
     * runtimes for fitting and/or predicting, from 2, 3, in the ``i``-th loop
-    * cutoff state of ``classifier``, at 3, in the ``i``-th loop
     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
 
     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
@@ -432,13 +415,11 @@ def evaluate(
     X_mtype = X_metadata.get("mtype", None)
     X = convert(X, from_type=X_mtype, to_type=PANDAS_MTYPES)
 
-    cutoff_dtype = str(y.index.dtype)
     _evaluate_fold_kwargs = {
         "classifier": classifier,
         "scoring": scoring,
         "return_data": return_data,
         "error_score": error_score,
-        "cutoff_dtype": cutoff_dtype,
     }
 
     def gen_y_X_train_test(y, X, cv):
@@ -492,7 +473,7 @@ def evaluate(
     if backend in ["dask", "dask_lazy"]:
         import dask.dataframe as dd
 
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+        metadata = _get_column_order_and_datatype(scoring, return_data)
 
         results = dd.from_delayed(results, meta=metadata)
         if backend == "dask":
