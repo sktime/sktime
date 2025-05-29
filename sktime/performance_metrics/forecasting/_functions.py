@@ -17,7 +17,7 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
@@ -2528,7 +2528,9 @@ def geometric_mean_relative_squared_error(
 def relative_loss(
     y_true,
     y_pred,
+    y_pred_benchmark,
     relative_loss_function=mean_absolute_error,
+    loss_function=None,
     horizon_weight=None,
     multioutput="uniform_average",
     **kwargs,
@@ -2625,39 +2627,44 @@ def relative_loss(
     multioutput=[0.3, 0.7])  # doctest: +SKIP
     np.float64(0.927272727272727)
     """  # noqa: E501
-    y_pred_benchmark = _get_kwarg(
-        "y_pred_benchmark", metric_name="relative_loss", **kwargs
-    )
+    # y_pred_benchmark = _get_kwarg(
+    #     "y_pred_benchmark", metric_name="relative_loss", **kwargs
+    # )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    _, _, y_pred_benchmark, _ = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
+    )
 
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    # allow either a bare function or a MetricObject instance
-    if isinstance(relative_loss_function, BaseMetric):
+    # dispatch on metric object vs bare function
+
+    rel_fn = loss_function if loss_function is not None else relative_loss_function
+
+    if isinstance(rel_fn, BaseForecastingErrorMetric):
         eval_kwargs = {}
         if horizon_weight is not None:
             eval_kwargs["horizon_weight"] = horizon_weight
 
-        loss_preds = relative_loss_function.evaluate(
+        loss_preds = rel_fn.evaluate(
             y_true=y_true,
             y_pred=y_pred,
             **eval_kwargs,
         )
-        loss_benchmark = relative_loss_function.evaluate(
+        loss_benchmark = rel_fn.evaluate(
             y_true=y_true,
             y_pred=y_pred_benchmark,
             **eval_kwargs,
         )
     else:
-        # original behavior: bare function call
-        loss_preds = relative_loss_function(
+        loss_preds = rel_fn(
             y_true,
             y_pred,
             horizon_weight=horizon_weight,
             multioutput=multioutput,
         )
-        loss_benchmark = relative_loss_function(
+        loss_benchmark = rel_fn(
             y_true,
             y_pred_benchmark,
             horizon_weight=horizon_weight,
