@@ -1096,6 +1096,81 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Check that _repr_html_ call to instance does not raise exceptions."""
         estimator_instance._repr_html_()
 
+    def test_html_repr_content(self, estimator_instance):
+        """Check that _repr_html_ returns HTML with expected content structure.
+
+        This test validates that the HTML output contains:
+        1. Basic HTML structure (tags)
+        2. For selected representative estimators:
+            - Class name appears in the HTML
+            - Key parameters and their values appear in the HTML
+        """
+        html_output = estimator_instance._repr_html_()
+
+        # General check: output is a string with HTML structure
+        assert isinstance(html_output, str)
+        assert "<" in html_output and ">" in html_output
+
+        # Class name should appear in the HTML output
+        class_name = type(estimator_instance).__name__
+        assert class_name in html_output
+
+        # Specific checks for representative estimators
+        try:
+            from sktime.forecasting.naive import NaiveForecaster
+        except ImportError:
+            NaiveForecaster = None
+
+        if NaiveForecaster is not None and isinstance(
+            estimator_instance, NaiveForecaster
+        ):
+            # Check for important parameters
+            params = estimator_instance.get_params()
+            assert "strategy" in html_output
+            strategy_value = str(params.get("strategy"))
+            assert strategy_value in html_output
+
+        # Add a transformer check (Imputer)
+        try:
+            from sktime.transformations.series.impute import Imputer
+        except ImportError:
+            Imputer = None
+
+        if Imputer is not None and isinstance(estimator_instance, Imputer):
+            params = estimator_instance.get_params()
+            assert "method" in html_output
+            method_value = str(params.get("method"))
+            assert method_value in html_output
+
+        # Add a pipeline check (ForecastingPipeline)
+        try:
+            from sktime.pipeline import ForecastingPipeline
+        except ImportError:
+            ForecastingPipeline = None
+
+        if ForecastingPipeline is not None and isinstance(
+            estimator_instance, ForecastingPipeline
+        ):
+            # For pipelines, check if the steps are somehow represented
+            # At minimum, the word "steps" should appear
+            assert "steps" in html_output
+
+            # Try to check for step names if steps are available
+            steps = getattr(estimator_instance, "steps_", None)
+            if steps is None:
+                steps = getattr(estimator_instance, "steps", None)
+
+            if steps and len(steps) > 0:
+                # The first step name should appear in the HTML
+                try:
+                    first_step_name = steps[0][
+                        0
+                    ]  # Assuming format is [(name, estimator), ...]
+                    assert first_step_name in html_output
+                except (IndexError, TypeError):
+                    # Skip if steps structure is different than expected
+                    pass
+
     def test_constructor(self, estimator_class):
         """Check that the constructor has sklearn compatible signature and behaviour.
 
