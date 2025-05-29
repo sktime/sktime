@@ -59,8 +59,8 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
 
     Examples
     --------
-    >>> import sktime.classification.distance_based as db_clf  # doctest: +SKIP
-    >>> from db_clf import KNeighborsTimeSeriesClassifierTslearn  # doctest: +SKIP
+    >>> from sktime.classification.distance_based import ( # doctest: +SKIP
+    ...    KNeighborsTimeSeriesClassifierTslearn) # doctest: +SKIP
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
