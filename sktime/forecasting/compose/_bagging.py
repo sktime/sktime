@@ -85,7 +85,7 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": PANDAS_MTYPES,
@@ -119,10 +119,11 @@ class BaggingForecaster(BaseForecaster):
 
         super().__init__()
 
-        # set the tags based on forecaster
+        # set the tags based on forecaster, including missing_values capability
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:missing_values",
         ]
         if forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
