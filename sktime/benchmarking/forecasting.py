@@ -125,6 +125,8 @@ def forecasting_validation(
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
 
     cv_global:  sklearn splitter, or sktime instance splitter, optional, default=None
@@ -341,6 +343,8 @@ class ForecastingBenchmark(BaseBenchmark):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+            - "verbose": bool, default=False; if False, supresses logger on
+                ray init
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
