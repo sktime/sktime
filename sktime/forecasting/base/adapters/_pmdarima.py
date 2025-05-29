@@ -16,13 +16,15 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
-        "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
-        "maintainers": "hyang1996",
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
+        "handles-missing-data": False,
+        "authors": ["hyang1996"],
+        "maintainers": "hyang1996",
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "capability:missing_values": True,
+        "capability:missing_values": False,
         # TODO 0.38.0: check if numpy 2 incompatiblity can be removed
         "python_dependencies": ["pmdarima", "numpy<2"],
     }
