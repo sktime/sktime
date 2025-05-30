@@ -241,5 +241,12 @@ class GreykiteForecaster(BaseForecaster):
             {
                 "model_template": "SILVERKITE",
                 "date_format": None,
+                "coverage": 0.95,
+            },
+            {
+                "model_template": "PROPHET",
+                "date_format": "%Y-%m-%d",
+                "forecast_config": None,
+                "coverage": 0.75,
             },
         ]
