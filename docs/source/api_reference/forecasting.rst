@@ -1,3 +1,16 @@
+.. warning::
+
+   The class ``ExpandingWindowSplitter`` has been moved from
+   ``sktime.forecasting.model_selection`` to ``sktime.split``.
+
+   Please update your imports accordingly:
+
+   ::
+
+       from sktime.split import ExpandingWindowSplitter
+
+
+
 
 .. _forecasting_ref:
 
