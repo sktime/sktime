@@ -231,7 +231,9 @@ class ShapeDTW(BaseClassifier):
         self.metric_params = {k.lower(): v for k, v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
-        if isinstance(self.metric_params.get("weighting_factor"), float):
+        if isinstance(self.metric_params.get("weighting_factor"), float) or isinstance(
+            self.metric_params.get("weighting_factor"), int
+        ):
             self.weighting_factor = self.metric_params.get("weighting_factor")
         else:
             if isinstance(self.metric_params.get("weighting_factor"), list):
