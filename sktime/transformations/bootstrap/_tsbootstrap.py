@@ -24,18 +24,19 @@ class TSBootstrapAdapter(BaseTransformer):
         The splitter used for the bootstrap splitting.
     include_actual : bool, default=False
         Whether to include the actual data in the output.
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.bootstrap import TSBootstrapAdapter
-    >>> from tsbootstrap import (
-    ...    MovingBlockBootstrap,
-    ...    MovingBlockBootstrapConfig
-    ... ) # doctest: +SKIP
+    >>> from tsbootstrap import MovingBlockBootstrap, # doctest: +SKIP
     >>> y = load_airline()
-    >>> config = MovingBlockBootstrapConfig(10, n_bootstraps=10)  # doctest: +SKIP
-    >>> bootstrap = TSBootstrapAdapter(MovingBlockBootstrap(config))  # doctest: +SKIP
+    >>> bootstrap = TSBootstrapAdapter(
+    ...    MovingBlockBootstrap(n_bootstrap=10, block_length=10)
+    ... )  # doctest: +SKIP
     >>> result = bootstrap.fit_transform(y)  # doctest: +SKIP
     """
 
@@ -59,15 +60,18 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
+        "capability:bootstrap_index": True,
     }
 
     def __init__(
         self,
         bootstrap,
         include_actual=False,
+        return_indices=False,
     ):
         self.bootstrap = bootstrap
         self.include_actual = include_actual
+        self.return_indices = return_indices
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -87,9 +91,20 @@ class TSBootstrapAdapter(BaseTransformer):
         -------
         transformed version of X
         """
-        bootstrapped_samples = self.bootstrap.bootstrap(X, test_ratio=0)
+        # Need to be cloned otherwise it helds a inner state and fails during update
+        bootstrapped_samples = self.bootstrap.clone().bootstrap(
+            X, test_ratio=0, return_indices=True
+        )
 
         def wrap_df(spl):
+            if isinstance(spl, tuple):
+                index = spl[1]
+                spl = spl[0]
+                df = pd.DataFrame(spl, index=X.index, columns=X.columns)
+                return pd.concat(
+                    [df, pd.Series(index, X.index, name="resampled_index")], axis=1
+                )
+
             return pd.DataFrame(spl, index=X.index, columns=X.columns)
 
         bootstrapped_samples = [wrap_df(sample) for sample in bootstrapped_samples]
@@ -100,7 +115,12 @@ class TSBootstrapAdapter(BaseTransformer):
             bootstrapped_samples = [X_actual] + bootstrapped_samples
             spl_keys = ["actual"] + spl_keys
 
-        return pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
+        df = pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
+        if self.return_indices:
+            return df
+        else:
+            del df["resampled_index"]
+            return df
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
