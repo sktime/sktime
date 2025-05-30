@@ -3158,7 +3158,7 @@
       ]
     },
     {
-      "login": "Garve",
+      "login": "RobKuebler",
       "name": "Robert Kübler",
       "avatar_url": "https://avatars.githubusercontent.com/u/932327?v=4",
       "profile": "https://linkedin.com/in/robert-kuebler",
@@ -3486,6 +3486,17 @@
       ]
     },
     {
+      "login": "OmBiradar",
+      "name": "Om Biradar",
+      "avatar_url": "https://avatars.githubusercontent.com/OmBiradar",
+      "profile": "https://github.com/OmBiradar",
+      "contributions": [
+        "code",
+        "bug",
+        "doc"
+      ]
+    },
+    {
       "login": "gbilleyPeco",
       "name": "Graham Billey",
       "avatar_url": "https://avatars.githubusercontent.com/u/119866794?v=4",
@@ -3496,6 +3507,23 @@
       "doc",
       "ideas"
       ]
+    },
+    {
+      "login": "",
+      "name": "Martin Tveten",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18215310?v=4",
+      "profile": "https://github.com/Tveten",
+      "contributions": [
+        "code",
+        "design"
+      ],
+      "login": "jobs-git",
+      "name": "James Guana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13552004?v=4",
+      "profile": "https://github.com/jobs-git",
+      "contributions": [
+        "code"
+      ],
     }
   ]
 }
