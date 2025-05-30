@@ -771,6 +771,7 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "capability:missing_values": False,
     }
 
     def _transform(self, y, X=None):
@@ -1429,6 +1430,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "capability:missing_values": False,
     }
 
     _estimator_scitype = "time-series-regressor"
