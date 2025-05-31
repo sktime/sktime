@@ -146,7 +146,7 @@ class BaseBenchmark:
         )
         self.estimators.register(id=estimator_id, entry_point=estimator.clone)
 
-    def _run(self, *args, **kkwargs) -> pd.DataFrame:
+    def _run(self, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Method not implemented in base class.")
 
     def run(self, output_file: str, force_rerun: Union[str, list[str]] = "none"):
