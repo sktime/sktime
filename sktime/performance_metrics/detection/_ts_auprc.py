@@ -38,7 +38,11 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
     if integration == "riemann":
         area = -np.sum(np.diff(recall) * precision[:-1])
     else:
-        area = auc(recall, precision)
+        sorted_indices = np.argsort(recall)
+        recall_sorted = recall[sorted_indices]
+        precision_sorted = precision[sorted_indices]
+        area = auc(recall_sorted, precision_sorted)
+
 
     return area
 
@@ -100,17 +104,19 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
     Examples
     --------
     >>> import numpy as np
+    >>> import pandas as pd
     >>> from sktime.performance_metrics.detection import TimeSeriesAUPRC
     >>> ts_auprc = TimeSeriesAUPRC(with_scores=True)
-    >>> y_true = np.array([0, 0, 1, 1, 0, 0, 1])
-    >>> y_pred = np.array([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
-    >>> area = ts_auprc.evaluate(y_true, y_pred)  # doctest: +SKIP
+    >>> y_true = pd.DataFrame([0, 0, 1, 1, 0, 0, 1])
+    >>> y_pred = pd.DataFrame([0.1, 0.3, 0.7, 0.8, 0.2, 0.0, 0.9])
+    >>> area = ts_auprc.evaluate(y_true, y_pred)
     """
 
     _tags = {
         "object_type": ["metric_detection", "metric"],
         "requires_X": False,  # not using X by default
         "requires_y_true": True,  # supervised metric
+        "y_type": "numpy3D",
     }
 
     def __init__(
@@ -156,17 +162,21 @@ class TimeSeriesAUPRC(BaseDetectionMetric):
         self._integration = self.integration
         self._weighted_precision = self.weighted_precision
         self._with_scores = self.with_scores
+
         if not self._with_scores:
-            n_timepoints = max(max(y_pred["ilocs"]), max(y_true["ilocs"])) + 1
+            y_true_np = y_true.to_numpy().flatten()
+            y_pred_np = y_pred.to_numpy().flatten()
+            n_timepoints = max(np.max(y_pred_np), np.max(y_true_np)) + 1
             scores = np.zeros(n_timepoints)
-            for pred_idx in y_pred["ilocs"]:
-                distances = np.abs(pred_idx - y_true["ilocs"])
+            for pred_idx in y_pred_np:
+                distances = np.abs(pred_idx - y_true_np)
                 scores[pred_idx] = 1 / (1 + np.min(distances))
             true_events = np.zeros(n_timepoints, dtype=bool)
-            true_events[y_true["ilocs"]] = True
+            true_events[y_true_np] = True
         else:
-            true_events = y_true
-            scores = y_pred
+            true_events = y_true.to_numpy().flatten()
+            scores = y_pred.to_numpy().flatten()
+
         return _ts_auprc(
             true_events,
             scores,
