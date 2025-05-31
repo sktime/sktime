@@ -1,4 +1,4 @@
-.. warning::
+.. note::
 
    The class ``ExpandingWindowSplitter`` has been moved from
    ``sktime.forecasting.model_selection`` to ``sktime.split``.
