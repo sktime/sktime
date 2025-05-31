@@ -169,8 +169,9 @@ class SubLOF(BaseDetector):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to fit model to (time series).
+            Will be converted to internal format.
         """
         model_params = {
             "n_neighbors": self.n_neighbors,
@@ -183,8 +184,6 @@ class SubLOF(BaseDetector):
             "novelty": self.novelty,
             "n_jobs": self.n_jobs,
         }
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
 
         intervals = self._split_into_intervals(X.index, self.window_size)
         self.models = {
