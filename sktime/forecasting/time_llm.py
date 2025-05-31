@@ -71,7 +71,7 @@ class TimeLLMForecaster(BaseForecaster):
     ...     llm_model='GPT2'
     ... )
     >>> forecaster.fit(y, fh=[1])
-    TimeLLMForecaster(pred_len=1)
+    TimeLLMForecaster(pred_len=36)
     >>> y_pred = forecaster.predict(fh=[1])
     """
 
