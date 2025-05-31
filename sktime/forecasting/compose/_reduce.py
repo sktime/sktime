@@ -485,6 +485,7 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "capability:missing_values": False,
     }
 
     def __init__(
@@ -1107,6 +1108,7 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": True,
+        "capability:missing_values": False,
     }
 
     def _transform(self, y, X=None):
@@ -2768,7 +2770,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "capability:missing_values": True,
+        "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,
