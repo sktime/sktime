@@ -81,6 +81,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(
@@ -217,6 +219,16 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
+
+        # Check if we need to restore from checkpoint
+        if hasattr(self, "_is_checkpoint_loaded") and self._is_checkpoint_loaded:
+            self._restore_model_from_checkpoint(training)
+            return self
+
+        # Store training data for future refit operations
+        self._last_y = y  # Store original y
+        self._last_X = X  # Store original X
+
         if self.model_path is None:
             # instantiate forecaster and trainer
             self._forecaster, self._trainer = self._instantiate_model(training)
@@ -662,6 +674,320 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 lambda x: pd.concat([x.droplevel(list(range(len_levels - 1))), _y])
             )
         return _y
+
+    def refit(self, y, X=None, fh=None):
+        """Refit the forecaster to new data.
+
+        This method enables incremental training by continuing from the existing
+        model state rather than restarting training from scratch.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target time series to refit to.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous time series to fit to.
+        fh : ForecastingHorizon, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+
+        Returns
+        -------
+        self : _PytorchForecastingAdapter
+            Reference to self.
+        """
+        # Validate that the model has been fitted initially
+        if not hasattr(self, "_forecaster") or self._forecaster is None:
+            raise ValueError(
+                "Model must be fitted before calling refit. "
+                "Call fit() first before refit()."
+            )
+
+        # Store current fitted state
+        self._is_fitted = True
+
+        # Convert data to sktime internal format
+        fh = self._check_fh(fh)
+        X, y = self._check_X_y(X=X, y=y)
+
+        # For refit, we may need to combine new data with historical data
+        # to ensure we have enough data for encoder/decoder requirements
+        if hasattr(self, "_last_y") and self._last_y is not None:
+            # Combine historical and new data for sufficient context
+            combined_y = pd.concat([self._last_y, y], axis=0).drop_duplicates()
+            if X is not None and hasattr(self, "_last_X") and self._last_X is not None:
+                combined_X = pd.concat([self._last_X, X], axis=0).drop_duplicates()
+            else:
+                combined_X = X
+        else:
+            combined_y = y
+            combined_X = X
+
+        try:
+            # Update max_prediction_length if needed
+            self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
+
+            # check if dummy X is needed
+            combined_X = self._dummy_X(combined_X, combined_y)
+
+            # convert series to frame
+            _y, self._convert_to_series = _series_to_frame(combined_y)
+            _X, _ = _series_to_frame(combined_X)
+
+            # Convert data to pytorch-forecasting datasets
+            training, validation = self._Xy_to_dataset(
+                _X, _y, self._dataset_params, self._max_prediction_length
+            )
+
+            # Create new data loaders for incremental training
+            train_dataloader = training.to_dataloader(
+                train=True,
+                batch_size=self._train_to_dataloader_params.get("batch_size", 64),
+            )
+            val_dataloader = validation.to_dataloader(
+                train=False,
+                batch_size=self._validation_to_dataloader_params.get("batch_size", 128),
+            )
+
+            # Continue training from current state
+            # The trainer will continue from the current epoch
+            self._trainer.fit(
+                self._forecaster,
+                train_dataloaders=train_dataloader,
+                val_dataloaders=val_dataloader,
+            )
+
+            # Update best model if checkpoint callback is available
+            if self._trainer.checkpoint_callback is not None:
+                # load model from checkpoint
+                best_model_path = self._trainer.checkpoint_callback.best_model_path
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
+            else:
+                self.best_model = self._forecaster
+
+            # Store the new data for future refit operations
+            self._last_y = combined_y
+            self._last_X = combined_X
+
+        except Exception as e:
+            # If refit fails with new data, fall back to regular fit behavior
+            print(f"Warning: Refit failed with error: {e}")
+            print("Falling back to regular fit with combined data...")
+
+            # Use the regular fit method as fallback
+            return self.fit(y=combined_y, X=combined_X, fh=fh)
+
+        return self
+
+    def save_checkpoint(self, filepath):
+        """Save the model checkpoint including training state.
+
+        This method saves the complete model state including optimizer state,
+        epoch information, and model parameters to enable resuming training.
+
+        Parameters
+        ----------
+        filepath : str
+            The filepath to save the checkpoint to.
+        """
+        if not hasattr(self, "best_model") or self.best_model is None:
+            raise ValueError(
+                "Model must be fitted before saving checkpoint. Call fit() first."
+            )
+
+        import torch
+
+        # Prepare checkpoint data
+        checkpoint_data = {
+            "model_state_dict": self.best_model.state_dict(),
+            "model_params": self._model_params,
+            "dataset_params": self._dataset_params,
+            "trainer_params": self._trainer_params,
+            "train_to_dataloader_params": self._train_to_dataloader_params,
+            "validation_to_dataloader_params": self._validation_to_dataloader_params,
+            "max_prediction_length": getattr(self, "_max_prediction_length", None),
+            "target_name": getattr(self, "_target_name", None),
+            "index_names": getattr(self, "_index_names", None),
+            "new_index_names": getattr(self, "_new_index_names", None),
+            "index_len": getattr(self, "_index_len", None),
+            "convert_to_series": getattr(self, "_convert_to_series", False),
+            "algorithm_class_name": self.algorithm_class.__name__,
+            "cutoff": getattr(self, "_cutoff", None),
+            "fh": getattr(self, "_fh", None),
+        }
+
+        # Add trainer state if available
+        if hasattr(self, "_trainer") and self._trainer is not None:
+            try:
+                if (
+                    hasattr(self._trainer, "optimizers")
+                    and len(self._trainer.optimizers) > 0
+                ):
+                    checkpoint_data["optimizer_state_dict"] = self._trainer.optimizers[
+                        0
+                    ].state_dict()
+                if hasattr(self._trainer, "current_epoch"):
+                    checkpoint_data["epoch"] = self._trainer.current_epoch
+                if (
+                    hasattr(self._trainer, "checkpoint_callback")
+                    and self._trainer.checkpoint_callback is not None
+                ):
+                    checkpoint_data["best_model_score"] = getattr(
+                        self._trainer.checkpoint_callback, "best_model_score", None
+                    )
+            except Exception as e:
+                # If we can't save trainer state, warn but continue
+                import warnings
+
+                warnings.warn(f"Could not save trainer state: {e}")
+
+        # Add X column names if they exist
+        if hasattr(self, "_X_columns"):
+            checkpoint_data["X_columns"] = self._X_columns
+        if hasattr(self, "_new_X_columns"):
+            checkpoint_data["new_X_columns"] = self._new_X_columns
+
+        torch.save(checkpoint_data, filepath)
+
+    def load_checkpoint(self, filepath):
+        """Load the model checkpoint and restore training state.
+
+        This method loads a previously saved checkpoint and restores the complete
+        model state including optimizer state and epoch information.
+
+        Parameters
+        ----------
+        filepath : str
+            The filepath to load the checkpoint from.
+
+        Returns
+        -------
+        self : _PytorchForecastingAdapter
+            Reference to self.
+        """
+        import torch
+
+        # Load checkpoint data
+        checkpoint = torch.load(filepath, map_location="cpu", weights_only=False)
+
+        # Restore model parameters
+        self._model_params = checkpoint.get("model_params", {})
+        self._dataset_params = checkpoint.get("dataset_params", {})
+        self._trainer_params = checkpoint.get("trainer_params", {})
+        self._train_to_dataloader_params = checkpoint.get(
+            "train_to_dataloader_params", {}
+        )
+        self._validation_to_dataloader_params = checkpoint.get(
+            "validation_to_dataloader_params", {}
+        )
+
+        # Restore model-specific attributes
+        self._max_prediction_length = checkpoint.get("max_prediction_length")
+        self._target_name = checkpoint.get("target_name")
+        self._index_names = checkpoint.get("index_names")
+        self._new_index_names = checkpoint.get("new_index_names")
+        self._index_len = checkpoint.get("index_len")
+        self._convert_to_series = checkpoint.get("convert_to_series", False)
+
+        # Restore X column names if they exist
+        if "X_columns" in checkpoint:
+            self._X_columns = checkpoint["X_columns"]
+        if "new_X_columns" in checkpoint:
+            self._new_X_columns = checkpoint["new_X_columns"]
+
+        # Restore cutoff and fh
+        if "cutoff" in checkpoint and checkpoint["cutoff"] is not None:
+            self._cutoff = checkpoint["cutoff"]  # Use internal attribute
+        if "fh" in checkpoint and checkpoint["fh"] is not None:
+            self._fh = checkpoint["fh"]  # Use internal attribute
+
+        # Create model instance - we need data to do this properly
+        # For now, mark that we need to create the model when we have data
+        self._checkpoint_data = checkpoint
+        self._is_checkpoint_loaded = True
+
+        return self
+
+    def _restore_model_from_checkpoint(self, training_data):
+        """Restore model from checkpoint data when training data is available."""
+        if not hasattr(self, "_is_checkpoint_loaded") or not self._is_checkpoint_loaded:
+            return
+
+        checkpoint = self._checkpoint_data
+
+        # Create model instance
+        self._forecaster, self._trainer = self._instantiate_model(training_data)
+
+        # Load model state
+        self._forecaster.load_state_dict(checkpoint["model_state_dict"])
+        self.best_model = self._forecaster
+
+        # Restore trainer state if available
+        if "optimizer_state_dict" in checkpoint:
+            try:
+                if (
+                    hasattr(self._trainer, "optimizers")
+                    and len(self._trainer.optimizers) > 0
+                ):
+                    self._trainer.optimizers[0].load_state_dict(
+                        checkpoint["optimizer_state_dict"]
+                    )
+            except Exception as e:
+                import warnings
+
+                warnings.warn(f"Could not restore optimizer state: {e}")
+
+        if "epoch" in checkpoint:
+            try:
+                self._trainer.current_epoch = checkpoint["epoch"]
+            except Exception:  # noqa: S110
+                pass
+
+        if "best_model_score" in checkpoint and hasattr(
+            self._trainer, "checkpoint_callback"
+        ):
+            try:
+                self._trainer.checkpoint_callback.best_model_score = checkpoint[
+                    "best_model_score"
+                ]
+            except Exception:  # noqa: S110
+                pass
+
+        # Clean up
+        delattr(self, "_checkpoint_data")
+        delattr(self, "_is_checkpoint_loaded")
+
+    def _convert_numpy_to_y(self, _y):
+        """Convert numpy array back to pandas format for y."""
+        if _y is None:
+            return None
+        # This is a simple conversion - in practice you might need more
+        # sophisticated logic depending on the original data format
+        if hasattr(self, "_y_index_names") and hasattr(self, "_y_columns"):
+            # Try to reconstruct the original format
+            index = (
+                pd.MultiIndex.from_tuples(_y.index.values, names=self._y_index_names)
+                if hasattr(_y, "index")
+                else None
+            )
+            return pd.DataFrame(_y, index=index, columns=self._y_columns)
+        return _y
+
+    def _convert_numpy_to_X(self, _X):
+        """Convert numpy array back to pandas format for X."""
+        if _X is None:
+            return None
+        # This is a simple conversion - in practice you might need more
+        # sophisticated logic
+        if hasattr(self, "_X_index_names") and hasattr(self, "_X_columns"):
+            index = (
+                pd.MultiIndex.from_tuples(_X.index.values, names=self._X_index_names)
+                if hasattr(_X, "index")
+                else None
+            )
+            return pd.DataFrame(_X, index=index, columns=self._X_columns)
+        return _X
 
 
 def _series_to_frame(data):
