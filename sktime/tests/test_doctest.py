@@ -8,7 +8,6 @@ from functools import lru_cache
 
 from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils._testing.doctest import run_doctest
 
 EXCLUDE_MODULES_STARTING_WITH = ("all", "test", "contrib", "mlflow")
 
@@ -113,4 +112,6 @@ def pytest_generate_tests(metafunc):
 
 def test_all_functions_doctest(func):
     """Run doctest for all functions in sktime."""
+    from skbase.utils.doctest_run import run_doctest
+
     run_doctest(func, name=f"function {func.__name__}")
