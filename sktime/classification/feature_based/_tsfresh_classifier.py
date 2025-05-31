@@ -229,7 +229,9 @@ class TSFreshClassifier(BaseClassifier):
 
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            X_t = self._transformer.transform(X)
+            X_t = X_t.reindex(self._Xt_colnames, axis=1, fill_value=0)
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
             X_t = self._transformer.transform(X)
