@@ -521,7 +521,7 @@ class SkforecastRecursive(BaseForecaster):
         - ``random_state``
         - ``dtype``
 
-        Argument ``method`` is passed internally to the fucntion ``numpy.percentile``.
+        Argument ``method`` is passed internally to the function ``numpy.percentile``.
 
     References
     ----------

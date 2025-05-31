@@ -41,7 +41,7 @@ def is_monotonically_increasing(obj):
 
 
 def _convert_period_index_to_datetime_index(obj):
-    """Convert PeriodIndex to DatatimeIndex as polars only supports DatetimeIndex."""
+    """Convert PeriodIndex to DatetimeIndex as polars only supports DatetimeIndex."""
     import pandas as pd
 
     if isinstance(obj.index, pd.PeriodIndex):

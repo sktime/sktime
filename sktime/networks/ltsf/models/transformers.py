@@ -25,12 +25,12 @@ class LTSFTransformerNetwork:
     ----------
     seq_len : int
         Length of the input sequence.
-        Preffered to be twice the pred_len.
+        Preferred to be twice the pred_len.
     pred_len : int
         Length of the prediction sequence.
     context_len : int, optional (default=2)
         Length of the label sequence.
-        Preffered to be same as the pred_len.
+        Preferred to be same as the pred_len.
     position_encoding : bool, optional (default=True)
         Whether to use positional encoding.
         Positional encoding helps the model understand the order of elements

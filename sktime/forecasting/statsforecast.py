@@ -351,7 +351,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
 
-    decomposition_type : str, optional, default="multipliciative"
+    decomposition_type : str, optional, default="multiplicative"
         possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
