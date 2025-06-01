@@ -26,7 +26,35 @@ Forecasting
 Point forecasts - classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Average losses
+^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanAbsoluteError
+    MeanSquaredError
+    MedianAbsoluteError
+    MedianSquaredError
+
+Percentage errors
+^^^^^^^^^^^^^^^^^
+
 .. currentmodule:: sktime.performance_metrics.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanAbsolutePercentageError
+    MedianAbsolutePercentageError
+    MeanSquaredPercentageError
+    MedianSquaredPercentageError
+    MeanSquaredErrorPercentage
+
+Scaled errors
+^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: auto_generated/
@@ -36,23 +64,40 @@ Point forecasts - classes
     MedianAbsoluteScaledError
     MeanSquaredScaledError
     MedianSquaredScaledError
-    MeanAbsoluteError
-    MeanSquaredError
-    MedianAbsoluteError
-    MedianSquaredError
-    GeometricMeanAbsoluteError
-    GeometricMeanSquaredError
-    MeanAbsolutePercentageError
-    MedianAbsolutePercentageError
-    MeanSquaredPercentageError
-    MedianSquaredPercentageError
+
+Relative errors
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
+    RelativeLoss
+
+Geometric errors
+^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    GeometricMeanAbsoluteError
+    GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+Under- and over-prediction errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
     MeanAsymmetricError
     MeanLinexError
-    RelativeLoss
+
 
 Point forecasts - functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,6 +143,7 @@ Quantile and interval forecasts
     PinballLoss
     EmpiricalCoverage
     ConstraintViolation
+    IntervalWidth
 
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +183,7 @@ Event detection - anomalies, outliers
 .. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: function.rst
 
