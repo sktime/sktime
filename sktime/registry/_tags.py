@@ -341,6 +341,39 @@ class env_marker(_BaseTag):
     }
 
 
+class test_only_estimator(_BaseTag):
+    """Tag to determine test execution strategy of estimator in sktime CI.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    ``sktime``'s CI framework regularly tests various estimators in pull requests,
+    along with the estimator that is being implemented or modified. If the base
+    module has been modified, then all estimators that inherit from the
+    base module are also tested.
+
+    The `test_only_estimator` tag is used to indicate whether the tests for the
+    estimator should only be run when the estimator itself is modified.
+    Therefore pull requests that do not modify the estimator will not trigger
+    tests for the estimator, including base classes that the estimator
+    inherits from.
+
+    This tag should be set to ``True`` if you would like tests for the estimator to
+    not be triggered unless the estimator/class itself is modified in a pull
+    request. This tag is primarily used for estimators that use high amounts of
+    resources to complete estimator tests, such as time series models built on
+    top of large language models that contain many parameters.
+    This tag should be used sparingly, as it can lead to reduced test coverage.
+    """
+
+    _tags = {
+        "tag_name": "test_only_estimator",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether or not the estimator should only be tested when itself has changed",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class requires_cython(_BaseTag):
     """Whether the object requires a C compiler present, such as libomp, gcc.
 
