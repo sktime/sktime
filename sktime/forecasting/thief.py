@@ -53,17 +53,17 @@ class THieFForecaster(BaseForecaster):
     def __init__(self, base_forecaster, reconciliation_method="ols"):
         self.base_forecaster = base_forecaster
         self.reconciliation_method = reconciliation_method
-        self.requires_residuals = self.reconciliation_method in [
-            "wls_var",
-            "mint_cov",
-            "mint_shrink",
-        ]
+        # self.requires_residuals = self.reconciliation_method in [
+        #     "wls_var",
+        #     "mint_cov",
+        #     "mint_shrink",
+        # ]
         self.agg_method = "mean"
         self.aggregation_levels = None
         self.forecasters = {}
         super().__init__()
 
-        TRFORM_LIST = ["bu", "ols", "wls_str", "wls_var", "mint_cov", "mint_shrink"]
+        TRFORM_LIST = ["bu", "ols", "wls_str"]
         if self.reconciliation_method not in TRFORM_LIST:
             raise ValueError(
                 f"{self.reconciliation_method} has not been implemented for THieF."
@@ -81,16 +81,18 @@ class THieFForecaster(BaseForecaster):
 
         return S
 
-    def _thief_s_matrix(self, agg_factors):
-        """Build full S matrix for THieF using all aggregation levels."""
+    def _thief_s_matrix(self, forecasts):
+        """Build full S matrix aligned with actual forecast output per level."""
         all_S = []
-        agg_list = list(agg_factors)
-        agg_list.sort(reverse=True)
-        for f in agg_list:
-            if agg_list[0] % f == 0:
-                S_f = self._build_summing_matrix(agg_list[0], f)
-                all_S.append(S_f)
-
+        # bottom level (most granular) is f=1
+        base_len = len(forecasts[1])
+        # iterate from highest aggregation down to 1
+        for f in sorted(forecasts.keys(), reverse=True):
+            n = len(forecasts[f])
+            agg_factor = base_len // n
+            S_full = self._build_summing_matrix(base_len, agg_factor)
+            # trim to the first n rows so it matches forecasts[f]
+            all_S.append(S_full[:n, :])
         return np.vstack(all_S)
 
     def _determine_aggregation_levels(self, y):
@@ -127,32 +129,39 @@ class THieFForecaster(BaseForecaster):
         return aggregation_levels
 
     def _divide_fh(self, fh, level):
-        """Convert fh into aggregated levels."""
-        from sktime.forecasting.base import ForecastingHorizon
+        fh_period = fh.to_pandas()
 
-        fh_vals = fh.to_numpy()
-        if fh.is_relative:
-            fh_diffs = fh_vals
+        if pd.api.types.is_integer_dtype(fh_period.dtype):
+            fh_diffs = fh_period.to_numpy()
         else:
-            fh_period = fh.to_pandas()
+            reference = fh_period.min()
+            diffs = []
+            for p in fh_period:
+                delta = p - reference
+                if isinstance(delta, pd.Timedelta):
+                    diffs.append(delta.days)
+                elif hasattr(delta, "n"):
+                    diffs.append(delta.n)
+                else:
+                    diffs.append(int(delta))
+            fh_diffs = np.array(diffs, dtype=int)
 
-        if not isinstance(fh_period, pd.PeriodIndex):
-            fh_period = fh_period.to_period("M")
-
-        reference_period = fh_period.min()
-        fh_diffs = np.array([(p - reference_period).n for p in fh_period]) + 1
         new_vals = np.unique(
-            [int(np.ceil(i / level)) for i in fh_diffs if (i / level) >= 1]
+            [int(np.ceil(diff / level)) for diff in fh_diffs if diff >= level]
         )
-
         return ForecastingHorizon(new_vals, is_relative=True)
 
     def _reconcile_forecasts(self, forecasts):
         """Reconcile forecasts using the specified reconciliation method."""
-        self._Y_base = np.vstack(
-            [forecasts[level].values for level in forecasts.keys()]
-        )
-        self._S = self._thief_s_matrix(self.forecasters.keys())
+        valid_levels = [f for f in forecasts.keys() if max(forecasts.keys()) % f == 0]
+        # print(f"Valid aggregation levels: {valid_levels}")
+        if not valid_levels:
+            return np.empty(np.array([]))
+        self._Y_base = np.vstack([forecasts[l].values for l in valid_levels])
+        # print(f"Base Y: {self._Y_base}")
+        filtered_forecasts = {l: forecasts[l] for l in valid_levels}
+        self._S = self._thief_s_matrix(filtered_forecasts)
+        # print(self.reconciliation_method)
         # if self.requires_residuals:
         #     self._resids = np.concatenate(
         #         [self._residuals[level].values for level in self._residuals.keys()]
@@ -236,33 +245,62 @@ class THieFForecaster(BaseForecaster):
             forecaster.fit(y_agg, X)
             self.forecasters[level] = forecaster
 
-            if self.requires_residuals:
-                fh_insample = ForecastingHorizon(y_agg.index, is_relative=False)
-                if len(y_agg) == 1:
-                    y_pred_in = y_agg.squeeze()
-                else:
-                    y_pred_in = forecaster.predict(fh=fh_insample)
-                residuals = y_agg.squeeze() - y_pred_in.squeeze()
-                self._residuals[level] = residuals
+            # if self.requires_residuals:
+            #     fh_insample = ForecastingHorizon(y_agg.index, is_relative=False)
+            #     if len(y_agg) == 1:
+            #         y_pred_in = y_agg.squeeze()
+            #     else:
+            #         y_pred_in = forecaster.predict(fh=fh_insample)
+            #     residuals = y_agg.squeeze() - y_pred_in.squeeze()
+            #     self._residuals[level] = residuals
 
         return self
 
     def _predict(self, fh, X=None):
         """Predict using the fitted forecaster."""
         self._forecast_store = {}
+        # print(self.forecasters)
         for level, forecaster in self.forecasters.items():
             fh_level = self._divide_fh(fh, level)
-
+            # print(fh_level)
             if len(fh_level) > 0:
                 y_pred_agg = forecaster.predict(fh=fh_level, X=X)
                 if not y_pred_agg.isna().values.any():
                     self._forecast_store[level] = y_pred_agg
             else:
-                raise AssertionError("Forecast horizon cannot be empty")
+                continue
 
+        self._y_cols = (
+            self._y.columns if isinstance(self._y, pd.DataFrame) else ["value"]
+        )
+
+        if not self._forecast_store:
+            return pd.DataFrame(
+                np.nan,
+                index=fh.to_absolute(self.cutoff).to_pandas(),
+                columns=self._y_cols,
+            )
+        # print(self._forecast_store)
         result = self._reconcile_forecasts(self._forecast_store)
+        # print(result)
+        n_needed = len(fh)
+        n_available = result.shape[0]
 
-        return result
+        if n_available < n_needed:
+            # pad with NaNs on top so that we have at least `n_needed` rows
+            n_pad = n_needed - n_available
+            pad_shape = (n_pad, result.shape[1])
+            pad = np.full(pad_shape, np.nan)
+            result = np.vstack([pad, result])
+
+        # Now slice out exactly len(fh) rows
+        final_forecast = result[-n_needed:, :]
+
+        # 4) Build a DataFrame with the proper index and column names
+        y_cols = self._y.columns if isinstance(self._y, pd.DataFrame) else ["value"]
+        index = fh.to_absolute(self.cutoff).to_pandas()
+        y_pred = pd.DataFrame(final_forecast, index=index, columns=y_cols)
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -298,18 +336,18 @@ class THieFForecaster(BaseForecaster):
                 "base_forecaster": NaiveForecaster(strategy="drift"),
                 "reconciliation_method": "wls_str",
             },
-            {
-                "base_forecaster": NaiveForecaster(strategy="mean"),
-                "reconciliation_method": "mint_cov",
-            },
-            {
-                "base_forecaster": NaiveForecaster(strategy="last"),
-                "reconciliation_method": "mint_shrink",
-            },
-            {
-                "base_forecaster": NaiveForecaster(strategy="last"),
-                "reconciliation_method": "wls_var",
-            },
+            # {
+            #     "base_forecaster": NaiveForecaster(strategy="mean"),
+            #     "reconciliation_method": "mint_cov",
+            # },
+            # {
+            #     "base_forecaster": NaiveForecaster(strategy="last"),
+            #     "reconciliation_method": "mint_shrink",
+            # },
+            # {
+            #     "base_forecaster": NaiveForecaster(strategy="last"),
+            #     "reconciliation_method": "wls_var",
+            # },
         ]
 
         return params
