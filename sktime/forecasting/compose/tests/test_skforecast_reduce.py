@@ -247,3 +247,24 @@ def test_SkforecastRecursive_predict_quantile_against_ForecasterRecursive():
     skforecast_pred_qtl.columns = pd.MultiIndex.from_arrays(multiindex)
 
     assert_frame_equal(sktime_pred_qtl, skforecast_pred_qtl)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SkforecastRecursive),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_SkforecastRecursive_capability_tags():
+    """
+    Tests that capability tags are set correctly based on store_in_sample_residuals.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    # Default case (store_in_sample_residuals=False)
+    forecaster = SkforecastRecursive(LinearRegression(), 2)
+    assert not forecaster.get_tag("capability:pred_int:insample")
+
+    # When store_in_sample_residuals=True
+    forecaster = SkforecastRecursive(
+        LinearRegression(), 2, store_in_sample_residuals=True
+    )
+    assert forecaster.get_tag("capability:pred_int:insample")
