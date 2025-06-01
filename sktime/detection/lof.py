@@ -165,12 +165,12 @@ class SubLOF(BaseDetector):
         super().__init__()
         
         
-    def _get_index_from_input(self, X):  # <-- ADD THIS HERE (AFTER __init__)
+    def _get_index_from_input(self, X):  
         """Extract or create appropriate index from input data."""
         if hasattr(X, 'index'):
-          return X.index
+            return X.index
         else:
-          return pd.RangeIndex(len(X))
+            return pd.RangeIndex(len(X))
         
 
     def _fit(self, X, y=None):
