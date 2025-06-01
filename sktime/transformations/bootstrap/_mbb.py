@@ -3,7 +3,6 @@
 
 __author__ = ["ltsaprounis"]
 
-from copy import copy
 from typing import Union
 
 import numpy as np
@@ -119,6 +118,9 @@ class STLBootstrapTransformer(BaseTransformer):
         This param goes into STL.fit() from statsmodels.
     random_state : int, np.random.RandomState or None, by default None
         Controls the randomness of the estimator
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     See Also
     --------
@@ -189,6 +191,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "capability:bootstrap_index": True,
     }
 
     def __init__(
@@ -213,6 +216,7 @@ class STLBootstrapTransformer(BaseTransformer):
         inner_iter: int = None,
         outer_iter: int = None,
         random_state: Union[int, np.random.RandomState] = None,
+        return_indices=False,
     ):
         self.n_series = n_series
         self.sp = sp
@@ -234,6 +238,7 @@ class STLBootstrapTransformer(BaseTransformer):
         self.inner_iter = inner_iter
         self.outer_iter = outer_iter
         self.random_state = random_state
+        self.return_indices = return_indices
 
         super().__init__()
 
@@ -301,6 +306,9 @@ class STLBootstrapTransformer(BaseTransformer):
 
         Xcol = X.columns
         X = X[X.columns[0]]
+        if self.return_indices:
+            Xcol = list(Xcol)
+            Xcol.append("resampled_index")
 
         if len(X) <= self.block_length_:
             raise ValueError(
@@ -335,16 +343,17 @@ class STLBootstrapTransformer(BaseTransformer):
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
-            df_list = [
-                pd.DataFrame(
-                    X.values,
-                    index=pd.MultiIndex.from_product(
-                        iterables=[["actual"], X_index],
-                        names=["series_id", "time_index"],
-                    ),
-                    columns=[col_name],
-                )
-            ]
+            df = pd.DataFrame(
+                X.values,
+                index=pd.MultiIndex.from_product(
+                    iterables=[["actual"], X_index],
+                    names=["series_id", "time_index"],
+                ),
+                columns=[col_name],
+            )
+            if self.return_indices:
+                df["resampled_index"] = range(len(X))
+            df_list = [df]
         else:
             df_list = []
 
@@ -352,15 +361,15 @@ class STLBootstrapTransformer(BaseTransformer):
         rng = check_random_state(self.random_state)
         # create multiple series
         for i in range(self.n_series):
+            bs_ts, indices = _moving_block_bootstrap(
+                ts=resid,
+                block_length=self.block_length_,
+                replacement=self.sampling_replacement,
+                random_state=rng,
+                return_indices=True,
+            )
             new_series = self.box_cox_transformer_.inverse_transform(
-                _moving_block_bootstrap(
-                    ts=resid,
-                    block_length=self.block_length_,
-                    replacement=self.sampling_replacement,
-                    random_state=rng,
-                )
-                + seasonal
-                + trend
+                bs_ts + seasonal + trend
             )
 
             new_series_id = f"synthetic_{i}"
@@ -369,11 +378,12 @@ class STLBootstrapTransformer(BaseTransformer):
                 names=["series_id", "time_index"],
             )
 
-            df_list.append(
-                pd.DataFrame(
-                    data=new_series.values, index=new_df_index, columns=[col_name]
-                )
+            df = pd.DataFrame(
+                data=new_series.values, index=new_df_index, columns=[col_name]
             )
+            if self.return_indices:
+                df["resampled_index"] = indices
+            df_list.append(df)
 
         Xt = pd.concat(df_list)
         Xt.columns = Xcol
@@ -440,6 +450,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         The actual time series will be labelled as "actual"
     random_state : int, np.random.RandomState or None, by default None
         Controls the randomness of the estimator
+    return_indices : bool, optional
+        If True, the output will contain the resampled indices as extra column,
+        by default False.
 
     See Also
     --------
@@ -503,6 +516,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "capability:bootstrap_index": True,
     }
 
     def __init__(
@@ -512,12 +526,14 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         sampling_replacement: bool = False,
         return_actual: bool = True,
         random_state: Union[int, np.random.RandomState] = None,
+        return_indices=False,
     ):
         self.n_series = n_series
         self.block_length = block_length
         self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
         self.random_state = random_state
+        self.return_indices = return_indices
 
         super().__init__()
 
@@ -538,7 +554,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        Xcol = X.columns
+        Xcol = list(X.columns)
+        if self.return_indices:
+            Xcol.append("resampled_index")
         X = X[X.columns[0]]
 
         if len(X) <= self.block_length:
@@ -554,16 +572,17 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
-            df_list = [
-                pd.DataFrame(
-                    X.values,
-                    index=pd.MultiIndex.from_product(
-                        iterables=[["actual"], X_index],
-                        names=["series_id", "time_index"],
-                    ),
-                    columns=[col_name],
-                )
-            ]
+            df = pd.DataFrame(
+                X.values,
+                index=pd.MultiIndex.from_product(
+                    iterables=[["actual"], X_index],
+                    names=["series_id", "time_index"],
+                ),
+                columns=[col_name],
+            )
+            if self.return_indices:
+                df["resampled_index"] = range(len(X))
+            df_list = [df]
         else:
             df_list = []
 
@@ -571,11 +590,12 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         rng = check_random_state(self.random_state)
         # create multiple series
         for i in range(self.n_series):
-            new_series = _moving_block_bootstrap(
+            new_series, indices = _moving_block_bootstrap(
                 ts=X,
                 block_length=self.block_length,
                 replacement=self.sampling_replacement,
                 random_state=rng,
+                return_indices=True,
             )
 
             new_series_id = f"synthetic_{i}"
@@ -583,11 +603,12 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
                 iterables=[[new_series_id], new_series.index],
                 names=["series_id", "time_index"],
             )
-            df_list.append(
-                pd.DataFrame(
-                    data=new_series.values, index=new_df_index, columns=[col_name]
-                )
+            df = pd.DataFrame(
+                data=new_series.values, index=new_df_index, columns=[col_name]
             )
+            if self.return_indices:
+                df["resampled_index"] = indices
+            df_list.append(df)
 
         Xt = pd.concat(df_list)
         Xt.columns = Xcol
@@ -629,6 +650,7 @@ def _moving_block_bootstrap(
     block_length: int,
     replacement: bool = False,
     random_state: Union[int, np.random.RandomState] = None,
+    return_indices=False,
 ) -> pd.Series:
     """Create a synthetic time series using the moving block bootstrap method MBB.
 
@@ -659,26 +681,31 @@ def _moving_block_bootstrap(
         )
 
     if block_length == 1 and not replacement:
-        mbb_values = copy(ts_values)
-        rng.shuffle(mbb_values)
+        mbb_indices = np.arange(len(ts_index))
+        rng.shuffle(mbb_indices)
     elif block_length == 1:
-        mbb_values = rng.choice(ts_values, size=ts_length, replace=replacement)
+        mbb_indices = rng.choice(
+            np.arange(len(ts_index)), size=ts_length, replace=replacement
+        )
     else:
+        ts_int_indexes = np.arange(len(ts_index))
         total_num_blocks = int(ts_length / block_length) + 2
         block_origns = rng.choice(
             ts_length - block_length + 1, size=total_num_blocks, replace=replacement
         )
-        mbb_values = [
-            val for i in block_origns for val in ts_values[i : i + block_length]
+        mbb_indices = [
+            val for i in block_origns for val in ts_int_indexes[i : i + block_length]
         ]
         # remove the first few observations and ensure new series has the
         # same length as the original
         remove_first = rng.choice(block_length - 1)
-        mbb_values = mbb_values[remove_first : remove_first + ts_length]
+        mbb_indices = mbb_indices[remove_first : remove_first + ts_length]
 
-    mbb_series = pd.Series(data=mbb_values, index=ts_index)
-
-    return mbb_series
+    mbb_series = pd.Series(data=ts_values[mbb_indices], index=ts_index)
+    if not return_indices:
+        return mbb_series
+    else:
+        return mbb_series, mbb_indices
 
 
 def _get_series_name(ts: Union[pd.Series, pd.DataFrame]) -> str:
