@@ -163,6 +163,15 @@ class SubLOF(BaseDetector):
         self.n_jobs = n_jobs
         self.models = None
         super().__init__()
+        
+        
+    def _get_index_from_input(self, X):  # <-- ADD THIS HERE (AFTER __init__)
+        """Extract or create appropriate index from input data."""
+        if hasattr(X, 'index'):
+          return X.index
+        else:
+          return pd.RangeIndex(len(X))
+        
 
     def _fit(self, X, y=None):
         """Fit the LOF model to ``X``.
@@ -183,10 +192,17 @@ class SubLOF(BaseDetector):
             "novelty": self.novelty,
             "n_jobs": self.n_jobs,
         }
+        
+        if isinstance(X, np.ndarray):
+            if X.ndim == 1:
+                X = pd.Series(X)
+            else:
+                X = pd.DataFrame(X)
+                
         if isinstance(X, pd.Series):
             X = X.to_frame()
-
-        intervals = self._split_into_intervals(X.index, self.window_size)
+        index = self._get_index_from_input(X)
+        intervals = self._split_into_intervals(index, self.window_size)
         self.models = {
             interval: LocalOutlierFactor(**model_params) for interval in intervals
         }
@@ -228,6 +244,12 @@ class SubLOF(BaseDetector):
         y_pred : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
+        if isinstance(X, np.ndarray):
+            if X.ndim == 1:
+                X = pd.Series(X)
+            else:
+                X = pd.DataFrame(X)
+                
         if isinstance(X, pd.Series):
             X = X.to_frame()
         X["__id"] = pd.RangeIndex(len(X))

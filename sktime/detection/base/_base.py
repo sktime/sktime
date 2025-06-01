@@ -517,7 +517,17 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.fit_predict(X, y=y)
-        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+        # Handle both pandas and numpy inputs
+        if hasattr(X, 'index'):
+    # X is pandas DataFrame or Series
+                index = X.index
+        else:
+    # X is numpy array or other array-like without index
+    # Create a default integer index
+                import pandas as pd
+                index = pd.RangeIndex(len(X))
+
+        y_dense = self.sparse_to_dense(y_sparse, index=index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
