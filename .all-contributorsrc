@@ -3523,7 +3523,17 @@
       "profile": "https://github.com/jobs-git",
       "contributions": [
         "code"
-      ],
+      ]
+    },
+    {
+      "login": "Rajdeep-naha",
+      "name": "Rajdeep Naha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/161390547?v=4",
+      "profile": "https://github.com/Rajdeep-naha",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
