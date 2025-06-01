@@ -278,6 +278,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             y = pd.concat([y, y], axis=1)
+            y.columns = pd.MultiIndex.from_tuples([(0, 0), (0, 1)])
 
         if estimator_instance.is_composite():
             pytest.skip(
