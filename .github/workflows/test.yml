@@ -169,7 +169,7 @@ jobs:
       - name: Check estimator dependencies
         id: checkdeps
         run: |
-          $valid_env=$(python -c 'from sktime.utils.dependencies._dependencies import _check_estimator_deps; from sktime.registry import craft; print(_check_estimator_deps(craft('${{ matrix.flag}}'), severity="none"))')
+          $valid_env=$(python -c "from sktime.utils.dependencies._dependencies import _check_estimator_deps; from sktime.registry import craft; print(_check_estimator_deps(craft('${{ matrix.flag}}'), severity='none'))")
           echo "Result of _check_estimator_deps: $valid_env"
           echo "valid_env=$valid_env" >> $GITHUB_OUTPUT
       - name: Run tests with ${{ matrix.flag }} if valid_env is True
