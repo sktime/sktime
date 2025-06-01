@@ -18,18 +18,19 @@ EXCLUDE_FILES = {"CONTRIBUTORS.md"}
 EXCLUDE_DOMAINS = {"github.com"}
 
 
-def extract_links(text):
-    """
-    Extract HTTP/HTTPS links from Markdown-style syntax in a string.
-
-    Args:
-        text (str): The text content to search for links.
-
-    Returns
-    -------
-        list: A list of extracted URLs.
-    """
-    return re.findall(r"\[.*?\]\((https?://.*?)\)", text)
+def extract_links(text, file_suffix):
+    """Extract HTTP/HTTPS links based on file type."""
+    if file_suffix == ".md":
+        # Markdown-style links: [text](http...)
+        return re.findall(r"\[.*?\]\((https?://.*?)\)", text)
+    elif file_suffix == ".rst":
+        # reStructuredText links: `text <http...>`_
+        return re.findall(r"`[^`<]+<(\s*https?://[^>]+)>`_", text)
+    elif file_suffix == ".html":
+        # HTML-style hrefs: <a href="http...">
+        return re.findall(r'href=["\'](https?://[^"\']+)["\']', text)
+    else:
+        return []
 
 
 def is_excluded(url):
@@ -51,7 +52,7 @@ def is_excluded(url):
 
 def check_links_in_file(file_path):
     """
-    Check all links in a Markdown file for validity.
+    Check all links in a file for validity.
 
     Args:
         file_path (str or Path): Path to the Markdown file.
@@ -63,7 +64,7 @@ def check_links_in_file(file_path):
     errors = []
     with open(file_path, encoding="utf-8") as f:
         content = f.read()
-    links = extract_links(content)
+    links = extract_links(content, file_path.suffix)
     for link in links:
         if is_excluded(link):
             continue
@@ -78,11 +79,11 @@ def check_links_in_file(file_path):
 
 def main():
     """
-    Find and validate links in all Markdown files.
+    Find and validate links in files.
 
     Exits with code 1 if broken links are found, 0 otherwise.
     """
-    print("Checking Markdown links...")
+    print("Checking links...")
     root = Path(".")
     extensions = ["*.md", "*.rst", "*.html"]
     files = list(chain.from_iterable(root.rglob(ext) for ext in extensions))
