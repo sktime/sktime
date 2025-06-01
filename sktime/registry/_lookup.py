@@ -59,14 +59,14 @@ def all_estimators(
         for instance 'classifier', 'regressor', 'transformer', 'forecaster'
 
     return_names: bool, optional (default=True)
-
         if True, estimator class name is included in the ``all_estimators``
         return in the order: name, estimator class, optional tags, either as
         a tuple or as pandas.DataFrame columns
 
         if False, estimator class name is removed from the ``all_estimators`` return.
 
-    filter_tags: dict of (str or list of str or re.Pattern), str, or list of str, optional (default=None)
+    filter_tags: dict of (str or list of str or re.Pattern), str, or list of str, \
+            optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
 
         If dict, ``filter_tags`` subsets the returned estimators as follows:
@@ -76,10 +76,11 @@ def all_estimators(
         * value str or list of string are tag values
         * condition is "key must be equal to value, or in set(value)"
 
-        If str, equivalent to {filter_tags: True}, i.e., returns estimators where the specified tag is True.
+        If str, equivalent to {filter_tags: True}, i.e., returns estimators where the
+        specified tag is True.
 
-        If list of str, equivalent to {x: True for x in filter_tags}, i.e., returns estimators where all
-        specified tags are True.
+        If list of str, equivalent to {x: True for x in filter_tags}, i.e., returns
+        estimators where all specified tags are True.
 
         In detail, he return will be filtered to keep exactly the classes
         where tags satisfy all the filter conditions specified by ``filter_tags``.
@@ -108,7 +109,6 @@ def all_estimators(
         Names of estimators to exclude.
 
     as_dataframe: bool, optional (default=False)
-
         True: ``all_estimators`` will return a ``pandas.DataFrame`` with named
         columns for all of the attributes being returned.
 
@@ -163,7 +163,10 @@ def all_estimators(
     >>> # return all forecasters by filtering for estimator type
     >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
-    >>> all_estimators("forecaster", filter_tags={"capability:missing_values": True})  # doctest: +SKIP
+    >>> all_estimators(
+    ...     "forecaster",
+    ...     filter_tags={"capability:missing_values": True}
+    ... )  # doctest: +SKIP
 
     References
     ----------
