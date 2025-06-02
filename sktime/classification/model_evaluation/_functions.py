@@ -95,6 +95,7 @@ def _check_scores(metrics) -> dict:
     """
     if metrics is None:
         from sklearn.metrics import accuracy_score
+
         metrics = [accuracy_score]
 
     if not isinstance(metrics, list):
@@ -453,7 +454,6 @@ def evaluate(
     results = []
     for x in enumerate(yx_splits):
         result, classifier = _evaluate_fold(x, _evaluate_fold_kwargs)
-        _evaluate_fold_kwargs["classifier"] = classifier
         results.append(result)
 
     # final formatting of dask dataframes
