@@ -17,7 +17,20 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
-    """Median absolute scaled error (MdASE).
+    r"""Median absolute scaled error (MdASE).
+    
+    For a univariate sample of true values :math:`y_1, \dots, y_n`
+    and predictions :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and a training series
+    :math:`y_1^{\text{train}}, \dots, y_m^{\text{train}}`:
+
+    The Median Absolute Scaled Error is defined as
+
+    .. math::
+        \text{MdASE} =
+        \frac{\text{median}\left(|y_i - \widehat{y}_i|\right)}
+        {\frac{1}{m-s} \sum_{j=s+1}^{m} |y_j^{\text{train}} - y_{j-s}^{\text{train}}|}
+
+    where :math:`s` is the seasonal periodicity (`sp`).
 
     MdASE output is non-negative floating point. The best value is 0.0.
 

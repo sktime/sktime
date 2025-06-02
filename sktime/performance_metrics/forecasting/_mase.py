@@ -17,7 +17,22 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
-    """Mean absolute scaled error (MASE).
+    r"""Mean absolute scaled error (MASE).
+    For a univariate, non-hierarchical sample of
+    true values :math:`y_1, \dots, y_n`,
+    pred values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),
+    and in-sample training values :math:`y_1^{\text{train}}, \dots, y_m^{\text{train}}`,
+    ``evaluate`` or call returns the Mean Absolute Scaled Error (MASE), defined as:
+
+    .. math::
+    \text{MASE} = \frac{
+        \frac{1}{n} \sum_{i=1}^n |y_i - \widehat{y}_i|
+    }{
+        \frac{1}{m - s} \sum_{j=s+1}^m |y^{\text{train}}_j - y^{\text{train}}_{j-s}|
+    }
+
+    where :math:`s` is the seasonal periodicity (`sp`), and
+    the denominator is the in-sample mean absolute error of the seasonal naive forecast.
 
     MASE output is non-negative floating point. The best value is 0.0.
 
