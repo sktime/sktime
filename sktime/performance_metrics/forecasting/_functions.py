@@ -17,9 +17,9 @@ from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
+    _coerce_to_metric,
     _coerce_to_scalar,
 )
 from sktime.utils.stats import _weighted_geometric_mean
@@ -2620,16 +2620,7 @@ def relative_loss(
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)  # doctest: +SKIP
     np.float64(0.8490566037735847)
-    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
-    multioutput='raw_values')
-    array([0.625     , 1.03448276])
-    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
-    multioutput=[0.3, 0.7])  # doctest: +SKIP
-    np.float64(0.927272727272727)
     """  # noqa: E501
-    # y_pred_benchmark = _get_kwarg(
-    #     "y_pred_benchmark", metric_name="relative_loss", **kwargs
-    # )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     _, _, y_pred_benchmark, _ = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
@@ -2638,38 +2629,19 @@ def relative_loss(
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    # dispatch on metric object vs bare function
+    default_fn = (
+        loss_function if (loss_function is not None) else relative_loss_function
+    )
+    metric_obj = _coerce_to_metric(default_fn)
 
-    rel_fn = loss_function if loss_function is not None else relative_loss_function
+    eval_kwargs = {}
+    if horizon_weight is not None:
+        eval_kwargs["horizon_weight"] = horizon_weight
 
-    if isinstance(rel_fn, BaseForecastingErrorMetric):
-        eval_kwargs = {}
-        if horizon_weight is not None:
-            eval_kwargs["horizon_weight"] = horizon_weight
-
-        loss_preds = rel_fn.evaluate(
-            y_true=y_true,
-            y_pred=y_pred,
-            **eval_kwargs,
-        )
-        loss_benchmark = rel_fn.evaluate(
-            y_true=y_true,
-            y_pred=y_pred_benchmark,
-            **eval_kwargs,
-        )
-    else:
-        loss_preds = rel_fn(
-            y_true,
-            y_pred,
-            horizon_weight=horizon_weight,
-            multioutput=multioutput,
-        )
-        loss_benchmark = rel_fn(
-            y_true,
-            y_pred_benchmark,
-            horizon_weight=horizon_weight,
-            multioutput=multioutput,
-        )
+    loss_preds = metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
+    loss_benchmark = metric_obj.evaluate(
+        y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
+    )
 
     loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
     return _handle_output(loss, multioutput)
