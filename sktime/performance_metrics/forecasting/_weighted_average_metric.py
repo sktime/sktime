@@ -1,11 +1,11 @@
 import numpy as np
 
-from sktime.performance_metrics.forecasting._classes import (
-    BaseForecastingErrorMetric,
+from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanSquaredError,
     MedianAbsoluteError,
 )
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 __author__ = ["benheid"]
 __all__ = [
