@@ -167,6 +167,7 @@ jobs:
         run: python -m pip list
 
       - name: Check estimator dependencies
+        shell: bash
         id: checkdeps
         run: |
           valid_env=$(python -c "from sktime.utils.dependencies._dependencies import _check_estimator_deps; from sktime.registry import craft; print(_check_estimator_deps(craft('${{ matrix.flag}}'), severity='none'))")
