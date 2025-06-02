@@ -1,4 +1,5 @@
 import numpy as np
+
 from sktime.performance_metrics.forecasting._classes import (
     BaseForecastingErrorMetric,
     MeanAbsoluteError,
@@ -116,7 +117,9 @@ class WeightedAverageMetric(BaseForecastingErrorMetric):
         """
         total = 0.0
         weights = self.weights if self.normalize else [1.0] * len(self.metrics)
-        weights = np.array(weights) / sum(weights) if self.normalize else np.array(weights) 
+        weights = (
+            np.array(weights) / sum(weights) if self.normalize else np.array(weights)
+        )
         for metric, weight in zip(self.metrics, weights):
             total += weight * metric.evaluate(y_true, y_pred, **kwargs)
         return total
