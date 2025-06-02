@@ -188,7 +188,7 @@ class BaseDetector(BaseEstimator):
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         if _method_has_arg(self._fit, "y"):
-            self._fit(X=X, y=y)
+            self._fit(X=X_inner, y=y) #X_inner is the converted X
         else:
             self._fit(X=X_inner)
 
