@@ -94,7 +94,8 @@ def _check_scores(metrics) -> dict:
         values are lists of corresponding metrics
     """
     if metrics is None:
-        return {}
+        from sklearn.metrics import accuracy_score
+        metrics = [accuracy_score]
 
     if not isinstance(metrics, list):
         metrics = [metrics]
@@ -102,10 +103,6 @@ def _check_scores(metrics) -> dict:
     metrics_type = {}
 
     for metric in metrics:
-        if metric is None:
-            from sklearn.metrics import accuracy_score
-
-            metric = accuracy_score
         if not callable(metric):
             raise ValueError(f"Metric {metric} is not callable")
 
@@ -135,7 +132,7 @@ def _get_column_order_and_datatype(
             pred_args = _get_pred_args_from_metric(scitype, metric)
             if pred_args == {}:
                 time_key = f"{scitype}_time"
-                result_key = f"test_{metric.name}"
+                result_key = f"test_{metric.__name__}"
                 y_pred_key = f"y_{scitype}"
             else:
                 argval = list(pred_args.values())[0]
@@ -202,12 +199,12 @@ def _evaluate_fold(x, meta):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
                     time_key = f"{scitype}_time"
-                    result_key = f"test_{metric.name}"
+                    result_key = f"test_{metric.__name__}"
                     y_pred_key = f"y_{scitype}"
                 else:
                     argval = list(pred_args.values())[0]
                     time_key = f"{scitype}_{argval}_time"
-                    result_key = f"test_{metric.name}_{argval}"
+                    result_key = f"test_{metric.__name__}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
 
                 # make prediction
@@ -232,7 +229,7 @@ def _evaluate_fold(x, meta):
                 if return_data:
                     temp_result[f"y_{scitype}"] = [y_pred]
                 for metric in scoring.get(scitype):
-                    temp_result[f"test_{metric.name}"] = [score]
+                    temp_result[f"test_{metric.__name__}"] = [score]
             warnings.warn(
                 f"""
                 In evaluate, fitting of classifier {type(classifier).__name__} failed,
@@ -458,19 +455,6 @@ def evaluate(
         result, classifier = _evaluate_fold(x, _evaluate_fold_kwargs)
         _evaluate_fold_kwargs["classifier"] = classifier
         results.append(result)
-
-    # if backend == "dask":
-    #     backend_in = "dask_lazy"
-    # else:
-    #     backend_in = backend
-
-    # results = parallelize(
-    #     fun=_evaluate_fold,
-    #     iter=enumerate(yx_splits),
-    #     meta=_evaluate_fold_kwargs,
-    #     backend=backend_in,
-    #     backend_params=backend_params,
-    # )
 
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"]:
