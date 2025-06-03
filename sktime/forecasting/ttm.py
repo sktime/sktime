@@ -210,6 +210,15 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
+        # ajati, wgifford, vijaye12 for ibm-granite code
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["transformers", "torch"],
+        "test_vm": True,
+        # estimator type
+        # --------------
         "X_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -229,10 +238,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
-        # ajati, wgifford, vijaye12 for ibm-granite code
-        "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
     }
 
@@ -410,7 +415,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 param.requires_grad = False
 
             # Adjust requires_grad property of model weights based on info
-            for key, _, _ in info["mismatched_keys"]:
+            for key in info["mismatched_keys"]:
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
