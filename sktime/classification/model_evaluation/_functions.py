@@ -138,7 +138,7 @@ def _get_column_order_and_datatype(
             else:
                 argval = list(pred_args.values())[0]
                 time_key = f"{scitype}_{argval}_time"
-                result_key = f"test_{metric.name}_{argval}"
+                result_key = f"test_{metric.__name__}_{argval}"
                 y_pred_key = f"y_{scitype}_{argval}"
             fit_metadata[time_key] = "float"
             metrics_metadata[result_key] = "float"
