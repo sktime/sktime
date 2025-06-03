@@ -296,7 +296,6 @@ class THieFForecaster(BaseForecaster):
         # Now slice out exactly len(fh) rows
         final_forecast = result[-n_needed:, :]
 
-        # 4) Build a DataFrame with the proper index and column names
         y_cols = self._y.columns if isinstance(self._y, pd.DataFrame) else ["value"]
         index = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = pd.DataFrame(final_forecast, index=index, columns=y_cols)

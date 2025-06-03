@@ -63,7 +63,7 @@ def test_fit(sample_data):
     forecaster.fit(sample_data, fh=fh)
     y_pred = forecaster.predict(fh)
 
-    assert isinstance(y_pred, pd.Series)
+    assert isinstance(y_pred, pd.DataFrame)
     assert len(y_pred) == len(fh)
     assert np.all(np.isfinite(y_pred.values))
 
@@ -71,9 +71,9 @@ def test_fit(sample_data):
 @pytest.mark.parametrize(
     "reconciliation_method, expected_output",
     [
-        ("bu", np.array([21.21467, 21.21467, 21.21467])),
-        ("ols", np.array([16.8999, 16.8999, 16.8999])),
-        ("wls_str", np.array([16.8443, 16.8443, 16.8443])),
+        ("bu", np.array([[21.21467], [21.21467], [21.21467]])),
+        ("ols", np.array([[16.8999], [16.8999], [16.8999]])),
+        ("wls_str", np.array([[16.8443], [16.8443], [16.8443]])),
     ],
 )
 def test_thief_forecast_matches_r_thief(
@@ -84,7 +84,7 @@ def test_thief_forecast_matches_r_thief(
 
     fh = ForecastingHorizon(np.arange(1, 4))
     forecaster = THieFForecaster(
-        base_forecaster=NaiveForecaster(strategy="last"),
+        base_forecaster=NaiveForecaster(),
         reconciliation_method=reconciliation_method,
     )
 
