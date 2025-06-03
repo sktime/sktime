@@ -122,10 +122,10 @@ def _get_column_order_and_datatype(
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
     y_metadata = {
-        "y_train": "object",
-        "y_test": "object",
         "X_train": "object",
         "X_test": "object",
+        "y_train": "object",
+        "y_test": "object",
     }
     fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
     for scitype in metric_types:
@@ -218,7 +218,7 @@ def _evaluate_fold(x, meta):
                 else:
                     y_pred = y_preds_cache[y_pred_key][0]
 
-                score = metric(y_test, y_pred, y_train=y_train)
+                score = metric(y_test, y_pred)
                 temp_result[result_key] = [score]
 
     except Exception as e:
@@ -249,10 +249,10 @@ def _evaluate_fold(x, meta):
     temp_result["fit_time"] = [fit_time]
 
     if return_data:
-        temp_result["y_train"] = [y_train]
-        temp_result["y_test"] = [y_test]
         temp_result["X_train"] = [X_train]
         temp_result["X_test"] = [X_test]
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     column_order = _get_column_order_and_datatype(scoring, return_data)
