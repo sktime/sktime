@@ -38,7 +38,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
                 FutureWarning,
                 stacklevel=2,
             )
-            backend_params = "joblib"
+            # backend_params = "joblib"
 
         if forecasters is not None:
             self.forecasters = forecasters
