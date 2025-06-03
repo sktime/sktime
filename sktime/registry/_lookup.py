@@ -66,12 +66,15 @@ def all_estimators(
 
         if False, estimator class name is removed from the ``all_estimators`` return.
 
-    filter_tags: dict of (str or list of str or re.Pattern), optional (default=None)
+    filter_tags: dict of (str or list of str or re.Pattern), str, or list of str, optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
 
         ``filter_tags`` subsets the returned estimators as follows:
 
-        * each key/value pair is statement in "and"/conjunction
+        * If ``filter_tags`` is a string, it is equivalent to ``{filter_tags: True}``
+        * If ``filter_tags`` is a list of strings, it is equivalent to
+          ``{tag: True for tag in filter_tags}``
+        * If ``filter_tags`` is a dict, each key/value pair is statement in "and"/conjunction
         * key is tag name to sub-set on
         * value str or list of string are tag values
         * condition is "key must be equal to value, or in set(value)"
@@ -159,6 +162,10 @@ def all_estimators(
     >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
     >>> all_estimators("forecaster", filter_tags={"capability:missing_values": True})  # doctest: +SKIP
+    >>> # filter by a single tag string (equivalent to {"capability:missing_values": True})
+    >>> all_estimators("forecaster", filter_tags="capability:missing_values")  # doctest: +SKIP
+    >>> # filter by multiple tags using list of strings
+    >>> all_estimators("forecaster", filter_tags=["capability:missing_values", "requires-fh-in-fit"])  # doctest: +SKIP
 
     References
     ----------
@@ -199,13 +206,22 @@ def all_estimators(
         estimator_types = [x for y in estimator_types for x in _get_all_descendants(y)]
         estimator_types = list(set(estimator_types))
 
+    # Handle filter_tags conversion from str or list of str to dict
+    if filter_tags is not None:
+        if isinstance(filter_tags, str):
+            filter_tags = {filter_tags: True}
+        elif isinstance(filter_tags, list) and all(
+            isinstance(tag, str) for tag in filter_tags
+        ):
+            filter_tags = dict.fromkeys(filter_tags, True)
+        elif not isinstance(filter_tags, dict):
+            raise TypeError("filter_tags must be a str, list of str, or dict")
+        else:
+            filter_tags = filter_tags.copy()
+
     if estimator_types is not None:
         if filter_tags is None:
             filter_tags = {}
-        elif isinstance(filter_tags, str):
-            filter_tags = {filter_tags: True}
-        else:
-            filter_tags = filter_tags.copy()
 
         if "object_type" in filter_tags:
             obj_field = filter_tags["object_type"]
