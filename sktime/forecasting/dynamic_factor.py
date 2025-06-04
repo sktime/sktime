@@ -289,6 +289,12 @@ class DynamicFactor(_StatsModelsAdapter):
 
             y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
 
+            # if y is univariate, we duplicated the column in fit,
+            # so now we need to revert this duplication
+            # subste to first two columns as "lower" and "upper"
+            if self._was_univariate:
+                y_pred = y_pred.iloc[:, [0, 1]]
+
             y_pred = y_pred.iloc[ix]
 
             y_pred.rename(
