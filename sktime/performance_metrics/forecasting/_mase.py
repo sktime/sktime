@@ -18,6 +18,7 @@ from sktime.performance_metrics.forecasting._functions import (
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     r"""Mean absolute scaled error (MASE).
+
     For a univariate, non-hierarchical sample of
     true values :math:`y_1, \dots, y_n`,
     pred values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),

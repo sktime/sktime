@@ -18,7 +18,7 @@ from sktime.performance_metrics.forecasting._functions import (
 
 class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     r"""Median absolute scaled error (MdASE).
-    
+
     For a univariate sample of true values :math:`y_1, \dots, y_n`
     and predictions :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and a training series
     :math:`y_1^{\text{train}}, \dots, y_m^{\text{train}}`:
