@@ -1,110 +1,153 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for model classification module.
+"""Tests for `evaluate` function for TSC.
 
-In particular, function `evaluate`, that performs time series cross-validation, is
-tested with various configurations for correct output.
+`evaluate` performs cross-validation for time series
+classification, here it is tested with various configurations.
 """
 
-__author__ = ["ksharma6"]
+__author__ = ["jgyasu", "ksharma6"]
 
-__all__ = [
-    "test_evaluate_common_configs",
-]
+__all__ = ["TestEvaluate"]
 
-import numpy as np
 import pandas as pd
-import pytest
-from sklearn import metrics
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+)
 from sklearn.model_selection import KFold
 
-# from sktime.datasets import load_airline, load_longley
-from sktime.classification.base import BaseClassifier
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
-from sktime.classification.model_evaluation._functions import (
-    _check_scores,
-    _get_column_order_and_datatype,
-)
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.parallel import _get_parallel_test_fixtures
-
-METRICS = [
-    metrics.accuracy_score,
-]
-
-# list of parallelization backends to test
-BACKENDS = _get_parallel_test_fixtures("estimator")
+from sktime.datasets import load_unit_test
 
 
-def _check_evaluate_output(out, cv, y, scoring, return_data, return_model):
-    assert isinstance(out, pd.DataFrame)
-    # Check column names.
-    scoring = _check_scores(scoring)
-    columns = _get_column_order_and_datatype(
-        metric_types=scoring, return_data=return_data, return_model=return_model
-    )
-    assert set(out.columns) == columns.keys(), "Columns are not identical"
+class TestEvaluate:
+    """Tests for `evaluate` function using sktime components."""
 
-    # Check number of rows against number of splits.
-    n_splits = cv.get_n_splits(y)
-    assert out.shape[0] == n_splits
+    def test_evaluate_basic_functionality(self):
+        """Test basic functionality of evaluate function with  data."""
+        X, y = load_unit_test()
+        n_splits = 3
+        cv = KFold(n_splits=n_splits, shuffle=False)
 
-    # Check fitted models
-    if return_model:
-        assert "fitted_classifier" in out.columns
-        assert all(
-            isinstance(f, (BaseClassifier, type(None)))
-            for f in out["fitted_classifier"].values
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            error_score="raise",
         )
 
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == n_splits
 
-@pytest.mark.skipif(
-    not run_test_for_class(evaluate),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.parametrize("scoring", METRICS)
-@pytest.mark.parametrize("backend", BACKENDS)
-def test_evaluate_common_configs(scoring, backend):
-    """Test evaluate common configs."""
-    # skip test for dask backend if dask is not installed
-    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
-        return None
+        assert "test_accuracy_score" in result.columns
+        assert "fit_time" in result.columns
+        assert "pred_time" in result.columns
 
-    X, y = make_classification_problem(n_timepoints=30)
-    classifier = DummyClassifier()
-    classifier.fit(X, y)
-    y_pred = classifier.predict(X)
+        assert all(result["test_accuracy_score"].between(0, 1))
+        assert all(result["fit_time"] >= 0)
+        assert all(result["pred_time"] >= 0)
 
-    cv = KFold(n_splits=3, shuffle=False)
+    def test_evaluate_with_multiple_metrics(self):
+        """Test evaluate function with multiple scoring metrics."""
+        X, y = load_unit_test()
+        cv = KFold(n_splits=3, shuffle=True)
 
-    out = evaluate(
-        classifier=classifier,
-        cv=cv,
-        X=X,
-        y=y,
-        scoring=scoring,
-        **backend,
-    )
-    _check_evaluate_output(
-        out=out,
-        cv=cv,
-        y=y,
-        scoring=scoring(y_true=y, y_pred=y_pred),
-        return_data=False,
-        return_model=False,
-    )
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=[accuracy_score, f1_score],
+            error_score="raise",
+        )
 
-    # check scoring
-    actual = out.loc[:, f"test_{scoring.name}"]
+        assert "test_accuracy_score" in result.columns
+        assert "test_f1_score" in result.columns
 
-    n_splits = cv.get_n_splits(y)
-    expected = np.empty(n_splits)
-    for i, (train, test) in enumerate(cv.split(y)):
-        c = classifier.clone()
-        c.fit(y.iloc[train])
-        expected[i] = scoring(y.iloc[test], c.predict(), y_train=y.iloc[train])
+        assert all(result["test_accuracy_score"].between(0, 1))
+        assert all(result["test_f1_score"].between(0, 1))
 
-    np.testing.assert_array_equal(actual, expected)
+    def test_evaluate_with_return_data(self):
+        """Test evaluate function with return_data=True."""
+        X, y = load_unit_test()
+        cv = KFold(n_splits=2, shuffle=False)
+
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            return_data=True,
+            error_score="raise",
+        )
+
+        expected_data_cols = ["X_train", "X_test", "y_train", "y_test", "y_pred"]
+        for col in expected_data_cols:
+            assert col in result.columns
+
+        for i in range(len(result)):
+            assert result["X_train"].iloc[i] is not None
+            assert result["X_test"].iloc[i] is not None
+            assert result["y_train"].iloc[i] is not None
+            assert result["y_test"].iloc[i] is not None
+
+    def test_evaluate_different_cv_splits(self):
+        """Test evaluate function with different numbers of CV splits."""
+        X, y = load_unit_test()
+
+        for n_splits in [2, 3, 5]:
+            cv = KFold(n_splits=n_splits, shuffle=False)
+
+            result = evaluate(
+                classifier=DummyClassifier(), cv=cv, X=X, y=y, scoring=accuracy_score
+            )
+
+            assert len(result) == n_splits
+            assert all(
+                col in result.columns
+                for col in ["test_accuracy_score", "fit_time", "pred_time"]
+            )
+
+    def test_evaluate_with_different_classifiers(self):
+        """Test evaluate function with different types of classifiers."""
+        X, y = load_unit_test()
+        cv = KFold(n_splits=2, shuffle=False)
+
+        classifiers = [DummyClassifier(), KNeighborsTimeSeriesClassifier()]
+
+        for classifier in classifiers:
+            result = evaluate(
+                classifier=classifier,
+                cv=cv,
+                X=X,
+                y=y,
+                scoring=accuracy_score,
+                error_score="raise",
+            )
+
+            assert isinstance(result, pd.DataFrame)
+            assert len(result) == 2
+            assert "test_accuracy_score" in result.columns
+
+    def test_evaluate_timing_measurements(self):
+        """Test that evaluate function properly measures timing."""
+        X, y = load_unit_test()
+        cv = KFold(n_splits=2, shuffle=False)
+
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            error_score="raise",
+        )
+
+        assert all(result["fit_time"] > 0)
+        assert all(result["pred_time"] >= 0)

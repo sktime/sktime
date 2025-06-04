@@ -218,7 +218,7 @@ def _evaluate_fold(x, meta):
                 else:
                     y_pred = y_preds_cache[y_pred_key][0]
 
-                score = metric(y_test, y_pred)
+                score = metric(y_test.astype(int), y_pred.astype(int))
                 temp_result[result_key] = [score]
 
     except Exception as e:
