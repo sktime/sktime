@@ -119,10 +119,11 @@ class BaggingForecaster(BaseForecaster):
 
         super().__init__()
 
-        # set the tags based on forecaster
+        # set the tags based on forecaster, including missing_values capability
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:missing_values",
         ]
         if forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)

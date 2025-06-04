@@ -186,7 +186,7 @@ class AutoETS(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "capability:missing_values": True,
+        "capability:missing_values": False,
     }
 
     def __init__(
