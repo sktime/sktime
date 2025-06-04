@@ -150,6 +150,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
       - name: Check estimator dependencies
         shell: bash
         id: checkdeps
@@ -157,11 +161,6 @@ jobs:
           valid_env=$(python -c "from sktime.utils.dependencies._dependencies import _check_estimator_deps; from sktime.registry import craft; print(_check_estimator_deps(craft('${{ matrix.flag}}'), severity='none'))")
           echo "Result of _check_estimator_deps: $valid_env"
           echo "valid_env=$valid_env" >> $GITHUB_OUTPUT
-      - name: Install sktime with dev dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev]
-
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
           # Run the Python script to get the list of dependencies for the object and save it to a file deps.txt
