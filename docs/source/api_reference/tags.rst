@@ -70,7 +70,6 @@ These tags are typically used for typing, packaging and documentation purposes.
     authors
     python_version
     python_dependencies
-    python_dependencies_alias
     env_marker
     requires_cython
 
@@ -152,6 +151,7 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform
     capability__inverse_transform__exact
     capability__inverse_transform__range
+    capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
 

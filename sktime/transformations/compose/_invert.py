@@ -67,7 +67,7 @@ class InvertTransform(_DelegatedTransformer):
             "scitype:instancewise",
             "X_inner_mtype",
             "y_inner_mtype",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",

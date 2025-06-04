@@ -32,6 +32,7 @@ class AlignerNaive(BaseAligner):
     >>> X_list = [pd.DataFrame({"value": ts}) for ts in X_train.iloc[:, 0]]
     >>> aligner = AlignerNaive(strategy="start-end")
     >>> aligner.fit(X_list)
+    AlignerNaive(...)
     >>> alignment = aligner.get_alignment()
     """
 

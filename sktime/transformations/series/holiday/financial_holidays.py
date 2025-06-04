@@ -87,7 +87,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "enforce_index_type": [pandas.DatetimeIndex, pandas.PeriodIndex],
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
     }
 
     def __init__(self, market, years=None, expand=True, observed=True, name=None):

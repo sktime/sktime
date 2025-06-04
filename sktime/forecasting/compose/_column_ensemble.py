@@ -95,7 +95,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "y_inner_mtype": PANDAS_MTYPES,
         "X_inner_mtype": PANDAS_MTYPES,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
@@ -122,7 +122,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 "requires-fh-in-fit",
                 "capability:pred_int",
                 "ignores-exogeneous-X",
-                "handles-missing-data",
+                "capability:missing_values",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
@@ -130,7 +130,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
-            self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_forecasters
+            )
 
     @property
     def _forecasters(self):

@@ -19,9 +19,8 @@ State:
     fitted state flag       - check_is_fitted()
 """
 
-# todo 0.37.0: remove BaseSeriesAnnotator
 __author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
-__all__ = ["BaseDetector", "BaseSeriesAnnotator"]
+__all__ = ["BaseDetector"]
 
 import numpy as np
 import pandas as pd
@@ -30,7 +29,6 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.validation.series import check_series
-from sktime.utils.warnings import warn
 
 
 class BaseDetector(BaseEstimator):
@@ -74,14 +72,14 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
-        "object_type": ["series-annotator", "detector"],  # type of object
+        "object_type": ["detector", "series-annotator"],  # type of object
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
@@ -134,8 +132,7 @@ class BaseDetector(BaseEstimator):
         else:
             return NotImplemented
 
-    # todo 0.37.0: remove the Y parameter and related handling
-    def fit(self, X, y=None, Y=None):
+    def fit(self, X, y=None):
         """Fit to training data.
 
         Parameters
@@ -185,19 +182,6 @@ class BaseDetector(BaseEstimator):
             self._is_fitted = True
             return self
 
-        if Y is not None:
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                "Until the 0.37.0 release, the Y parameter will be used if "
-                "no y parameter is provided, ensuring backwards compatibility.",
-                stacklevel=2,
-            )
-
-        if Y is not None and y is None:
-            y = Y
-
         self._X = X
         self._y = y
 
@@ -205,18 +189,6 @@ class BaseDetector(BaseEstimator):
 
         if _method_has_arg(self._fit, "y"):
             self._fit(X=X, y=y)
-        elif _method_has_arg(self._fit, "Y"):
-            self._fit(X=X, Y=y)
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                f"The class {self.__class__.__name__} uses the Y parameter "
-                "internally in _fit, this should be replaced with y by a maintainer. "
-                f"Until the 0.37.0 release, this will raise no exceptions, "
-                "ensuring backwards compatibility.",
-                stacklevel=2,
-            )
         else:
             self._fit(X=X_inner)
 
@@ -349,7 +321,7 @@ class BaseDetector(BaseEstimator):
 
         return pd.DataFrame(scores)
 
-    def update(self, X, y=None, Y=None):
+    def update(self, X, y=None):
         """Update model with new data and optional ground truth labels.
 
         Parameters
@@ -376,19 +348,6 @@ class BaseDetector(BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
-        if Y is not None:
-            warn(
-                "Warning: the Y parameter in detection/annotation algorithms "
-                "is deprecated and will be removed in the 0.37.0 release. "
-                "Users should use the y parameter instead. "
-                "Until the 0.37.0 release, the Y parameter will be used if "
-                "no y parameter is provided, ensuring backwards compatibility.",
-                stacklevel=2,
-            )
-
-        if y is None and Y is not None:
-            y = Y
-
         self._X = X_inner.combine_first(self._X)
 
         if y is not None:
@@ -396,8 +355,6 @@ class BaseDetector(BaseEstimator):
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
-        elif _method_has_arg(self._update, "Y"):
-            self._update(X=X_inner, Y=y)
         else:
             self._update(X=X_inner)
 
@@ -465,8 +422,7 @@ class BaseDetector(BaseEstimator):
 
         return y
 
-    # todo 0.37.0: remove Y argument
-    def fit_predict(self, X, y=None, Y=None):
+    def fit_predict(self, X, y=None):
         """Fit to data, then predict it.
 
         Fits model to X and Y with given detection parameters
@@ -527,10 +483,9 @@ class BaseDetector(BaseEstimator):
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, y=y, Y=Y).predict(X)
+        return self.fit(X, y=y).predict(X)
 
-    # todo 0.37.0: remove Y argument
-    def fit_transform(self, X, y=None, Y=None):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
         Fits model to X and Y with given detection parameters
@@ -561,7 +516,7 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y_sparse = self.fit_predict(X, y=y, Y=Y)
+        y_sparse = self.fit_predict(X, y=y)
         y_dense = self.sparse_to_dense(y_sparse, index=X.index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
@@ -1183,18 +1138,3 @@ class BaseDetector(BaseEstimator):
             return BaseDetector._empty_sparse()
         change_points = y_sparse.set_index("ilocs").index.left
         return change_points
-
-
-class BaseSeriesAnnotator(BaseDetector):
-    """Base class for time series detectors - DEPRECATED - use BaseDetector instead."""
-
-    def __init__(self):
-        super().__init__()
-        warn(
-            "Warning: BaseSeriesAnnotator is deprecated. "
-            "Extension developers should use BaseDetector instead, "
-            "from sktime.detection.base, this is a replacement with "
-            "equivalent functionality. "
-            "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
-            stacklevel=2,
-        )

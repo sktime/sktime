@@ -96,6 +96,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
     }
 
     _required_parameters = ["regressor"]
@@ -118,7 +119,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
         missing = regressor.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -395,6 +398,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
     }
 
     _required_parameters = ["regressor"]
@@ -417,7 +421,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

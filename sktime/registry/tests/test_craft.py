@@ -111,9 +111,9 @@ def test_imports():
     assert imports(simple_spec) == simple_spec_imports
 
     pipe_imports = (
-        "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
+        "from sktime.forecasting.compose import TransformedTargetForecast"
         "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
-        " sktime.forecasting.model_selection._tune import ForecastingGridSearch"
+        " sktime.forecasting.model_selection import ForecastingGridSearch"
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
         "t ThetaForecaster\nfrom sktime.split.expandingwindow import "

@@ -1569,8 +1569,9 @@ def load_m5(
 
     Examples
     --------
-    >>> data = load_m5()
-    >>> data.head()
+    >>> from sktime.datasets import load_m5  # doctest: +SKIP
+    >>> data = load_m5()  # doctest: +SKIP
+    >>> data.head()  # doctest: +SKIP
     """
     required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
 

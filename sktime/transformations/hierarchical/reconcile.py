@@ -30,16 +30,20 @@ class Reconciler(BaseTransformer):
     after prediction. However they are general and can be used to transform
     hierarchical time-series data.
 
-    Please refer to [1]_ for further information
+    For reconciliation methods that require historical values in addition to the
+    forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
+
+    For further information on the methods, see [1]_.
 
     Parameters
     ----------
     method : {"bu", "ols", "wls_str", "td_fcst"}, default="bu"
         The reconciliation approach applied to the forecasts
-            "bu" - bottom-up
-            "ols" - ordinary least squares
-            "wls_str" - weighted least squares (structural)
-            "td_fcst" - top down based on (forecast) proportions
+
+        * ``"bu"`` - bottom-up
+        * ``"ols"`` - ordinary least squares
+        * ``"wls_str"`` - weighted least squares (structural)
+        * ``"td_fcst"`` - top down based on (forecast) proportions
 
     See Also
     --------
@@ -93,7 +97,7 @@ class Reconciler(BaseTransformer):
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": True,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,

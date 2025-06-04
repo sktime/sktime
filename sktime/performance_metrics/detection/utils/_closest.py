@@ -19,6 +19,9 @@ def _find_closest_elements(a, b):
 
     Examples
     --------
+    >>> from sktime.performance_metrics.detection.utils._closest import (
+    ...     _find_closest_elements
+    ... )
     >>> a = [1, 3, 5]
     >>> b = [2, 3.1, 3.2, 4, 6]
     >>> pointer = DirectedHausdorff()._find_closest_elements(a, b)

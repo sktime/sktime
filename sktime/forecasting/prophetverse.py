@@ -7,11 +7,12 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 
-from sktime.forecasting.base._delegate import BaseForecaster, _DelegatedForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0")
+# TODO 0.38.0: update upper and lower bounds when Prophetverse 0.6.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.6.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
@@ -207,8 +208,9 @@ class Prophetverse(_DelegatedForecaster):
         self._delegate = Prophet(**self.get_params())
 
 
-@_placeholder_record("prophetverse.sktime")
-class HierarchicalProphet(BaseForecaster):
+# TODO 0.38.0: update upper and lower bounds when Prophetverse 0.6.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.6.0")
+class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
 
     This method forecasts all bottom series in a hierarchy at once, using a
@@ -314,6 +316,8 @@ class HierarchicalProphet(BaseForecaster):
     >>> forecaster.predict(fh=[1])
     """
 
+    _delegate_name = "_delegate"
+
     _tags = {
         # packaging info
         # --------------
@@ -323,7 +327,7 @@ class HierarchicalProphet(BaseForecaster):
         # estimator type
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -388,3 +392,8 @@ class HierarchicalProphet(BaseForecaster):
         self.rng_key = rng_key
 
         super().__init__()
+
+        # delegation, only for prophetverse 0.2.X
+        from prophetverse.sktime import HierarchicalProphet
+
+        self._delegate = HierarchicalProphet(**self.get_params())

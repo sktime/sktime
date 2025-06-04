@@ -108,7 +108,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "scitype:y": "both",
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
