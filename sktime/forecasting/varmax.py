@@ -216,7 +216,7 @@ class VARMAX(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "capability:missing_values": False,
         "y_inner_mtype": "pd.DataFrame",
