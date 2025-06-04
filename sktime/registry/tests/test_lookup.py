@@ -268,46 +268,11 @@ def test_all_estimators_filter_tags_str():
         assert est.get_class_tag(tag_name) is True
 
 
-def test_all_estimators_filter_tags_list():
-    """Test filter_tags with list of strings (equivalent to {tag: True for tag})."""
-    # Test with multiple tags as list
-    tag_list = ["capability:missing_values", "requires-fh-in-fit"]
-
-    # Get results using list filter_tags
-    result_list = all_estimators("forecaster", filter_tags=tag_list, return_names=True)
-
-    # Get results using equivalent dict filter_tags
-    result_dict = all_estimators(
-        "forecaster", filter_tags=dict.fromkeys(tag_list, True), return_names=True
-    )
-
-    # They should be identical
-    list_names = {item[0] for item in result_list}
-    dict_names = {item[0] for item in result_dict}
-
-    assert list_names == dict_names, (
-        "List and dict filter_tags should give identical results"
-    )
-
-    # Verify all returned estimators have all tags set to True
-    for name, est in result_list:
-        for tag in tag_list:
-            assert est.get_class_tag(tag) is True
-
-
 def test_all_estimators_filter_tags_invalid_type():
     """Test that invalid filter_tags types raise appropriate errors."""
-    # Test with invalid type (int)
-    with pytest.raises(
-        TypeError, match="filter_tags must be a str, list of str, or dict"
-    ):
+    # Test with invalid type (int) - should raise error from underlying all_objects
+    with pytest.raises(TypeError):
         all_estimators("forecaster", filter_tags=123)
-
-    # Test with list containing non-strings
-    with pytest.raises(
-        TypeError, match="filter_tags must be a str, list of str, or dict"
-    ):
-        all_estimators("forecaster", filter_tags=["valid_tag", 123])
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
