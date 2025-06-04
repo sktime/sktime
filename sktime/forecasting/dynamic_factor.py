@@ -130,7 +130,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
@@ -210,7 +210,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Returns series of predicted values.
         """
         # statsmodels requires zero-based indexing starting at the
@@ -218,6 +218,11 @@ class DynamicFactor(_StatsModelsAdapter):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+
+        # if y is univariate, we duplicated the column in fit,
+        # so now we need to revert this duplication
+        if self._was_univariate:
+            y_pred = y_pred.iloc[:, [0]]
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
@@ -349,6 +354,14 @@ class DynamicFactor(_StatsModelsAdapter):
             DynamicFactor as _DynamicFactor,
         )
 
+        # if y is single column DataFrame, duplicate the column to make it multivariate
+        if y.shape[1] == 1:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+            self._was_univariate = True
+        else:
+            self._was_univariate = False
+
         self._forecaster = _DynamicFactor(
             endog=y,
             exog=X,
@@ -378,6 +391,14 @@ class DynamicFactor(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if self._was_univariate:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+        super()._update(y, X, update_params=update_params)
+        return self
 
     def summary(self):
         """Get a summary of the fitted forecaster."""
