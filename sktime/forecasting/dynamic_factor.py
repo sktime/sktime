@@ -306,8 +306,12 @@ class DynamicFactor(_StatsModelsAdapter):
         # concatenate the predictions for different values of alpha
         predictions_df = pd.concat(df_list, axis=1)
 
+        ynames = model.data.ynames
+        if self._was_univariate:
+            ynames = [ynames[0]]
+
         # all the code below is just boilerplate for getting the correct columns
-        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
+        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), ynames))
 
         rename_list = [
             var_name + " " + str(coverage) + " " + bound
@@ -334,7 +338,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         final_columns = [
             [col_name, float(coverage), bound]
-            for col_name in model.data.ynames
+            for col_name in ynames
             for coverage in predictions_df_2.columns.get_level_values(1).unique()
             for bound in predictions_df_2.columns.get_level_values(2).unique()
         ]
