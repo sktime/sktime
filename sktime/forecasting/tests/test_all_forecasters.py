@@ -271,6 +271,31 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         with pytest.raises(NotFittedError):
             estimator_instance.get_fitted_params()
 
+    def test_handle_missing_data(self, estimator_instance):
+        """Test for missing data handling"""
+        global y
+        y[y > y.mean()] = np.nan
+
+        if estimator_instance.get_tag("scitype:y") == "multivariate":
+            y = pd.concat([y, y], axis=1)
+            y.columns = ["series_1", "series_2"]
+
+        if estimator_instance.is_composite():
+            pytest.skip(
+                f"Skipping test for estimator - {estimator_instance.__class__.__name__}"
+            )
+        if estimator_instance.get_tag("capability:missing_values"):
+            estimator_instance.fit(y, fh=FH0)
+        else:
+            cls_name = estimator_instance.__class__.__name__
+            error_msg = (
+                f"{cls_name} cannot handle missing data (nans), but y passed contained "
+                "missing data."
+            )
+
+            with pytest.raises(ValueError, match=re.escape(error_msg)):
+                estimator_instance.fit(y, fh=FH0)
+
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
         if estimator_instance.get_tag("scitype:y") == "multivariate":
