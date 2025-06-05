@@ -137,6 +137,11 @@ class RotationForest(ClassifierMixin, BaseEstimator):
 
         super().__init__()
 
+        if self.base_estimator is None:
+            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+        else:
+            self._base_estimator = self.base_estimator
+
     def fit(self, X, y):
         """Fit a forest of trees on cases (X,y), where y is the target variable.
 
@@ -184,9 +189,6 @@ class RotationForest(ClassifierMixin, BaseEstimator):
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
-
-        if self.base_estimator is None:
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
 
         # remove useless attributes
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
