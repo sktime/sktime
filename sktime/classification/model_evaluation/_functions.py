@@ -55,7 +55,7 @@ def _is_proba_classification_score(metric) -> bool:
         sig = inspect.signature(metric)
         params = list(sig.parameters.keys())
 
-        proba_indicators = ["y_prob", "y_pred_proba", "probas_pred"]
+        proba_indicators = ["y_proba", "y_pred_proba", "probas_pred", "y_prob"]
         if any(indicator in params for indicator in proba_indicators):
             return True
     except (ValueError, TypeError):
@@ -218,7 +218,14 @@ def _evaluate_fold(x, meta):
                 else:
                     y_pred = y_preds_cache[y_pred_key][0]
 
-                score = metric(y_test.astype(int), y_pred.astype(int))
+                if scitype == "pred_proba":
+                    if "pos_label" in inspect.signature(metric).parameters:
+                        pos_label = 1
+                        score = metric(y_test, y_pred[:, 1], pos_label=pos_label)
+                    else:
+                        score = metric(y_test, y_pred)
+                else:
+                    score = metric(y_test, y_pred)
                 temp_result[result_key] = [score]
 
     except Exception as e:
