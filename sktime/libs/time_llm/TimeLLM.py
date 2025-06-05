@@ -90,7 +90,7 @@ class Model(nn.Module):
                     local_files_only=True,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
-                print("Local tokenizer files not found. Atempting to download them..")
+                print("Local tokenizer files not found. Attempting to download them..")
                 self.tokenizer = LlamaTokenizer.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/tokenizer.model",
                     "huggyllama/llama-7b",
@@ -126,7 +126,7 @@ class Model(nn.Module):
                     local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
-                print("Local tokenizer files not found. Atempting to download them..")
+                print("Local tokenizer files not found. Attempting to download them..")
                 self.tokenizer = GPT2Tokenizer.from_pretrained(
                     "openai-community/gpt2",
                     trust_remote_code=True,
@@ -163,7 +163,7 @@ class Model(nn.Module):
                     local_files_only=True,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
-                print("Local tokenizer files not found. Atempting to download them..")
+                print("Local tokenizer files not found. Attempting to download them..")
                 self.tokenizer = BertTokenizer.from_pretrained(
                     "google-bert/bert-base-uncased",
                     trust_remote_code=True,

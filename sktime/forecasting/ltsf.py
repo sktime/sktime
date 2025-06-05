@@ -539,12 +539,12 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     ----------
     seq_len : int
         Length of the input sequence.
-        Preffered to be twice the pred_len.
+        Preferred to be twice the pred_len.
     pred_len : int
         Length of the prediction sequence.
     context_len : int, optional (default=2)
         Length of the label sequence.
-        Preffered to be same as the pred_len.
+        Preferred to be same as the pred_len.
     num_epochs : int, optional (default=16)
         Number of epochs for training.
     batch_size : int, optional (default=8)
@@ -805,7 +805,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                     "Temporal encoding has been disabled because the input data's "
                     "index is not a DatetimeIndex or PeriodIndex. Temporal encoding "
                     "only works with time-based indices. To disable this warning "
-                    "set manually temporal_encoding=False when initalizing the model."
+                    "set manually temporal_encoding=False when initializing the model."
                 )
 
             from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes

@@ -177,7 +177,7 @@ class MiniRocket(BaseTransformer):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter sets for the estimator."""
         return [
-            {"random_state": 0},  # Default Paramters
+            {"random_state": 0},  # Default Parameters
             {
                 "num_kernels": 84,
                 "max_dilations_per_kernel": 32,

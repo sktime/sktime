@@ -86,7 +86,7 @@ def forecasting_validation(
     backend : string, by default "None".
         Parallelization backend to use.
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -301,7 +301,7 @@ class ForecastingBenchmark(BaseBenchmark):
     backend : string, by default "None".
         Parallelization backend to use for runs.
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -439,7 +439,7 @@ class ForecastingBenchmark(BaseBenchmark):
         data : Union[Callable, tuple]
             Can be
             - a function which returns a dataset, like from `sktime.datasets`.
-            - a tuple contianing two data container that are sktime comptaible.
+            - a tuple containing two data container that are sktime comptaible.
             - single data container that is sktime compatible (only endogenous data).
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.

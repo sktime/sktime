@@ -69,7 +69,7 @@ def test_predefined_output(timeseries):
     transform_output = pd.Series(["A"])
     transformer = PredefinedCategory(transform_output=transform_output)
 
-    # Should completly ignore the input and return the predefined output
+    # Should completely ignore the input and return the predefined output
     output = transformer.fit_transform(X=timeseries)
 
     assert output.equals(transform_output)

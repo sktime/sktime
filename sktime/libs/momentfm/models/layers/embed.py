@@ -140,7 +140,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             self.embed = nn.Linear(d_inp, d_model, bias=False)
 
         def forward(self, x):
-            """Foward Function."""
+            """Forward Function."""
             return self.embed(x)
 
     class DataEmbedding(nn.Module):
@@ -164,7 +164,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             self.dropout = nn.Dropout(p=dropout)
 
         def forward(self, x, x_mark=None):
-            """Foward Function."""
+            """Forward Function."""
             if x_mark is None:
                 x = self.value_embedding(x) + self.position_embedding(x)
             else:
@@ -193,7 +193,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             self.dropout = nn.Dropout(p=dropout)
 
         def forward(self, x, x_mark):
-            """Foward function."""
+            """Forward function."""
             if x_mark is None:
                 x = self.value_embedding(x)
             else:
@@ -240,7 +240,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             self.dropout = nn.Dropout(dropout)
 
         def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
-            """Foward Function."""
+            """Forward Function."""
             mask = Masking.convert_seq_to_patch_view(
                 mask, patch_len=self.patch_len
             ).unsqueeze(-1)
@@ -274,7 +274,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
                 )
 
         def forward(self, x):
-            """Foward Function."""
+            """Forward Function."""
             x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
             # x : [batch_size x n_channels x num_patch x patch_len]
             return x

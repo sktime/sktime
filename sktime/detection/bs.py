@@ -24,7 +24,7 @@ class BinarySegmentation(BaseDetector):
     min_cp_distance : int
         Minimum distance between change points.
     max_iter : int
-        Maximum number of interations before the found change points are returned.
+        Maximum number of interactions before the found change points are returned.
 
     Notes
     -----
@@ -122,7 +122,7 @@ class BinarySegmentation(BaseDetector):
         min_cp_distance : int
             Minimum distance between change points.
         max_iter : int
-            Maximum number of interations before the found change points are returned.
+            Maximum number of interactions before the found change points are returned.
 
         Returns
         -------
@@ -171,7 +171,7 @@ class BinarySegmentation(BaseDetector):
         X : pd.Series
             Timeseries on which the change points will be detected.
         Y : any
-            Unused argument. Included for compatability with sklearn.
+            Unused argument. Included for compatibility with sklearn.
 
         Returns
         -------
