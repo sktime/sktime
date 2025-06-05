@@ -330,25 +330,12 @@ class DynamicFactor(_StatsModelsAdapter):
         ]
 
         predictions_df = predictions_df[final_ord]
-        cols = [col_name.split(" ") for col_name in predictions_df.columns]
 
-        predictions_df_2 = pd.DataFrame(
-            predictions_df.values, columns=pd.MultiIndex.from_tuples(cols)
-        )
+        final_columns = self._get_columns("predict_interval", coverage=coverage_list)
+        predictions_df = pd.DataFrame(predictions_df.values, columns=final_columns)
+        predictions_df.index = fh.to_absolute_index(self.cutoff)
 
-        final_columns = [
-            [col_name, float(coverage), bound]
-            for col_name in ynames
-            for coverage in predictions_df_2.columns.get_level_values(1).unique()
-            for bound in predictions_df_2.columns.get_level_values(2).unique()
-        ]
-
-        predictions_df_3 = pd.DataFrame(
-            predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
-        )
-        predictions_df_3.index = fh.to_absolute_index(self.cutoff)
-
-        return predictions_df_3
+        return predictions_df
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
