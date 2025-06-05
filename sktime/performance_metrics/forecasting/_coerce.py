@@ -44,45 +44,6 @@ def _coerce_to_1d_numpy(obj):
     return obj.flatten()
 
 
-# A tiny “callable → Metric” wrapper, in case the user passed a bare function
-class _CallableForecastingErrorMetric:
-    """
-    Wrap any bare forecasting-error function into a BaseForecastingErrorMetric subclass.
-
-    Signature: (y_true, y_pred, ..., by_index=…, multioutput=…, multilevel=…)
-
-    This ensures that .evaluate(...) and .evaluate_by_index(...) work uniformly.
-    """
-
-    _tags = {
-        "requires-y-train": False,
-        "requires-y-pred-benchmark": False,
-        "univariate-only": False,
-    }
-
-    def __init__(self, func):
-        from sktime.performance_metrics.forecasting._base import (
-            BaseForecastingErrorMetric,
-        )
-
-        if not callable(func):
-            raise TypeError(f"""_CallableForecastingErrorMetric: expected
-                            callable, got {type(func)}""")
-        self._func = func
-        # Dynamically subclass BaseForecastingErrorMetric so isinstance checks pass
-        self.__class__ = type(
-            "_WrapForecastingErrorMetric",
-            (BaseForecastingErrorMetric,),
-            {**self.__class__.__dict__},
-        )
-
-    def evaluate(self, y_true, y_pred, **kwargs):
-        return self._func(y_true=y_true, y_pred=y_pred, **kwargs)
-
-    def evaluate_by_index(self, y_true, y_pred, **kwargs):
-        return self._func(y_true=y_true, y_pred=y_pred, by_index=True, **kwargs)
-
-
 def _coerce_to_metric(obj):
     """
     Coerce the input into a forecasting-error-metric-like object.
@@ -93,13 +54,14 @@ def _coerce_to_metric(obj):
     """
     from sktime.performance_metrics.forecasting._base import (
         BaseForecastingErrorMetric,
+        _DynamicForecastingErrorMetric,
     )
 
     if isinstance(obj, BaseForecastingErrorMetric):
         return obj
 
     if callable(obj):
-        return _CallableForecastingErrorMetric(obj)
+        return _DynamicForecastingErrorMetric(obj)
 
     raise TypeError(
         f"""_coerce_to_metric: expected a forecasting-error metric or a callable,
