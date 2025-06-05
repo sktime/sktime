@@ -162,6 +162,7 @@ jobs:
           echo "Result of _check_estimator_deps: $valid_env"
           echo "valid_env=$valid_env" >> $GITHUB_OUTPUT
       - name: Install dependencies for ${{ matrix.flag }}
+        if: steps.checkdeps.outputs.valid_env == 'True'
         run: |
           # Run the Python script to get the list of dependencies for the object and save it to a file deps.txt
           python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
@@ -171,6 +172,7 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
 
       - name: Run tests with ${{ matrix.flag }} if valid_env is True
         if: steps.checkdeps.outputs.valid_env == 'True'
