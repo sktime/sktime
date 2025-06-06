@@ -8,11 +8,11 @@ How to contribute
    :maxdepth: 1
    :hidden:
 
-   developer_guide
-   installation
-   contributing/enhancement_proposals
-   contributing/reporting_bugs
-   contributing/reviewer_guide
+   ../developer_guide
+   ../installation
+   ../contributing/enhancement_proposals
+   ../contributing/reporting_bugs
+   ../contributing/reviewer_guide
 
 Welcome to sktime's contributing guide!
 

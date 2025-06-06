@@ -1717,8 +1717,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.detrend import Deseasonalizer, Detrender
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.forecasting.trend import STLForecaster
+    >>> from sktime.forecasting.trend import STLForecaster, TrendForecaster
     >>> import optuna
     >>> from  optuna.distributions import CategoricalDistribution
 
@@ -1741,7 +1740,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
-    ...             (NaiveForecaster(), ThetaForecaster())
+    ...             (NaiveForecaster(), TrendForecaster())
     ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(

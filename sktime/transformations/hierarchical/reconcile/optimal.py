@@ -31,6 +31,8 @@ class OptimalReconciler(_ReconcilerTransformer):
     ----------
     error_covariance_matrix : pd.DataFrame, default=None
         Error covariance matrix. If None, it is assumed to be the identity matrix.
+    alpha : float, default=0
+        Constant added to the diagonal of the inverted matrix.
 
     Examples
     --------
@@ -44,8 +46,9 @@ class OptimalReconciler(_ReconcilerTransformer):
     >>> y_pred = pipe.predict(fh=[1,2,3])
     """
 
-    def __init__(self, error_covariance_matrix: pd.DataFrame = None):
+    def __init__(self, error_covariance_matrix: pd.DataFrame = None, alpha=0):
         self.error_covariance_matrix = error_covariance_matrix
+        self.alpha = 0
         super().__init__()
 
     def _fit_reconciler(self, X, y):
@@ -121,7 +124,7 @@ class OptimalReconciler(_ReconcilerTransformer):
         X_arr, C, _, E, Pt = self._get_arrays(X)
 
         # Inverse term
-        inv = np.linalg.inv(C @ E @ C.T)
+        inv = np.linalg.inv(C @ E @ C.T + self.alpha * np.eye(C.shape[0]))
         # The matrix that reconciles the base forecasts
         M = np.eye(self._n_series) - E @ C.T @ inv @ C
 
@@ -223,7 +226,7 @@ class OptimalReconciler(_ReconcilerTransformer):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         return [
-            {"error_covariance_matrix": "ols"},
+            {"error_covariance_matrix": "ols", "alpha": 0.1},
             {"error_covariance_matrix": "wls_str"},
         ]
 
@@ -245,6 +248,8 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     error_covariance_matrix : pd.DataFrame, default=None
         Error covariance matrix. If None, it is assumed to be
         the identity matrix
+    alpha : float, default=0
+        Constant added to the diagonal of the inverted matrix.
 
     Examples
     --------
