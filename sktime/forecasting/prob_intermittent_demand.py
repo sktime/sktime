@@ -14,6 +14,8 @@ from prophetverse.sktime.base import BaseBayesianForecaster
 
 from sktime.forecasting.base import ForecastingHorizon
 
+# TODO: think about priors, can we make them more informative?
+
 
 # TODO: move these to methods instead to allow for more flexibility in the model
 #  structure
@@ -41,9 +43,6 @@ def _sample_rate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
         regressors = X @ beta
 
     if not time_varying:
-        # TODO: consider using a more informative prior
-        # TODO: consider using a Gamma prior instead of Exponential
-        # TODO: how to handle regressors?
         log_rate = numpyro.sample("log_rate", Normal(scale=10.0))
         rate = jnp.exp(log_rate + regressors)
 
