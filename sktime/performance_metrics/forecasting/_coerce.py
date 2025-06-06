@@ -42,3 +42,28 @@ def _coerce_to_1d_numpy(obj):
     if isinstance(obj, (pd.DataFrame, pd.Series)):
         obj = obj.values
     return obj.flatten()
+
+
+def _coerce_to_metric(obj):
+    """
+    Coerce the input into a forecasting-error-metric-like object.
+
+    Take either:
+      1. a BaseForecastingErrorMetric instance → return it unchanged, or
+      2. a bare function (callable) → wrap it in _CallableForecastingErrorMetric.
+    """
+    from sktime.performance_metrics.forecasting._base import (
+        BaseForecastingErrorMetric,
+        _DynamicForecastingErrorMetric,
+    )
+
+    if isinstance(obj, BaseForecastingErrorMetric):
+        return obj
+
+    if callable(obj):
+        return _DynamicForecastingErrorMetric(obj)
+
+    raise TypeError(
+        f"""_coerce_to_metric: expected a forecasting-error metric or a callable,
+        got {type(obj).__name__}"""
+    )
