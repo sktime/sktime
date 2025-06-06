@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation.series import check_series
 
 
 class _AugmenterTags:
@@ -39,67 +40,126 @@ class _AugmenterTags:
     }
 
 
-class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
-    r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
+class WhiteNoiseAugmenter(BaseTransformer):
+    """
+    Augmenter that adds Gaussian (white) noise to a univariate or multivariate time series.
 
-    If ``transform`` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
-    returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are
-    i.i.d. random draws from a normal distribution with mean :math:`\mu` = 0
-    and standard deviation :math:`\sigma` = ``scale``.
-    Time series augmentation by adding Gaussian Noise has been discussed among
-    others in [1] and [2].
+    Internally, this always works on a NumPy array. If the user passes a pd.DataFrame,
+    we convert it to np.ndarray, add noise, then wrap it back into a DataFrame with the
+    same index and columns.
 
     Parameters
     ----------
-    scale: float, scale parameter (default=1.0)
-            Specifies the standard deviation.
-    random_state: None or int or ``np.random.RandomState`` instance, optional
-            "If int or RandomState, use it for drawing the random variates.
-            If None, rely on ``self.random_state``.
-            Default is None." [3]
+    scale : float, default=1.0
+        Standard deviation of the Gaussian noise to add.
+    random_state : int or np.random.RandomState or None, default=42
+        If int or RandomState, use it for drawing the random variates.
+        If None, use a new RandomState internally.
+    """
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
-    >>> X = np.array([1, 2, 3, 4, 5])
-    >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
-    >>> augmenter.fit(X)
-    WhiteNoiseAugmenter(...)
-    >>> X_augmented = augmenter.transform(X)
+    _tags = {
+        "scitype:transform-output": "Series",  # outputs same mtype as input
+        "capability:inverse_transform": False,
+    }
 
-    References and Footnotes
-    ----------
-
-        [1]: WEN, Qingsong, et al. Time series data augmentation for deep
-        learning: A survey. arXiv preprint arXiv:2002.12478, 2020.
-        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
-        augmentation for time series classification with neural networks. Plos
-        one, 2021, 16. Jg., Nr. 7, S. e0254841.
-        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
-    """  # noqa: E501
-
-    _tags = {"python_dependencies": "scipy"}
-
-    _allowed_statistics = [np.std]
-
-    def __init__(self, scale=1.0, random_state=42):
+    def __init__(self, scale: float = 1.0, random_state: int | np.random.RandomState | None = 42):
+        super().__init__()
         self.scale = scale
         self.random_state = random_state
-        super().__init__()
+        self._is_fitted = False
+        self._rng = None
 
-    def _transform(self, X, y=None):
-        from scipy.stats import norm
+    def fit(self, X, y=None):
+        """
+        Fit does nothing except initialize the random number generator and
+        check that X is a valid univariate/multivariate series.
 
-        if self.scale in self._allowed_statistics:
-            scale = self.scale(X)
-        elif isinstance(self.scale, (int, float)):
-            scale = self.scale
+        Parameters
+        ----------
+        X : np.ndarray or pd.Series or pd.DataFrame
+            Input series (univariate or multivariate). If DataFrame, columns are vars.
+        y : ignored
+        """
+        # Validate input series (accepts np.ndarray, pd.Series, or pd.DataFrame)
+        _ = check_series(X, enforce_univariate=False)
+
+        # Initialize RNG
+        if isinstance(self.random_state, (int, np.integer)):
+            self._rng = np.random.RandomState(self.random_state)
+        elif isinstance(self.random_state, np.random.RandomState):
+            self._rng = self.random_state
         else:
-            raise TypeError(
-                "Type of parameter 'scale' must be a non-negative float value."
+            # None or anything else → new RandomState
+            self._rng = np.random.RandomState()
+        self._is_fitted = True
+        return self
+
+    def _check_fitted(self):
+        if not self._is_fitted:
+            raise ValueError(f"{self.__class__.__name__} has not been fitted yet. Call `fit` first.")
+
+    def transform(self, X, y=None):
+        """
+        Add Gaussian noise to X. Works for np.ndarray, pd.Series, or pd.DataFrame.
+
+        Parameters
+        ----------
+        X : np.ndarray or pd.Series or pd.DataFrame
+            Time series to augment.
+        y : ignored
+
+        Returns
+        -------
+        X_noisy : same type as X (np.ndarray, pd.Series, or pd.DataFrame)
+            The input series plus white noise ~ N(0, scale^2).
+        """
+        self._check_fitted()
+
+        # Validate input
+        _ = check_series(X, enforce_univariate=False)
+
+        # Detect if it was a DataFrame (to re‐wrap later)
+        was_dataframe = isinstance(X, pd.DataFrame)
+        was_series = isinstance(X, pd.Series)
+
+        # Obtain raw NumPy array
+        if was_dataframe:
+            X_vals = X.values
+        elif was_series:
+            # make it a 2D array to handle univariate series uniformly
+            idx = X.index
+            X_vals = X.to_numpy().reshape(-1, 1)
+        else:
+            # Already an ndarray (1D or 2D)
+            X_vals = np.asarray(X)
+            if X_vals.ndim == 1:
+                X_vals = X_vals.reshape(-1, 1)
+
+        # Generate Gaussian noise of same shape
+        noise = self._rng.normal(loc=0.0, scale=self.scale, size=X_vals.shape)
+
+        # Add noise
+        X_noisy_vals = X_vals + noise
+
+        # Convert back to original type
+        if was_dataframe:
+            return pd.DataFrame(
+                X_noisy_vals,
+                index=X.index,
+                columns=X.columns,
             )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        elif was_series:
+            # Collapse back to a Series
+            return pd.Series(X_noisy_vals.ravel(), index=idx, name=X.name)
+        else:
+            # Original was np.ndarray: return same shape
+            return X_noisy_vals if X_noisy_vals.ndim > 1 else X_noisy_vals.ravel()
+
+    def fit_transform(self, X, y=None):
+        """
+        Just calls fit and then transform on X.
+        """
+        return self.fit(X, y).transform(X)
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
