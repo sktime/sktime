@@ -18,7 +18,7 @@ class _PmdArimaAdapter(BaseForecaster):
     _tags = {
         "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
         "maintainers": "hyang1996",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,

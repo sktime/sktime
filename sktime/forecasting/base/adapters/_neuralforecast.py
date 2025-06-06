@@ -118,7 +118,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         self.needs_X = self.algorithm_exogenous_support and bool(self.futr_exog_list)
 
-        self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
+        self.set_tags(**{"capability:exogenous": self.needs_X})
         if self.broadcasting:
             self.set_tags(
                 **{

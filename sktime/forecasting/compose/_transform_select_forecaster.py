@@ -100,7 +100,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["shlok191"],
@@ -141,7 +141,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
             "capability:missing_values": True,

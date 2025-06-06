@@ -82,7 +82,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

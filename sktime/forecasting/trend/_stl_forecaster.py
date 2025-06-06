@@ -142,7 +142,7 @@ class STLForecaster(BaseForecaster):
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -192,15 +192,15 @@ class STLForecaster(BaseForecaster):
             self.forecaster_seasonal,
             self.forecaster_resid,
         ):
-            if forecaster is not None and not forecaster.get_tag(
-                "ignores-exogeneous-X"
+            if forecaster is not None and forecaster.get_tag(
+                "capability:exogenous"
             ):
-                ignore_exogenous = False
+                capa_exo = True
                 break
         else:  # none of the forecasters (if provided) use exogenous feature variables
-            ignore_exogenous = True  # corresponding to NaiveForecaster in missing case
+            capa_exo = False  # corresponding to NaiveForecaster in missing case
 
-        self.set_tags(**{"ignores-exogeneous-X": ignore_exogenous})
+        self.set_tags(**{"capability:exogenous": capa_exo})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.

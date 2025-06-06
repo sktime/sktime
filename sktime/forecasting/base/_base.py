@@ -95,7 +95,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # --------------
         "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
@@ -1664,7 +1664,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
 
             if (
-                not self.get_tag("ignores-exogeneous-X")
+                self.get_tag("capability:exogenous")
                 and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
                 and not self.get_tag("capability:categorical_in_X")
             ):
@@ -1685,7 +1685,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             X_scitype = None
 
         # extra check: if X is ignored by inner methods, pass None to them
-        if self.get_tag("ignores-exogeneous-X"):
+        if not self.get_tag("capability:exogenous"):
             X = None
             X_scitype = None
         # end checking X
@@ -1695,7 +1695,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
                 # TODO: fix this so the check is general, using get_time_index
-                if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
+                if self.get_tag("capability:exogenous") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:

@@ -563,17 +563,17 @@ class capability__exogeneous(_BaseTag):
 
     ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogeneous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
     Exogeneous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogeneous data (``capability:exogeneous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
     can be used to pass exogeneous data to the forecaster.
 
@@ -585,11 +585,10 @@ class capability__exogeneous(_BaseTag):
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogeneous",
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "does forecaster make use of exogeneous data?",
