@@ -2744,6 +2744,12 @@ ESTIMATOR_TAG_REGISTER = [
         "dict",
         "deprecated tag for dependency import aliases",
     ),
+    (
+        "capability:exogenous",
+        "object",
+        "bool",
+        "deprecated tag for dependency import aliases",
+    ),
 ]
 
 # construct the tag register from all classes in this module

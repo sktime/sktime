@@ -56,6 +56,8 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
+from copy import deepcopy
+
 from skbase.base import BaseEstimator as _BaseEstimator
 from skbase.base import BaseObject as _BaseObject
 from skbase.base._base import TagAliaserMixin as _TagAliaserMixin
@@ -74,6 +76,8 @@ SERIALIZATION_FORMATS = {
 
 class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
+
+    Base class for all parametric objects in sktime.
 
     Extends skbase BaseObject with additional features.
     """
@@ -367,9 +371,34 @@ class TagAliaserMixin(_TagAliaserMixin):
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
     """
 
-    alias_dict = {"handles-missing-data": "capability:missing_values"}
-    deprecate_dict = {"handles-missing-data": "1.0.0"}
+    alias_dict = {
+        "handles-missing-data": "capability:missing_values",
+        "ignores-exogeneous-X": "capability:exogenous",
+    }
+    deprecate_dict = {"handles-missing-data": "1.0.0", "ignores-exogeneous-X": "1.0.0"}
 
+    @classmethod
+    def _complete_dict(cls, tag_dict):
+        """Add all aliased and aliasing tags to the dictionary."""
+        alias_dict = cls.alias_dict
+        deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
+        new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
+
+        if len(deprecated_tags) > 0 or len(new_tags) > 0:
+            new_tag_dict = deepcopy(tag_dict)
+            # for all tag strings being set, write the value
+            #   to all tags that could *be aliased by* the string
+            #   and all tags that could be *aliasing* the string
+            # this way we ensure upwards and downwards compatibility
+            for old_tag, new_tag in alias_dict.items():
+                for tag in tag_dict:
+                    if tag == old_tag and new_tag != "":
+                        new_tag_dict[new_tag] = tag_dict[tag]
+                    if tag == new_tag:
+                        new_tag_dict[old_tag] = tag_dict[tag]
+            return new_tag_dict
+        else:
+            return tag_dict
 
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
