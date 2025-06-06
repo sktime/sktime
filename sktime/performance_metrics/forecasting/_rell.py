@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import pandas as pd
 
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
@@ -18,6 +19,8 @@ from sktime.performance_metrics.forecasting._coerce import (
 from sktime.performance_metrics.forecasting._functions import (
     mean_absolute_error,
 )
+
+EPS = np.finfo(np.float64).eps
 
 
 class RelativeLoss(BaseForecastingErrorMetricFunc):
@@ -128,6 +131,12 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     >>> relative_mae = RelativeLoss()
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.8490566037735847)
+    >>> relative_mae = RelativeLoss(multioutput="raw_values")
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    array([0.625     , 1.03448276])
+    >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    np.float64(0.927272727272727)
     >>> rel_obj = RelativeLoss(relative_loss_function=MeanAbsoluteError())
     >>> rel_obj(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.8490566037735848)
@@ -146,16 +155,20 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         relative_loss_function=None,
         by_index=False,
     ):
-        default_fn = relative_loss_function or mean_absolute_error
+        self.relative_loss_function = relative_loss_function or mean_absolute_error
         # Coerce into a Metric object (either itself, or wrapped
         # via _CallableForecastingErrorMetric)
-        self._metric_obj = _coerce_to_metric(default_fn)
+        self._metric_obj = _coerce_to_metric(self.relative_loss_function)
 
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
         )
+
+        self._metric_obj.multioutput = self.multioutput
+        self._metric_obj.multilevel = self.multilevel
+        self._metric_obj.by_index = self.by_index
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -180,30 +193,76 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         }
         return [params1, params2, params3, params4, params5, params6, params7]
 
-    def _evaluate(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+    def _evaluate(
+        self,
+        y_true,
+        y_pred,
+        y_pred_benchmark,
+        sample_weight=None,
+        horizon_weight=None,
+        **kwargs,
+    ):
         if y_pred_benchmark is None:
             raise ValueError("y_pred_benchmark must be passed to RelativeLoss")
+
+        eval_kwargs = {}
+        if sample_weight is not None:
+            eval_kwargs["sample_weight"] = sample_weight
+        if horizon_weight is not None:
+            eval_kwargs["horizon_weight"] = horizon_weight
 
         # _metric_obj is guaranteed to be a BaseForecastingErrorMetric
-        base = self._metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **kwargs)
+        base = self._metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
         ref = self._metric_obj.evaluate(
-            y_true=y_true, y_pred=y_pred_benchmark, **kwargs
+            y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
         )
-        with np.errstate(divide="ignore", invalid="ignore"):
-            out = np.divide(base, ref)
-            return np.where(np.isfinite(out), out, float("inf"))
+        if sample_weight is None:
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out = np.divide(base, ref)
+                return np.where(np.isfinite(out), out, float("inf"))
+        else:
+            ref_safe = np.where(ref == 0, EPS, ref)
+            out = np.divide(base, ref_safe)
+            if isinstance(out, np.ndarray) and out.ndim > 0:
+                return np.mean(out)
+            return float(out)
 
-    def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+    def _evaluate_by_index(
+        self,
+        y_true,
+        y_pred,
+        y_pred_benchmark,
+        sample_weight=None,
+        horizon_weight=None,
+        **kwargs,
+    ):
         if y_pred_benchmark is None:
             raise ValueError("y_pred_benchmark must be passed to RelativeLoss")
 
+        eval_kwargs = {}
+        if sample_weight is not None:
+            eval_kwargs["sample_weight"] = sample_weight
+        if horizon_weight is not None:
+            eval_kwargs["horizon_weight"] = horizon_weight
+
         base = self._metric_obj.evaluate_by_index(
-            y_true=y_true, y_pred=y_pred, **kwargs
+            y_true=y_true, y_pred=y_pred, **eval_kwargs
         )
         ref = self._metric_obj.evaluate_by_index(
-            y_true=y_true, y_pred=y_pred_benchmark, **kwargs
+            y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
         )
 
-        with np.errstate(divide="ignore", invalid="ignore"):
-            out = np.divide(base, ref)
-            return np.where(np.isfinite(out), out, float("inf"))
+        if sample_weight is None:
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out = np.divide(base, ref)
+                out = np.where(np.isfinite(out), out, float("inf"))
+        else:
+            ref_safe = np.where(ref == 0, EPS, ref)
+            out = np.divide(base, ref_safe)
+
+        if self.multioutput == "raw_values":
+            return pd.DataFrame(out, index=y_true.index, columns=y_true.columns)
+        else:
+            if sample_weight is not None and out.ndim == 2:
+                out = np.mean(out, axis=1)
+            return pd.Series(out, index=y_true.index)

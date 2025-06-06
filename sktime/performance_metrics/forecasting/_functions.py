@@ -2531,6 +2531,8 @@ def relative_loss(
     y_pred_benchmark,
     relative_loss_function=mean_absolute_error,
     loss_function=None,
+    y_train=None,
+    sample_weight=None,
     horizon_weight=None,
     multioutput="uniform_average",
     **kwargs,
@@ -2621,7 +2623,7 @@ def relative_loss(
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)  # doctest: +SKIP
     np.float64(0.8490566037735847)
     """  # noqa: E501
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, multioutput)
     _, _, y_pred_benchmark, _ = _check_reg_targets(
         y_true, y_pred_benchmark, multioutput
     )
@@ -2633,8 +2635,13 @@ def relative_loss(
         loss_function if (loss_function is not None) else relative_loss_function
     )
     metric_obj = _coerce_to_metric(default_fn)
+    metric_obj.multioutput = "raw_values"
+    metric_obj.multilevel = "uniform_average"
+    metric_obj.by_index = False
 
     eval_kwargs = {}
+    if sample_weight is not None:
+        eval_kwargs["sample_weight"] = sample_weight
     if horizon_weight is not None:
         eval_kwargs["horizon_weight"] = horizon_weight
 
@@ -2643,7 +2650,16 @@ def relative_loss(
         y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
     )
 
-    loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    if sample_weight is None:
+        loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    else:
+        ref_safe = np.where(loss_benchmark == 0, EPS, loss_benchmark)
+        raw_out = np.divide(loss_preds, ref_safe)
+        if isinstance(raw_out, np.ndarray) and raw_out.ndim > 0:
+            loss = np.mean(raw_out)
+        else:
+            loss = float(raw_out)
+
     return _handle_output(loss, multioutput)
 
 
