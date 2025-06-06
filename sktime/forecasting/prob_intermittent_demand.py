@@ -1,8 +1,4 @@
-"""Probabilistic Intermittent Demand Forecaster.
-
-This module implements a probabilistic intermittent demand forecaster using a
-Bayesian approach.
-"""
+"""Probabilistic Intermittent Demand Forecaster."""
 
 import jax.nn
 import jax.numpy as jnp
