@@ -170,6 +170,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             rate = _sample_rate(self.time_varying_rate, length, X)
 
         # observed data
+        if index is not None:
+            gate = gate[index]
+            rate = rate[index]
+
         sampled_y = numpyro.sample(
             "y:ignore", ZeroInflatedPoisson(1.0 - gate, rate), obs=y
         )
@@ -177,7 +181,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         if oos == 0:
             return
 
-        numpyro.deterministic("observed", sampled_y[index])
+        numpyro.deterministic("observed", sampled_y)
 
         return
 
