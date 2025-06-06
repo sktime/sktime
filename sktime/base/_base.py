@@ -390,15 +390,51 @@ class TagAliaserMixin(_TagAliaserMixin):
             #   to all tags that could *be aliased by* the string
             #   and all tags that could be *aliasing* the string
             # this way we ensure upwards and downwards compatibility
-            for old_tag, new_tag in alias_dict.items():
-                for tag in tag_dict:
-                    if tag == old_tag and new_tag != "":
-                        new_tag_dict[new_tag] = tag_dict[tag]
-                    if tag == new_tag:
-                        new_tag_dict[old_tag] = tag_dict[tag]
+            for old_tag in alias_dict:
+                cls._translate_tags(new_tag_dict, tag_dict, old_tag)
             return new_tag_dict
         else:
             return tag_dict
+
+    @classmethod
+    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag):
+        """Translate old tag to new tag.
+
+        Mutates ``new_tag_dict`` given ``old_tag_dict`` and ``old_tag``.
+
+        Parameters
+        ----------
+        new_tag_dict : dict
+            Dictionary of new tags.
+        tag_dict : dict
+            Dictionary of old tags.
+        old_tag : str
+            Name of the tag to translate.
+
+        Returns
+        -------
+        str
+            Translated tag name.
+        """
+        alias_dict = cls.alias_dict
+        new_tag = alias_dict[old_tag]
+
+        # special treatment for "ignores-exogeneous-X"
+        # the new tag is the negation of the old tag
+        if old_tag == "ignores-exogeneous-X":
+            if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+                new_tag_dict[new_tag] = not tag_dict[old_tag]
+            if new_tag in tag_dict:
+                new_tag_dict[old_tag] = not tag_dict[new_tag]
+            return new_tag_dict
+
+        # standard treatment for all other tags
+        if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+            new_tag_dict[new_tag] = tag_dict[old_tag]
+        if new_tag in tag_dict:
+            new_tag_dict[old_tag] = tag_dict[new_tag]
+        return new_tag_dict
+
 
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
