@@ -186,7 +186,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.0.0"],
@@ -383,7 +383,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.3.0"],
@@ -498,7 +498,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.3.2"],
@@ -606,7 +606,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
@@ -716,7 +716,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.7.2"],
@@ -860,7 +860,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
@@ -1031,7 +1031,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.4.0"],

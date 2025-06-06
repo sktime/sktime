@@ -165,7 +165,7 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
     }
 
     def __init__(
@@ -229,7 +229,7 @@ class ARCH(BaseForecaster):
         self.reindex = reindex
 
         if self.mean in ["ARX", "HARX"]:
-            self.set_tags(**{"ignores-exogeneous-X": False})
+            self.set_tags(**{"capability:exogenous": True})
 
         super().__init__()
 

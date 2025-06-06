@@ -61,7 +61,7 @@ class TrendForecaster(BaseForecaster):
     _tags = {
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "maintainers": ["tensorflow-as-tf"],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }

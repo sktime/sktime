@@ -125,7 +125,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
@@ -678,7 +678,7 @@ class NaiveVariance(BaseForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_var": True,
     }
@@ -691,7 +691,7 @@ class NaiveVariance(BaseForecaster):
 
         tags_to_clone = [
             "requires-fh-in-fit",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
             "capability:missing_values",
             "y_inner_mtype",
             "X_inner_mtype",

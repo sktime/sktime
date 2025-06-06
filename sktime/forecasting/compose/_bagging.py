@@ -84,7 +84,7 @@ class BaggingForecaster(BaseForecaster):
     _tags = {
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?

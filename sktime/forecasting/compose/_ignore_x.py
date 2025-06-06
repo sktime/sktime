@@ -19,8 +19,9 @@ class IgnoreX(_DelegatedForecaster):
         The forecaster to wrap.
     ignore_x : bool, optional (default=True)
         Whether to ignore exogenous data or not, this parameter is useful for tuning.
-        True: ignore exogenous data, X is not passed on to ``forecaster``
-        False: use exogenous data, X is passed on to ``forecaster``
+
+        * True: ignore exogenous data, X is not passed on to ``forecaster``
+        * False: use exogenous data, X is passed on to ``forecaster``
 
     Attributes
     ----------
@@ -34,7 +35,7 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
     }
 
     def __init__(self, forecaster, ignore_x=True):
@@ -46,10 +47,10 @@ class IgnoreX(_DelegatedForecaster):
         self.forecaster_ = forecaster.clone()
 
         self._set_delegated_tags(self.forecaster_)
-        self.set_tags(**{"ignores-exogeneous-X": True})
+        self.set_tags(**{"capability:exogenous": False})
 
-        if not ignore_x:
-            self.set_tags(**{"ignores-exogeneous-X": ignore_x})
+        if ignore_x:
+            self.set_tags(**{"capability:exogenous": False})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

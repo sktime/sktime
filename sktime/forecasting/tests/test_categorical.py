@@ -30,7 +30,7 @@ def test_dummy_est_with_categorical_capability():
 
     est = ForecastKnownValues(y)
     modified_tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:categorical_in_X": True,
     }
     est.set_tags(**modified_tags)
