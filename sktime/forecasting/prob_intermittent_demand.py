@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import numpy as np
 import numpyro.handlers
 import pandas as pd
-from numpyro.distributions import Exponential, Laplace, Normal, ZeroInflatedPoisson
+from numpyro.distributions import Laplace, Normal, ZeroInflatedPoisson
 from prophetverse.sktime.base import BaseBayesianForecaster
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -34,16 +34,24 @@ def _sample_gate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
 
 
 def _sample_rate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
-    """Sample the rate parameter for the ZIP model."""
+    """Sample the log_rate parameter for the ZIP model."""
+    regressors = 0.0
+    if X is not None:
+        beta = numpyro.sample("beta", Laplace(), sample_shape=X.shape[-1:])
+        regressors = X @ beta
+
     if not time_varying:
         # TODO: consider using a more informative prior
         # TODO: consider using a Gamma prior instead of Exponential
         # TODO: how to handle regressors?
-        rate = numpyro.sample("rate", Exponential(rate=1e-3))
+        log_rate = numpyro.sample("log_rate", Normal(scale=10.0))
+        rate = jnp.exp(log_rate + regressors)
 
         return jnp.full((length,), rate)
 
-    raise NotImplementedError("Time-varying rate parameters are not implemented yet.")
+    raise NotImplementedError(
+        "Time-varying log_rate parameters are not implemented yet."
+    )
 
 
 class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
