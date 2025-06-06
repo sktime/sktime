@@ -17,7 +17,7 @@ How to contribute
 Welcome to sktime's contributing guide!
 
 We value all kinds of contributions - not just code.
-For a detailed overview of current and future work, check out our :ref:`roadmap`.
+For a detailed overview of current and future work, check out our :ref:`_roadmap`.
 
 We are particularly motivated to support new contributors
 and people who are looking to learn and develop their skills.
