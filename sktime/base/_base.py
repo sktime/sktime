@@ -419,6 +419,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         alias_dict = cls.alias_dict
         new_tag = alias_dict[old_tag]
 
+        # todo 1.0.0 - removve this special case
         # special treatment for "ignores-exogeneous-X"
         # the new tag is the negation of the old tag
         if old_tag == "ignores-exogeneous-X":
