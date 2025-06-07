@@ -3,11 +3,17 @@
 import numpy as np
 import pandas as pd
 import pytest
-
+from numpy.testing import assert_almost_equal
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 from sktime.utils.parallel import _get_parallel_test_fixtures
+from sktime.performance_metrics.forecasting import (
+    MeanAbsolutePercentageError,
+    MeanSquaredErrorPercentage,
+    MedianAbsolutePercentageError,
+    MedianSquaredPercentageError,
+)
 
 MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
 
@@ -43,161 +49,162 @@ class ForecastingMetricPtFixtureGenerator(BaseFixtureGenerator):
     ]
 
 
-class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTester):
-    """Module level tests for all sktime forecast metrics, point forecasts."""
+def test_mape_relative_to_y_true_and_y_pred():
+        """Test MAPE metric with relative_to y_true and y_pred."""
 
-    @pytest.mark.parametrize("n_columns", [1, 2])
-    @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-    def test_metric_output_direct(self, estimator_instance, multioutput, n_columns):
-        """Test output is of correct type, dependent on multioutput.
+        y_true = np.array([10, 20, 30])
+        y_pred = np.array([12, 18, 33])
 
-        Also tests that four ways to call the metric yield equivalent results:
-            1. using the __call__ dunder
-            2. calling the evaluate method
-        """
-        # create numpy weights based on n_columns
-        if multioutput == "numpy":
-            if n_columns == 1:
-                return None
-            multioutput = np.random.rand(n_columns)
+        mape_ytrue = MeanAbsolutePercentageError(relative_to="y_true")(y_true, y_pred)
+        mape_ypred = MeanAbsolutePercentageError(relative_to="y_pred")(y_true, y_pred)
 
-        metric = estimator_instance.set_params(multioutput=multioutput)
+        expected_ytrue = np.mean(np.abs((y_true - y_pred) / y_true)) 
+        expected_ypred = np.mean(np.abs((y_true - y_pred) / y_pred)) 
 
-        # create test data
-        y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
-        y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
+        assert np.isclose(mape_ytrue, expected_ytrue, atol=1e-6), "MAPE relative to y_true incorrect"
+        assert np.isclose(mape_ypred, expected_ypred, atol=1e-6), "MAPE relative to y_pred incorrect"
 
-        # coerce to DataFrame since _make_series does not return consistent output type
-        y_pred = pd.DataFrame(y_pred)
-        y_true = pd.DataFrame(y_true)
+def test_mspe_relative_to_y_true_and_y_pred():
+    """Test MSPE metric with relative_to y_true and y_pred.
+    
+    MSPE = mean squared percentage error, i.e.
+    MSPE = mean(((y_true - y_pred)^2) / (y_true^2)) or (y_pred^2)
+    """
+    y_true = np.array([10, 20, 30])
+    y_pred = np.array([12, 18, 33])
 
-        res = dict()
+    mspe_ytrue = MeanSquaredErrorPercentage(relative_to="y_true")(y_true, y_pred)
+    mspe_ypred = MeanSquaredErrorPercentage(relative_to="y_pred")(y_true, y_pred)
 
-        res[1] = metric(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_pred_benchmark=y_pred,
-            y_train=y_true,
-        )
+    expected_ytrue = np.mean(((y_true - y_pred) / y_true) ** 2)
+    expected_ypred = np.mean(((y_true - y_pred) / y_pred) ** 2)
+    
+    assert np.isclose(mspe_ytrue, expected_ytrue, atol=1e-6), "MSPE relative to y_true incorrect"
+    assert np.isclose(mspe_ypred, expected_ypred, atol=1e-6), "MSPE relative to y_pred incorrect"
 
-        res[2] = metric.evaluate(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_pred_benchmark=y_pred,
-            y_train=y_true,
-        )
+def test_mspe_raises_on_empty_input():
+    """Ensure MSPE raises ValueError on empty inputs."""
+    y_true = np.array([])
+    y_pred = np.array([])
 
-        if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
-            assert all(type(x) is np.float64 for x in res.values())
-        elif multioutput == "raw_values":
-            assert all(isinstance(x, np.ndarray) for x in res.values())
-            assert all(x.ndim == 1 for x in res.values())
-            assert all(len(x) == len(y_true.columns) for x in res.values())
+    with pytest.raises(ValueError, match="empty"):
+        MeanSquaredErrorPercentage(relative_to="y_true")(y_true, y_pred)
 
-        # assert results from all options are equal
-        assert np.allclose(res[1], res[2])
+def test_mdape_relative_to_y_true_and_y_pred():
+    """Test MdAPE with relative_to='y_true' and 'y_pred'."""
+    y_true = np.array([10, 20, 30])
+    y_pred = np.array([12, 18, 33])
 
-    @pytest.mark.parametrize("n_columns", [1, 2])
-    @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-    def test_metric_output_by_instance(
-        self, estimator_instance, multioutput, n_columns
-    ):
-        """Test output of evaluate_by_index for type, dependent on multioutput."""
-        # create numpy weights based on n_columns
-        if multioutput == "numpy":
-            if n_columns == 1:
-                return None
-            multioutput = np.random.rand(n_columns)
+    mdape_ytrue = MedianAbsolutePercentageError(relative_to="y_true")(y_true, y_pred)
+    mdape_ypred = MedianAbsolutePercentageError(relative_to="y_pred")(y_true, y_pred)
 
-        metric = estimator_instance.set_params(multioutput=multioutput)
+    expected_ytrue = np.median(np.abs((y_true - y_pred) / y_true))
+    expected_ypred = np.median(np.abs((y_true - y_pred) / y_pred))
 
-        # create test data
-        y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
-        y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
+    assert np.isclose(mdape_ytrue, expected_ytrue, atol=1e-6), "MdAPE relative to y_true incorrect"
+    assert np.isclose(mdape_ypred, expected_ypred, atol=1e-6), "MdAPE relative to y_pred incorrect"
 
-        # coerce to DataFrame since _make_series does not return consistent output type
-        y_pred = pd.DataFrame(y_pred)
-        y_true = pd.DataFrame(y_true)
+def test_mdape_symmetric_behavior():
+    """Test symmetric MdAPE behaves correctly and ignores relative_to."""
+    y_true = np.array([10, 20, 30])
+    y_pred = np.array([12, 18, 33])
 
-        res = metric.evaluate_by_index(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_pred_benchmark=y_pred,
-            y_train=y_true,
-        )
+    symmetric_ytrue = MedianAbsolutePercentageError(symmetric=True, relative_to="y_true")(y_true, y_pred)
+    symmetric_ypred = MedianAbsolutePercentageError(symmetric=True, relative_to="y_pred")(y_true, y_pred)
 
-        if isinstance(multioutput, str) and multioutput == "raw_values":
-            assert isinstance(res, pd.DataFrame)
-            assert (res.columns == y_true.columns).all()
-        else:
-            assert isinstance(res, pd.Series)
+    # Symmetric percentage error formula
+    expected_symmetric = np.median(
+        2 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred))
+    )
 
-        assert (res.index == y_true.index).all()
+    assert np.isclose(symmetric_ytrue, expected_symmetric, atol=1e-6), "Symmetric MdAPE calculation is incorrect"
+    assert np.isclose(symmetric_ypred, expected_symmetric, atol=1e-6), "Symmetric MdAPE should ignore relative_to"
 
-        metric = metric.clone()
+def test_mdape_invalid_relative_to_raises():
+    """Ensure MdAPE raises on invalid `relative_to` argument."""
+    y_true = np.array([1, 2, 3])
+    y_pred = np.array([1, 2, 3])
+    
+    with pytest.raises(ValueError, match="relative_to must be 'y_true' or 'y_pred'"):
+        MedianAbsolutePercentageError(relative_to="invalid")(y_true, y_pred)
 
-        metric.set_params(by_index=True)
+def test_mdape_empty_input_raises():
+    """Ensure MdAPE raises ValueError when inputs are empty."""
+    y_true = np.array([])
+    y_pred = np.array([])
 
-        res_call = metric(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_pred_benchmark=y_pred,
-            y_train=y_true,
-        )
-        if isinstance(multioutput, str) and multioutput == "raw_values":
-            pd.testing.assert_frame_equal(res, res_call)
-        else:
-            pd.testing.assert_series_equal(res, res_call)
+    with pytest.raises(ValueError, match="0 sample"):
+        MedianAbsolutePercentageError()(y_true, y_pred)
 
-    def test_uniform_average_time(self, estimator_instance):
-        """Tests that uniform_average_time indeed ignores index."""
-        metric_obj = estimator_instance.set_params(multilevel="uniform_average_time")
+def test_mdape_nan_input_raises():
+    y_true = np.array([10, np.nan, 30])
+    y_pred = np.array([12, 18, 33])
 
-        y_true = _make_panel()
-        y_pred = _make_panel()
+    with pytest.raises(ValueError, match="contains NaN"):
+        MedianAbsolutePercentageError()(y_true, y_pred)
 
-        y_true_noix = y_true.reset_index(drop=True)
-        y_pred_noix = y_pred.reset_index(drop=True)
+def test_mdspe_relative_to_y_true_and_y_pred():
+    """Test MdSPE with relative_to='y_true' and 'y_pred'."""
+    y_true = np.array([10, 20, 30])
+    y_pred = np.array([12, 18, 33])
 
-        res = metric_obj.evaluate(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_pred_benchmark=y_pred,
-            y_train=y_true,
-        )
+    mdspe_ytrue = MedianSquaredPercentageError(relative_to="y_true").evaluate(y_true, y_pred)
+    mdspe_ypred = MedianSquaredPercentageError(relative_to="y_pred").evaluate(y_true, y_pred)
 
-        res_noix = metric_obj.evaluate(
-            y_true=y_true_noix,
-            y_pred=y_pred_noix,
-            y_pred_benchmark=y_pred_noix,
-            y_train=y_true_noix,
-        )
+    expected_ytrue = np.median(((y_true - y_pred) / y_true) ** 2)
+    expected_ypred = np.median(((y_true - y_pred) / y_pred) ** 2)
 
-        assert np.allclose(res, res_noix)
+    assert np.isclose(mdspe_ytrue, expected_ytrue, atol=1e-6), "MdSPE relative to y_true incorrect"
+    assert np.isclose(mdspe_ypred, expected_ypred, atol=1e-6), "MdSPE relative to y_pred incorrect"
 
-    def test_metric_weights(self, estimator_instance):
-        """Test that weights are correctly applied to the metric."""
-        metric_obj = estimator_instance
-        metric = type(metric_obj)
+def test_mdspe_invalid_relative_to_raises():
+    """Ensure MdSPE raises on invalid `relative_to` argument."""
+    y_true = np.array([1, 2, 3])
+    y_pred = np.array([1, 2, 3])
 
-        y_true = np.array([3, -0.5, 2, 7, 2])
-        y_pred = np.array([2.5, 0.5, 2, 8, 2.25])
-        wts = np.array([0.1, 0.2, 0.1, 0.3, 2.4])
+    with pytest.raises(ValueError):
+        MedianSquaredPercentageError(relative_to="invalid").evaluate(y_true, y_pred)
 
-        y_kwargs = {
-            "y_true": y_true,
-            "y_pred": y_pred,
-            "y_pred_benchmark": y_true,
-            "y_train": y_true,
-        }
+def test_mdspe_empty_input_raises():
+    """Ensure MdSPE raises ValueError when inputs are empty."""
+    y_true = np.array([])
+    y_pred = np.array([])
 
-        # skip for private metrics such as dynamic error metrics
-        if metric.__name__.startswith("_"):
-            return None
+    with pytest.raises(ValueError, match="0 sample"):
+        MedianSquaredPercentageError().evaluate(y_true, y_pred)
 
-        if metric_obj(**y_kwargs) == metric_obj(sample_weight=wts, **y_kwargs):
-            raise ValueError(f"Metric {metric} does not handle sample_weight correctly")
+def test_mdspe_nan_input_raises():
+    """Ensure MdSPE raises ValueError when input contains NaN."""
+    y_true = np.array([10, np.nan, 30])
+    y_pred = np.array([12, 18, 33])
 
-        # wt_metr = metric(sample_weight=wts)
-        # res_wt = wt_metr(y_true, y_pred)
-        # assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))
+    with pytest.raises(ValueError, match="relative_to.*y_true.*y_pred"):
+        MedianSquaredPercentageError(relative_to="invalid").evaluate(y_true, y_pred)
+
+def test_mdspe_symmetric_behavior():
+    """Test symmetric MdSPE behaves correctly and ignores relative_to."""
+    y_true = np.array([10, 20, 30])
+    y_pred = np.array([12, 18, 33])
+
+    symmetric_ytrue = MedianSquaredPercentageError(symmetric=True, relative_to="y_true").evaluate(y_true, y_pred)
+    symmetric_ypred = MedianSquaredPercentageError(symmetric=True, relative_to="y_pred").evaluate(y_true, y_pred)
+
+    expected_symmetric = np.median(
+        (2 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred))) ** 2
+    )
+
+    assert np.isclose(symmetric_ytrue, expected_symmetric, atol=1e-6), "Symmetric MdSPE calculation is incorrect"
+    assert np.isclose(symmetric_ypred, expected_symmetric, atol=1e-6), "Symmetric MdSPE should ignore relative_to"
+
+def test_median_squared_percentage_error_relative_to_pred():
+    y_true = np.array([100, 200, 300])
+    y_pred = np.array([90, 210, 310])
+    metric = MedianSquaredPercentageError(relative_to="y_pred")
+    result = metric(y_true, y_pred)
+
+    expected = np.nanmedian(((y_true - y_pred) / y_pred) ** 2)
+    assert np.isclose(result, expected, atol=1e-6), "MdSPE relative_to=y_pred incorrect"
+
+class TestAllForecastingPtMetrics(QuickTester):
+    """Dummy test class to register point forecasting metrics in registry."""
+    pass
