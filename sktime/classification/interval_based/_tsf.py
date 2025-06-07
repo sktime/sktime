@@ -236,7 +236,7 @@ class TimeSeriesForestClassifier(
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
-            return {"n_estimators": 10, "min_interval": 3}
+            return {"n_estimators": 10}
         else:
             param1 = {"n_estimators": 2, "min_interval": 5}
             param2 = {
