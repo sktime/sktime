@@ -65,6 +65,10 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
           equivalent to a call of the``evaluate`` method.
         * If True, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+    Determines normalization base in percentage error:
+    - "y_true": errors are relative to true values
+    - "y_pred": errors are relative to predicted values
 
     See Also
     --------
@@ -120,15 +124,24 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
+        relative_to = "y_true",
         by_index=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
         )
+    def _func_args(self):
+        """Parameters passed to the metric function."""
+        return {
+            "symmetric": self.symmetric,
+            "square_root": self.square_root,
+            "relative_to": self.relative_to,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -151,4 +164,5 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]

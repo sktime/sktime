@@ -1898,6 +1898,15 @@ def mean_squared_percentage_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
+    if isinstance(output_errors, np.ndarray) and not isinstance(multioutput, (str, type(None))):
+        multioutput = np.asarray(multioutput)
+        
+        if output_errors.shape != multioutput.shape:
+            raise ValueError(
+                f"Shape mismatch: output_errors has shape {output_errors.shape}, "
+                f"but weights (multioutput) have shape {multioutput.shape}."
+            )
+
     loss = np.average(output_errors, weights=multioutput)
     return _handle_output(loss, multioutput)
 

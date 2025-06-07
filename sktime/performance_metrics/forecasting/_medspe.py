@@ -6,7 +6,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-
+import numpy as np
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
     median_squared_percentage_error,
@@ -21,7 +21,8 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     is True then calculates sMdSPE or sRMdSPE. Output is non-negative floating
     point. The best value is 0.0.
 
-    MdSPE is measured in squared percentage error relative to the test data.
+    MdSPE is measured in squared percentage error relative to the test data (y_true),
+    or to predictions (y_pred) if ``relative_to`` is set accordingly.
     RMdSPE is measured in percentage error relative to the test data.
     Because the calculation takes the square rather than absolute value of
     the percentage forecast error, large errors are penalized more than
@@ -41,7 +42,9 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
-
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Denominator of percentage error. If "y_pred", the metric is relative to
+        predictions instead of true values.
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -116,6 +119,15 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.7428571428571428)
     """
 
+    _tags = {
+        "multioutput": "uniform_average",
+        "lower_is_better": True,
+        "scitype:metric": "performance",
+        "scitype:y_pred": "forecast",
+        "scitype:instance": "Series",
+        "capability:multioutput": False,
+    }
+    
     func = median_squared_percentage_error
 
     def __init__(
@@ -124,14 +136,38 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         square_root=False,
+        relative_to="y_true",
         by_index=False,
     ):
+        if relative_to not in ("y_true", "y_pred"):
+            raise ValueError(
+                f"Invalid relative_to value: {relative_to}. "
+                "Expected 'y_true' or 'y_pred'."
+            )
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
+        
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+        )
+    
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the metric."""
+        # Collect required parameters
+        multioutput = self.get_tag("multioutput", "uniform_average")
+        horizon_weight = kwargs.get("horizon_weight", None)
+
+        return median_squared_percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            multioutput=multioutput,
+            horizon_weight=horizon_weight,
+            relative_to=self.relative_to,
+            symmetric=self.symmetric,
+            square_root=self.square_root,
         )
 
     @classmethod
@@ -155,4 +191,5 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]
