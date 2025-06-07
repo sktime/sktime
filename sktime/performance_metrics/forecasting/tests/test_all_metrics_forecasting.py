@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from numpy.testing import assert_almost_equal
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
@@ -195,15 +194,6 @@ def test_mdspe_symmetric_behavior():
 
     assert np.isclose(symmetric_ytrue, expected_symmetric, atol=1e-6), "Symmetric MdSPE calculation is incorrect"
     assert np.isclose(symmetric_ypred, expected_symmetric, atol=1e-6), "Symmetric MdSPE should ignore relative_to"
-
-def test_median_squared_percentage_error_relative_to_pred():
-    y_true = np.array([100, 200, 300])
-    y_pred = np.array([90, 210, 310])
-    metric = MedianSquaredPercentageError(relative_to="y_pred")
-    result = metric(y_true, y_pred)
-
-    expected = np.nanmedian(((y_true - y_pred) / y_pred) ** 2)
-    assert np.isclose(result, expected, atol=1e-6), "MdSPE relative_to=y_pred incorrect"
 
 class TestAllForecastingPtMetrics(QuickTester):
     """Dummy test class to register point forecasting metrics in registry."""

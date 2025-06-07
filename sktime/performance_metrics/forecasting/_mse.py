@@ -6,7 +6,6 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-import numpy as np
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
