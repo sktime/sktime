@@ -9,18 +9,42 @@ from sktime.forecasting.thief import THieFForecaster
 
 @pytest.fixture
 def sample_data():
-    """Create sample time series data for testing.
+    """Create sample time series data from R output for testing.
 
     Returns
     -------
     pd.DataFrame
-        A DataFrame containing a sample time series with a sinusoidal pattern
-        and some added noise.
+        A DataFrame containing a fixed time series from R with sinusoidal pattern
+        and added noise.
     """
-    np.random.seed(42)
-    dates = pd.date_range(start="2020-01-01", periods=24, freq="M")
-    data = np.sin(np.linspace(0, 4 * np.pi, 24)) * 10 + np.random.normal(0, 1, 24) + 20
-    return pd.DataFrame(data, index=dates, columns=["value"])
+    dates = pd.date_range(start="2020-01-01", periods=24, freq="MS")
+    values = [
+        21.370958,
+        24.631141,
+        29.241981,
+        30.609550,
+        28.573967,
+        23.877886,
+        20.149856,
+        13.594462,
+        12.595814,
+        10.146445,
+        13.996510,
+        19.588678,
+        21.309107,
+        27.029571,
+        29.657520,
+        30.058560,
+        26.026627,
+        18.705211,
+        13.575522,
+        13.150414,
+        9.716674,
+        9.339839,
+        14.632243,
+        21.214675,
+    ]
+    return pd.DataFrame({"value": values}, index=dates)
 
 
 @pytest.mark.parametrize(
