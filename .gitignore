@@ -174,3 +174,4 @@ profile.svg
 test_output/*
 mlruns/*
 _build/
+docs/source/_static/estimator_overview_db.json

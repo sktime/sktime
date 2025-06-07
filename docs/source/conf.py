@@ -55,6 +55,15 @@ extensions = [
     "sphinx.ext.doctest",
 ]
 
+
+# Mock heavy optional dependencies so ReadTheDocs can build without them
+autodoc_mock_imports = [
+    "tsai",
+    "torch",
+    "fastai",
+]
+
+
 # Recommended by sphinx_design when using the MyST Parser
 myst_enable_extensions = ["colon_fence"]
 

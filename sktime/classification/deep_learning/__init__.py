@@ -15,11 +15,14 @@ __all__ = [
     "TapNetClassifier",
     "GRUClassifier",
     "GRUFCNNClassifier",
-    "InceptionTimeClassifierTsai", #InceptionTime Classifier from tsai
-    "TSTClassifierTsai",   # TST classifier from tsai
-
+    "InceptionTimeClassifierTsai",  # InceptionTime Classifier from tsai
+    "TSTClassifierTsai",  # TST classifier from tsai
 ]
 
+from sktime.classification.deep_learning._tsai import (
+    InceptionTimeClassifierTsai,
+    TSTClassifierTsai,
+)
 from sktime.classification.deep_learning.cnn import CNNClassifier
 from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
@@ -38,4 +41,3 @@ from sktime.classification.deep_learning.mvts_transformer import (
 from sktime.classification.deep_learning.resnet import ResNetClassifier
 from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
 from sktime.classification.deep_learning.tapnet import TapNetClassifier
-from sktime.classification.deep_learning._tsai import InceptionTimeClassifierTsai, TSTClassifierTsai

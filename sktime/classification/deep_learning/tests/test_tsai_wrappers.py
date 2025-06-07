@@ -1,14 +1,13 @@
-
 # sktime/classification/deep_learning/tests/test_tsai_wrappers.py
-import pandas as pd
 import numpy as np
 import pytest
 
-from sktime.datasets import load_basic_motions
 from sktime.classification.deep_learning import (
     InceptionTimeClassifierTsai,
     TSTClassifierTsai,
 )
+from sktime.datasets import load_basic_motions
+
 
 @pytest.mark.parametrize("Cls", [InceptionTimeClassifierTsai, TSTClassifierTsai])
 def test_tsai_classifier_smoke(Cls):

@@ -4,6 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import torch
+
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
@@ -15,9 +16,12 @@ __author__ = ["timeseriesAI (oguiza)", "estiern", "AlexThomasMa"]
 # -------------------------------------------------------------------------
 _ce = torch.nn.CrossEntropyLoss()
 
+
 def _loss(pred, targ):
-    """Wrapper around torch.nn.CrossEntropyLoss that casts targets to long."""
+    """Wrap torch.nn.CrossEntropyLoss to cast targets to long."""
     return _ce(pred, targ.long())
+
+
 # -------------------------------------------------------------------------
 
 
@@ -38,8 +42,8 @@ class _TsaiAdapter(BaseClassifier):
         self.lr = lr
         self.fit_kwargs = fit_kwargs
 
-        self._learn = None          # fastai Learner (tsai learner)
-        self._classes = None        # np.ndarray of class labels
+        self._learn = None  # fastai Learner (tsai learner)
+        self._classes = None  # np.ndarray of class labels
 
         super().__init__()
 
@@ -48,7 +52,7 @@ class _TsaiAdapter(BaseClassifier):
         # Delay-import tsai until fit time, so sktime can still import
         from tsai.all import get_ts_dls, ts_learner
 
-        # 1) Convert nested DataFrame -> 3‐D NumPy array (N, C, L)
+        # 1) Convert nested DataFrame -> 3-D NumPy array (N, C, L)
         X_np = from_nested_to_3d_numpy(X)
 
         # 2) Encode y labels to integer indices
@@ -69,21 +73,22 @@ class _TsaiAdapter(BaseClassifier):
     # ---------------------- Inference / Predict logic ---------------------- #
     def _forward(self, X_np: np.ndarray):
         """
-        Run a batch (N,C,L) through the tsai model and return
-        soft-max probabilities, avoiding fastai’s predict path.
+        Run a batch (N,C,L) through the tsai model and return.
+
+        Softmax probabilities, avoiding fastai's predict path.
         """
         xb = torch.from_numpy(X_np).to(self._learn.dls.device).float()  # (N,C,L)
         mdl = self._learn.model.eval()
         with torch.no_grad():
-            logits = mdl(xb)                                       # (N, n_classes)
-            probs = torch.softmax(logits, dim=1).cpu().numpy()      # (N, n_classes)
+            logits = mdl(xb)  # (N, n_classes)
+            probs = torch.softmax(logits, dim=1).cpu().numpy()  # (N, n_classes)
         return probs
 
     def predict(self, X: pd.DataFrame):
-        X_np = from_nested_to_3d_numpy(X)     # (N, C, L)
-        probs = self._forward(X_np)           # (N, n_classes)
-        idx = probs.argmax(axis=1)            # (N,)
-        return self._classes[idx]             # map back to original labels
+        X_np = from_nested_to_3d_numpy(X)  # (N, C, L)
+        probs = self._forward(X_np)  # (N, n_classes)
+        idx = probs.argmax(axis=1)  # (N,)
+        return self._classes[idx]  # map back to original labels
 
     def predict_proba(self, X: pd.DataFrame):
         X_np = from_nested_to_3d_numpy(X)
