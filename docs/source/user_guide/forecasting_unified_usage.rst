@@ -1,57 +1,90 @@
-.. _forecasting_unified_usage:
 
-Unified Forecasting Usage
+Forecasting Unified Usage
 =========================
 
-This page provides a unified interface overview for using forecasting models in sktime.
+This guide demonstrates how to apply multiple forecasting models in a consistent way using `sktime`.
 
-The goal is to show how all sktime forecasters can be used in a consistent, modular way.
+We will forecast airline passenger data using a unified interface and compare the predictions.
 
-Notebook
---------
+Data Preparation
+----------------
 
-You can also view the unified forecasting notebook example:
-
-- :doc:`../examples/01d_forecasting_unified_example.ipynb`
-
-Overview
---------
-
-All forecasters in sktime follow a common interface:
-
-- ``fit(y)``
-- ``predict(fh)``
-- ``update(y_new)``, optionally
-- ``predict_interval``, ``predict_var`` for probabilistic forecasts
-
-Typical Usage Example
----------------------
-
-Here’s the basic usage pattern:
+We load the monthly international airline passenger dataset:
 
 .. code-block:: python
 
-    from sktime.forecasting.arima import AutoARIMA
-    from sktime.forecasting.base import ForecastingHorizon
     from sktime.datasets import load_airline
-
     y = load_airline()
-    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
-    forecaster = AutoARIMA()
+    y.index.freq = "MS"
 
-    forecaster.fit(y)
-    y_pred = forecaster.predict(fh)
-
-This interface is consistent across all forecasters, whether statistical, machine learning-based, or hierarchical.
-
-Forecaster Types
+Train-Test Split
 ----------------
 
-Here are some types of forecasters in sktime:
+We split the data into training and test sets.
 
-- **Classical models**: e.g., ARIMA, ExponentialSmoothing
-- **Machine-learning based**: e.g., RegressionForecaster
-- **Probabilistic**: support `predict_interval`, `predict_proba`
-- **Hierarchical/Global**: support panel data inputs
+.. code-block:: python
 
-See also: :doc:`../estimator_overview` and the full API reference.
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y_train, y_test = temporal_train_test_split(y)
+
+    fh = range(1, len(y_test) + 1)
+
+Define Models
+-------------
+
+We define three models using a common interface:
+
+- **NaiveForecaster**: Uses the last observed value to make forecasts.
+- **ExponentialSmoothing**: Applies exponential decay to past observations.
+- **ARIMA**: Combines autoregression and moving average components.
+
+
+
+.. code-block:: python
+
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    from sktime.forecasting.arima import ARIMA
+
+    models = {
+        "Naive": NaiveForecaster(strategy="last"),
+        "ETS": ExponentialSmoothing(),
+        "ARIMA": ARIMA()
+    }
+
+Fit and Forecast
+----------------
+
+We fit each model and generate predictions.
+
+.. code-block:: python
+
+    fitted_models = {}
+    y_preds = {}
+
+    for name, model in models.items():
+        fitted_models[name] = model.fit(y_train)
+        y_preds[name] = model.predict(fh)
+
+Visualize Forecasts
+-------------------
+
+We plot and compare forecasts from each model.
+
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(y_test.index, y_test, label="True", linewidth=2)
+
+    for name, y_pred in y_preds.items():
+        plt.plot(y_test.index, y_pred, label=name)
+
+    plt.title("Forecast Comparison: Airline Dataset")
+    plt.xlabel("Date")
+    plt.ylabel("Passengers")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
