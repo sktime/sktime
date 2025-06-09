@@ -2,15 +2,15 @@
 
 import pandas as pd
 
-from sktime.transformations.hierarchical.drop_redundant_hierarchical_levels import (  # noqa: E501
-    DropRedundantHierarchicalLevels,
-)
 from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
 from sktime.transformations.hierarchical.reconcile._utils import (
     _get_total_level_idxs,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,
     _recursively_propagate_topdown,
+)
+from sktime.transformations.hierarchical.squeeze_hierarchy import (  # noqa: E501
+    SqueezeHierarchy,
 )
 
 __all__ = ["TopdownReconciler"]
@@ -64,7 +64,7 @@ class TopdownReconciler(_ReconcilerTransformer):
             )
 
     def _fit_reconciler(self, X, y=None):
-        self._drop_redundant_levels = DropRedundantHierarchicalLevels()
+        self._drop_redundant_levels = SqueezeHierarchy()
         self._drop_redundant_levels.fit(X)
         X = self._drop_redundant_levels.transform(X)
 

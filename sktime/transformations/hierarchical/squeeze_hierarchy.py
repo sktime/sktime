@@ -3,10 +3,10 @@
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 
-__all__ = ["DropRedundantHierarchicalLevels"]
+__all__ = ["SqueezeHierarchy"]
 
 
-class DropRedundantHierarchicalLevels(BaseTransformer):
+class SqueezeHierarchy(BaseTransformer):
     """
     Drop redundant levels from multiindex.
 
@@ -56,7 +56,6 @@ class DropRedundantHierarchicalLevels(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "capability:hierarchical_reconciliation": False,
     }
 
     def _fit(self, X, y):

@@ -15,12 +15,12 @@ from sktime.transformations.hierarchical.reconcile import (
     OptimalReconciler,
     TopdownReconciler,
 )
+from sktime.transformations.hierarchical.reconcile._optimal import (
+    _create_summing_matrix_from_index,
+)
 from sktime.transformations.hierarchical.reconcile._utils import (
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
-)
-from sktime.transformations.hierarchical.reconcile.optimal import (
-    _create_summing_matrix_from_index,
 )
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 

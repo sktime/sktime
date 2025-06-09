@@ -3,8 +3,8 @@ import itertools
 import pandas as pd
 import pytest
 
-from sktime.transformations.hierarchical.reconcile.topdown import (
-    DropRedundantHierarchicalLevels,
+from sktime.transformations.hierarchical.reconcile._topdown import (
+    SqueezeHierarchy,
 )
 
 
@@ -66,7 +66,7 @@ def test_fit(n_redundant, n_hier_levels, n_instances_per_level=2):
     X = create_redundant_hierarchical_indexes(
         n_hier_levels, n_redundant, n_instances_per_level
     )
-    transformer = DropRedundantHierarchicalLevels()
+    transformer = SqueezeHierarchy()
     transformer.fit(X)
 
     expected_levels_to_drop = min(n_redundant, n_hier_levels - 2)
@@ -85,7 +85,7 @@ def test_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     X = create_redundant_hierarchical_indexes(
         n_hier_levels, n_redundant, n_instances_per_level
     )
-    transformer = DropRedundantHierarchicalLevels()
+    transformer = SqueezeHierarchy()
     transformer.fit(X)
     transformed = transformer.transform(X, None)
 
@@ -105,7 +105,7 @@ def test_inverse_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     X = create_redundant_hierarchical_indexes(
         n_hier_levels, n_redundant, n_instances_per_level
     )
-    transformer = DropRedundantHierarchicalLevels()
+    transformer = SqueezeHierarchy()
     transformer.fit(X)
     transformed = transformer.transform(X)
     inversed = transformer.inverse_transform(transformed)
@@ -119,7 +119,7 @@ def test_inverse_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
 def test_no_hierarchy_handling():
     """Test the transformer with a non-hierarchical DataFrame."""
     non_hierarchical_data = pd.DataFrame({"value": [1, 2, 3]}, index=[0, 1, 2])
-    transformer = DropRedundantHierarchicalLevels()
+    transformer = SqueezeHierarchy()
     transformer.fit(non_hierarchical_data)
 
     assert transformer._no_hierarchy is True, "Expected `_no_hierarchy` to be True."

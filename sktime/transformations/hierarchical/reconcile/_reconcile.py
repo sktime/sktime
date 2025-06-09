@@ -20,6 +20,8 @@ from sktime.utils.warnings import warn
 class Reconciler(BaseTransformer):
     """Hierarchical reconciliation transformer.
 
+    Please refer to ...
+
     Hierarchical reconciliation is a transformation which is used to make the
     predictions in a hierarchy of time-series sum together appropriately.
 

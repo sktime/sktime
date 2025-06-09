@@ -6,16 +6,16 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
+from sktime.transformations.hierarchical.reconcile._bottom_up import (
+    BottomUpReconciler,
+)
+from sktime.transformations.hierarchical.reconcile._topdown import (
+    TopdownReconciler,
+)
 from sktime.transformations.hierarchical.reconcile._utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
-)
-from sktime.transformations.hierarchical.reconcile.bottom_up import (
-    BottomUpReconciler,
-)
-from sktime.transformations.hierarchical.reconcile.topdown import (
-    TopdownReconciler,
 )
 
 __all__ = ["MiddleOutReconciler"]
@@ -310,7 +310,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Get test params."""
-        from sktime.transformations.hierarchical.reconcile.topdown import (
+        from sktime.transformations.hierarchical.reconcile._topdown import (
             TopdownReconciler,
         )
 

@@ -48,6 +48,7 @@ class _ReconcilerTransformer(BaseTransformer):
         "maintainers": "felipeangelimvieira",
         # estimator type
         # --------------
+        "object_type": ["transformer", "reconciler"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -67,7 +68,6 @@ class _ReconcilerTransformer(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "capability:hierarchical_reconciliation": True,
     }
 
     def _fit(self, X, y=None):
