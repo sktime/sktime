@@ -66,8 +66,6 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
     def __init__(
         self,
-        add_gate_intercept: bool = True,
-        add_rate_intercept: bool = True,
         time_varying_gate: bool = False,
         time_varying_rate: bool = False,
         inference_engine=None,
@@ -83,9 +81,6 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             raise NotImplementedError(
                 "Time-varying rate parameters are not implemented yet."
             )
-
-        self.add_gate_intercept = add_gate_intercept
-        self.add_rate_intercept = add_rate_intercept
 
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
@@ -118,21 +113,15 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
     def _sample_gate(self, length: int, X: np.ndarray) -> jnp.ndarray:
         """Sample the gate parameter for the ZIP model."""
-        regressors = 0.0
+        features = np.ones((length, 1))
+
         if X is not None:
-            with numpyro.plate("factors", X.shape[-1]):
-                beta = numpyro.sample("beta", Normal())
+            features = np.concatenate((features, X), axis=1)
 
-            regressors = X @ beta
+        with numpyro.plate("factors", features.shape[-1]):
+            beta = numpyro.sample("beta", Normal())
 
-        if not self.add_gate_intercept and X is None:
-            raise ValueError(
-                "If no exogenous variables are provided, "
-                "the gate intercept must be added."
-            )
-
-        if self.add_gate_intercept:
-            regressors += numpyro.sample("gate_intercept", Normal())
+        regressors = features @ beta
 
         if not self.time_varying_gate:
             gate = jax.nn.sigmoid(regressors)
@@ -149,21 +138,15 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         X: np.ndarray,
     ) -> jnp.ndarray:
         """Sample the log_rate parameter for the ZIP model."""
-        regressors = 0.0
+        features = np.ones((length, 1))
+
         if X is not None:
-            with numpyro.plate("factors", X.shape[-1]):
-                beta = numpyro.sample("beta", Normal())
+            features = np.concatenate((features, X), axis=1)
 
-            regressors = X @ beta
+        with numpyro.plate("factors", features.shape[-1]):
+            beta = numpyro.sample("beta", Normal())
 
-        if not self.add_rate_intercept and X is None:
-            raise ValueError(
-                "If no exogenous variables are provided, "
-                "the rate intercept must be added."
-            )
-
-        if self.add_rate_intercept:
-            regressors += numpyro.sample("rate_intercept", Normal())
+        regressors = features @ beta
 
         if not self.time_varying_rate:
             rate = jnp.exp(regressors)
