@@ -1323,6 +1323,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "capability:missing_values": False,
     }
 
     def __init__(
