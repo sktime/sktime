@@ -30,7 +30,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             return F.l1_loss(input, torch.zeros_like(input), reduction="none")
 
         def _divide_no_nan(self, a: float, b: float) -> float:
-            """Auxiliary funtion to handle divide by 0."""
+            """Auxiliary function to handle divide by 0."""
             div = a / b
             div[div != div] = 0.0
             div[div == float("inf")] = 0.0
@@ -46,7 +46,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             return error
 
     def _divide_no_nan(a: float, b: float) -> float:
-        """Auxiliary funtion to handle divide by 0."""
+        """Auxiliary function to handle divide by 0."""
         div = a / b
         div[div != div] = 0.0
         div[div == float("inf")] = 0.0

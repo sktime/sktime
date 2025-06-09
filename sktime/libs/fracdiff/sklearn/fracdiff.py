@@ -61,7 +61,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         "fixed" (default) :
             Fixed window method.
             Every term in the output is evaluated using `window` observations.
-            In other words, a fracdiff operator, which is a polynominal of a backshift
+            In other words, a fracdiff operator, which is a polynomial of a backshift
             operator, is truncated up to the `window`-th term.
             The beginning window\_ - 1 elements in output are filled with `numpy.nan`.
         "expanding" (not available) :

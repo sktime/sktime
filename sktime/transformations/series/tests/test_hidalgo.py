@@ -25,7 +25,7 @@ for j in range(3):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_X():
-    """Test if innput data is of expected dimension and type."""
+    """Test if input data is of expected dimension and type."""
     assert isinstance(X, np.ndarray), "X should be a numpy array"
     assert len(np.shape(X)) == 2, "X should be a two-dimensional numpy array"
 
