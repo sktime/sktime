@@ -40,14 +40,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
     """
 
     _tags = {
-        # packaging info
-        # --------------
-        "authors": "TODO",
-        "maintainers": "TODO",
+        "authors": ["tingiskhan", "felipeangleimvieira"],
+        "maintainers": ["tingiskhan"],
         "python_version": None,
         "python_dependencies": ["prophetverse"],
-        # estimator type
-        # --------------
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
@@ -122,14 +118,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
         regressors = features @ beta
 
-        if not self.time_varying_gate:
-            gate = jax.nn.sigmoid(regressors)
+        # TODO: add support for time varying gate parameters
+        gate = jax.nn.sigmoid(regressors)
 
-            return jnp.full((length,), gate)
-
-        raise NotImplementedError(
-            "Time-varying gate parameters are not implemented yet."
-        )
+        return gate
 
     def _sample_rate(
         self,
@@ -147,14 +139,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
         regressors = features @ beta
 
-        if not self.time_varying_rate:
-            rate = jnp.exp(regressors)
+        # TODO: add support for time varying gate parameters
+        rate = jnp.exp(regressors)
 
-            return jnp.full((length,), rate)
-
-        raise NotImplementedError(
-            "Time-varying log_rate parameters are not implemented yet."
-        )
+        return rate
 
     def model(
         self,
