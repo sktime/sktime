@@ -10,17 +10,30 @@ from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class TransferEntropy(BasePairwiseTransformerPanel):
-    """
+    r"""
     Transfer Entropy-based pairwise distance for panel time series data.
 
     Transfer Entropy (TE) is an information-theoretic measure of directed
-    information transfer between two random processes. It quantifies how much knowing
-    the past of one process (source) improves the prediction of another process,
-    beyond what the target's own past provides.
+    information transfer between two random processes. It quantifies how much
+    knowing the past of one process (the source) improves the prediction of another
+    process (the target), beyond what the target's own past provides.
 
-    This implementation currently supports a binning-based estimation of TE using joint
-    and conditional probability histograms. The result is a non-symmetric matrix
-    where TE(X → Y) ≠ TE(Y → X).
+    Formally, transfer entropy from process \\( X \\) to process \\( Y \\) is defined:
+
+    \\[
+    T_{X \rightarrow Y} = H\\left(Y_t \\mid Y_{t-1:t-L}\\right) -
+    H\\left(Y_t \\mid Y_{t-1:t-L}, X_{t-1:t-L}\\right)
+    \\]
+
+    where:
+    - \\( H(\\cdot) \\) denotes Shannon entropy
+    - \\( Y_{t-1:t-L} \\) represents the lagged vector
+    \\( (Y_{t-1}, Y_{t-2}, \\dots, Y_{t-L}) \\)
+    - \\( X_{t-1:t-L} \\) represents the lagged vector for the source process \\( X \\)
+
+    This implementation supports histogram-based estimation of joint and conditional
+    probabilities. As a result, the transfer entropy matrix is generally asymmetric:
+    \\( T_{X \rightarrow Y} \neq T_{Y \rightarrow X} \\).
 
     Parameters
     ----------
@@ -34,6 +47,12 @@ class TransferEntropy(BasePairwiseTransformerPanel):
         Number of histogram bins if estimator="binning".
     significance_test : bool, default=False
         If True, enables significance testing using surrogate time series.
+
+    References
+    ----------
+    .. [1] https://pmc.ncbi.nlm.nih.gov/articles/PMC4196918/
+    .. [2] https://arxiv.org/html/2409.14745v1
+
     """
 
     _tags = {

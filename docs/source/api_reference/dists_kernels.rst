@@ -84,17 +84,9 @@ Composition
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
-    
-    ConstantPwTrafoPanel
-    
-.. currentmodule:: sktime.dists_kernels.transfer_entropy
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-    
-    TransferEntropy
-    
+    ConstantPwTrafoPanel
+
 
 Simple Time Series Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -273,3 +265,12 @@ Can be used within other ``numba`` compiled functions for end-to-end compilation
     twe_distance
     wddtw_distance
     wdtw_distance
+
+Information Theoretic Interactions
+--------------------------------
+.. currentmodule:: sktime.dists_kernels.transfer_entropy
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransferEntropy
