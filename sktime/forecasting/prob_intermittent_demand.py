@@ -18,54 +18,6 @@ from sktime.forecasting.base import ForecastingHorizon
 # TODO: think about priors, can we make them more informative?
 
 
-# TODO: move these to methods instead to allow for more flexibility in the model
-#  structure
-def _sample_gate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
-    """Sample the gate parameter for the ZIP model."""
-    regressors = 0.0
-    if X is not None:
-        # TODO: perhaps we need to think differently regarding the truncation, if
-        #  using other regressors
-        truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
-
-        beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
-        regressors = X @ beta
-
-    if not time_varying:
-        logit_gate = numpyro.sample("logit_gate", Normal())
-        gate = jax.nn.sigmoid(logit_gate + regressors)
-
-        return jnp.full((length,), gate)
-
-    raise NotImplementedError("Time-varying gate parameters are not implemented yet.")
-
-
-def _sample_rate(
-    time_varying: bool,
-    length: int,
-    X: np.ndarray,
-) -> jnp.ndarray:
-    """Sample the log_rate parameter for the ZIP model."""
-    regressors = 0.0
-    if X is not None:
-        # TODO: perhaps we need to think differently regarding the truncation, if
-        #  using other regressors
-        truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
-
-        beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
-        regressors = X @ beta
-
-    if not time_varying:
-        log_rate = numpyro.sample("log_rate", Normal(scale=10.0))
-        rate = jnp.exp(log_rate + regressors)
-
-        return jnp.full((length,), rate)
-
-    raise NotImplementedError(
-        "Time-varying log_rate parameters are not implemented yet."
-    )
-
-
 class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
     r"""Probabilistic Intermittent Demand Forecaster.
 
@@ -159,6 +111,52 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             "mask": True,
         }
 
+    def _sample_gate(self, length: int, X: np.ndarray) -> jnp.ndarray:
+        """Sample the gate parameter for the ZIP model."""
+        regressors = 0.0
+        if X is not None:
+            # TODO: perhaps we need to think differently regarding the truncation, if
+            #  using other regressors
+            truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+
+            beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
+            regressors = X @ beta
+
+        if not self.time_varying_gate:
+            logit_gate = numpyro.sample("logit_gate", Normal())
+            gate = jax.nn.sigmoid(logit_gate + regressors)
+
+            return jnp.full((length,), gate)
+
+        raise NotImplementedError(
+            "Time-varying gate parameters are not implemented yet."
+        )
+
+    def _sample_rate(
+        self,
+        length: int,
+        X: np.ndarray,
+    ) -> jnp.ndarray:
+        """Sample the log_rate parameter for the ZIP model."""
+        regressors = 0.0
+        if X is not None:
+            # TODO: perhaps we need to think differently regarding the truncation, if
+            #  using other regressors
+            truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+
+            beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
+            regressors = X @ beta
+
+        if not self.time_varying_rate:
+            log_rate = numpyro.sample("log_rate", Normal(scale=10.0))
+            rate = jnp.exp(log_rate + regressors)
+
+            return jnp.full((length,), rate)
+
+        raise NotImplementedError(
+            "Time-varying log_rate parameters are not implemented yet."
+        )
+
     def model(
         self,
         length: int,
@@ -190,15 +188,14 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         -------
             Nothing.
         """
-        # gate
         with numpyro.handlers.scope(prefix="gate"):
-            gate = _sample_gate(self.time_varying_gate, length, X)
+            gate = self._sample_gate(length, X)
 
-        # rate
         with numpyro.handlers.scope(prefix="rate"):
-            rate = _sample_rate(self.time_varying_rate, length, X)
+            rate = self._sample_rate(length, X)
 
-        # observed data
+        # NB: by indexing the gate and rate we can speed up posterior predictive
+        # sampling
         if index is not None:
             gate = gate[index]
             rate = rate[index]
@@ -212,6 +209,8 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             return
 
         numpyro.deterministic("observed", sampled_y)
+        numpyro.deterministic("rate", rate)
+        numpyro.deterministic("gate", gate)
 
         return
 
@@ -228,9 +227,15 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         X_inner = self._check_X(X=X)
         predictive_samples_ = self._get_predictive_samples_dict(fh=fh, X=X_inner)
 
+        mapping = {
+            "observed": np.median,
+            "rate": np.mean,
+            "gate": np.mean,
+        }
+
         out = pd.DataFrame(
             data={
-                site: np.median(data, axis=0).flatten()
+                site: mapping[site](data, axis=0).flatten()
                 for site, data in predictive_samples_.items()
             },
             index=self.periodindex_to_multiindex(fh_as_index),
