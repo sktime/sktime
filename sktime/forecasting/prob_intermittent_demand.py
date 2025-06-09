@@ -66,6 +66,8 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
     def __init__(
         self,
+        add_gate_intercept: bool = True,
+        add_rate_intercept: bool = True,
         time_varying_gate: bool = False,
         time_varying_rate: bool = False,
         inference_engine=None,
@@ -81,6 +83,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             raise NotImplementedError(
                 "Time-varying rate parameters are not implemented yet."
             )
+
+        self.add_gate_intercept = add_gate_intercept
+        self.add_rate_intercept = add_rate_intercept
 
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
@@ -120,9 +125,17 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
             regressors = X @ beta
 
+        if not self.add_gate_intercept and X is None:
+            raise ValueError(
+                "If no exogenous variables are provided, "
+                "the gate intercept must be added."
+            )
+
+        if self.add_gate_intercept:
+            regressors += numpyro.sample("gate_intercept", Normal())
+
         if not self.time_varying_gate:
-            logit_gate = numpyro.sample("logit_gate", Normal())
-            gate = jax.nn.sigmoid(logit_gate + regressors)
+            gate = jax.nn.sigmoid(regressors)
 
             return jnp.full((length,), gate)
 
@@ -143,9 +156,17 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
             regressors = X @ beta
 
+        if not self.add_rate_intercept and X is None:
+            raise ValueError(
+                "If no exogenous variables are provided, "
+                "the rate intercept must be added."
+            )
+
+        if self.add_rate_intercept:
+            regressors += numpyro.sample("rate_intercept", Normal())
+
         if not self.time_varying_rate:
-            log_rate = numpyro.sample("log_rate", Normal(scale=10.0))
-            rate = jnp.exp(log_rate + regressors)
+            rate = jnp.exp(regressors)
 
             return jnp.full((length,), rate)
 
