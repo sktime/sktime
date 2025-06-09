@@ -10,6 +10,8 @@ __author__ = ["jgyasu", "ksharma6"]
 
 __all__ = ["TestEvaluate"]
 
+import pytest
+
 import pandas as pd
 from sklearn.metrics import accuracy_score, brier_score_loss, f1_score
 from sklearn.model_selection import KFold
@@ -17,9 +19,14 @@ from sklearn.model_selection import KFold
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 class TestEvaluate:
     """Tests for `evaluate` function using sktime components."""
 
