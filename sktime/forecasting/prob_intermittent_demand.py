@@ -5,7 +5,12 @@ import jax.numpy as jnp
 import numpy as np
 import numpyro.handlers
 import pandas as pd
-from numpyro.distributions import Laplace, Normal, ZeroInflatedPoisson
+from numpyro.distributions import (
+    Laplace,
+    Normal,
+    TruncatedDistribution,
+    ZeroInflatedPoisson,
+)
 from prophetverse.sktime.base import BaseBayesianForecaster
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -19,7 +24,11 @@ def _sample_gate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
     """Sample the gate parameter for the ZIP model."""
     regressors = 0.0
     if X is not None:
-        beta = numpyro.sample("beta", Laplace(), sample_shape=X.shape[-1:])
+        # TODO: perhaps we need to think differently regarding the truncation, if
+        #  using other regressors
+        truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+
+        beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
         regressors = X @ beta
 
     if not time_varying:
@@ -37,7 +46,11 @@ def _sample_rate(
     """Sample the log_rate parameter for the ZIP model."""
     regressors = 0.0
     if X is not None and use_regressors:
-        beta = numpyro.sample("beta", Laplace(), sample_shape=X.shape[-1:])
+        # TODO: perhaps we need to think differently regarding the truncation, if
+        #  using other regressors
+        truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+
+        beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
         regressors = X @ beta
 
     if not time_varying:
