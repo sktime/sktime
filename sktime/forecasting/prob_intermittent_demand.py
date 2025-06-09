@@ -41,11 +41,13 @@ def _sample_gate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
 
 
 def _sample_rate(
-    time_varying: bool, length: int, X: np.ndarray, use_regressors: bool
+    time_varying: bool,
+    length: int,
+    X: np.ndarray,
 ) -> jnp.ndarray:
     """Sample the log_rate parameter for the ZIP model."""
     regressors = 0.0
-    if X is not None and use_regressors:
+    if X is not None:
         # TODO: perhaps we need to think differently regarding the truncation, if
         #  using other regressors
         truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
@@ -115,13 +117,22 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         self,
         time_varying_gate: bool = False,
         time_varying_rate: bool = False,
-        use_regressors_magnitude: bool = False,
         inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
+
+        if time_varying_gate:
+            raise NotImplementedError(
+                "Time-varying gate parameters are not implemented yet."
+            )
+
+        if time_varying_rate:
+            raise NotImplementedError(
+                "Time-varying rate parameters are not implemented yet."
+            )
+
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
-        self.use_regressors_magnitude = use_regressors_magnitude
 
     def _get_fit_data(self, y: pd.DataFrame, X: pd.DataFrame, fh: ForecastingHorizon):
         return {
@@ -185,9 +196,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
         # rate
         with numpyro.handlers.scope(prefix="rate"):
-            rate = _sample_rate(
-                self.time_varying_rate, length, X, self.use_regressors_magnitude
-            )
+            rate = _sample_rate(self.time_varying_rate, length, X)
 
         # observed data
         if index is not None:
