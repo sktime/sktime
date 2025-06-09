@@ -87,7 +87,6 @@ Composition
 
     ConstantPwTrafoPanel
 
-
 Simple Time Series Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
