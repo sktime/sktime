@@ -6,9 +6,7 @@ import numpy as np
 import numpyro.handlers
 import pandas as pd
 from numpyro.distributions import (
-    Laplace,
     Normal,
-    TruncatedDistribution,
     ZeroInflatedPoisson,
 )
 from prophetverse.sktime.base import BaseBayesianForecaster
@@ -87,6 +85,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
 
+    # TODO: enforce s.t. we pass the harmonics here instead
     def _get_fit_data(self, y: pd.DataFrame, X: pd.DataFrame, fh: ForecastingHorizon):
         return {
             "length": y.shape[0],
@@ -118,9 +117,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         if X is not None:
             # TODO: perhaps we need to think differently regarding the truncation, if
             #  using other regressors
-            truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+            # truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
 
-            beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
+            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
             regressors = X @ beta
 
         if not self.time_varying_gate:
@@ -143,9 +142,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         if X is not None:
             # TODO: perhaps we need to think differently regarding the truncation, if
             #  using other regressors
-            truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
+            # truncated_laplace = TruncatedDistribution(Laplace(), low=-1.0, high=1.0)
 
-            beta = numpyro.sample("beta", truncated_laplace, sample_shape=X.shape[-1:])
+            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
             regressors = X @ beta
 
         if not self.time_varying_rate:
