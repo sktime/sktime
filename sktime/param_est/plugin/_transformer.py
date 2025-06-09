@@ -136,7 +136,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "skip-inverse-transform",
             "capability:unequal_length",
             "capability:unequal_length:removes",
-            "handles-missing-data",
+            "capability:missing_values",
             "capability:missing_values:removes",
         ]
 

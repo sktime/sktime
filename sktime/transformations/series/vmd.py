@@ -6,7 +6,7 @@ import pandas as pd
 from sktime.libs.vmdpy import VMD
 from sktime.transformations.base import BaseTransformer
 
-__author__ = ["DaneLyttinen", "vrcarva"]
+__author__ = ["DaneLyttinen", "vrcarva", "danferns"]
 
 
 class VmdTransformer(BaseTransformer):
@@ -131,7 +131,7 @@ class VmdTransformer(BaseTransformer):
         "skip-inverse-transform": False,
         "capability:unequal_length": False,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": False,
     }
 
@@ -175,18 +175,12 @@ class VmdTransformer(BaseTransformer):
 
     def _transform(self, X, y=None):
         return_dec = self.returned_decomp
-        # Package truncates last if odd, so make even
-        # through duplication then remove duplicate
         values = X.values
-        if len(values) % 2 == 1:
-            values = np.append(values, values[-1])
         u, u_hat, omega = VMD(
             values, self.alpha, self.tau, self.K_, self.DC, self.init, self.tol
         )
         if return_dec in ["u", "u_both"]:
             transposed = u.T
-            if len(transposed) != len(X.values):
-                transposed = transposed[:-1]
             u_return = pd.DataFrame(transposed)
         if return_dec in ["u_hat", "u_both"]:
             u_hat_return = pd.DataFrame(np.abs(u_hat))

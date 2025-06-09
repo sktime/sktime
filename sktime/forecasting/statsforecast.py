@@ -10,6 +10,7 @@ __all__ = [
     "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
+    "StatsForecastADIDA",
 ]
 from typing import Optional, Union
 
@@ -983,3 +984,108 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             ]
 
         return params
+
+
+class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
+    """StatsForecast ADIDA (Aggregate-Disaggregate Intermittent Demand Approach) model.
+
+    Direct interface to ``statsforecast.models.ADIDA`` by Nixtla.
+
+    This estimator directly interfaces ``ADIDA``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Aggregate-Disagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been aggregated, it uses
+    the optimized SES to generate the forecasts at the new level. It then breaks down
+    the forecast to the original level using equal weights.
+
+    ADIDA specializes on sparse or intermittent series are series with very few
+    non-zero observations.They are notoriously hard to forecast, and so, different
+    methods have been developed specifically for them.
+
+    Parameters
+    ----------
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/docs/models/adida.html#introduction
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
+    >>> y = load_airline()
+    >>> model = StatsForecastADIDA()
+    >>> fitted_model = model.fit(y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AzulGarza", "yarnabrina", "vedantag17"],
+        "maintainers": ["vedantag17"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.4.0"],
+    }
+
+    def __init__(
+        self,
+        prediction_intervals: Optional[object] = None,
+    ):
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
+        if prediction_intervals is None:
+            self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import ADIDA
+
+        return ADIDA
+
+    def _get_statsforecast_params(self):
+        """Get the parameters for the statsforecast model."""
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        if _check_soft_dependencies("statsforecast", severity="none"):
+            from statsforecast.utils import ConformalIntervals
+
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        else:
+            return [{}, {}]

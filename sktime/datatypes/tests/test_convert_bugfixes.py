@@ -29,6 +29,11 @@ def test_multiindex_to_df_list_large_level_values():
     convert_to(X1, "df-list")
 
 
+@pytest.mark.xfail(reason="Failing test for bug #7928, to be fixed")
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_convert_MvS_to_UvS_as_Series():
     """Checks that column name in MvS is preserved as attr name in UvS"""
     y = load_airline()

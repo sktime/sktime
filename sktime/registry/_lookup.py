@@ -158,7 +158,7 @@ def all_estimators(
     >>> # return all forecasters by filtering for estimator type
     >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
-    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})  # doctest: +SKIP
+    >>> all_estimators("forecaster", filter_tags={"capability:missing_values": True})  # doctest: +SKIP
 
     References
     ----------
@@ -426,7 +426,7 @@ def _check_estimator_types(estimator_types):
     for i, estimator_type in enumerate(estimator_types):
         if not isinstance(estimator_type, (type, str)):
             raise ValueError(
-                "Please specify `estimator_types` as a list of str or " "types."
+                "Please specify `estimator_types` as a list of str or types."
             )
         if isinstance(estimator_type, str):
             if estimator_type not in get_obj_scitype_list():

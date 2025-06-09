@@ -258,14 +258,29 @@ class python_dependencies(_BaseTag):
     each string a PEP 440 compliant version specifier,
     specifying python dependency requirements of the object.
 
+    If passed as a list, conditions are combined with logical AND.
+    Optionally, lists within a list can be used to combine conditions with logical OR.
+
     The tag is used in packaging metadata for the object,
     and is used internally to check compatibility of the object with
     the build environment, to raise informative error messages.
 
-    Developers should note that package names in PEP 440 specifier strings
-    are identical with the package names used in ``pip install`` commands,
+    Valid dependency specifications with plain English descriptions:
+
+    * ``"numba"``: ``numba`` must be present
+    * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
+    * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
+        higher, and ``pandas`` must be version 1.3.0 or higher
+    * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
+        ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
+        version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+
+    Developers should note that package names in the PEP 440 specifier strings
+    that should be provided
+    are identical with the package names used in ``pip install`` commands or on PyPI,
     which in general is not the same as the import name of the package,
-    e.g., ``"scikit-learn"`` and not ``"sklearn"``.
+    e.g., ``"scikit-learn"`` as in ``pip install scikit-learn``,
+    and not ``"sklearn"``, as in ``import sklearn``.
 
     Developers can use ``_check_soft_dependencies`` from ``skbase.utils.dependencies``
     to check compatibility of the python constraint of the object
@@ -758,7 +773,7 @@ class capability__categorical_in_X(_BaseTag):
 
     _tags = {
         "tag_name": "capability:categorical_in_X",
-        "parent_type": ["forecaster", "transformer"],
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
         "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
@@ -1345,7 +1360,7 @@ class scitype__transform_labels(_BaseTag):
     * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars,
       in ``Table`` :term:`scitype`. In this case, the number of rows (=instances)
       in ``y`` must always equal the number of instances in ``X``, which typically
-      will be of :mtype:`scitype` ``Panel`` in this case.
+      will be of :term:`scitype` ``Panel`` in this case.
     * ``"Panel"``: a panel of time series, in ``Panel`` :term:`scitype`.
 
     The tag ``scitype:transform-labels`` is used in conjunction with the tag
@@ -1531,6 +1546,34 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class capability__bootstrap_index(_BaseTag):
+    """Capability: the transformer is a bootstrap that can return bootstrap indices.
+
+    - String name: ``"capability:bootstrap_index"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the transformer is a bootstrap transformer.
+    In this case, it should have the parameter ``return_indices``,
+    and ``return_indices=True`` will ensure that ``transform`` returns ``iloc`` indices
+    of the bootstrapped time series, in reference to the input data ``X``,
+    as an additional column.
+
+    If the tag is ``False``, the transformer is not a bootstrap transformer,
+    and a parameter ``return_indices``, as described above, is not available.
+    """
+
+    _tags = {
+        "tag_name": "capability:bootstrap_index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can the bootsrap return the index of bootstraped time series?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -1665,6 +1708,38 @@ class distribution_type(_BaseTag):
     }
 
 
+class capability__variable_identification(_BaseTag):
+    """Capability: can the detector identify the variables causing each detection.
+
+    - String name: ``"capability:variable_identification"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the detector can identify the variables responsible for
+    a detected event, like a change point or anomaly.
+
+    If the tag is ``True``, the output of the detector will include information
+    about the variables that are responsible for the detected event.
+
+    The `predict` method will contain an additional column named `"icolumns"`, where
+    each cell contains a list of integers representing the indices of the
+    variables/columns responsible for the detected event.
+
+    The `transform` method will contain the same number of columns as the input data
+    with the column naming format `"labels_<input_column_name>"`.
+    """
+
+    _tags = {
+        "tag_name": "capability:variable_identification",
+        "parent_type": "detector",
+        "tag_type": "bool",
+        "short_descr": "Can the detector identify the variables causing each detection?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -1702,10 +1777,10 @@ class x_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
@@ -1773,10 +1848,10 @@ class y_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
@@ -2447,6 +2522,12 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "is aligner capable of aligning multiple series (True) or only two (False)?",
+    ),
+    (
+        "capability:pairwise",
+        "param_est",
+        "bool",
+        "Indicates whether the estimator supports pairwise parameter estimation.",
     ),
     (
         "capability:distance",

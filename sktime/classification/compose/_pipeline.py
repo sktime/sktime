@@ -106,6 +106,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -126,7 +127,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
         missing = classifier.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -438,6 +441,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
     }
 
     # no default tag values - these are set dynamically below
@@ -457,7 +461,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )

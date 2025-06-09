@@ -209,7 +209,7 @@ class WindowSummarizer(BaseTransformer):
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -296,7 +296,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
+        func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict

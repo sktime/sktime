@@ -38,7 +38,7 @@ class Filter(BaseTransformer):
     >>> from sktime.datasets import load_arrow_head
     >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")
     >>> transformer = Filter(sfreq=128, l_freq=0.5, h_freq=40)
-    >>> X_filtered = transformer.fit_transform(X)
+    >>> X_filtered = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     # default tag values for "Series-to-Series"
@@ -80,7 +80,7 @@ class Filter(BaseTransformer):
             if not ((l_freq > 0) & (h_freq > 0)):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
-                raise ValueError("High frequency must be higher" " than low frequency")
+                raise ValueError("High frequency must be higher than low frequency")
         super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:

@@ -45,7 +45,7 @@ def piecewise_normal_multivariate(
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
         lengths=[2, 3, 1], random_state=2)
     array([[ 0.58324215,  0.94373317],
@@ -55,7 +55,7 @@ def piecewise_normal_multivariate(
            [ 0.94204778,  1.09099239],
            [ 3.55145404,  5.29220801]])
 
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
         lengths=[2, 3, 1], variances=[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]],\
         random_state=2)
@@ -66,7 +66,7 @@ def piecewise_normal_multivariate(
            [ 0.94204778,  1.09099239],
            [ 3.55145404,  5.29220801]])
 
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
         lengths=[2, 3, 1], covariances=[[[1.0, 0], [0, 1.0]], [[1.0, 0],\
             [0, 1.0]], [[1.0, 0], [0, 1.0]]], random_state=2)
@@ -77,7 +77,7 @@ def piecewise_normal_multivariate(
            [ 0.94204778,  1.09099239],
            [ 3.55145404,  5.29220801]])
 
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 3],\
         covariances=[[[0.5, 0.3], [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]],\
         random_state=2)
@@ -159,17 +159,17 @@ def piecewise_normal(
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> from sktime.detection.datagen import piecewise_normal
     >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], random_state=42) # doctest: +SKIP
     array([1.49671415, 0.8617357 , 2.64768854, 3.52302986, 1.76584663,
         1.76586304, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
 
-    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> from sktime.detection.datagen import piecewise_normal
     >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=0) # doctest: +SKIP
     array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
 
-    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> from sktime.detection.datagen import piecewise_normal
     >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=[0, 0.5, 1.0])\
         # doctest: +SKIP
     array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
@@ -224,7 +224,7 @@ def piecewise_multinomial(
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> from sktime.detection.datagen import piecewise_multinomial
     >>> piecewise_multinomial(20, lengths=[3, 2], p_vals=[[1/4, 3/4], \
         [3/4, 1/4]], random_state=42) # doctest: +SKIP
     array([[ 4, 16],
@@ -233,7 +233,7 @@ def piecewise_multinomial(
        [15,  5],
        [17,  3]])
 
-    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> from sktime.detection.datagen import piecewise_multinomial
     >>> piecewise_multinomial(10, lengths=[2, 4, 8], \
         p_vals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
     array([[10,  0],
@@ -294,11 +294,11 @@ def piecewise_poisson(
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> from sktime.detection.datagen import piecewise_poisson
     >>> piecewise_poisson(lambdas=[1,2,3],lengths=[2,4,8],random_state=42)#doctest:+SKIP
     array([1, 2, 1, 3, 3, 1, 3, 1, 3, 2, 2, 4, 2, 1])
 
-    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> from sktime.detection.datagen import piecewise_poisson
     >>> piecewise_poisson(lambdas=[1,3,6],lengths=[2,4,8],random_state=42)#doctest:+SKIP
     array([1, 2, 1, 3, 3, 2, 5, 5, 6, 4, 4, 9, 3, 5])
     """

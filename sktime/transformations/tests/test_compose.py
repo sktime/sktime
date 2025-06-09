@@ -157,9 +157,9 @@ def test_missing_unequal_tag_inference():
     assert t1.get_tag("capability:unequal_length")
     assert t1.get_tag("capability:unequal_length:removes")
     assert not t2.get_tag("capability:unequal_length:removes")
-    assert t3.get_tag("handles-missing-data")
+    assert t3.get_tag("capability:missing_values")
     assert t3.get_tag("capability:missing_values:removes")
-    assert not t4.get_tag("handles-missing-data")
+    assert not t4.get_tag("capability:missing_values")
     assert not t4.get_tag("capability:missing_values:removes")
 
 
