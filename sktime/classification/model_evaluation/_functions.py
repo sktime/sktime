@@ -2,9 +2,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating classification models."""
 
-__author__ = ["ksharma6"]
+__author__ = ["ksharma6", "jgyasu"]
 __all__ = ["evaluate"]
 
+import inspect
 import time
 import warnings
 from typing import Optional, Union
@@ -15,54 +16,108 @@ from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
-from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.parallel import parallelize
-from sktime.utils.validation.forecasting import check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_scores(metrics) -> dict:
-    """Validate and coerce to BaseMetric and segregate them based on predict type.
+def _is_proba_classification_score(metric) -> bool:
+    """
+    Check if metric function is intended for probabilistic classification.
+
+    This function attempts to identify if the input `metric` is a classification
+    score that expects predicted probabilities rather than class labels.
+    It performs this check using:
+    1. A set of known probability-based metric names.
+    2. Inspection of the function's signature for indicative argument names.
+    3. A test call using sample `y_true` and `y_pred_proba` arrays to check
+    compatibility.
 
     Parameters
     ----------
-    metrics : sktime accepted metrics object or a list of them or None
+    metric : callable or str
+    A metric function or its name to check.
 
-    Return
-    ------
-    metrics_type : Dict
-        The key is metric types and its value is a list of its corresponding metrics.
+    Returns
+    -------
+    bool
+    True if the metric appears to be for probabilistic classification;
+    False otherwise.
     """
+    PROBA_METRICS = {"brier_score_loss", "log_loss", "roc_auc_score"}
+    metric_name = getattr(metric, "__name__", str(metric))
+    if metric_name in PROBA_METRICS:
+        return True
+
+    if callable(metric):
+        sig = inspect.signature(metric)
+        params = list(sig.parameters.keys())
+        proba_indicators = ["y_proba", "y_pred_proba", "probas_pred", "y_prob"]
+        if any(indicator in params for indicator in proba_indicators):
+            return True
+
+    try:
+        y_true_sample = np.array([0, 1])
+        y_pred_proba_sample = np.array([[0.8, 0.2], [0.3, 0.7]])
+        metric(y_true_sample, y_pred_proba_sample)
+        return True
+    except (TypeError, ValueError, AttributeError):
+        pass
+
+    return False
+
+
+def _check_scores(metrics) -> dict:
+    """
+    Validate sklearn classification metrics and segregate them based on prediction type.
+
+    Categorizes metrics based on whether they require deterministic predictions ('pred')
+    or probabilistic predictions ('pred_proba'). This function is designed for
+    time series classification using sklearn metrics, which don't have tags
+    like sktime metrics.
+
+    Parameters
+    ----------
+    metrics : sklearn metric function, list of sklearn metric functions, or None
+        The classification metrics to validate and categorize
+
+    Returns
+    -------
+    metrics_type : dict
+        Dictionary where keys are metric types ('pred' or 'pred_proba') and
+        values are lists of corresponding metrics
+    """
+    if metrics is None:
+        from sklearn.metrics import accuracy_score
+
+        metrics = [accuracy_score]
+
     if not isinstance(metrics, list):
         metrics = [metrics]
 
     metrics_type = {}
+
     for metric in metrics:
-        metric = check_scoring(metric)
-        # collect predict type
-        if hasattr(metric, "get_tag"):
-            scitype = metric.get_tag(
-                "scitype:y_pred", raise_error=False, tag_value_default="pred"
-            )
-        else:  # If no scitype exists then metric is a point forecast type
-            scitype = "pred"
-        if scitype not in metrics_type.keys():
+        if not callable(metric):
+            raise ValueError(f"Metric {metric} is not callable")
+
+        scitype = "pred_proba" if _is_proba_classification_score(metric) else "pred"
+
+        if scitype not in metrics_type:
             metrics_type[scitype] = [metric]
         else:
             metrics_type[scitype].append(metric)
+
     return metrics_type
 
 
 def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+    metric_types: dict, return_data: bool = True
 ) -> dict:
     """Get the ordered column name and input datatype of results."""
-    others_metadata = {
-        "cutoff": cutoff_dtype,
-    }
     y_metadata = {
+        "X_train": "object",
+        "X_test": "object",
         "y_train": "object",
         "y_test": "object",
     }
@@ -70,20 +125,19 @@ def _get_column_order_and_datatype(
     for scitype in metric_types:
         for metric in metric_types.get(scitype):
             pred_args = _get_pred_args_from_metric(scitype, metric)
-            if pred_args == {} or old_naming:
+            if pred_args == {}:
                 time_key = f"{scitype}_time"
-                result_key = f"test_{metric.name}"
+                result_key = f"test_{metric.__name__}"
                 y_pred_key = f"y_{scitype}"
             else:
                 argval = list(pred_args.values())[0]
                 time_key = f"{scitype}_{argval}_time"
-                result_key = f"test_{metric.name}_{argval}"
+                result_key = f"test_{metric.__name__}_{argval}"
                 y_pred_key = f"y_{scitype}_{argval}"
             fit_metadata[time_key] = "float"
             metrics_metadata[result_key] = "float"
             if return_data:
                 y_metadata[y_pred_key] = "object"
-    fit_metadata.update(others_metadata)
     if return_data:
         fit_metadata.update(y_metadata)
     metrics_metadata.update(fit_metadata)
@@ -101,25 +155,19 @@ def _get_pred_args_from_metric(scitype, metric):
     return {}
 
 
-def _evaluate_window(x, meta):
-    # unpack args
+def _evaluate_fold(x, meta):
     i, (y_train, y_test, X_train, X_test) = x
     classifier = meta["classifier"]
     scoring = meta["scoring"]
     return_data = meta["return_data"]
     error_score = meta["error_score"]
-    cutoff_dtype = meta["cutoff_dtype"]
 
-    # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
     pred_time = np.nan
-    cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
     y_pred = pd.NA
     temp_result = dict()
     y_preds_cache = dict()
-    old_naming = True
-    old_name_mapping = {}
 
     try:
         # fit
@@ -140,26 +188,17 @@ def _evaluate_window(x, meta):
         # compute other metrics
         for scitype in scoring:
             method = getattr(classifier, pred_type[scitype])
-            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-                scoring.get(scitype)
-            ):
-                old_naming = False
             for metric in scoring.get(scitype):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
                     time_key = f"{scitype}_time"
-                    result_key = f"test_{metric.name}"
+                    result_key = f"test_{metric.__name__}"
                     y_pred_key = f"y_{scitype}"
                 else:
                     argval = list(pred_args.values())[0]
                     time_key = f"{scitype}_{argval}_time"
-                    result_key = f"test_{metric.name}_{argval}"
+                    result_key = f"test_{metric.__name__}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
-                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
-                        f"test_{metric.name}"
-                    )
-                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
@@ -171,11 +210,15 @@ def _evaluate_window(x, meta):
                 else:
                     y_pred = y_preds_cache[y_pred_key][0]
 
-                score = metric(y_test, y_pred, y_train=y_train)
+                if scitype == "pred_proba":
+                    if "pos_label" in inspect.signature(metric).parameters:
+                        pos_label = 1
+                        score = metric(y_test, y_pred[:, 1], pos_label=pos_label)
+                    else:
+                        score = metric(y_test, y_pred)
+                else:
+                    score = metric(y_test, y_pred)
                 temp_result[result_key] = [score]
-
-        # get cutoff
-        cutoff = classifier.cutoff
 
     except Exception as e:
         if error_score == "raise":
@@ -186,14 +229,14 @@ def _evaluate_window(x, meta):
                 if return_data:
                     temp_result[f"y_{scitype}"] = [y_pred]
                 for metric in scoring.get(scitype):
-                    temp_result[f"test_{metric.name}"] = [score]
+                    temp_result[f"test_{metric.__name__}"] = [score]
             warnings.warn(
                 f"""
                 In evaluate, fitting of classifier {type(classifier).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
-                Fit failed for the {i}-th data split, on training data y_train with
-                cutoff {cutoff}, and len(y_train)={len(y_train)}.
+                Fit failed for the {i}-th data split, on training data y_train
+                , and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed classifier with parameters: {classifier}.
                 """,
@@ -201,26 +244,17 @@ def _evaluate_window(x, meta):
                 stacklevel=2,
             )
 
-    if pd.isnull(cutoff):
-        cutoff_ind = cutoff
-    else:
-        cutoff_ind = cutoff[0]
-
     # Storing the remaining evaluate detail
     temp_result["fit_time"] = [fit_time]
 
-    temp_result["cutoff"] = [cutoff_ind]
     if return_data:
+        temp_result["X_train"] = [X_train]
+        temp_result["X_test"] = [X_test]
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
-    result = result.astype({"cutoff": cutoff_dtype})
-    if old_naming:
-        result = result.rename(columns=old_name_mapping)
-    column_order = _get_column_order_and_datatype(
-        scoring, return_data, cutoff_dtype, old_naming=old_naming
-    )
+    column_order = _get_column_order_and_datatype(scoring, return_data)
     result = result.reindex(columns=column_order.keys())
 
     return result, classifier
@@ -237,118 +271,115 @@ def evaluate(
     backend: Optional[str] = None,
     backend_params: Optional[dict] = None,
 ):
-    r"""Evaluate classifier using timeseries cross-validation.
+    r"""
+    Evaluate classifier using time series cross-validation.
 
-     All-in-one statistical performance benchmarking utility for classifiers
-     which runs a simple backtest experiment and returns a summary pd.DataFrame.
+    All-in-one statistical performance benchmarking utility for classifiers,
+    which runs a simple backtest experiment and returns a summary DataFrame.
 
-     The experiment run is the following:
+    The experiment runs the following:
 
-     Train and test folds are generated by ``cv.split(X, y)``.
-     For each fold ``i`` in ``K`` number of folds:
-     1. Fit the ``classifier`` to the training set ``S_i``
-     2. Use the ``classifier`` to make a prediction ``y_pred`` on the  test set ``T_i``
-     3. Compute the score using ``scoring(T_i, y_pred)``
-     4. If ``i == K``, terminate, otherwise
-     5. Set ``i = i + 1`` and go to 1
+    1. Train and test folds are generated by ``cv.split(X, y)``.
+    2. For each fold ``i`` in ``K`` folds:
 
-     Results returned in this function's return are:
+        a. Fit the ``classifier`` on the training set ``S_i``
+        b. Predict ``y_pred`` on the test set ``T_i``
+        c. Compute the score via ``scoring(T_i, y_pred)``
+        d. If ``i == K``, terminate; else repeat
 
-     * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
-     * runtimes for fitting and/or predicting, from 2, 3, in the ``i``-th loop
-     * cutoff state of ``classifier``, at 3, in the ``i``-th loop
-     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
+    Results returned include:
 
-     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
+    - Scores from ``scoring`` for each fold
+    - Fit and prediction runtimes
+    - Optionally: ``y_train``, ``y_test``, and ``y_pred``
+    (if ``return_data=True``)
+
+    A distributed or parallel backend can be chosen using ``backend``.
 
     Parameters
     ----------
-     classifier : sktime BaseClassifier descendant (concrete classifier)
-         sktime classifier to benchmark
-     cv : sklearn KFold
-        Provides train/test indices to split data in train/test sets.
-       Splits the dataset into k consecutive folds (without shuffling by default).
-     X : sktime compatible time series panel data container, Panel scitype, e.g.,
-             pd-multiindex: pd.DataFrame with columns = variables,
-             index = pd.MultiIndex with first level = instance indices,
-             second level = time indices
-             numpy3D: 3D np.array (any number of dimensions, equal length series)
-             of shape [n_instances, n_dimensions, series_length]
-             or of any other supported Panel mtype
-             for list of mtypes, see datatypes.SCITYPE_REGISTER
-             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-     y : sktime compatible tabular data container, Table scitype
-         numpy1D iterable, of shape [n_instances]
-    scoring : subclass of sklearn.metrics or list of same,
-         default=None. Used to get a score function that takes y_pred and y_test
-         arguments and accept y_train as keyword argument.
-         If None, then uses scoring = accuracy_score().
-     return_data : bool, default=False
-         Returns three additional columns in the DataFrame, by default False.
-         The cells of the columns contain each a pd.Series for y_train,
-         y_pred, y_test.
-     error_score : "raise" or numeric, default=np.nan
-         Value to assign to the score if an exception occurs in estimator fitting.
-         If set to "raise", the exception is raised. If a numeric value is given,
-         FitFailedWarning is raised.
-     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+    classifier : sktime.BaseClassifier
+        Concrete sktime classifier to benchmark.
 
-         - "None": executes loop sequentally, simple list comprehension
-         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-         - "dask": uses ``dask``, requires ``dask`` package in environment
-         - "dask_lazy": same as "dask",
-           but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+    cv : sklearn.model_selection.BaseCrossValidator
+        Provides train/test indices to split data into folds.
+        Example: ``KFold`` or ``TimeSeriesSplit``.
 
-         Recommendation: Use "dask" or "loky" for parallel evaluate.
-         "threading" is unlikely to see speed ups due to the GIL and the serialization
-         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-         than the standard ``pickle`` library used in "multiprocessing".
+    X : sktime-compatible panel data (Panel scitype)
+        Panel data container. Supported formats include:
 
-     backend_params : dict, optional
-         additional parameters passed to the backend as config.
-         Directly passed to ``utils.parallel.parallelize``.
-         Valid keys depend on the value of ``backend``:
+        - ``pd.DataFrame`` with MultiIndex [instance, time] and variable columns
+        - 3D ``np.array`` with shape ``[n_instances, n_dimensions, series_length]``
+        - Other formats listed in ``datatypes.SCITYPE_REGISTER``
 
-         - "None": no additional parameters, ``backend_params`` is ignored
-         - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-           any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-           with the exception of ``backend`` which is directly controlled by
-           ``backend``.
-           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-           will default to ``joblib`` defaults.
-         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-           any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-           ``backend`` must be passed as a key of ``backend_params`` in this case.
-           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-           will default to ``joblib`` defaults.
-         - "dask": any valid keys for ``dask.compute`` can be passed,
-           e.g., ``scheduler``
+    y : sktime-compatible tabular data (Table scitype)
+        Target variable, typically a 1D ``np.ndarray`` or ``pd.Series``
+        of shape ``[n_instances]``.
+
+    scoring : callable or list of callables, optional (default=None)
+        A scoring function or list of scoring functions that take
+        ``(y_true, y_pred)`` and optionally ``y_train``.
+        If None, defaults to ``accuracy_score``.
+
+    return_data : bool, default=False
+        If True, adds columns ``y_train``, ``y_test``, and
+        ``y_pred`` (as pd.Series) to the result.
+
+    error_score : {"raise"} or float, default=np.nan
+        Value to assign if estimator fitting fails.
+        If "raise", the exception is raised.
+        If a numeric value, a ``FitFailedWarning`` is raised
+        and the value is assigned.
+
+    backend : {"dask", "loky", "multiprocessing", "threading", "joblib"}, default=None
+        Enables parallel evaluation.
+
+        - "None": sequential loop via list comprehension
+        - "loky", "multiprocessing", "threading": uses ``joblib.Parallel``
+        - "joblib": allows custom joblib backends, e.g., ``spark``
+        - "dask": uses Dask for distributed computation (requires Dask)
+        - "dask_lazy": like "dask", but returns a lazy ``dask.dataframe.DataFrame``
+
+    backend_params : dict, optional
+        Additional parameters passed to the backend.
+        Depends on the value of ``backend``:
+
+        - For "None": ignored
+        - For "loky", "multiprocessing", "threading":
+        valid ``joblib.Parallel`` params (e.g., ``n_jobs``).
+        ``backend`` is controlled by this function and should not be included.
+        - For "joblib": user must include ``backend`` key in this dictionary.
+        Also accepts ``n_jobs`` and other ``joblib.Parallel`` args.
+        - For "dask": passed to ``dask.compute()``, e.g., ``scheduler="threads"``
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
 
     Returns
     -------
-     results : pd.DataFrame or dask.dataframe.DataFrame
-        DataFrame that contains several columns with information regarding each
-        refit/update and prediction of the classifier.
-        Row index is TimeSeriesSplit index of train/test fold in ``cv``.
-        Entries in the i-th row are for the i-th train/test split in ``cv``.
-        Columns are as follows:
+    results : pd.DataFrame or dask.dataframe.DataFrame
+        DataFrame indexed by fold (i-th split in ``cv``) with the following columns:
 
-         - test_{scoring.name}: (float) Model performance score. If ``scoring`` is a
-         list,
-         then there is a column withname ``test_{scoring.name}`` for each scorer.
+        - ``test_<score_name>``: float performance score(s)
+        - ``fit_time``: time in seconds to fit the classifier
+        - ``pred_time``: time in seconds to predict from the classifier
+        - ``y_train``: pd.Series of train targets (if ``return_data=True``)
+        - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
+        - ``y_test``: pd.Series of test targets (if ``return_data=True``)
 
-         - fit_time: (float) Time in sec for ``fit`` or ``update`` on train fold.
-         - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
-         - y_train: (pd.Series) only present if see ``return_data=True``
-         train fold of the i-th split in ``cv``, used to fit/update the classifier.
 
-         - y_pred: (pd.Series) present if see ``return_data=True``
-         classifies from fitted classifier for the i-th test fold indices of ``cv``.
-
-         - y_test: (pd.Series) present if see ``return_data=True``
-         testing fold of the i-th split in ``cv``, used to compute the metric.
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.classification.model_evaluation import evaluate
+    >>> from sklearn.model_selection import KFold
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> X, y = load_unit_test()
+    >>> classifier = DummyClassifier(strategy="prior")
+    >>> cv = KFold(n_splits=3, shuffle=False)
+    >>> results = evaluate(classifier=classifier, cv=cv, X=X, y=y)
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
@@ -371,13 +402,11 @@ def evaluate(
     X_mtype = X_metadata.get("mtype", None)
     X = convert(X, from_type=X_mtype, to_type=PANDAS_MTYPES)
 
-    cutoff_dtype = str(y.index.dtype)
-    _evaluate_window_kwargs = {
+    _evaluate_fold_kwargs = {
         "classifier": classifier,
         "scoring": scoring,
         "return_data": return_data,
         "error_score": error_score,
-        "cutoff_dtype": cutoff_dtype,
     }
 
     def gen_y_X_train_test(y, X, cv):
@@ -390,12 +419,18 @@ def evaluate(
         X_train : i-th train split of y as per cv.
         X_test : i-th test split of y as per cv.
         """
-        splitter = InstanceSplitter(cv)
+        instance_idx = X.index.get_level_values(0).unique()
 
-        geny = splitter.split(y)
-        genx = splitter.split(X)
+        for train_instance_idx, test_instance_idx in cv.split(instance_idx):
+            train_instances = instance_idx[train_instance_idx]
+            test_instances = instance_idx[test_instance_idx]
 
-        for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+            X_train = X.loc[X.index.get_level_values(0).isin(train_instances)]
+            X_test = X.loc[X.index.get_level_values(0).isin(test_instances)]
+
+            y_train = y.iloc[train_instance_idx]
+            y_test = y.iloc[test_instance_idx]
+
             yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
@@ -404,28 +439,14 @@ def evaluate(
     # Run temporal cross-validation sequentially
     results = []
     for x in enumerate(yx_splits):
-        result, classifier = _evaluate_window(x, _evaluate_window_kwargs)
-        _evaluate_window_kwargs["classifier"] = classifier
+        result, classifier = _evaluate_fold(x, _evaluate_fold_kwargs)
         results.append(result)
-
-    if backend == "dask":
-        backend_in = "dask_lazy"
-    else:
-        backend_in = backend
-
-    results = parallelize(
-        fun=_evaluate_window,
-        iter=enumerate(yx_splits),
-        meta=_evaluate_window_kwargs,
-        backend=backend_in,
-        backend_params=backend_params,
-    )
 
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"]:
         import dask.dataframe as dd
 
-        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+        metadata = _get_column_order_and_datatype(scoring, return_data)
 
         results = dd.from_delayed(results, meta=metadata)
         if backend == "dask":
