@@ -85,7 +85,6 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
 
-    # TODO: enforce s.t. we pass the harmonics here instead
     def _get_fit_data(self, y: pd.DataFrame, X: pd.DataFrame, fh: ForecastingHorizon):
         return {
             "length": y.shape[0],
