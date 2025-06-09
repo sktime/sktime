@@ -7,7 +7,6 @@ import numpyro.handlers
 import pandas as pd
 from numpyro.distributions import (
     Normal,
-    TruncatedDistribution,
     ZeroInflatedPoisson,
 )
 from prophetverse.sktime.base import BaseBayesianForecaster
@@ -116,11 +115,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         """Sample the gate parameter for the ZIP model."""
         regressors = 0.0
         if X is not None:
-            # TODO: perhaps we need to think differently regarding the truncation, if
-            #  using other regressors
-            truncated = TruncatedDistribution(Normal(), low=-1.0, high=1.0)
-
-            beta = numpyro.sample("beta", truncated, sample_shape=X.shape[-1:])
+            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
             regressors = X @ beta
 
         if not self.time_varying_gate:
@@ -141,11 +136,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         """Sample the log_rate parameter for the ZIP model."""
         regressors = 0.0
         if X is not None:
-            # TODO: perhaps we need to think differently regarding the truncation, if
-            #  using other regressors
-            truncated = TruncatedDistribution(Normal(), low=-1.0, high=1.0)
-
-            beta = numpyro.sample("beta", truncated, sample_shape=X.shape[-1:])
+            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
             regressors = X @ beta
 
         if not self.time_varying_rate:
