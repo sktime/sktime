@@ -58,7 +58,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
     the series as an Zero-Inflated Poisson (ZIP) process. The mathematical model is
     given by
     .. math::
-        y_t \\sim ZIP(g_t, r_t)
+        y_t \sim ZIP(g_t, r_t)
 
     where :math:`g_t` is the gate parameter and :math:`r_t` is the rate parameter. The
     gate parameter determines the probability of observing a non-zero value, while the
@@ -66,8 +66,8 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
     rates and gates can be time-varying or constant, depending on the model
     configuration. The general model structure is as follows:
     .. math::
-        \\logit{g_t} = \text{logit\\_gate\\_offset} + \beta_{g}^T X_t,
-        \\log{r_t} = \text{log\\_rate\\_offset}, + \beta_{r}^T X_t
+        \logit{g_t} = \text{logit\_gate\_offset} + \beta_{g}^T X_t,
+        \log{r_t} = \text{log\_rate\_offset}, + \beta_{r}^T X_t
 
     where :math:`X_t` are the exogenous variables, :math:`\beta` are the regression
     coefficients, and TODO.
