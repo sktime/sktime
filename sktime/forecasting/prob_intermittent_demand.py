@@ -115,7 +115,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         """Sample the gate parameter for the ZIP model."""
         regressors = 0.0
         if X is not None:
-            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
+            with numpyro.plate("factors", X.shape[-1]):
+                beta = numpyro.sample("beta", Normal())
+
             regressors = X @ beta
 
         if not self.time_varying_gate:
@@ -136,7 +138,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         """Sample the log_rate parameter for the ZIP model."""
         regressors = 0.0
         if X is not None:
-            beta = numpyro.sample("beta", Normal(), sample_shape=X.shape[-1:])
+            with numpyro.plate("factors", X.shape[-1]):
+                beta = numpyro.sample("beta", Normal())
+
             regressors = X @ beta
 
         if not self.time_varying_rate:
