@@ -32,10 +32,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
     rates and gates can be time-varying or constant, depending on the model
     configuration. The general model structure is as follows:
     .. math::
-        \logit{g_t} = \beta_{g, 0} + \beta_{g}^T \cdot X_t,
-        \log{r_t} = \beta_{r, 0} + \beta_{r}^T \cdot X_t
+        \logit{g_t} = \beta_{g, 0} + \beta_{g} \cdot X_t,
+        \log{r_t} = \beta_{r, 0} + \beta_{r} \cdot X_t
 
-    where :math:`X_t` are the exogenous variables, :math:`\beta` are the regression
+    where :math:`X_t` are exogenous variables, :math:`\beta` are regression
     coefficients. TODO
     """
 
