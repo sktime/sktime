@@ -10,9 +10,8 @@ __author__ = ["jgyasu", "ksharma6"]
 
 __all__ = ["TestEvaluate"]
 
-import pytest
-
 import pandas as pd
+import pytest
 from sklearn.metrics import accuracy_score, brier_score_loss, f1_score
 from sklearn.model_selection import KFold
 
