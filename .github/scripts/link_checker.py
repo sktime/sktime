@@ -25,7 +25,8 @@ def extract_links(text, file_suffix):
         return re.findall(r"\[.*?\]\((https?://.*?)\)", text)
     elif file_suffix == ".rst":
         # reStructuredText links: `text <http...>`_
-        return re.findall(r"`[^`<]+<(\s*https?://[^>]+)>`_", text)
+        text = re.sub(r"[ \t]+", " ", text)
+        return re.findall(r"`[^`<]+ <(https?://[^>]+)>`_", text)
     elif file_suffix == ".html":
         # HTML-style hrefs: <a href="http...">
         return re.findall(r'href=["\'](https?://[^"\']+)["\']', text)
@@ -66,6 +67,7 @@ def check_links_in_file(file_path):
         content = f.read()
     links = extract_links(content, file_path.suffix)
     for link in links:
+        link = link.strip().rstrip(".,);]")
         if is_excluded(link):
             continue
         try:
