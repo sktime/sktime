@@ -101,7 +101,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "capability:missing_values": False,  # TODO: consider this
+        "capability:missing_values": True,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -128,9 +128,11 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             "length": y.shape[0],
             "y": jnp.array(y.values),
             "X": jnp.array(X.values) if X is not None else None,
+            "mask": jnp.isfinite(y.values),
         }
 
     def _get_predict_data(self, X: pd.DataFrame, fh: ForecastingHorizon):
+        # TODO: handle this better - only append if X is not in self._X
         if X is not None:
             X = pd.concat([self._X, X], axis=0, verify_integrity=True)
 
@@ -143,6 +145,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             "X": jnp.array(X.values) if X is not None else None,
             "oos": oos,
             "index": index.to_numpy(),
+            "mask": True,
         }
 
     def model(
@@ -150,6 +153,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         length: int,
         y: jnp.ndarray,
         X: np.ndarray,
+        mask: jnp.ndarray,
         oos: int = 0,
         index: np.array = None,
     ):
@@ -164,6 +168,8 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             Observed values.
         X: np.ndarray
             Exogenous variables.
+        mask: jnp.ndarray
+            Mask for the observed values.
         oos: int
             Number of out-of-sample points to forecast.
         index: np.array
@@ -188,9 +194,10 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
             gate = gate[index]
             rate = rate[index]
 
-        sampled_y = numpyro.sample(
-            "y:ignore", ZeroInflatedPoisson(1.0 - gate, rate), obs=y
-        )
+        with numpyro.handlers.mask(mask=mask):
+            sampled_y = numpyro.sample(
+                "y:ignore", ZeroInflatedPoisson(1.0 - gate, rate), obs=y
+            )
 
         if oos == 0:
             return
