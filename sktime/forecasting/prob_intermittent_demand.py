@@ -31,10 +31,12 @@ def _sample_gate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
     raise NotImplementedError("Time-varying gate parameters are not implemented yet.")
 
 
-def _sample_rate(time_varying: bool, length: int, X: np.ndarray) -> jnp.ndarray:
+def _sample_rate(
+    time_varying: bool, length: int, X: np.ndarray, use_regressors: bool
+) -> jnp.ndarray:
     """Sample the log_rate parameter for the ZIP model."""
     regressors = 0.0
-    if X is not None:
+    if X is not None and use_regressors:
         beta = numpyro.sample("beta", Laplace(), sample_shape=X.shape[-1:])
         regressors = X @ beta
 
@@ -100,11 +102,13 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         self,
         time_varying_gate: bool = False,
         time_varying_rate: bool = False,
+        use_regressors_magnitude: bool = False,
         inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
         self.time_varying_gate = time_varying_gate
         self.time_varying_rate = time_varying_rate
+        self.use_regressors_magnitude = use_regressors_magnitude
 
     def _get_fit_data(self, y: pd.DataFrame, X: pd.DataFrame, fh: ForecastingHorizon):
         return {
@@ -162,7 +166,9 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
 
         # rate
         with numpyro.handlers.scope(prefix="rate"):
-            rate = _sample_rate(self.time_varying_rate, length, X)
+            rate = _sample_rate(
+                self.time_varying_rate, length, X, self.use_regressors_magnitude
+            )
 
         # observed data
         if index is not None:
