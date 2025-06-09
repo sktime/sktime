@@ -1,6 +1,6 @@
 """Bottomup reconciliation."""
 
-from sktime.transformations._reconcile import _ReconcilerTransformer
+from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
 from sktime.transformations.hierarchical.reconcile._utils import (
     _get_bottom_level_idxs,
     _loc_series_idxs,

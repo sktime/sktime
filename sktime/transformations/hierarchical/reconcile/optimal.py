@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from sktime.transformations._reconcile import _ReconcilerTransformer
+from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
 from sktime.transformations.hierarchical.reconcile._utils import (
     _is_ancestor,
 )

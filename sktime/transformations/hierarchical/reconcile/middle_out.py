@@ -4,8 +4,8 @@ import warnings
 
 import pandas as pd
 
-from sktime.transformations._reconcile import _ReconcilerTransformer
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
 from sktime.transformations.hierarchical.reconcile._utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
