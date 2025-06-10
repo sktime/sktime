@@ -288,3 +288,139 @@ class StationarityKPSS(BaseParamFitter):
         params2 = {"p_threshold": 0.1, "regression": "ct", "nlags": 5}
 
         return [params1, params2]
+
+
+class AcorrLjungbox(BaseParamFitter):
+    def __init__(self, lags=1, boxpierce=False):
+        self.lags = lags
+        self.boxpierce = boxpierce
+        super().__init__()
+
+    def _fit(self, X):
+        from statsmodels.stats.diagnostic import acorr_ljungbox
+
+        res = acorr_ljungbox(x=X, lags=self.lags, boxpierce=self.boxpierce)
+        self.lb_statistic_ = res["lb_stat"].to_numpy()
+        self.lb_pvalue_ = res["lb_pvalue"].to_numpy()
+        if self.boxpierce:
+            self.bp_statistic_ = res["bp_stat"].to_numpy()
+            self.bp_pvalue_ = res["bp_pvalue"].to_numpy()
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "lags": 0,
+            "boxpierce": True,
+        }
+
+        return [params1, params2]
+
+
+class JarqueBera(BaseParamFitter):
+    def __init__(self, axis=0):
+        self.axis = axis
+        super().__init__()
+
+    def _fit(self, X):
+        from statsmodels.stats.stattools import jarque_bera
+
+        res = jarque_bera(resids=X, axis=self.axis)
+        self.lb_pvalue_ = res
+
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "axis": 0,
+        }
+
+        return [params1, params2]
+
+
+class BreakvarHeteroskedasticityTest(BaseParamFitter):
+    def __init__(self, subset_length=1 / 3, alternative="two-sided", use_f=True):
+        self.subset_length = subset_length
+        self.alternative = alternative
+        self.use_f = use_f
+
+        super().__init__()
+
+    def _fit(self, X):
+        from statsmodels.tsa.stattools import breakvar_heteroskedasticity_test
+
+        res = breakvar_heteroskedasticity_test(
+            resid=X,
+            subset_length=self.subset_length,
+            alternative=self.alternative,
+            use_f=self.use_f,
+        )
+        self.lb_pvalue_ = res
+
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "axis": 0,
+        }
+
+        return [params1, params2]

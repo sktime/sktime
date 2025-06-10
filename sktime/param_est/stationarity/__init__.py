@@ -20,4 +20,10 @@ from sktime.param_est.stationarity._arch import (
     StationarityVarianceRatio,
     StationarityZivotAndrews,
 )
-from sktime.param_est.stationarity._statsmodels import StationarityADF, StationarityKPSS
+from sktime.param_est.stationarity._statsmodels import (
+    AcorrLjungbox,
+    BreakvarHeteroskedasticityTest,
+    JarqueBera,
+    StationarityADF,
+    StationarityKPSS,
+)
