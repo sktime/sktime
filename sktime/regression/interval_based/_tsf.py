@@ -161,7 +161,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             for i in range(self.n_estimators)
         )
         return np.mean(y_pred, axis=0)
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
