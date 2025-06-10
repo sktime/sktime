@@ -17,6 +17,7 @@ from sklearn.model_selection import KFold
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.parallel import parallelize
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -436,11 +437,17 @@ def evaluate(
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, cv)
 
-    # Run temporal cross-validation sequentially
-    results = []
-    for x in enumerate(yx_splits):
-        result, classifier = _evaluate_fold(x, _evaluate_fold_kwargs)
-        results.append(result)
+    def evaluate_fold_wrapper(x, meta):
+        result, classifier = _evaluate_fold(x, meta["_evaluate_fold_kwargs"])
+        return result
+
+    results = parallelize(
+        fun=evaluate_fold_wrapper,
+        iter=enumerate(yx_splits),
+        meta={"_evaluate_fold_kwargs": _evaluate_fold_kwargs},
+        backend="loky",
+        backend_params={"n_jobs": -1},
+    )
 
     # final formatting of dask dataframes
     if backend in ["dask", "dask_lazy"]:
