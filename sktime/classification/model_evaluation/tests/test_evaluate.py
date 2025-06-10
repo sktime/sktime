@@ -172,3 +172,50 @@ class TestEvaluate:
 
         assert all(result["fit_time"] > 0)
         assert all(result["pred_time"] >= 0)
+
+    def test_evaluate_parallel_backend(self):
+        """Test the parrelelization backends"""
+        X, y = make_classification_problem()
+        n_splits = 3
+        cv = KFold(n_splits=n_splits)
+
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            error_score="raise",
+            backend="loky",
+            backend_params={"n_jobs": -1},
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == n_splits
+
+        assert "test_accuracy_score" in result.columns
+        assert "fit_time" in result.columns
+        assert "pred_time" in result.columns
+
+    def test_evaluate_parallel_backend_none(self):
+        """Test the parrelelization backends"""
+        X, y = make_classification_problem()
+        n_splits = 3
+        cv = KFold(n_splits=n_splits)
+
+        result = evaluate(
+            classifier=DummyClassifier(),
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            error_score="raise",
+            backend="None",
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == n_splits
+
+        assert "test_accuracy_score" in result.columns
+        assert "fit_time" in result.columns
+        assert "pred_time" in result.columns
