@@ -198,7 +198,7 @@ class TestEvaluate:
         assert "pred_time" in result.columns
 
     def test_evaluate_parallel_backend_none(self):
-        """Test the parrelelization backends"""
+        """Test the sequential loop if `backend="None"`"""
         X, y = make_classification_problem()
         n_splits = 3
         cv = KFold(n_splits=n_splits)
