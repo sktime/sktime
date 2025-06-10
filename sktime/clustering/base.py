@@ -312,7 +312,7 @@ class BaseClusterer(BaseEstimator):
             n_clusters = self.n_clusters
         else:
             n_clusters = max(preds) + 1
-        dists = np.zeros((X.shape[0], n_clusters))
+        dists = np.zeros((n_instances, n_clusters))
         for i in range(n_instances):
             # preds[i] can be -1, in this case there is no cluster for this instance
             if preds[i] > -1:

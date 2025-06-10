@@ -65,6 +65,7 @@ class TimeSeriesKvisibility(BaseClusterer):
         # --------------
         "authors": "seigpe",
         "maintainers": ["seigpe", "acoxonante"],
+        "python_dependencies": ["networkx", "ts2vg"],
         # estimator type
         # --------------
         "capability:multivariate": False,

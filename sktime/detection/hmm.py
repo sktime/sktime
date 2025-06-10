@@ -113,7 +113,7 @@ class HMM(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm import HMM
+    >>> from sktime.detection.hmm import HMM
     >>> from scipy.stats import norm
     >>> from numpy import asarray
     >>> # define the emission probs for our HMM model:

@@ -38,6 +38,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     >>>
     >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5, novelty=True)
     >>> pipeline.fit(x)
+    DetectorPipeline(...)
     >>> y_hat = pipeline.transform(x)
     """
 

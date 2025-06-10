@@ -61,6 +61,7 @@ class EnbPIForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tsbootstrap import MovingBlockBootstrap
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -74,9 +75,9 @@ class EnbPIForecaster(BaseForecaster):
     ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
     >>> fh = ForecastingHorizon(np.arange(1, 13))
     >>> forecaster.fit(y, fh=fh)
+    TransformedTargetForecaster(...)
     >>> res = forecaster.predict()
     >>> res_int = forecaster.predict_interval(coverage=[0.5])
-
 
     References
     ----------
@@ -91,7 +92,7 @@ class EnbPIForecaster(BaseForecaster):
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",

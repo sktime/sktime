@@ -203,8 +203,8 @@ class ClaSPSegmentation(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.clasp import ClaSPSegmentation
-    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.detection.clasp import ClaSPSegmentation
+    >>> from sktime.detection.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_gun_point_segmentation
     >>> X, true_period_size, cps = load_gun_point_segmentation()
     >>> dominant_period_size = find_dominant_window_sizes(X)

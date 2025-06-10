@@ -73,6 +73,8 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Eric J Berger
+     - :user:`ericjb`
    * - Felipe Angelim Vieira
      - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti

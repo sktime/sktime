@@ -163,7 +163,8 @@ def imports(spec):
             )
         cls = register[x]
 
-        import_str = f"from {cls.__module__} import {x}"
+        import_module = _get_public_import(cls.__module__)
+        import_str = f"from {import_module} import {x}"
         import_strs += [import_str]
 
     if len(import_strs) == 0:
@@ -172,3 +173,15 @@ def imports(spec):
         imports_str = "\n".join(sorted(import_strs))
 
     return imports_str
+
+
+def _get_public_import(module_path: str) -> str:
+    """Get the public import path from full import path.
+
+    Removes everything from the first private submodule (starting with '_') onwards.
+    """
+    parts = module_path.split(".")
+    for i, part in enumerate(parts):
+        if part.startswith("_"):
+            return ".".join(parts[:i])  # Keep only part before first private submodule
+    return module_path  # Return the original path if no private submodules are found

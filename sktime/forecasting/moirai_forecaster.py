@@ -86,7 +86,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "python_dependencies": [
             "gluonts",
