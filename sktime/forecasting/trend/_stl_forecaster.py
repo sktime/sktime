@@ -192,9 +192,7 @@ class STLForecaster(BaseForecaster):
             self.forecaster_seasonal,
             self.forecaster_resid,
         ):
-            if forecaster is not None and forecaster.get_tag(
-                "capability:exogenous"
-            ):
+            if forecaster is not None and forecaster.get_tag("capability:exogenous"):
                 capa_exo = True
                 break
         else:  # none of the forecasters (if provided) use exogenous feature variables
