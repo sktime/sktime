@@ -86,8 +86,8 @@ class THieFForecaster(BaseForecaster):
         all_S = []
         # bottom level (most granular) is f=1
         base_len = len(forecasts[1])
-        # iterate from highest aggregation down to 1
-        for f in sorted(forecasts.keys(), reverse=True):
+        # iterate from bottom to highest aggregation
+        for f in sorted(forecasts.keys()):
             n = len(forecasts[f])
             agg_factor = base_len // n
             S_full = self._build_summing_matrix(base_len, agg_factor)
@@ -108,15 +108,21 @@ class THieFForecaster(BaseForecaster):
         elif isinstance(y.index, pd.Index):
             m = y.index[-1] - y.index[0]
 
-        freq_map = {"D": 7, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
+        freq_map = {"D": 365, "W": 52, "M": 12, "ME": 12, "H": 24, "Q": 4, "Y": 1}
 
         if m is None:
             if freq is None:
-                raise ValueError(
-                    "Could not infer frequency. Ensure timestamps are evenly spaced."
-                )
-
-            m = freq_map.get(freq[0].capitalize())
+                try:
+                    freq = pd.infer_freq(y.index)
+                except ValueError:
+                    raise ValueError("Could not infer frequency from index.")
+            if freq and freq[0].capitalize() == "D":
+                if len(y) <= freq_map["D"]:
+                    m = len(y)
+                else:
+                    m = freq_map.get(freq[0].capitalize())
+            else:
+                m = freq_map.get(freq[0].capitalize())
 
         if isinstance(m, pd.Timedelta):
             m = m.days
