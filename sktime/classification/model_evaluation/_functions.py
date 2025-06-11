@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements functions to be used in evaluating classification models."""
+"""Utilities for performance evaluation of time series classification models."""
 
 __author__ = ["ksharma6", "jgyasu"]
 __all__ = ["evaluate"]
