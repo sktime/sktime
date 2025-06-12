@@ -152,10 +152,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        # when relaxing deps, check whether the extra test in
-        # test_timesfm.py are still needed
         "python_version": ">=3.10,<3.11",
-        "env_marker": "sys_platform=='linux'",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -165,6 +162,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
+        "env_marker": "sys_platform=='linux'",
+        "test_vm": True,
         # estimator type
         # --------------
         "y_inner_mtype": [
