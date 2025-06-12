@@ -223,7 +223,7 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
 def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""
     FALSE_EXAMPLE = "TrendForecaster"  # tag_value known False for both tag_name
-    TRUE_EXAMPLE = "ARIMA"  # tag_value known True for both tag_name
+    TRUE_EXAMPLE = "NaiveForecaster"  # tag_value known True for both tag_name
 
     res = all_estimators("forecaster", filter_tags={tag_name: tag_value})
     names, ests = zip(*res)
