@@ -1,29 +1,21 @@
 """Interface for the momentfm deep learning time series classifier."""
 
-import os
 from copy import deepcopy
 
 import numpy as np
-
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.base import BaseClassifier
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.cuda import empty_cache
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-        pass
-
-
-if _check_soft_dependencies("accelerate", severity="none"):
-    pass
+Accelerator = _safe_import("accelerate")
+CrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
+Adam = _safe_import("torch.optim.Adam")
+OneCycleLR = _safe_import("torch.optim.lr_scheduler.OneCycleLR")
+DataLoader = _safe_import("torch.utils.data.DataLoader")
+Dataset = _safe_import("torch.utils.data.Dataset")
+empty_cache = _safe_import("torch.cuda.empty_cache")
 
 if _check_soft_dependencies("transformers", severity="none"):
     from sktime.libs.momentfm import MOMENTPipeline
@@ -189,12 +181,6 @@ class MomentFMClassifier(BaseClassifier):
             [0, num_classes - 1] for the model.
 
         """
-        from accelerate import Accelerator
-        from torch.nn import CrossEntropyLoss
-        from torch.optim import Adam
-        from torch.optim.lr_scheduler import OneCycleLR
-        from torch.utils.data import DataLoader
-
         self.y_dtype = y.dtype
 
         self._pretrained_model_name_or_path = self._config.get(
