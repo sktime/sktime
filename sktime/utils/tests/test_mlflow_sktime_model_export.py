@@ -617,7 +617,8 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:
-        mlflow.end_run()
+        if should_start_run:
+            mlflow.end_run()
 
 
 @pytest.mark.xfail(reason="known failure to be debugged, see #4904")
