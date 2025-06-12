@@ -31,6 +31,10 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     units rather than percentage. The best value is 0.0.
 
     MdAPE and sMdAPE are measured in percentage error relative to the test data.
+    If ``relative_to='y_true'`` (default), percentage error is relative to the true values.
+    If ``relative_to='y_pred'``, percentage error is measured relative to predicted values.
+    Note: when ``symmetric=True``, the ``relative_to`` setting is ignored.
+    
     Because it takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
@@ -38,7 +42,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    MAPE has no limit on how large the error can be, particulalrly when ``y_true``
+    MAPE has no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``. While sMAPE is bounded at 2.
 
@@ -135,9 +139,20 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
+        relative_to = "y_true",
         by_index=False,
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to
+        if relative_to not in ["y_true", "y_pred"]:
+            raise ValueError("relative_to must be 'y_true' or 'y_pred'")
+
+        if symmetric and relative_to != "y_true":
+            # symmetric mode overrides relative_to
+            # symmetric mode does not depend on relative_to
+            # internally marked as "symmetric" to disable denominator switching
+            self.relative_to = "symmetric"
+        
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -179,7 +194,12 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         if self.symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
         else:
-            denom_values = y_true.abs()
+            if self.relative_to == "y_true":
+                denom_values = y_true.abs()
+            elif self.relative_to == "y_pred":
+                denom_values = y_pred.abs()
+            else:
+                raise ValueError("Invalid value for relative_to")
 
         raw_values = numer_values / denom_values
 
@@ -213,4 +233,6 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        params4 = {"symmetric": True, "relative_to": "y_pred"}
+        return [params1, params2, params3, params4]
