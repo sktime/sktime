@@ -65,8 +65,6 @@ def test_missing_values_capability_tag_validation(forecaster_class):
     This test validates that forecasters claiming to handle missing values
     can actually fit and predict with missing data without crashing.
     """
-    y_univariate, y_multivariate, X = _create_missing_value_test_data()
-
     # Skip forecasters with missing dependencies
     try:
         # Try to instantiate to check dependencies
