@@ -9,7 +9,8 @@ __all__ = [
     "RandomSamplesAugmenter",
 ]
 
-
+import pandas as pd
+from scipy.stats import norm
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
@@ -89,17 +90,15 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         super().__init__()
 
     def _transform(self, X, y=None):
-        from scipy.stats import norm
+        scale = self.scale
+        rs = self.random_state
 
-        if self.scale in self._allowed_statistics:
-            scale = self.scale(X)
-        elif isinstance(self.scale, (int, float)):
-            scale = self.scale
-        else:
-            raise TypeError(
-                "Type of parameter 'scale' must be a non-negative float value."
-            )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        if isinstance(X, pd.DataFrame):
+            X_out = X.copy()
+            for col in X.columns:
+                X_out[col] = X[col] + norm.rvs(0, scale, size=len(X), random_state=rs)
+            return X_out
+        return X + norm.rvs(0, scale, size=len(X), random_state=rs)
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
