@@ -109,3 +109,324 @@ def test_load_model_from_disk(model_class) -> None:
     index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        PytorchForecastingNBeats,
+        PytorchForecastingTFT,
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            PytorchForecastingNBeats,
+            PytorchForecastingTFT,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_refit_functionality(model_class) -> None:
+    """Test refit functionality for incremental training."""
+
+    # Define model with minimal parameters for quick testing
+    model = model_class(
+        trainer_params={
+            "max_epochs": 1,
+            "limit_train_batches": 3,
+            "limit_val_batches": 3,
+            "enable_checkpointing": False,
+            "logger": False,
+            "enable_progress_bar": False,
+        },
+        model_params={"num_blocks": [2, 2]}
+        if model_class == PytorchForecastingNBeats
+        else {},
+        dataset_params={
+            "min_encoder_length": 20,
+            "max_encoder_length": 20,
+        }
+        if model_class == PytorchForecastingNBeats
+        else {},
+    )
+
+    # Generate test data
+    data = _make_hierarchical(
+        (3, 20), n_columns=2, max_timepoints=100, min_timepoints=100
+    )
+    x = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+
+    # Split data for initial training and refit
+    y_initial = y.iloc[:80]
+    y_new = y.iloc[80:90]
+    X_initial = x.iloc[:80] if model_class == PytorchForecastingTFT else None
+    X_new = x.iloc[80:90] if model_class == PytorchForecastingTFT else None
+
+    max_prediction_length = 5
+    fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+    # Initial fit
+    model.fit(y_initial, X_initial, fh=fh)
+
+    # Get initial prediction
+    y_pred_initial = model.predict(fh)
+
+    # Refit with new data
+    model.refit(y=y_new, X=X_new, fh=fh)
+
+    # Get prediction after refit
+    y_pred_refit = model.predict(fh)
+
+    # Verify predictions are different (model has been updated)
+    assert not y_pred_initial.equals(y_pred_refit)
+
+    # Verify shapes are correct
+    expected_length = len(fh) * len(y_new.index.get_level_values(0).unique())
+    assert y_pred_refit.shape[0] == expected_length
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        PytorchForecastingNBeats,
+        PytorchForecastingTFT,
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            PytorchForecastingNBeats,
+            PytorchForecastingTFT,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_checkpoint_save_load(model_class) -> None:
+    """Test checkpoint save and load functionality."""
+    import tempfile
+
+    import numpy as np
+
+    # Define model with minimal parameters for quick testing
+    model = model_class(
+        trainer_params={
+            "max_epochs": 1,
+            "limit_train_batches": 3,
+            "limit_val_batches": 3,
+            "enable_checkpointing": False,
+            "logger": False,
+            "enable_progress_bar": False,
+        },
+        model_params={"num_blocks": [2, 2]}
+        if model_class == PytorchForecastingNBeats
+        else {},
+        dataset_params={
+            "min_encoder_length": 20,
+            "max_encoder_length": 20,
+        }
+        if model_class == PytorchForecastingNBeats
+        else {},
+    )
+
+    # Generate test data
+    data = _make_hierarchical(
+        (3, 20), n_columns=2, max_timepoints=100, min_timepoints=100
+    )
+    x = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+
+    y_train = y.iloc[:80]
+    X_train = x.iloc[:80] if model_class == PytorchForecastingTFT else None
+
+    max_prediction_length = 5
+    fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+    # Fit model
+    model.fit(y_train, X_train, fh=fh)
+    y_pred_original = model.predict(fh)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        checkpoint_path = os.path.join(temp_dir, "test_checkpoint.pth")
+
+        # Save checkpoint
+        model.save_checkpoint(checkpoint_path)
+
+        # Verify file was created
+        assert os.path.exists(checkpoint_path)
+        assert os.path.getsize(checkpoint_path) > 0
+
+        # Create new model and load checkpoint
+        new_model = model_class(
+            trainer_params={
+                "max_epochs": 1,
+                "limit_train_batches": 3,
+                "limit_val_batches": 3,
+                "enable_checkpointing": False,
+                "logger": False,
+                "enable_progress_bar": False,
+            },
+            model_params={"num_blocks": [2, 2]}
+            if model_class == PytorchForecastingNBeats
+            else {},
+            dataset_params={
+                "min_encoder_length": 20,
+                "max_encoder_length": 20,
+            }
+            if model_class == PytorchForecastingNBeats
+            else {},
+        )
+
+        new_model.load_checkpoint(checkpoint_path)
+
+        # Verify checkpoint data was loaded
+        assert hasattr(new_model, "_is_checkpoint_loaded")
+        assert new_model._is_checkpoint_loaded
+
+        # Restore model by fitting (this triggers _restore_model_from_checkpoint)
+        new_model.fit(y_train, X_train, fh=fh)
+        y_pred_loaded = new_model.predict(fh)
+
+        # Predictions should be similar (loaded from checkpoint)
+        np.testing.assert_allclose(
+            y_pred_original.values, y_pred_loaded.values, rtol=1e-5, atol=1e-5
+        )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PytorchForecastingNBeats]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_refit_without_initial_fit_raises_error() -> None:
+    """Test that refit raises error when called before initial fit."""
+    model = PytorchForecastingNBeats(
+        trainer_params={
+            "max_epochs": 1,
+            "limit_train_batches": 3,
+            "limit_val_batches": 3,
+            "enable_checkpointing": False,
+            "logger": False,
+            "enable_progress_bar": False,
+        },
+        model_params={"num_blocks": [2, 2]},
+        dataset_params={
+            "min_encoder_length": 20,
+            "max_encoder_length": 20,
+        },
+    )
+
+    # Generate test data
+    data = _make_hierarchical(
+        (3, 20), n_columns=1, max_timepoints=100, min_timepoints=100
+    )
+    y = data["c0"].to_frame().iloc[80:90]
+    fh = ForecastingHorizon(range(1, 6), is_relative=True)
+
+    with pytest.raises(ValueError, match="Model must be fitted before calling refit"):
+        model.refit(y=y, fh=fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PytorchForecastingNBeats]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_save_checkpoint_without_fit_raises_error() -> None:
+    """Test that save_checkpoint raises error when called before fit."""
+    import tempfile
+
+    model = PytorchForecastingNBeats(
+        trainer_params={
+            "max_epochs": 1,
+            "limit_train_batches": 3,
+            "limit_val_batches": 3,
+            "enable_checkpointing": False,
+            "logger": False,
+            "enable_progress_bar": False,
+        },
+        model_params={"num_blocks": [2, 2]},
+        dataset_params={
+            "min_encoder_length": 20,
+            "max_encoder_length": 20,
+        },
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        checkpoint_path = os.path.join(temp_dir, "test_checkpoint.pth")
+        with pytest.raises(
+            ValueError, match="Model must be fitted before saving checkpoint"
+        ):
+            model.save_checkpoint(checkpoint_path)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PytorchForecastingNBeats]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_incremental_training_workflow() -> None:
+    """Test the complete incremental training workflow."""
+    import tempfile
+
+    model = PytorchForecastingNBeats(
+        trainer_params={
+            "max_epochs": 1,
+            "limit_train_batches": 3,
+            "limit_val_batches": 3,
+            "enable_checkpointing": False,
+            "logger": False,
+            "enable_progress_bar": False,
+        },
+        model_params={"num_blocks": [2, 2]},
+        dataset_params={
+            "min_encoder_length": 20,
+            "max_encoder_length": 20,
+        },
+    )
+
+    # Generate test data
+    data = _make_hierarchical(
+        (3, 20), n_columns=1, max_timepoints=100, min_timepoints=100
+    )
+    y = data["c0"].to_frame()
+
+    y_initial = y.iloc[:80]
+    y_new = y.iloc[80:90]
+
+    fh = ForecastingHorizon(range(1, 6), is_relative=True)
+
+    # Initial training
+    model.fit(y=y_initial, fh=fh)
+
+    # Simulate saving checkpoint during training
+    with tempfile.TemporaryDirectory() as temp_dir:
+        checkpoint_path = os.path.join(temp_dir, "epoch_checkpoint.pth")
+        model.save_checkpoint(checkpoint_path)
+
+        # Simulate loading and continuing training (like after interruption)
+        resumed_model = PytorchForecastingNBeats(
+            trainer_params={
+                "max_epochs": 1,
+                "limit_train_batches": 3,
+                "limit_val_batches": 3,
+                "enable_checkpointing": False,
+                "logger": False,
+                "enable_progress_bar": False,
+            },
+            model_params={"num_blocks": [2, 2]},
+            dataset_params={
+                "min_encoder_length": 20,
+                "max_encoder_length": 20,
+            },
+        )
+
+        # Load checkpoint
+        resumed_model.load_checkpoint(checkpoint_path)
+
+        # Continue training with new batch of data
+        resumed_model.fit(y=y_initial, fh=fh)  # Restore model state
+        resumed_model.refit(y=y_new, fh=fh)  # Continue with new data
+
+        # Verify model can make predictions
+        y_pred = resumed_model.predict(fh)
+        assert y_pred is not None
+        assert len(y_pred) > 0
