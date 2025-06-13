@@ -10,6 +10,8 @@ from numpyro.distributions import (
     ZeroInflatedPoisson,
 )
 from prophetverse.sktime.base import BaseBayesianForecaster
+from skpro.distributions import Empirical
+from xarray import DataArray
 
 from sktime.forecasting.base import ForecastingHorizon
 
@@ -17,7 +19,7 @@ from sktime.forecasting.base import ForecastingHorizon
 
 
 # TODO: replace truncated laplace with a more formalized approach
-class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
+class ZeroInflatedPoissonDemandForecaster(BaseBayesianForecaster):
     r"""Probabilistic Intermittent Demand Forecaster.
 
     Uses a Bayesian approach to forecast intermittent demand time series by modeling
@@ -35,7 +37,7 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         \logit{g_t} = \beta_{g, 0} + \beta_{g} \cdot X_t,
         \log{r_t} = \beta_{r, 0} + \beta_{r} \cdot X_t
 
-    where :math:`X_t` are exogenous variables, :math:`\beta` are regression
+    where :math:`X_t` are exogenous variables, and :math:`\beta` are regression
     coefficients. TODO
     """
 
@@ -229,3 +231,17 @@ class ProbabilisticIntermittentDemandForecaster(BaseBayesianForecaster):
         ).sort_index()
 
         return self._inv_scale_y(out)
+
+    def _predict_proba(self, marginal=True, **kwargs):
+        if self._is_vectorized:
+            return self._vectorize_predict_method("_predict_components", **kwargs)
+
+        predictive_samples = self._get_predictive_samples_dict(**kwargs)
+        y_hat = predictive_samples["observed"]
+
+        index = kwargs["fh"].to_absolute(self.cutoff).to_numpy()
+        as_array = DataArray(y_hat, dims=["sample", "time"], coords={"time": index})
+
+        as_frame = as_array.to_dataframe(self._y_metadata["feature_names"][0])
+
+        return Empirical(as_frame, time_indep=False)
