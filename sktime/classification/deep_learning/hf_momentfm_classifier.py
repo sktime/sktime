@@ -9,7 +9,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
-Accelerator = _safe_import("accelerate")
+accelerate = _safe_import("accelerate")
 CrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
 Adam = _safe_import("torch.optim.Adam")
 OneCycleLR = _safe_import("torch.optim.lr_scheduler.OneCycleLR")
@@ -192,7 +192,7 @@ class MomentFMClassifier(BaseClassifier):
         # check availability of user specified device
         self._device = _check_device(self._device)
         # initialize accelerator
-        accelerator = Accelerator()
+        accelerator = accelerate.Accelerator()
         if self._device == "auto":
             self._device = accelerator.device
 
