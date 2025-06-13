@@ -57,6 +57,35 @@ Estimators with a soft dependency need to ensure the following:
    See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example of
    ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
    for an example of ``_check_soft_dependencies`` usage.
+Module-level soft dependency imports
+-------------------------------------
+
+In certain scenarios, it may be necessary to import soft dependencies at the module level,
+rather than within a class or function. However, directly importing optional dependencies 
+at the top of a module can lead to import errors in user environments where the package 
+is not installed.
+
+To handle this properly, use the `_check_soft_dependencies` function before performing 
+the import.
+
+Example pattern:
+
+.. code-block:: python
+
+    _check_soft_dependencies("pmdarima", severity="error", obj="MyForecaster")
+    import pmdarima
+
+Alternatively, use the return value of `_check_soft_dependencies`:
+
+.. code-block:: python
+
+    if _check_soft_dependencies("pmdarima", severity="none"):
+        import pmdarima
+    else:
+        raise ImportError("pmdarima is required for this module.")
+
+Refer to ``sktime.utils.validation._dependencies._check_soft_dependencies`` for 
+detailed usage and parameters.
 
 Adding and maintaining soft dependencies
 ----------------------------------------
