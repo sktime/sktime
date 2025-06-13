@@ -58,6 +58,32 @@ Estimators with a soft dependency need to ensure the following:
    ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
    for an example of ``_check_soft_dependencies`` usage.
 
+Avoiding module-level imports of soft dependencies
+-------------------------------------
+
+In certain scenarios, it may be necessary to import soft dependencies at the module level,
+rather than within a class or function. However, directly importing optional dependencies 
+at the top of a module can lead to import errors in user environments where the package 
+is not installed.
+
+Try to avoid importing soft dependencies at the top of a file (module-level imports), even if you're using `_check_soft_dependencies` before it.
+
+Instead,the recommended approach is to use the `python_dependencies` tag in your estimator. This lets `sktime` handle missing dependencies automatically and keeps the import behavior clean and predictable.
+
+Example (preferred pattern):
+
+.. code-block:: python
+
+    def _fit(self, X, y):
+        _check_soft_dependencies("pmdarima", severity="error", obj=self)
+        import pmdarima
+        ...
+
+There might be rare exceptions — like in some deep learning estimators — where a module-level import is the only practical option. But even in those cases, it should be done carefully and only if absolutely necessary.
+If you need to use a soft dependency, import it inside a method or function (like `_fit` or `__init__`) instead of at the top of the module.
+Refer to ``sktime.utils.validation._dependencies._check_soft_dependencies`` for 
+detailed usage and parameters.
+
 Adding and maintaining soft dependencies
 ----------------------------------------
 
