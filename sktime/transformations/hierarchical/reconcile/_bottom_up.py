@@ -18,19 +18,6 @@ class BottomUpReconciler(_ReconcilerTransformer):
     It aggregates the data to the bottom level and then transforms it back
     to the original hierarchy.
 
-    Attributes
-    ----------
-    _tags : dict
-        Common tags for the transformer.
-    _no_hierarchy : bool
-        Indicates if the data has no hierarchy (single level).
-    _original_series : pd.Index
-        The original series index before transformation.
-    _aggregator : Aggregator
-        An instance of the Aggregator class used for aggregation.
-    _bottom_series : pd.Index
-        The index of the bottom level series.
-
     Examples
     --------
     >>> from sktime.transformations.hierarchical.reconcile import (

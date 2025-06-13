@@ -20,8 +20,6 @@ from sktime.utils.warnings import warn
 class Reconciler(BaseTransformer):
     """Hierarchical reconciliation transformer.
 
-    Please refer to ...
-
     Hierarchical reconciliation is a transformation which is used to make the
     predictions in a hierarchy of time-series sum together appropriately.
 
@@ -34,6 +32,12 @@ class Reconciler(BaseTransformer):
 
     For reconciliation methods that require historical values in addition to the
     forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
+
+    For more versatile and efficient reconciliation in pipelines,
+    see ``BottomUpReconciler``,
+    ``TopdownReconciler``, ``OptimalReconciler``,
+    ``NonNegativeOptimalReconciler``, ``MiddleOutReconciler``, that apply
+    reconciliation as preprocessing and postprocessing steps.
 
     For further information on the methods, see [1]_.
 
@@ -51,6 +55,11 @@ class Reconciler(BaseTransformer):
     --------
     Aggregator
     ReconcilerForecaster
+    BottomUpReconciler
+    TopdownReconciler
+    OptimalReconciler
+    NonNegativeOptimalReconciler
+    MiddleOutReconciler
 
     References
     ----------

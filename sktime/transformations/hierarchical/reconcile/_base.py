@@ -48,7 +48,7 @@ class _ReconcilerTransformer(BaseTransformer):
         "maintainers": "felipeangelimvieira",
         # estimator type
         # --------------
-        "object_type": ["transformer", "reconciler"],
+        "object_type": ["reconciler", "transformer"],
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -92,7 +92,7 @@ class _ReconcilerTransformer(BaseTransformer):
         if self._no_hierarchy:
             return self
         self._original_series = X.index.droplevel(-1).unique()
-        self.aggregator_ = Aggregator()
+        self.aggregator_ = Aggregator(bypass_inverse_transform=False)
         self.aggregator_.fit(X)
         X = self.aggregator_.transform(X)
         return self._fit_reconciler(X, y)

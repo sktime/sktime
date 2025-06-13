@@ -264,7 +264,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         reconc_fc = self.reconciler_transform_.inverse_transform(base_fc)
 
-        agg = Aggregator(False).fit(reconc_fc)
+        agg = Aggregator(False, bypass_inverse_transform=False).fit(reconc_fc)
         if not self.return_totals:
             return agg.inverse_transform(reconc_fc)
 

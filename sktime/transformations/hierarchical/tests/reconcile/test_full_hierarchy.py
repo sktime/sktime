@@ -3,8 +3,10 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile._optimal import (
     NonNegativeOptimalReconciler,
+    OptimalReconciler,
     _create_summing_matrix_from_index,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -101,8 +103,6 @@ def test_nonnegative_reconciliation(hierarchical_levels):
         hierarchy_levels=hierarchical_levels, max_timepoints=12, min_timepoints=12
     )
 
-    from sktime.transformations.hierarchical.aggregate import Aggregator
-
     y = Aggregator().fit_transform(y)
     y *= 0
     # Add noise
@@ -112,3 +112,71 @@ def test_nonnegative_reconciliation(hierarchical_levels):
     reconciler.fit(y)
     yreconc = reconciler.inverse_transform(y)
     assert np.all(yreconc >= 0), "Negative values in reconciled series!"
+
+
+@pytest.mark.parametrize(
+    "W",
+    [
+        np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        np.array([[1, 0, 0], [0, 2, 0], [0, 0, 5]]),
+        np.array([[1, 0.2, 0.3], [0.2, 5, 0.6], [0.3, 0.6, 9]]),
+    ],
+)
+@pytest.mark.parametrize(
+    "Reconciler", [OptimalReconciler, NonNegativeOptimalReconciler]
+)
+def test_mint_kills_weighted_rowspace_perturbation(W, Reconciler):
+    """
+    Test if a pertubation is cancelled by the MinT reconciler.
+
+    In the zero-constrained approach, we reconciled by computing the matrix M:
+
+    y_reconc = M @ y_base
+
+    where M =  I - WC'(CWC')^(-1)C, and C is the constrain matrix such that
+    C@y = 0 for all coherent y
+
+    Then, if y_base = (y_tilde + WC'), for y_tilde such that C @ y_tilde = 0
+    M @ y_base = M @ (y_tilde + WC') = M @ y_tilde + M @ WC'
+    = y_tilde + (I - WC'(CWC')^(-1)C) @ WC') = y_tilde + (WC' - WC') = y_tilde
+    """
+
+    idx = pd.MultiIndex.from_tuples(
+        [
+            ("__total", "__total", 0),
+            ("parent", "child1", 0),
+            ("parent", "child2", 0),
+        ],
+        names=["lvl1", "lvl2", "time"],
+    )
+    y = pd.DataFrame({"value": [5.0, 2.0, 3.0]}, index=idx)
+
+    W_df = pd.DataFrame(
+        data=W,
+        index=y.index.droplevel(-1),
+        columns=y.index.droplevel(-1),
+    )
+    rec = Reconciler(error_covariance_matrix=W_df, alpha=0.0)
+    base = rec.fit_transform(y)  # identity transform for base forecasts
+
+    # hand-construct the single constraint C = [1, -1, -1]
+    #   so that Cy = 0 iff total = c1 + c2
+    C = np.array([[1, -1, -1]])  # shape (1,3)
+
+    # a perturbation in the row-space of W C^T,
+    # which the weighted projector must annihilate:
+    v = W @ C.T
+
+    v = v / v.max()
+    # add it to the base forecasts
+    yt = base.copy()
+    yt["value"] = yt["value"].values + v.ravel()
+    y_rec = rec.inverse_transform(yt)
+    np.testing.assert_allclose(
+        y.values,  # original
+        y_rec.values,  # after adding v then reconciling
+        atol=1e-8,
+        err_msg="MinT did not kill the WC' perturbation!",
+    )
+    # and the index must be preserved
+    assert (y.index == y_rec.index).all()

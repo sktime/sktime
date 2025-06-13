@@ -48,7 +48,7 @@ class OptimalReconciler(_ReconcilerTransformer):
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None, alpha=0):
         self.error_covariance_matrix = error_covariance_matrix
-        self.alpha = 0
+        self.alpha = alpha
         super().__init__()
 
     def _fit_reconciler(self, X, y):
@@ -125,7 +125,6 @@ class OptimalReconciler(_ReconcilerTransformer):
 
         # Inverse term
         inv = np.linalg.inv(C @ E @ C.T + self.alpha * np.eye(C.shape[0]))
-        # The matrix that reconciles the base forecasts
         M = np.eye(self._n_series) - E @ C.T @ inv @ C
 
         # Expand level 0 with X_arr.shape[0] (timepoints)
