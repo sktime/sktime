@@ -1,4 +1,3 @@
-# sktime/base/adapters/_tsai.py
 from __future__ import annotations
 
 import warnings
@@ -32,13 +31,11 @@ class _TsaiAdapter(BaseClassifier):
         "requires_y": True,
         "handles-tabular_X": False,
         "capability:multivariate": True,
-        "capability:multioutput": True,  #  ← NEW: declare native multi-output support
+        "capability:multioutput": True,  # declare native multi-output support
         "python_dependencies": ["tsai", "torch"],
     }
 
-    # --------------------------------------------------------------------- #
-    #                              constructor                              #
-    # --------------------------------------------------------------------- #
+    # constructor
     def __init__(self, tsai_model_cls, n_epochs=5, bs=64, lr=1e-3, **fit_kwargs):
         self.tsai_model_cls = tsai_model_cls
         self.n_epochs = n_epochs
@@ -52,15 +49,12 @@ class _TsaiAdapter(BaseClassifier):
 
         super().__init__()
 
-    # --------------------------------------------------------------------- #
-    #                                   fit                                 #
-    # --------------------------------------------------------------------- #
+    # fit
     def fit(self, X: pd.DataFrame, y: pd.Series | pd.DataFrame):
-        # delay heavy deps
         import torch
         from tsai.all import get_ts_dls, ts_learner
 
-        # --- handle multi-output y: train on first column, remember the rest
+        # handle multi-output y: train on first column, remember the rest
         if isinstance(y, pd.DataFrame):
             self._multioutput_columns = list(y.columns)
             y_train = y.iloc[:, 0]
@@ -73,7 +67,7 @@ class _TsaiAdapter(BaseClassifier):
         def _loss(pred, targ):
             return _ce(pred, targ.long())
 
-        # 1) X → (N, C, L)
+        # 1) X to (N, C, L)
         X_np = _to_3d_numpy(X)
 
         # 2) encode class labels
@@ -94,12 +88,15 @@ class _TsaiAdapter(BaseClassifier):
         # 4) Learner
         model = self.tsai_model_cls(dls.vars, len(classes), dls.len)
         self._learn = ts_learner(dls, model, loss_func=_loss)
+        # self._learn.fit_one_cycle(self.n_epochs, self.lr, **self.fit_kwargs)
+        # return self
+        # train
         self._learn.fit_one_cycle(self.n_epochs, self.lr, **self.fit_kwargs)
+        ## tell sktime we're now fitted
+        self._is_fitted = True
         return self
 
-    # --------------------------------------------------------------------- #
-    #                           inference helpers                           #
-    # --------------------------------------------------------------------- #
+    # inference helpers
     def _forward(self, X_np: np.ndarray):
         """Run a batch through the tsai model and return soft-max probabilities."""
         import torch
@@ -111,10 +108,9 @@ class _TsaiAdapter(BaseClassifier):
             probs = torch.softmax(logits, dim=1).cpu().numpy()
         return probs
 
-    # --------------------------------------------------------------------- #
-    #                               predict                                 #
-    # --------------------------------------------------------------------- #
+    # predict
     def predict(self, X: pd.DataFrame):
+        self.check_is_fitted()
         X_np = _to_3d_numpy(X)
         probs = self._forward(X_np)
         preds = self._classes[probs.argmax(axis=1)]
@@ -128,5 +124,8 @@ class _TsaiAdapter(BaseClassifier):
         return preds
 
     def predict_proba(self, X: pd.DataFrame):
+        """Return (n_instances, n_classes) numpy array of class probabilities."""
+        self.check_is_fitted()
         X_np = _to_3d_numpy(X)
+        # _forward already returns a NumPy array of shape (n_instances, n_classes)
         return self._forward(X_np)
