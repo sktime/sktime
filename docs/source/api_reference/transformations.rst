@@ -58,7 +58,6 @@ Pipeline building - Structural
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnSelect
     FitInTransform
     InvertTransform
     YtoX
