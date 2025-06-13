@@ -4,9 +4,15 @@
 
 __author__ = ["fkiraly"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.warnings import warn
@@ -237,7 +243,7 @@ class Lag(BaseTransformer):
         shift_params = list(self._yield_shift_params())
 
         Xt_list = []
-
+        X, Xoldnames, Xnewnames = _coerce_variable_name(deepcopy(X))
         for lag, freq in shift_params:
             # need to deal separately with RangeIndex
             # because shift always cuts off the end values
@@ -264,7 +270,7 @@ class Lag(BaseTransformer):
             # this is necessary if we added indices from _X above
             if index_out == "shift" and remember_data:
                 Xt = Xt.loc[X_orig_idx_shifted]
-
+            Xt = _restore_variable_name(Xt, Xoldnames, Xnewnames)
             Xt_list.append(Xt)
 
         lag_names = self._yield_shift_param_names()
