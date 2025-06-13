@@ -93,19 +93,19 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
         ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)
 
-        est_scitypes = [scitype(x) for x in estimators]
-
-        if not all([x in ACCEPTED_SCITYPES for x in est_scitypes]):
+        if not all([is_scitype(x, ACCEPTED_SCITYPES) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        forecaster_indicator = [x == "forecaster" for x in est_scitypes]
+        forecaster_indicator = [is_scitype(x, "forecaster") for x in estimators]
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
+
+        est_scitypes = [scitype(x) for x in estimators]
 
         forecaster_ind = forecaster_indicator.index(True)
         self._forecaster_index = forecaster_ind
