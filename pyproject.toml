@@ -31,7 +31,7 @@ authors = [
 ]
 requires-python = ">=3.9,<3.14"
 classifiers = [
-  "Intended Audience :: Developers",
+  "Intended Audience :: Develaopers",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: BSD License",
   "Operating System :: MacOS",
@@ -52,7 +52,7 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib>=1.2.0,<1.6",  # required for parallel processing
-  "numpy>=1.21,<2.3",  # required for framework layer and base class logic
+  "numpy>=1.21,<2.0",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
@@ -292,6 +292,10 @@ dl = [
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
   'tensorflow<2.20,>=2; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
+  "tsai==0.4.0",
+  "ipykernel",
+  "fastai==2.7.19",
+  "fastcore==1.7.29",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
   "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
