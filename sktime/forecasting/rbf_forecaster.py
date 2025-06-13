@@ -94,7 +94,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         # --------------
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": False,

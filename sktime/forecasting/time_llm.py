@@ -83,7 +83,7 @@ class TimeLLMForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": True,
     }
 
