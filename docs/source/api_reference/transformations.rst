@@ -326,6 +326,7 @@ Lagging
 
     Lag
     ReducerTransform
+    PyPOTSImputer
 
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
