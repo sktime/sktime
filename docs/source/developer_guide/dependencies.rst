@@ -57,7 +57,8 @@ Estimators with a soft dependency need to ensure the following:
    See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example of
    ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
    for an example of ``_check_soft_dependencies`` usage.
-Module-level soft dependency imports
+
+Avoiding module-level imports of soft dependencies
 -------------------------------------
 
 In certain scenarios, it may be necessary to import soft dependencies at the module level,
@@ -65,25 +66,21 @@ rather than within a class or function. However, directly importing optional dep
 at the top of a module can lead to import errors in user environments where the package 
 is not installed.
 
-To handle this properly, use the `_check_soft_dependencies` function before performing 
-the import.
+Try to avoid importing soft dependencies at the top of a file (module-level imports), even if you're using `_check_soft_dependencies` before it.
 
-Example pattern:
+Instead,the recommended approach is to use the `python_dependencies` tag in your estimator. This lets `sktime` handle missing dependencies automatically and keeps the import behavior clean and predictable.
 
-.. code-block:: python
-
-    _check_soft_dependencies("pmdarima", severity="error", obj="MyForecaster")
-    import pmdarima
-
-Alternatively, use the return value of `_check_soft_dependencies`:
+Example (preferred pattern):
 
 .. code-block:: python
 
-    if _check_soft_dependencies("pmdarima", severity="none"):
+    def _fit(self, X, y):
+        _check_soft_dependencies("pmdarima", severity="error", obj=self)
         import pmdarima
-    else:
-        raise ImportError("pmdarima is required for this module.")
+        ...
 
+There might be rare exceptions — like in some deep learning estimators — where a module-level import is the only practical option. But even in those cases, it should be done carefully and only if absolutely necessary.
+If you need to use a soft dependency, import it inside a method or function (like `_fit` or `__init__`) instead of at the top of the module.
 Refer to ``sktime.utils.validation._dependencies._check_soft_dependencies`` for 
 detailed usage and parameters.
 
