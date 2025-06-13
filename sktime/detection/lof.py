@@ -249,6 +249,40 @@ class SubLOF(BaseDetector):
         y_pred = pd.concat(y_all, ignore_index=True).reset_index(drop=True)
         return y_pred
 
+    # todo 0.37.0: remove Y argument
+    def fit_predict(self, X, y=None, Y=None):
+        """Fit to data, then predict it."""
+        # When novelty is true, 'fit' and 'predict' are available. When novelty is
+        # false, 'predict' is not available.
+        if self.novelty:
+            return self.fit(X, y=y, Y=Y).predict(X)
+
+        model_params = {
+            "n_neighbors": self.n_neighbors,
+            "algorithm": self.algorithm,
+            "leaf_size": self.leaf_size,
+            "metric": self.metric,
+            "p": self.p,
+            "metric_params": self.metric_params,
+            "contamination": self.contamination,
+            "novelty": self.novelty,
+            "n_jobs": self.n_jobs,
+        }
+        if isinstance(X, pd.Series):
+            X = X.to_frame()
+
+        intervals = self._split_into_intervals(X.index, self.window_size)
+        self.models = {
+            interval: LocalOutlierFactor(**model_params) for interval in intervals
+        }
+
+        predictions = []
+        for interval, model in self.models.items():
+            mask = (X.index >= interval.left) & (X.index < interval.right)
+            predictions.append(model.fit_predict(X.loc[mask]))
+
+        return pd.Series(np.concatenate(predictions), index=X.index)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -269,6 +303,11 @@ class SubLOF(BaseDetector):
             "novelty": True,
         }
         params1 = {
+            "n_neighbors": 5,
+            "window_size": datetime.timedelta(days=25),
+            "novelty": False,
+        }
+        params2 = {
             "n_neighbors": 3,
             "window_size": 3,
             "algorithm": "brute",
@@ -277,4 +316,4 @@ class SubLOF(BaseDetector):
             "novelty": True,
             "p": 3,
         }
-        return [params0, params1]
+        return [params0, params1, params2]
