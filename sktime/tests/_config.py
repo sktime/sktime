@@ -288,6 +288,10 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
+    "MomentFMClassifier": [
+        "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
+    ],  # see 8253
 }
 
 # exclude tests but keyed by test name
