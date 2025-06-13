@@ -10,6 +10,7 @@ from sktime.transformations.hierarchical.reconcile._optimal import (
     _create_summing_matrix_from_index,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -140,6 +141,11 @@ def test_mint_kills_weighted_rowspace_perturbation(W, Reconciler):
     M @ y_base = M @ (y_tilde + WC') = M @ y_tilde + M @ WC'
     = y_tilde + (I - WC'(CWC')^(-1)C) @ WC') = y_tilde + (WC' - WC') = y_tilde
     """
+
+    if Reconciler == NonNegativeOptimalReconciler and not _check_soft_dependencies(
+        "cvxpy", severity="none"
+    ):
+        pytest.skip("NonNegativeOptimalReconciler requires cvxpy, skipping test.")
 
     idx = pd.MultiIndex.from_tuples(
         [
