@@ -29,6 +29,8 @@ Point forecasts - classes
 Average losses
 ^^^^^^^^^^^^^^
 
+.. currentmodule:: sktime.performance_metrics.forecasting
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class_with_call.rst
@@ -40,8 +42,6 @@ Average losses
 
 Percentage errors
 ^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -55,6 +55,7 @@ Percentage errors
 
 Scaled errors
 ^^^^^^^^^^^^^
+
 
 .. autosummary::
     :toctree: auto_generated/
