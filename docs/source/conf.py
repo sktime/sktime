@@ -100,6 +100,8 @@ exclude_patterns = [
 
 add_module_names = False
 
+parallel_jobs = "auto"
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
