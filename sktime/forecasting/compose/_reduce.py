@@ -27,6 +27,37 @@ __all__ = [
     "RecursiveReductionForecaster",
     "YfromX",
 ]
+"""
+def make_reduction(                         #line 1488
+     The function returns a forecaster that wraps a scikit-learn regressor.
+
+     Examples
++    --------
++    >>> from sktime.datasets import load_airline
++    >>> import pandas as pd
++    >>> from sktime.forecasting.compose import make_reduction
++    >>> from sklearn.linear_model import LinearRegression
++    >>> from sklearn.preprocessing import StandardScaler
++
++    >>> y, _ = load_airline(return_X_y=True)
++    >>> X = pd.DataFrame({
++    ...     "month": y.index.month,
++    ...     "yesterday": y.shift(1)
++    ... })
++    >>> y_train, X_train = y.iloc[1:80], X.iloc[1:80]
++
++    >>> forecaster = make_reduction(
++    ...     estimator=LinearRegression(),
++    ...     strategy="recursive",
++    ...     window_length=1,
++    ...     transformers=[
++    ...         ("scaler", StandardScaler(), ["month", "yesterday"])
++    ...     ],
++    ... )
++
++    >>> forecaster.fit(y_train, X_train)
++    >>> y_pred = forecaster.predict(fh=[1,2,3])
++ """
 
 import numpy as np
 import pandas as pd
