@@ -88,7 +88,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # validate names
         self._check_names(names)
 
-        ALLOWED_SCITYPES = ["forecaster", "transformer"]
+        ALLOWED_SCITYPES = ["forecaster", "transformer", "reconciler"]
         COERCIBLE_SCITYPES = all_coercible_to("transformer")
         COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
         ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)

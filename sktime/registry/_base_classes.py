@@ -594,6 +594,30 @@ class dataset_regression(_BaseScitypeOfObject):
         return BaseRegressionDataset
 
 
+class reconciler(_BaseScitypeOfObject):
+    _tags = {
+        "scitype_name": "reconciler",
+        "short_descr": "time series reconciliation transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.hierarchical.reconcile._base import (
+            _ReconcilerTransformer,
+        )
+
+        return _ReconcilerTransformer
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.transformations.tests.test_all_reconcilers import (
+            TestAllReconciliationTransformers,
+        )
+
+        return TestAllReconciliationTransformers
+
+
 # ----------------------------------
 # utility functions for base classes
 # ----------------------------------

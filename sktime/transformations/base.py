@@ -136,7 +136,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": False,
-        # does the transformer natively support categorical in exogeneous X?
+        # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
