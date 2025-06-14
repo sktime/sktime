@@ -123,8 +123,9 @@ class OptimalReconciler(_ReconcilerTransformer):
         """
         X_arr, C, _, E, Pt = self._get_arrays(X)
 
+        E = E + self.alpha * np.eye(E.shape[0])
         # Inverse term
-        inv = np.linalg.inv(C @ E @ C.T + self.alpha * np.eye(C.shape[0]))
+        inv = np.linalg.inv(C @ E @ C.T)
         M = np.eye(self._n_series) - E @ C.T @ inv @ C
 
         # Expand level 0 with X_arr.shape[0] (timepoints)
