@@ -213,6 +213,9 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        # TODO(fangelim): refactor this _all_estimators
+        # to make it possible to set custom tags to filter
+        # as class attributes, similar to `estimator_type_filter`
         if CYTHON_ESTIMATORS:
             filter_tags = {"requires_cython": True}
         else:
