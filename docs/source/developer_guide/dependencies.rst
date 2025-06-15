@@ -26,6 +26,12 @@ Handling soft dependencies
 This section explains how to handle existing soft dependencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
 
+**Best practices:**
+* (a) Soft dependencies should be restricted to estimators whenever possible.
+* (b) If restricting to estimators is not feasible, follow the guidance in the subsections below.
+
+Isolating soft dependencies to estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
@@ -66,7 +72,7 @@ rather than within a class or function. However, directly importing optional dep
 at the top of a module can lead to import errors in user environments where the package 
 is not installed.
 
-Try to avoid importing soft dependencies at the top of a file (module-level imports), even if you're using `_check_soft_dependencies` before it.
+Even when using `_check_soft_dependencies`, avoid placing soft dependency imports at the top of a module.
 
 Instead,the recommended approach is to use the `python_dependencies` tag in your estimator. This lets `sktime` handle missing dependencies automatically and keeps the import behavior clean and predictable.
 
@@ -80,9 +86,20 @@ Example (preferred pattern):
         ...
 
 There might be rare exceptions — like in some deep learning estimators — where a module-level import is the only practical option. But even in those cases, it should be done carefully and only if absolutely necessary.
-If you need to use a soft dependency, import it inside a method or function (like `_fit` or `__init__`) instead of at the top of the module.
-Refer to ``sktime.utils.validation._dependencies._check_soft_dependencies`` for 
-detailed usage and parameters.
+If a module-level import is absolutely necessary—such as in rare cases involving deep learning estimators—consider using `_safe_import` from `sktime.utils.importing`.
+
+**Example using `_safe_import` (not recommended unless unavoidable):**
+
+.. code-block:: python
+
+    from sktime.utils.importing import _safe_import
+
+    keras = _safe_import("keras", import_name="keras")
+
+    if keras is None:
+        raise ImportError("Please install keras to use this module.")
+
+If you do use `_safe_import`, ensure you still call `_check_soft_dependencies` before using the functionality, and document why module-level import is necessary.
 
 Adding and maintaining soft dependencies
 ----------------------------------------
