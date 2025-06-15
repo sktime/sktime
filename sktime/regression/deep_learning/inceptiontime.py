@@ -7,7 +7,6 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -69,6 +68,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
+        from sktime.networks.inceptiontime import InceptionTimeNetwork
 
         self.verbose = verbose
 
@@ -140,7 +140,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         Parameters
         ----------
-        X : np.ndarray of shape = (n_instances (n), n_dimensions (d), series_length (m))
+        X : np.ndarray of shape = (
+            n_instances (n), n_dimensions (d),
+            series_length (m)
+            )
             The training input samples.
         y : np.ndarray of shape n
             The training data class labels.
@@ -210,7 +213,8 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        # This import is removed. It is not needed.
+        # from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,
@@ -223,14 +227,17 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         }
         test_params = [param1, param2]
 
-        if _check_soft_dependencies("keras", severity="none"):
-            from keras.callbacks import LambdaCallback
-
-            test_params.append(
-                {
-                    "n_epochs": 2,
-                    "callbacks": [LambdaCallback()],
-                }
-            )
+        # This entire block is removed. get_test_params cannot
+        # import from soft dependencies.
+        #
+        # if _check_soft_dependencies("keras", severity="none"):
+        #     from keras.callbacks import LambdaCallback
+        #
+        #     test_params.append(
+        #         {
+        #             "n_epochs": 2,
+        #             "callbacks": [LambdaCallback()],
+        #         }
+        #     )
 
         return test_params
