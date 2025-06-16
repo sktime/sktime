@@ -605,15 +605,27 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             conda_env=str(conda_env),
             serialization_format=serialization_format,
         )
-        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-        assert model_info.model_uri == model_uri
+       
+        active_run = mlflow.active_run()
+        if active_run:
+            expected_run_uri = f"runs:/{active_run.info.run_id}/{artifact_path}"
+            assert (
+                model_info.model_uri == expected_run_uri  # MLflow 2.x format
+                or model_info.model_uri.startswith("models:/m-")  # MLflow 3.x format
+            )
+        else:
+            # When no active run, just check the model_uri matches expected format
+            assert (
+                model_info.model_uri.startswith("runs:/")  # MLflow 2.x format
+                or model_info.model_uri.startswith("models:/m-")  # MLflow 3.x format
+            )
         reloaded_model = mlflow_sktime.load_model(
-            model_uri=model_uri,
+            model_uri=model_info.model_uri,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(), reloaded_model.predict()
         )
-        model_path = Path(_download_artifact_from_uri(artifact_uri=model_uri))
+        model_path = Path(_download_artifact_from_uri(artifact_uri=model_info.model_uri))
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:
