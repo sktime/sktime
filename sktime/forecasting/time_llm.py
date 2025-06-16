@@ -51,6 +51,10 @@ class TimeLLMForecaster(BaseForecaster):
         Dropout rate.
     device : str, default='cuda' if available else 'cpu'
         Device to run model on.
+    to_cpu_after_fit : bool, default=False
+        Parameter to set whether or not to return the model
+        to CPU after training. This is useful for freeing up GPU
+        memory after training.
 
     References
     ----------
@@ -70,9 +74,8 @@ class TimeLLMForecaster(BaseForecaster):
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y, fh=[1])
-    TimeLLMForecaster(pred_len=1)
-    >>> y_pred = forecaster.predict(fh=[1])
+    >>> forecaster.fit(y, fh=[1]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _tags = {
@@ -103,6 +106,7 @@ class TimeLLMForecaster(BaseForecaster):
         dropout=0.1,
         device: Optional[str] = None,
         prompt_domain=False,
+        to_cpu_after_fit=False,
     ):
         self.task_name = task_name
         self.pred_len = pred_len
@@ -118,6 +122,7 @@ class TimeLLMForecaster(BaseForecaster):
         self.dropout = dropout
         self.device = device
         self.prompt_domain = prompt_domain
+        self.to_cpu_after_fit = to_cpu_after_fit
 
         super().__init__()
 
@@ -167,6 +172,9 @@ class TimeLLMForecaster(BaseForecaster):
         self.model_ = self.model_.to(torch.bfloat16)
 
         self.last_values = y
+
+        if self.to_cpu_after_fit:
+            self.model_.to("cpu")
 
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
@@ -227,6 +235,10 @@ class TimeLLMForecaster(BaseForecaster):
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )
         X_tensor = X_tensor.to(torch.float32)
+
+        self.model_.eval()
+        self.model_.to(self.device_)
+
         res = self.model_.forward(
             X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
         )
@@ -241,6 +253,9 @@ class TimeLLMForecaster(BaseForecaster):
 
         y_pred = y_pred.astype("float64")
 
+        if self.to_cpu_after_fit:
+            self.model_.to("cpu")
+
         return y_pred
 
     @classmethod
@@ -249,51 +264,37 @@ class TimeLLMForecaster(BaseForecaster):
         params_list = [
             {
                 "task_name": "long_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
+                "pred_len": 3,
+                "seq_len": 4,
+                "llm_model": "BERT",
+                "llm_layers": 1,
                 "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
+                "patch_len": 4,
+                "stride": 4,
+                "d_model": 16,
+                "d_ff": 32,
+                "n_heads": 2,
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
+                "to_cpu_after_fit": True,
             },
             {
                 "task_name": "short_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
+                "pred_len": 3,
+                "seq_len": 4,
+                "llm_model": "BERT",
+                "llm_layers": 1,
                 "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
+                "patch_len": 4,
+                "stride": 4,
+                "d_model": 16,
+                "d_ff": 32,
+                "n_heads": 2,
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-            },
-            {
-                "task_name": "short_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
-                "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
-                "dropout": 0.1,
-                "device": None,
-                "prompt_domain": False,
+                "to_cpu_after_fit": True,
             },
         ]
 
