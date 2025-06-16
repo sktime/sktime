@@ -10,6 +10,8 @@ from functools import lru_cache
 from inspect import getmro, isclass
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
+from sktime.utils.git_diff import is_file_changed
+
 
 LOCAL_PACKAGE = "sktime"
 
@@ -83,6 +85,8 @@ def run_test_for_class(cls, return_reason=False):
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
         * "True_changed_framework" - run reason, core framework modules changed
+        * "True_changed_calling_file" - run reason, test file calling the check has changed
+
 
         If multiple reasons are present, the first one in the above list is returned.
 
@@ -181,6 +185,8 @@ def _run_test_for_class(cls):
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
         * "True_changed_framework" - run reason, core framework modules changed
+        * "True_changed_calling_file" - run reason, test file calling the check has changed
+
 
         If multiple reasons are present, the first one in the above list is returned.
     """
@@ -237,6 +243,13 @@ def _run_test_for_class(cls):
         package_deps = [Requirement(req).name for req in cls_reqs]
 
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
+    
+    def get_calling_file():
+        """Return the absolute path of the file that called run_test_for_class."""
+        import inspect
+        import os
+        frame = inspect.stack()[3]
+        return os.path.abspath(frame.filename)
 
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
@@ -280,6 +293,10 @@ def _run_test_for_class(cls):
     utils_changed = is_module_changed("sktime.utils")
     if any([datatypes_changed, tests_changed, utils_changed]):
         return True, "True_changed_framework"
+    
+    calling_file = get_calling_file()
+    if is_file_changed(calling_file):
+        return True, "True_changed_calling_file"
 
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
