@@ -75,11 +75,12 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
 
     Examples
     --------
-    >>> import sktime.classification.distance_based as clf_db  # doctest: +SKIP
-    >>> from clf_db import KNeighborsTimeSeriesClassifierPyts  # doctest: +SKIP
-    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
-    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
-    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> from sktime.classification.distance_based import (
+    ...     KNeighborsTimeSeriesClassifierPyts
+    ...)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = KNeighborsTimeSeriesClassifierPyts(n_neighbors=1,
     ...     weights="uniform",
     ...     algorithm="auto",
@@ -88,10 +89,10 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
     ...     metric="minkowski",
     ...     metric_params=None,
     ...     n_jobs=1,
-    ... )  # doctest: +SKIP
-    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifierPyts(...)
-    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
