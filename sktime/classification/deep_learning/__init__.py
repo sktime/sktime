@@ -9,7 +9,6 @@ __all__ = [
     "MACNNClassifier",
     "MCDCNNClassifier",
     "MLPClassifier",
-    "MomentFMClassifier",
     "MVTSTransformerClassifier",
     "ResNetClassifier",
     "SimpleRNNClassifier",
@@ -24,9 +23,6 @@ from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
     GRUFCNNClassifier,
-)
-from sktime.classification.deep_learning.hf_momentfm_classifier import (
-    MomentFMClassifier,
 )
 from sktime.classification.deep_learning.inceptiontime import InceptionTimeClassifier
 from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier
