@@ -33,6 +33,12 @@ class Reconciler(BaseTransformer):
     For reconciliation methods that require historical values in addition to the
     forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
 
+    For more versatile and efficient reconciliation in pipelines,
+    see ``BottomUpReconciler``,
+    ``TopdownReconciler``, ``OptimalReconciler``,
+    ``NonNegativeOptimalReconciler``, ``MiddleOutReconciler``, that apply
+    reconciliation as preprocessing and postprocessing steps.
+
     For further information on the methods, see [1]_.
 
     Parameters
@@ -49,6 +55,11 @@ class Reconciler(BaseTransformer):
     --------
     Aggregator
     ReconcilerForecaster
+    BottomUpReconciler
+    TopdownReconciler
+    OptimalReconciler
+    NonNegativeOptimalReconciler
+    MiddleOutReconciler
 
     References
     ----------
