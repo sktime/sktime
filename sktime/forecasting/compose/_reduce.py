@@ -231,7 +231,7 @@ class _Reducer(_BaseWindowForecaster):
             "benheid",
         ],
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
-        "capability:missing_values": True,
+        "capability:missing_values": False,  # default to False, will be set dynamically
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -251,12 +251,8 @@ class _Reducer(_BaseWindowForecaster):
         self.pooling = pooling
         self._cv = None
 
-        # it seems that the sklearn tags are not fully reliable
-        # see discussion in PR #3405 and issue #3402
-        # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(
-        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
-        # )
+        # Determine missing values capability based on estimator
+        self._set_missing_values_capability()
 
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
@@ -276,6 +272,41 @@ class _Reducer(_BaseWindowForecaster):
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
         self._est_type = _est_type
+
+    def _set_missing_values_capability(self):
+        """Set the missing values capability based on the underlying estimator."""
+        # Check if it's an sktime estimator with tags
+        if hasattr(self.estimator, "get_tag"):
+            missing_capability = self.estimator.get_tag(
+                "capability:missing_values", False
+            )
+            self.set_tags(**{"capability:missing_values": missing_capability})
+            return
+
+        # For sklearn estimators, check known capabilities
+        estimator_name = type(self.estimator).__name__
+
+        # Known sklearn estimators that can handle missing values
+        missing_capable_estimators = {
+            "HistGradientBoostingRegressor",
+            "HistGradientBoostingClassifier",
+            "ExtraTreesRegressor",
+            "ExtraTreesClassifier",
+            "RandomForestRegressor",
+            "RandomForestClassifier",
+            "DecisionTreeRegressor",
+            "DecisionTreeClassifier",
+            "KNeighborsRegressor",
+            "KNeighborsClassifier",
+        }
+
+        # Check if the estimator can handle missing values
+        if estimator_name in missing_capable_estimators:
+            self.set_tags(**{"capability:missing_values": True})
+        else:
+            # For other sklearn estimators, default to False
+            # This is safer than assuming they can handle missing values
+            self.set_tags(**{"capability:missing_values": False})
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -2766,7 +2797,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "capability:missing_values": True,
+        "capability:missing_values": False,  # default to False, will be set dynamically
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,
@@ -2777,6 +2808,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.estimator = estimator
         self.pooling = pooling
         super().__init__()
+
+        # Set missing values capability based on estimator
+        self._set_missing_values_capability()
 
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
@@ -2809,6 +2843,37 @@ class YfromX(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
+
+    def _set_missing_values_capability(self):
+        """Set missing values capability based on estimator's capabilities."""
+        try:
+            # Try sklearn's _get_tags first
+            if hasattr(self.estimator, "_get_tags"):
+                sklearn_tags = self.estimator._get_tags()
+                can_handle_missing = sklearn_tags.get("allow_nan", False)
+            # Fallback to checking if it's a known estimator that supports
+            # missing values
+            elif hasattr(self.estimator, "__class__"):
+                estimator_name = self.estimator.__class__.__name__
+                # Known sklearn estimators that handle missing values
+                missing_value_estimators = {
+                    "HistGradientBoostingRegressor",
+                    "HistGradientBoostingClassifier",
+                    "DecisionTreeRegressor",
+                    "DecisionTreeClassifier",
+                    "RandomForestRegressor",
+                    "RandomForestClassifier",
+                    "ExtraTreesRegressor",
+                    "ExtraTreesClassifier",
+                }
+                can_handle_missing = estimator_name in missing_value_estimators
+            else:
+                can_handle_missing = False
+
+            self.set_tags(**{"capability:missing_values": can_handle_missing})
+        except Exception:
+            # If we can't determine, default to False (safe)
+            self.set_tags(**{"capability:missing_values": False})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
