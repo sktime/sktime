@@ -403,10 +403,10 @@ def test_requires_tags_trafopipe():
         ]
     )
 
-    assert not pipe.get_tags("requires_X")
+    assert not pipe.get_tag("requires_X")
     # should not requires X as input, because YtoX does not
 
-    assert pipe.get_tags("requires_y")
+    assert pipe.get_tag("requires_y")
     # should require y as input, because YtoX does
 
     pipe.fit_transform(X=None, y=X)
