@@ -1368,7 +1368,7 @@ class BaseTransformer(BaseEstimator):
 
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
-            elif self.get_tags("scitype:transform-input") == "Panel":
+            elif self.get_tag("scitype:transform-input") == "Panel":
                 # Converting Panel to Series
                 if X_input_scitype == "Hierarchical":
                     # Input was Hierarchical, but output has dropped one level.
