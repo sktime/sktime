@@ -3535,6 +3535,13 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "somyasaxena01",
+      "name": "Somya Saxena",
+      "avatar_url": "https://avatars.githubusercontent.com/somyasaxena01",
+      "profile": "https://github.com/somyasaxena01",
+      "contributions": ["code"]
     }
   ]
 }
