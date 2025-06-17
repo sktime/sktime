@@ -3,21 +3,23 @@
 """Implements reconciled forecasters for hierarchical data."""
 
 __all__ = ["ReconcilerForecaster"]
-__author__ = ["ciaran-g"]
-
-# todo: top down historical proportions? -> new _get_g_matrix_prop(self)
+__author__ = ["ciaran-g", "felipeangelimvieira"]
 
 import numpy as np
 import pandas as pd
-from numpy.linalg import inv
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
-from sktime.transformations.hierarchical.reconcile import (
-    Reconciler,
-    _get_s_matrix,
-    _parent_child_df,
+from sktime.transformations.hierarchical.aggregate import (
+    Aggregator,
+    _check_index_no_total,
 )
+from sktime.transformations.hierarchical.reconcile import (
+    BottomUpReconciler,
+    NonNegativeOptimalReconciler,
+    OptimalReconciler,
+    TopdownReconciler,
+)
+from sktime.transformations.hierarchical.reconcile._utils import _loc_series_idxs
 from sktime.utils.warnings import warn
 
 
@@ -94,8 +96,8 @@ class ReconcilerForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": "ciaran-g",
-        "maintainers": "ciaran-g",
+        "authors": ["ciaran-g", "felipeangelimvieira"],
+        "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
@@ -120,8 +122,24 @@ class ReconcilerForecaster(BaseForecaster):
         "fit_is_empty": False,
     }
 
-    TRFORM_LIST = Reconciler().METHOD_LIST
-    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
+    # We do not create the instances to avoid error due to
+    # soft dependency on cvxpy for NonNegativeOptimalReconciler
+    TRFORM_METHOD_MAP = {
+        "bu": (BottomUpReconciler, {}),
+        "ols": (OptimalReconciler, {}),
+        "ols:nonneg": (NonNegativeOptimalReconciler, {}),
+        "wls_str": (OptimalReconciler, {"error_covariance_matrix": "wls_str"}),
+        "wls_str:nonneg": (
+            NonNegativeOptimalReconciler,
+            {"error_covariance_matrix": "wls_str"},
+        ),
+        "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
+        "td_share": (TopdownReconciler, {"method": "td_share"}),
+    }
+
+    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
+        TRFORM_METHOD_MAP.keys()
+    )
     RETURN_TOTALS_LIST = [True, False]
 
     def __init__(self, forecaster, method="mint_shrink", return_totals=True, alpha=0):
@@ -162,7 +180,9 @@ class ReconcilerForecaster(BaseForecaster):
             self.forecaster_.fit(y=y, X=X, fh=fh)
             return self
 
-        # check index for no "__total", if not add totals to y
+        self._series_to_keep = y.index.droplevel(-1).unique()
+
+        # Add totals and flatten single levels
         if _check_index_no_total(y):
             y = self._add_totals(y)
 
@@ -170,26 +190,23 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        # if transformer just fit pipeline and return
-        if np.isin(self.method, self.TRFORM_LIST):
-            self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
-            self.forecaster_.fit(y=y, X=X, fh=fh)
-            # bring g matrix/s_matrix/parent_child to top for compatibility/tests
-            self.s_matrix = self.forecaster_.transformers_post_[0][1].s_matrix
-            self.g_matrix = self.forecaster_.transformers_post_[0][1].g_matrix
-            self.parent_child = self.forecaster_.transformers_post_[0][1].parent_child
-            return self
+        if self.return_totals:
+            # Override the series to keep
+            self._series_to_keep = y.index.droplevel(-1).unique()
 
-        # fit forecasters for each level
         self.forecaster_ = self.forecaster.clone()
+
+        if not self._requires_residuals:
+            Class, kwargs = self.TRFORM_METHOD_MAP[self.method]
+            self.reconciler_transform_ = Class(**kwargs)
+            yt = self.reconciler_transform_.fit_transform(y)
+            self.forecaster_.fit(y=yt, X=X, fh=fh)
+            return self
+        # fit forecasters for each level
+
+        # In this case, the totals are required
+        y = self._add_totals(y)
         self.forecaster_.fit(y=y, X=X, fh=fh)
-
-        # now summation matrix
-        self.s_matrix = _get_s_matrix(y)
-
-        # parent child df
-        self.parent_child = _parent_child_df(self.s_matrix)
-
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
@@ -198,13 +215,21 @@ class ReconcilerForecaster(BaseForecaster):
 
         # now define recon matrix
         if self.method == "mint_cov":
-            self.g_matrix = self._get_g_matrix_mint(shrink=False)
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(shrink=False)
         elif self.method == "mint_shrink":
-            self.g_matrix = self._get_g_matrix_mint(shrink=True)
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(shrink=True)
         elif self.method == "wls_var":
-            self.g_matrix = self._get_g_matrix_mint(shrink=False, diag_only=True)
-        else:
-            raise RuntimeError("unreachable condition, error in _check_method")
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(
+                shrink=False, diag_only=True
+            )
+
+        ReconcilerClass = OptimalReconciler
+        if self.method.endswith(":nonneg"):
+            ReconcilerClass = NonNegativeOptimalReconciler
+        self.reconciler_transform_ = ReconcilerClass(
+            self.error_cov_matrix_, alpha=self.alpha
+        )
+        self.reconciler_transform_.fit(y)
 
         return self
 
@@ -237,44 +262,16 @@ class ReconcilerForecaster(BaseForecaster):
             )
             return base_fc
 
-        # if Forecaster() * Reconciler() then base_fc is already reconciled
-        if np.isin(self.method, self.TRFORM_LIST):
-            if not self.return_totals:
-                n = base_fc.index.get_slice_bound(label="__total", side="left")
-                if len(base_fc[:n]) == 0:
-                    base_fc = base_fc[n:]
-                else:
-                    base_fc = base_fc[:n]
-                level_values = base_fc.index.get_level_values(-2)
-                base_fc = base_fc[~(level_values == "__total")]
-                return base_fc
+        reconc_fc = self.reconciler_transform_.inverse_transform(base_fc)
 
-            return base_fc
-
-        base_fc = base_fc.groupby(level=-1)
-
-        recon_fc = []
-        for _name, group in base_fc:
-            # reconcile via SGy
-            fcst = self.s_matrix.dot(self.g_matrix.dot(group.droplevel(-1)))
-            # add back in time index
-            fcst.index = group.index
-            recon_fc.append(fcst)
-
-        recon_fc = pd.concat(recon_fc, axis=0)
-        recon_fc = recon_fc.sort_index()
-
+        agg = Aggregator(False, bypass_inverse_transform=False).fit(reconc_fc)
         if not self.return_totals:
-            n = recon_fc.index.get_slice_bound(label="__total", side="left")
-            if len(recon_fc[:n]) == 0:
-                recon_fc = recon_fc[n:]
-            else:
-                recon_fc = recon_fc[:n]
-            level_values = recon_fc.index.get_level_values(-2)
-            recon_fc = recon_fc[~(level_values == "__total")]
-            return recon_fc
+            return agg.inverse_transform(reconc_fc)
 
-        return recon_fc
+        reconc_fc = agg.fit_transform(reconc_fc)
+        reconc_fc = _loc_series_idxs(reconc_fc, self._series_to_keep)
+
+        return reconc_fc
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -302,7 +299,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         self.forecaster_.update(y, X, update_params=update_params)
 
-        if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
+        if y.index.nlevels < 2 or not self._requires_residuals:
             return self
 
         # update self.residuals_
@@ -314,25 +311,30 @@ class ReconcilerForecaster(BaseForecaster):
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
         self.residuals_ = self.residuals_.sort_index()
 
-        # could implement something specific here
-        # for now just refit
+        # now define recon matrix
         if self.method == "mint_cov":
-            self.g_matrix = self._get_g_matrix_mint(shrink=False)
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(shrink=False)
         elif self.method == "mint_shrink":
-            self.g_matrix = self._get_g_matrix_mint(shrink=True)
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(shrink=True)
         elif self.method == "wls_var":
-            self.g_matrix = self._get_g_matrix_mint(shrink=False, diag_only=True)
-        else:
-            raise RuntimeError("unreachable condition, error in _check_method")
+            self.error_cov_matrix_ = self._get_error_covariance_matrix(
+                shrink=False, diag_only=True
+            )
 
         return self
 
-    def _get_g_matrix_mint(self, shrink=False, diag_only=False):
-        """Define the G matrix for the MinT methods based on model residuals.
+    @property
+    def _requires_residuals(self):
+        """Check if the reconciliation requires residuals."""
+        return self.method in ["mint_cov", "mint_shrink", "wls_var"]
 
-        Reconciliation methods require the G matrix. The G matrix is used to redefine
-        base forecasts for the entire hierarchy to the bottom-level only before
-        summation using the S matrix.
+    def _get_error_covariance_matrix(self, shrink=False, diag_only=False):
+        """Get the error covariance matrix for the MinT methods.
+
+        Reconciliation methods require the error covariance matrix.
+        The error covariance matrix is used to define the covariance of the
+        residuals for the entire hierarchy
+        to the bottom-level only before summation using the S matrix.
 
         Please refer to [1]_ for further information.
 
@@ -346,7 +348,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         Returns
         -------
-        g_mint : pd.DataFrame with rows equal to the number of bottom level nodes
+        cov_mint : pd.DataFrame with rows equal to the number of bottom level nodes
             only, i.e. with no aggregate nodes, and columns equal to the number of
             unique nodes in the hierarchy. The matrix indexes is inherited from the
             input data, with the time level removed.
@@ -356,6 +358,14 @@ class ReconcilerForecaster(BaseForecaster):
         .. [1] https://otexts.com/fpp3/hierarchical.html
         .. [2] https://doi.org/10.2202/1544-6115.1175
         """
+        if self.residuals_.index.nlevels < 2:
+            return None
+
+        # copy for further mods
+        resid = self.residuals_.copy()
+        resid = resid.unstack().transpose()
+        cov_mat = resid.cov()
+
         if self.residuals_.index.nlevels < 2:
             return None
 
@@ -401,23 +411,7 @@ class ReconcilerForecaster(BaseForecaster):
             for i in resid.columns:
                 cov_mat.loc[cov_mat.index != i, cov_mat.columns == i] = 0
 
-        # now get the g matrix based on the covariance
-        g_mint = pd.DataFrame(
-            np.dot(
-                inv(
-                    np.dot(np.transpose(self.s_matrix), np.dot(cov_mat, self.s_matrix))
-                    + self.alpha * np.eye(self.s_matrix.shape[1])
-                ),
-                np.dot(np.transpose(self.s_matrix), cov_mat),
-            )
-        )
-        # set indexes of matrix
-        g_mint = g_mint.transpose()
-        g_mint = g_mint.set_index(self.s_matrix.index)
-        g_mint.columns = self.s_matrix.columns
-        g_mint = g_mint.transpose()
-
-        return g_mint
+        return cov_mat
 
     def _check_method(self):
         """Raise warning if method is not defined correctly."""
@@ -449,6 +443,9 @@ class ReconcilerForecaster(BaseForecaster):
         from sktime.forecasting.trend import TrendForecaster
 
         FORECASTER = TrendForecaster()
+        methods_without_soft_deps = [
+            x for x in cls.METHOD_LIST if not x.endswith("nonneg")
+        ]
         params_list = [
             {
                 "forecaster": FORECASTER,
@@ -456,7 +453,7 @@ class ReconcilerForecaster(BaseForecaster):
                 "alpha": alpha,
                 "return_totals": totals,
             }
-            for x in cls.METHOD_LIST
+            for x in methods_without_soft_deps
             for totals in cls.RETURN_TOTALS_LIST
             for alpha in [0, 1]
         ]

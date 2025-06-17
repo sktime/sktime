@@ -294,7 +294,7 @@ dl = [
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  "pytorch-forecasting>=1.0.0,<1.5.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -304,12 +304,12 @@ dl = [
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
-  "mlflow",
+  "mlflow<3.0",
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
-  "mlflow",
+  "mlflow<3.0",
   "moto",
 ]
 numpy1 = [
