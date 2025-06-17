@@ -43,7 +43,6 @@ def _ts_auprc(y_true, y_pred, integration="trapezoid", weighted_precision=True):
         precision_sorted = precision[sorted_indices]
         area = auc(recall_sorted, precision_sorted)
 
-
     return area
 
 
