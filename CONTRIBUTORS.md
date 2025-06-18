@@ -1,13 +1,12 @@
-# Contributors
+Contributors
+============
 
 <!-- IMPORTANT - DO NOT MODIFY THIS FILE DIRECTLY. -->
 <!-- This file is updated automatically from .all-contributorsrc -->
 <!-- Please add your badges to .all-contibutorsrc -->
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-
 [![All Contributors](https://img.shields.io/badge/all_contributors-348-orange.svg)](#contributors)
-
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
