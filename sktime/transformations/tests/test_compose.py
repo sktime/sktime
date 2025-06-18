@@ -371,8 +371,8 @@ def test_input_output_series_panel_chain():
     X = load_airline()
     bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
 
-    assert bootstrap_trafo.get_tags()["scitype:transform-input"] == "Series"
-    assert bootstrap_trafo.get_tags()["scitype:transform-output"] == "Panel"
+    assert bootstrap_trafo.get_tag("scitype:transform-input") == "Series"
+    assert bootstrap_trafo.get_tag("scitype:transform-output") == "Panel"
 
     Xt = bootstrap_trafo.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
@@ -403,10 +403,10 @@ def test_requires_tags_trafopipe():
         ]
     )
 
-    assert not pipe.get_tags()["requires_X"]
+    assert not pipe.get_tag("requires_X")
     # should not requires X as input, because YtoX does not
 
-    assert pipe.get_tags()["requires_y"]
+    assert pipe.get_tag("requires_y")
     # should require y as input, because YtoX does
 
     pipe.fit_transform(X=None, y=X)
