@@ -1,6 +1,12 @@
 """Utilities for loading panel datasets."""
 
-__author__ = ["Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
+__author__ = [
+    "Emiliathewolf",
+    "TonyBagnall",
+    "jasonlines",
+    "achieveordie",
+    "jgyasu",
+]
 
 __all__ = [
     "generate_example_long_table",
@@ -22,12 +28,20 @@ from sktime.datasets._readers_writers.ts import load_from_tsfile
 from sktime.datasets._readers_writers.utils import _alias_mtype_check
 from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import _make_column_names
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("huggingface_hub"):
+    from huggingface_hub import hf_hub_download, list_repo_files
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
+
+HF_ORG = "sktime"
+HF_REPO = "tsc-datasets"
+
 CLASSIF_URLS = [
-    "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
-    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
+    "https://timeseriesclassification.com/aeon-toolkit",  # fallback 1 (UEA)
+    "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # fallback 2 (sktime)
 ]
 
 
@@ -77,6 +91,35 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
+def _list_available_datasets_hf():
+    """List all available datasets from Hugging Face repository.
+
+    Returns
+    -------
+    datasets : List
+        List of dataset names available on HF
+    """
+    if not _check_soft_dependencies("huggingface_hub"):
+        return []
+
+    try:
+        files = list_repo_files(repo_id=f"{HF_ORG}/{HF_REPO}", repo_type="dataset")
+
+        datasets = set()
+        for file_path in files:
+            if "/" in file_path and file_path.endswith(".ts"):
+                dataset_name = file_path.split("/")[0]
+                train_file = f"{dataset_name}/{dataset_name}_TRAIN.ts"
+                test_file = f"{dataset_name}/{dataset_name}_TEST.ts"
+                if train_file in files and test_file in files:
+                    datasets.add(dataset_name)
+
+        return sorted(list(datasets))
+    except Exception as e:
+        print(f"Warning: Could not list HF datasets: {e}")
+        return []
+
+
 def _list_available_datasets(extract_path, origin_repo=None):
     """Return a list of all the currently downloaded datasets.
 
@@ -119,23 +162,85 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
-def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
-    """Download and unzip datasets from multiple mirrors or fallback sources.
+def _download_from_hf(name, extract_path=None, verbose=False):
+    """Download dataset from Hugging Face.
 
-    If url is string, will attempt to download and unzip from url, to extract_path.
-    If url is list of str, will go through urls in order until a download succeeds.
+    Parameters
+    ----------
+    name : string
+        Name of the dataset to download
+    extract_path : string, optional (default: None)
+        Path to save downloaded files
+    verbose : bool, optional (default: False)
+        Whether to print progress
+
+    Returns
+    -------
+    dataset_path : string
+        Path to the downloaded dataset directory
+    """
+    if not _check_soft_dependencies("huggingface_hub"):
+        raise ImportError("huggingface_hub is required to download from Hugging Face")
+
+    if extract_path is None:
+        extract_path = os.path.join(MODULE, "local_data")
+
+    dataset_path = os.path.join(extract_path, name)
+    _mkdir_if_not_exist(dataset_path)
+
+    try:
+        train_filename = f"{name}_TRAIN.ts"
+        test_filename = f"{name}_TEST.ts"
+
+        if verbose:
+            print(f"Downloading {name} from Hugging Face...")
+
+        hf_hub_download(
+            repo_id=f"{HF_ORG}/{HF_REPO}",
+            repo_type="dataset",
+            filename=f"{name}/{train_filename}",
+            local_dir=extract_path,
+            local_dir_use_symlinks=False,
+        )
+
+        hf_hub_download(
+            repo_id=f"{HF_ORG}/{HF_REPO}",
+            repo_type="dataset",
+            filename=f"{name}/{test_filename}",
+            local_dir=extract_path,
+            local_dir_use_symlinks=False,
+        )
+
+        if verbose:
+            print(f"Downloaded {name} successfully to {dataset_path}")
+
+        return dataset_path
+
+    except Exception as e:
+        if os.path.exists(dataset_path):
+            shutil.rmtree(dataset_path)
+        raise RuntimeError(f"Failed to download {name} from Hugging Face: {e}")
+
+
+def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
+    """Download datasets with Hugging Face as default, automatic fallback to mirrors.
+
+    Tries Hugging Face first. If HF fails, automatically falls back to
+    mirrors without any user configuration needed.
 
     Parameters
     ----------
     url : string or list of string
-        URL pointing to file to download
+        URL pointing to file to download (used as fallback)
         files are expected to be at f"{url}/{name}.zip" for a string url
         or f"{url[i]}/{name}.zip" for a list of string urls
+    name : string
+        Name of the dataset
     extract_path : string, optional (default: None)
         path to extract downloaded zip to, None defaults
         to sktime/datasets/data
     repeats : int, optional (default: 1)
-        number of times to try downloading from each url
+        number of times to try downloading from each fallback url
     verbose : bool, optional (default: False)
         whether to print progress
 
@@ -143,12 +248,33 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
     -------
     extract_path : string or None
         if successful, string containing the path of the extracted file
-    u : string
-        url from which the dataset was downloaded
+    source : string
+        source from which the dataset was downloaded ("huggingface" or url)
     repeat : int
-        number of times it took to download the dataset from u
+        number of times it took to download the dataset
     If none of the attempts are successful, will raise RuntimeError
     """
+    if _check_soft_dependencies("huggingface_hub"):
+        available_hf_datasets = _list_available_datasets_hf()
+        if name in available_hf_datasets:
+            try:
+                if verbose:
+                    print(f"Downloading {name} from Hugging Face...")
+                _download_from_hf(name, extract_path=extract_path, verbose=verbose)
+                return extract_path, "huggingface", 0
+            except Exception as e:
+                if verbose:
+                    print(f"Hugging Face download failed: {e}")
+                    print("Falling back to mirrors...")
+        else:
+            if verbose:
+                print(f"Dataset {name} not found on Hugging Face, using mirrors...")
+
+    else:
+        if verbose:
+            print("Hugging Face Hub not available, using mirrors...")
+
+    # Fallback to mirrors
     if isinstance(url, str):
         url = [url]
 
@@ -178,7 +304,7 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
                         )
 
     raise RuntimeError(
-        f"Dataset with name ={name} could not be downloaded from any of the mirrors."
+        f"Dataset with name ={name} could not be downloaded from any source."
     )
 
 
