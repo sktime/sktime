@@ -6,6 +6,7 @@ __author__ = [
     "jasonlines",
     "achieveordie",
     "jgyasu",
+    "fkiraly",
 ]
 
 __all__ = [
@@ -30,7 +31,7 @@ from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import _make_column_names
 from sktime.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("huggingface_hub"):
+if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import hf_hub_download, list_repo_files
 
 DIRNAME = "data"
@@ -99,9 +100,6 @@ def _list_available_datasets_hf():
     datasets : List
         List of dataset names available on HF
     """
-    if not _check_soft_dependencies("huggingface_hub"):
-        return []
-
     try:
         files = list_repo_files(repo_id=f"{HF_ORG}/{HF_REPO}", repo_type="dataset")
 
@@ -179,9 +177,6 @@ def _download_from_hf(name, extract_path=None, verbose=False):
     dataset_path : string
         Path to the downloaded dataset directory
     """
-    if not _check_soft_dependencies("huggingface_hub"):
-        raise ImportError("huggingface_hub is required to download from Hugging Face")
-
     if extract_path is None:
         extract_path = os.path.join(MODULE, "local_data")
 
@@ -254,7 +249,7 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
         number of times it took to download the dataset
     If none of the attempts are successful, will raise RuntimeError
     """
-    if _check_soft_dependencies("huggingface_hub"):
+    if _check_soft_dependencies("huggingface-hub"):
         available_hf_datasets = _list_available_datasets_hf()
         if name in available_hf_datasets:
             try:
