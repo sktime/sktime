@@ -2764,7 +2764,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "ignores-exogeneous-x",
-        "object",
+        "forecaster",
         "bool",
         "deprecated tag for exogenous capability",
     ),
