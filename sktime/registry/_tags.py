@@ -2763,10 +2763,10 @@ ESTIMATOR_TAG_REGISTER = [
         "deprecated tag for dependency import aliases",
     ),
     (
-        "capability:exogenous",
+        "ignores-exogeneous-x",
         "object",
         "bool",
-        "deprecated tag for dependency import aliases",
+        "deprecated tag for exogenous capability",
     ),
 ]
 
