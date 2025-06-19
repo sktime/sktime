@@ -96,7 +96,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> # first fit polyomial trend, if fails make naive forecast
+    >>> # first fit polynomial trend, if fails make naive forecast
     >>> forecasters = [
     ...     ("poly", PolynomialTrendForecaster()),
     ...     ("naive", NaiveForecaster())

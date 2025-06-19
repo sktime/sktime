@@ -218,8 +218,8 @@ limitations under the License.
 """
 
 __authors__ = [
-    "abdulfatir",  # Main contibutor and co-author of original paper
-    "lostella",  # Main contibutor and co-author of original paper
+    "abdulfatir",  # Main contributor and co-author of original paper
+    "lostella",  # Main contributor and co-author of original paper
     "canerturkmen",
     "alvaropp",  # minor updates
     "HugoSenetaire",  # minor updates

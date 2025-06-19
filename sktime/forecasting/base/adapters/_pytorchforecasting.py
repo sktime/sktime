@@ -387,10 +387,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         ]
         if "to_quantiles" not in methods_list:
             raise NotImplementedError(
-                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "To perform probabilistic forecast, QuantileLoss or other loss"
                 "metrics that support to_quantiles function has to be used in fit."
                 f"With {self.best_model.loss}, it doesn't support probabilistic"
-                "forcast. Details can be found:"
+                "forecast. Details can be found:"
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 

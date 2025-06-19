@@ -19,7 +19,7 @@ class ClusterSegmenter(BaseDetector):
 
     time series segmentation using clustering is simple task. This annotator
     segments time series data into distinct segments based on similarity, identified
-    using the choosen clustering algorithm.
+    using the chosen clustering algorithm.
 
     Parameters
     ----------

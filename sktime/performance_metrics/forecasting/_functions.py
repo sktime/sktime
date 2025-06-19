@@ -1647,7 +1647,7 @@ def median_absolute_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1785,7 +1785,7 @@ def mean_squared_percentage_error(
     the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1929,7 +1929,7 @@ def median_squared_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
