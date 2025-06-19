@@ -410,8 +410,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "TimeBinner",
-        "TimeSeriesForestClassifier",
-        "TimeSeriesForestRegressor",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",
