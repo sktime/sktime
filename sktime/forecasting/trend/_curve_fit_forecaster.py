@@ -79,7 +79,7 @@ class CurveFitForecaster(BaseForecaster):
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
     }
 
