@@ -1546,8 +1546,25 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class capability__hierarchical_reconciliation(_BaseTag):
+    """Property: transformer reconciles hierarchical series.
+
+    - String name: ``"capability:hierarchical_reconciliation"``
+    - Public property tag
+    This tag applies to transformations that reconcile hierarchical series.
+    """
+
+    _tags = {
+        "tag_name": "capability:hierarchical_reconciliation",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer reconcile hierarchical series?",
+        "user_facing": True,
+    }
+
+
 class capability__bootstrap_index(_BaseTag):
-    """Capability: the transformer is a bootstrap that can return bootstrap indices.
+    """Capability: the transformer is a bootstrap that can return bootstrap idx.
 
     - String name: ``"capability:bootstrap_index"``
     - Public capability tag
@@ -1557,19 +1574,21 @@ class capability__bootstrap_index(_BaseTag):
 
     The tag specifies whether the transformer is a bootstrap transformer.
     In this case, it should have the parameter ``return_indices``,
-    and ``return_indices=True`` will ensure that ``transform`` returns ``iloc`` indices
+    and ``return_indices=True`` will ensure that ``transform`` returns
+     ``iloc`` indices
     of the bootstrapped time series, in reference to the input data ``X``,
     as an additional column.
 
     If the tag is ``False``, the transformer is not a bootstrap transformer,
-    and a parameter ``return_indices``, as described above, is not available.
+    and a parameter ``return_indices``, as described above,
+    is not available.
     """
 
     _tags = {
         "tag_name": "capability:bootstrap_index",
         "parent_type": "transformer",
         "tag_type": "bool",
-        "short_descr": "can the bootsrap return the index of bootstraped time series?",
+        "short_descr": "can the bootstrap return the index of bootstraped time series?",
         "user_facing": True,
     }
 
