@@ -85,7 +85,6 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": PANDAS_MTYPES,
@@ -119,16 +118,35 @@ class BaggingForecaster(BaseForecaster):
 
         super().__init__()
 
-        # set the tags based on forecaster
+        # First validate and set up the components
+        self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
+        self.forecaster_ = self._check_forecaster(forecaster)
+
+        # Now set the tags based on the validated forecaster
+        self._set_dynamic_tags()
+
+    def _set_dynamic_tags(self):
+        """Set tags dynamically based on component capabilities."""
+        # Set missing values capability based on both components
+        transformer_handles_missing = self.bootstrap_transformer_.get_tag(
+            "capability:missing_values", False
+        )
+        forecaster_handles_missing = self.forecaster_.get_tag(
+            "capability:missing_values", False
+        )
+
+        # BaggingForecaster can handle missing values only if BOTH components can
+        can_handle_missing = transformer_handles_missing and forecaster_handles_missing
+
+        # Set other tags from the forecaster
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
         ]
-        if forecaster is not None:
-            self.clone_tags(self.forecaster, tags_to_clone)
+        self.clone_tags(self.forecaster_, tags_to_clone)
 
-        self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
-        self.forecaster_ = self._check_forecaster(forecaster)
+        # Set the missing values capability tag
+        self.set_tags(**{"capability:missing_values": can_handle_missing})
 
     def _check_transformer(self, transformer):
         """Check if the transformer is a valid transformer for BaggingForecaster.

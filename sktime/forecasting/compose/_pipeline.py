@@ -1226,7 +1226,9 @@ class TransformedTargetForecaster(_Pipeline):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -1372,7 +1374,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "capability:missing_values": True,
+        "capability:missing_values": False,  # default to False, will be set dynamically
     }
 
     def __init__(
@@ -1431,10 +1433,8 @@ class ForecastX(BaseForecaster):
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
 
-        # tag_translate_dict = {
-        #   "capability:missing_values": forecaster.get_tag("capability:missing_values")
-        # }
-        # self.set_tags(**tag_translate_dict)
+        # Set missing values capability based on component forecasters
+        self._set_missing_values_capability()
 
         if (
             self.fit_behaviour == "use_forecast"
@@ -1450,6 +1450,19 @@ class ForecastX(BaseForecaster):
                 obj=self,
                 stacklevel=2,
             )
+
+    def _set_missing_values_capability(self):
+        """Set missing values capability based on component forecasters."""
+        # ForecastX can handle missing values only if BOTH forecasters can
+        forecaster_y_missing = self.forecaster_y.get_tag(
+            "capability:missing_values", False
+        )
+        forecaster_X_missing = self.forecaster_X_c.get_tag(
+            "capability:missing_values", False
+        )
+
+        can_handle_missing = forecaster_y_missing and forecaster_X_missing
+        self.set_tags(**{"capability:missing_values": can_handle_missing})
 
     def _fit(self, y, X, fh):
         """Fit to training data.

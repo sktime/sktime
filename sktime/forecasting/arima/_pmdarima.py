@@ -284,7 +284,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
         # --------------
-        "capability:missing_values": True,
+        "capability:missing_values": False,
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -694,7 +694,7 @@ class ARIMA(_PmdArimaAdapter):
             "ilkersigirci",
         ],
         "maintainers": ["hyang1996"],
-        "capability:missing_values": True,
+        "capability:missing_values": False,
     }
 
     SARIMAX_KWARGS_KEYS = [
