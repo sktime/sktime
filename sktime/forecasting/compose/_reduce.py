@@ -515,7 +515,8 @@ class _Reducer(_BaseWindowForecaster):
 class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        **_Reducer._tags,
+        "requires-fh-in-fit": True,
     }
 
     def __init__(
@@ -801,8 +802,23 @@ class _DirectReducer(_Reducer):
 class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        **_Reducer._tags,
+        "requires-fh-in-fit": True,
     }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+    ):
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+        )
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -1135,9 +1151,24 @@ class _RecursiveReducer(_Reducer):
 class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
-        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        **_Reducer._tags,
+        "requires-fh-in-fit": True,
         "ignores-exogeneous-X": True,
     }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+    ):
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+        )
 
     def _transform(self, y, X=None):
         # Note that the transform for dirrec is the same as in the direct
@@ -1279,11 +1310,13 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         pooling="local",
         windows_identical=True,
     ):
-        super(_DirectReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+            windows_identical=windows_identical,
         )
-        self.pooling = pooling
-        self.windows_identical = windows_identical
 
         if pooling == "local":
             mtypes_y = "pd.Series"
@@ -1350,7 +1383,8 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
-        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        **_RecursiveReducer._tags,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(
@@ -1360,10 +1394,12 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         transformers=None,
         pooling="local",
     ):
-        super(_RecursiveReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
         )
-        self.pooling = pooling
 
         if pooling == "local":
             mtypes_y = "pd.Series"
@@ -1459,8 +1495,23 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
-        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        **_RecursiveReducer._tags,
+        "requires-fh-in-fit": False,
     }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+    ):
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+        )
 
     _estimator_scitype = "time-series-regressor"
 
