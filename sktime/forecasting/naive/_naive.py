@@ -55,7 +55,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     The forecast variance is then computed by multiplying the residual
     variance by a constant. This constant is a small-sample bias adjustment
     and each method (mean, last, drift) have different formulas for computing
-    the constant. These formulas can be found in the Forecasting:
+    the constant. These formulae can be found in the Forecasting:
     Principles and Practice textbook (Table 5.2) [1]_. Lastly, under the assumption that
     residuals follow a normal distribution, we use the forecast variance and
     z-scores of a normal distribution to estimate the prediction quantiles.
