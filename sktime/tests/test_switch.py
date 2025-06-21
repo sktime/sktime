@@ -271,16 +271,19 @@ def _run_test_for_class(cls):
     # run the test if and only if at least one of the conditions 2-4 are met
     # conditions are checked in order to minimize runtime due to git diff etc
 
+    # variable: is cls a core object?
+    cls_is_core = _is_core_object(cls)
+
     # Condition 4:
     # the package requirements for any dependency in pyproject.toml have changed
-    cond4 = _is_impacted_by_pyproject_change(cls, include_core_deps=True)
+    cond4 = _is_impacted_by_pyproject_change(cls, include_core_deps=cls_is_core)
     if cond4:
         return True, "True_pyproject_change"
 
     # Condition 3:
     # if the object is an sktime BaseObject, and one of the test classes
     # covering the class have changed, then run the test
-    if _is_core_object(cls) and _tests_covering_class_changed(cls):
+    if cls_is_core and _tests_covering_class_changed(cls):
         return True, "True_changed_tests"
 
     # Condition 2:
@@ -294,7 +297,7 @@ def _run_test_for_class(cls):
     # Condition 5 (only for core objects):
     # if the object is an sktime BaseObject, and one of the core framework modules
     # datatypes, tests, utils have changed, then run the test
-    if _is_core_object(cls):
+    if cls_is_core:
         FRAMEWORK_MODULES = [
             "sktime.datatypes",
             "sktime.tests._config",
