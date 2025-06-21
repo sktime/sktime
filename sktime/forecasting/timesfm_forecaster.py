@@ -182,7 +182,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:global_forecasting": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True,
     }
 
     def __init__(
