@@ -34,6 +34,9 @@ class BaseDataset(BaseObject):
         "python_dependencies": None,  # python dependencies required to load the dataset
         "python_version": None,  # python version required to load the dataset
         "n_splits": 0,  # Number of cross-validation splits, if any.
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self):

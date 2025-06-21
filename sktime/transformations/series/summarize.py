@@ -216,6 +216,9 @@ class WindowSummarizer(BaseTransformer):
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

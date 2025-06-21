@@ -49,6 +49,9 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         # estimator type
         # --------------
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

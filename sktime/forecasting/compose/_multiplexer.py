@@ -85,6 +85,9 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedForecaster, which then delegates

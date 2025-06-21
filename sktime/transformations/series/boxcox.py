@@ -176,6 +176,9 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

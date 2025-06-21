@@ -303,6 +303,8 @@ class UnobservedComponents(_StatsModelsAdapter):
             UnobservedComponents as _UnobservedComponents,
         )
 
+        raise ValueError("Oops")
+
         self._forecaster = _UnobservedComponents(
             endog=y,
             exog=X,

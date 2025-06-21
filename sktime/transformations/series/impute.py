@@ -112,6 +112,9 @@ class Imputer(BaseTransformer):
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
         "remember_data": False,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

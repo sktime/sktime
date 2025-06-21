@@ -326,6 +326,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):

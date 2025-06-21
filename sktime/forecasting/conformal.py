@@ -133,6 +133,9 @@ class ConformalIntervals(BaseForecaster):
         "capability:pred_int:insample": False,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     ALLOWED_METHODS = [

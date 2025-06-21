@@ -107,6 +107,9 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "maintainers": ["shlok191"],
         "python_version": None,
         "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

@@ -105,6 +105,9 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below

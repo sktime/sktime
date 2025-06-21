@@ -102,6 +102,9 @@ class TimeSince(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

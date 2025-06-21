@@ -64,6 +64,9 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
         "X_inner_mtype": MTYPE_LIST_PANEL,
         "y_inner_mtype": MTYPE_LIST_TABLE,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedRegressor, which then delegates

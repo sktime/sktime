@@ -49,6 +49,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
