@@ -77,6 +77,7 @@ def run_test_for_class(cls, return_reason=False):
 
         * "False_exclude_list" - skip reason, class is on the exclude list
         * "False_required_deps_missing" - skip reason, required dependencies are missing
+        * "False_requires_vm" - skip reason, class requires its own VM.
         * "False_no_change" - skip reason, no change in class or dependencies
         * "True_run_always" - run reason, run always, as ``ONLY_CHANGED_MODULES=False``
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
@@ -162,7 +163,12 @@ def _flatten_list(nested_list):
 
 
 @lru_cache
-def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
+def _run_test_for_class(
+    cls,
+    ignore_deps=False,
+    only_changed_modules=True,
+    skip_test_vm=True,
+):
     """Check if test should run - cached with hashable cls.
 
     Parameters
@@ -175,6 +181,8 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     only_changed_modules : boolean, default=True
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
+    skip_test_vm : boolean, default=True
+        whether to skip if the object requires its own VM to test.
 
     Returns
     -------
@@ -182,7 +190,10 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     reason : str, reason to run or skip the test, one of:
 
         * "False_required_deps_missing" - skip reason, required dependencies are missing
-        * "False_no_change" - skip reason, no change in class or dependencies
+        * "False_requires_vm" - skip reason, class requires its own VM.
+          Only active if skip_test_vm=True.
+        * "False_no_change" - skip reason, no change in class or dependencies.
+          Only active if ``ignore_deps=False``.
         * "True_run_always" - run reason, run always, as ``ONLY_CHANGED_MODULES=False``
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
         * "True_changed_tests" - run reason, test(s) covering class have changed
@@ -249,6 +260,10 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     if not ignore_deps and not _required_deps_present(cls):
         return False, "False_required_deps_missing"
     # otherwise, continue
+
+    # if skip_test_vm is True and the class requires a test vm, skip
+    if skip_test_vm and cls.get_class_tag("tests:vm", True):
+        return False, "False_requires_vm"
 
     # if ONLY_CHANGED_MODULES is off: always True
     # tests are always run if soft dependencies are present
