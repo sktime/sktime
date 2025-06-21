@@ -618,7 +618,7 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             # MLflow 3.x format
             assert model_info.model_uri.startswith("models:/m-")
             # Check format: models:/m-model_id
-            assert model_info.model_uri.count("/") == 0
+            assert model_info.model_uri.count("/") == 1
             assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
             model_uri=model_info.model_uri,
