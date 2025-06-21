@@ -383,7 +383,7 @@ class requires_cython(_BaseTag):
     }
 
 
-class test_vm(_BaseTag):
+class tests__vm(_BaseTag):
     """Whether to spin up a separate VM to test the estimator.
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
