@@ -71,7 +71,7 @@ Example:
 .. code-block:: python
 
     from sktime.datasets.base import BaseDataset
-    from sktime.datasets import make_classification_problem
+    from sktime.utils._testing.panel import make_classification_problem
 
     class MyClassificationDataset(BaseDataset):
         """
