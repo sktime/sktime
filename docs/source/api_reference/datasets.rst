@@ -74,19 +74,43 @@ Example:
     from sktime.datasets import make_classification_problem
 
     class MyClassificationDataset(BaseDataset):
-        """A sample classification dataset template using sktime's classification problem generator."""
+        """
+        A sample classification dataset template using sktime's classification problem generator.
+
+        This template demonstrates how to implement a custom dataset class for a classification task
+        using sktime's dataset extension interface. It uses a synthetic classification problem generator
+        as an example source.
+
+        Attributes
+        ----------
+        metadata : dict
+            Dictionary containing key information about the dataset such as task type, 
+            number of classes, number of instances, and whether the data is univariate
+            and of equal length.
+        """
 
         def __init__(self):
+            """Initialize dataset metadata and inherit base functionality from BaseDataset."""
             super().__init__()
             self.metadata = {
                 "task": "classification",
                 "n_classes": 2,  # adjust depending on what make_classification_problem returns
-                "n_instances": 20,  # adjust accordingly
+                "n_instances": 20,  # adjust based on dataset size
                 "univariate": True,
                 "equal_length": True,
             }
 
         def _load(self):
+            """
+            Loads the dataset.
+
+            Returns
+            -------
+            X : pd.DataFrame
+                Time series features, indexed by instance and time.
+            y : pd.Series
+                Corresponding class labels for each instance in X.
+            """
             X, y = make_classification_problem()
             return X, y
 
