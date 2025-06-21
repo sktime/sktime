@@ -217,7 +217,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch", "accelerate"],
         "python_version": ">=3.11",
-        "test_vm": True,
         # estimator type
         # --------------
         "X_inner_mtype": [
@@ -240,6 +239,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
