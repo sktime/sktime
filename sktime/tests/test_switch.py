@@ -205,8 +205,9 @@ def _run_test_for_class(cls):
 
     def _is_core_object(cls):
         """Check if the class is a core object, for condition 3 and 5."""
-        is_core = cls.get_class_tag("tests:core", False)
-        return is_core
+        if hasattr(cls, "get_class_tag"):
+            return cls.get_class_tag("tests:core", False)
+        return False
 
     def _is_class_changed_or_local_parents(cls):
         """Check if class or any of its local parents have changed, return bool."""
