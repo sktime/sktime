@@ -112,6 +112,9 @@ class Reconciler(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]

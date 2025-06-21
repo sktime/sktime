@@ -107,6 +107,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multithreading": False,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -442,6 +445,9 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multithreading": False,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
