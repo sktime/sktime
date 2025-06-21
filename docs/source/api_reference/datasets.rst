@@ -70,30 +70,25 @@ Example:
 
 .. code-block:: python
 
-   from sktime.datasets._base import BaseDataset
-   import pandas as pd
-   from sklearn.datasets import make_classification
+    from sktime.datasets.base import BaseDataset
+    from sktime.datasets import make_classification_problem
 
-   class MyClassificationDataset(BaseDataset):
-       def __init__(self):
-           super().__init__()
-           self.metadata = {
-               "task": "classification",
-               "n_classes": 3,
-               "n_instances": 150,
-               "univariate": True,
-               "equal_length": True,
-           }
+    class MyClassificationDataset(BaseDataset):
+        """A sample classification dataset template using sktime's classification problem generator."""
 
-       def _load(self):
-           X_raw, y = make_classification_problem(
-               n_samples=150,
-               n_features=5,
-               n_classes=3,
-               random_state=42
-           )
-           X = pd.DataFrame([pd.Series(row) for row in X_raw])
-           return X, y
+        def __init__(self):
+            super().__init__()
+            self.metadata = {
+                "task": "classification",
+                "n_classes": 2,  # adjust depending on what make_classification_problem returns
+                "n_instances": 20,  # adjust accordingly
+                "univariate": True,
+                "equal_length": True,
+            }
+
+        def _load(self):
+            X, y = make_classification_problem()
+            return X, y
 
 Usage:
 
