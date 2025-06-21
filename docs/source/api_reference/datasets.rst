@@ -61,6 +61,19 @@ Regression datasets
 
     tecator.Tecator
 
+Creating Custom Datasets
+------------------------
+
+You can define your own dataset by subclassing ``BaseDataset``.
+
+Example:
+
+.. code-block:: python
+    from sktime.datasets._dataset_templates import MyDataset
+    dataset = MyDataset()
+    X, y = dataset.load()
+    X_train, y_train, X_test, y_test = dataset.load("X_train", "y_train", "X_test", "y_test")
+
 Loaders
 -------
 
