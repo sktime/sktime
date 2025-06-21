@@ -140,7 +140,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
-
     Attributes
     ----------
     best_index_ : int
@@ -230,6 +229,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
 
     def __init__(
         self,

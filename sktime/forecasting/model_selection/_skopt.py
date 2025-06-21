@@ -166,7 +166,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
-
     Attributes
     ----------
     best_index_ : int
