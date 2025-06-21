@@ -244,6 +244,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "tests:vm": True,
     }
 
+    raise ValueError("test")
+
     def __init__(
         self,
         model_path="ibm/TTM",
