@@ -607,11 +607,19 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
         )
 
         if _check_soft_dependencies("mlflow<3.0", severity="none"):
-            # MLflow 2.x format uses runs:/
+            # MLflow 2.x format
             assert model_info.model_uri.startswith("runs:/")
+            # Check format: runs:/run_id/artifact_path
+            uri_parts = model_info.model_uri.split("/")
+            assert len(uri_parts) >= 3
+            assert uri_parts[0] == "runs:"
+            assert uri_parts[2] == artifact_path
         else:
-            # MLflow 3.x format uses models:/m-
+            # MLflow 3.x format
             assert model_info.model_uri.startswith("models:/m-")
+            # Check format: models:/m-model_id
+            assert model_info.model_uri.count("/") == 0
+            assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
             model_uri=model_info.model_uri,
         )
