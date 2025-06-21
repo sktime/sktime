@@ -388,7 +388,7 @@ class test_vm(_BaseTag):
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
 
-    - String name: ``"test_vm"``
+    - String name: ``"tests:vm"``
     - Private tag, developer and framework facing
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
@@ -411,7 +411,7 @@ class test_vm(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "test_vm",
+        "tag_name": "tests:vm",
         "parent_type": "object",
         "tag_type": "bool",
         "short_descr": "whether to test the object in its own VM",

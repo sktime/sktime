@@ -163,7 +163,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "utilsforecast",
         ],
         "env_marker": "sys_platform=='linux'",
-        "test_vm": True,
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -181,6 +180,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(

@@ -335,8 +335,8 @@ def _get_all_changed_classes(vm=False):
     ----------
     vm : bool, optional, default=False
         whether to run estimator in its own virtual machine.
-        Queries the tag ``"test_vm"`` in the class tags.
-        If ``vm`` is True, only classes with tag ``"test_vm"=True`` are returned.
+        Queries the tag ``"tests:vm"`` in the class tags.
+        If ``vm`` is True, only classes with tag ``"tests:vm"=True`` are returned.
 
     Returns
     -------
@@ -349,7 +349,7 @@ def _get_all_changed_classes(vm=False):
         changed, _ = _run_test_for_class(cls, ignore_deps=True)
 
         if vm:
-            changed = changed and cls.get_class_tag("test_vm", False)
+            changed = changed and cls.get_class_tag("tests:vm", False)
         return changed
 
     names = [name for name, est in all_estimators() if _changed_class(est)]
