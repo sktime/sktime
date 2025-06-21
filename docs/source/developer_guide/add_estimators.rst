@@ -7,6 +7,14 @@ Implementing Estimators
 This page describes how to implement ``sktime`` compatible estimators, and how to ensure and test compatibility.
 There are additional steps for estimators that are contributed to ``sktime`` directly.
 
+You can use the following prompts to guide you through implementing a new estimator:
+
+.. code-block:: text
+
+    * "I want to implement a new forecaster in sktime. Can you outline the main steps and point me to the relevant extension template?"
+    * "I have an idea for a time series classifier. What's the first step to make it sktime-compatible, and where can I find the right template?"
+    * "Help me get started with creating a custom sktime transformer. What are the initial steps and which template should I use?"
+
 
 Implementing an ``sktime`` compatible estimator
 ===============================================
@@ -80,6 +88,13 @@ How to use ``sktime`` extension templates
 -----------------------------------------
 
 To use the ``sktime`` extension templates, copy them to the intended location of the estimator.
+
+Here's a general prompt to get an overview of extension templates:
+
+.. code-block:: text
+
+    * "I'm new to sktime extension templates. Can you give me an overview of how to use them effectively?"
+
 Inside the extension templates, necessary actions are marked with ``todo``.
 The typical workflow goes through the extension template by searching for ``todo``, and carrying out
 the action described next to the ``todo``.
@@ -88,19 +103,53 @@ Extension templates typically have the following ``todo``:
 
 *   choosing name and parameters for the estimator
 *   filling in the ``__init__``: writing parameters to ``self``, calling ``super``'s ``__init__``
+
+For guidance on the `__init__` method, you can use this prompt:
+
+.. code-block:: text
+
+    * "I'm working with an sktime extension template. Can you explain how to fill in the `__init__` method correctly, especially regarding parameters and calling `super`?"
+
 *   filling in docstrings of the module and the estimator. This is recommended as early as parameters have been settled on,
     it tends to be useful as a specification to follow in implementation.
+
+To understand best practices for docstrings, consider this prompt:
+
+.. code-block:: text
+
+    * "What are the best practices for writing docstrings for a new sktime estimator, and when should I write them?"
+
 *   filling in the tags for the estimator. Some tags are "capabilities", i.e., what the estimator can do, e.g., dealing with nans.
     Other tags determine the format of inputs seen in the "inner" methods ``_fit`` etc, these tags are usually called ``X_inner_mtype`` or similar.
     This is useful in case the inner functionality assumes ``numpy.ndarray``, or ``pandas.DataFrame``, and helps avoid conversion boilerplate.
     The type strings can be found in ``datatypes.MTYPE_REGISTER``. For a tutorial on data type conventions, see ``examples/AA_datatypes_and_datasets``.
+
+For help with understanding and choosing tags, use this prompt:
+
+.. code-block:: text
+
+    * "Explain the concept of 'tags' in sktime estimators. How do I choose the right tags for `X_inner_mtype` and other capability tags?"
+
 *   Filling in the "inner" methods, e.g., ``_fit`` and ``_predict``. The docstrings and comments in the extension template should be followed here.
     The docstrings also describe the guarantees on the inputs to the "inner" methods, which are typically stronger than the guarantees on
     inputs to the public methods, and determined by values of tags that have been set.
     For instance, setting the tag ``y_inner_mtype`` to ``pd.DataFrame`` for a forecaster guarantees that the ``y`` seen by ``_fit`` will be
     a ``pandas.DataFrame``, complying with additional data container specifications in ``sktime`` (e.g., index types).
+
+When implementing the core logic, this prompt can be helpful:
+
+.. code-block:: text
+
+    * "I need to implement the `_fit` and `_predict` methods in my custom sktime forecaster. What are the key considerations and where can I find guidance on the expected inputs and outputs?"
+
 *   filling in testing parameters in ``get_test_params``. The selection of parameters should cover major estimator internal case distinctions
     to achieve good coverage.
+
+For setting up test parameters, you can ask:
+
+.. code-block:: text
+
+    * "How do I set up `get_test_params` for my new sktime estimator to ensure good test coverage?"
 
 Some common caveats, also described in extension template text:
 
@@ -128,6 +177,12 @@ Usually, the simplest way to test interface conformance with ``sktime`` is via t
 
 When invoked, this will collect tests in ``sktime`` relevant for the estimator type and
 run them on the estimator.
+
+To learn how to use `check_estimator` for your specific estimator type, you can use this prompt:
+
+.. code-block:: text
+
+    * "How do I use `check_estimator` in sktime to test my new [forecaster/classifier/transformer]?"
 
 This can be used for manual debugging in a notebook environment.
 Example of running the full test suite for ``NaiveForecaster``:
@@ -172,6 +227,12 @@ Example, running the test-fixture-combination ``"test_repr[NaiveForecaster-2]"``
 
 ``{'test_repr[NaiveForecaster-2]': 'PASSED'}``
 
+If you encounter issues with `check_estimator`, this prompt can help with debugging:
+
+.. code-block:: text
+
+    * "My `check_estimator` run is failing for `MyEstimator`. How can I debug this more effectively, perhaps by focusing on specific failing tests or raising exceptions?"
+
 A useful workflow for using ``check_estimator`` to debug an estimator is as follows:
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
@@ -192,6 +253,13 @@ Generic interface conformance tests are contained in the classes ``TestAllEstima
 and are identical with the test-fixture-strings returned by ``check_estimator``.
 
 To run tests only for a given estimator from the console, the command ``pytest -k "EstimatorName"`` can be used.
+
+When contributing to sktime, you might want to run the full local test suite for your estimator:
+
+.. code-block:: text
+
+    * "I'm contributing my estimator to sktime. How do I run the full sktime test suite locally for just my estimator, `EstimatorName`?"
+
 This will typically have the same effect as using ``check_estimator(EstimatorName)``, only via direct ``pytest`` call.
 When using Visual Studio Code or pycharm, tests can also be sub-set using GUI filter
 functionality - for this, refer to the respecetive IDE documentation on test integration.
