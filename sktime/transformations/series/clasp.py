@@ -108,6 +108,8 @@ class ClaSPTransformer(BaseTransformer):
 
         scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
+        raise ValueError("Oops")
+
         X = X.flatten()
         Xt, _ = clasp(
             X,
