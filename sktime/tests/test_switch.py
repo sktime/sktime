@@ -186,7 +186,7 @@ def _run_test_for_class(cls):
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.git_diff import (
         get_packages_with_changed_specs,
@@ -284,10 +284,17 @@ def _run_test_for_class(cls):
     # if the object is an sktime BaseObject, and one of the core framework modules
     # datatypes, tests, utils have changed, then run the test
     if _is_core_object(cls):
-        datatypes_changed = is_module_changed("sktime.datatypes")
-        tests_changed = is_module_changed("sktime.tests")
-        utils_changed = is_module_changed("sktime.utils")
-        if any([datatypes_changed, tests_changed, utils_changed]):
+        FRAMEWORK_MODULES = [
+            "sktime.datatypes",
+            "sktime.tests._config",
+            "sktime.tests.test_all_estimators",
+            "sktime.tests.test_class_register",
+            "sktime.tests.test_doctest",
+            "sktime.tests.test_softdeps",
+            "sktime.tests.test_switch",
+            "sktime.utils",
+        ]
+        if any([is_module_changed(x) for x in FRAMEWORK_MODULES]):
             return True, "True_changed_framework"
 
     # if none of the conditions are met, do not run the test
@@ -320,7 +327,7 @@ def run_test_module_changed(module):
         True iff: at least one of the modules or its submodules have changed,
         or if ``ONLY_CHANGED_MODULES`` is False
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import is_module_changed
 
     # if ONLY_CHANGED_MODULES is off: always True
