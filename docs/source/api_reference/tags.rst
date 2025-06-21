@@ -202,6 +202,7 @@ The tags below have limited use in retrieval or inspection of objects.
     y_inner_mtype
     visual_block_kind
 
+.. _dev_testing_tags:
 
 Testing and CI tags
 -------------------
