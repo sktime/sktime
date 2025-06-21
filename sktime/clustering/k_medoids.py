@@ -87,6 +87,9 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

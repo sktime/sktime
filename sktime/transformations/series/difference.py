@@ -250,6 +250,9 @@ class Differencer(BaseTransformer):
         "transform-returns-same-time-index": False,
         "univariate-only": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]

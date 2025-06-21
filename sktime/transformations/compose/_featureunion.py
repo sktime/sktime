@@ -61,6 +61,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         "visual_block_kind": "parallel",
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
+        #
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

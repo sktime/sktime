@@ -76,6 +76,9 @@ class BaseParamFitter(BaseEstimator):
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self):
