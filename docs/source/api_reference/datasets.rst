@@ -62,16 +62,20 @@ Regression datasets
     tecator.Tecator
 
 Creating Custom Classification Datasets
-------------------------
+---------------------------------------
 
-You can define your own classification dataset by subclassing BaseDataset from sktime.datasets._base.
+You can define your own classification dataset by subclassing ``BaseDataset`` from ``sktime.datasets._base``.
 
 Example:
+
 .. code-block:: python
+
    from sktime.datasets._base import BaseDataset
-   
+   import pandas as pd
+   from sklearn.datasets import make_classification
+
    class MyClassificationDataset(BaseDataset):
-      def __init__(self):
+       def __init__(self):
            super().__init__()
            self.metadata = {
                "task": "classification",
@@ -81,22 +85,25 @@ Example:
                "equal_length": True,
            }
 
-      def _load(self):
-        # Load or generate your dataset here
-        from sklearn.datasets import make_classification
-        import pandas as pd
-        import numpy as np
-
-        X_raw, y = make_classification(n_samples=150, n_features=5, n_classes=3, random_state=42)
-        X = pd.DataFrame([pd.Series(row) for row in X_raw])
-        return X, y
+       def _load(self):
+           X_raw, y = make_classification(
+               n_samples=150,
+               n_features=5,
+               n_classes=3,
+               random_state=42
+           )
+           X = pd.DataFrame([pd.Series(row) for row in X_raw])
+           return X, y
 
 Usage:
 
 .. code-block:: python
+
    dataset = MyClassificationDataset()
    X, y = dataset.load()
-   X_train, y_train, X_test, y_test = dataset.load(split=["X_train", "y_train", "X_test", "y_test"])
+   X_train, y_train, X_test, y_test = dataset.load(
+       split=["X_train", "y_train", "X_test", "y_test"]
+   )
 
 Loaders
 -------
