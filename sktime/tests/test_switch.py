@@ -221,7 +221,7 @@ def _run_test_for_class(cls):
         test_classes = get_test_classes_for_obj(cls)
         return any(is_class_changed(x) for x in test_classes)
 
-    def _is_impacted_by_pyproject_change(cls):
+    def _is_impacted_by_pyproject_change(cls, include_core_deps=False):
         """Check if the dep specifications of cls have changed, return bool."""
         from packaging.requirements import Requirement
 
@@ -236,15 +236,16 @@ def _run_test_for_class(cls):
         cls_reqs = _flatten_list(cls_reqs)
         package_deps = [Requirement(req).name for req in cls_reqs]
 
-        CORE_DEPENDENCIES = [
-            "scikit-base",
-            "scikit-learn",
-            "scipy",
-            "numpy",
-            "pandas",
-            "scikit-base",
-        ]
-        package_deps += CORE_DEPENDENCIES
+        if include_core_deps:
+            CORE_DEPENDENCIES = [
+                "scikit-base",
+                "scikit-learn",
+                "scipy",
+                "numpy",
+                "pandas",
+                "scikit-base",
+            ]
+            package_deps += CORE_DEPENDENCIES
 
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
 
@@ -264,7 +265,7 @@ def _run_test_for_class(cls):
 
     # Condition 4:
     # the package requirements for any dependency in pyproject.toml have changed
-    cond4 = _is_impacted_by_pyproject_change(cls)
+    cond4 = _is_impacted_by_pyproject_change(cls, include_core_deps=True)
     if cond4:
         return True, "True_pyproject_change"
 
