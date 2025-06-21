@@ -67,7 +67,7 @@ class LowerBounding(Enum):
             Processing, vol. 23, no. 1, pp. 67-72, February 1975,
             doi: 10.1109/TASSP.1975.1162641.
     .. [3]  C. A. Ratanamahatana and E. Keogh, "Making Time-Series
-            Classification More Accurate Using Learned Constraints," in Proceedings 
+            Classification More Accurate Using Learned Constraints," in Proceedings
             of the 2004 SIAM International Conference on Data Mining (SDM), 2004,
             doi: 10.1137/1.9781611972740.2.
     """
