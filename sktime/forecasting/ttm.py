@@ -244,8 +244,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "tests:vm": True,
     }
 
-    raise ValueError("test")
-
     def __init__(
         self,
         model_path="ibm/TTM",
@@ -312,6 +310,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        raise ValueError("test")
         from transformers import Trainer, TrainingArguments
 
         if self.use_source_package:
