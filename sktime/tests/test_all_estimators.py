@@ -39,7 +39,6 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils._testing.doctest import run_doctest
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -214,6 +213,9 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        # TODO(fangelim): refactor this _all_estimators
+        # to make it possible to set custom tags to filter
+        # as class attributes, similar to `estimator_type_filter`
         if CYTHON_ESTIMATORS:
             filter_tags = {"requires_cython": True}
         else:
@@ -732,6 +734,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
+        from skbase.utils.doctest_run import run_doctest
+
         run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
 
     def test_create_test_instance(self, estimator_class):

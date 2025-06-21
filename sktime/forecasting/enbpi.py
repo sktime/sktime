@@ -9,6 +9,12 @@ from sklearn.utils import check_random_state
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+from sktime.transformations.bootstrap import (
+    MovingBlockBootstrapTransformer,
+    TSBootstrapAdapter,
+)
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -23,21 +29,29 @@ class EnbPIForecaster(BaseForecaster):
     tutorial from this blogpost [2].
 
     The forecaster is similar to the the bagging forecaster and performs
-    internally the following steps:
+    internally the following steps.
+
     For training:
-        1. Uses a tsbootstrap transformer to generate bootstrap samples
+
+        1. Uses a bootstrap transformer to generate bootstrap samples
            and returning the corresponding indices of the original time
-           series
+           series. Note that the bootstrap transformer must be able to
+           return indices of the original time series as and additional column.
+           I.e., the ``bootstrap_transformer`` must have the
+           ``capability:bootstrap_indices`` tag, and its parameter
+           ``return_indices`` must be set to True.
         2. Fit a forecaster on the first n - max(fh) values of each
            bootstrap sample
         3. Uses each forecaster to predict the last max(fh) values of each
            bootstrap sample
 
     For Prediction:
+
         1. Average the predictions of each fitted forecaster using the
            aggregation function
 
     For Probabilistic Forecasting:
+
         1. Calculate the point forecast by average the prediction of each
            fitted forecaster using the aggregation function
         2. Passes the indices of the bootstrapped samples, the predictions
@@ -53,6 +67,11 @@ class EnbPIForecaster(BaseForecaster):
         The base forecaster to fit to each bootstrap sample.
     bootstrap_transformer : tsbootstrap.BootstrapTransformer
         The transformer to fit to the target series to generate bootstrap samples.
+        This transformer must be able to return the indices of the original
+        time series as an additional column. I.e., the ``bootstrap_transformer``
+        must have the
+        ``capability:bootstrap_indices`` tag, and its parameter
+        ``return_indices`` must be set to True.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
     aggregation_function : str, default="mean"
@@ -131,13 +150,42 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        from tsbootstrap import MovingBlockBootstrap
+        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
+            self.bootstrap_transformer_ = TSBootstrapAdapter(
+                bootstrap_transformer, return_indices=True
+            )
+        else:
+            self.bootstrap_transformer_ = bootstrap_transformer
 
-        self.bootstrap_transformer_ = (
-            clone(bootstrap_transformer)
-            if bootstrap_transformer is not None
-            else MovingBlockBootstrap()
-        )
+        if self.bootstrap_transformer is None:
+            # todo 0.39.0: remove this warning
+            warn(
+                "The default value for the bootstrap_transformer will change to the"
+                "sktime MovingBlockBootstrap in version 0.39.0."
+                "For obtaining the current default behaviour after 0.39.0, pass "
+                "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap()), "
+                "with moving block bootstrap from tsbootstrap.",
+                obj=self,
+                stacklevel=2,
+            )
+            from tsbootstrap import MovingBlockBootstrap
+
+            # todo 0.39.0: replace with Moving Block Bootstrap from sktime. And set
+            # the return_indices=True
+            self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
+
+        bs_tags = self.bootstrap_transformer_.get_tags()
+        if (
+            not bs_tags.get("capability:bootstrap_index", False)
+            or not self.bootstrap_transformer_.return_indices
+        ):
+            raise ValueError(
+                "Error in EnbPIForecaster: "
+                "The bootstrap_transformer needs to be able to "
+                "return bootstrap indices, i.e., it must have the tag "
+                "'capability:bootstrap_index' and the parameter "
+                "'return_indices' must be set to True."
+            )
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -147,16 +195,16 @@ class EnbPIForecaster(BaseForecaster):
         self.random_state_ = check_random_state(self.random_state)
 
         # fit/transform the transformer to obtain bootstrap samples
-        bs_ts_index = list(
-            self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True)
-        )
-        self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
-        bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
+        bs_ts_index = self.bootstrap_transformer_.fit_transform(y)
+
+        self.indexes = bs_ts_index["resampled_index"].values.reshape((-1, len(y)))
+        bootstrapped_ts = bs_ts_index[y.columns]
 
         self.forecasters = []
         self._preds = []
         # Fit Models per Bootstrap Sample
-        for bs_ts in bootstrapped_ts:
+        for bs_index in bootstrapped_ts.index.get_level_values(0).unique():
+            bs_ts = bootstrapped_ts.loc[bs_index]
             bs_df = pd.DataFrame(bs_ts, index=y.index)
             forecaster = clone(self.forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
@@ -180,7 +228,7 @@ class EnbPIForecaster(BaseForecaster):
     def _predict_interval(self, fh, X, coverage):
         preds = []
         for forecaster in self.forecasters:
-            preds.append(forecaster.predict(fh=fh, X=X))
+            preds.append(forecaster.predict(fh=fh, X=X).values)
 
         train_targets = self._y.copy()
         train_targets.index = pd.RangeIndex(len(train_targets))
@@ -236,21 +284,21 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        deps = cls.get_class_tag("python_dependencies")
-
-        if _check_soft_dependencies(deps, severity="none"):
+        params = [
+            {
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(
+                    return_indices=True
+                ),
+            }
+        ]
+        if _check_soft_dependencies("tsbootstrap", severity="none"):
             from tsbootstrap import BlockBootstrap
 
-            params = [
-                {},
+            params.append(
                 {
                     "forecaster": NaiveForecaster(),
                     "bootstrap_transformer": BlockBootstrap(),
-                },
-            ]
-        else:
-            params = {}
+                }
+            )
 
         return params

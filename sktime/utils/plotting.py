@@ -8,6 +8,9 @@ __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 import math
 from warnings import simplefilter, warn
 
+from sktime.datatypes._check import check_is_scitype
+from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
+
 
 def plot_series(
     *series,
@@ -179,6 +182,60 @@ def plot_series(
 
 
 def plot_interval(ax, interval_df):
+    """Plot prediction intervals on an existing matplotlib axes.
+
+    This function overlays prediction intervals on an existing plot to visualize
+    forecast uncertainty.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to add the prediction intervals to.
+    interval_df : pd.DataFrame
+        A multi-index DataFrame containing prediction intervals.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The matplotlib axes with the prediction intervals added.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.utils.plotting import plot_series, plot_interval
+
+    >>> data = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(data, test_size=12)
+
+    >>> forecaster = NaiveForecaster(strategy="last")
+    >>> _ = forecaster.fit(y_train)
+
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> interval_df = forecaster.predict_interval(fh=fh)
+
+    >>> y_train.index = y_train.index.to_timestamp()
+    >>> y_test.index = y_test.index.to_timestamp()
+    >>> interval_df.index = interval_df.index.to_timestamp()
+
+    >>> fig, ax = plot_series(
+    ...     y_train, y_test, labels=["Train", "Test"],
+    ...     pred_interval=interval_df,
+    ... )  # doctest: +SKIP
+    >>> plot_interval(ax, interval_df)  # doctest: +SKIP
+
+    >>> ax.set_title('Predictions with Confidence Intervals')  # doctest: +SKIP
+    >>> ax.set_xlabel('Date')  # doctest: +SKIP
+    >>> ax.set_ylabel('Passengers')  # doctest: +SKIP
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("seaborn")
+
     import seaborn as sns
 
     var_name = interval_df.columns.levels[0][0]
@@ -421,6 +478,74 @@ def _get_windows(cv, y):
     return train_windows, test_windows
 
 
+def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
+    """Plot training and test windows for global forecasting.
+
+    cv_global_temporal splits the Panel temporally
+    before the instance split from cv_global is applied. This avoids
+    temporal leakage in the global evaluation across time series.
+    cv is applied on the test set of the combined application of
+    cv_global and cv_global_temporal.
+    The resulting train and test windows are plotted for each fold.
+
+
+    Pararameters
+    ----------
+    cv : sktime splitter object, descendant of BaseSplitter
+        Time series splitter, e.g., temporal cross-validation iterator
+    cv_global : sktime splitter object, descendant of BaseSplitter
+        the ``cv_global`` splitter is used to split data at instance level,
+        into a global training set ``y_train``,
+        and a global test set ``y_test_global``.
+    cv_global_temporal : SingleWindowSplitter
+        Time series splitter, e.g., temporal cross-validation iterator.
+        splits the Panel temporally before the instance split from cv_global
+        is applied.
+    y : pd.DataFrame
+        Time series to split
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        matplotlib figure object
+    axes : np.ndarray
+        matplotlib axes object with the figure
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("matplotlib")
+
+    import matplotlib.pyplot as plt
+
+    assert len(y.columns) == 1, "y should be univariate"
+    assert check_is_scitype(y, scitype="Panel"), "y should be Panel data"
+
+    ins = list(
+        gen_y_X_train_test_global(y, None, cv, None, cv_global, cv_global_temporal)
+    )
+
+    column_name = y.columns[0]
+
+    fig, axes = plt.subplots(len(ins), 2, figsize=(16, 3 * len(ins)))
+    for i, _ins in enumerate(ins):
+        for idx in _ins[0].index.get_level_values(0).unique():
+            _ins[0].loc[idx].rename(columns={column_name: idx}).plot(
+                ax=axes[i, 0], label=idx
+            )
+        test_title = _ins[1].index.get_level_values(0).unique()[0]
+        ax = (
+            _ins[1]
+            .rename(columns={column_name: "Context"})
+            .droplevel(0)
+            .plot(ax=axes[i, 1], title=test_title)
+        )
+        _ins[2].rename(columns={column_name: "Target"}).droplevel(0).plot(ax=ax)
+        axes[i, 0].legend(ncol=len(_ins[0].index.get_level_values(0).unique()))
+        axes[i, 1].legend(ncol=2)
+
+    return fig, axes
+
+
 def plot_windows(cv, y, title="", ax=None):
     """Plot training and test windows.
 
@@ -428,8 +553,11 @@ def plot_windows(cv, y, title="", ax=None):
     subject to an sktime time series splitter.
 
     x-axis: time, ranging from start to end of ``y``
+
     y-axis: window number, starting at 0
+
     plot elements: training split (orange) and test split (blue)
+
         dots indicate index in the training or test split
         will be plotted on top of each other if train/test split is not disjoint
 
@@ -450,6 +578,18 @@ def plot_windows(cv, y, title="", ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
+
+    Examples
+    --------
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.utils.plotting import plot_windows
+    >>> from sktime.datasets import load_airline
+    >>> import numpy as np
+
+    >>> fh = np.arange(1, 13)
+    >>> cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=24)
+    >>> y = load_airline()
+    >>> plot_windows(cv, y.iloc[:50])  # doctest: +SKIP
     """
     from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -532,12 +672,12 @@ def plot_calibration(y_true, y_pred, ax=None):
     e.g., via ``alpha`` in ``predict_quantiles``.
 
     Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
-    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dots k`
+    and let :math:`\widehat{y}_{i,j}`, for :math:`i = 1, \dots, N, j = 1, \dots, k`
     be quantile predictions at quantile point :math:`p_j`,
     of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
 
     We compute the calibration indicators :math:`c_{i, j},`
-    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
+    as :math:`c_{i, j} = 1, \text{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
     and calibration fractions as
 
     .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
@@ -546,10 +686,13 @@ def plot_calibration(y_true, y_pred, ax=None):
     to be close to :math:`p_j`.
 
     x-axis: interval from 0 to 1, quantile points
+
     y-axis: interval from 0 to 1, calibration fractions
+
     plot elements: calibration curve of the quantile predictions (blue) and the ideal
-        calibration curve (orange), the curve with equation y = x.
+    calibration curve (orange), the curve with equation y = x.
         Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
+
         Ideal curve is the curve with equation y = x,
         containing points :math:`(p_i, p_i)`.
 
@@ -570,10 +713,30 @@ def plot_calibration(y_true, y_pred, ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.utils.plotting import plot_calibration
+
+    >>> y_train = load_airline()[0:24]  # train on 24 months, 1949 and 1950
+    >>> y_test = load_airline()[24:36]  # ground truth for 12 months in 1951
+
+    >>> # try to forecast 12 months ahead, from y_train
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    >>> forecaster = NaiveForecaster(strategy="last")
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+
+    >>> pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.25, 0.5, 0.75, 0.9])  # doctest: +SKIP
+    >>> plot_calibration(y_true=y_test.loc[pred_quantiles.index], y_pred=pred_quantiles)  # doctest: +SKIP
     """  # noqa: E501
     from sktime.utils.dependencies import _check_soft_dependencies
 
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
     import pandas as pd
 
