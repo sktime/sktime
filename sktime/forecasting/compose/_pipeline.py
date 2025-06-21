@@ -427,6 +427,9 @@ class ForecastingPipeline(_Pipeline):
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
@@ -875,6 +878,9 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
