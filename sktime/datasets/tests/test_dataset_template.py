@@ -1,4 +1,4 @@
-from sktime.datasets._dataset_templates import MyDataset
+from sktime.datasets.base._dataset_templates import MyDataset
 
 
 def test_my_dataset():
