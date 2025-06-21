@@ -169,6 +169,12 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     ----------
     cls : class, function or list of classes/functions
         class for which to determine whether it should be tested
+    ignore_deps : boolean, default=False
+        whether to ignore the soft dependencies check.
+        If True, will not skip due to False_required_deps_missing, see below.
+    only_changed_modules : boolean, default=True
+        whether to run tests only for classes impacted by changed modules.
+        If False, will only check active "False" conditions to skip.
 
     Returns
     -------
