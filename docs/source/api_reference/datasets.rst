@@ -86,7 +86,7 @@ Example:
            }
 
        def _load(self):
-           X_raw, y = make_classification(
+           X_raw, y = make_classification_problem(
                n_samples=150,
                n_features=5,
                n_classes=3,
