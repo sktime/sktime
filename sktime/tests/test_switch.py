@@ -163,12 +163,7 @@ def _flatten_list(nested_list):
 
 
 @lru_cache
-def _run_test_for_class(
-    cls,
-    ignore_deps=False,
-    only_changed_modules=True,
-    skip_test_vm=True,
-):
+def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     """Check if test should run - cached with hashable cls.
 
     Parameters
@@ -181,8 +176,6 @@ def _run_test_for_class(
     only_changed_modules : boolean, default=True
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
-    skip_test_vm : boolean, default=True
-        whether to skip if the object requires its own VM to test.
 
     Returns
     -------
@@ -191,7 +184,6 @@ def _run_test_for_class(
 
         * "False_required_deps_missing" - skip reason, required dependencies are missing
         * "False_requires_vm" - skip reason, class requires its own VM.
-          Only active if skip_test_vm=True.
         * "False_no_change" - skip reason, no change in class or dependencies.
           Only active if ``ignore_deps=False``.
         * "True_run_always" - run reason, run always, as ``ONLY_CHANGED_MODULES=False``
@@ -262,7 +254,7 @@ def _run_test_for_class(
     # otherwise, continue
 
     # if skip_test_vm is True and the class requires a test vm, skip
-    if skip_test_vm and cls.get_class_tag("tests:vm", True):
+    if cls.get_class_tag("tests:vm", True):
         return False, "False_requires_vm"
 
     # if ONLY_CHANGED_MODULES is off: always True
@@ -361,17 +353,18 @@ def _get_all_changed_classes(vm=False):
 
     Returns
     -------
-    tuple of string sof class names : object classes that have changed
+    tuple of strings of class names : object classes that have changed
     """
     from sktime.registry import all_estimators
 
     def _changed_class(cls):
         """Check if a class has changed compared to the main branch."""
-        changed, _ = _run_test_for_class(cls, ignore_deps=True)
+        run, reason = _run_test_for_class(cls, ignore_deps=True)
 
         if vm:
-            changed = changed and cls.get_class_tag("tests:vm", False)
-        return changed
+            return reason == "False_requires_vm"
+
+        return run
 
     names = [name for name, est in all_estimators() if _changed_class(est)]
     return names
