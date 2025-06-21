@@ -75,6 +75,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         "capability:out_of_sample": False,
         "capability:predict": True,
         "capability:predict_proba": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]

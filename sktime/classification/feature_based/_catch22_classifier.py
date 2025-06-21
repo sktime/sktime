@@ -92,6 +92,9 @@ class Catch22Classifier(_DelegatedClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

@@ -72,6 +72,9 @@ class TimeBinAggregate(BaseTransformer):
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):

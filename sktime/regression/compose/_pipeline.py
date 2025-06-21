@@ -97,6 +97,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     _required_parameters = ["regressor"]

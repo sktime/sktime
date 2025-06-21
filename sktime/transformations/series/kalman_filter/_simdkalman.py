@@ -153,6 +153,9 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

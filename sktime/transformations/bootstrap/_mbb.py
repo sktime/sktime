@@ -192,6 +192,9 @@ class STLBootstrapTransformer(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         "capability:bootstrap_index": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

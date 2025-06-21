@@ -69,6 +69,9 @@ class ClustererAsTransformer(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,
         "capability:missing_values:removes": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, clusterer):

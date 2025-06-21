@@ -35,6 +35,9 @@ class IgnoreX(_DelegatedForecaster):
 
     _tags = {
         "ignores-exogeneous-X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecaster, ignore_x=True):

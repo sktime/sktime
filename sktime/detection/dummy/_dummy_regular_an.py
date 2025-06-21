@@ -35,6 +35,9 @@ class DummyRegularAnomalies(BaseDetector):
         "fit_is_empty": False,
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, step_size=2):

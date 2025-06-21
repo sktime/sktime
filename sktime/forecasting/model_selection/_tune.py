@@ -605,6 +605,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
+
     def __init__(
         self,
         forecaster,

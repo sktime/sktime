@@ -96,6 +96,9 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

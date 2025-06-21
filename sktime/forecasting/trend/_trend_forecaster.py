@@ -64,6 +64,9 @@ class TrendForecaster(BaseForecaster):
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, regressor=None):

@@ -201,3 +201,22 @@ The tags below have limited use in retrieval or inspection of objects.
     x_inner_mtype
     y_inner_mtype
     visual_block_kind
+
+.. _dev_testing_tags:
+
+Testing and CI tags
+-------------------
+
+These tags control behaviour of estimators in the ``sktime`` continuous integration
+tests.
+
+They are primarily useful for developers managing CI behaviour of individual objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    tests__core
