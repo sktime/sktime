@@ -236,6 +236,16 @@ def _run_test_for_class(cls):
         cls_reqs = _flatten_list(cls_reqs)
         package_deps = [Requirement(req).name for req in cls_reqs]
 
+        CORE_DEPENDENCIES = [
+            "scikit-base",
+            "scikit-learn",
+            "scipy",
+            "numpy",
+            "pandas",
+            "scikit-base",
+        ]
+        package_deps += CORE_DEPENDENCIES
+
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
 
     # Condition 1:
