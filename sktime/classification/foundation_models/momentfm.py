@@ -104,8 +104,8 @@ class MomentFMClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.hf_momentfm_classifier import (
-    ... MomentFMClassifier,
+    >>> from sktime.classification.foundation_models.momentfm import (
+    ...     MomentFMClassifier,
     ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_type = "numpy3d")
