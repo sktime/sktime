@@ -190,6 +190,9 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.0.0"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
