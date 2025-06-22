@@ -22,6 +22,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         "authors": ["yarnabrina", "arnaujc91"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
+        # todo 0.39.0: check whether scipy<1.16 is still needed
         "python_dependencies": ["statsforecast", "scipy<1.16"],
         # estimator type
         # --------------

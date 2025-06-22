@@ -101,8 +101,12 @@ def test_deps(spec):
     # this should be returned like this and not as ["statsmodels", "statsmodels"]
     assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
+    # todo 0.39.0: check whether this is still necessary
+    TEMP_DEPS = {"scipy<1.16"}
+
     # example with two dependencies, should be identified, order does not matter
-    assert set(deps(dunder_spec_with_deps)) == {"statsmodels", "pmdarima", "numpy<2"}
+    expected_deps = {"statsmodels", "pmdarima", "numpy<2"}.union(TEMP_DEPS)
+    assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 
 def test_imports():
