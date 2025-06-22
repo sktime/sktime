@@ -29,8 +29,10 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
+    CYTHON_ESTIMATORS,
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
+    MATRIXDESIGN,
     NON_STATE_CHANGING_METHODS,
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_TAGS,
@@ -39,7 +41,6 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils._testing.doctest import run_doctest
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -52,18 +53,6 @@ from sktime.utils.deep_equals import deep_equals
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-
-# whether to subsample estimators per os/version partition matrix design
-# default is False, can be set to True by pytest --matrixdesign True flag
-MATRIXDESIGN = False
-
-# whether to test only estimators that require cython, C compiler such as gcc
-# default is False, can be set to True by pytest --only_cython_estimators True flag
-CYTHON_ESTIMATORS = False
-
-# whether to test only estimators from modules that are changed w.r.t. main
-# default is False, can be set to True by pytest --only_changed_modules True flag
-ONLY_CHANGED_MODULES = False
 
 
 def subsample_by_version_os(x):
@@ -214,6 +203,9 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        # TODO(fangelim): refactor this _all_estimators
+        # to make it possible to set custom tags to filter
+        # as class attributes, similar to `estimator_type_filter`
         if CYTHON_ESTIMATORS:
             filter_tags = {"requires_cython": True}
         else:
@@ -732,6 +724,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
+        from skbase.utils.doctest_run import run_doctest
+
         run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
 
     def test_create_test_instance(self, estimator_class):
