@@ -107,6 +107,9 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "classifier_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # defines the name of the attribute containing the pyts estimator

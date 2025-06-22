@@ -93,6 +93,9 @@ class AlignerDTW(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "partial",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
