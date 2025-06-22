@@ -102,7 +102,7 @@ def test_deps(spec):
     assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    expected_deps = {"statsmodels", "prophet"}.union(TEMP_DEPS)
+    expected_deps = {"statsmodels", "prophet"}
     assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 
