@@ -139,6 +139,9 @@ class Lag(BaseTransformer):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # todo: add any hyper-parameters and components to constructor

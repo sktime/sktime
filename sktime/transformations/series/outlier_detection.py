@@ -2,14 +2,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers for detecting outliers in a time series."""
 
-__author__ = ["aiwalter"]
+__author__ = ["aiwalter", "RobKuebler"]
 __all__ = ["HampelFilter"]
 
 import warnings
 from math import ceil
 
 import numpy as np
-import pandas as pd
 
 from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
@@ -59,13 +58,13 @@ class HampelFilter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": "pd.Series",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": True,
         "capability:missing_values": True,
         "skip-inverse-transform": True,
-        "univariate-only": False,
+        "univariate-only": True,
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
@@ -93,17 +92,7 @@ class HampelFilter(BaseTransformer):
             transformed version of X
         """
         Z = X.copy()
-
-        # multivariate
-        if isinstance(Z, pd.DataFrame):
-            for col in Z:
-                Z[col] = self._transform_series(Z[col])
-        # univariate
-        else:
-            Z = self._transform_series(Z)
-
-        Xt = Z
-        return Xt
+        return self._transform_series(Z)
 
     def _transform_series(self, Z):
         """Logic internal to the algorithm for transforming the input series.
