@@ -1824,9 +1824,9 @@ class ForecastX(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.theta import ThetaForecaster
         from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
@@ -1835,12 +1835,7 @@ class ForecastX(BaseForecaster):
 
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
-        # example with probabilistic capability
-        # todo 0.38.0: check if numpy<2 is still needed
-        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
-            fy_proba = ARIMA()
-        else:
-            fy_proba = NaiveForecaster()
+        fy_proba = ThetaForecaster()
         fx = NaiveForecaster()
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
