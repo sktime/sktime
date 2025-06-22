@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Normal/Gaussian probability distribution."""
+"""Normal/Gaussian probability distribution - silent in case skpro is not present."""
 
 __author__ = ["fkiraly"]
 
@@ -24,7 +24,7 @@ class Normal(BaseDistribution):
 
     Examples
     --------
-    >>> from sktime.proba.normal import Normal
+    >>> from sktime.forecasting.base._normal import Normal
 
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
     """

@@ -5,12 +5,12 @@ import warnings
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base._normal import Normal
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
     CRPS,
     AUCalibration,
     LogLoss,
 )
-from sktime.proba.normal import Normal
 from sktime.tests.test_switch import run_test_module_changed
 
 warnings.filterwarnings("ignore", category=FutureWarning)
