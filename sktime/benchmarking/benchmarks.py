@@ -8,16 +8,6 @@ from sktime.base import BaseEstimator
 from sktime.utils.warnings import warn
 
 
-# See https://www.sktime.net/en/stable/developer_guide/deprecation.html
-def is_initalised_estimator(estimator: BaseEstimator) -> bool:
-    """Check if estimator is initialised BaseEstimator object."""
-    warn(
-        "Warning: the is_initialised_estimatormethod "
-        "is deprecated and will be removed in the 0.38.0 release. ",
-    )
-    return _is_initialised_estimator(estimator)
-
-
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
     if isinstance(estimator, BaseEstimator):
@@ -42,28 +32,6 @@ def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
             "One or many estimator(s) is not an initialised BaseEstimator "
             "object(s). Please instantiate the estimator(s) first."
         )
-
-
-def coerce_estimator_and_id(estimators, estimator_id=None):
-    """Coerce estimators to a dict with estimator_id as key and estimator as value.
-
-    Parameters
-    ----------
-    estimators : dict, list or BaseEstimator object
-        Estimator to coerce to a dict.
-    estimator_id : str, optional (default=None)
-        Identifier for estimator. If none given then uses estimator's class name.
-
-    Returns
-    -------
-    estimators : dict
-        Dict with estimator_id as key and estimator as value.
-    """
-    warn(
-        "Warning: the coerce_estimator_and_id "
-        "is deprecated and will be removed in the 0.38.0 release. ",
-    )
-    return _coerce_estimator_and_id(estimators, estimator_id)
 
 
 def _coerce_estimator_and_id(estimators, estimator_id=None):
@@ -138,13 +106,10 @@ class BaseBenchmark:
         estimator: BaseEstimator,
         estimator_id: Optional[str] = None,
     ):
-        warn(
-            "The class inheriting from BaseBenchmark should implement the "
-            "_add_estimator method. "
-            "In version 0.38.0, the _add_estimator method will raise a "
-            "NotImplementedError.",
+        raise NotImplementedError(
+            "Method not implemented in base class. "
+            "Please implement this method in a subclass."
         )
-        self.estimators.register(id=estimator_id, entry_point=estimator.clone)
 
     def _run(self, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Method not implemented in base class.")
