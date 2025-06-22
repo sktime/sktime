@@ -56,6 +56,10 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
           equivalent to a call of the``evaluate`` method.
         * If True, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Denominator reference for normalization. 
+        If 'y_true', normalizes against the mean of ground truth values. 
+        If 'y_pred', normalizes against mean of prediction values.      
     """
 
     def __init__(
@@ -64,9 +68,11 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         square_root=False,
         by_index=False,
+        relative_to = "y_true",
     ):
         self.square_root = square_root
         self.multioutput = multioutput
+        self.relative_to = relative_to
 
         super().__init__(
             multioutput=multioutput,
@@ -96,13 +102,25 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
             each output.
             - Otherwise, returns a scalar value representing the aggregated MSPE.
         """
+        if y_true.empty or y_pred.empty:
+            raise ValueError("y_true and y_pred must not be empty.")
+
         multioutput = self.multioutput
         raw_values = (y_true - y_pred) ** 2
         raw_values = self._get_weighted_df(raw_values, **kwargs)
         num = raw_values.mean()
-        denom = y_true.mean().abs()
+        
+        if self.relative_to == "y_true":
+            perc_error = (y_true - y_pred) / y_true
+        elif self.relative_to == "y_pred":
+            perc_error = (y_true - y_pred) / y_pred
+        else:
+            raise ValueError("relative_to must be 'y_true' or 'y_pred'")
+        
+        squared_perc_error = perc_error ** 2
+        squared_perc_error = self._get_weighted_df(squared_perc_error, **kwargs)
 
-        msqe = num / denom
+        msqe = squared_perc_error.mean()
 
         if self.square_root:
             msqe = msqe.pow(0.5)
@@ -137,23 +155,43 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
-        multioutput = self.multioutput
+        if y_true.empty or y_pred.empty:
+            raise ValueError("y_true and y_pred must not be empty.")
 
+        multioutput = self.multioutput
+        
+        # Compute squared error
         raw_values_mse = (y_true - y_pred) ** 2
-        raw_values_p = y_true
+        
+        if self.relative_to == "y_true":
+            raw_values_p = y_true
+        elif self.relative_to == "y_pred":
+            raw_values_p = y_pred
+        else:
+            raise ValueError("relative_to must be 'y_true' or 'y_pred'")        
 
         # what we need to do is efficiently
         # compute msqe but using data with the i-th time point removed
         # msqe[i] = msqe(all data minus i-th time point)
+        
+        raw_values_mse = self._get_weighted_df(raw_values_mse, **kwargs)
+        raw_values_p = self._get_weighted_df(raw_values_p, **kwargs)
 
         n = raw_values_mse.shape[0]
-
+        
         num_mean = raw_values_mse.mean()
-        denom_mean = raw_values_p.mean()
+        denom_mean = raw_values_p.mean().abs()
+        if (denom_mean == 0).any():
+            raise ZeroDivisionError(f"Denominator in MSE% computation is zero (relative_to='{self.relative_to}').")
 
         num_jk = num_mean * (1 + 1 / (n - 1)) - raw_values_mse / (n - 1)
         denom_jk = denom_mean * (1 + 1 / (n - 1)) - raw_values_p / (n - 1)
-
+        if (denom_jk == 0).any().any():  # check for any zero entries in the DataFrame denominator
+            zero_locs = denom_jk.columns[(denom_jk == 0).any()]
+            raise ZeroDivisionError(
+                f"Zero denominator encountered in jackknife resampling at columns {zero_locs.tolist()}"
+            )
+            
         msep_jk = num_jk / denom_jk
         msep = num_mean / denom_mean
 
@@ -185,6 +223,6 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
-        params2 = {"square_root": True}
+        params1 = {"relative_to": "y_true"}
+        params2 = {"square_root": True, "relative_to": "y_pred"}
         return [params1, params2]

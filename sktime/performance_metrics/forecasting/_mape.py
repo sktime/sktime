@@ -6,7 +6,8 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-
+import numpy as np
+import warnings
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
     mean_absolute_percentage_error,
@@ -49,12 +50,18 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
     the symmetric version, if ``symmetric`` is True, for all time indices
     :math:`t_1, \dots, t_n` in the input.
+    NaN values in the output indicate division by zero or near-zero in the denominator.
 
     Parameters
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-
+    
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Which values to normalize the error with respect to:
+        - 'y_true' uses the ground truth for percentage calculation.
+        - 'y_pred' uses the predicted values instead.
+    
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -134,8 +141,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to = "y_true",
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to # New attribute assignment
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -175,10 +184,28 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
         numer_values = (y_true - y_pred).abs()
 
+        relative_to = self.relative_to
+
         if symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
         else:
-            denom_values = y_true.abs()
+            if relative_to == "y_true":
+                denom_values = y_true.abs()
+            elif relative_to == "y_pred":
+                denom_values = y_pred.abs()
+            else:
+                raise ValueError(
+                    f"`relative_to` must be either 'y_true' or 'y_pred', but got '{relative_to}'"
+                )
+        # Avoid division by zero 
+        denom_values = denom_values.replace(0,np.nan)
+        # Warn if any NaNs are present in the denominator 
+        if denom_values.isna().any().any():
+            warnings.warn(
+                "Division by zero or near-zero detected in denominator. "
+                "MAPE may return NaNs or unusually large values."
+                )
+        #return numer_values / denom_values
 
         raw_values = numer_values / denom_values
 
@@ -213,4 +240,17 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        params4 = {"relative_to": "y_pred", "symmetric": True}
+        params5 = {
+            "multioutput": "raw_values",
+            "symmetric": True,
+            "relative_to": "y_pred",
+            }
+        params6 = {
+            "multioutput": [0.3, 0.7],
+            "symmetric": False,
+            }
+        return [params1, params2, params3, params4, params5, params6]
+
+
