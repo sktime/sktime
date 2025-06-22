@@ -1,4 +1,3 @@
-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter search via scikit-optimize."""
 

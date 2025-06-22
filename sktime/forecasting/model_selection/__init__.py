@@ -15,7 +15,7 @@ __all__ = [
 from sktime.forecasting.model_selection._gridsearch import ForecastingGridSearchCV
 from sktime.forecasting.model_selection._optuna import ForecastingOptunaSearchCV
 from sktime.forecasting.model_selection._randomsearch import (
-    ForecastingRandomizedSearchCV
+    ForecastingRandomizedSearchCV,
 )
 from sktime.forecasting.model_selection._skopt import ForecastingSkoptSearchCV
 
