@@ -22,7 +22,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         "authors": ["yarnabrina", "arnaujc91"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
+        "python_dependencies": ["statsforecast", "scipy<1.16"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
