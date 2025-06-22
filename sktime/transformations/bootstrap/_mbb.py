@@ -440,22 +440,21 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
 
     Parameters
     ----------
-    n_series : int, optional
-        The number of bootstrapped time series that will be generated, by default 10
-    block_length : int, optional
+    n_series : int, optional, default=10
+        The number of bootstrapped time series that will be generated
+    block_length : int, optional, default = min(2*sp, len(X) - sp)
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the
         minimum between 2*sp and len(X) - sp.
-    sampling_replacement : bool, optional
-        Whether the MBB sample is with or without replacement, by default False.
-    return_actual : bool, optional
-        If True the output will contain the actual time series, by default True.
-        The actual time series will be labelled as "actual"
+    sampling_replacement : bool, optional, default=False
+        Whether the MBB sample is with or without replacement
+    return_actual : bool, optional, default=True
+        If True the output will contain the actual time series.
+        The actual time series will be labelled as "actual".
     random_state : int, np.random.RandomState or None, by default None
         Controls the randomness of the estimator
-    return_indices : bool, optional
-        If True, the output will contain the resampled indices as extra column,
-        by default False.
+    return_indices : bool, optional, default=False.
+        If True, the output will contain the resampled indices as extra column.
 
     See Also
     --------

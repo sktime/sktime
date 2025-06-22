@@ -684,9 +684,6 @@ class NaiveVariance(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_var": True,
-        # CI and test flags
-        # -----------------
-        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
