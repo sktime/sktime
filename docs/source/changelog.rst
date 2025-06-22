@@ -26,7 +26,7 @@ Highlights
 * new reconciler module, new non-negative reconciliation (:pr:`7697`) :user:`felipeangelimvieira`
 * ``ClassificationBenchmark`` and ``evaluate`` utility for benchmarking time series classifiers (:pr:`8267`, :pr:`8357`) :user:`ksharma6`, :user:`jgyasu`
 * ``momentfm`` foundation model forecaster (:pr:`6570`) :user:`julian-fong`
-* ``momentfm`` foundation model classifier  (:pr:`8263`) :user:`julian-fong`
+* ``momentfm`` foundation model time series classifier  (:pr:`8263`) :user:`julian-fong`
 * ``ForecastKnownValues`` can now handle multi-index prescribed forecasts (:pr:`8236`) :user:`RobKuebler`
 * sliding greedy splitter (:pr:`8168`) :user:`marrov`
 * forecast ``evaluate`` utility can now handle temporal and global splits (:pr:`8064`) :user:`benHeid`
@@ -80,6 +80,7 @@ Forecasting
 * [ENH] make ``ForecastKnownValues`` multiindex-ready (:pr:`8236`) :user:`RobKuebler`
 * [ENH] Add regularization hyperparameter in ``ReconcilerForecaster`` (:pr:`7660`) :user:`HarshvirSandhu`
 * [ENH] ``Greykite`` forecaster integration (:pr:`7902`) :user:`vedantag17`
+* [ENH] change forecaster default tag value of `capability:categorical_in_X` to `True` to enable composition case (:pr:`8231`) :user:`fkiraly`
 * [ENH] ``SkforecastRecursive`` - support in-sample ``predict_quantiles`` (:pr:`8255`) :user:`nahcol10`
 * [ENH] enable univariate mode for ``DynamicFactor`` forecaster (:pr:`8345`) :user:`fkiraly`
 * [ENH] minor improvements to ``MultiplexForecaster`` (:pr:`8422`) :user:`fkiraly`
