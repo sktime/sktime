@@ -54,7 +54,7 @@ if _check_soft_dependencies(
                 self.linear.bias.data.zero_()
 
         def forward(self, x):
-            """Foward Function."""
+            """Forward Function."""
             x = self.linear(self.dropout(x))
             x = x.flatten(start_dim=2, end_dim=3)
             return x
@@ -83,7 +83,7 @@ if _check_soft_dependencies(
                 )
 
         def forward(self, x, input_mask: torch.Tensor = None):
-            """Foward Function."""
+            """Forward Function."""
             x = torch.mean(x, dim=1)
             x = self.dropout(x)
             y = self.linear(x)
@@ -104,7 +104,7 @@ if _check_soft_dependencies(
             self.linear = nn.Linear(head_nf, forecast_horizon)
 
         def forward(self, x, input_mask: torch.Tensor = None):
-            """Foward Function."""
+            """Forward Function."""
             x = self.flatten(x)
             x = self.linear(x)
             x = self.dropout(x)
@@ -608,7 +608,7 @@ if _check_soft_dependencies(
             input_mask: torch.Tensor = None,
             **kwargs,
         ) -> TimeseriesOutputs:
-            """Foward Function."""
+            """Forward Function."""
             if input_mask is None:
                 input_mask = torch.ones_like(x_enc[:, 0, :])
 

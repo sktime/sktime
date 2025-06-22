@@ -51,7 +51,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib>=1.2.0,<1.6",  # required for parallel processing
+  "joblib>=1.2.0,<1.5",  # required for parallel processing
   "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
@@ -92,7 +92,7 @@ all_extras = [
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'optuna<4.4',
+  'optuna<4.5',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
@@ -137,7 +137,7 @@ all_extras_pandas2 = [
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'optuna<4.4',
+  'optuna<4.5',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
@@ -264,10 +264,10 @@ docs = [
   "tabulate",
 ]
 tests = [
-  "pytest>=7.4,<8.4",
+  "pytest>=7.4,<8.5",
   "pytest-randomly>=3.15,<3.17",
   "pytest-timeout>=2.1,<2.5",
-  "pytest-xdist>=3.3,<3.7",
+  "pytest-xdist>=3.3,<3.8",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
@@ -294,7 +294,7 @@ dl = [
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  "pytorch-forecasting>=1.0.0,<1.4.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  "pytorch-forecasting>=1.0.0,<1.5.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -304,12 +304,15 @@ dl = [
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
-  "mlflow",
+  "mlflow<4.0",
+]
+mlflow2 = [
+  "mlflow<3.0",
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
-  "mlflow",
+  "mlflow<4.0",
   "moto",
 ]
 numpy1 = [

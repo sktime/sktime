@@ -383,6 +383,41 @@ class requires_cython(_BaseTag):
     }
 
 
+class tests__core(_BaseTag):
+    """Whether tests for this estimator are triggered by framework changes.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:core"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:core`` tag of an object is a boolean,
+    it specifies whether changes to the framework or base classes
+    trigger tests for the estimator.
+
+    Only a core selection of estimators should have the ``tests:core``
+    tag set to true, to avoid that all estimators in ``sktime`` are triggered
+    by a framework change.
+
+    It is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:core",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether framework changes trigger estimator tests",
+        "user_facing": False,
+    }
+
+
 # Estimator tags
 # --------------
 
@@ -773,7 +808,7 @@ class capability__categorical_in_X(_BaseTag):
 
     _tags = {
         "tag_name": "capability:categorical_in_X",
-        "parent_type": ["forecaster", "transformer"],
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
         "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
@@ -1546,6 +1581,53 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class capability__hierarchical_reconciliation(_BaseTag):
+    """Property: transformer reconciles hierarchical series.
+
+    - String name: ``"capability:hierarchical_reconciliation"``
+    - Public property tag
+    This tag applies to transformations that reconcile hierarchical series.
+    """
+
+    _tags = {
+        "tag_name": "capability:hierarchical_reconciliation",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer reconcile hierarchical series?",
+        "user_facing": True,
+    }
+
+
+class capability__bootstrap_index(_BaseTag):
+    """Capability: the transformer is a bootstrap that can return bootstrap idx.
+
+    - String name: ``"capability:bootstrap_index"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the transformer is a bootstrap transformer.
+    In this case, it should have the parameter ``return_indices``,
+    and ``return_indices=True`` will ensure that ``transform`` returns
+     ``iloc`` indices
+    of the bootstrapped time series, in reference to the input data ``X``,
+    as an additional column.
+
+    If the tag is ``False``, the transformer is not a bootstrap transformer,
+    and a parameter ``return_indices``, as described above,
+    is not available.
+    """
+
+    _tags = {
+        "tag_name": "capability:bootstrap_index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can the bootstrap return the index of bootstraped time series?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -1583,7 +1665,7 @@ class capability__update(_BaseTag):
         "tag_name": "capability:update",
         "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
-        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -2399,7 +2481,7 @@ class visual_block_kind(_BaseTag):
         "tag_name": "visual_block_kind",
         "parent_type": "estimator",
         "tag_type": ("str", ["single", "serial", "parallel"]),
-        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
+        "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
     }
 
