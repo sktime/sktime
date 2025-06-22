@@ -100,7 +100,7 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Extending categorical framework support in ``X`` to time series classifiers (:pr:`8114`) :user:`Ankit-1204`
-* [MNT] Make grid search parameters in ``ShapeDTW`` configurable to enable faster testing (:pr:`8324`) :user:`benHeid`
+* [ENH] Make grid search parameters in ``ShapeDTW`` configurable to enable faster testing (:pr:`8324`) :user:`benHeid`
 * [ENH] ``momentfm`` classifier  (:pr:`8263`) :user:`julian-fong`
 * [ENH] ``evaluate`` for TSC and TSR (:pr:`8267`, :pr:`6888`) :user:`jgyasu`, :user:`ksharma6`
 * [ENH] Second Set of Test Parameters ``TimeSeriesForest`` (:pr:`8337`) :user:`nmwitzig`
