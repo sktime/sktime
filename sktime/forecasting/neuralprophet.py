@@ -93,6 +93,11 @@ class NeuralProphet(_ProphetAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _tags = {
+        "authors": ["vedantag17"],
+        "python_dependencies": "neuralprophet",
+    }
+
     def __init__(
         self,
         # Args due to wrapping
