@@ -29,6 +29,10 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         # therefore, we need to restrict the version of scipy
         # the dependency tag translates to:
         # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
+        #
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

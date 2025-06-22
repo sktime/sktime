@@ -120,6 +120,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
