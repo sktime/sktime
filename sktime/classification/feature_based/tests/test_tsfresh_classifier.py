@@ -1,12 +1,18 @@
 """Tests for TSFreshClassifier."""
 
 import numpy as np
+import pytest
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.feature_based import TSFreshClassifier
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TSFreshClassifier),
+    reason="test only if soft dependencies are present",
+)
 def test_tsfresh_predict_proba_feature_order_consistency():
     """Check that TSFreshClassifier.predict_proba has consistent feature ordering."""
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
