@@ -65,7 +65,7 @@ return ForecastingGridSearchCV(
 """
 
 dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
-dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
+dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=7)) * ExponentialSmoothing()"
 
 specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
