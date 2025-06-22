@@ -241,6 +241,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:multithreading": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(

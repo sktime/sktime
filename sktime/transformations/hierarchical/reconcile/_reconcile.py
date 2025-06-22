@@ -33,6 +33,12 @@ class Reconciler(BaseTransformer):
     For reconciliation methods that require historical values in addition to the
     forecasts, such as MinT, see the ``ReconcilerForecaster`` class.
 
+    For more versatile and efficient reconciliation in pipelines,
+    see ``BottomUpReconciler``,
+    ``TopdownReconciler``, ``OptimalReconciler``,
+    ``NonNegativeOptimalReconciler``, ``MiddleOutReconciler``, that apply
+    reconciliation as preprocessing and postprocessing steps.
+
     For further information on the methods, see [1]_.
 
     Parameters
@@ -49,6 +55,11 @@ class Reconciler(BaseTransformer):
     --------
     Aggregator
     ReconcilerForecaster
+    BottomUpReconciler
+    TopdownReconciler
+    OptimalReconciler
+    NonNegativeOptimalReconciler
+    MiddleOutReconciler
 
     References
     ----------
@@ -101,6 +112,9 @@ class Reconciler(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
