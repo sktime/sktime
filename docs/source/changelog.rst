@@ -156,6 +156,7 @@ Documentation
 * [DOC] Improves documentation in ``Testing and continuous integration`` webpage (:pr:`8247`) :user:`julian-fong`
 * [DOC] Fix Docstring Example of Distance Based Classifiers (:pr:`8313`) :user:`jgyasu`
 * [DOC] Update ``utils.rst`` API reference to add ``plot_windows`` (:pr:`7993`) :user:`Prahitha`
+* [DOC] Fix documentation typos throughout the code base5 (:pr:`8301`) :user:`szepeviktor`
 
 Maintenance
 ~~~~~~~~~~~
@@ -244,6 +245,7 @@ Contributors
 :user:`piyushbiraje`,
 :user:`Prahitha`,
 :user:`RobKuebler`,
+:user:`szepeviktor`,
 :user:`Tveten`,
 :user:`vedantag17`,
 :user:`yury-fedotov`
