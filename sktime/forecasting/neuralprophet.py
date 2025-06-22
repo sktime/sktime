@@ -223,6 +223,6 @@ class NeuralProphet(_ProphetAdapter):
                 "epochs": 15,
                 "batch_size": 32,
                 "uncertainty_samples": 100,
-            }
+            },
         ]
         return params
