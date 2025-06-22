@@ -372,6 +372,9 @@ class TagAliaserMixin(_TagAliaserMixin):
     alias_dict = {"handles-missing-data": "capability:missing_values"}
     deprecate_dict = {"handles-missing-data": "1.0.0"}
 
+    # package name used for deprecation warnings
+    _package_name = "sktime"
+
 
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
