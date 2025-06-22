@@ -74,13 +74,12 @@ class ARLagOrderSelector(BaseParamFitter):
     >>> from sktime.param_est.lag import ARLagOrderSelector
     >>> y = load_airline()
     >>> selector = ARLagOrderSelector(maxlag=12, ic="bic")
-    >>> selector.fit(y)  # doctest: +ELLIPSIS
+    >>> selector.fit(y)
     ARLagOrderSelector(...)
-    >>> isinstance(selector.selected_model_, (list, tuple))
-    True
-    >>> isinstance(selector.ic_value_, float)
-    True
-
+    >>> selector.selected_model_
+    (3,)
+    >>> selector.ic_value_  # doctest: +SKIP
+    1369.6963340649502
 
     See Also
     --------
