@@ -208,6 +208,7 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] fix ``RotationForest`` for a custom ``base_estimator`` (:pr:`8270`) :user:`fkiraly`
+* [BUG] reindex features in ``TSFreshClassifier.predict_proba`` to match training columns (:pr:`8285`) :user:`Pranavsingh431`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -244,6 +245,7 @@ Contributors
 :user:`pcpp94`,
 :user:`piyushbiraje`,
 :user:`Prahitha`,
+:user:`Pranavsingh431`,
 :user:`RobKuebler`,
 :user:`szepeviktor`,
 :user:`Tveten`,
