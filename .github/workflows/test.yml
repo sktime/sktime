@@ -185,7 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mlflow-version: ['2.9.2', '3.0.0']
+        mlflow-version: ['2.9.2', '3.latest']
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
@@ -199,7 +199,8 @@ jobs:
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
-          python -m pip install mlflow==${{ matrix.mlflow-version }}
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+            python -m pip install mlflow==${{ matrix.mlflow-version }}
 
       - name: Show dependencies
         run: python -m pip list
