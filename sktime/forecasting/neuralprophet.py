@@ -83,14 +83,14 @@ class NeuralProphet(_ProphetAdapter):
     >>> from sktime.forecasting.neuralprophet import NeuralProphet
     >>> # NeuralProphet requires data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
-    >>> forecaster = NeuralProphet(  # doctest: +SKIP
+    >>> forecaster = NeuralProphet(
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=12,
     ...     add_country_holidays={'country_name': 'US'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     NeuralProphet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(
@@ -192,30 +192,27 @@ class NeuralProphet(_ProphetAdapter):
         -------
         params : dict or list of dict
         """
-        if parameter_set == "default":
-            return [
-                {
-                    "n_changepoints": 0,
-                    "yearly_seasonality": False,
-                    "weekly_seasonality": False,
-                    "daily_seasonality": False,
-                    "epochs": 5,
-                    "uncertainty_samples": 10,
-                    "verbose": False,
-                },
-                {
-                    "growth": "linear",
-                    "n_changepoints": 5,
-                    "yearly_seasonality": True,
-                    "weekly_seasonality": True,
-                    "seasonality_mode": "multiplicative",
-                    "epochs": 10,
-                    "loss_func": "MAE",
-                    "uncertainty_samples": 50,
-                },
-            ]
-        else:
-            return {
+        params = [
+            {
+                "n_changepoints": 0,
+                "yearly_seasonality": False,
+                "weekly_seasonality": False,
+                "daily_seasonality": False,
+                "epochs": 5,
+                "uncertainty_samples": 10,
+                "verbose": False,
+            },
+            {
+                "growth": "linear",
+                "n_changepoints": 5,
+                "yearly_seasonality": True,
+                "weekly_seasonality": True,
+                "seasonality_mode": "multiplicative",
+                "epochs": 10,
+                "loss_func": "MAE",
+                "uncertainty_samples": 50,
+            },
+            {
                 "growth": "discontinuous",
                 "n_changepoints": 3,
                 "yearly_seasonality": 10,
@@ -227,3 +224,5 @@ class NeuralProphet(_ProphetAdapter):
                 "batch_size": 32,
                 "uncertainty_samples": 100,
             }
+        ]
+        return params
