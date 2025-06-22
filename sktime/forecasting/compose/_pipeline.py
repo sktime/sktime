@@ -1827,7 +1827,6 @@ class ForecastX(BaseForecaster):
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.theta import ThetaForecaster
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
