@@ -1,4 +1,5 @@
-"""Tests for TSFreshClassifier."""	
+"""Tests for TSFreshClassifier."""
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
