@@ -381,7 +381,7 @@ class AcorrLjungbox(BaseParamFitter):
         """
         params1 = {}
         params2 = {
-            "lags": 0,
+            "lags": 1,
             "boxpierce": True,
         }
 
@@ -443,7 +443,7 @@ class JarqueBera(BaseParamFitter):
         self.jb_stat_ = jb
         self.jb_pvalue_ = jb_pv
         self.skew_ = skew
-        self.kurtosis = kurtosis
+        self.kurtosis_ = kurtosis
 
         return self
 
@@ -501,9 +501,9 @@ class BreakvarHeteroskedasticityTest(BaseParamFitter):
 
     Attributes
     ----------
-    test_statistic : float
+    bh_statistic_ : float
         Test statistic(s) H(h).
-    p_value : float
+    bh_pvalue_ : float
         p-value(s) of test statistic(s).
 
     Examples
@@ -541,8 +541,8 @@ class BreakvarHeteroskedasticityTest(BaseParamFitter):
             use_f=self.use_f,
         )
         test_statistic, p_value = res
-        self.test_statistic = test_statistic
-        self.p_value = p_value
+        self.bh_statistic_ = test_statistic
+        self.bh_pvalue_ = p_value
 
         return self
 
@@ -567,8 +567,6 @@ class BreakvarHeteroskedasticityTest(BaseParamFitter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
-        params2 = {
-            "axis": 0,
-        }
+        params2 = {"subset_length": 1 / 2, "alternative": "decreasing"}
 
         return [params1, params2]
