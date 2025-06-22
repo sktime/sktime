@@ -401,7 +401,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         try:  # try/except to avoid import errors at construction
             statsforecast_class = self._get_statsforecast_class()
         except Exception:
-            return False
+            return {"int_in_sample": False, "int": False}
 
         if (
             "level"
