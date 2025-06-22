@@ -23,20 +23,19 @@ Version 0.37.1 - 2025-06-22
 Highlights
 ~~~~~~~~~~
 
-* [ENH] Implement reconcilers as transformations, and add new non-negative reconciliation (:pr:`7697`) :user:`felipeangelimvieira`
-* [ENH] ``ClassificationBenchmark`` and ``evaluate`` utility for benchmarking time series classifiers (:pr:`8267`, :pr:`8357`) :user:`ksharma6`, :user:`jgyasu`
-* [ENH] interfacing ``momentfm`` forecaster as a deep learning module  (:pr:`6570`) :user:`julian-fong`
-* [ENH] make ``ForecastKnownValues`` multiindex-ready (:pr:`8236`) :user:`RobKuebler`
-* [ENH] sliding greedy splitter (:pr:`8168`) :user:`marrov`
+* new reconciler module, new non-negative reconciliation (:pr:`7697`) :user:`felipeangelimvieira`
+* ``ClassificationBenchmark`` and ``evaluate`` utility for benchmarking time series classifiers (:pr:`8267`, :pr:`8357`) :user:`ksharma6`, :user:`jgyasu`
+* ``momentfm`` foundation model forecaster (:pr:`6570`) :user:`julian-fong`
+* ``momentfm`` foundation model classifier  (:pr:`8263`) :user:`julian-fong`
+* ``ForecastKnownValues`` can now handle multi-index prescribed forecasts (:pr:`8236`) :user:`RobKuebler`
+* sliding greedy splitter (:pr:`8168`) :user:`marrov`
+* forecast ``evaluate`` utility can now handle temporal and global splits (:pr:`8064`) :user:`benHeid`
+* ``SkforecastRecursive`` now supports in-sample ``predict_quantiles`` (:pr:`8255`) :user:`nahcol10`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``optuna`` (tuning soft dependency) bounds have been updated to ``<4.5``
-
-Core interface changes
-~~~~~~~~~~~~~~~~~~~~~~
-
 
 Enhancements
 ~~~~~~~~~~~~
@@ -51,7 +50,7 @@ BaseObject and base framework
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Add temporal global split to evaluate (:pr:`8064`) :user:`benHeid`
+* [ENH] Add temporal global split to forecast ``evaluate`` utility (:pr:`8064`) :user:`benHeid`
 * [ENH] sliding greedy splitter (:pr:`8168`) :user:`marrov`
 * [ENH] make ``numpy`` output coercions consistent in metrics and distances (:pr:`8194`) :user:`fkiraly`
 * [ENH] Visualisation utility for global splits (:pr:`8204`) :user:`benHeid`
