@@ -201,6 +201,7 @@ jobs:
           python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
           if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
             python -m pip install mlflow==${{ matrix.mlflow-version }}
+          fi
 
       - name: Show dependencies
         run: python -m pip list
