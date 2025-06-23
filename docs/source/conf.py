@@ -45,6 +45,8 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "numpydoc",
+    "sphinx_design",
+    "sphinx_issues",
     # ------------- quality of life -------------------
     "myst_parser",  # .md support
     "sphinx_copybutton",  # “copy-code” buttons
@@ -149,6 +151,8 @@ suppress_warnings = [
 ]
 warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
 show_warning_types = True
+
+issues_github_path = "sktime/sktime"
 
 # -- Options for Texinfo output ----------------------------------------------
 
