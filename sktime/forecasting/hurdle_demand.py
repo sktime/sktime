@@ -44,7 +44,6 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
         }
 
     def _get_predict_data(self, X: pd.DataFrame, fh: ForecastingHorizon):
-        # TODO: handle this better - only append if X is not in self._X
         if X is not None:
             temp = self._X.copy()
             temp.update(X)
