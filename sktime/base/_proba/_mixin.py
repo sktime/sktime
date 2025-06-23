@@ -321,7 +321,7 @@ class _PredictProbaMixin:
         if _check_soft_dependencies("skpro", severity="none"):
             from skpro.distributions.normal import Normal
         else:
-            from sktime.forecasting.base._normal import Normal
+            from sktime.base._proba._normal import Normal
 
         index = pred_mean.index
         columns = pred_mean.columns
