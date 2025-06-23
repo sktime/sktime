@@ -50,6 +50,7 @@ extensions = [
     # ------------- quality of life -------------------
     "myst_parser",  # .md support
     "sphinx_copybutton",  # “copy-code” buttons
+    "sphinx_design",  # panels, buttons on doc overview pages
     "nbsphinx",  # integrates example notebooks
 ]
 
