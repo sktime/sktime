@@ -21,6 +21,7 @@ from numpyro.distributions.transforms import (
     RecursiveLinearTransform,
     SoftplusTransform,
 )
+from prophetverse.engine import BaseInferenceEngine
 from prophetverse.sktime.base import BaseBayesianForecaster
 from skpro.distributions import Empirical
 from xarray import DataArray
@@ -119,18 +120,23 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
 class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
 
-    The mathematics behind the model is the following:
+    The definition of the model is as follows:
         .. math::
             Y_t = \begin{cases}
-                \mathcal{P}(r_t) \text{ if } I_t = 1, \\
-                0 \text{ if } I_t = 0.
+                D_t \vert r_t \sim f(d \vert r_t) &\text{ if } I_t = 1, \\
+                0 &\text{ if } I_t = 0.
             \end{cases}
     where
         .. math::
-            \log{r_t} = \beta_r \cdot X_t + \phi_r \log{r_{t - 1}} + \epsilon_{r, t}, \\
-            \sigma^{-1}(p_t) = \beta_p \cdot X_t + \phi_p \sigma^{-1}(p_{t - 1})
-                + \epsilon_{p, t}, \\
-            I_t \sim \mathcal{B}(p_t),
+            \begin{split}
+                I_t &\sim \mathcal{B}(p_t), \\
+                \log{r_t} &= \beta_r \cdot X_t + \Phi(t, r_{t - 1}), \\
+                \sigma^{-1}(p_t) &= \beta_p \cdot X_t + \Phi \left ( t,
+                \sigma^{-1}(p_t) \right ), \\
+                \Phi_i(t, x) &= \phi_i x + \eta_{t, i}, \eta \sim \mathcal{N}(0,
+                \sigma^2_i),
+            \end{split}
+    :math:`f` denotes a density parameterized by at least a location parameter,
     :math:`X` is the exogenous variables, and :math:`\sigma^{-1}` denotes the logit
     function. The time varying component can be toggled on or off depending on the
     value of the `time_varying_<probability|demand>` parameter.
@@ -147,6 +153,13 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     time_varying_demand: bool, default=False
         Whether to use a time varying demand for the Poisson distribution.
         If True, the demand will be modeled as a time series.
+
+    Notes
+    -----
+    The model is implemented using the `numpyro` library, which allows for inference
+    using both MCMC and VI. MCMC can sometimes be a bit tricky to achieve convergence
+    with (measured in terms of R-hat), so it is recommended to use dense masses for
+    regression parameters should the default inference engine not work well.
 
     """
 
@@ -176,7 +189,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         family: Literal["poisson", "gamma-poisson"] = "gamma-poisson",
         time_varying_probability: bool = False,
         time_varying_demand: bool = False,
-        inference_engine=None,
+        inference_engine: BaseInferenceEngine = None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
 
