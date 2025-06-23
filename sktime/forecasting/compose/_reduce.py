@@ -41,6 +41,7 @@ from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
@@ -2062,8 +2063,15 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
 
+        def sklearn_multioutput(estimator):
+            """Get sklearn tags for estimator."""
+            if _check_soft_dependencies("sklearn<1.5", severity="none"):
+                return estimator._get_tags().get("multioutput", False)
+            else:
+                return estimator.get_tags().target_tags.multi_output
+
         estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
+        if not sklearn_multioutput(estimator):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
