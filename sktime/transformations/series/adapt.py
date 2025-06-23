@@ -177,11 +177,19 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        if hasattr(transformer, "_get_tags"):
-            categorical_list = ["categorical", "1dlabels", "2dlabels"]
-            tag_values = transformer._get_tags()["X_types"]
-            if any(val in tag_values for val in categorical_list):
-                self.set_tags(**{"capability:categorical_in_X": True})
+        def sklearn_supports_categorical(estimator):
+            """Whether the sklearn estimator supports categorical."""
+            if _check_soft_dependencies("sklearn<1.5", severity="none"):
+                if hasattr(transformer, "_get_tags"):
+                    categorical_list = ["categorical", "1dlabels", "2dlabels"]
+                    tag_values = transformer._get_tags()["X_types"]
+                    return any(val in tag_values for val in categorical_list):
+            elif hasattr(transformer, "get_tags"):
+                return estimator.get_tags().input_tags.categorical
+            return False
+
+        if sklearn_supports_categorical(transformer):
+            self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
