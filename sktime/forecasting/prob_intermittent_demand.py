@@ -180,22 +180,18 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         sigma = numpyro.sample("sigma", LogNormal()) ** 0.5
         reversion_speed = numpyro.sample("phi", TruncatedNormal(low=-1.0, high=1.0))
 
-        alpha = jnp.zeros((1, 1))
-
         transition_matrix = reversion_speed.reshape((1, 1))
-        alpha = alpha.reshape((1, 1))
 
-        eps = Normal(loc=alpha, scale=sigma).expand((length, 1)).to_event(1)
-
+        eps = Normal(scale=sigma).expand((length, 1)).to_event(1)
         time_varying_component = numpyro.sample(
             "x",
             TransformedDistribution(
                 eps, RecursiveLinearTransform(transition_matrix=transition_matrix)
             ),
-        ).squeeze(1)
+        )
 
         if oos > 0:
-            mean = jnp.eye(oos, 1) * time_varying_component[-1] + alpha
+            mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
             eps_oos = Normal(mean, sigma).to_event(1)
 
             x_oos = numpyro.sample(
@@ -204,13 +200,13 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
                     eps_oos,
                     RecursiveLinearTransform(transition_matrix=transition_matrix),
                 ),
-            ).squeeze(1)
+            )
 
             time_varying_component = jnp.concatenate(
                 (time_varying_component, x_oos), axis=0
             )
 
-        return regressors + time_varying_component
+        return regressors + time_varying_component.squeeze(-1)
 
     def _sample_probability(
         self, length: int, X: np.ndarray, oos: int = 0
