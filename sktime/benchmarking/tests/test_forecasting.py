@@ -195,7 +195,7 @@ def test_forecastingbenchmark_global_mode(
     expected_results_df,
     scorers,
 ):
-    """Test benchmarking a forecaster estimator in gloabl mode."""
+    """Test benchmarking a forecaster estimator in global mode."""
     from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
 
     benchmark = ForecastingBenchmark()
@@ -203,7 +203,7 @@ def test_forecastingbenchmark_global_mode(
     params = {
         "trainer_params": {
             # the training process is not deterministic
-            # train 10 epoches to make sure loss is low enough
+            # train 10 epochs to make sure loss is low enough
             "max_epochs": 1,
         },
         "model_params": {

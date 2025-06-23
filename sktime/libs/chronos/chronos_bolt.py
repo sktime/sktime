@@ -187,7 +187,7 @@ class ResidualBlock(nn.Module):
     """
     A Residual Block for optional LayerNorm and Dropout.
 
-    This block implementes a standard residual connection that allows gradients to flow
+    This block implements a standard residual connection that allows gradients to flow
     through the layers more effectively. It consists of two layers with an activation
     function in between with an option dropout and layer normalization operation.
 
@@ -726,7 +726,7 @@ class ChronosBoltPipeline:
         ------
         ValueError
             When limit_prediction_length is True and the prediction_length is
-            greater than model's trainig prediction_length.
+            greater than model's training prediction_length.
         """
         context_tensor = self._prepare_and_validate_context(context=context)
 
