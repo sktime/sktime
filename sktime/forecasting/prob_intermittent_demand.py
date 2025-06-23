@@ -133,7 +133,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "authors": ["tingiskhan", "felipeangleimvieira"],
         "maintainers": ["tingiskhan"],
         "python_version": None,
-        "python_dependencies": ["prophetverse"],
+        "python_dependencies": ["prophetverse", "xarray"],
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
