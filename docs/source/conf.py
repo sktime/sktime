@@ -153,7 +153,6 @@ suppress_warnings = [
 warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
 show_warning_types = True
 
-
 # --------------------------------------------------------------------------- #
 #  Configurations for sphinx_issues extension and linkcode
 # --------------------------------------------------------------------------- #
