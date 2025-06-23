@@ -100,6 +100,9 @@ class BaseSplitter(BaseObject):
         # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

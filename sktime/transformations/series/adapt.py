@@ -153,6 +153,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "univariate-only": False,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -504,6 +507,9 @@ class PandasTransformAdaptor(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "remember_data": False,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):
