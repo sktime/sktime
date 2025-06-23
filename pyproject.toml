@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.37.0"
+version = "0.37.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -51,7 +51,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib>=1.2.0,<1.6",  # required for parallel processing
+  "joblib>=1.2.0,<1.5",  # required for parallel processing
   "numpy>=1.21,<2.3",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
@@ -304,12 +304,15 @@ dl = [
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
+  "mlflow<4.0",
+]
+mlflow2 = [
   "mlflow<3.0",
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
-  "mlflow<3.0",
+  "mlflow<4.0",
   "moto",
 ]
 numpy1 = [

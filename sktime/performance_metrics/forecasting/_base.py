@@ -98,6 +98,9 @@ class BaseForecastingErrorMetric(BaseMetric):
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
         "reserved_params": ["multioutput", "multilevel", "by_index"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

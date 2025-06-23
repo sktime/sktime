@@ -68,6 +68,9 @@ class DropNA(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]
