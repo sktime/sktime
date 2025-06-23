@@ -45,6 +45,8 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "numpydoc",
+    # ------------- required for changelogs -----------
+    "sphinx_issues",  # links to issues, pr, users in changelog
     # ------------- quality of life -------------------
     "myst_parser",  # .md support
     "sphinx_copybutton",  # “copy-code” buttons
