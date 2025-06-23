@@ -60,23 +60,23 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     6. **Model Architecture**: The final configuration is used to construct the
        *model architecture*.
 
-    7. **Pretrained Weights**: *pretrained weights* are loded from the ``model_path``,
-       these weights are then aligned and loaded into the *model architechture*.
+    7. **Pretrained Weights**: *pretrained weights* are loaded from the ``model_path``,
+       these weights are then aligned and loaded into the *model architecture*.
 
     8. **Weight Alignment**: However sometimes, *pretrained weights* do not align with
-       the *model architechture*, because the config was changed which created a
-       *model architechture* of different size than the default one.
-       This causes some of the weights in *model architechture* to be reinitialized
+       the *model architecture*, because the config was changed which created a
+       *model architecture* of different size than the default one.
+       This causes some of the weights in *model architecture* to be reinitialized
        randomly instead of using the pre-trained weights.
 
     **Training Strategies**:
 
     - **Zero-shot Forecasting**: When all the *pre-trained weights* are correctly
-      aligned with the *model architechture*, fine-tuing part is bypassed and
+      aligned with the *model architecture*, fine-tuing part is bypassed and
       the model preforms zero-short forecasting.
 
     - **Minimal Fine-tuning**: When not all the *pre-trained weights* are correctly
-      aligned with the *model architechture*, rather some weights are re-initialized,
+      aligned with the *model architecture*, rather some weights are re-initialized,
       these re-initialized weights are fine-tuned on the provided data.
 
     - **Full Fine-tuning**:  The model is *fully fine-tuned* on new data, updating *all

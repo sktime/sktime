@@ -456,7 +456,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -804,7 +804,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -1074,7 +1074,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment

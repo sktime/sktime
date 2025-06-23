@@ -126,7 +126,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         classname = estimator_class.__name__
 
         # if numba is not installed, some estimators may still try to construct
-        # numba dependenct estimators in results_comparison
+        # numba dependent estimators in results_comparison
         # if that is the case, we skip the test
         if classname in unit_test_proba.keys():
             parameter_set = "results_comparison"
@@ -180,7 +180,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # if numba is not installed, some estimators may still try to construct
-        # numba dependenct estimators in results_eomparison
+        # numba dependent estimators in results_eomparison
         # if that is the case, we skip the test
         try:
             # we only use the first estimator instance for testing
