@@ -514,22 +514,6 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
         return TestAllPanelTransformers
 
 
-class distribution(_BaseScitypeOfObject):
-    """Pandas-like probability distribution."""
-
-    _tags = {
-        "scitype_name": "distribution",
-        "short_descr": "pandas-like probability distribution",
-        "parent_scitype": "object",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from skpro.distributions.base import BaseDistribution
-
-        return BaseDistribution
-
-
 class dataset(_BaseScitypeOfObject):
     """Dataset object."""
 
