@@ -12,13 +12,13 @@ from sktime.utils.warnings import warn
 def is_initalised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
     warn(
-        "Warning: the is_initalised_estimatormethod "
+        "Warning: the is_initialised_estimatormethod "
         "is deprecated and will be removed in the 0.38.0 release. ",
     )
-    return _is_initalised_estimator(estimator)
+    return _is_initialised_estimator(estimator)
 
 
-def _is_initalised_estimator(estimator: BaseEstimator) -> bool:
+def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
     if isinstance(estimator, BaseEstimator):
         return True
@@ -36,7 +36,7 @@ def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
     if isinstance(objs, BaseEstimator):
         objs = [objs]
     items = objs.values() if isinstance(objs, dict) else objs
-    compatible = all(_is_initalised_estimator(estimator) for estimator in items)
+    compatible = all(_is_initialised_estimator(estimator) for estimator in items)
     if not compatible:
         raise TypeError(
             "One or many estimator(s) is not an initialised BaseEstimator "

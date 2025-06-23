@@ -22,7 +22,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         "authors": ["yarnabrina", "arnaujc91"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast", "scipy<1.16"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -397,7 +398,11 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             - `support_pred_int`: True if prediction intervals are supported
               in `predict`, False otherwise.
         """
-        statsforecast_class = self._get_statsforecast_class()
+        try:  # try/except to avoid import errors at construction
+            statsforecast_class = self._get_statsforecast_class()
+        except Exception:
+            return {"int_in_sample": False, "int": False}
+
         if (
             "level"
             not in signature(statsforecast_class.predict_in_sample).parameters.keys()
