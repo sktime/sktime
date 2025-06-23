@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Optional, Union
 
-import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
@@ -24,7 +23,6 @@ from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.utils.unique_str import _make_strings_unique
-from sktime.utils.warnings import warn
 
 
 def _coerce_data_for_evaluate(dataset_loader):

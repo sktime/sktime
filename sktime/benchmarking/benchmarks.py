@@ -5,7 +5,6 @@ from typing import Optional, Union
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.warnings import warn
 
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
@@ -54,7 +53,7 @@ def _coerce_estimator_and_id(estimators, estimator_id=None):
         return estimators
     elif isinstance(estimators, list):
         return {estimator.__class__.__name__: estimator for estimator in estimators}
-    elif is_initalised_estimator(estimators):
+    elif _is_initialised_estimator(estimators):
         estimator_id = estimator_id or estimators.__class__.__name__
         return {estimator_id: estimators}
     else:
