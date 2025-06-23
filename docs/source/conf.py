@@ -59,7 +59,7 @@ extensions = [
 # --------------------------------------------------------------------------- #
 
 parallel_jobs = "auto"  # -j auto  ⇒ multiprocess build
-autosummary_generate = False  # we commit .rst stubs
+autosummary_generate = True
 autosummary_imported_members = False  # no deep imports
 nbsphinx_execute = "never"  # *no* notebook execution
 
@@ -80,6 +80,8 @@ add_module_names = False  # cleaner headings
 # Mock heavy optional runtimes (imported, but not needed for docs)
 autodoc_mock_imports = ["tensorflow", "torch", "jax", "cvxopt", "pytorch_lightning"]
 
+templates_path = ["_templates"]
+
 # --------------------------------------------------------------------------- #
 #  Intersphinx — keep only the big neighbours
 # --------------------------------------------------------------------------- #
@@ -87,8 +89,12 @@ autodoc_mock_imports = ["tensorflow", "torch", "jax", "cvxopt", "pytorch_lightni
 intersphinx_mapping = {
     "python": (f"https://docs.python.org/{sys.version_info.major}", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
 }
 
 # --------------------------------------------------------------------------- #
@@ -101,6 +107,12 @@ html_favicon = "images/sktime-favicon.ico"
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 
+html_sidebars = {
+    "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
+    "index": [],
+    "get_started": [],
+    "search": [],
+}
 html_context = {
     "github_user": "sktime",
     "github_repo": "sktime",
@@ -109,8 +121,6 @@ html_context = {
 }
 
 html_theme_options = {
-    "navigation_depth": 2,  # collapses deep trees
-    "collapse_navigation": True,
     "show_prev_next": False,
     "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
@@ -161,43 +171,11 @@ show_warning_types = True
 issues_github_path = "sktime/sktime"
 
 
-def linkcode_resolve(domain, info):
-    """Return URL to source code corresponding.
-    Parameters
-    ----------
-    domain : str
-    info : dict
-    Returns
-    -------
-    url : str
-    """
-
-    def find_source():
-        # try to find the file and line number, based on code from numpy:
-        # https://github.com/numpy/numpy/blob/main/doc/source/conf.py#L286
-        obj = sys.modules[info["module"]]
-        for part in info["fullname"].split("."):
-            obj = getattr(obj, part)
-        import inspect
-        import os
-
-        fn = inspect.getsourcefile(obj)
-        fn = os.path.relpath(fn, start=os.path.dirname(sktime.__file__))
-        source, lineno = inspect.getsourcelines(obj)
-        return fn, lineno, lineno + len(source) - 1
-
-    if domain != "py" or not info["module"]:
-        return None
-    try:
-        filename = "sktime/%s#L%d-L%d" % find_source()
-    except Exception:
-        filename = info["module"].replace(".", "/") + ".py"
-    return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
-
 # --------------------------------------------------------------------------- #
 #  Estimator overview table - automatically generated
 #  This is a table of all estimators in sktime, with their tags, authors
 # --------------------------------------------------------------------------- #
+
 
 def _make_estimator_overview(app):
     """Make estimator overview table."""
@@ -507,9 +485,6 @@ Generated using nbsphinx_. The Jupyter notebook can be found here_.
 .. _here: {notebook_url}
 .. _nbsphinx: https://nbsphinx.readthedocs.io/
 """
-
-# -- Options for _todo extension ----------------------------------------------
-todo_include_todos = False
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True
