@@ -53,6 +53,7 @@ extensions = [
     "sphinx_design",  # panels, buttons on doc overview pages
     "nbsphinx",  # integrates example notebooks
     "sphinx.ext.linkcode",  # links to source code
+    "sphinx.ext.autosectionlabel",  # auto-label sections
 ]
 
 # --------------------------------------------------------------------------- #
