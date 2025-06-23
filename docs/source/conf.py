@@ -163,10 +163,12 @@ issues_github_path = "sktime/sktime"
 
 def linkcode_resolve(domain, info):
     """Return URL to source code corresponding.
+
     Parameters
     ----------
     domain : str
     info : dict
+
     Returns
     -------
     url : str
@@ -194,10 +196,12 @@ def linkcode_resolve(domain, info):
         filename = info["module"].replace(".", "/") + ".py"
     return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
 
+
 # --------------------------------------------------------------------------- #
 #  Estimator overview table - automatically generated
 #  This is a table of all estimators in sktime, with their tags, authors
 # --------------------------------------------------------------------------- #
+
 
 def _make_estimator_overview(app):
     """Make estimator overview table."""
