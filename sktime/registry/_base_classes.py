@@ -525,7 +525,7 @@ class distribution(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.proba._base import BaseDistribution
+        from skpro.distributions.base import BaseDistribution
 
         return BaseDistribution
 
