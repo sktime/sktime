@@ -162,6 +162,40 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     with (measured in terms of R-hat), so it is recommended to use dense masses for
     regression parameters should the default inference engine not work well.
 
+    Examples
+    --------
+    >>> from sktime.forecasting.hurdle_demand import HurdleDemandForecaster
+    >>> from prophetverse.engine import MCMCInferenceEngine
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from sktime.transformations.compose import YtoX
+    >>> from sktime.transformations.series.fourier import FourierFeatures
+    >>> from sktime.datasets import load_PBS_dataset
+    >>> from sklearn.model_selection import train_test_split
+    >>>
+    >>> numpyro.set_host_device_count(4)
+    >>> numpyro.set_platform("cpu")
+    >>>
+    >>> data = load_PBS_dataset()
+    >>> data.index = data.index.to_timestamp() + pd.tseries.offsets.MonthEnd(0)
+    >>>
+    >>> y_train, y_test = train_test_split(data, test_size=0.3, shuffle=False)
+    >>> engine = MCMCInferenceEngine(
+    >>>    num_samples=1_000,
+    >>>    num_warmup=5_000,
+    >>>    num_chains=4,
+    >>>    r_hat=1.1,
+    >>>    dense_mass=[("probability/beta",), ("demand/beta",)],
+    >>> )
+    >>> model = HurdleDemandForecaster(
+    >>>     time_varying_demand=True,
+    >>>     time_varying_probability=True,
+    >>>     inference_engine=engine,
+    >>> )
+    >>> model.fit(y_train)
+
+    See also the notebook under
+    `examples/forecasting/probabilistic_intermittent_demand.ipynb`.
     """
 
     _tags = {
