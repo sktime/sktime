@@ -16,7 +16,11 @@ from numpyro.distributions import (
     TransformedDistribution,
     TruncatedNormal,
 )
-from numpyro.distributions.transforms import RecursiveLinearTransform, SoftplusTransform
+from numpyro.distributions.transforms import (
+    AffineTransform,
+    RecursiveLinearTransform,
+    SoftplusTransform,
+)
 from prophetverse.sktime.base import BaseBayesianForecaster
 from skpro.distributions import Empirical
 from xarray import DataArray
@@ -201,23 +205,30 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
         transition_matrix = reversion_speed.reshape((1, 1))
 
-        eps = Normal(scale=sigma).expand((length, 1)).to_event(1)
+        eps = Normal().expand((length, 1)).to_event(1)
         time_varying_component = numpyro.sample(
             "x",
             TransformedDistribution(
-                eps, RecursiveLinearTransform(transition_matrix=transition_matrix)
+                eps,
+                [
+                    AffineTransform(0.0, sigma),
+                    RecursiveLinearTransform(transition_matrix=transition_matrix),
+                ],
             ),
         )
 
         if oos > 0:
             mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
-            eps_oos = Normal(mean, sigma).to_event(1)
+            eps_oos = Normal().expand((oos, 1)).to_event(1)
 
             x_oos = numpyro.sample(
                 "x_oos",
                 TransformedDistribution(
                     eps_oos,
-                    RecursiveLinearTransform(transition_matrix=transition_matrix),
+                    [
+                        AffineTransform(mean, sigma),
+                        RecursiveLinearTransform(transition_matrix=transition_matrix),
+                    ],
                 ),
             )
 
