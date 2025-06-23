@@ -1,5 +1,7 @@
 """Probabilistic Intermittent Demand Forecaster."""
 
+from typing import Literal
+
 import jax.nn
 import jax.numpy as jnp
 import numpy as np
@@ -7,13 +9,14 @@ import numpyro.handlers
 import pandas as pd
 from numpyro.distributions import (
     Bernoulli,
+    GammaPoisson,
     LogNormal,
     Normal,
     Poisson,
     TransformedDistribution,
     TruncatedNormal,
 )
-from numpyro.distributions.transforms import RecursiveLinearTransform
+from numpyro.distributions.transforms import RecursiveLinearTransform, SoftplusTransform
 from prophetverse.sktime.base import BaseBayesianForecaster
 from skpro.distributions import Empirical
 from xarray import DataArray
@@ -127,6 +130,20 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     :math:`X` is the exogenous variables, and :math:`\sigma^{-1}` denotes the logit
     function. The time varying component can be toggled on or off depending on the
     value of the `time_varying_<probability|demand>` parameter.
+
+    Parameters
+    ----------
+    family: str, default="gamma-poisson"
+        The family of the model. Can be either "poisson" or "gamma-poisson".
+
+    time_varying_probability: bool, default=False
+        Whether to use a time varying probability for the Bernoulli distribution.
+        If True, the probability will be modeled as a time series.
+
+    time_varying_demand: bool, default=False
+        Whether to use a time varying demand for the Poisson distribution.
+        If True, the demand will be modeled as a time series.
+
     """
 
     _tags = {
@@ -152,12 +169,14 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     def __init__(
         self,
+        family: Literal["poisson", "gamma-poisson"] = "gamma-poisson",
         time_varying_probability: bool = False,
         time_varying_demand: bool = False,
         inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
 
+        self.family = family
         self.time_varying_probability = time_varying_probability
         self.time_varying_demand = time_varying_demand
 
@@ -258,10 +277,18 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
                 "events:ignore", Bernoulli(prob), obs=events
             )
 
-        with numpyro.handlers.mask(mask=events_mask & mask):
-            sampled_demand = numpyro.sample(
-                "demand:ignore", Poisson(demand), obs=observed_demand
+        if self.family == "gamma-poisson":
+            concentration = numpyro.sample(
+                "concentration", TransformedDistribution(Normal(), SoftplusTransform())
             )
+            dist = GammaPoisson(concentration, demand)
+        elif self.family == "poisson":
+            dist = Poisson(demand)
+        else:
+            raise ValueError(f"Unknown family: {self.family}!")
+
+        with numpyro.handlers.mask(mask=events_mask & mask):
+            sampled_demand = numpyro.sample("demand:ignore", dist, obs=observed_demand)
 
         if oos == 0:
             return
