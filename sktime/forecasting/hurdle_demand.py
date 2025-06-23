@@ -28,9 +28,10 @@ from xarray import DataArray
 
 from sktime.forecasting.base import ForecastingHorizon
 
+
 # TODO: think about priors, can we make them more informative?
-
-
+# TODO: add updating logic based on using means of posterior samples
+#  (do this in prophetverse
 class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
     """Base class for probabilistic intermittent demand forecasters."""
 
