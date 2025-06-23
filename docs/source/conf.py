@@ -45,9 +45,12 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "numpydoc",
+    # ------------- required for changelogs -----------
+    "sphinx_issues",  # links to issues, pr, users in changelog
     # ------------- quality of life -------------------
     "myst_parser",  # .md support
     "sphinx_copybutton",  # “copy-code” buttons
+    "sphinx_design",  # panels, buttons on doc overview pages
     "nbsphinx",  # integrates example notebooks
 ]
 
@@ -150,8 +153,51 @@ suppress_warnings = [
 warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
 show_warning_types = True
 
-# -- Options for Texinfo output ----------------------------------------------
+# --------------------------------------------------------------------------- #
+#  Configurations for sphinx_issues extension and linkcode
+# --------------------------------------------------------------------------- #
 
+# Link to GitHub repo for github_issues extension
+issues_github_path = "sktime/sktime"
+
+
+def linkcode_resolve(domain, info):
+    """Return URL to source code corresponding.
+    Parameters
+    ----------
+    domain : str
+    info : dict
+    Returns
+    -------
+    url : str
+    """
+
+    def find_source():
+        # try to find the file and line number, based on code from numpy:
+        # https://github.com/numpy/numpy/blob/main/doc/source/conf.py#L286
+        obj = sys.modules[info["module"]]
+        for part in info["fullname"].split("."):
+            obj = getattr(obj, part)
+        import inspect
+        import os
+
+        fn = inspect.getsourcefile(obj)
+        fn = os.path.relpath(fn, start=os.path.dirname(sktime.__file__))
+        source, lineno = inspect.getsourcelines(obj)
+        return fn, lineno, lineno + len(source) - 1
+
+    if domain != "py" or not info["module"]:
+        return None
+    try:
+        filename = "sktime/%s#L%d-L%d" % find_source()
+    except Exception:
+        filename = info["module"].replace(".", "/") + ".py"
+    return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
+
+# --------------------------------------------------------------------------- #
+#  Estimator overview table - automatically generated
+#  This is a table of all estimators in sktime, with their tags, authors
+# --------------------------------------------------------------------------- #
 
 def _make_estimator_overview(app):
     """Make estimator overview table."""
