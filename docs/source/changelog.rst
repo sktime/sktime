@@ -55,6 +55,41 @@ Forecasting
 * removed: the ``proba`` module has been removed from ``sktime``. Users should replace
   imports from ``sktime.proba`` with imports from ``skpro.distributions``, in the ``skpro`` package.
 
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update pandas requirement from ``<2.3.0,>=1.1`` to ``>=1.1,<2.4.0`` (:pr:`8349`) :user:`dependabot[bot]`
+* [MNT] lint ``conf.py`` (:pr:`8437`) :user:`fkiraly`
+* [MNT] increase ``joblib`` bound to ``joblib<1.7`` (:pr:`8424`) :user:`fkiraly`
+* [MNT] revert documentation PR 8385 (:pr:`8442`) :user:`fkiraly`
+* [MNT] add ``scipy<1.16`` bounds to incompatible estimators (:pr:`8447`) :user:`fkiraly`
+* [MNT] raise ``numpy`` bound to ``numpy<2.4`` (:pr:`8414`) :user:`fkiraly`
+* [MNT] 0.38.0 deprecations and change actions (:pr:`8429`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+* [MNT] ``sklearn 1.7`` compatibility (:pr:`8439`) :user:`fkiraly`
+* [MNT] raise ``scikit-learn`` bound to  ``<1.8.0`` (:pr:`8402`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add new reconcilers to API reference (:pr:`8440`) :user:`felipeangelimvieira`
+
+Fixes
+~~~~~
+
+* [BUG] Documentation ``conf.py`` is missing mandatory extensions (:pr:`8435`) :user:`felipeangelimvieira`
+* [BUG] fix sphinx changelog link generation and panel overview (:pr:`8432`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`jgyasu`,
+:user:`yarnabrina`
+
+
 Version 0.37.1 - 2025-06-22
 ---------------------------
 
