@@ -461,12 +461,13 @@ class SeasonalityPeriodogram(BaseParamFitter):
 
     _tags = {
         "authors": ["blazingbhavneek"],
-        "maintainers": ["blaingbhavneek"],
+        "maintainers": ["blazingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
         "capability:missing_values": True,
         "capability:multivariate": False,
-        "python_dependencies": "seasonal",
+        # todo 0.39.0: check whether numpy<2.4 is still needed
+        "python_dependencies": ["seasonal", "numpy<2.4"],
     }
 
     def __init__(self, min_period=4, max_period=None, thresh=0.10):
