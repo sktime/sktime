@@ -40,6 +40,15 @@ Benchmarking, Metrics, Splitters
 * deprecated methods from ``BaseBenchmark`` have been removed
 * ``forecasting_validation`` utility has been removed - users should call ``ForecastingBenchmark`` instead
 
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* unuesd copies datasets have been removed from ``sktime.datasets.data``.
+  Users should replace any direct read of data files in ``sktime.datasets.data`` with loading
+  via dataset classes or loader functions. For example, reading ``ArrowHead_TRAIN.tsv``
+  should be replaced by calling ``load`` from
+  ``sktime.datasets.classification.ArrowHead``.
+
 Forecasting
 ^^^^^^^^^^^
 
