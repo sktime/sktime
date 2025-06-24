@@ -27,7 +27,7 @@ from sktime.utils.unique_str import _make_strings_unique
 
 def _coerce_data_for_evaluate(dataset_loader):
     """Coerce data input object to a dict to pass to forecasting evaluate."""
-    # TODO: remove in 0.38.0
+    # TODO: remove in 0.39.0
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
         data = dataset_loader()
     elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
