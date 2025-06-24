@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class VARReduce(BaseForecaster):
@@ -277,10 +276,14 @@ class VARReduce(BaseForecaster):
 
         def sklearn_multioutput(estimator):
             """Get sklearn tags for estimator."""
-            if _check_soft_dependencies("sklearn<1.7", severity="none"):
+            from sktime.utils.dependencies import _check_soft_dependencies
+
+            if _check_soft_dependencies("sklearn<1.6", severity="none"):
                 return estimator._get_tags().get("multioutput", False)
             else:
-                return estimator.get_tags().target_tags.multi_output
+                from sklearn.utils import get_tags
+
+                return get_tags(estimator).target_tags.multi_output
 
         native_multioutput_support = sklearn_multioutput(self.regressor_)
         if not native_multioutput_support:
