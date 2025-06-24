@@ -166,8 +166,8 @@ class RotationForest(_SklVersionBridgeMixin, ClassifierMixin, BaseEstimator):
         from joblib import Parallel, delayed
 
         X, y = self._validate_data_version_safe(
-            X,
-            y,
+            X=X,
+            y=y,
             dtype=[np.float32, np.float64],
             ensure_2d=True,
             allow_nd=True,
@@ -298,7 +298,7 @@ class RotationForest(_SklVersionBridgeMixin, ClassifierMixin, BaseEstimator):
             return np.repeat([[1]], X.shape[0], axis=0)
 
         X = self._validate_data_version_safe(
-            X,
+            X=X,
             dtype=[np.float32, np.float64],
             reset=False,
             ensure_2d=True,
@@ -332,7 +332,7 @@ class RotationForest(_SklVersionBridgeMixin, ClassifierMixin, BaseEstimator):
 
         check_is_fitted(self)
         X = self._validate_data_version_safe(
-            X,
+            X=X,
             dtype=[np.float32, np.float64],
             reset=False,
             ensure_2d=True,
