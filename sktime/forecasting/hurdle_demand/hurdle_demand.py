@@ -9,8 +9,8 @@ import numpyro.handlers
 import pandas as pd
 from numpyro.distributions import (
     Bernoulli,
-    GammaPoisson,
     LogNormal,
+    NegativeBinomial2,
     Normal,
     Poisson,
     TransformedDistribution,
@@ -27,6 +27,7 @@ from skpro.distributions import Empirical
 from xarray import DataArray
 
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
 
 
 # TODO: think about priors, can we make them more informative?
@@ -220,7 +221,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     def __init__(
         self,
-        family: Literal["poisson", "gamma-poisson"] = "gamma-poisson",
+        family: Literal["poisson", "negative-binomial"] = "negative-binomial",
         time_varying_probability: bool = False,
         time_varying_demand: bool = False,
         inference_engine: BaseInferenceEngine = None,
@@ -335,18 +336,22 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
                 "events:ignore", Bernoulli(prob), obs=events
             )
 
-        if self.family == "gamma-poisson":
+        if self.family == "negative-binomial":
             concentration = numpyro.sample(
                 "concentration", TransformedDistribution(Normal(), SoftplusTransform())
             )
-            dist = GammaPoisson(concentration, demand)
+            dist = NegativeBinomial2(demand, concentration)
         elif self.family == "poisson":
             dist = Poisson(demand)
         else:
             raise ValueError(f"Unknown family: {self.family}!")
 
+        truncated = TruncatedDiscrete(dist)
+
         with numpyro.handlers.mask(mask=events_mask & mask):
-            sampled_demand = numpyro.sample("demand:ignore", dist, obs=observed_demand)
+            sampled_demand = numpyro.sample(
+                "demand:ignore", truncated, obs=observed_demand
+            )
 
         if index is None:
             return
