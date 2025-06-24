@@ -2065,7 +2065,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         def sklearn_multioutput(estimator):
             """Get sklearn tags for estimator."""
-            if _check_soft_dependencies("sklearn<1.5", severity="none"):
+            if _check_soft_dependencies("sklearn<1.7", severity="none"):
                 return estimator._get_tags().get("multioutput", False)
             else:
                 return estimator.get_tags().target_tags.multi_output
