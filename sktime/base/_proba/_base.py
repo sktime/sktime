@@ -13,7 +13,6 @@ import pandas as pd
 from sktime.base import BaseObject
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.pandas import df_map
-from sktime.utils.warnings import warn as _warn
 
 
 class BaseDistribution(BaseObject):
@@ -45,20 +44,6 @@ class BaseDistribution(BaseObject):
 
         super().__init__()
         _check_estimator_deps(self)
-
-        _warn(
-            "The proba module in sktime is deprecated and will "
-            "be fully replaced by skpro in sktime version 0.38.0. "
-            "Until 0.38.0, imports from proba will continue working, "
-            "defaulting to sktime.proba if skpro is not present, "
-            "otherwise redirecting imports to skpro objects. "
-            "To silence this message, ensure skpro is installed in the environment."
-            "If using the sktime.proba module directly, "
-            "in addition, replace any imports from "
-            "sktime.proba with imports from skpro.distributions.",
-            obj=self,
-            stacklevel=2,
-        )
 
     @property
     def loc(self):

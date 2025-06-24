@@ -315,7 +315,13 @@ class _PredictProbaMixin:
         # pred_mean and pred_var now have the same format
 
         # default is normal with predict as mean and pred_var as variance
-        from sktime.proba.normal import Normal
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        # silent fork of Normal in sktime if skpro is not installed
+        if _check_soft_dependencies("skpro", severity="none"):
+            from skpro.distributions.normal import Normal
+        else:
+            from sktime.base._proba._normal import Normal
 
         index = pred_mean.index
         columns = pred_mean.columns
