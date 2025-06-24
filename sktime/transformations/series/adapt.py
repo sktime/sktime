@@ -187,7 +187,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
             else:
                 from sklearn.utils import get_tags
 
-                return get_tags(estimator).input_tags.categorical
+                cat1 = get_tags(estimator).input_tags.categorical
+                cat2 = get_tags(estimator).target_tags.one_d_labels
+                cat3 = get_tags(estimator).target_tags.two_d_labels
+                return cat1 or cat2 or cat3
             return False
 
         if sklearn_supports_categorical(transformer):
