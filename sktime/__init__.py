@@ -1,4 +1,7 @@
-"""sktime."""
+"""sktime - the package for AI with time series.
+
+See https://www.sktime.net/ for documentation and tutorials.
+"""
 
 __version__ = "0.38.0"
 
