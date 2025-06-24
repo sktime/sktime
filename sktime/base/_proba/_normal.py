@@ -24,7 +24,7 @@ class Normal(BaseDistribution):
 
     Examples
     --------
-    >>> from sktime.forecasting.base._normal import Normal
+    >>> from sktime.forecasting.base._proba._normal import Normal
 
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
     """
