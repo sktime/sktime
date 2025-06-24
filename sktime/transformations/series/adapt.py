@@ -183,7 +183,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
                 if hasattr(transformer, "_get_tags"):
                     categorical_list = ["categorical", "1dlabels", "2dlabels"]
                     tag_values = transformer._get_tags()["X_types"]
-                    return any(val in tag_values for val in categorical_list):
+                    return any(val in tag_values for val in categorical_list)
             elif hasattr(transformer, "get_tags"):
                 return estimator.get_tags().input_tags.categorical
             return False
