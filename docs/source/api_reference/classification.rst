@@ -77,6 +77,19 @@ Deep learning
     rnn.SimpleRNNClassifier
     tapnet.TapNetClassifier
 
+Foundation models
+-----------------
+
+.. currentmodule:: sktime.classification.foundation_models
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMClassifier
+
+
 Dictionary-based
 ----------------
 

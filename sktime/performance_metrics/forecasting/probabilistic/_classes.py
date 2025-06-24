@@ -679,7 +679,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         y_true_np = np.tile(y_true_np, no_scores)
 
-        truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
+        truth_array = (y_true_np >= lower).astype(int) * (y_true_np <= upper).astype(
+            int
+        )
 
         out_df = pd.DataFrame(
             truth_array, columns=pd.MultiIndex.from_product([vars, scores])
