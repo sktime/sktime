@@ -5,7 +5,7 @@ import warnings
 import pandas as pd
 import pytest
 
-from sktime.forecasting.base._proba._normal import Normal
+from sktime.base._proba._normal import Normal
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
     CRPS,
     AUCalibration,
