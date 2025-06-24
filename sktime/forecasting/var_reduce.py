@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class VARReduce(BaseForecaster):
