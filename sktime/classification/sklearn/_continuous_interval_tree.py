@@ -13,10 +13,10 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
-from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 
 
 class ContinuousIntervalTree(_SklVersionBridgeMixin, BaseEstimator):
