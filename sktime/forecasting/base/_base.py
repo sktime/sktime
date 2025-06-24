@@ -2296,13 +2296,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
+            X_new = X.iloc[new_window] if X is not None else X
 
             # we use `update_predict_single` here
             #  this updates the forecasting horizon
             y_pred = self_copy.update_predict_single(
                 y=y_new,
                 fh=fh,
-                X=X,
+                X=X_new,
                 update_params=update_params,
             )
             y_preds.append(y_pred)
