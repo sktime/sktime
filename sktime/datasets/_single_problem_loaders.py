@@ -1177,9 +1177,9 @@ def load_macroeconomic():
           http://www.bls.gov/data/; accessed December 15, 2009.
     """
     _check_soft_dependencies("statsmodels")
-    from statsmodels.api.datasets import macrodata
+    import statsmodels.api as sm
 
-    y = macrodata.load_pandas().data
+    y = sm.datasets.macrodata.load_pandas().data
     y["year"] = y["year"].astype(int).astype(str)
     y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
     y["time"] = y["year"] + "-" + y["quarter"]
