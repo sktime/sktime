@@ -16,7 +16,6 @@ class _SklVersionBridgeMixin:
 
     def _validate_data_version_safe(self, **kwargs):
         """Validate data using the version-safe method."""
-
         if self._sklearn_15_or_lower():
             return self._validate_data(**kwargs)
         else:
