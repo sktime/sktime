@@ -21,4 +21,4 @@ class _SklVersionBridgeMixin:
         else:
             from sklearn.utils.validation import validate_data
 
-            return validate_data(**kwargs)
+            return validate_data(self, **kwargs)
