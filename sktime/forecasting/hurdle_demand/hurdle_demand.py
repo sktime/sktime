@@ -130,7 +130,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     where
         .. math::
             \begin{split}
-                I_t &\sim \mathcal{B}(p_t), \\
+                I_t &\sim \mathcal{B}(1.0 - p_t), \\
                 \log{r_t} &= \beta_r \cdot X_t + \Phi(t, r_{t - 1}), \\
                 \sigma^{-1}(p_t) &= \beta_p \cdot X_t + \Phi \left ( t,
                 \sigma^{-1}(p_t) \right ), \\
@@ -333,7 +333,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
         with numpyro.handlers.mask(mask=mask):
             sampled_events = numpyro.sample(
-                "events:ignore", Bernoulli(prob), obs=events
+                "events:ignore", Bernoulli(1.0 - prob), obs=events
             )
 
         if self.family == "negative-binomial":
