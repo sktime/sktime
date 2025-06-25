@@ -79,6 +79,7 @@ class BaseDetector(BaseEstimator):
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
@@ -147,7 +148,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -222,7 +223,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -374,7 +375,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -399,7 +400,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
@@ -440,7 +441,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -465,7 +466,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 

@@ -120,6 +120,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -599,7 +602,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -880,7 +883,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}

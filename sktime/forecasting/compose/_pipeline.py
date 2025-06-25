@@ -88,24 +88,24 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # validate names
         self._check_names(names)
 
-        ALLOWED_SCITYPES = ["forecaster", "transformer"]
+        ALLOWED_SCITYPES = ["forecaster", "transformer", "reconciler"]
         COERCIBLE_SCITYPES = all_coercible_to("transformer")
         COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
         ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)
 
-        est_scitypes = [scitype(x) for x in estimators]
-
-        if not all([x in ACCEPTED_SCITYPES for x in est_scitypes]):
+        if not all([is_scitype(x, ACCEPTED_SCITYPES) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        forecaster_indicator = [x == "forecaster" for x in est_scitypes]
+        forecaster_indicator = [is_scitype(x, "forecaster") for x in estimators]
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
+
+        est_scitypes = [scitype(x) for x in estimators]
 
         forecaster_ind = forecaster_indicator.index(True)
         self._forecaster_index = forecaster_ind
@@ -185,7 +185,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.38.0 - check why this cannot be easily removed
+                        # todo 0.39.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -427,6 +427,9 @@ class ForecastingPipeline(_Pipeline):
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
@@ -875,6 +878,9 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
@@ -1818,10 +1824,8 @@ class ForecastX(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
@@ -1829,12 +1833,7 @@ class ForecastX(BaseForecaster):
 
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
-        # example with probabilistic capability
-        # todo 0.38.0: check if numpy<2 is still needed
-        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
-            fy_proba = ARIMA()
-        else:
-            fy_proba = NaiveForecaster()
+        fy_proba = NaiveForecaster()
         fx = NaiveForecaster()
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
