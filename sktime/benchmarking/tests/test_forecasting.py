@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import KFold
 
-from sktime.benchmarking.benchmarks import coerce_estimator_and_id
+from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
@@ -258,7 +258,7 @@ def test_forecastingbenchmark_global_mode(
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
 def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     """Test coerce_estimator_and_id return expected output."""
-    assert coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
+    assert _coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
         "coerce_estimator_and_id does not return the expected output."
     )
 

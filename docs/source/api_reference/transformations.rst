@@ -896,13 +896,16 @@ The transformation depends on the specified hierarchy in a non-trivial way.
 
     Reconciler
 
-.. currentmodule:: sktime.transformations.hierarchical.reconcile
+For usage of Reconciliation with pipelines, these transformations below are more
+efficient and should be preferred:
+
+.. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    MiddleOutReconciler
-    TopdownReconciler
     BottomUpReconciler
-    OptimalReconciler
+    MiddleOutReconciler
     NonNegativeOptimalReconciler
-    ForecastProportions
+    OptimalReconciler
+    TopdownReconciler

@@ -2062,8 +2062,19 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
 
+        def sklearn_multioutput(estimator):
+            """Get sklearn tags for estimator."""
+            from sktime.utils.dependencies import _check_soft_dependencies
+
+            if _check_soft_dependencies("sklearn<1.6", severity="none"):
+                return estimator._get_tags().get("multioutput", False)
+            else:
+                from sklearn.utils import get_tags
+
+                return get_tags(estimator).target_tags.multi_output
+
         estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
+        if not sklearn_multioutput(estimator):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
