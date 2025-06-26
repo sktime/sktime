@@ -8,11 +8,7 @@ the lower the better.
 """
 
 import numpy as np
-import sklearn
 from scipy.stats import gmean
-from sklearn.metrics import mean_absolute_error as _mean_absolute_error
-from sklearn.metrics import mean_squared_error as _mean_squared_error
-from sklearn.metrics import median_absolute_error as _median_absolute_error
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
@@ -22,9 +18,6 @@ from sktime.performance_metrics.forecasting._coerce import (
 )
 from sktime.utils.sklearn import _check_reg_targets
 from sktime.utils.stats import _weighted_geometric_mean
-
-if sklearn.__version__ >= "1.4.0":
-    from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
 
 __author__ = ["mloning", "tch", "RNKuhns"]
 __all__ = [
@@ -52,6 +45,42 @@ __all__ = [
 ]
 
 EPS = np.finfo(np.float64).eps
+
+
+def _mean_absolute_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+
+    mae = MeanAbsoluteError(multioutput=multioutput)
+    return mae.evaluate(y_true=y_true, y_pred=y_pred, sample_weight=sample_weight)
+
+
+def _mean_squared_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    from sktime.performance_metrics.forecasting._mse import MeanSquaredError
+
+    mae = MeanSquaredError(multioutput=multioutput)
+    return mae.evaluate(y_true=y_true, y_pred=y_pred, sample_weight=sample_weight)
+
+
+def _root_mean_squared_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    from sktime.performance_metrics.forecasting._mse import MeanSquaredError
+
+    mae = MeanSquaredError(multioutput=multioutput, square_root=True)
+    return mae.evaluate(y_true=y_true, y_pred=y_pred, sample_weight=sample_weight)
+
+
+def _median_absolute_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
+
+    mae = MedianAbsoluteError(multioutput=multioutput)
+    return mae.evaluate(y_true=y_true, y_pred=y_pred, sample_weight=sample_weight)
 
 
 def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
@@ -1038,16 +1067,7 @@ def mean_squared_error(
 
     if not square_root:
         metric_function = _mean_squared_error
-    elif sklearn.__version__ < "1.4.0":
-        # Scikit-learn argument `squared` returns MSE when True and RMSE when False
-        # Scikit-time argument `square_root` returns RMSE when True and MSE when False
-        # Therefore need to pass the opposite of square_root as squared argument
-        # to the scikit-learn function being wrapped
-        metric_function = _mean_squared_error
-        metric_kwargs["squared"] = False
     else:
-        # sklearn 1.4 introduced ``root_mean_squared_error`` function, so we can
-        # use that directly to avoid DeprecationWarning from sklearn 1.6
         metric_function = _root_mean_squared_error
 
     loss = metric_function(*metric_args, **metric_kwargs)
