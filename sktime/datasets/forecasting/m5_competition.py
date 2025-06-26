@@ -101,7 +101,7 @@ class M5Dataset(BaseForecastingDataset):
     def _load(self, *args):
         """Load the dataset.
 
-        Downlaods the data if it is not already downloaded, and
+        Downloads the data if it is not already downloaded, and
         joins the 3 main files into a single dataframe.
 
         The last 28 days are used as test data, and the rest is used as training data.
