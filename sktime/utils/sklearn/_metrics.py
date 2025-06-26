@@ -1,7 +1,9 @@
-"""Temporary functions to ensure compatibility with sklearn
-See https://github.com/sktime/sktime/issues/8457
-"""
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Temporary fork of sklearn metrics utilities to ensure compatibility with sklearn.
+
+sklearn 1.7 changes metrics signatures, which breaks compatibility
+of sktime across sklearn versions. This fork ensures upwards compatibility."""
+# copyright/attribution scikit-learn developers
+# _check_reg_targets is a copy of the function of the same name from sklearn 1.6.X
 
 from sklearn.utils._array_api import get_namespace
 from sklearn.utils.validation import check_array, check_consistent_length
