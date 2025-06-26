@@ -1,7 +1,6 @@
 """Temporary functions to ensure compatibility with sklearn
 See https://github.com/sktime/sktime/issues/8457
 """
-# Original Authors: The scikit-learn developers
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sklearn.utils._array_api import get_namespace
@@ -16,6 +15,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 
     Extracted from v1.6.X sklearn/metrics/_regression.py#L61
     Parameter `sample_weight` introduced in 1.7 removed
+    Original Authors: The scikit-learn developers
 
     Parameters
     ----------
