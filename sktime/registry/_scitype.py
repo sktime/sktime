@@ -60,7 +60,7 @@ def scitype(
 
         * if True, only the *first* scitype found will be returned
           order is determined by the order in ``BASE_CLASS_REGISTER`` resp
-          ``BASE_CLASS_SCITYPE_LIST`` (both imply the same odrer)
+          ``BASE_CLASS_SCITYPE_LIST`` (both imply the same order)
         * if False, a list of all scitypes is returned
 
     coerce_to_list : bool, optional, default = False
@@ -123,7 +123,7 @@ def scitype(
             detected_scitype = [detected_scitype]
         if force_single_scitype and len(detected_scitype) > 1:
             detected_scitype = [detected_scitype[0]]
-        if not coerce_to_list:
+        if not coerce_to_list and len(detected_scitype) == 1:
             detected_scitype = detected_scitype[0]
         return detected_scitype
 

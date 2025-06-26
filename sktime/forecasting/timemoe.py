@@ -21,7 +21,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     of experts algorithm to make predictions. designed to operate in an auto-regressive
     manner, enabling universal forecasting with arbitrary prediction horizons
     and context lengths of up to 4096. This method has been proposed in [2]_ and the
-    official code is avalaible at [2]_.
+    official code is available at [2]_.
 
     Parameters
     ----------
@@ -115,7 +115,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [

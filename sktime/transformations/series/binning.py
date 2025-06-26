@@ -67,11 +67,14 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):

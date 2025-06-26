@@ -32,7 +32,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.37.0: check if this is still necessary
+        # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -456,7 +456,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -604,6 +604,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
 
     def __init__(
         self,
@@ -798,7 +804,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -1068,7 +1074,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -1177,7 +1183,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -1717,8 +1723,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.detrend import Deseasonalizer, Detrender
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.forecasting.trend import STLForecaster
+    >>> from sktime.forecasting.trend import STLForecaster, TrendForecaster
     >>> import optuna
     >>> from  optuna.distributions import CategoricalDistribution
 
@@ -1737,11 +1742,11 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...         ]
     ...     )
     >>> param_grid = {
-    ...     "scaler__transformer__with_scaling": CategoricalDistribution(
+    ...     "scaler__with_scaling": CategoricalDistribution(
     ...             (True, False)
     ...         ),
     ...     "forecaster": CategoricalDistribution(
-    ...             (NaiveForecaster(), ThetaForecaster())
+    ...             (NaiveForecaster(), TrendForecaster())
     ...         ),
     ...     }
     >>> gscv = ForecastingOptunaSearchCV(
@@ -1760,7 +1765,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

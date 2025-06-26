@@ -120,7 +120,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
     }
@@ -470,7 +470,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
     }
 

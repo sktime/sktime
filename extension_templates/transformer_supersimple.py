@@ -95,7 +95,7 @@ class MyTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     # todo: add any hyper-parameters and components to constructor

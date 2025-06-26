@@ -35,6 +35,7 @@ def window_from_tol_coef(n: float, tol_coef: float, max_window: int = 2**12) -> 
     Examples
     --------
     >>> from sktime.libs.fracdiff.sklearn.tol import window_from_tol_coef
+    >>> from sktime.libs.fracdiff import fdiff_coef
     >>> window_from_tol_coef(0.5, 0.1)
     4
     >>> fdiff_coef(0.5, 3)[-1]
@@ -50,7 +51,7 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
     """
     Return length of window determined from tolerance to memory loss.
 
-    Minimum lenght of window that makes the absolute value of the sum of fracdiff
+    Minimum length of window that makes the absolute value of the sum of fracdiff
     coefficients from `window_ + 1`-th term is smaller than `tol_memory`.
     If `window` is not None, ignored.
 
@@ -73,7 +74,10 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.libs.fracdiff import fdiff_coef
     >>> from sktime.libs.fracdiff.sklearn.tol import window_from_tol_memory
+    >>>
     >>> window_from_tol_memory(0.5, 0.2)
     9
     >>> np.sum(fdiff_coef(0.5, 10000)[9:])

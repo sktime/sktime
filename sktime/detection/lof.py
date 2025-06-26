@@ -102,7 +102,7 @@ class SubLOF(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.annotation.lof import SubLOF
+    >>> from sktime.detection.lof import SubLOF
     >>> model = SubLOF(3, window_size=5, novelty=True)
     >>> x = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0, 0, 100, 0, 0, 0.3, -1, 0, 100, 0.2])
     >>> model.fit_transform(x)
@@ -135,6 +135,9 @@ class SubLOF(BaseDetector):
         "learning_type": "unsupervised",
         "univariate-only": False,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

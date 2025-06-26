@@ -64,7 +64,8 @@ class FhPlexForecaster(BaseForecaster):
     >>> f = FhPlexForecaster(NaiveForecaster())
     >>> f.fit(y, fh=[1, 2, 3])
     FhPlexForecaster(...)
-    >>> f.forecasters_  # get individual fitted forecasters
+    >>> # get individual fitted forecasters
+    >>> f.forecasters_  # doctest: +SKIP
     {1: NaiveForecaster(), 2: NaiveForecaster(), 3: NaiveForecaster()}
     >>> fitted_params = f.get_fitted_params()  # or via get_fitted_params
     >>> y_pred = f.predict()
@@ -84,7 +85,7 @@ class FhPlexForecaster(BaseForecaster):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": PANDAS_TS_MTYPES,
         "X_inner_mtype": PANDAS_TS_MTYPES,

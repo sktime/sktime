@@ -246,7 +246,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
 
 
 class PytorchDataset(Dataset):
-    """Dataset specifc to TransformerClassifier."""
+    """Dataset specific to TransformerClassifier."""
 
     def __init__(self, X, y):
         # X.shape = (batch_size, n_dims, n_timestamps)

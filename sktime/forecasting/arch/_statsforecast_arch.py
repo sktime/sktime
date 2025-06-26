@@ -61,7 +61,8 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(
@@ -128,6 +129,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     >>> y = load_airline()
     >>> forecaster = StatsForecastARCH(p=2)
     >>> forecaster.fit(y)
+    StatsForecastARCH(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
@@ -141,7 +143,8 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(
