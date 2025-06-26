@@ -1,7 +1,8 @@
 """Temporary fork of sklearn metrics utilities to ensure compatibility with sklearn.
 
 sklearn 1.7 changes metrics signatures, which breaks compatibility
-of sktime across sklearn versions. This fork ensures upwards compatibility."""
+of sktime across sklearn versions. This fork ensures upwards compatibility.
+"""
 # copyright/attribution scikit-learn developers
 # _check_reg_targets is a copy of the function of the same name from sklearn 1.6.X
 
