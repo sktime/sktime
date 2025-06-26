@@ -7,11 +7,13 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import median_absolute_error
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import _weighted_percentile
 
 
-class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
+class MedianAbsoluteError(BaseForecastingErrorMetric):
     r"""Median absolute error (MdAE).
 
     MdAE output is non-negative floating point. The best value is 0.0.
@@ -99,7 +101,46 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     np.float64(0.85)
     """
 
-    func = median_absolute_error
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        By default this uses evaluate_by_index, taking arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+        sample_weight = kwargs.get("sample_weight", None)
+
+        if sample_weight is None:
+            output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+        else:
+            output_errors = _weighted_percentile(
+                np.abs(y_pred - y_true), sample_weight=sample_weight
+            )
+
+        return self._handle_multioutput(output_errors, multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
