@@ -10,7 +10,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     `percentile` is computed along the axis 0.
 
     Forked from scikit-learn 1.7.
-    
+
     Parameters
     ----------
     array : 1D or 2D array
