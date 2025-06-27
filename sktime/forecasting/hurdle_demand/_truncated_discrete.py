@@ -18,6 +18,7 @@ if _check_soft_dependencies("jax", "numpyro", severity="none"):
 else:
     Distribution = object
     REGISTRY = {}
+    validate_sample = lambda u: u  # type: ignore[no-untyped-def]
 
 
 class TruncatedDiscrete(Distribution):

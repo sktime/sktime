@@ -246,7 +246,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     def _sample_parameters(
         self, length: int, X: np.ndarray, time_regressor: bool = False, oos: int = 0
-    ) -> jnp.ndarray:
+    ) -> np.ndarray:
         features = np.ones((length + oos, 1))
 
         if X is not None:
