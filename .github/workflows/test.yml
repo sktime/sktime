@@ -288,7 +288,7 @@ jobs:
     secrets: inherit
 
   test-full:
-    needs: test-nosoftdeps
+    needs: [test-base, test-module, test-other]
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
@@ -327,7 +327,7 @@ jobs:
         run: make test_without_datasets
 
   test-unix-pandas1:
-    needs: test-nosoftdeps
+    needs: [test-base, test-module, test-other]
     strategy:
       fail-fast: false
       matrix:
