@@ -88,6 +88,9 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, market, years=None, expand=True, observed=True, name=None):
