@@ -55,6 +55,12 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
 
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Defines the reference values for normalizing the percentage error.
+
+            * 'y_true': normalize errors relative to the true values,
+            * 'y_pred': normalize errors relative to the predicted values.
+        
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -134,8 +140,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true",
     ):
         self.symmetric = symmetric
+        self.relative_to=relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -170,13 +178,19 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
+
+        if self.symmetric and self.relative_to != "y_true":
+            raise ValueError("relative_to cannot be used with symmetric=True")
+        
         multioutput = self.multioutput
         symmetric = self.symmetric
-
+        relative=self.relative_to
         numer_values = (y_true - y_pred).abs()
 
         if symmetric:
             denom_values = (y_true.abs() + y_pred.abs()) / 2
+        elif relative == "y_pred":
+            denom_values = y_pred.abs()    
         else:
             denom_values = y_true.abs()
 
@@ -213,4 +227,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = { "relative_to": "y_pred"}
+        return [params1, params2, params3]
+    
+    

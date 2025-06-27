@@ -39,6 +39,13 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Defines the reference values for normalizing the percentage error.
+
+            * 'y_true': normalize errors relative to the true values,
+            * 'y_pred': normalize errors relative to the predicted values.
+
     square_root : bool, default = False
         Whether to take the square root of the metric
 
@@ -125,9 +132,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         symmetric=False,
         square_root=False,
         by_index=False,
+        relative_to="y_true",
     ):
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -155,4 +164,5 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]
