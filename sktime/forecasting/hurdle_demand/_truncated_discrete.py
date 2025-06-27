@@ -16,11 +16,12 @@ if _check_soft_dependencies("jax", "numpyro", severity="none"):
         dist.NegativeBinomial2: _inverse_neg_binom,
     }
 else:
+    Distribution = object
     REGISTRY = {}
 
 
 class TruncatedDiscrete(Distribution):
-    """A wrapper to create a zero-truncated version of a discrete distribution.
+    """Wrapper to create a zero-truncated version of a discrete distribution.
 
     Takes a base distribution (like Poisson or NegativeBinomial) and
     modifies its log_prob and sample methods to enforce a support of {1, 2, 3, ...}.

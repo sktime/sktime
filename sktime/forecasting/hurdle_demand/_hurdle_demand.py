@@ -30,6 +30,8 @@ if _check_soft_dependencies("numpyro", severity="none"):
 
 if _check_soft_dependencies("prophetverse", severity="none"):
     from prophetverse.sktime.base import BaseBayesianForecaster
+else:
+    from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
 
 from skpro.distributions import Empirical
 
