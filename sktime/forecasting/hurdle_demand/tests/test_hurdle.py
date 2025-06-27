@@ -2,7 +2,11 @@
 
 import numpy as np
 import pytest
-from prophetverse.engine import MAPInferenceEngine, MCMCInferenceEngine
+
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("prophetverse", severity="none"):
+    from prophetverse.engine import MAPInferenceEngine, MCMCInferenceEngine
 
 from sktime.datasets import load_PBS_dataset
 from sktime.forecasting.hurdle_demand import HurdleDemandForecaster

@@ -1,6 +1,10 @@
 import jax.random as jrnd
 import pytest
-from numpyro.distributions import NegativeBinomial2, Poisson
+
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numpyro", severity="none"):
+    from numpyro.distributions import NegativeBinomial2, Poisson
 
 from sktime.forecasting.hurdle_demand import HurdleDemandForecaster
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete

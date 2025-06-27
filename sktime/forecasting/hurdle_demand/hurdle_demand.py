@@ -2,29 +2,39 @@
 
 from typing import Literal
 
-import jax.nn
-import jax.numpy as jnp
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("jax", severity="none"):
+    import jax.nn
+    import jax.numpy as jnp
+
 import numpy as np
-import numpyro.handlers
 import pandas as pd
-from numpyro.distributions import (
-    Bernoulli,
-    LogNormal,
-    NegativeBinomial2,
-    Normal,
-    Poisson,
-    TransformedDistribution,
-    TruncatedNormal,
-)
-from numpyro.distributions.transforms import (
-    AffineTransform,
-    RecursiveLinearTransform,
-    SoftplusTransform,
-)
-from prophetverse.engine import BaseInferenceEngine
-from prophetverse.sktime.base import BaseBayesianForecaster
+
+if _check_soft_dependencies("numpyro", severity="none"):
+    import numpyro.handlers
+    from numpyro.distributions import (
+        Bernoulli,
+        LogNormal,
+        NegativeBinomial2,
+        Normal,
+        Poisson,
+        TransformedDistribution,
+        TruncatedNormal,
+    )
+    from numpyro.distributions.transforms import (
+        AffineTransform,
+        RecursiveLinearTransform,
+        SoftplusTransform,
+    )
+
+if _check_soft_dependencies("prophetverse", severity="none"):
+    from prophetverse.sktime.base import BaseBayesianForecaster
+
 from skpro.distributions import Empirical
-from xarray import DataArray
+
+if _check_soft_dependencies("xarray", severity="none"):
+    from xarray import DataArray
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
@@ -87,11 +97,11 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
     def model(
         self,
         length: int,
-        y: jnp.ndarray,
+        y: np.ndarray,
         X: np.ndarray,
-        mask: jnp.ndarray,
+        mask: np.ndarray,
         oos: int = 0,
-        index: np.array = None,
+        index: np.ndarray = None,
     ):
         """
         Build the model for the probabilistic intermittent demand forecaster.
@@ -202,7 +212,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "authors": ["tingiskhan", "felipeangleimvieira"],
         "maintainers": ["tingiskhan"],
         "python_version": None,
-        "python_dependencies": ["prophetverse", "xarray"],
+        "python_dependencies": ["prophetverse", "xarray", "jax", "numpyro"],
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
@@ -224,7 +234,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         family: Literal["poisson", "negative-binomial"] = "negative-binomial",
         time_varying_probability: bool = False,
         time_varying_demand: bool = False,
-        inference_engine: BaseInferenceEngine = None,
+        inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
 
@@ -288,7 +298,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     def _sample_probability(
         self, length: int, X: np.ndarray, oos: int = 0
-    ) -> jnp.ndarray:
+    ) -> np.ndarray:
         logit_prob = self._sample_parameters(
             length=length, X=X, time_regressor=self.time_varying_probability, oos=oos
         )
@@ -296,7 +306,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
         return prob
 
-    def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> jnp.ndarray:
+    def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> np.ndarray:
         log_demand = self._sample_parameters(
             length=length, time_regressor=self.time_varying_demand, X=X, oos=oos
         )
@@ -307,11 +317,11 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     def model(  # noqa: D102
         self,
         length: int,
-        y: jnp.ndarray,
+        y: np.ndarray,
         X: np.ndarray,
-        mask: jnp.ndarray,
+        mask: np.ndarray,
         oos: int = 0,
-        index: np.array = None,
+        index: np.ndarray = None,
     ):
         with numpyro.handlers.scope(prefix="probability"):
             prob = self._sample_probability(length, X, oos=oos)

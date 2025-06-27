@@ -1,17 +1,22 @@
-import jax
-import jax.numpy as jnp
-import numpyro.distributions as dist
-from jax import random
-from numpyro.distributions import constraints
-from numpyro.distributions.distribution import Distribution
-from numpyro.distributions.util import validate_sample
+from sktime.utils.dependencies import _check_soft_dependencies
 
 from ._inverse_functions import _inverse_neg_binom, _inverse_poisson
 
-REGISTRY = {
-    dist.Poisson: _inverse_poisson,
-    dist.NegativeBinomial2: _inverse_neg_binom,
-}
+if _check_soft_dependencies("jax", "numpyro", severity="none"):
+    import jax
+    import jax.numpy as jnp
+    import numpyro.distributions as dist
+    from jax import random
+    from numpyro.distributions import constraints
+    from numpyro.distributions.distribution import Distribution
+    from numpyro.distributions.util import validate_sample
+
+    REGISTRY = {
+        dist.Poisson: _inverse_poisson,
+        dist.NegativeBinomial2: _inverse_neg_binom,
+    }
+else:
+    REGISTRY = {}
 
 
 class TruncatedDiscrete(Distribution):
@@ -34,9 +39,7 @@ class TruncatedDiscrete(Distribution):
     pytree_data_fields = ("base_dist",)
     pytree_aux_fields = ("_icdf", "low")
 
-    def __init__(
-        self, base_dist: dist.Distribution, low: int = 0, *, validate_args=None
-    ):
+    def __init__(self, base_dist, low: int = 0, *, validate_args=None):
         if base_dist.support is not constraints.nonnegative_integer:
             raise ValueError("ZeroTruncated only works with discrete distributions!")
 
