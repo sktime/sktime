@@ -134,6 +134,9 @@ def get_changed_lines(file_path, only_indented=True):
 def get_packages_with_changed_specs():
     """Get packages with changed or added specs.
 
+    A change means that the package has changed version or specification in the
+    ``pyproject.toml`` file compared to ``main``, or has been added or removed.
+
     Returns
     -------
     list of str : names of packages with changed or added specs
@@ -186,3 +189,25 @@ def _get_packages_with_changed_specs():
     packages = tuple(set(packages))
 
     return packages
+
+
+def deps_have_changed(deps):
+    """Check if any of the given dependencies have changed.
+
+    A change means that the package has changed version or specification in the
+    ``pyproject.toml`` file compared to ``main``, or has been added or removed.
+
+    Parameters
+    ----------
+    deps : str or list of str
+        Dependency names to check for changes.
+        Must be PEP 508 compliant package names, e.g., "scikit-learn", "numpy".
+
+    Returns
+    -------
+    bool : True if at least one dependency in ``deps`` has changed, False otherwise.
+    """
+    if not isinstance(deps, (list, tuple)):
+        deps = [deps]
+    changed_packages = get_packages_with_changed_specs()
+    return any(dep in changed_packages for dep in deps)

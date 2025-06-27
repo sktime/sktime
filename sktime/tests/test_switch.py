@@ -189,12 +189,10 @@ def _run_test_for_class(cls):
     from sktime.tests._config import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.git_diff import (
-        get_packages_with_changed_specs,
+        deps_have_changed
         is_class_changed,
         is_module_changed,
     )
-
-    PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
     def _required_deps_present(obj):
         """Check if all required soft dependencies are present, return bool."""
@@ -255,7 +253,7 @@ def _run_test_for_class(cls):
             ]
             package_deps += CORE_DEPENDENCIES
 
-        return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
+        return deps_have_changed(package_deps)
 
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
@@ -353,3 +351,4 @@ def run_test_module_changed(module):
         module = [module]
 
     return any(is_module_changed(mod) for mod in module)
+
