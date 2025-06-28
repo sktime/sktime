@@ -33,8 +33,6 @@ if _check_soft_dependencies("prophetverse", severity="none"):
 else:
     from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
 
-from skpro.distributions import Empirical
-
 if _check_soft_dependencies("xarray", severity="none"):
     from xarray import DataArray
 
@@ -88,6 +86,8 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
         as_array = DataArray(y_hat, dims=["sample", "time"], coords={"time": index})
 
         as_frame = as_array.to_dataframe(self._y_metadata["feature_names"][0])
+
+        from skpro.distributions import Empirical
 
         return Empirical(as_frame, time_indep=False)
 
