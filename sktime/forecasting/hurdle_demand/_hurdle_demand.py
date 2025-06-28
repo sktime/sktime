@@ -5,7 +5,6 @@ from typing import Literal
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("jax", severity="none"):
-    import jax.nn
     import jax.numpy as jnp
 
 import numpy as np
