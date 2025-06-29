@@ -25,7 +25,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 

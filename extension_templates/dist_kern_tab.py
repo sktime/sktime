@@ -14,7 +14,7 @@ How to use this:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     transforming    - _transform(self, X, X2=None)
 
 Testing - required for sktime test framework and check_estimator usage:

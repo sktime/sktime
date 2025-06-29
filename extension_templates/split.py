@@ -18,10 +18,10 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     splitting (iloc reference)            - _split(self, y)
 
-Optional implements:
+Optional methods to implement:
     splitting (loc reference)             - _split_loc(self, y)
     get number of splits                  - get_n_splits(self, y)
 
