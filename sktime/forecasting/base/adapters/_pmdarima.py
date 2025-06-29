@@ -94,8 +94,8 @@ class _PmdArimaAdapter(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
         fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
-        end_int = fh_abs_int[-1] + 2
-        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
+        end_int = fh_abs_int[-1] + 1
+        # +1 because we need to include the last forecast period
 
         if X is not None:
             X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
