@@ -748,13 +748,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check update_predict with exogenous features."""
         if (
-            estimator_instance.get_tag("ignores-exogeneous-X")
+            estimator_instance.get_tag("ignores-exogeneous-X", False)
             or "IgnoreX" in type(estimator_instance).__name__
         ):
             pytest.skip("Forecaster ignores exogenous variables.")
 
         n = 100
-        y = _make_series(n_columns=1, all_positive=True, index_type="datetime")
+        y = _make_series(
+            n_columns=1, all_positive=True, index_type="datetime", n_timepoints=n
+        )
         X = pd.DataFrame(np.random.rand(n, 1), index=y.index, columns=["feature"])
         initial_window = 80
         y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
