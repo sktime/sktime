@@ -32,7 +32,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
-
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
@@ -46,7 +45,6 @@ from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
-
 
 def _concat_y_X(y, X):
     """Concatenate y and X prior to sliding-window transform."""
@@ -1451,10 +1449,7 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix
     """
-
     _estimator_scitype = "time-series-regressor"
-
-
 def make_reduction(
     estimator,
     strategy="recursive",
@@ -1608,15 +1603,46 @@ def make_reduction(
     .. [1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
         Machine Learning Strategies for Time Series Forecasting.
     """
+    """
+    "user feedback is appreciated in issue #4516 here: "
+    "https://github.com/sktime/sktime/issues/4516"
+def make_reduction(                         #line 1453
+     The function returns a forecaster that wraps a scikit-learn regressor.
+ 
+     Examples
++    --------
++    >>> from sktime.datasets import load_airline
++    >>> import pandas as pd
++    >>> from sktime.forecasting.compose import make_reduction
++    >>> from sklearn.linear_model import LinearRegression
++    >>> from sklearn.preprocessing import StandardScaler
++
++    >>> y, _ = load_airline(return_X_y=True)
++    >>> X = pd.DataFrame({
++    ...     "month": y.index.month,
++    ...     "yesterday": y.shift(1)
++    ... })
++    >>> y_train, X_train = y.iloc[1:80], X.iloc[1:80]
++
++    >>> forecaster = make_reduction(
++    ...     estimator=LinearRegression(),
++    ...     strategy="recursive",
++    ...     window_length=1,
++    ...     transformers=[
++    ...         ("scaler", StandardScaler(), ["month", "yesterday"])
++    ...     ],
++    ... )
++
++    >>> forecaster.fit(y_train, X_train)
++    >>> y_pred = forecaster.predict(fh=[1,2,3])
++
+     """
     # We provide this function as a factory method for user convenience.
     strategy = _check_strategy(strategy)
     scitype = _check_scitype(scitype)
-
     if scitype == "infer":
         scitype = _infer_scitype(estimator)
-
     Forecaster = _get_forecaster(scitype, strategy)
-
     dispatch_params = {
         "estimator": estimator,
         "window_length": window_length,
@@ -1624,10 +1650,7 @@ def make_reduction(
         "pooling": pooling,
         "windows_identical": windows_identical,
     }
-
     return construct_dispatch(Forecaster, dispatch_params)
-
-
 def _check_scitype(scitype):
     valid_scitypes = ("infer", "tabular-regressor", "time-series-regressor")
     if scitype not in valid_scitypes:
@@ -1636,8 +1659,6 @@ def _check_scitype(scitype):
             f" {valid_scitypes}, but found: {scitype}."
         )
     return scitype
-
-
 def _infer_scitype(estimator):
     """Infer scitype from estimator.
 
@@ -1661,8 +1682,6 @@ def _infer_scitype(estimator):
             return "time-series-regressor"
         else:
             return scitype(estimator, raise_on_unknown=False)
-
-
 def _check_strategy(strategy):
     valid_strategies = ("direct", "recursive", "multioutput", "dirrec")
     if strategy not in valid_strategies:
@@ -1671,8 +1690,6 @@ def _check_strategy(strategy):
             f" {valid_strategies}, but found: {strategy}."
         )
     return strategy
-
-
 def _get_forecaster(scitype, strategy):
     """Select forecaster for a given scientific type and reduction strategy."""
     registry = {
@@ -1690,7 +1707,6 @@ def _get_forecaster(scitype, strategy):
         },
         "regressor_proba": {"direct": DirectTabularRegressionForecaster},
     }
-
     if scitype not in registry:
         raise ValueError(
             "Error in make_reduction, no reduction strategies defined for "
@@ -1704,8 +1720,6 @@ def _get_forecaster(scitype, strategy):
             f"Valid strategies are: {list(registry[scitype].keys())}."
         )
     return registry[scitype][strategy]
-
-
 def _cut_df(X, n_obs=1, type="tail"):
     """Cut input at tail or head, supports grouping."""
     if n_obs == 0:
@@ -1722,8 +1736,6 @@ def _cut_df(X, n_obs=1, type="tail"):
         elif type == "head":
             X = X.head(n_obs)
     return X
-
-
 def _create_fcst_df(target_date, origin_df, fill=None):
     """Create an empty multiindex dataframe from origin dataframe.
 
@@ -1755,28 +1767,20 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         fh = ForecastingHorizon(ix, is_relative=False)
     else:
         fh = target_date.to_absolute()
-
     index = fh.get_expected_pred_idx(origin_df)
-
     if isinstance(origin_df, pd.Series):
         columns = [origin_df.name]
     else:
         columns = origin_df.columns.to_list()
-
     if fill is None:
         values = 0
     else:
         values = fill
-
     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
-
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
         res.name = origin_df.name
-
     return res
-
-
 def slice_at_ix(df, ix):
     """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
 
@@ -1797,8 +1801,6 @@ def slice_at_ix(df, ix):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
     else:
         return df.loc[[ix]]
-
-
 def _get_notna_idx(df):
     """Get sub-index of df that contains rows without nans.
 
@@ -1815,11 +1817,8 @@ def _get_notna_idx(df):
     df_notna_bool = df.notnull().all(axis=1)
     df_notna_idx = df.index[df_notna_bool]
     return df_notna_idx
-
-
 class _ReducerMixin:
     """Common utilities for reducers."""
-
     def _get_expected_pred_idx(self, fh):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
@@ -1837,20 +1836,15 @@ class _ReducerMixin:
         else:
             fh_idx = pd.Index(fh)
         y_index = self._y.index
-
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
             if isinstance(y_inst_idx, pd.MultiIndex):
                 fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
             else:
                 fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
-
         if hasattr(y_index, "names") and y_index.names is not None:
             fh_idx.names = y_index.names
-
         return fh_idx
-
-
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
@@ -1936,7 +1930,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         or a different number of observations.
 
         * `True` : Uniform window of length (total observations - maximum
-          forecasting horizon). Note: Currently, there are no missing arising
+          forecasting horizon). Note: Currently, there are no missings arising
           from window length due to backwards imputation in
           `ReductionTransformer`. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
@@ -1945,7 +1939,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
     """
-
     _tags = {
         "authors": "fkiraly",
         "maintainers": "hliebert",
@@ -1953,11 +1946,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # CI and test flags
-        # -----------------
-        "tests:core": True,  # should tests be triggered by framework changes?
     }
-
     def __init__(
         self,
         estimator,
@@ -1978,7 +1967,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -1993,14 +1981,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
-
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
         # self.set_tags(
         #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
         # )
-
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
         # shifted X (future X unknown) and identical windows reduce to
@@ -2009,7 +1995,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             return self._fit_multioutput(y=y, X=X, fh=fh)
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
-
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
         if self.X_treatment == "shifted":
@@ -2019,31 +2004,25 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 return self._predict_multiple(X=self._X, fh=fh)
         else:
             return self._predict_multiple(X=X, fh=fh)
-
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
-
         impute_method = self.impute_method
         lags = self._lags
         trafos = self.transformers
-
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lagger_y_to_X = ReducerTransform(
             lags=lags, transformers=trafos, impute_method=impute_method
         )
         self.lagger_y_to_X_ = lagger_y_to_X
-
         # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
         lagger_y_to_y = Lag(lags=y_lags, index_out="original", keep_column_names=True)
         self.lagger_y_to_y_ = lagger_y_to_y
-
         yt = lagger_y_to_y.fit_transform(X=y)
         y_notna_idx = _get_notna_idx(yt)
-
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
@@ -2053,101 +2032,66 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             return self
         else:
             self.empty_lags_ = False
-
         yt = yt.loc[y_notna_idx]
-
         Xt = lagger_y_to_X.fit_transform(X=y, y=X)
         Xt = Xt.loc[y_notna_idx]
-
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
-
-        def sklearn_multioutput(estimator):
-            """Get sklearn tags for estimator."""
-            from sktime.utils.dependencies import _check_soft_dependencies
-
-            if _check_soft_dependencies("sklearn<1.6", severity="none"):
-                return estimator._get_tags().get("multioutput", False)
-            else:
-                from sklearn.utils import get_tags
-
-                return get_tags(estimator).target_tags.multi_output
-
         estimator = clone(self.estimator)
-        if not sklearn_multioutput(estimator):
+        if not estimator._get_tags()["multioutput"]:
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
-
         return self
-
     def _predict_multioutput(self, fh=None, X=None):
         """Predict core logic."""
         y_cols = self._y.columns
         fh_idx = self._get_expected_pred_idx(fh=fh)
-
         if self.empty_lags_:
             ret = pd.DataFrame(index=fh_idx, columns=y_cols)
             for i in ret.index:
                 ret.loc[i] = self.dummy_value_
             return ret
-
         lagger_y_to_X = self.lagger_y_to_X_
-
         Xt = lagger_y_to_X.transform(X=self._y, y=self._X)
         Xt_lastrow = slice_at_ix(Xt, self.cutoff)
         Xt_lastrow = prep_skl_df(Xt_lastrow)
-
         estimator = self.estimator_
         # 2D numpy array with col index = (fh, var) and 1 row
         y_pred = estimator.predict(Xt_lastrow)
         y_pred = y_pred.reshape((len(fh_idx), len(y_cols)))
-
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
-
         if isinstance(y_pred.index, pd.MultiIndex):
             y_pred = y_pred.sort_index()
-
         return y_pred
-
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
-
         impute_method = self.impute_method
         X_treatment = self.X_treatment
         windows_identical = self.windows_identical
-
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-
         # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
-
         # lagging behaviour is per fh, so w initialize dicts
         # copied to self.lagger_y_to_X/y_, by reference
         lagger_y_to_y = dict()
         lagger_y_to_X = dict()
         self.lagger_y_to_y_ = lagger_y_to_y
         self.lagger_y_to_X_ = lagger_y_to_X
-
         self.estimators_ = []
-
         for lag in y_lags:
             t = Lag(lags=lag, index_out="original", keep_column_names=True)
             lagger_y_to_y[lag] = t
-
             yt = lagger_y_to_y[lag].fit_transform(X=y)
-
             impute_method = self.impute_method
             lags = self._lags
             trafos = self.transformers
-
             # determine whether to use concurrent X (lead them) or shifted (0)
             X_lag = lag if X_treatment == "concurrent" else 0
-
             # lagger_y_to_X_ will lag y to obtain the sklearn X
             # also updates self.lagger_y_to_X_ by reference
             lagger_y_to_X[lag] = ReducerTransform(
@@ -2156,25 +2100,20 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 transformers=trafos,
                 impute_method=impute_method,
             )
-
             Xtt = lagger_y_to_X[lag].fit_transform(X=y, y=X)
             Xtt_notna_idx = _get_notna_idx(Xtt)
             yt_notna_idx = _get_notna_idx(yt)
             notna_idx = Xtt_notna_idx.intersection(yt_notna_idx)
-
             yt = yt.loc[notna_idx]
             Xtt = Xtt.loc[notna_idx]
-
             if windows_identical:
                 # determine offset for uniform window length
                 # convert to abs values to account for in-sample prediction
                 offset = np.abs(fh_rel.to_numpy()).max() - abs(lag)
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
-
             Xtt = prep_skl_df(Xtt)
             yt = prep_skl_df(yt)
-
             # we now check whether the set of full lags is empty
             # if yes, we set a flag, since we cannot fit the reducer
             # instead, later, we return a dummy prediction
@@ -2184,44 +2123,32 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 estimator = clone(self.estimator)
                 estimator.fit(Xtt, yt)
                 self.estimators_.append(estimator)
-
         return self
-
     def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag
-
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
             X_pool = self._X
         else:
             X_pool = X
-
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
-
         lagger_y_to_X = self.lagger_y_to_X_
-
         fh_rel = fh.to_relative(self.cutoff)
         fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
-
         y_pred_list = []
-
         for i, lag in enumerate(y_lags):
             predict_idx = y_abs[i]
-
             lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
-
             Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             Xtt_predrow = prep_skl_df(Xtt_predrow)
-
             estimator = self.estimators_[i]
-
             # if = no training indices in _fit, fill in y training mean
             if isinstance(estimator, pd.Series):
                 y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
@@ -2231,15 +2158,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_pred_i = estimator.predict(Xtt_predrow)
             # 2D numpy array with col index = (var) and 1 row
             y_pred_list.append(y_pred_i)
-
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
-
         if isinstance(y_pred.index, pd.MultiIndex):
             y_pred = y_pred.sort_index()
-
         return y_pred
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -2260,7 +2183,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
-
         est = LinearRegression()
         params1 = {
             "estimator": est,
@@ -2291,9 +2213,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "windows_identical": False,
         }
         params5 = {"estimator": est, "window_length": 0}
-
         params = [params1, params2, params3, params4, params5]
-
         # this fails because catboost is not sklearn compatible
         # and fails set_params contracts already in sklearn;
         # so it also fails them in sktime...
@@ -2306,8 +2226,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         #     params6 = {"estimator": est, "window_length": 3}
         #     params.append(params6)
         return params
-
-
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """Recursive reduction forecaster, incl exogeneous Rec.
 
@@ -2363,7 +2281,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
     """
-
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
@@ -2371,7 +2288,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
-
     def __init__(
         self,
         estimator,
@@ -2385,13 +2301,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.pooling = pooling
         self._lags = list(range(window_length))
         super().__init__()
-
         warn(
             "RecursiveReductionForecaster is experimental, and interfaces may change. "
             "user feedback is appreciated in issue #3224 here: "
             "https://github.com/alan-turing-institute/sktime/issues/3224"
         )
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2406,10 +2320,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
-
         if isinstance(impute_method, str):
             from sktime.transformations.series.impute import Imputer
-
             self._impute_method = Imputer(method=impute_method)
         elif impute_method is None:
             self._impute_method = None
@@ -2421,7 +2333,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"impute_method must be str, None, or sktime transformer, "
                 f"but found {impute_method}"
             )
-
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -2446,28 +2357,21 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.lag import Lag
-
         impute_method = self._impute_method
-
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
-
         if impute_method is not None:
             lagger_y_to_X = lagger_y_to_X * impute_method.clone()
         self.lagger_y_to_X_ = lagger_y_to_X
-
         Xt = lagger_y_to_X.fit_transform(y)
-
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
-
         yt = y.loc[notna_idx]
         Xtt = Xtt.loc[notna_idx]
-
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
@@ -2476,16 +2380,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         else:
             if X is not None:
                 Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
-
             Xtt = prep_skl_df(Xtt)
             yt = prep_skl_df(yt)
-
             estimator = clone(self.estimator)
             estimator.fit(Xtt, yt)
             self.estimator_ = estimator
-
         return self
-
     def _predict(self, X=None, fh=None):
         """Forecast time series at future horizon.
 
@@ -2511,10 +2411,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             X_pool = self._X
         else:
             X_pool = X
-
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
-
         if len(fh_oos) == 0:
             y_pred = self._predict_in_sample(X_pool, fh_ins)
         elif len(fh_ins) == 0:
@@ -2523,48 +2421,36 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred_ins = self._predict_in_sample(X_pool, fh_ins)
             y_pred_oos = self._predict_out_of_sample(X_pool, fh_oos)
             y_pred = pd.concat([y_pred_ins, y_pred_oos], axis=0)
-
         if isinstance(y_pred.index, pd.MultiIndex):
             y_pred = y_pred.sort_index()
-
         return y_pred
-
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.series.lag import Lag
-
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
-
         lagger_y_to_X = self.lagger_y_to_X_
-
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
-
         # for all positive fh
         y_lags_no_gaps = range(1, y_lags[-1] + 1)
         y_abs_no_gaps = ForecastingHorizon(
             list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
         )
         y_abs_no_gaps = y_abs_no_gaps.to_absolute_index(self._cutoff)
-
         # we will keep growing y_plus_preds recursively
         y_plus_preds = self._y
         y_pred_list = []
-
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = apply_method_per_series(
                     y_plus_preds, "asfreq", self.fh.freq
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
-
             lag_plus = Lag(lags=1, index_out="extend")
-
             if self._impute_method is not None:
                 lag_plus = lag_plus * self._impute_method.clone()
-
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
             predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
@@ -2573,11 +2459,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 Xtt_predrow = pd.concat(
                     [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
                 )
-
             Xtt_predrow = prep_skl_df(Xtt_predrow)
-
             estimator = self.estimator_
-
             # if = no training indices in _fit, fill in y training mean
             if isinstance(estimator, pd.Series):
                 y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
@@ -2585,49 +2468,33 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # otherwise proceed as per direct reduction algorithm
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
-
             y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
-
             y_pred_list.append(y_pred_new)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
-
         y_pred = pd.concat(y_pred_list).sort_index()
         y_pred = y_pred.loc[fh_idx]
-
         return y_pred
-
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
         from sktime.transformations.series.lag import Lag
-
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
-
         lagger_y_to_X = self.lagger_y_to_X_
-
         fh_abs = fh.to_absolute(self.cutoff)
         y = self._y
-
         Xt = lagger_y_to_X.transform(y)
-
         lag_plus = Lag(lags=1, index_out="extend")
-
         if self._impute_method is not None:
             lag_plus = lag_plus * self._impute_method.clone()
-
         Xtt = lag_plus.fit_transform(Xt)
-
         Xtt_predrows = slice_at_ix(Xtt, fh_abs)
         if X_pool is not None:
             Xtt_predrows = pd.concat(
                 [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
             )
-
         Xtt_predrows = prep_skl_df(Xtt_predrows)
-
         estimator = self.estimator_
-
         # if = no training indices in _fit, fill in y training mean
         if isinstance(estimator, pd.Series):
             y_pred = pd.DataFrame(index=fh_idx, columns=y_cols)
@@ -2637,9 +2504,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = estimator.predict(Xtt_predrows)
             # 2D numpy array with col index = (var) and 1 row
             y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
-
         return y_pred
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -2660,15 +2525,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
-
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.transformations.series.impute import Imputer
-
         est = LinearRegression()
         forecaster_imputer = Imputer(
             method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
         )
-
         params1 = {
             "estimator": est,
             "window_length": 3,
@@ -2704,10 +2566,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "pooling": "global",
             "impute_method": "pad",
         }
-
         return [params1, params2, params3, params4, params5, params6]
-
-
 class YfromX(BaseForecaster, _ReducerMixin):
     """Simple reduction predicting endogeneous from concurrent exogeneous variables.
 
@@ -2776,7 +2635,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
     YfromX(...)
     >>> y_pred = f.predict_interval(X=X_test)  # doctest: +SKIP
     """
-
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
@@ -2786,29 +2644,22 @@ class YfromX(BaseForecaster, _ReducerMixin):
         "capability:pred_int": True,
         "capability:categorical_in_X": True,
     }
-
     def __init__(self, estimator, pooling="local"):
         self.estimator = estimator
         self.pooling = pooling
         super().__init__()
-
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
             _est_type = estimator.get_tag("object_type", "regressor", False)
         else:
             _est_type = "regressor"
-
         if _est_type not in ["regressor", "regressor_proba"]:
             raise TypeError(
                 "error in YfromX, estimator must be either an sklearn compatible "
                 "regressor, or an skpro probabilistic regressor."
-            )
-
-        # has probabilistic mode iff the estimator is of type regressor_proba
+            )# has probabilistic mode if the estimator is of type regressor_proba
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
-
         self._est_type = _est_type
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2823,7 +2674,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
-
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -2847,32 +2697,24 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         _est_type = self._est_type
-
         if X is None:
             from sklearn.dummy import DummyRegressor
-
             if _est_type == "regressor":
                 estimator = DummyRegressor()
             else:  # "proba_regressor"
                 from skpro.regression.residual import ResidualDouble
-
                 dummy = DummyRegressor()
                 estimator = ResidualDouble(dummy)
-
             X = prep_skl_df(y, copy_df=True)
         else:
             X = prep_skl_df(X, copy_df=True)
             estimator = clone(self.estimator)
-
         if _est_type == "regressor":
             y = prep_skl_df(y, copy_df=True)
             y = y.values.flatten()
-
         estimator.fit(X, y)
         self.estimator_ = estimator
-
         return self
-
     def _predict(self, X=None, fh=None):
         """Forecast time series at future horizon.
 
@@ -2893,18 +2735,13 @@ class YfromX(BaseForecaster, _ReducerMixin):
             Point predictions
         """
         _est_type = self._est_type
-
         fh_idx = self._get_expected_pred_idx(fh=fh)
-
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict(X_idx)
-
         if _est_type == "regressor":
             y_cols = self._y.columns
             y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
-
         return y_pred
-
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
@@ -2942,7 +2779,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_quantiles(X_idx, alpha=alpha)
         return y_pred
-
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
@@ -2985,7 +2821,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_interval(X_idx, coverage=coverage)
         return y_pred
-
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
 
@@ -3027,7 +2862,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_var(X_idx)
         return y_pred
-
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
@@ -3057,10 +2891,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_proba(X_idx)
         return y_pred
-
     def _get_pred_X(self, X, fh_idx):
         y_cols = self._y.columns
-
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -3069,12 +2901,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
             X_pool = X
         else:
             X_pool = pd.DataFrame(0, index=fh_idx, columns=y_cols)
-
         X_pool = prep_skl_df(X_pool, copy_df=True)
-
         X_idx = X_pool.loc[fh_idx]
         return X_idx
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -3096,28 +2925,21 @@ class YfromX(BaseForecaster, _ReducerMixin):
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-
         from sktime.utils.dependencies import _check_soft_dependencies
-
         params1 = {
             "estimator": LinearRegression(),
             "pooling": "local",
         }
-
         params2 = {
             "estimator": RandomForestRegressor(),
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
-
         params = [params1, params2]
-
         if _check_soft_dependencies("skpro", severity="none"):
             from skpro.regression.residual import ResidualDouble
-
             params3 = {
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "global",
             }
             params = params + [params3]
-
         return params
