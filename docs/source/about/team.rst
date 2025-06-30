@@ -93,6 +93,8 @@ Core Developers
      - :user:`lovkush-a`
    * - Marc Rovira
      - :user:`marrov`
+   * - Mateusz Kasprowicz
+     - :user:`mateuszkasprowicz `
    * - Mirae Parker
      - :user:`miraep8`
    * - Pranav Prajapati

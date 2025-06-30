@@ -74,8 +74,9 @@ class TimeLLMForecaster(BaseForecaster):
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y, fh=[1]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1])
+    TimeLLMForecaster(pred_len=36)
+    >>> y_pred = forecaster.predict(fh=[1])
     """
 
     _tags = {

@@ -59,7 +59,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Parallelization backend to use for runs.
         Runs parallel evaluate if specified and ``strategy="refit"``.
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -148,6 +148,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     BY_LIST = ["level", "node"]

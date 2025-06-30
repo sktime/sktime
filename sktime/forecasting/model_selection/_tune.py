@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.38.0: check if this is still necessary
+        # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -456,7 +456,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -604,6 +604,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
 
     def __init__(
         self,
@@ -798,7 +804,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -1068,7 +1074,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment

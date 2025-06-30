@@ -372,7 +372,7 @@ def test_keep_original_columns(df_panel):
 
 
 @pytest.mark.skipif(
-    not (DateTimeFeatures),
+    not run_test_for_class(DateTimeFeatures),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_month_of_quarter(df_panel):
