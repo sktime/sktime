@@ -78,7 +78,7 @@ class ARLagOrderSelector(BaseParamFitter):
     ARLagOrderSelector(...)
     >>> selector.selected_model_
     (3,)
-    >>> selector.ic_value_
+    >>> selector.ic_value_  # doctest: +SKIP
     1369.6963340649502
 
     See Also

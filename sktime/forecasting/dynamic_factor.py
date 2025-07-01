@@ -130,7 +130,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
@@ -210,7 +210,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Returns series of predicted values.
         """
         # statsmodels requires zero-based indexing starting at the
@@ -218,6 +218,11 @@ class DynamicFactor(_StatsModelsAdapter):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+
+        # if y is univariate, we duplicated the column in fit,
+        # so now we need to revert this duplication
+        if self._was_univariate:
+            y_pred = y_pred.iloc[:, [0]]
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
@@ -284,6 +289,12 @@ class DynamicFactor(_StatsModelsAdapter):
 
             y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
 
+            # if y is univariate, we duplicated the column in fit,
+            # so now we need to revert this duplication
+            # subste to first two columns as "lower" and "upper"
+            if self._was_univariate:
+                y_pred = y_pred.iloc[:, [0, 1]]
+
             y_pred = y_pred.iloc[ix]
 
             y_pred.rename(
@@ -295,8 +306,12 @@ class DynamicFactor(_StatsModelsAdapter):
         # concatenate the predictions for different values of alpha
         predictions_df = pd.concat(df_list, axis=1)
 
+        ynames = model.data.ynames
+        if self._was_univariate:
+            ynames = [ynames[0]]
+
         # all the code below is just boilerplate for getting the correct columns
-        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
+        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), ynames))
 
         rename_list = [
             var_name + " " + str(coverage) + " " + bound
@@ -315,25 +330,12 @@ class DynamicFactor(_StatsModelsAdapter):
         ]
 
         predictions_df = predictions_df[final_ord]
-        cols = [col_name.split(" ") for col_name in predictions_df.columns]
 
-        predictions_df_2 = pd.DataFrame(
-            predictions_df.values, columns=pd.MultiIndex.from_tuples(cols)
-        )
+        final_columns = self._get_columns("predict_interval", coverage=coverage_list)
+        predictions_df = pd.DataFrame(predictions_df.values, columns=final_columns)
+        predictions_df.index = fh.to_absolute_index(self.cutoff)
 
-        final_columns = [
-            [col_name, float(coverage), bound]
-            for col_name in model.data.ynames
-            for coverage in predictions_df_2.columns.get_level_values(1).unique()
-            for bound in predictions_df_2.columns.get_level_values(2).unique()
-        ]
-
-        predictions_df_3 = pd.DataFrame(
-            predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
-        )
-        predictions_df_3.index = fh.to_absolute_index(self.cutoff)
-
-        return predictions_df_3
+        return predictions_df
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
@@ -348,6 +350,14 @@ class DynamicFactor(_StatsModelsAdapter):
         from statsmodels.tsa.statespace.dynamic_factor import (
             DynamicFactor as _DynamicFactor,
         )
+
+        # if y is single column DataFrame, duplicate the column to make it multivariate
+        if y.shape[1] == 1:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+            self._was_univariate = True
+        else:
+            self._was_univariate = False
 
         self._forecaster = _DynamicFactor(
             endog=y,
@@ -378,6 +388,14 @@ class DynamicFactor(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if self._was_univariate:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+        super()._update(y, X, update_params=update_params)
+        return self
 
     def summary(self):
         """Get a summary of the fitted forecaster."""
