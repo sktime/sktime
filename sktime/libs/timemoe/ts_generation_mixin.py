@@ -33,7 +33,6 @@ GenerateDecoderOnlyOutput = _safe_import(
 GenerateEncoderDecoderOutput = _safe_import(
     "transformers.generation.utils.GenerateEncoderDecoderOutput"
 )
-ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
 
 class TSGenerationMixin(GenerationMixin):
