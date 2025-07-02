@@ -18,7 +18,7 @@ from typing import Any, Optional, Union
 
 from sktime.utils.dependencies import _safe_import
 
-torch = _safe_import("torch", severity="none")
+torch = _safe_import("torch")
 
 GenerationMixin = _safe_import("transformers.GenerationMixin")
 LogitsProcessorList = _safe_import("transformers.LogitsProcessorList")
