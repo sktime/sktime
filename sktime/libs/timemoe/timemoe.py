@@ -15,7 +15,7 @@
 
 import math
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 from sktime.utils.dependencies import _safe_import
 

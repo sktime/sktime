@@ -20,7 +20,7 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import _safe_import    
+from sktime.utils.dependencies import _safe_import
 
 es = _safe_import("sktime.utils.einshape")
 jax = _safe_import("jax")
@@ -28,7 +28,7 @@ jnp = _safe_import("jax.numpy")
 
 snapshot_download = _safe_import(
     "huggingface_hub.snapshot_download",
-    pkg_name = "huggingfaec-hub",
+    pkg_name="huggingfaec-hub",
 )
 
 checkpoints = _safe_import("paxml.checkpoints")

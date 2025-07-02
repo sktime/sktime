@@ -9,7 +9,7 @@ Authors: Lorenzo Stella <stellalo@amazon.com>, Abdul Fatir Ansari <ansarnd@amazo
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 from sktime.utils.dependencies import _safe_import
 
