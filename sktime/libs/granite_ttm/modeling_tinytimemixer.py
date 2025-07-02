@@ -52,7 +52,7 @@ class TinyTimeMixerBatchNorm(nn_module):
         super().__init__()
         self.batchnorm = nn.BatchNorm1d(config.d_model, eps=config.norm_eps)
 
-    def forward(self, inputs: torch_tensor):
+    def forward(self, inputs):
         """
         Forward Pass.
 
@@ -107,7 +107,7 @@ class TinyTimeMixerPositionalEncoding(nn_module):
             )
         return position_enc
 
-    def forward(self, patch_input: torch_tensor):
+    def forward(self, patch_input):
         """Forward Pass."""
         hidden_state = patch_input + self.position_enc
         return hidden_state
@@ -131,7 +131,7 @@ class TinyTimeMixerNormLayer(nn_module):
         else:
             self.norm = nn.LayerNorm(config.d_model, eps=config.norm_eps)
 
-    def forward(self, inputs: torch_tensor):
+    def forward(self, inputs):
         """
         Forward Pass.
 
@@ -174,7 +174,7 @@ class TinyTimeMixerMLP(nn_module):
         self.fc2 = nn.Linear(num_hidden, out_features)
         self.dropout2 = nn.Dropout(config.dropout)
 
-    def forward(self, inputs: torch_tensor):
+    def forward(self, inputs):
         """
         Forward Pass.
 
@@ -218,7 +218,7 @@ class TinyTimeMixerChannelFeatureMixerBlock(nn_module):
                 in_size=config.num_input_channels, out_size=config.num_input_channels
             )
 
-    def forward(self, inputs: torch_tensor):
+    def forward(self, inputs):
         """
         Forward Pass.
 
@@ -289,11 +289,11 @@ class TinyTimeMixerAttention(nn_module):
 
     def forward(
         self,
-        hidden_states: torch_tensor,
-        key_value_states: Optional[torch_tensor] = None,
-        past_key_value: Optional[tuple[torch_tensor]] = None,
-        attention_mask: Optional[torch_tensor] = None,
-        layer_head_mask: Optional[torch_tensor] = None,
+        hidden_states,
+        key_value_states=None,
+        past_key_value=None,
+        attention_mask=None,
+        layer_head_mask=None,
         output_attentions: bool = False,
     ):
         """Input shape: Batch x Time x Channel."""

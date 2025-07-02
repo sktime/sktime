@@ -56,13 +56,12 @@ def _get_unpad_data(attention_mask):
 
 
 def load_balancing_loss_func(
-    gate_logits: Union[torch.Tensor, tuple[torch.Tensor], list[torch.Tensor]],
+    gate_logits,
     top_k: int,
     num_experts: int = None,
-    attention_mask: Optional[torch.Tensor] = None,
-) -> torch.Tensor:
-    r"""
-    Compute auxiliary load balancing loss as in Switch Transformer.
+    attention_mask=None,
+):
+    r"""Compute auxiliary load balancing loss as in Switch Transformer.
 
     See Switch Transformer (https://arxiv.org/abs/2101.03961) for more details.
     This function implements the loss function presented in equations (4) - (6) of the
@@ -84,6 +83,7 @@ def load_balancing_loss_func(
 
     Returns
     -------
+        torch.Tensor
         The auxiliary loss.
     """
     if (
@@ -153,7 +153,7 @@ def load_balancing_loss_func(
 
 
 # Copied from transformers.models.llama.modeling_llama.repeat_kv
-def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
+def repeat_kv(hidden_states, n_rep: int):
     """
     Equivalent of torch.repeat_interleave(x, dim=1, repeats=n_rep).
 
@@ -478,9 +478,8 @@ class TimeMoeSparseExpertsLayer(nn.Module):
         )
         self.shared_expert_gate = torch.nn.Linear(config.hidden_size, 1, bias=False)
 
-    def forward(self, hidden_states: torch.Tensor):
-        """
-        Forward pass through the sparse experts layer.
+    def forward(self, hidden_states):
+        """Forward pass through the sparse experts layer.
 
         Parameters
         ----------
@@ -609,15 +608,14 @@ class TimeMoeAttention(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Cache] = None,
+        hidden_states,
+        attention_mask=None,
+        position_ids=None,
+        past_key_value=None,
         output_attentions: bool = False,
         **kwargs,
-    ) -> tuple[torch.Tensor, Optional[torch.Tensor], Optional[tuple[torch.Tensor]]]:
-        """
-        Forward pass through the attention layer.
+    ):
+        """Forward pass through the attention layer.
 
         Parameters
         ----------
@@ -636,7 +634,7 @@ class TimeMoeAttention(nn.Module):
 
         Returns
         -------
-        tuple
+        tuple[torch.Tensor, Optional[torch.Tensor], Optional[tuple[torch.Tensor]]]
             Output states, attention weights (optional), and cached states (optional)
         """
         if "padding_mask" in kwargs:
