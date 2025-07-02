@@ -19,6 +19,13 @@ nn_module = nn.Module
 torch_tensor = torch.Tensor
 torch_float = torch.FloatTensor
 
+# workaround condition for the case where ModelOutput cannot be imported
+# using the mock class does not work here
+if ModelOutput.__class__.__name__ == "CommonMagicMeta":
+
+    class ModelOutput:
+        """Dummy model output if transformers is unavailable."""
+
 
 class TinyTimeMixerGatedAttention(nn_module):
     """
