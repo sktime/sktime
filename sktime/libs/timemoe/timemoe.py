@@ -19,7 +19,6 @@ from typing import Optional, Union
 
 from sktime.utils.dependencies import _safe_import
 
-
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
 F = _safe_import("torch.nn.functional")

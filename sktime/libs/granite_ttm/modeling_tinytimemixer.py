@@ -6,38 +6,18 @@ from dataclasses import dataclass
 from typing import Optional
 from warnings import warn
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers.modeling_utils import ModelOutput, PreTrainedModel
-else:
+ModelOutput = _safe_import("transformers.modeling_utils.ModelOutput")
+PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
 
-    class PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
+torch = _safe_import("torch", severity="none")
+nn = _safe_import("torch.nn", severity="none")
 
-    class ModelOutput:
-        """Dummy class if transformers is unavailable."""
-
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-
-    nn_module = nn.Module
-    torch_tensor = torch.Tensor
-    torch_float = torch.FloatTensor
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
-
-    class torch_tensor:
-        """Dummy class if torch is unavailable."""
-
-    class torch_float:
-        """Dummy class if torch is unavailable."""
+nn_module = nn.Module
+torch_tensor = torch.Tensor
+torch_float = torch.FloatTensor
 
 
 class TinyTimeMixerGatedAttention(nn_module):
