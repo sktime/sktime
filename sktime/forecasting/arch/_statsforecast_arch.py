@@ -61,7 +61,8 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(
@@ -142,7 +143,8 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(

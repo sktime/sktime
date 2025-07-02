@@ -183,6 +183,10 @@ jobs:
   test-mlflow:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mlflow-version: ['2.9.2', '3.latest']
+    name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -194,7 +198,11 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+            python -m pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
+          else
+            python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          fi
 
       - name: Show dependencies
         run: python -m pip list
@@ -285,7 +293,7 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        os: [ubuntu-latest, macos-13, windows-latest]
+        os: [ubuntu-latest, macos-13, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

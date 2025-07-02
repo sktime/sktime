@@ -174,11 +174,10 @@ class EnbPIForecaster(BaseForecaster):
             # the return_indices=True
             self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
 
-        bs_tags = self.bootstrap_transformer_.get_tags()
-        if (
-            not bs_tags.get("capability:bootstrap_index", False)
-            or not self.bootstrap_transformer_.return_indices
-        ):
+        bs_capable = self.bootstrap_transformer_.get_tag(
+            "capability:bootstrap_index", False, raise_error=False
+        )
+        if not bs_capable or not self.bootstrap_transformer_.return_indices:
             raise ValueError(
                 "Error in EnbPIForecaster: "
                 "The bootstrap_transformer needs to be able to "

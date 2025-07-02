@@ -88,6 +88,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
         "sktime_version": SKTIME_VERSION,  # current sktime version
+        # default tags for testing
+        "tests:core": False,  # core objects have wider trigger conditions in testing
     }
 
     _config = {
@@ -126,7 +128,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         backend:parallel : str, optional, default="None"
             backend to use for parallelization when broadcasting/vectorizing, one of
 
-            - "None": executes loop sequentally, simple list comprehension
+            - "None": executes loop sequentially, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
             - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -435,6 +437,9 @@ class TagAliaserMixin(_TagAliaserMixin):
         if new_tag in tag_dict:
             new_tag_dict[old_tag] = tag_dict[new_tag]
         return new_tag_dict
+
+    # package name used for deprecation warnings
+    _package_name = "sktime"
 
 
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):

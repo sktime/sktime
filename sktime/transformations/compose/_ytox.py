@@ -128,6 +128,9 @@ class YtoX(BaseTransformer):
         "fit_is_empty": True,
         "requires_X": False,
         "requires_y": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, subset_index=False):
