@@ -51,7 +51,7 @@ class IgnoreX(_DelegatedForecaster):
         self.forecaster_ = forecaster.clone()
 
         self._set_delegated_tags(self.forecaster_)
-        self.set_tags(**{"capability:exogenous": False})
+        self.set_tags(**{"capability:exogenous": True})
 
         if ignore_x:
             self.set_tags(**{"capability:exogenous": False})
