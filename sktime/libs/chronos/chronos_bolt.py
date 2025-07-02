@@ -14,43 +14,17 @@ import warnings
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
-
-    class nn:
-        """Dummy class if torch is unavailable."""
-
-        class Module:
-            """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import AutoConfig
-    from transformers.models.t5.modeling_t5 import (
-        ACT2FN,
-        T5LayerNorm,
-        T5PreTrainedModel,
-        T5Stack,
-    )
-    from transformers.utils import ModelOutput
-else:
-
-    class T5PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
-
-    class ModelOutput:
-        """Dummy model output if transformers is unavailable."""
-
+AutoConfig = _safe_import("transformers.AutoConfig")
+ACT2FN = _safe_import("transformers.models.t5.modeling_t5.ACT2FN")
+T5LayerNorm = _safe_import("transformers.models.t5.modeling_t5.T5LayerNorm")
+T5PreTrainedModel = _safe_import("transformers.models.t5.modeling_t5.T5PreTrainedModel")
+T5Stack = _safe_import("transformers.models.t5.modeling_t5.T5Stack")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
 logger = logging.getLogger(__file__)
 

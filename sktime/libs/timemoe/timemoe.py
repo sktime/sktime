@@ -17,60 +17,27 @@ import math
 import warnings
 from typing import Optional, Union
 
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-else:
-
-    class torch:
-        """Dummy class if torch is not installed."""
-
-        class Tensor:
-            """Dummy class if torch is not installed."""
-
-        class LongTensor:
-            """Dummy class if torch is not installed."""
-
-        class FloatTensor:
-            """Dummy class if torch is not installed."""
-
-    class nn:
-        """Dummy class if torch is not installed."""
-
-        class Module:
-            """Dummy class if torch is not installed."""
-
-    class F:
-        """Dummy class if torch is not installed."""
+from sktime.utils.dependencies import _safe_import
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import Cache, DynamicCache, PreTrainedModel, StaticCache
-    from transformers.activations import ACT2FN
-    from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
-    from transformers.modeling_outputs import (
-        MoeCausalLMOutputWithPast,
-        MoeModelOutputWithPast,
-    )
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
 
-    class Cache:
-        """Dummy class if transformers is not installed."""
-
-    class StaticCache:
-        """Dummy class if transformers is not installed."""
-
-    class PreTrainedModel:
-        """Dummy class if transformers is not installed."""
-
-    class MoeModelOutputWithPast:
-        """Dummy class if transformers is not installed."""
-
-    class MoeCausalLMOutputWithPast:
-        """Dummy class if transformers is not installed."""
+Cache = _safe_import("transformers.Cache")
+DynamicCache = _safe_import("transformers.DynamicCache")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
+StaticCache = _safe_import("transformers.StaticCache")
+ACT2FN = _safe_import("transformers.activations.ACT2FN")
+_prepare_4d_causal_attention_mask = _safe_import(
+    "transformers.modeling_attn_mask_utils._prepare_4d_causal_attention_mask"
+)
+MoeCausalLMOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeCausalLMOutputWithPast"
+)
+MoeModelOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeModelOutputWithPast"
+)
 
 
 from .timemoe_config import TimeMoeConfig

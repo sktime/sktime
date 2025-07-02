@@ -11,38 +11,16 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Literal, Optional, Union
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
-
-    class nn:
-        """Dummy class if torch is unavailable."""
-
-        class Module:
-            """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import (
-        AutoConfig,
-        AutoModelForCausalLM,
-        AutoModelForSeq2SeqLM,
-        GenerationConfig,
-        PreTrainedModel,
-    )
-else:
-
-    class PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
+AutoConfig = _safe_import("transformers.AutoConfig")
+AutoModelForCausalLM = _safe_import("transformers.AutoModelForCausalLM")
+AutoModelForSeq2SeqLM = _safe_import("transformers.AutoModelForSeq2SeqLM")
+GenerationConfig = _safe_import("transformers.GenerationConfig")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
 
 
 @dataclass

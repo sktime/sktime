@@ -16,40 +16,25 @@
 import warnings
 from typing import Any, Optional, Union
 
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy torch class if the torch module is not available."""
-
-        class Tensor:
-            """Dummy Tensor class if the torch module is not available."""
+from sktime.utils.dependencies import _safe_import
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
-    from transformers.generation import EosTokenCriteria, validate_stopping_criteria
-    from transformers.generation.utils import (
-        GenerateDecoderOnlyOutput,
-        GenerateEncoderDecoderOutput,
-    )
-    from transformers.utils import ModelOutput
-else:
+torch = _safe_import("torch", severity="none")
 
-    class GenerationMixin:
-        """Dummy GenerationMixin class if the transformers module is not available."""
-
-    class LogitsProcessorList:
-        """Dummy class if the transformers module is not available."""
-
-    class StoppingCriteriaList:
-        """Dummy class if the transformers module is not available."""
-
-    class ModelOutput:
-        """Dummy class if the transformers module is not available."""
+GenerationMixin = _safe_import("transformers.GenerationMixin")
+LogitsProcessorList = _safe_import("transformers.LogitsProcessorList")
+StoppingCriteriaList = _safe_import("transformers.StoppingCriteriaList")
+EosTokenCriteria = _safe_import("transformers.generation.EosTokenCriteria")
+validate_stopping_criteria = _safe_import(
+    "transformers.generation.validate_stopping_criteria"
+)
+GenerateDecoderOnlyOutput = _safe_import(
+    "transformers.generation.utils.GenerateDecoderOnlyOutput"
+)
+GenerateEncoderDecoderOutput = _safe_import(
+    "transformers.generation.utils.GenerateEncoderDecoderOutput"
+)
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
 
 class TSGenerationMixin(GenerationMixin):
