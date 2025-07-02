@@ -6,6 +6,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("jax", severity="none"):
     import jax.numpy as jnp
+    from jax.scipy.special import expit
 
 import numpy as np
 import pandas as pd
@@ -303,7 +304,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         logit_prob = self._sample_parameters(
             length=length, X=X, time_regressor=self.time_varying_probability, oos=oos
         )
-        prob = jax.scipy.special.expit(logit_prob)
+        prob = expit(logit_prob)
 
         return prob
 
