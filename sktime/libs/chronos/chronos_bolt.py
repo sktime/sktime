@@ -29,6 +29,14 @@ ModelOutput = _safe_import("transformers.utils.ModelOutput")
 logger = logging.getLogger(__file__)
 
 
+# workaround condition for the case where ModelOutput cannot be imported
+# using the mock class does not work here
+if ModelOutput.__class__.__name__ == "CommonMagicMeta"
+
+    class ModelOutput:
+        """Dummy model output if transformers is unavailable."""
+
+
 @dataclass
 class ChronosBoltConfig:
     """Configuration for chronos-bolt."""
