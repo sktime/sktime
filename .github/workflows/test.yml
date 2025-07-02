@@ -181,7 +181,8 @@ jobs:
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
-    needs: test-nosoftdeps
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
