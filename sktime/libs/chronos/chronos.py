@@ -11,7 +11,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
@@ -21,6 +21,15 @@ AutoModelForCausalLM = _safe_import("transformers.AutoModelForCausalLM")
 AutoModelForSeq2SeqLM = _safe_import("transformers.AutoModelForSeq2SeqLM")
 GenerationConfig = _safe_import("transformers.GenerationConfig")
 PreTrainedModel = _safe_import("transformers.PreTrainedModel")
+
+# this is required as a workaround for the dataclass fields
+if not _check_soft_dependencies("torch", severity="none"):
+
+    class nn:
+        """Dummy class if torch is unavailable."""
+
+        class Module:
+            """Dummy class if torch is unavailable."""
 
 
 @dataclass
