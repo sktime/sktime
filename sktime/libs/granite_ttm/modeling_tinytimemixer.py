@@ -280,7 +280,7 @@ class TinyTimeMixerAttention(nn_module):
         self.q_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
 
-    def _shape(self, tensor: torch_tensor, seq_len: int, bsz: int):
+    def _shape(self, tensor, seq_len: int, bsz: int):
         return (
             tensor.view(bsz, seq_len, self.num_heads, self.head_dim)
             .transpose(1, 2)
@@ -507,7 +507,7 @@ class FeatureMixerBlock(nn_module):
                 in_size=config.d_model, out_size=config.d_model
             )
 
-    def forward(self, hidden: torch_tensor):
+    def forward(self, hidden):
         """
         Forward Pass.
 
@@ -555,7 +555,7 @@ class TinyTimeMixerLayer(nn_module):
                 config=config
             )
 
-    def forward(self, hidden: torch_tensor):
+    def forward(self, hidden):
         """
         Forward Pass.
 
@@ -612,7 +612,7 @@ class TinyTimeMixerAdaptivePatchingBlock(nn_module):
             [TinyTimeMixerLayer(temp_config) for i in range(temp_config.num_layers)]
         )
 
-    def forward(self, hidden: torch_tensor):
+    def forward(self, hidden):
         """
         Forward Pass.
 
@@ -958,7 +958,7 @@ class TinyTimeMixerPatchify(nn_module):
         )
         self.sequence_start = self.sequence_length - new_sequence_length
 
-    def forward(self, past_values: torch_tensor):
+    def forward(self, past_values):
         """
         Forward Pass.
 
@@ -1005,7 +1005,7 @@ class TinyTimeMixerStdScaler(nn_module):
             config.minimum_scale if hasattr(config, "minimum_scale") else 1e-5
         )
 
-    def forward(self, data: torch_tensor, observed_indicator: torch_tensor):
+    def forward(self, data, observed_indicator):
         """
         Forward Pass.
 
@@ -1055,7 +1055,7 @@ class TinyTimeMixerMeanScaler(nn_module):
             config.default_scale if hasattr(config, "default_scale") else None
         )
 
-    def forward(self, data: torch_tensor, observed_indicator: torch_tensor):
+    def forward(self, data, observed_indicator):
         """
         Forward Pass.
 
@@ -1108,7 +1108,7 @@ class TinyTimeMixerNOPScaler(nn_module):
         self.dim = config.scaling_dim if hasattr(config, "scaling_dim") else 1
         self.keepdim = config.keepdim if hasattr(config, "keepdim") else True
 
-    def forward(self, data: torch_tensor, observed_indicator: torch_tensor = None):
+    def forward(self, data, observed_indicator=None):
         """
         Forward Pass.
 
@@ -1144,8 +1144,8 @@ class TinyTimeMixerEncoderOutput(ModelOutput):
             Hidden-states of the model at the output of each layer.
     """
 
-    last_hidden_state: torch_float = None
-    hidden_states: Optional[tuple[torch_float]] = None
+    last_hidden_state = None
+    hidden_states = None
 
 
 class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
@@ -1192,10 +1192,10 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
 
     def forward(
         self,
-        past_values: torch_tensor,
+        past_values,
         output_hidden_states: Optional[bool] = False,
         return_dict: Optional[bool] = None,
-        freq_token: Optional[torch_tensor] = None,
+        freq_token=None,
     ):
         r"""
         Forward Pass.
@@ -1289,11 +1289,11 @@ class TinyTimeMixerModelOutput(ModelOutput):
             enabled.
     """
 
-    last_hidden_state: torch_float = None
-    hidden_states: Optional[tuple[torch_float]] = None
-    patch_input: torch_float = None
-    loc: Optional[torch_float] = None
-    scale: Optional[torch_float] = None
+    last_hidden_state = None
+    hidden_states = None
+    patch_input = None
+    loc = None
+    scale = None
 
 
 class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
@@ -1344,11 +1344,11 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
 
     def forward(
         self,
-        past_values: torch_tensor,
-        observed_mask: Optional[torch_tensor] = None,
+        past_values,
+        observed_mask=None,
         output_hidden_states: Optional[bool] = False,
         return_dict: Optional[bool] = None,
-        freq_token: Optional[torch_tensor] = None,
+        freq_token=None,
     ):
         r"""
         Forward Pass.
@@ -1456,13 +1456,13 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
 
     """
 
-    loss: Optional[torch_float] = None
-    prediction_outputs: torch_float = None
-    backbone_hidden_state: torch_float = None
-    decoder_hidden_state: torch_float = None
-    hidden_states: Optional[tuple[torch_float]] = None
-    loc: torch_float = None
-    scale: torch_float = None
+    loss = None
+    prediction_outputs = None
+    backbone_hidden_state = None
+    decoder_hidden_state = None
+    hidden_states = None
+    loc = None
+    scale = None
 
 
 class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
@@ -1508,13 +1508,13 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
 
     def forward(
         self,
-        past_values: torch_tensor,
-        future_values: Optional[torch_tensor] = None,
-        observed_mask: Optional[torch_tensor] = None,
-        output_hidden_states: Optional[bool] = False,
-        return_loss: bool = True,
-        return_dict: Optional[bool] = None,
-        freq_token: Optional[torch_tensor] = None,
+        past_values,
+        future_values=None,
+        observed_mask=None,
+        output_hidden_states=False,
+        return_loss=True,
+        return_dict=None,
+        freq_token=None,
     ):
         r"""
         Forward Pass.
