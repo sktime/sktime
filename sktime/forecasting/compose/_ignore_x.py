@@ -17,6 +17,7 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster : sktime forecaster, BaseForecaster descendant instance
         The forecaster to wrap.
+
     ignore_x : bool, optional (default=True)
         Whether to ignore exogenous data or not, this parameter is useful for tuning.
 
@@ -35,7 +36,7 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
