@@ -12,8 +12,8 @@ from sktime.utils.dependencies import _safe_import
 ModelOutput = _safe_import("transformers.modeling_utils.ModelOutput")
 PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
 
-torch = _safe_import("torch", severity="none")
-nn = _safe_import("torch.nn", severity="none")
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 nn_module = nn.Module
 torch_tensor = torch.Tensor
