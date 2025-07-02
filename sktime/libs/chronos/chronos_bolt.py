@@ -45,10 +45,10 @@ class ChronosBoltConfig:
 class ChronosBoltOutput(ModelOutput):
     """Description of the output of the model."""
 
-    loss: Optional[torch.Tensor] = None
-    quantile_preds: Optional[torch.Tensor] = None
-    attentions: Optional[torch.Tensor] = None
-    cross_attentions: Optional[torch.Tensor] = None
+    loss=None
+    quantile_preds=None
+    attentions=None
+    cross_attentions=None
 
 
 class Patch(nn.Module):
@@ -66,7 +66,7 @@ class Patch(nn.Module):
         self.patch_size = patch_size
         self.patch_stride = patch_stride
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         """
         Convert input time series `x` into patches for further processing.
 
@@ -103,13 +103,8 @@ class InstanceNorm(nn.Module):
         super().__init__()
         self.eps = eps
 
-    def forward(
-        self,
-        x: torch.Tensor,
-        loc_scale: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Apply instance normalization to the input tensor.
+    def forward(self, x, loc_scale=None):
+        """Apply instance normalization to the input tensor.
 
         This method normalizes the input tensor by subtracting the mean and dividing by
         the standard deviation, computed separately for each instance of the batch.
@@ -135,11 +130,8 @@ class InstanceNorm(nn.Module):
 
         return (x - loc) / scale, (loc, scale)
 
-    def inverse(
-        self, x: torch.Tensor, loc_scale: tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
-        """
-        Reverses the normalization process of the InstanceNorm during ``forward()``.
+    def inverse(self, x, loc_scale):
+        """Reverses the normalization process of the InstanceNorm during ``forward()``.
 
         Parameter
         ---------
@@ -202,7 +194,7 @@ class ResidualBlock(nn.Module):
         if use_layer_norm:
             self.layer_norm = T5LayerNorm(out_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         """
         Forward pass through the Residual Block.
 
@@ -343,13 +335,8 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
             ):
                 module.output_layer.bias.data.zero_()
 
-    def encode(
-        self, context: torch.Tensor, mask: Optional[torch.Tensor] = None
-    ) -> tuple[
-        torch.Tensor, tuple[torch.Tensor, torch.Tensor], torch.Tensor, torch.Tensor
-    ]:
-        """
-        Encode the input context tensor using the model's architecture.
+    def encode(self, context, mask=None):
+        """Encode the input context tensor using the model's architecture.
 
         Parameters
         ----------
@@ -428,15 +415,8 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
         return encoder_outputs[0], loc_scale, input_embeds, attention_mask
 
-    def forward(
-        self,
-        context: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        target: Optional[torch.Tensor] = None,
-        target_mask: Optional[torch.Tensor] = None,
-    ) -> ChronosBoltOutput:
-        """
-        Predict the future sample tokens for the given sequences.
+    def forward(self, context, mask=None, target=None, target_mask=None):
+        """Predict the future sample tokens for the given sequences.
 
         Arguments `context`, `mask`, `target` and `target_mask` can be used to customize
         the model inference at runtime.
@@ -617,9 +597,7 @@ class ChronosBoltPipeline:
     model: ChronosBoltModelForForecasting
     default_context_length: int = 2048
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -629,11 +607,8 @@ class ChronosBoltPipeline:
 
         return context
 
-    def embed(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Get encoder embeddings for the given time series.
+    def embed(self, context):
+        """Get encoder embeddings for the given time series.
 
         Parameters
         ----------
@@ -671,12 +646,11 @@ class ChronosBoltPipeline:
 
     def predict(  # type: ignore[override]
         self,
-        context: Union[torch.Tensor, list[torch.Tensor]],
+        context,
         prediction_length: Optional[int] = None,
         limit_prediction_length: bool = False,
-    ) -> torch.Tensor:
-        """
-        Get forecasts for the given time series.
+    ):
+        """Get forecasts for the given time series.
 
         Refer to the base method (``BaseChronosPipeline.predict``)
         for details on shared parameters.

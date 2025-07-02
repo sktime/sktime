@@ -41,9 +41,9 @@ class TSGenerationMixin(GenerationMixin):
 
     def _greedy_search(
         self,
-        input_ids: torch.Tensor,
-        logits_processor: Optional[LogitsProcessorList] = None,
-        stopping_criteria: Optional[StoppingCriteriaList] = None,
+        input_ids,
+        logits_processor=None,
+        stopping_criteria=None,
         max_length: Optional[int] = None,
         pad_token_id: Optional[int] = None,
         eos_token_id: Optional[Union[int, list[int]]] = None,
@@ -274,7 +274,7 @@ class TSGenerationMixin(GenerationMixin):
 
     def _update_model_kwargs_for_generation(
         self,
-        outputs: ModelOutput,
+        outputs,
         model_kwargs: dict[str, Any],
         horizon_length: int = 1,
         is_encoder_decoder: bool = False,

@@ -771,19 +771,14 @@ class TimeMoeDecoderLayer(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[tuple[torch.Tensor]] = None,
+        hidden_states,
+        attention_mask=None,
+        position_ids=None,
+        past_key_value=None,
         output_attentions: Optional[bool] = False,
         use_cache: Optional[bool] = False,
         **kwargs,
-    ) -> tuple[
-        torch.FloatTensor,
-        torch.FloatTensor,
-        Optional[torch.FloatTensor],
-        Optional[torch.FloatTensor],
-    ]:
+    ):
         """
         Perform a forward pass through the model.
 
@@ -924,16 +919,16 @@ class TimeMoeModel(TimeMoePreTrainedModel):
 
     def forward(
         self,
-        input_ids: torch.FloatTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[list[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
+        input_ids=None,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        inputs_embeds=None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-    ) -> Union[tuple, MoeModelOutputWithPast]:
+    ):
         """
         Perform a forward pass of the model.
 
@@ -1243,19 +1238,19 @@ class TimeMoeForPrediction(TimeMoePreTrainedModel, TSGenerationMixin):
 
     def forward(
         self,
-        input_ids: torch.FloatTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[list[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.FloatTensor] = None,
-        loss_masks: Optional[torch.FloatTensor] = None,
+        input_ids=None,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        inputs_embeds=None,
+        labels=None,
+        loss_masks=None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
         max_horizon_length: Optional[int] = None,
-    ) -> Union[tuple, MoeCausalLMOutputWithPast]:
+    ):
         """
         Perform a forward pass through the model.
 
