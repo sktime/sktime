@@ -182,6 +182,7 @@ jobs:
 
   test-mlflow:
     needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
