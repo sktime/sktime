@@ -16,6 +16,15 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.38.2 - 2025-07-03
+---------------------------
+
+``transformers 4.52`` compatibility patch.
+
+Contents
+~~~~~~~~
+
+
 Version 0.38.1 - 2025-06-26
 ---------------------------
 
