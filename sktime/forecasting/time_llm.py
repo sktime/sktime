@@ -122,20 +122,17 @@ class TimeLLMForecaster(BaseForecaster):
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        """Fit forecaster to training data."""
 
-        private _fit containing the core logic, called from fit
-        """
         self.device_ = (
             "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
         )
 
-        self.fh_ = fh
-
+        # Use max(fh) for prediction length
         if isinstance(fh, int):
             self._pred_len = fh
-        elif hasattr(fh, "__len__"):
-            self._pred_len = len(fh)
+        elif hasattr(fh, "__len__") and len(fh) > 0:
+            self._pred_len = max(fh)
         else:
             self._pred_len = self.pred_len
 
