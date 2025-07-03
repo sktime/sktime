@@ -9,7 +9,7 @@ from warnings import warn
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
 from sktime.utils.dependencies import _safe_import
 
-ModelOutput = _safe_import("transformers.modeling_utils.ModelOutput")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
 PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
 
 torch = _safe_import("torch")
