@@ -304,6 +304,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         from transformers import Trainer, TrainingArguments
 
+        raise ValueError("test")
+
         if self.use_source_package:
             from tsfm_public.models.tinytimemixer import (
                 TinyTimeMixerConfig,

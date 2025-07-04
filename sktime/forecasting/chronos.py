@@ -410,6 +410,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        raise ValueError("test")
+
         self.model_pipeline = self.model_strategy.create_pipeline(
             key=self._get_unique_chronos_key(),
             kwargs=self._get_chronos_kwargs(),
