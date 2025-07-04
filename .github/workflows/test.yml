@@ -175,7 +175,7 @@ jobs:
           from sktime.utils import check_estimator
           from sktime.utils.dependencies import _check_estimator_deps
 
-          cls = '${{ matrix.flag }}'
+          cls = craft('${{ matrix.flag }}')
           if _check_estimator_deps(cls, severity="none"):
             check_estimator(cls, raise_exceptions=True)
           else:
