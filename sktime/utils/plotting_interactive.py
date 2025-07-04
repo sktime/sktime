@@ -316,6 +316,7 @@ class InteractiveForecaster(BaseForecaster):
     def fit(self, y, X=None, fh=None):
         """Fit the underlying forecaster."""
         self.forecaster.fit(y, X, fh)
+        self._y = y  # Store the target variable
         self._is_fitted = True
         return self
     
