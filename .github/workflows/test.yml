@@ -174,10 +174,12 @@ jobs:
           from sktime.registry import craft
           from sktime.utils import check_estimator
           from sktime.utils.dependencies import _check_estimator_deps
-          if _check_estimator_deps('${{ matrix.flag }}', severity="none"):
-            check_estimator(craft('${{ matrix.flag }}'), raise_exceptions=True)
+
+          cls = '${{ matrix.flag }}'
+          if _check_estimator_deps(cls, severity="none"):
+            check_estimator(cls, raise_exceptions=True)
           else:
-            print(f'Skipping estimator: {${{ matrix.flag }}} due to incompatibility with python or OS version.')
+            print(f'Skipping estimator: {cls} due to incompatibility with python or OS version.')
           EOF
 
   detect-package-change:
