@@ -1,4 +1,4 @@
-"""Implements Chronos forecaster."""
+"""Chronos forecaster."""
 
 __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "PranavBhatP"]
 # abdulfatir and lostella for amazon-science/chronos-forecasting

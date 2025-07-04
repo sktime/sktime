@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implementation of TinyTimeMixer for forecasting."""
+"""TinyTimeMixer for forecasting."""
 
 __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 # ajati, wgifford, vijaye12 for ibm-granite code
