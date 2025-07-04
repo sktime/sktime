@@ -18,8 +18,9 @@ from sktime.performance_metrics.forecasting._functions import (
 class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Geometric mean relative absolute error (GMRAE).
 
-    This class implements an efficient, custom evaluation for GMRAE, including per-time-point
-    evaluation via the `_evaluate_by_index` method. It does not rely on a function-based fallback.
+    This class implements an efficient, custom evaluation for GMRAE, including
+    per-time-point evaluation via the `_evaluate_by_index` method. It does not
+    rely on a function-based fallback.
 
     In relative error metrics, relative errors are first calculated by
     scaling (dividing) the individual forecast errors by the error calculated
@@ -131,21 +132,21 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
         multioutput = self.multioutput
 
         y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
-        
+
         # Calculate relative errors at each time point
         # For GMRAE, we need the absolute relative errors
         relative_errors = np.abs(self._relative_error(y_true, y_pred, y_pred_benchmark))
-        
-        EPS = np.finfo(np.float64).eps
-        relative_errors = np.where(relative_errors == 0.0, EPS, relative_errors)
-        
+
+        eps = np.finfo(np.float64).eps
+        relative_errors = np.where(relative_errors == 0.0, eps, relative_errors)
+
         relative_errors = self._get_weighted_df(relative_errors, **kwargs)
-        
+
         return self._handle_multioutput(relative_errors, multioutput)
-    
+
     def _relative_error(self, y_true, y_pred, y_pred_benchmark):
         """Calculate relative error for observations to benchmark method.
-        
+
         Parameters
         ----------
         y_true : pd.DataFrame
@@ -154,18 +155,18 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
             Forecasted values
         y_pred_benchmark : pd.DataFrame
             Forecasted values from benchmark method
-            
+
         Returns
         -------
         relative_error : pd.DataFrame
             Relative errors
         """
-        EPS = np.finfo(np.float64).eps
-        
+        eps = np.finfo(np.float64).eps
+
         denominator = np.where(
             y_true - y_pred_benchmark >= 0,
-            np.maximum((y_true - y_pred_benchmark), EPS),
-            np.minimum((y_true - y_pred_benchmark), -EPS),
+            np.maximum((y_true - y_pred_benchmark), eps),
+            np.minimum((y_true - y_pred_benchmark), -eps),
         )
-        
+
         return (y_true - y_pred) / denominator
