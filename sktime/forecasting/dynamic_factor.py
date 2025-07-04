@@ -131,7 +131,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

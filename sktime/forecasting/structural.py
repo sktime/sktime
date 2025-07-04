@@ -212,7 +212,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": False,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
     }
 
     def __init__(
