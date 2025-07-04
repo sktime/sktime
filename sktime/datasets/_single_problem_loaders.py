@@ -205,7 +205,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float")
     Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
     """
     name = "Tecator"
-    return _load_dataset(
+    return _load_provided_dataset(
         name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
     )
 
@@ -249,7 +249,7 @@ def load_plaid(split=None, return_X_y=True, return_type=None):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_gunpoint(split=None, return_X_y=True, return_type=None):
@@ -317,7 +317,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_osuleaf(split=None, return_X_y=True, return_type=None):
@@ -375,7 +375,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
@@ -430,7 +430,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
@@ -558,7 +558,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_arrow_head(split=None, return_X_y=True, return_type=None):
@@ -683,7 +683,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
@@ -1502,7 +1502,7 @@ def load_m5(
         If `extract_path` is provided:
             - Check if the required files are present at the given `extract_path`.
             - If files are not found, check if the directory "m5-forecasting-accuracy"
-              exists within the `extract_path`. Useful when the funciton has already
+              exists within the `extract_path`. Useful when the function has already
               run previously with the same path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder in the `extract_path`.
@@ -1512,7 +1512,7 @@ def load_m5(
             - Check if the directory "m5-forecasting-accuracy" exists within the module
               level.
             - If the directory exists, takes path to current directory.
-              Useful when the funciton has already run previously without any path.
+              Useful when the function has already run previously without any path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder at the module level.
 
