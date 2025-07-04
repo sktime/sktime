@@ -3,7 +3,7 @@
 See https://www.sktime.net/ for documentation and tutorials.
 """
 
-__version__ = "0.38.2"
+__version__ = "0.38.3"
 
 __all__ = ["show_versions"]
 
