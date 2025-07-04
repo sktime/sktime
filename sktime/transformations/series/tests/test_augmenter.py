@@ -9,6 +9,22 @@ from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series import augmenter as aug
 
+def test_white_noise_dataframe_support():
+    from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
+    import pandas as pd
+
+    X = pd.DataFrame({
+        "a": range(10),
+        "b": range(10, 20)
+    })
+
+    augmenter = WhiteNoiseAugmenter(scale=1.0, random_state=42)
+    Xt = augmenter.fit_transform(X)
+
+    assert isinstance(Xt, pd.DataFrame)
+    assert Xt.shape == X.shape
+    assert not Xt.equals(X), "Transformed data should differ from input"
+
 
 def _load_test_data():
     X, y = load_basic_motions()
