@@ -170,15 +170,7 @@ jobs:
         env:
           FLAG: ${{ matrix.flag }}
         shell: bash
-        run: |
-          python -c "from sktime.registry import craft; \
-          from sktime.utils import check_estimator; \
-          from sktime.utils.dependencies import _check_estimator_deps; \
-          cls = craft('${{ matrix.flag }}'); \
-          if _check_estimator_deps(cls, severity='none'): \
-              check_estimator(cls, raise_exceptions=True); \
-          else: \
-              print(f'Skipping estimator: {cls} due to incompatibility with python or OS version.')"
+        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
 
   detect-package-change:
     needs: [code-quality, detect-changed-classes]
