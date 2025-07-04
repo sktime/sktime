@@ -170,15 +170,15 @@ jobs:
         env:
           FLAG: ${{ matrix.flag }}
         run: |
-          python -c "
-            from sktime.registry import craft
-            from sktime.utils import check_estimator
-            from sktime.utils.dependencies import _check_estimator_deps
-            if _check_estimator_deps('${{ matrix.flag }}', severity="none"):
-              check_estimator(craft('${{ matrix.flag }}'), raise_exceptions=True)
-            else:
-              print(f'Skipping estimator: {${{ matrix.flag }}} due to incompatibility with python or OS version.')
-          "
+          python - <<EOF
+          from sktime.registry import craft
+          from sktime.utils import check_estimator
+          from sktime.utils.dependencies import _check_estimator_deps
+          if _check_estimator_deps('${{ matrix.flag }}', severity="none"):
+            check_estimator(craft('${{ matrix.flag }}'), raise_exceptions=True)
+          else:
+            print(f'Skipping estimator: {${{ matrix.flag }}} due to incompatibility with python or OS version.')
+          EOF
 
   detect-package-change:
     needs: [code-quality, detect-changed-classes]
