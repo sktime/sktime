@@ -12,7 +12,7 @@ import copy
 import logging
 import warnings
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from sktime.utils.dependencies import _safe_import
 
@@ -53,10 +53,10 @@ class ChronosBoltConfig:
 class ChronosBoltOutput(ModelOutput):
     """Description of the output of the model."""
 
-    loss = None
-    quantile_preds = None
-    attentions = None
-    cross_attentions = None
+    loss: Optional[Any] = None
+    quantile_preds: Optional[Any] = None
+    attentions: Optional[Any] = None
+    cross_attentions: Optional[Any] = None
 
 
 class Patch(nn.Module):
