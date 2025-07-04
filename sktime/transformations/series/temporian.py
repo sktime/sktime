@@ -65,6 +65,9 @@ class TemporianTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(self, function, compile=False):
