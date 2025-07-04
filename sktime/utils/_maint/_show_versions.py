@@ -44,6 +44,7 @@ DEFAULT_DEPS_TO_SHOW = [
     "pandas",
     "matplotlib",
     "joblib",
+    "huggingface-hub",
     "numba",
     "pmdarima",
     "pytorch-forecasting",
