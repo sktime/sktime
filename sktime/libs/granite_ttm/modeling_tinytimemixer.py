@@ -3,7 +3,7 @@
 import copy
 import math
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 from warnings import warn
 
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
@@ -1151,8 +1151,8 @@ class TinyTimeMixerEncoderOutput(ModelOutput):
             Hidden-states of the model at the output of each layer.
     """
 
-    last_hidden_state = None
-    hidden_states = None
+    last_hidden_state: Optional[Any] = None
+    hidden_states: Optional[Any] = None
 
 
 class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
@@ -1296,11 +1296,11 @@ class TinyTimeMixerModelOutput(ModelOutput):
             enabled.
     """
 
-    last_hidden_state = None
-    hidden_states = None
-    patch_input = None
-    loc = None
-    scale = None
+    last_hidden_state: Optional[Any] = None
+    hidden_states: Optional[Any] = None
+    patch_input: Optional[Any] = None
+    loc: Optional[Any] = None
+    scale: Optional[Any] = None
 
 
 class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
@@ -1463,13 +1463,13 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
 
     """
 
-    loss = None
-    prediction_outputs = None
-    backbone_hidden_state = None
-    decoder_hidden_state = None
-    hidden_states = None
-    loc = None
-    scale = None
+    loss: Optional[Any] = None
+    prediction_outputs: Optional[Any] = None
+    backbone_hidden_state: Optional[Any] = None
+    decoder_hidden_state: Optional[Any] = None
+    hidden_states: Optional[Any] = None
+    loc: Optional[Any] = None
+    scale: Optional[Any] = None
 
 
 class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
