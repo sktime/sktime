@@ -260,7 +260,7 @@ class BaseFixtureGenerator:
         # 1. the estimator is excluded in the legacy EXCLUDED_TESTS list
         # 2. the excluded test appears in the "tests:skip_by_name" tag
         cond1 = test_name in EXCLUDED_TESTS.get(est.__name__, [])
-        excl_tag = est.get_class_tag("tests:skip_by_name", [], raise_error=False)
+        excl_tag = est.get_class_tag("tests:skip_by_name", [])
         if excl_tag is None:
             excl_tag = []
         cond2 = test_name in excl_tag
