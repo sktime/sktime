@@ -16,6 +16,132 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.38.3 - 2025-07-04
+---------------------------
+
+Hotfix for failures of ``ChronosForecaster`` and ``TinyTimeMixerForecaster``.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix accidental removal of dataclass types in ``ChronosForecaster`` and ``TinyTimeMixerForecaster`` (:pr:`8488`) :user:`fkiraly`
+
+Version 0.38.2 - 2025-07-03
+---------------------------
+
+``transformers 4.53`` compatibility patch, minor maintenance and documentation updates.
+
+Contents
+~~~~~~~~
+
+* [MNT] CI: ``Add ubuntu-22.04-arm`` runners to enhance arm aarch64 architecture testing and maintenance (:pr:`7695`) :user:`abhishek-iitmadras`
+* [MNT] fix: add ``aarch64`` installation constraint for ``esig`` and ``ts2vg`` (:pr:`8471`) :user:`abhishek-iitmadras`
+* [MNT] Skip mlflow test jobs if ``sktime`` folder or ``pyproject.toml`` is untouched (:pr:`8474`) :user:`yarnabrina`
+* [MNT] replace unsafe imports from ``torch`` and ``transformers`` with ``_safe_import`` pattern (:pr:`8476`) :user:`fkiraly`
+* [MNT] update ``transformers`` imports for 4.53 compatibility (:pr:`8478`) :user:`fkiraly`
+* [DOC] use clearer language in extension template preamble (:pr:`8466`) :user:`fkiraly`
+* [DOC] add missing API reference for ``GreykiteForecaster`` (:pr:`8472`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`abhishek-iitmadras`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
+Version 0.38.1 - 2025-06-26
+---------------------------
+
+``scikit-learn 1.7`` compatibility hotfix, thanks go to :user:`andretheronsa`.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix forecasting metric functions incompatible with ``scikit-learn 1.7`` (:pr:`8459`) :user:`andretheronsa`
+* [MNT] revert docs to pre-8385 state (:pr:`8454`, :pr:`8444`) :user:`fkiraly`, :user:`yarnabrina`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`andretheronsa`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
+Version 0.38.0 - 2025-06-24
+---------------------------
+
+Maintenance release with scheduled deprecations and change actions.
+
+For the last non-maintenance content update, see 0.37.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.4``
+* ``pandas`` (core dependency) bounds have been updated to ``<2.4``
+* ``scikit-learn`` (core dependency) bounds have been updated to ``<1.8``
+* ``scipy`` (core dependency) bounds have been updated to ``<1.17``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* deprecated methods from ``BaseBenchmark`` have been removed
+* ``forecasting_validation`` utility has been removed - users should call ``ForecastingBenchmark`` instead
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* unused copies datasets have been removed from ``sktime.datasets.data``.
+  Users should replace any direct read of data files in ``sktime.datasets.data`` with loading
+  via dataset classes or loader functions. For example, reading ``ArrowHead_TRAIN.tsv``
+  should be replaced by calling ``load`` from
+  ``sktime.datasets.classification.ArrowHead``.
+
+Forecasting
+^^^^^^^^^^^
+
+* removed: the ``proba`` module has been removed from ``sktime``. Users should replace
+  imports from ``sktime.proba`` with imports from ``skpro.distributions``, in the ``skpro`` package.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update pandas requirement from ``<2.3.0,>=1.1`` to ``>=1.1,<2.4.0`` (:pr:`8349`) :user:`dependabot[bot]`
+* [MNT] lint ``conf.py`` (:pr:`8437`) :user:`fkiraly`
+* [MNT] increase ``joblib`` bound to ``joblib<1.7`` (:pr:`8424`) :user:`fkiraly`
+* [MNT] revert documentation PR 8385 (:pr:`8442`) :user:`fkiraly`
+* [MNT] add ``scipy<1.16`` bounds to incompatible estimators (:pr:`8447`) :user:`fkiraly`
+* [MNT] raise ``numpy`` bound to ``numpy<2.4`` (:pr:`8414`) :user:`fkiraly`
+* [MNT] 0.38.0 deprecations and change actions (:pr:`8429`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+* [MNT] ``sklearn 1.7`` compatibility (:pr:`8439`) :user:`fkiraly`
+* [MNT] raise ``scikit-learn`` bound to  ``<1.8.0`` (:pr:`8402`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add new reconcilers to API reference (:pr:`8440`) :user:`felipeangelimvieira`
+
+Fixes
+~~~~~
+
+* [BUG] Documentation ``conf.py`` is missing mandatory extensions (:pr:`8435`) :user:`felipeangelimvieira`
+* [BUG] fix sphinx changelog link generation and panel overview (:pr:`8432`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`jgyasu`,
+:user:`yarnabrina`
+
 
 Version 0.37.1 - 2025-06-22
 ---------------------------

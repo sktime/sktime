@@ -311,6 +311,9 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     _default_chronos_config = {

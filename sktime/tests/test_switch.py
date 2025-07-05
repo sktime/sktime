@@ -95,7 +95,7 @@ def run_test_for_class(cls, return_reason=False):
         * otherwise, any reasons to run cause the entire list to be run
         * otherwise, the list is not run due to "no change"
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
 
     def _return(run, reason):
         if return_reason:
@@ -238,6 +238,12 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
         test_classes = get_test_classes_for_obj(cls)
         return any(is_class_changed(x) for x in test_classes)
 
+    def _requires_vm(cls):
+        """Check if the class requires a test VM, return bool."""
+        if not isclass(cls) or not hasattr(cls, "get_class_tags"):
+            return False
+        return cls.get_class_tag("tests:vm", False)
+
     def _is_impacted_by_pyproject_change(cls, include_core_deps=False):
         """Check if the dep specifications of cls have changed, return bool."""
         from packaging.requirements import Requirement
@@ -272,8 +278,8 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
         return False, "False_required_deps_missing"
     # otherwise, continue
 
-    # if skip_test_vm is True and the class requires a test vm, skip
-    if cls.get_class_tag("tests:vm", True):
+    # if the class requires a test vm, skip
+    if _requires_vm(cls):
         return False, "False_requires_vm"
 
     # if ONLY_CHANGED_MODULES is off: always True
