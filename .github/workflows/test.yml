@@ -138,6 +138,7 @@ jobs:
 
   test-est:
     needs: detect-changed-classes
+    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
 
     strategy:
       fail-fast: false
