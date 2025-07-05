@@ -178,7 +178,8 @@ class ChronosBoltStrategy(ChronosModelStrategy):
 
 
 class ChronosForecaster(_BaseGlobalForecaster):
-    """
+    """Test this.
+
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
     Chronos and Chronos-Bolt are pretrained time-series foundation models
