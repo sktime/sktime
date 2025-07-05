@@ -88,6 +88,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "sktime_version": SKTIME_VERSION,  # current sktime version
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
+        "tests:vm": False,  # whether the object should be tested in its own VM
     }
 
     _config = {
