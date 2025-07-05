@@ -11,6 +11,7 @@ from sktime.transformations.hierarchical.reconcile._optimal import (
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
 
 @pytest.fixture
@@ -36,6 +37,10 @@ def small_hier_index():
     return pd.MultiIndex.from_tuples(tuples, names=names)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
+    reason="run test only if module has changed",
+)
 def test_create_summing_matrix_from_index(small_hier_index):
     # Given our small index, let's compute the summation matrix
     S_df = _create_summing_matrix_from_index(small_hier_index)
@@ -115,6 +120,10 @@ def test_nonnegative_reconciliation(hierarchical_levels):
     assert np.all(yreconc >= 0), "Negative values in reconciled series!"
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([OptimalReconciler, NonNegativeOptimalReconciler]),
+    reason="run test only if classes changed and if softdeps are present",
+)
 @pytest.mark.parametrize(
     "W",
     [
