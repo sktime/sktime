@@ -138,7 +138,7 @@ jobs:
 
   test-est:
     needs: detect-changed-classes
-    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
+    if: ${{ needs.detect-changed-classes.outputs.CLS_CH_VM != '[]' }}
 
     strategy:
       fail-fast: false
