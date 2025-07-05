@@ -67,12 +67,12 @@ class _DelegatedForecaster(BaseForecaster):
 
         TAGS_TO_DELEGATE = [
             "requires-fh-in-fit",
-            "handles-missing-data",
+            "capability:missing_values",
             "ignores-exogeneous-X",
             "capability:insample",
             "capability:pred_int",
             "capability:pred_int:insample",
-            "handles-missing-data",
+            "capability:missing_values",
             "requires-fh-in-fit",
             "X-y-must-have-same-index",
             "enforce_index_type",

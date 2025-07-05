@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class CNNRegressor(BaseDeepRegressor):
     """Time Series Convolutional Neural Network (CNN), as described in [1].
 
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
     Parameters
     ----------
     n_epochs       : int, default = 2000
@@ -77,7 +80,8 @@ class CNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["AurumnPegasus", "achieveordie"],
+        "authors": ["hfawaz", "AurumnPegasus", "achieveordie"],
+        # hfawaz for dl-4-tsc
         "maintainers": ["AurumnPegasus", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

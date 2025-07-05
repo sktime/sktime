@@ -13,6 +13,7 @@ from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class BaseClusterer(BaseEstimator):
@@ -44,7 +45,12 @@ class BaseClusterer(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
-        self.n_clusters = n_clusters
+
+        # defensive programming in case subclass does set n_clusters
+        # but does not pass it to super().__init__
+        if not hasattr(self, "n_clusters"):
+            self.n_clusters = n_clusters
+
         super().__init__()
         _check_estimator_deps(self)
 
@@ -306,9 +312,11 @@ class BaseClusterer(BaseEstimator):
             n_clusters = self.n_clusters
         else:
             n_clusters = max(preds) + 1
-        dists = np.zeros((X.shape[0], n_clusters))
+        dists = np.zeros((n_instances, n_clusters))
         for i in range(n_instances):
-            dists[i, preds[i]] = 1
+            # preds[i] can be -1, in this case there is no cluster for this instance
+            if preds[i] > -1:
+                dists[i, preds[i]] = 1
         return dists
 
     def _score(self, X, y=None):
@@ -428,6 +436,26 @@ class BaseClusterer(BaseEstimator):
         ValueError
             If y or X is invalid input data type, or there is not enough data.
         """
+        # remember hash for determining in predict whether data is the same as in fit
+        # only needed if out_of_sample tag is False, then all X must be the same
+        if not self.get_tag("capability:out_of_sample"):
+            # if first seen in fit: store hash
+            if not hasattr(self, "_X_hash"):
+                self._X_hash = hash(str(X))
+            else:  # in predict: check if hash is the same
+                X_fit_hash = self._X_hash
+                X_predict_hash = hash(str(X))
+                if not X_fit_hash != X_predict_hash:
+                    warn(
+                        f"This instance of {type(self).__name__} does not support "
+                        "different X in fit and predict, "
+                        "but a new X was passed in predict. "
+                        "This may result in an exception, or incorrect results. "
+                        "Please use the same X in fit and predict to avoid this "
+                        "warning, and possible subsequent exceptions.",
+                        obj=self,
+                    )
+
         X = self._initial_conversion(X)
 
         ALLOWED_SCITYPES = [

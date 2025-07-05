@@ -48,11 +48,10 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
-    broadcasting : bool (default=True)
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
 
     Notes
     -----
@@ -85,7 +84,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
     }
@@ -97,8 +96,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
-        # TODO change the default value to False in v0.35.0
-        broadcasting: bool = True,
+        broadcasting: bool = False,
     ) -> None:
         self.freq = freq
         self.local_scaler_type = local_scaler_type
@@ -129,13 +127,6 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-        warn(
-            "DeprecationWarning: The default value of the parameter "
-            "broadcasting will be set to False in v0.35.0.",
-            DeprecationWarning,
-            obj=self,
-        )
 
     @functools.cached_property
     @abc.abstractmethod
@@ -168,7 +159,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         - future exogenous columns (``futr_exog_list``) - used from ``__init__``
         - historical exogenous columns (``hist_exog_list``) - not supported
-        - statis exogenous columns (``stat_exog_list``) - not supported
+        - static exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 

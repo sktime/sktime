@@ -49,7 +49,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
                 return obj.get_tag(tag_name)
 
         # applicable only if obj inherits from BaseForecaster
-        if is_scitype(obj, "forecaster"):
+        if not is_scitype(obj, "forecaster"):
             return False
 
         # applicable only if number of variables in y complies with scitype:y

@@ -70,7 +70,6 @@ These tags are typically used for typing, packaging and documentation purposes.
     authors
     python_version
     python_dependencies
-    python_dependencies_alias
     env_marker
     requires_cython
 
@@ -152,9 +151,32 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform
     capability__inverse_transform__exact
     capability__inverse_transform__range
+    capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
 
+
+.. _detector_tags:
+
+Tags for detectors
+------------------
+
+This section lists tags applying to time series detectors (``"detector"`` types).
+These tags are used to describe capabilities, properties, and behavior of
+detectors.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    task
+    learning_type
+    capability__update
+    capability__multivariate
+    capability__missing_values
 
 .. _dev_common_tags:
 
@@ -178,3 +200,23 @@ The tags below have limited use in retrieval or inspection of objects.
 
     x_inner_mtype
     y_inner_mtype
+    visual_block_kind
+
+.. _dev_testing_tags:
+
+Testing and CI tags
+-------------------
+
+These tags control behaviour of estimators in the ``sktime`` continuous integration
+tests.
+
+They are primarily useful for developers managing CI behaviour of individual objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    tests__core

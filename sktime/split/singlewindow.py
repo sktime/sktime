@@ -34,22 +34,64 @@ from sktime.utils.validation import (
 class SingleWindowSplitter(BaseSplitter):
     r"""Single window splitter.
 
-    Split time series once into a training and test set.
-    See more details on what to expect from this splitter in :class:`BaseSplitter`.
+    Split time series into a single training and test set window.
 
-    Test window is defined by forecasting horizons
-    relative to the end of the training window.
-    It will contain as many indices
+    The training set is defined based on a "window".
+    The endpoint of the training set is determined by
+    `the length of the time series - fh[-1] - 1`,
+    and the starting point is calculated as `endpoint - window_length + 1`.
+    If the starting point is negative, it will be set to 0.
+
+    If the time points in the data are :math:`(t_1, t_2, \ldots, t_N)`,
+    the training windows will be all indices in the interval
+
+    .. math:: [t_N-fh[-1] - w, \ldots, t_N-fh[-1] - 1]
+
+    where :math:`w` is the window length and N the length of the time series.
+
+    The test window will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
-    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
+    In particularly, they will be equal to the endpoint plus the forecasting horizon.
+
+    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test indices
+    will consist of the indices :math:`(k+h_1,\ldots,k+h_H)`,
+    where k is the end of the training window.
+
+
+    **Important Notes:**
+
+    - ``SingleWindowSplitter`` uses positional indexing (`iloc`) for the training and
+        test windows, regardless of the type of ``window_length``.
+        Even if ``window_length`` is a `timedelta` or `pd.DateOffset`,
+        the splitter interprets it in terms of the number of positions.
+
+    - ``window_length`` can be an integer, `timedelta`, or `pd.DateOffset`, where:
+
+      - If `int`, it specifies the number of time points directly.
+
+      - If `timedelta` or `pd.DateOffset`, it represents a relative duration,
+        but it will still be applied as a positional offset,
+        not based on label-based indexing.
+
+
+    **Example Calculation:**
+    For example, with ``window_length = 5``, ``fh = [1, 2, 3]`` and time points
+    :math:`(t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9, t_{10})`,
+    the resulting folds are as follows:
+
+    - `[3, 4, 5, 6, 7]` = training fold indices.
+
+    - `[8, 9, 10]` = test fold indices.
 
     Parameters
     ----------
-    fh : int, list or np.array
-        Forecasting horizon
-    window_length : int or timedelta or pd.DateOffset
-        Window length
+    fh : int, list or np.array, optional (default=1)
+        Forecasting horizon, determines the test window. Should be relative.
+        The test window is determined by applying the forecasting horizon ``fh``
+        to the end of the training window.
+
+    window_length : int or timedelta or pd.DateOffset, optional (default=10)
+        Window length of the training window.
 
     Examples
     --------

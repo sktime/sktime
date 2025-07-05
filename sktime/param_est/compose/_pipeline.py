@@ -118,7 +118,9 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data
         missing = param_est.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -137,6 +139,16 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.param_est)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.param_est_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.

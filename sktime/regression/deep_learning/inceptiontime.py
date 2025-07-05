@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class InceptionTimeRegressor(BaseDeepRegressor):
     """InceptionTime Deep Learning Regressor.
 
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
     Parameters
     ----------
     n_epochs : int, default=1500
@@ -39,15 +42,12 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
-
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["james-large"],
+        "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
     }

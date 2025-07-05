@@ -99,14 +99,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
-        "capability:categorical_in_X": False,
+        "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogeneous X?
     }
 
@@ -119,6 +119,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
+        #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
         "remember_data": True,  # whether to remember data in fit - self._X, self._y
     }
@@ -853,7 +854,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
-        Note: currently only implemented for Series (non-panel, non-hierarchical) y.
+        Note:
+
+        * currently only implemented for Series (non-panel, non-hierarchical) y.
+        * requires ``skpro`` installed for the distribution objects returned.
 
         State required:
             Requires state to be "fitted", i.e., ``self.is_fitted=True``.
@@ -874,7 +878,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-
             If ``fh`` is not None and not of type ``ForecastingHorizon``,
             it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
 
@@ -884,7 +887,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * if ``fh`` is of type ``pd.Index``, it is interpreted
               as an absolute horizon, and coerced
               to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
-
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -898,7 +900,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Returns
         -------
-        pred_dist : sktime BaseDistribution
+        pred_dist : skpro BaseDistribution
             predictive distribution
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
@@ -910,29 +912,32 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
+        self.check_is_fitted()
 
         if hasattr(self, "_is_vectorized") and self._is_vectorized:
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
 
-        # todo 0.35.0: replace warning by soft dependency exception
-        if not _check_soft_dependencies("skpro", severity="none"):
-            warn(
-                "From sktime version 0.38.0, forecasters' predict_proba will "
-                "require skpro to be present in the python environment, "
-                "for distribution objects to represent distributional forecasts. "
-                "Until 0.35.0, predict_proba will continue working without skpro, "
-                "defaulting to return objects in sktime.proba if skpro is not present. "
-                "From 0.35.0, an error will be raised if skpro is not present "
-                "in the environment. "
-                "To silence this message, ensure skpro is installed in the environment "
-                "when calling forecasters' predict_proba. ",
-                obj=self,
-                stacklevel=2,
-            )
+        # predict_proba requires skpro to provide the distribution object returns
+        # "silent" exception for user convenience is Normal distribution,
+        # which has a minimal implementation living in sktime
+        # this is not signposted to users though, to avoid too high reliance
+        msg = (
+            "Forecasters' predict_proba requires "
+            "skpro to be present in the python environment, "
+            "for distribution objects to represent distributional forecasts. "
+            "To silence this message, ensure skpro is installed in the environment "
+            "when calling forecasters' predict_proba."
+        )
+        non_default_pred_proba = self._has_implementation_of("_predict_proba")
+        skpro_present = _check_soft_dependencies("skpro", severity="none")
 
-        self.check_is_fitted()
+        if not non_default_pred_proba and not skpro_present:
+            warn(msg, obj=self, stacklevel=2)
+
+        if non_default_pred_proba and not skpro_present:
+            raise ImportError(msg)
 
         # input checks and conversions
 
@@ -1527,12 +1532,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         def _check_missing(metadata, obj_name):
             """Check input metadata against self's missing capability tag."""
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 msg = (
                     f"{type(self).__name__} cannot handle missing data (nans), "
                     f"but {obj_name} passed contained missing data."
                 )
-                if self.get_class_tag("handles-missing-data"):
+                if self.get_class_tag("capability:missing_values"):
                     msg = msg + (
                         f" Whether instances of {type(self).__name__} can handle "
                         "missing data depends on parameters of the instance, "
@@ -1562,7 +1567,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 y_metadata_required += ["has_nans"]
 
             y_valid, y_msg, y_metadata = check_is_scitype(
@@ -1629,7 +1634,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if X is not None:
             # request only required metadata from checks
             X_metadata_required = ["feature_kind"]
-            if not self.get_tag("handles-missing-data"):
+            if not self.get_tag("capability:missing_values"):
                 X_metadata_required += ["has_nans"]
 
             X_valid, X_msg, X_metadata = check_is_scitype(

@@ -18,8 +18,6 @@ class AutoREG(_StatsModelsAdapter):
 
     Parameters
     ----------
-    endog : array_like
-        A 1-d endogenous response variable. The dependent variable.
     lags : {None, int, list[int]}
         The number of lags to include in the model if an integer or the
         list of lag indices to include.  For example, [1, 4] will only
@@ -37,10 +35,6 @@ class AutoREG(_StatsModelsAdapter):
         Flag indicating whether to include seasonal dummies in the model. If
         seasonal is True and trend includes 'c', then the first period
         is excluded from the seasonal terms.
-    exog : array_like, optional
-        Exogenous variables to include in the model. Must have the same number
-        of observations as endog and should be aligned so that endog[i] is
-        regressed on exog[i].
     hold_back : {None, int}
         Initial observations to exclude from the estimation sample.  If None,
         then hold_back is equal to the maximum lag in the model.  Set to a
@@ -51,7 +45,7 @@ class AutoREG(_StatsModelsAdapter):
         the model.
     period : {None, int}
         The period of the data. Only used if seasonal is True. This parameter
-        can be omitted if using a pandas object for endog that contains a
+        can be omitted if using a pandas object  that contains a
         recognized frequency.
     missing : str
         Available options are 'none', 'drop', and 'raise'. If 'none', no nan

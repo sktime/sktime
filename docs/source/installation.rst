@@ -13,18 +13,23 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 .. contents::
    :local:
 
-For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
+For frequent issues with installation, consult the `Troubleshooting`_ section.
 
-There are three different installation types:
+There are three different installation types, depending on your use case:
 
-* Installing sktime releases
-* Installing the latest sktime development version
-* For developers of sktime and 3rd party extensions: Developer setup
+* Installing stable ``sktime`` releases - for most users, for production environments
+* Installing the latest unstable ``sktime`` development version - for pre-release tests
+* For developers of ``sktime`` and 3rd party extensions: Developer setup for extensions and contributions
 
 Each of these three setups are explained below.
 
-Release versions
-----------------
+Installing release versions
+---------------------------
+
+For:
+
+* Most users
+* Use in production environments
 
 Installing sktime from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +52,7 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 These are curated selections of the most common soft dependencies for the respective learning task.
 The available dependency sets are of the same names as the respective modules:
 ``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param_est``,
-``networks``, ``annotation``, ``alignment``.
+``networks``, ``detection``, ``alignment``.
 
 .. warning::
 
@@ -83,16 +88,23 @@ Note: not all soft dependencies of ``sktime`` are also available on ``conda-forg
 The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
 
 
-Development version install
----------------------------
+Installing latest unstable development version
+----------------------------------------------
 
-Development versions of ``sktime`` are installs from static snapshots of the ``sktime`` repository.
+For:
 
-Installing development versions is useful for testing, but not recommended
-for development and contribution. For development and contribution, see the next section
-on full developer setup.
+* pre-release tests, e.g., early testing of new features
+* not for reliable production use
+* not for contributors or extenders
 
-To install the latest development version of ``sktime``,
+This type of ``sktime`` installation obtains a latest static snapshot of the repository.
+It is intended for developers that wish to build or test code using a version of the library
+that contains the all of the latest and current updates.
+
+.. note::
+    For an full editible developer setup, please read the section "Full developer setup for contributors and extension developers" below.
+
+To install the latest version of ``sktime`` directly from the repository,
 you can use the ``pip`` package manager to install directly from the GitHub repository:
 
 .. code-block:: bash
@@ -106,9 +118,11 @@ To install from a specific branch, use the following command:
 
     pip install git+https://github.com/sktime/sktime.git@<branch_name>
 
-Alternatively, a developer install can be obtained from a local clone of the repository.
+Alternatively, a latest version install can be obtained from a local clone of the repository.
 
-For this, follow Step 1 of the `full developer setup`_ below, and then install the package with:
+For steps on how to obtain a local clone of the repository, please follow the steps described here:
+:ref:`Creating a fork and cloning the repository <Creating a fork and cloning the repository - initial one time setup>`
+
 
 .. code-block:: bash
 
@@ -120,6 +134,12 @@ Alternatively, the ``.`` may be replaced with a full or relative path to the roo
 Full developer setup for contributors and extension developers
 --------------------------------------------------------------
 
+For whom:
+
+* contributors to the ``sktime`` project
+* developers of extensions in closed code bases
+* developers of 3rd party extensions released as open source
+
 To develop ``sktime`` locally, or to contribute to the project, you need to set up:
 
 * a local clone of the ``sktime`` repository.
@@ -127,16 +147,16 @@ To develop ``sktime`` locally, or to contribute to the project, you need to set 
 
 The following steps guide you through the process:
 
-1. Follow the Git workflow: Fork and clone the repository as described in [Git and GitHub workflow](https://www.sktime.net/en/stable/developer_guide/git_workflow.html)
+1. Follow the Git workflow: :ref:`Creating a fork and cloning the repository <Creating a fork and cloning the repository - initial one time setup>`
 
-2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment, which tends to be beginner friendly.
 The process will be similar for ``venv`` or other virtual environment managers.
 
-  .. warning::
-       Using ``conda`` via one of the commercial distributions such as Anaconda
-       is in general not free for commercial use and may incur significant costs or liabilities.
-       Consider using free distributions and channels for package management,
-       and be aware of applicable terms and conditions.
+.. warning::
+    Using ``conda`` via one of the commercial distributions such as Anaconda
+    is in general not free for commercial use and may incur significant costs or liabilities.
+    Consider using free distributions and channels for package management,
+    and be aware of applicable terms and conditions.
 
 In the ``conda`` terminal:
 

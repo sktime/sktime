@@ -24,15 +24,17 @@ def run_test_for_class(cls, return_reason=False):
        If yes, behaviour depends on ONLY_CHANGED_MODULES setting:
        if off (False), always runs the test (return True);
        if on (True), runs test if and only if
-       at least one of conditions 2, 3, 4 below are met.
+       at least one of conditions 2, 3, 4, 5 below are met.
 
     2. Condition 2:
 
       If the module containing the class/func has changed according to is_class_changed,
-      or one of the modules containing any parent classes  in the local package,
       then condition 2 is met.
+      If the class is a core object, then in addition, condition 2 is also met,
+      if one of the modules containing any parent classes in the local package
+      have changed.
 
-    3. Condition 3:
+    3. Condition 3 (only checked for core objects):
 
       If the object is an sktime ``BaseObject``, and one of the test classes
       covering the class have changed, then condition 3 is met.
@@ -43,13 +45,19 @@ def run_test_for_class(cls, return_reason=False):
       for any of its dependencies have changed in ``pyproject.toml``,
       condition 4 is met.
 
+    5. Condition 5 (only checked for core objects):
+
+      If the object is an sktime ``BaseObject``,
+      and one of the core framework modules ``datatypes``, ``tests``, ``utils``
+      have changed, then condition 5 is met.
+
     cls can also be a list of classes or functions,
     in this case the test is run if and only if both of the following are True:
 
     * all required soft dependencies are present
     * if ``ONLY_CHANGED_MODULES`` is True, additionally,
       if any of the estimators in the list should be tested by
-      at least one of criteria 2-4 above.
+      at least one of criteria 2-5 above.
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Also checks whether the class or function is on the exclude override list,
@@ -76,6 +84,7 @@ def run_test_for_class(cls, return_reason=False):
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
+        * "True_changed_framework" - run reason, core framework modules changed
 
         If multiple reasons are present, the first one in the above list is returned.
 
@@ -118,6 +127,7 @@ def run_test_for_class(cls, return_reason=False):
             "True_pyproject_change",
             "True_changed_tests",
             "True_changed_class",
+            "True_changed_framework",
         ]
         for pos_reason in POS_REASONS:
             if any(reason == pos_reason for reason in reasons):
@@ -137,6 +147,19 @@ def run_test_for_class(cls, return_reason=False):
     # and not on the exclude list
     run, reason = _run_test_for_class(cls)
     return _return(run, reason)
+
+
+def _flatten_list(nested_list):
+    """Recursively flattens a nested list or tuple of arbitrary depth."""
+    flat_list = []
+
+    for item in nested_list:
+        if isinstance(item, (list, tuple)):
+            flat_list.extend(_flatten_list(item))  # Recursively flatten
+        else:
+            flat_list.append(item)
+
+    return flat_list
 
 
 @lru_cache
@@ -159,12 +182,17 @@ def _run_test_for_class(cls):
         * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
+        * "True_changed_framework" - run reason, core framework modules changed
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
-    from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
+    from sktime.utils.git_diff import (
+        get_packages_with_changed_specs,
+        is_class_changed,
+        is_module_changed,
+    )
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -175,10 +203,16 @@ def _run_test_for_class(cls):
         else:
             return True
 
+    def _is_core_object(cls):
+        """Check if the class is a core object, for condition 3 and 5."""
+        if hasattr(cls, "get_class_tag"):
+            return cls.get_class_tag("tests:core", False)
+        return False
+
     def _is_class_changed_or_local_parents(cls):
         """Check if class or any of its local parents have changed, return bool."""
         # if cls is a function, not a class, default to is_class_changed
-        if not isclass(cls):
+        if not isclass(cls) or not _is_core_object(cls):
             return is_class_changed(cls)
 
         # now we know cls is a class, so has an mro
@@ -195,7 +229,7 @@ def _run_test_for_class(cls):
         test_classes = get_test_classes_for_obj(cls)
         return any(is_class_changed(x) for x in test_classes)
 
-    def _is_impacted_by_pyproject_change(cls):
+    def _is_impacted_by_pyproject_change(cls, include_core_deps=False):
         """Check if the dep specifications of cls have changed, return bool."""
         from packaging.requirements import Requirement
 
@@ -207,7 +241,19 @@ def _run_test_for_class(cls):
             cls_reqs = []
         if not isinstance(cls_reqs, list):
             cls_reqs = [cls_reqs]
+        cls_reqs = _flatten_list(cls_reqs)
         package_deps = [Requirement(req).name for req in cls_reqs]
+
+        if include_core_deps:
+            CORE_DEPENDENCIES = [
+                "scikit-base",
+                "scikit-learn",
+                "scipy",
+                "numpy",
+                "pandas",
+                "scikit-base",
+            ]
+            package_deps += CORE_DEPENDENCIES
 
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
 
@@ -225,25 +271,45 @@ def _run_test_for_class(cls):
     # run the test if and only if at least one of the conditions 2-4 are met
     # conditions are checked in order to minimize runtime due to git diff etc
 
+    # variable: is cls a core object?
+    cls_is_core = _is_core_object(cls)
+
     # Condition 4:
     # the package requirements for any dependency in pyproject.toml have changed
-    cond4 = _is_impacted_by_pyproject_change(cls)
+    cond4 = _is_impacted_by_pyproject_change(cls, include_core_deps=cls_is_core)
     if cond4:
         return True, "True_pyproject_change"
 
     # Condition 3:
     # if the object is an sktime BaseObject, and one of the test classes
     # covering the class have changed, then run the test
-    cond3 = _tests_covering_class_changed(cls)
-    if cond3:
+    if cls_is_core and _tests_covering_class_changed(cls):
         return True, "True_changed_tests"
 
     # Condition 2:
     # any of the modules containing any of the classes in the list have changed
-    # or any of the modules containing any parent classes in local package have changed
+    # additionally, for core objects:
+    # any of the modules containing any parent classes in local package have changed
     cond2 = _is_class_changed_or_local_parents(cls)
     if cond2:
         return True, "True_changed_class"
+
+    # Condition 5 (only for core objects):
+    # if the object is an sktime BaseObject, and one of the core framework modules
+    # datatypes, tests, utils have changed, then run the test
+    if cls_is_core:
+        FRAMEWORK_MODULES = [
+            "sktime.datatypes",
+            "sktime.tests._config",
+            "sktime.tests.test_all_estimators",
+            "sktime.tests.test_class_register",
+            "sktime.tests.test_doctest",
+            "sktime.tests.test_softdeps",
+            "sktime.tests.test_switch",
+            "sktime.utils",
+        ]
+        if any([is_module_changed(x) for x in FRAMEWORK_MODULES]):
+            return True, "True_changed_framework"
 
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
@@ -275,7 +341,7 @@ def run_test_module_changed(module):
         True iff: at least one of the modules or its submodules have changed,
         or if ``ONLY_CHANGED_MODULES`` is False
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import is_module_changed
 
     # if ONLY_CHANGED_MODULES is off: always True

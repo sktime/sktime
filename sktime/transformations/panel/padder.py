@@ -23,8 +23,8 @@ class PaddingTransformer(BaseTransformer):
     pad_length : int, optional (default=None) length to pad the series too.
         if None, will find the longest sequence and use instead.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import pandas as pd
     >>> from sktime.transformations.panel.padder import PaddingTransformer
     >>>
@@ -44,12 +44,13 @@ class PaddingTransformer(BaseTransformer):
     >>>
     >>> # Fit the transformer to the data
     >>> padder.fit(X)
+    PaddingTransformer()
     >>>
     >>> # Transform the data
     >>> Xt = padder.transform(X)
     >>>
     >>> # Display the transformed data
-    >>> print(Xt)
+    >>> # print(Xt)
     """
 
     _tags = {
@@ -65,6 +66,9 @@ class PaddingTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length:removes": True,
         # is transform result always guaranteed to be equal length (and series)?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, pad_length=None, fill_value=0):

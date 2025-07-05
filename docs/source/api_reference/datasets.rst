@@ -5,14 +5,67 @@ Datasets
 
 The ``datasets`` module contains:
 
+* dataset objects, which are in-memory representations of time series datasets
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
 * toy data generators for didactic and illustrative purposes
 * utilities to write to, and load from, time series specific file formats
 
+Forecasting datasets
+--------------------
+.. currentmodule:: sktime.datasets.forecasting
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    airline.Airline
+    hierarchical_sales_toydata.HierarchicalSalesToydata
+    longley.Longley
+    lynx.Lynx
+    m5_competition.M5Dataset
+    macroeconomic.Macroeconomic
+    shampoo_sales.ShampooSales
+    solar.Solar
+    uschange.USChange
+
+Classification datasets
+-----------------------
+
+.. currentmodule:: sktime.datasets.classification
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    arrow_head.ArrowHead
+    basic_motions.BasicMotions
+    gunpoint.GunPoint
+    italy_power_demand.ItalyPowerDemand
+    japanese_vowels.JapaneseVowels
+    osuleaf.OSULeaf
+    plaid.PLAID
+
+Regression datasets
+-------------------
+
+.. currentmodule:: sktime.datasets.regression
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    tecator.Tecator
+
+Loaders
+-------
+
 Loaders from dataset repositories
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These loaders access dataset repositories on the internet and fetch one or multiple
 datasets from there, individual datasets specifiable as strings.
@@ -36,7 +89,7 @@ These loaders can be used to access reference datasets for benchmarking.
 
 
 Individual datasets
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 These loaders fetch a commonly used individual dataset,
 usually for illustration purposes.
@@ -87,7 +140,7 @@ Panels of time series
 
 
 Toy data generators
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Hierarchical time series data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

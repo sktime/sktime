@@ -29,8 +29,10 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
+    CYTHON_ESTIMATORS,
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
+    MATRIXDESIGN,
     NON_STATE_CHANGING_METHODS,
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_TAGS,
@@ -51,18 +53,6 @@ from sktime.utils.deep_equals import deep_equals
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-
-# whether to subsample estimators per os/version partition matrix design
-# default is False, can be set to True by pytest --matrixdesign True flag
-MATRIXDESIGN = False
-
-# whether to test only estimators that require cython, C compiler such as gcc
-# default is False, can be set to True by pytest --only_cython_estimators True flag
-CYTHON_ESTIMATORS = False
-
-# whether to test only estimators from modules that are changed w.r.t. main
-# default is False, can be set to True by pytest --only_changed_modules True flag
-ONLY_CHANGED_MODULES = False
 
 
 def subsample_by_version_os(x):
@@ -93,6 +83,23 @@ def subsample_by_version_os(x):
     res = [x[i] for i in subset_idx]
 
     return res
+
+
+class ValidProbaErrors:
+    """Context manager, returns None on valid predict_proba or skpro exception."""
+
+    def __enter__(self):
+        self.skipped = False
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if isinstance(exc_value, NotImplementedError):
+            self.skipped = True
+            return True
+        if isinstance(exc_value, ImportError) and "skpro" in str(exc_value):
+            self.skipped = True
+            return True
+        return False  # Propagate any other exceptions
 
 
 class BaseFixtureGenerator:
@@ -196,6 +203,9 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
+        # TODO(fangelim): refactor this _all_estimators
+        # to make it possible to set custom tags to filter
+        # as class attributes, similar to `estimator_type_filter`
         if CYTHON_ESTIMATORS:
             filter_tags = {"requires_cython": True}
         else:
@@ -410,6 +420,7 @@ class QuickTester:
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
+        verbose=False,
     ):
         """Run all tests on one single estimator.
 
@@ -425,6 +436,7 @@ class QuickTester:
         Parameters
         ----------
         estimator : estimator class or estimator instance
+
         raise_exceptions : bool, optional, default=False
             whether to return exceptions/failures in the results dict, or raise them
 
@@ -433,17 +445,23 @@ class QuickTester:
 
         tests_to_run : str or list of str, names of tests to run. default = all tests
             sub-sets tests that are run to the tests given here.
+
         fixtures_to_run : str or list of str, pytest test-fixture combination codes.
             which test-fixture combinations to run. Default = run all of them.
             sub-sets tests and fixtures to run to the list given here.
             If both tests_to_run and fixtures_to_run are provided, runs the *union*,
             i.e., all test-fixture combinations for tests in tests_to_run,
-                plus all test-fixture combinations in fixtures_to_run.
+            plus all test-fixture combinations in fixtures_to_run.
+
         tests_to_exclude : str or list of str, names of tests to exclude. default = None
             removes tests that should not be run, after subsetting via tests_to_run.
+
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
+
+        verbose : bool, optional, default=False
+            whether to print the results of the tests as they are run
 
         Returns
         -------
@@ -516,7 +534,7 @@ class QuickTester:
             temp_generator_dict["estimator_instance"] = _generate_estimator_instance_cls
         # override of generator_dict end, temp_generator_dict is now prepared
 
-        # sub-setting to specific tests to run, if tests or fixtures were speified
+        # sub-setting to specific tests to run, if tests or fixtures were specified
         if tests_to_run is None and fixtures_to_run is None:
             test_names_subset = test_names
         else:
@@ -576,6 +594,10 @@ class QuickTester:
                         pytest_fixture_names,
                     )
 
+            def print_if_verbose(msg):
+                if verbose:
+                    print(msg)  # noqa: T001, T201
+
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
                 # this is needed because pytest unwraps 1-tuples automatically
@@ -592,17 +614,20 @@ class QuickTester:
                 if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
-                if not raise_exceptions:
-                    try:
-                        test_fun(**deepcopy(args))
-                        results[key] = "PASSED"
-                    except Skipped as err:
-                        results[key] = f"SKIPPED: {err.msg}"
-                    except Exception as err:
-                        results[key] = err
-                else:
+                print_if_verbose(f"{key}")
+
+                try:
                     test_fun(**deepcopy(args))
                     results[key] = "PASSED"
+                    print_if_verbose("PASSED")
+                except Skipped as err:
+                    results[key] = f"SKIPPED: {err.msg}"
+                    print_if_verbose(f"SKIPPED: {err.msg}")
+                except Exception as err:
+                    results[key] = err
+                    print_if_verbose(f"FAILED: {err}")
+                    if raise_exceptions:
+                        raise err
 
         return results
 
@@ -699,9 +724,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
-        import doctest
+        from skbase.utils.doctest_run import run_doctest
 
-        doctest.run_docstring_examples(estimator_class, globals())
+        run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
@@ -908,9 +933,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_inheritance(self, estimator_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
-        assert issubclass(
-            estimator_class, BaseObject
-        ), f"object {estimator_class} is not a sub-class of BaseObject."
+        assert issubclass(estimator_class, BaseObject), (
+            f"object {estimator_class} is not a sub-class of BaseObject."
+        )
 
         if hasattr(estimator_class, "fit"):
             assert issubclass(estimator_class, BaseEstimator), (
@@ -948,9 +973,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         required_methods = _list_required_methods(est_scitype, is_est=is_est)
 
         for attr in required_methods:
-            assert hasattr(
-                estimator, attr
-            ), f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
+            assert hasattr(estimator, attr), (
+                f"Estimator: {estimator.__name__} does not implement attribute: {attr}"
+            )
 
         if hasattr(estimator, "inverse_transform"):
             assert hasattr(estimator, "transform")
@@ -1159,12 +1184,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
@@ -1188,24 +1215,24 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
-            assert not getattr(
-                estimator, attr
-            ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
+            assert not getattr(estimator, attr), (
+                f"Estimator: {estimator} does not initiate attribute: {attr} to False"
+            )
 
         fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
         # Check is_fitted attributes are updated correctly to True after calling fit
         for attr in attrs:
-            assert getattr(
-                fitted_estimator, attr
-            ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
+            assert getattr(fitted_estimator, attr), (
+                f"Estimator: {estimator} does not update attribute: {attr} during fit"
+            )
 
     def test_fit_returns_self(self, estimator_instance, scenario):
         """Check that fit returns self."""
         fit_return = scenario.run(estimator_instance, method_sequence=["fit"])
-        assert (
-            fit_return is estimator_instance
-        ), f"Estimator: {estimator_instance} does not return self when calling fit"
+        assert fit_return is estimator_instance, (
+            f"Estimator: {estimator_instance} does not return self when calling fit"
+        )
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario, method_nsc):
         """Check exception raised for non-fit method calls to unfitted estimators.
@@ -1244,12 +1271,23 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # run fit plus method_nsc once, save results
         set_random_state(estimator)
-        results = scenario.run(
-            estimator,
-            method_sequence=["fit", method_nsc_arraylike],
-            return_all=True,
-            deepcopy_return=True,
-        )
+        if method_nsc_arraylike in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
+                results = scenario.run(
+                    estimator,
+                    method_sequence=["fit", method_nsc_arraylike],
+                    return_all=True,
+                    deepcopy_return=True,
+                )
+            if handler.skipped:
+                return None
+        else:
+            results = scenario.run(
+                estimator,
+                method_sequence=["fit", method_nsc_arraylike],
+                return_all=True,
+                deepcopy_return=True,
+            )
 
         estimator = results[0]
         set_random_state(estimator)
@@ -1327,10 +1365,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
+        if method_nsc in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
                 scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+            if handler.skipped:
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
@@ -1380,16 +1418,16 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         fit_args_after = args_after[0]
         fit_args_before = scenario.args["fit"]
 
-        assert deep_equals(
-            fit_args_before, fit_args_after
-        ), f"Estimator: {estimator} has side effects on arguments of fit"
+        assert deep_equals(fit_args_before, fit_args_after), (
+            f"Estimator: {estimator} has side effects on arguments of fit"
+        )
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
+        if method_nsc in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
                 scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+            if handler.skipped:
                 return None
 
         # Fit the model, get args before and after
@@ -1399,28 +1437,33 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_args_after = args_after[0]
         method_args_before = scenario.get_args(method_nsc, estimator)
 
-        assert deep_equals(
-            method_args_after, method_args_before
-        ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
+        assert deep_equals(method_args_after, method_args_before), (
+            f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
+        )
 
     def test_persistence_via_pickle(
         self, estimator_instance, scenario, method_nsc_arraylike
     ):
         """Check that we can pickle all estimators."""
         method_nsc = method_nsc_arraylike
-        # escape predict_proba for forecasters, tfp distributions cannot be pickled
-        if (
-            isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
-        ):
+        estimator = estimator_instance
+        is_forecaster = scitype(estimator) == "forecaster"
+
+        # escape predict_proba for forecasters, skpro distributions cannot be pickled
+        if is_forecaster and method_nsc == "predict_proba":
             return None
+
+        # escape predict_var for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
+            return None
+
         # escape Deep estimators if soft-dep `h5py` isn't installed
         if isinstance(
             estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
         ) and not _check_soft_dependencies("h5py", severity="warning"):
             return None
 
-        estimator = estimator_instance
         set_random_state(estimator)
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
@@ -1452,14 +1495,18 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     ):
         """Check if saved estimators onto disk can be loaded correctly."""
         method_nsc = method_nsc_arraylike
-        # escape predict_proba for forecasters, tfp distributions cannot be pickled
-        if (
-            isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
-        ):
+        estimator = estimator_instance
+        is_forecaster = scitype(estimator) == "forecaster"
+
+        # escape predict_proba for forecasters, skpro distributions cannot be pickled
+        if is_forecaster and method_nsc == "predict_proba":
             return None
 
-        estimator = estimator_instance
+        # escape predict_var for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
+            return None
+
         set_random_state(estimator)
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
@@ -1506,7 +1553,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # skip test for predict_proba
         # this produces a BaseDistribution object, for which no ready
         # equality check is implemented
-        if method_nsc == "predict_proba":
+        is_forecaster = scitype(estimator_instance) == "forecaster"
+        if is_forecaster and method_nsc == "predict_proba":
+            return None
+        # escape predict_proba etc for forecasters if skpro is not available
+        skpro_available = _check_soft_dependencies("skpro", severity="none")
+        if is_forecaster and method_nsc == "predict_var" and not skpro_available:
             return None
 
         # run on a single process
