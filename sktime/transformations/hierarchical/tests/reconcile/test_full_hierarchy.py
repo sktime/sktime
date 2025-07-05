@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile._optimal import (
     NonNegativeOptimalReconciler,
@@ -11,7 +11,6 @@ from sktime.transformations.hierarchical.reconcile._optimal import (
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
 
 @pytest.fixture
