@@ -128,25 +128,31 @@ def render_contributors(prs: list, fmt: str = "rst"):
         print(",\n".join(f":user:`{user}`" for user in authors))
 
 
-def assign_prs(prs, categs: list[dict[str, list[str]]]):
-    """Assign PR to categories based on labels."""
-    assigned = defaultdict(list)
+def assign_prs(prs, categs):
+    """Assign PRs into categories and modules based on labels."""
+    from collections import defaultdict
+
+    assigned = defaultdict(lambda: defaultdict(list))
 
     for i, pr in enumerate(prs):
+        pr_labels = [label["name"] for label in pr["labels"]]
+
+        category_found = False
+
         for cat in categs:
-            pr_labels = [label["name"] for label in pr["labels"]]
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
-                assigned[cat["title"]].append(i)
+                category_found = True
 
-    #             if any(l.startswith("module") for l in pr_labels):
-    #                 print(i, pr_labels)
+                # Find module label
+                module_labels = [l for l in pr_labels if l.startswith("module:")]
+                module = module_labels[0] if module_labels else "Other"
 
-    assigned["Other"] = list(
-        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
-    )
+                assigned[cat["title"]][module].append(i)
+
+        if not category_found:
+            assigned["Other"]["Other"].append(i)
 
     return assigned
-
 
 def render_row(pr):
     """Render a single row with PR in restructuredText format."""
@@ -160,17 +166,20 @@ def render_row(pr):
 
 def render_changelog(prs, assigned):
     # sourcery skip: use-named-expression
-    """Render changelog."""
+    """Render changelog with sections and subsections."""
     from dateutil import parser
 
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
+    for category, modules in assigned.items():
+        print(f"\n{category}")
+        print("~" * len(category), end="\n\n")
 
-            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
-                render_row(pr)
+        for module, pr_indices in modules.items():
+            if module != "Other":
+                print(f"{module.replace('module:', '').capitalize()}")
+                print("^" * len(module), end="\n\n")
+
+            for i in sorted(pr_indices, key=lambda x: parser.parse(prs[x]["merged_at"])):
+                render_row(prs[i])
 
 
 if __name__ == "__main__":
