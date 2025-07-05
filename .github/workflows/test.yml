@@ -157,16 +157,9 @@ jobs:
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          echo "skip-job=false" >> $GITHUB_ENV
           python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
-          pip install -r deps.txt || echo "skip-job=true" >> $GITHUB_ENV
+          pip install -r deps.txt
         continue-on-error: true
-
-      - name: Skip job if deps failed
-        if: env.skip-job == 'true'
-        run: |
-          echo "Skipping rest of the job due to failed dependency installation."
-          exit 0
 
       - name: Show dependencies
         run: python -m pip list
