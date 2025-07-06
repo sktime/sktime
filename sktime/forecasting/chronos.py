@@ -293,7 +293,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         ],
         # abdulfatir and lostella for amazon-science/chronos-forecasting
         "maintainers": ["geetu040"],
-        "python_dependencies": ["torch", "transformers", "accelerate", "numpy==1.26.4"],
+        "python_dependencies": ["torch==2.7.1", "transformers", "accelerate", "numpy"],
         # estimator type
         # --------------
         "requires-fh-in-fit": False,
