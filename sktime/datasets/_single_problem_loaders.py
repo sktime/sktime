@@ -43,7 +43,6 @@ __all__ = [
 ]
 
 import os
-import zipfile
 from urllib.error import HTTPError, URLError
 from warnings import warn
 
@@ -51,12 +50,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.datasets._data_io import (
-    _download_and_extract,
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
     _reduce_memory_usage,
 )
+from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -1460,19 +1459,13 @@ def load_forecastingdata(
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-        # This also tests the validity of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=path_to_data_dir,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                f"Invalid dataset name ={name} is not available on extract path ="
-                f"{extract_path}. Nor is it available on "
-                f"https://forecastingdata.org/.",
-            ) from e
+        forecastingdata_downloader = DatasetDownloader(
+            hf_repo_name="sktime/tsf-datasets", fallback_urls=[url]
+        )
+
+        forecastingdata_downloader.download_dataset(
+            dataset_name=name, download_path=path_to_data_dir
+        )
 
     path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
     return load_tsf_to_dataframe(
@@ -1588,9 +1581,13 @@ def load_m5(
             ):
                 path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
-                _download_and_extract(
-                    "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                    extract_path=extract_path,
+                m5_url = "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
+
+                m5_downloader = DatasetDownloader(
+                    hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
+                )
+                m5_downloader.download_dataset(
+                    dataset_name="m5-forecasting-accuracy", download_path=extract_path
                 )
 
             else:
@@ -1601,10 +1598,17 @@ def load_m5(
         if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
             path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
-            _download_and_extract(
-                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=extract_path,
+            m5_url = (
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
             )
+
+            m5_downloader = DatasetDownloader(
+                hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
+            )
+            m5_downloader.download_dataset(
+                dataset_name="m5-forecasting-accuracy", download_path=extract_path
+            )
+
         else:
             path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
 
