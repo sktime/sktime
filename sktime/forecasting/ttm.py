@@ -595,6 +595,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         test_params = [
             {
                 "training_args": {
+                    "num_train_epochs": 1,
                     "max_steps": 5,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 4,
@@ -610,6 +611,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
                 "validation_split": 0.2,
                 "training_args": {
+                    "num_train_epochs": 1,
                     "max_steps": 5,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 4,
