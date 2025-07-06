@@ -14,8 +14,8 @@ repos:
         exclude: "^docs/source/examples/"
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-      - id: mixed-line-ending          # ← ADD THIS LINE
-        args: ['--fix=lf']              # ← ADD THIS LINE TOO
+      - id: mixed-line-ending          
+        args: ['--fix=lf']              
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.0
