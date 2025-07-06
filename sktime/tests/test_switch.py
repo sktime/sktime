@@ -165,7 +165,12 @@ def _flatten_list(nested_list):
 
 
 @lru_cache
-def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
+def _run_test_for_class(
+    cls,
+    ignore_deps=False,
+    only_changed_modules=True,
+    only_vm_required=False,
+):
     """Check if test should run - cached with hashable cls.
 
     Parameters
@@ -178,6 +183,10 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     only_changed_modules : boolean, default=True
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
+    only_vm_required : boolean, default=False
+        whether th return only classes that require their own VM.
+        If True, will only return classes with tag "tests:vm"=True.
+        If False, will only return classes with tag "tests:vm"=False.
 
     Returns
     -------
@@ -278,8 +287,11 @@ def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
         return False, "False_required_deps_missing"
     # otherwise, continue
 
-    # if the class requires a test vm, skip
-    if _requires_vm(cls):
+    # if only_vm_required=False, and the class requires a test vm, skip
+    if not only_vm_required and _requires_vm(cls):
+        return False, "False_requires_vm"
+    # if only_vm_required=True, and the class does not require a test vm, skip
+    if only_vm_required and not _requires_vm(cls):
         return False, "False_requires_vm"
 
     # if ONLY_CHANGED_MODULES is off: always True
@@ -395,11 +407,7 @@ def _get_all_changed_classes(vm=False):
 
     def _changed_class(cls):
         """Check if a class has changed compared to the main branch."""
-        run, reason = _run_test_for_class(cls, ignore_deps=True)
-
-        if vm:
-            return reason == "False_requires_vm"
-
+        run, _ = _run_test_for_class(cls, ignore_deps=True, only_vm_required=vm)
         return run
 
     names = [name for name, est in all_estimators() if _changed_class(est)]

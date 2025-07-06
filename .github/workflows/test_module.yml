@@ -53,6 +53,7 @@ jobs:
               - sktime/transformations/**
   test:
     needs: detect
+    if: ${{ fromJSON(needs.detect.outputs.module_changes) != '[]' }}
     name:
     strategy:
       fail-fast: false
