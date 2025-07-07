@@ -181,7 +181,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         # testing configuration
-        # ---------------------
+        # ----------------------
         "tests:vm": True,
     }
 
