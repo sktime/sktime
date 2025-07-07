@@ -14,6 +14,11 @@ A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
 (select "forecaster" in the "Estimator type" dropdown).
 
+.. note::
+   **Important:** Some classes have moved in the latest version of sktime. For example,
+   ``ExpandingWindowSplitter`` has been relocated from ``sktime.forecasting.model_selection``
+   to ``sktime.split``. Please refer to the updated documentation:
+   [https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.split.ExpandingWindowSplitter.html](https://www.sktime.net/en/latest/api_reference/auto_generated/sktime.split.ExpandingWindowSplitter.html)
 
 Base
 ----
