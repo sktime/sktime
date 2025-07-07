@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from sktime.datasets._data_io import _download_and_extract, _reduce_memory_usage
+from sktime.datasets._data_io import _reduce_memory_usage
+from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets.forecasting._base import BaseForecastingDataset
 
 
@@ -93,9 +94,14 @@ class M5Dataset(BaseForecastingDataset):
     def _download_if_needed(self):
         """Download the data if it is not already downloaded."""
         if not self.path_to_data_dir.exists():
-            _download_and_extract(
-                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=self._extract_path,
+            url = (
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
+            )
+            downloader = DatasetDownloader(
+                hf_repo_name="tsf-datasets", fallback_urls=[url]
+            )
+            downloader.download_dataset(
+                dataset_name="m5-forecasting-accuracy", download_path=self._extract_path
             )
 
     def _load(self, *args):
