@@ -1,0 +1,57 @@
+name: Colab Test
+
+on:
+  pull_request:
+    paths:
+      - 'sktime/**'
+      - 'colab_test.ipynb'
+
+jobs:
+  test_colab:
+    strategy:
+        matrix:
+          python-version:
+            - "3.9"
+            - "3.10"
+            - "3.11"
+            - "3.12"
+            - "3.13"
+    runs-on: ubuntu-latest # Google Colab runs on an Ubuntu-based Linux operating system
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install jupyter nbconvert build matplotlib seaborn
+          # installs the necessary packages to run the notebook and build the sktime package
+
+      - name: Build sktime package
+        run: python -m pip install build && python -m build
+        # takes the new source code from the pull request and builds it into a package file.
+        # It basically simulates an official release
+
+      - name: Install built sktime package
+        run: python -m pip install dist/*.whl
+        # installs the built package from the previous step
+
+      - name: Execute test notebook
+        run: |
+          jupyter nbconvert --to notebook --execute colab_test.ipynb --output executed_notebook.ipynb > /dev/null
+          # runs the notebook and saves the output to a new file called executed_notebook.ipynb
+
+      - name: Verify success message
+        run: |
+          grep "Successfully imported sktime" executed_notebook.ipynb
+          # confirms the notebook ran to the end.
+
+      - name: Verify plot file was created
+        run: |
+          test -f forecast_plot.png
+          # confirms plot was created
