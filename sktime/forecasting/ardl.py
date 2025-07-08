@@ -249,12 +249,16 @@ class ARDL(_StatsModelsAdapter):
         self.trend = trend
         # Check statsmodels version if trend='ctt'
         if self.trend == "ctt":
-            if version.parse(statsmodels.__version__) < version.parse("0.15.0"):
-                raise ImportError(
-                    f"The 'ctt' trend option requires statsmodels >= 0.15.0. "
-                    f"Your statsmodels version is {statsmodels.__version__}. "
-                    "Please upgrade statsmodels to use trend='ctt'."
-                )
+            sm_version = version.parse(statsmodels.__version__)
+            if sm_version < version.parse("0.15.0"):
+                if not sm_version.is_prerelease:
+                    raise ImportError(
+                        f"The 'ctt' trend option requires statsmodels >= 0.15.0. "
+                        f"Your statsmodels version is {statsmodels.__version__}. "
+                        "Please upgrade statsmodels to use trend='ctt'."
+                    )
+                # If it's a prerelease, assume the user knows what they are doing.
+
         self.seasonal = seasonal
         self.deterministic = deterministic
         self.hold_back = hold_back
