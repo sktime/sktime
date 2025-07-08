@@ -4,6 +4,8 @@
 import warnings
 
 import pandas as pd
+import statsmodels
+from packaging import version
 
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -37,7 +39,7 @@ class ARDL(_StatsModelsAdapter):
     causal : bool, optional
         Whether to include lag 0 of exog variables.  If True, only includes
         lags 1, 2, ...
-    trend : {'n', 'c', 't', 'ct'}, optional
+    trend : {'n', 'c', 't', 'ct', 'ctt'}, optional
         The trend to include in the model:
 
         * 'n' - No trend.
@@ -45,6 +47,7 @@ class ARDL(_StatsModelsAdapter):
         * 't' - Time trend only.
         * 'ct' - Constant and time trend.
         * 'ctt' - Constant plus linear plus quadratic time trends.
+                N.B. The choice of 'ctt' requires statsmodels >= 0.15.0.
 
         The default is 'c'.
 
@@ -244,6 +247,14 @@ class ARDL(_StatsModelsAdapter):
         self.fixed = fixed
         self.causal = causal
         self.trend = trend
+        # Check statsmodels version if trend='ctt'
+        if self.trend == "ctt":
+            if version.parse(statsmodels.__version__) < version.parse("0.15.0"):
+                raise ImportError(
+                    f"The 'ctt' trend option requires statsmodels >= 0.15.0. "
+                    f"Your statsmodels version is {statsmodels.__version__}. "
+                    "Please upgrade statsmodels to use trend='ctt'."
+                )
         self.seasonal = seasonal
         self.deterministic = deterministic
         self.hold_back = hold_back
