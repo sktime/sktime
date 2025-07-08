@@ -5,7 +5,12 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.multiindex import apply_split, flatten_multiindex, rename_multiindex
+from sktime.utils.multiindex import (
+    apply_split,
+    flatten_multiindex,
+    is_hierarchical,
+    rename_multiindex,
+)
 
 
 @pytest.mark.skipif(
@@ -98,3 +103,64 @@ def test_apply_split():
 
     assert isinstance(result, np.ndarray)
     assert np.array_equal(result, expected)
+
+    # another test case from the docstring
+    y = pd.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0), (1, 1)])
+    iloc_ix = np.array([1, 0])
+    result2 = apply_split(y, iloc_ix)
+    expected2 = np.array([2, 3, 0, 1])
+
+    assert isinstance(result2, np.ndarray)
+    assert np.array_equal(result2, expected2)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_is_hierarchical():
+    """Test is_hierarchical()"""
+    data_hier = {
+        ("Z1", "R1", "A"): 1,
+        ("Z1", "R1", "B"): 2,
+        ("Z1", "R1", "C"): 3,
+        ("Z1", "R2", "D"): 4,
+        ("Z1", "R2", "E"): 5,
+        ("Z1", "R2", "F"): 6,
+        ("Z2", "R3", "G"): 7,
+        ("Z2", "R3", "H"): 8,
+        ("Z2", "R3", "I"): 9,
+        ("Z2", "R4", "J"): 10,
+        ("Z2", "R4", "K"): 11,
+        ("Z2", "R4", "L"): 12,
+    }
+
+    data_not_hier = {
+        ("Z1", "R1", "A"): 1,
+        ("Z1", "R1", "B"): 2,
+        ("Z1", "R1", "C"): 3,
+        ("Z1", "R2", "D"): 4,
+        ("Z1", "R2", "E"): 5,
+        ("Z1", "R2", "F"): 6,
+        ("Z2", "R3", "G"): 7,
+        ("Z2", "R1", "H"): 8,  # <- breaks the hierarchy (R1 under both Z1 and Z2)
+        ("Z2", "R3", "I"): 9,
+        ("Z2", "R4", "J"): 10,
+        ("Z2", "R4", "K"): 11,
+        ("Z2", "R4", "L"): 12,
+    }
+
+    # Create MultiIndex DataFrames
+    df_hier = pd.DataFrame.from_dict(data_hier, orient="index", columns=["Value"])
+    df_hier.index = pd.MultiIndex.from_tuples(df_hier.index)
+
+    df_not_hier = pd.DataFrame.from_dict(
+        data_not_hier, orient="index", columns=["Value"]
+    )
+    df_not_hier.index = pd.MultiIndex.from_tuples(df_not_hier.index)
+
+    result_true = is_hierarchical(df_hier.index)
+    result_false = is_hierarchical(df_not_hier.index)
+
+    assert result_true
+    assert not result_false

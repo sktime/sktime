@@ -85,7 +85,7 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
         "X_inner_mtype": PANDAS_MTYPES,
@@ -398,7 +398,7 @@ class BaggingForecaster(BaseForecaster):
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
         from sktime.utils.dependencies import _check_soft_dependencies
 
-        mbb = MovingBlockBootstrapTransformer(block_length=6)
+        mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()
         params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
 

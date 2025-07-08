@@ -64,11 +64,14 @@ class ForecastByLevel(_DelegatedForecaster):
     _tags = {
         "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -156,7 +159,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
 
-        If a clusterer is used, it must suport cluster assignment,
+        If a clusterer is used, it must support cluster assignment,
         i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
@@ -270,7 +273,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "ignores-exogeneous-X": True,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,

@@ -128,6 +128,9 @@ class AlignerDtwNumba(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": False,  # can align sequences of unequal length?
         "X_inner_mtype": "numpy3D",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

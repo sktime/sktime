@@ -88,7 +88,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
         )
 
         if isinstance(multioutput, np.ndarray) or multioutput == "uniform_average":
-            assert all(isinstance(x, float) for x in res.values())
+            assert all(type(x) is np.float64 for x in res.values())
         elif multioutput == "raw_values":
             assert all(isinstance(x, np.ndarray) for x in res.values())
             assert all(x.ndim == 1 for x in res.values())

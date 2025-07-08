@@ -36,6 +36,7 @@ class AlignerLuckyDtw(BaseAligner):
     >>> ts2_df = pd.DataFrame({"dim_0": [2, 3, 4, 5, 6]})
     >>> aligner = AlignerLuckyDtw(window=2)
     >>> aligner.fit([ts1_df, ts2_df])
+    AlignerLuckyDtw(...)
     >>> alignment = aligner.get_alignment()
     """
 
@@ -50,6 +51,9 @@ class AlignerLuckyDtw(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "full",  # does the aligner produce full or partial alignment
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, window=None):

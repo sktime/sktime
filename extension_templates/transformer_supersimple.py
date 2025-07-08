@@ -27,7 +27,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
@@ -95,7 +95,7 @@ class MyTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     # todo: add any hyper-parameters and components to constructor

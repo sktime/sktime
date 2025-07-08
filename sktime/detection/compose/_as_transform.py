@@ -37,10 +37,11 @@ class DetectorAsTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.detection.compose import DetectorAsTransformer
-    >>> from sktime.detection.stray import STRAY
-    >>> from sktime.utils._testing import _make_hierarchical
+    >>> from sktime.detection.lof import SubLOF
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
-    >>> t = DetectorAsTransformer(STRAY())
+    >>> detector = SubLOF.create_test_instance()
+    >>> t = DetectorAsTransformer(detector)
     >>> t.fit(X)
     DetectorAsTransformer(...)
     >>> Xt = t.transform(X)
@@ -67,8 +68,11 @@ class DetectorAsTransformer(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:missing_values:removes": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, estimator):
