@@ -1568,40 +1568,19 @@ def load_m5(
     """
     required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
 
-    if extract_path is not None:
-        if all(
-            os.path.exists(os.path.join(extract_path, file)) for file in required_files
-        ):
-            # checks if the required files are present at given extract_path
-            path_to_data_dir = extract_path
+    extract_path = extract_path if extract_path is not None else MODULE
 
-        else:
-            if not os.path.exists(
-                os.path.join(extract_path, "m5-forecasting-accuracy")
-            ):
-                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
-
-                m5_url = "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
-
-                m5_downloader = DatasetDownloader(
-                    hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
-                )
-                m5_downloader.download_dataset(
-                    dataset_name="m5-forecasting-accuracy", download_path=extract_path
-                )
-
-            else:
-                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
-
+    if required_files and all(
+        os.path.exists(os.path.join(extract_path, file)) for file in required_files
+    ):
+        path_to_data_dir = extract_path
     else:
-        extract_path = MODULE
-        if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
-            path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+        data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
+        if not os.path.exists(data_dir):
             m5_url = (
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
             )
-
             m5_downloader = DatasetDownloader(
                 hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
             )
@@ -1609,8 +1588,7 @@ def load_m5(
                 dataset_name="m5-forecasting-accuracy", download_path=extract_path
             )
 
-        else:
-            path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
+        path_to_data_dir = data_dir
 
     sales_train_validation = _reduce_memory_usage(
         pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
