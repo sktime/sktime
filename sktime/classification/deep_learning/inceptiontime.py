@@ -87,6 +87,10 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
+        
+        # capabilities
+        # ------------
+        "capability:class_weights": True,
     }
 
     def __init__(
@@ -104,6 +108,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
+        class_weight=None
     ):
         _check_dl_dependencies(severity="error")
 
@@ -121,6 +126,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
+        self.class_weight = class_weight
 
         super().__init__()
 
@@ -206,6 +212,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
+            class_weight=self.class_weight,
         )
         return self
 
