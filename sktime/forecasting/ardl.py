@@ -249,7 +249,7 @@ class ARDL(_StatsModelsAdapter):
         self.trend = trend
         # Check statsmodels version if trend='ctt'
         if self.trend == "ctt":
-            if version.parse(statsmodels.__version__) < version.parse("0.15.0"):
+            if version.parse(statsmodels.__version__) < version.parse("0.14.5"):
                 raise ImportError(
                     f"The 'ctt' trend option requires statsmodels >= 0.15.0. "
                     f"Your statsmodels version is {statsmodels.__version__}. "
