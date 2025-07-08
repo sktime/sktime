@@ -205,27 +205,44 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         if y_pred_benchmark is None:
             raise ValueError("y_pred_benchmark must be passed to RelativeLoss")
 
-        eval_kwargs = {}
-        if sample_weight is not None:
-            eval_kwargs["sample_weight"] = sample_weight
-        if horizon_weight is not None:
-            eval_kwargs["horizon_weight"] = horizon_weight
+        # eval_kwargs = {}
+        # if sample_weight is not None:
+        #     eval_kwargs["sample_weight"] = sample_weight
+        # if horizon_weight is not None:
+        #     eval_kwargs["horizon_weight"] = horizon_weight
 
-        # _metric_obj is guaranteed to be a BaseForecastingErrorMetric
-        base = self._metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
-        ref = self._metric_obj.evaluate(
-            y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
+        # # _metric_obj is guaranteed to be a BaseForecastingErrorMetric
+        # base = self._metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
+        # ref = self._metric_obj.evaluate(
+        #     y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
+        # )
+        # if sample_weight is None:
+        #     with np.errstate(divide="ignore", invalid="ignore"):
+        #         out = np.divide(base, ref)
+        #         return np.where(np.isfinite(out), out, float("inf"))
+        # else:
+        #     ref_safe = np.where(ref == 0, EPS, ref)
+        #     out = np.divide(base, ref_safe)
+        #     if isinstance(out, np.ndarray) and out.ndim > 0:
+        #         return np.mean(out)
+        #     return float(out)
+
+        per_index = self._evaluate_by_index(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+            sample_weight=sample_weight,
+            horizon_weight=horizon_weight,
+            **kwargs,
         )
-        if sample_weight is None:
-            with np.errstate(divide="ignore", invalid="ignore"):
-                out = np.divide(base, ref)
-                return np.where(np.isfinite(out), out, float("inf"))
-        else:
-            ref_safe = np.where(ref == 0, EPS, ref)
-            out = np.divide(base, ref_safe)
-            if isinstance(out, np.ndarray) and out.ndim > 0:
-                return np.mean(out)
-            return float(out)
+
+        if self.by_index:
+            return per_index
+
+        arr = per_index.values
+        if arr.ndim == 1:
+            return arr.mean()
+        return arr.mean(axis=0)
 
     def _evaluate_by_index(
         self,
@@ -260,9 +277,35 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
             ref_safe = np.where(ref == 0, EPS, ref)
             out = np.divide(base, ref_safe)
 
-        if self.multioutput == "raw_values":
+        # if self.multioutput == "raw_values":
+        #     return pd.DataFrame(out, index=y_true.index, columns=y_true.columns)
+        # else:
+        #     if sample_weight is not None and out.ndim == 2:
+        #         out = np.mean(out, axis=1)
+        #     return pd.Series(out, index=y_true.index)
+
+        arr = np.asarray(out)
+        if arr.ndim == 1:
+            return pd.Series(arr, index=y_true.index)
+
+        if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
             return pd.DataFrame(out, index=y_true.index, columns=y_true.columns)
-        else:
-            if sample_weight is not None and out.ndim == 2:
-                out = np.mean(out, axis=1)
-            return pd.Series(out, index=y_true.index)
+
+        if out.ndim == 2:
+            if isinstance(self.multioutput, str):
+                if self.multioutput == "uniform_average":
+                    weights = None
+                else:
+                    raise ValueError(
+                        f"Unsupported multioutput string: {self.multioutput}"
+                    )
+            else:
+                weights = np.asarray(self.multioutput, dtype=float)
+                if weights.ndim != 1 or weights.shape[0] != out.shape[1]:
+                    raise ValueError(
+                        f"There must be equally many custom weights "
+                        f"({weights.shape[0]}) as outputs ({out.shape[1]})."
+                    )
+            out = np.average(out, axis=1, weights=weights)
+
+        return pd.Series(out, index=y_true.index)
