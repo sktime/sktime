@@ -67,7 +67,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self,
         dataset_name,
         download_path=None,
-        force_download=False,
+        force_download=True,
         **kwargs,
     ):
         """Download a specific dataset folder from the Hugging Face repository.
@@ -148,9 +148,7 @@ class URLDownloader(DatasetDownloadStrategy):
         last_error = None
         for url in self.base_urls:
             try:
-                dataset_url = f"{url}/{dataset_name}.zip"
-
-                result_path = self._download_and_extract(dataset_url, download_path)
+                result_path = self._download_and_extract(url, download_path)
                 if result_path:
                     return result_path
 
