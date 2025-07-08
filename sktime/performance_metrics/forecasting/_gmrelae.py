@@ -16,19 +16,30 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
-    """Geometric mean relative absolute error (GMRAE).
+    r"""Geometric mean relative absolute error (GMRAE).
 
-    This class implements an efficient, custom evaluation for GMRAE, including
-    per-time-point evaluation via the `_evaluate_by_index` method. It does not
-    rely on a function-based fallback.
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n`,
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and
+    benchmark predicted values :math:`\widehat{y}_1^b, \dots, \widehat{y}_n^b`
+    (in :math:`\mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Geometric Mean Relative Absolute Error,
+    :math:`\left(\prod_{i=1}^n |r_i|\right)^{1/n}`,
+    where :math:`r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}_i^b}`
+    is the relative error at time index :math:`t_i`.
 
-    In relative error metrics, relative errors are first calculated by
-    scaling (dividing) the individual forecast errors by the error calculated
-    using a benchmark method at the same index position. If the error of the
-    benchmark method is zero then a large value is returned.
+    If the benchmark error :math:`y_i - \widehat{y}_i^b` is zero, a large
+    value is returned.
 
-    GMRAE applies geometric mean absolute error (GMAE) to the resulting relative
-    errors.
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute relative error at that time index, :math:`|r_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
+
+    GMRAE output is non-negative floating point. The best value is 0.0.
 
     Parameters
     ----------
