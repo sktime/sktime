@@ -445,6 +445,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vincent-nich12"><img src="https://avatars3.githubusercontent.com/u/36476633?v=4?s=100" width="100px;" alt="vincent-nich12"/><br /><sub><b>vincent-nich12</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vincent-nich12" title="Code">💻</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt="vollmersj"/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
+      <td align="center" valign="top" width="11.11%"><a href="https://github.com/Virgile-Fousserequ"><img src="https://avatars.githubusercontent.com/u/99748194?v=4?s=100" width="100px;" alt="Virgile Foussereau"/><br /><sub><b>Virgile-Foussereau</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=Virgile-Foussereau" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
