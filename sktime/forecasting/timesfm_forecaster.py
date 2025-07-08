@@ -152,10 +152,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        # when relaxing deps, check whether the extra test in
-        # test_timesfm.py are still needed
         "python_version": ">=3.10,<3.11",
-        "env_marker": "sys_platform=='linux'",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -165,6 +162,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
+        "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -182,6 +180,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -222,7 +223,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 0.38.0: Regularly check whether timesfm version can be updated
+                # todo 0.39.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
         else:

@@ -153,6 +153,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "univariate-only": False,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -174,11 +177,24 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        if hasattr(transformer, "_get_tags"):
-            categorical_list = ["categorical", "1dlabels", "2dlabels"]
-            tag_values = transformer._get_tags()["X_types"]
-            if any(val in tag_values for val in categorical_list):
-                self.set_tags(**{"capability:categorical_in_X": True})
+        def sklearn_supports_categorical(estimator):
+            """Whether the sklearn estimator supports categorical."""
+            if _check_soft_dependencies("sklearn<1.6", severity="none"):
+                if hasattr(transformer, "_get_tags"):
+                    categorical_list = ["categorical", "1dlabels", "2dlabels"]
+                    tag_values = transformer._get_tags()["X_types"]
+                    return any(val in tag_values for val in categorical_list)
+            else:
+                from sklearn.utils import get_tags
+
+                cat1 = get_tags(estimator).input_tags.categorical
+                cat2 = get_tags(estimator).target_tags.one_d_labels
+                cat3 = get_tags(estimator).target_tags.two_d_labels
+                return cat1 or cat2 or cat3
+            return False
+
+        if sklearn_supports_categorical(transformer):
+            self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
@@ -504,6 +520,9 @@ class PandasTransformAdaptor(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "remember_data": False,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):

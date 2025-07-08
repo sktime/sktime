@@ -895,3 +895,17 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     :template: class.rst
 
     Reconciler
+
+For usage of Reconciliation with pipelines, these transformations below are more
+efficient and should be preferred:
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BottomUpReconciler
+    MiddleOutReconciler
+    NonNegativeOptimalReconciler
+    OptimalReconciler
+    TopdownReconciler
