@@ -4,7 +4,6 @@
 import warnings
 
 import pandas as pd
-import statsmodels
 from packaging import version
 
 from sktime.forecasting.base._base import BaseForecaster
@@ -247,17 +246,22 @@ class ARDL(_StatsModelsAdapter):
         self.fixed = fixed
         self.causal = causal
         self.trend = trend
-        # Check statsmodels version if trend='ctt'
+        # Safe optional dependency check for 'ctt'
         if self.trend == "ctt":
+            try:
+                import statsmodels
+            except ImportError:
+                raise ImportError(
+                    "Using trend='ctt' requires statsmodels >= 0.15.0."
+                    "Please install statsmodels."
+                )
             sm_version = version.parse(statsmodels.__version__)
             if sm_version < version.parse("0.15.0"):
-                if not sm_version.is_prerelease:
-                    raise ImportError(
-                        f"The 'ctt' trend option requires statsmodels >= 0.15.0. "
-                        f"Your statsmodels version is {statsmodels.__version__}. "
-                        "Please upgrade statsmodels to use trend='ctt'."
-                    )
-                # If it's a prerelease, assume the user knows what they are doing.
+                raise ImportError(
+                    "The 'ctt' trend option requires statsmodels >= 0.15.0. "
+                    f"Your statsmodels version is {statsmodels.__version__}. "
+                    "Please upgrade statsmodels to use trend='ctt'."
+                )
 
         self.seasonal = seasonal
         self.deterministic = deterministic
