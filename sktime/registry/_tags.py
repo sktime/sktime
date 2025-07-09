@@ -1179,10 +1179,10 @@ class capability__predict_proba(_BaseTag):
     }
 
 
-class capability__class_weights(_BaseTag):
+class capability__class_weight(_BaseTag):
     """Capability: the classifier can use class weights to handle imbalanced data.
 
-    - String name: ``"capability:class_weights"``
+    - String name: ``"capability:class_weight"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
@@ -1205,10 +1205,10 @@ class capability__class_weights(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "capability:class_weights",
+        "tag_name": "capability:class_weight",
         "parent_type": "classifier",
         "tag_type": "bool",
-        "short_descr": "can the classifier use class weights to handle imbalanced data?",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
