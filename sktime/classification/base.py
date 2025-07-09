@@ -63,6 +63,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:multithreading": False,
         "capability:categorical_in_X": True,
         "capability:predict_proba": False,
+        "capability:class_weight": False,  # can the classifier use class weights?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
         "authors": "sktime developers",  # author(s) of the object
