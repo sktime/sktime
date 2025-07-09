@@ -1463,7 +1463,7 @@ def load_forecastingdata(
             hf_repo_name="sktime/tsf-datasets", fallback_urls=[url]
         )
 
-        forecastingdata_downloader.download_dataset(
+        forecastingdata_downloader.download(
             dataset_name=name, download_path=path_to_data_dir
         )
 
@@ -1584,7 +1584,7 @@ def load_m5(
             m5_downloader = DatasetDownloader(
                 hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
             )
-            m5_downloader.download_dataset(
+            m5_downloader.download(
                 dataset_name="m5-forecasting-accuracy", download_path=extract_path
             )
 

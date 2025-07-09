@@ -7,33 +7,61 @@ __all__ = ["DatasetDownloader"]
 import os
 import shutil
 import tempfile
+import warnings
 import zipfile
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
-from sktime.utils.dependencies import _safe_import
-
-snapshot_download = _safe_import(
-    "huggingface_hub.snapshot_download", pkg_name="huggingface-hub"
-)
-hf_hub_download = _safe_import(
-    "huggingface_hub.hf_hub_download", pkg_name="huggingface-hub"
-)
-HfHubHTTPError = _safe_import(
-    "huggingface_hub.utils.HfHubHTTPError", pkg_name="huggingface-hub"
-)
-RepositoryNotFoundError = _safe_import(
-    "huggingface_hub.utils.RepositoryNotFoundError", pkg_name="huggingface-hub"
-)
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class DatasetDownloadStrategy:
     """Base class for dataset download strategies."""
 
-    def download_dataset(self, **kwargs):
-        """Download a dataset using this strategy."""
-        raise NotImplementedError("Subclasses must implement download_dataset method")
+    def download(
+        self, dataset_name, download_path=None, force_download=False, **kwargs
+    ):
+        """Download a dataset using this strategy.
+
+        This method handles common boilerplate, then delegates to
+        _download for strategy-specific implementation.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset to download.
+        download_path : str or Path, optional
+            Local directory where the dataset should be saved. If not specified,
+            defaults to a 'local_data' folder in the current working directory.
+        force_download : bool, default=False
+            Whether to force re-download the dataset even if it's cached locally.
+        **kwargs
+            Additional keyword arguments passed to the strategy implementation.
+
+        Returns
+        -------
+        Path
+            Path to the downloaded dataset folder.
+        """
+        if download_path is None:
+            download_path = Path.cwd() / "local_data"
+        else:
+            download_path = Path(download_path)
+
+        download_path.mkdir(parents=True, exist_ok=True)
+        local_dataset_path = download_path / dataset_name
+
+        if local_dataset_path.exists():
+            if force_download:
+                return self._download(dataset_name, download_path, **kwargs)
+            return local_dataset_path
+
+        return self._download(dataset_name, download_path, **kwargs)
+
+    def _download(self, dataset_name, download_path, **kwargs):
+        """Strategy-specific download implementation."""
+        raise NotImplementedError("Subclasses must implement _download method")
 
 
 class HuggingFaceDownloader(DatasetDownloadStrategy):
@@ -62,25 +90,17 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.repo_name = repo_name
         self.repo_type = repo_type
         self.token = token
+        self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
-    def download_dataset(
-        self,
-        dataset_name,
-        download_path=None,
-        force_download=True,
-        **kwargs,
-    ):
+    def _download(self, dataset_name, download_path, **kwargs):
         """Download a specific dataset folder from the Hugging Face repository.
 
         Parameters
         ----------
         dataset_name : str
             Name of the folder (dataset) inside the repository to download.
-        download_path : str or Path, optional
-            Local directory where the dataset should be saved. If not specified,
-            defaults to a 'local_data' folder in the current working directory.
-        force_download : bool, default=False
-            Whether to force re-download the dataset even if it's cached locally.
+        download_path : Path
+            Local directory where the dataset should be saved.
         **kwargs
             Additional keyword arguments passed to `snapshot_download`.
 
@@ -89,14 +109,11 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         Path
             Path to the downloaded dataset folder.
         """
-        if download_path is None:
-            download_path = Path.cwd() / "local_data"
-        else:
-            download_path = Path(download_path)
-
-        download_path.mkdir(parents=True, exist_ok=True)
-
         local_dataset_path = download_path / dataset_name
+
+        if _check_soft_dependencies("huggingface-hub", severity="error"):
+            from huggingface.hub.utils import HfHubHTTPError, RepositoryNotFoundError
+            from huggingface_hub import snapshot_download
 
         try:
             snapshot_download(
@@ -104,8 +121,9 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
                 repo_type=self.repo_type,
                 allow_patterns=f"{dataset_name}/**",
                 local_dir=download_path,
-                force_download=force_download,
+                force_download=False,
                 token=self.token,
+                **kwargs,
             )
 
             if not local_dataset_path.exists():
@@ -131,20 +149,23 @@ class URLDownloader(DatasetDownloadStrategy):
     def __init__(self, base_urls):
         self.base_urls = base_urls
 
-    def download_dataset(
-        self, dataset_name, download_path=None, force_download=False, **kwargs
-    ):
-        """Download and extract a dataset from URL."""
-        if download_path is None:
-            download_path = Path.cwd() / "local_data"
-        else:
-            download_path = Path(download_path)
+    def _download(self, dataset_name, download_path, **kwargs):
+        """Download and extract a dataset from URL.
 
-        extract_path = download_path / dataset_name
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset to download.
+        download_path : Path
+            Local directory where the dataset should be saved.
+        **kwargs
+            Additional keyword arguments (unused in this implementation).
 
-        if extract_path.exists() and not force_download:
-            return extract_path
-
+        Returns
+        -------
+        Path
+            Path to the downloaded dataset folder.
+        """
         last_error = None
         for url in self.base_urls:
             try:
@@ -211,14 +232,18 @@ class FallbackDownloader(DatasetDownloadStrategy):
         self.strategies = strategies
         self.retries = retries
 
-    def download_dataset(self, **kwargs):
+    def _download(self, dataset_name, download_path, **kwargs):
         """
         Try each strategy in sequence until one succeeds.
 
         Parameters
         ----------
+        dataset_name : str
+            Name of the dataset to download.
+        download_path : Path
+            Local directory where the dataset should be saved.
         **kwargs
-            Arguments passed to each strategy's download_dataset method.
+            Arguments passed to each strategy's download method.
 
         Returns
         -------
@@ -233,9 +258,17 @@ class FallbackDownloader(DatasetDownloadStrategy):
         errors = []
 
         for i, strategy in enumerate(self.strategies):
+            if isinstance(strategy, HuggingFaceDownloader) and not strategy.available:
+                next_strategy = type(self.strategies[i + 1]).__name__
+                warnings.warn(
+                    f"huggingface_hub is not available, please install it to"
+                    f" use Hugging Face for dataset downloads, skipping "
+                    f"HuggingFaceDownloader, using {next_strategy}."
+                )
+                continue
             for attempt in range(self.retries):
                 try:
-                    return strategy.download_dataset(**kwargs)
+                    return strategy._download(dataset_name, download_path, **kwargs)
                 except Exception as e:
                     strategy_name = type(strategy).__name__
                     error_msg = (
@@ -271,7 +304,7 @@ class DatasetDownloader:
 
         self._downloader = FallbackDownloader(strategies)
 
-    def download_dataset(
+    def download(
         self, dataset_name, download_path=None, force_download=False, **kwargs
     ):
         """
@@ -293,7 +326,7 @@ class DatasetDownloader:
         Path
             Path to the downloaded dataset.
         """
-        return self._downloader.download_dataset(
+        return self._downloader.download(
             dataset_name=dataset_name,
             download_path=download_path,
             force_download=force_download,

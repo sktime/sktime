@@ -100,7 +100,7 @@ class M5Dataset(BaseForecastingDataset):
             downloader = DatasetDownloader(
                 hf_repo_name="tsf-datasets", fallback_urls=[url]
             )
-            downloader.download_dataset(
+            downloader.download(
                 dataset_name="m5-forecasting-accuracy", download_path=self._extract_path
             )
 
