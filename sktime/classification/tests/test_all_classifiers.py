@@ -245,3 +245,27 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             assert hasattr(estimator_instance, "classifiers_")
             assert isinstance(estimator_instance.classifiers_, pd.DataFrame)
             assert estimator_instance.classifiers_.shape == (1, 2)
+
+    def test_class_weight(self, estimator_instance, scenario):
+        """Test that classifiers with class_weight handle it correctly."""
+        # Check if the estimator supports class_weight
+        if not estimator_instance.get_tag("capability:class_weight"):
+            return None
+
+        # Get training data from scenario
+        X_train = scenario.args["fit"]["X"]
+        y_train = scenario.args["fit"]["y"]
+
+        # Compute class weights (e.g. normalized inverse frequency)
+        unique, counts = np.unique(y_train, return_counts=True)
+        inv_freq = np.array([1.0 / count for count in counts])
+        norm_inv_freq = inv_freq / inv_freq.sum()
+        class_weight = {cls: w for cls, w in zip(unique, norm_inv_freq)}
+
+        # Set class_weight param
+        estimator_instance.set_params(class_weight=class_weight)
+
+        # Fit and predict to check no error is raised
+        estimator_instance.fit(X_train, y_train)
+        y_pred = estimator_instance.predict(X_train)
+        assert set(np.unique(y_pred)).issubset(set(unique))

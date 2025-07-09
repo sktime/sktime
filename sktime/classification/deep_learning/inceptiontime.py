@@ -87,10 +87,10 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
-        
+
         # capabilities
         # ------------
-        "capability:class_weights": True,
+        "capability:class_weight": True,
     }
 
     def __init__(
