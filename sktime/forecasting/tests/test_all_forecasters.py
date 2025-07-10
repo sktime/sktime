@@ -273,6 +273,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test_handle_missing_data(self, estimator_instance):
         """Test for missing data handling"""
+        from sklearn.utils import get_tags
+
         global y
         y1 = y.copy()
         y1[y1 > y1.mean()] = np.nan
@@ -286,7 +288,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"Skipping test for estimator - {estimator_instance.__class__.__name__}"
             )
         if estimator_instance.get_tag("capability:missing_values"):
-            estimator_instance.fit(y1, fh=FH0)
+            if get_tags(estimator_instance).input_tags.allow_nan:
+                estimator_instance.fit(y1, fh=FH0)
         else:
             cls_name = estimator_instance.__class__.__name__
             error_msg = (
