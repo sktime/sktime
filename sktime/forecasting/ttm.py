@@ -216,6 +216,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # ajati, wgifford, vijaye12 for ibm-granite code
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
+        "python_version": ">=3.11",
         # estimator type
         # --------------
         "X_inner_mtype": [
@@ -594,6 +595,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         test_params = [
             {
                 "training_args": {
+                    "num_train_epochs": 1,
                     "max_steps": 5,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 4,
@@ -609,6 +611,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
                 "validation_split": 0.2,
                 "training_args": {
+                    "num_train_epochs": 1,
                     "max_steps": 5,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 4,
