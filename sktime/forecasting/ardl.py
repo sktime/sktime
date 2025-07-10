@@ -9,6 +9,7 @@ from packaging import version
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _all_ = ["ARDL"]
 __author__ = ["kcc-lion"]
@@ -248,14 +249,12 @@ class ARDL(_StatsModelsAdapter):
         self.trend = trend
         # Safe optional dependency check for 'ctt'
         if self.trend == "ctt":
-            try:
-                import statsmodels
-            except ImportError:
-                raise ImportError(
-                    "Using trend='ctt' requires statsmodels >= 0.15.0."
-                    "Please install statsmodels."
-                )
-            sm_version = version.parse(statsmodels.__version__)
+            present, sm_version_str = _check_soft_dependencies(
+                "statsmodels",
+                severity="none",
+                object=self,
+            )
+            sm_version = version.parse(sm_version_str)
             if sm_version < version.parse("0.15.0"):
                 if sm_version.is_prerelease:
                     # a dev or RC version — trust they know what they are doing.
@@ -263,7 +262,7 @@ class ARDL(_StatsModelsAdapter):
                 else:
                     raise ImportError(
                         "The 'ctt' trend option requires statsmodels >= 0.15.0. "
-                        f"Your statsmodels version is {statsmodels.__version__}. "
+                        f"Your statsmodels version is {sm_version_str}. "
                         "Please upgrade statsmodels to use trend='ctt'."
                     )
 
