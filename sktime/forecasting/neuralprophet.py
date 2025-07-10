@@ -94,6 +94,7 @@ class NeuralProphet(_ProphetAdapter):
     """
 
     _tags = {
+        **_ProphetAdapter._tags,
         "authors": ["vedantag17"],
         "python_dependencies": "neuralprophet",
     }
