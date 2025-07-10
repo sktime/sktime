@@ -12,8 +12,10 @@ def _coerce_to_scalar(obj):
         assert len(obj.columns) == 1
         return obj.iloc[0, 0]
     if isinstance(obj, pd.Series):
-        assert len(obj) == 1
-        return obj.iloc[0]
+        if len(obj) == 1:
+            assert len(obj) == 1
+            return obj.iloc[0]
+        return obj
     if not isinstance(obj, np.float64):
         obj = np.float64(obj)
     return obj
