@@ -314,7 +314,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.chronos"]
+        "tests:libs": ["sktime.libs.chronos"],
     }
 
     _default_chronos_config = {

@@ -130,7 +130,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.timemoe"]
+        "tests:libs": ["sktime.libs.timemoe"],
     }
 
     def __init__(

@@ -133,7 +133,7 @@ class MomentFMClassifier(BaseClassifier):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.momentfm"]
+        "tests:libs": ["sktime.libs.momentfm"],
     }
 
     def __init__(

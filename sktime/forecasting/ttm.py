@@ -241,7 +241,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.granite_ttm"]
+        "tests:libs": ["sktime.libs.granite_ttm"],
     }
 
     def __init__(
