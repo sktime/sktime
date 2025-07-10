@@ -418,6 +418,42 @@ class tests__core(_BaseTag):
     }
 
 
+class tests__vm(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:vm"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull request,
+    usually only estimators that have changed.
+
+    The ``test_vm`` tag of an object is a boolean,
+    it specifies whether the estimator should be tested in a separate VM,
+    with a fresh environment set up using the ``python_dependencies`` tag,
+    with version/OS matrix defined by ``python_version`` and ``env_marker`` tags.
+
+    This tag should be set to ``True`` for estimators that have a complex
+    dependency setup, or that are known to have issues with the default
+    ``sktime`` CI environment. Otherwise, it should be used sparingly.
+
+    It is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:vm",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to test the object in its own VM",
+        "user_facing": False,
+    }
+
+
 # Estimator tags
 # --------------
 
@@ -1665,7 +1701,7 @@ class capability__update(_BaseTag):
         "tag_name": "capability:update",
         "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
-        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -2481,7 +2517,7 @@ class visual_block_kind(_BaseTag):
         "tag_name": "visual_block_kind",
         "parent_type": "estimator",
         "tag_type": ("str", ["single", "serial", "parallel"]),
-        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
+        "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
     }
 

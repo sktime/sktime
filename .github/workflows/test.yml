@@ -90,8 +90,89 @@ jobs:
         run: build_tools/run_blogposts.sh
         shell: bash
 
-  detect-package-change:
+  detect-changed-classes:
     needs: code-quality
+    runs-on: ubuntu-latest
+    outputs:
+      obj_list: ${{ steps.get-change-list.outputs.obj_list }}
+      obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Get list of names of changed classes
+        id: get-change-list
+        run: |
+          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; obj_list = _get_all_changed_classes(vm=True); print(json.dumps(obj_list))')
+          OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
+          echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
+          echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
+          echo "::set-output name=obj_list::$OBJ_LIST"
+          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
+
+      - name: Print changed classes
+        run: |
+          echo "Number of changed classes: $OBJ_LIST_LENGTH"
+          echo "Changed classes: $OBJ_LIST"
+
+  test-est:
+    needs: detect-changed-classes
+    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        os: [ubuntu-latest, macos-13, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Install dependencies for ${{ matrix.flag }}
+        run: |
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
+          pip install -r deps.txt
+        continue-on-error: true
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests with ${{ matrix.flag }}
+        env:
+          FLAG: ${{ matrix.flag }}
+        shell: bash
+        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
+
+  detect-package-change:
+    needs: [code-quality, detect-changed-classes]
     name: detect package changes
     runs-on: ubuntu-latest
     permissions:
@@ -181,8 +262,13 @@ jobs:
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
-    needs: test-nosoftdeps
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mlflow-version: ['2.9.2', '3.latest']
+    name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -194,7 +280,11 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+            python -m pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
+          else
+            python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          fi
 
       - name: Show dependencies
         run: python -m pip list
@@ -281,12 +371,14 @@ jobs:
 
   test-full:
     needs: test-nosoftdeps
+
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        os: [ubuntu-latest, macos-13, windows-latest]
+        os: [ubuntu-latest, macos-13, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
