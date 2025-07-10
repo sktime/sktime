@@ -81,6 +81,9 @@ class Logger(BaseTransformer):
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
         "capability:missing_values": True,  # can estimator handle missing data?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
