@@ -484,7 +484,7 @@ class tests__libs(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "tests:vm",
+        "tag_name": "tests:libs",
         "parent_type": "object",
         "tag_type": "list",
         "short_descr": "Core libraries used by the estimator, to trigger tests.",
