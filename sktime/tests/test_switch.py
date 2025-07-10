@@ -294,7 +294,7 @@ def _run_test_for_class(
         if not isclass(cls) or not hasattr(cls, "get_class_tags"):
             return False
 
-        libs = cls.get_class_tags("tests:libs")
+        libs = cls.get_class_tag("tests:libs", [])
         if libs is None or libs == []:
             return False
 
