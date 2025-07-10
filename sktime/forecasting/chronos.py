@@ -311,6 +311,9 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     _default_chronos_config = {
@@ -366,7 +369,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         self._initialize_model_type()
 
     def _initialize_model_type(self):
-        """Intialise model type and configuration based on model's architecture."""
+        """Initialise model type and configuration based on model's architecture."""
         from transformers import AutoConfig
 
         try:

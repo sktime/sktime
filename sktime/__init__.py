@@ -1,6 +1,9 @@
-"""sktime."""
+"""sktime - the package for AI with time series.
 
-__version__ = "0.37.0"
+See https://www.sktime.net/ for documentation and tutorials.
+"""
+
+__version__ = "0.38.3"
 
 __all__ = ["show_versions"]
 

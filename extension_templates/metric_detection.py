@@ -18,7 +18,7 @@ Purpose of this implementation template:
     - more details:
       https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-    Mandatory implements:
+    Mandatory methods to implement:
         evaluating            - _evaluate(self, X)
 
     Testing - required for sktime test framework and check_estimator usage:
