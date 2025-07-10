@@ -383,6 +383,154 @@ class requires_cython(_BaseTag):
     }
 
 
+class tests__core(_BaseTag):
+    """Whether tests for this estimator are triggered by framework changes.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:core"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:core`` tag of an object is a boolean,
+    it specifies whether changes to the framework or base classes
+    trigger tests for the estimator.
+
+    Only a core selection of estimators should have the ``tests:core``
+    tag set to true, to avoid that all estimators in ``sktime`` are triggered
+    by a framework change.
+
+    The ``tests:core`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:core",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether framework changes trigger estimator tests",
+        "user_facing": False,
+    }
+
+
+class tests__vm(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:vm"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:vm`` tag of an object is a boolean,
+    it specifies whether the estimator should be tested in a separate VM,
+    with a fresh environment set up using the ``python_dependencies`` tag,
+    with version/OS matrix defined by ``python_version`` and ``env_marker`` tags.
+
+    This tag should be set to ``True`` for estimators that have a complex
+    dependency setup, or that are known to have issues with the default
+    ``sktime`` CI environment.
+    It can also be used for estimators with soft dependencies that occur
+    only in one or few specific estimators.
+    Otherwise, it should be used sparingly.
+
+    The ``tests:vm`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:vm",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to test the object in its own VM",
+        "user_facing": False,
+    }
+
+
+class tests__skip_all(_BaseTag):
+    """Whether all tests for this estimator should be skipped.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_all"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_all`` tag of an object is a boolean.
+    If set to ``True``, all tests for the estimator are skipped.
+
+    WARNING: this tag should be used with caution,
+    as it will skip all tests for the estimator,
+    including those that are necessary for the estimator to be considered
+    a valid estimator in ``sktime``.
+
+    The ``tests:skip_all`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_all",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to skip all tests for the object",
+        "user_facing": False,
+    }
+
+
+class tests__skip_by_name(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_by_name``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ["test_fit_idempotent", "test_persistence_via_pickle"]
+    - Default: None
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_by_name`` tag of an object is list of strings,
+    with strings being names of tests that should be skipped for the object.
+    The names should be the same as names of test functions in the "test all"
+    suite, and will be the same as test names in ``check_estimator`` returns.
+    If set to ``None`` (default), no tests are skipped.
+
+    WARNING: this tag should be used with caution.
+    When it is set, developers should leave a comment
+    next to the tag, explaining why the tests are skipped,
+    and optimally link from the comment to an open issue with the purpose to resolving
+    the skipped test(s).
+
+    The ``tests:skip_by_name`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_by_name",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "list of names of tests that should be skipped for this object",
+        "user_facing": False,
+    }
+
+
 # Estimator tags
 # --------------
 
@@ -773,7 +921,7 @@ class capability__categorical_in_X(_BaseTag):
 
     _tags = {
         "tag_name": "capability:categorical_in_X",
-        "parent_type": ["forecaster", "transformer"],
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
         "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
@@ -1360,7 +1508,7 @@ class scitype__transform_labels(_BaseTag):
     * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars,
       in ``Table`` :term:`scitype`. In this case, the number of rows (=instances)
       in ``y`` must always equal the number of instances in ``X``, which typically
-      will be of :mtype:`scitype` ``Panel`` in this case.
+      will be of :term:`scitype` ``Panel`` in this case.
     * ``"Panel"``: a panel of time series, in ``Panel`` :term:`scitype`.
 
     The tag ``scitype:transform-labels`` is used in conjunction with the tag
@@ -1546,6 +1694,53 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+class capability__hierarchical_reconciliation(_BaseTag):
+    """Property: transformer reconciles hierarchical series.
+
+    - String name: ``"capability:hierarchical_reconciliation"``
+    - Public property tag
+    This tag applies to transformations that reconcile hierarchical series.
+    """
+
+    _tags = {
+        "tag_name": "capability:hierarchical_reconciliation",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer reconcile hierarchical series?",
+        "user_facing": True,
+    }
+
+
+class capability__bootstrap_index(_BaseTag):
+    """Capability: the transformer is a bootstrap that can return bootstrap idx.
+
+    - String name: ``"capability:bootstrap_index"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the transformer is a bootstrap transformer.
+    In this case, it should have the parameter ``return_indices``,
+    and ``return_indices=True`` will ensure that ``transform`` returns
+     ``iloc`` indices
+    of the bootstrapped time series, in reference to the input data ``X``,
+    as an additional column.
+
+    If the tag is ``False``, the transformer is not a bootstrap transformer,
+    and a parameter ``return_indices``, as described above,
+    is not available.
+    """
+
+    _tags = {
+        "tag_name": "capability:bootstrap_index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can the bootstrap return the index of bootstraped time series?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -1583,7 +1778,7 @@ class capability__update(_BaseTag):
         "tag_name": "capability:update",
         "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
-        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -1680,6 +1875,38 @@ class distribution_type(_BaseTag):
     }
 
 
+class capability__variable_identification(_BaseTag):
+    """Capability: can the detector identify the variables causing each detection.
+
+    - String name: ``"capability:variable_identification"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the detector can identify the variables responsible for
+    a detected event, like a change point or anomaly.
+
+    If the tag is ``True``, the output of the detector will include information
+    about the variables that are responsible for the detected event.
+
+    The `predict` method will contain an additional column named `"icolumns"`, where
+    each cell contains a list of integers representing the indices of the
+    variables/columns responsible for the detected event.
+
+    The `transform` method will contain the same number of columns as the input data
+    with the column naming format `"labels_<input_column_name>"`.
+    """
+
+    _tags = {
+        "tag_name": "capability:variable_identification",
+        "parent_type": "detector",
+        "tag_type": "bool",
+        "short_descr": "Can the detector identify the variables causing each detection?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -1717,10 +1944,10 @@ class x_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
@@ -1788,10 +2015,10 @@ class y_inner_mtype(_BaseTag):
 
     * specifying a single string. In this case, internal methods will provide
       the extender with inputs in the specified machine type.
-    * specifying a list of strings, of the same :mtype:`scitype`.
+    * specifying a list of strings, of the same :term:`scitype`.
       In this case, the boilerplate layer will
       first attempt to find the first :term:`mtype` in the list.
-    * specifying a list of strings, all of different :mtype:`scitype`.
+    * specifying a list of strings, all of different :term:`scitype`.
       This will convert the input to the mtype of the same scitype. This is especially
       useful if the implementer wants to deal with scitype broadcasting internally,
       in this case it is recommended to specify similar mtypes, such as
@@ -2367,7 +2594,7 @@ class visual_block_kind(_BaseTag):
         "tag_name": "visual_block_kind",
         "parent_type": "estimator",
         "tag_type": ("str", ["single", "serial", "parallel"]),
-        "short_descr": "how to display html represantation of a meta-estimator in jupyter notebook",  # noqa: E501
+        "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
     }
 

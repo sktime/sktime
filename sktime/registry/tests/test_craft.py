@@ -65,12 +65,12 @@ return ForecastingGridSearchCV(
 """
 
 dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
-dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
+dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * Prophet()"
 
 specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
 
-if _check_soft_dependencies(["statsmodels", "pmdarima"], severity="none"):
+if _check_soft_dependencies(["statsmodels", "prophet"], severity="none"):
     specs += [simple_spec_with_dep, pipe_spec_with_deps, dunder_spec_with_deps]
 
 
@@ -102,7 +102,8 @@ def test_deps(spec):
     assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    assert set(deps(dunder_spec_with_deps)) == {"statsmodels", "pmdarima", "numpy<2"}
+    expected_deps = {"statsmodels", "prophet"}
+    assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 
 def test_imports():
@@ -111,9 +112,9 @@ def test_imports():
     assert imports(simple_spec) == simple_spec_imports
 
     pipe_imports = (
-        "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
+        "from sktime.forecasting.compose import TransformedTargetForecast"
         "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
-        " sktime.forecasting.model_selection._tune import ForecastingGridSearch"
+        " sktime.forecasting.model_selection import ForecastingGridSearch"
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
         "t ThetaForecaster\nfrom sktime.split.expandingwindow import "

@@ -52,6 +52,7 @@ class FunctionParamFitter(BaseParamFitter):
     :class:`~sktime.param_est.plugin.PluginParamsForecaster`.
 
     >>> import numpy as np
+    >>> from sktime.param_est.compose import FunctionParamFitter
     >>> param_est = FunctionParamFitter(
     ...     param="selected_forecaster",
     ...     func=(

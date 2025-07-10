@@ -102,7 +102,7 @@ class HolidayFeatures(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
         "univariate-only": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
@@ -111,6 +111,9 @@ class HolidayFeatures(BaseTransformer):
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

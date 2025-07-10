@@ -59,7 +59,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch"],
+        "python_dependencies": ["pykan", "torch", "matplotlib"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -69,7 +69,7 @@ class PyKANForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
