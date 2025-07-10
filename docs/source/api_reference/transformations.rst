@@ -58,11 +58,19 @@ Pipeline building - Structural
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnSelect
     FitInTransform
     InvertTransform
     YtoX
     IxToX
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
 
 Pipeline building - Broadcasting and apply-map
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
