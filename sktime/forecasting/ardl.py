@@ -247,24 +247,29 @@ class ARDL(_StatsModelsAdapter):
         self.fixed = fixed
         self.causal = causal
         self.trend = trend
-        # Safe optional dependency check for 'ctt'
         if self.trend == "ctt":
-            present, sm_version_str = _check_soft_dependencies(
+            present = _check_soft_dependencies(
                 "statsmodels",
                 severity="none",
-                object=self,
             )
-            sm_version = version.parse(sm_version_str)
-            if sm_version < version.parse("0.15.0"):
-                if sm_version.is_prerelease:
-                    # a dev or RC version — trust they know what they are doing.
-                    pass
-                else:
-                    raise ImportError(
-                        "The 'ctt' trend option requires statsmodels >= 0.15.0. "
-                        f"Your statsmodels version is {sm_version_str}. "
-                        "Please upgrade statsmodels to use trend='ctt'."
-                    )
+            if not present:
+                raise ImportError(
+                    "Using trend='ctt' requires statsmodels >= 0.15.0. "
+                    "Please install statsmodels."
+                )
+        import statsmodels
+
+        sm_version = version.parse(statsmodels.__version__)
+        if sm_version < version.parse("0.15.0"):
+            if sm_version.is_prerelease:
+                # a dev or RC version — trust they know what they are doing.
+                pass
+            else:
+                raise ImportError(
+                    "The 'ctt' trend option requires statsmodels >= 0.15.0. "
+                    f"Your statsmodels version is {sm_version}. "
+                    "Please upgrade statsmodels to use trend='ctt'."
+                )
 
         self.seasonal = seasonal
         self.deterministic = deterministic
