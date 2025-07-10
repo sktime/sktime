@@ -168,7 +168,7 @@ def test_load_m5():
 
 
 @pytest.mark.datadownload
-def test_huggingfacedownloader():
+def test_huggingfacedownloader(tmp_path):
     """Test downloading dataset from Hugging Face."""
     hf_repo_name = "sktime/tsc-datasets"
     downloader = DatasetDownloader(hf_repo_name=hf_repo_name)
