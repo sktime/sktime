@@ -130,6 +130,10 @@ class MomentFMClassifier(BaseClassifier):
             "transformers",
         ],
         "python_version": ">= 3.10",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.momentfm"]
     }
 
     def __init__(

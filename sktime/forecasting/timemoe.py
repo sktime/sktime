@@ -127,6 +127,10 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.timemoe"]
     }
 
     def __init__(

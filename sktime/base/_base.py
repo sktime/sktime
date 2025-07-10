@@ -89,6 +89,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM
+        "tests:libs": None,  # required libraries, for change conditional testing
     }
 
     _config = {
