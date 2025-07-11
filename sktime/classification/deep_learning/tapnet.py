@@ -100,6 +100,9 @@ class TapNetClassifier(BaseDeepClassifier):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # Run tests in a dedicated VM due to sporadic crashes and possible
+        # memory leaks (see #8518)
+        "tests:vm": True,
     }
 
     def __init__(
