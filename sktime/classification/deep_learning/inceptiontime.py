@@ -48,6 +48,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         whether to print runtime information
     loss: str, default="categorical_crossentropy"
     metrics: optional
+    class_weight: dict, optional, default=None
 
     Notes
     -----

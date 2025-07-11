@@ -1191,13 +1191,12 @@ class capability__class_weight(_BaseTag):
     This tag applies to classifiers only.
 
     If the tag is ``True``, the classifier supports class weighting functionality,
-    typically through a ``class_weight`` parameter that allows users to assign
+    through a ``class_weight`` parameter that allows users to assign
     different weights to different classes during training. This is commonly used
     to handle imbalanced datasets where some classes are underrepresented.
 
     Class weights can usually be provided as:
     - A dictionary mapping class labels to weights
-    - The string "balanced" for automatic weight calculation
     - None for uniform class weights (default behavior)
 
     If the tag is ``False``, the classifier does not support class weighting,
