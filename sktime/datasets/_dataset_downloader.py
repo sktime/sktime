@@ -289,6 +289,10 @@ class FallbackDownloader(DatasetDownloadStrategy):
 class DatasetDownloader:
     """Main dataset downloader class using the composite pattern."""
 
+    _tags = {
+        "python_dependencies": "huggingface-hub",
+    }
+
     def __init__(self, hf_repo_name=None, fallback_urls=None):
         """
         Initialize the Dataset Downloader with multiple strategies.
