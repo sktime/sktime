@@ -168,12 +168,21 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.005,
+                "optimizer": "Adam",
+                "batch_size": 1,
+                "num_epochs": 1,
+                "individual": True # To see a difference num_channels needs to be >1
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
+                "individual": False # To see a difference num_channels needs to be >1
             }
         ]
 
@@ -341,12 +350,21 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.005,
+                "optimizer": "Adam",
+                "batch_size": 1,
+                "num_epochs": 1,
+                "individual": True # To see a difference num_channels needs to be >1
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
+                "individual": False # To see a difference num_channels needs to be >1
             }
         ]
 
@@ -514,12 +532,21 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.005,
+                "optimizer": "Adam",
+                "batch_size": 1,
+                "num_epochs": 1,
+                "individual": True # To see a difference num_channels needs to be >1
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
+                "individual": False # To see a difference num_channels needs to be >1
             }
         ]
 
