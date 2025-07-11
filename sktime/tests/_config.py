@@ -30,10 +30,9 @@ CYTHON_ESTIMATORS = False
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
 
-
+# DO NOT ADD ESTIMATORS HERE ANYMORE
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
-    "SFA",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
@@ -87,8 +86,6 @@ EXCLUDE_ESTIMATORS = [
     "STDBSCAN",
     # Temporarily remove RRF from tests, while #7380 is not merged
     "RecursiveReductionForecaster",
-    # DistanceFeatures does not work for hierarchical data, see #8077
-    #removed DistanceFeatures
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
@@ -317,6 +314,8 @@ EXCLUDED_TESTS = {
     ],  # see 8253
 }
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
