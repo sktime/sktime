@@ -70,7 +70,9 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
+        # fails due to #8151 or #8059
         "tests:skip_all": True,
+        # `test_fit_idempotent` fails with `AssertionError`, see #3616
         "tests:skip_by_name": ["test_fit_idempotent"],
     }
 
