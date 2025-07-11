@@ -16,9 +16,10 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 
 
-class ContinuousIntervalTree(BaseEstimator):
+class ContinuousIntervalTree(_SklVersionBridgeMixin, BaseEstimator):
     """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
     The ``Time Series Tree`` described in the Time Series Forest (TSF) paper Deng et al
@@ -129,7 +130,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(
+        X, y = self._validate_data_version_safe(
             X=X, y=y, ensure_min_samples=2, force_all_finite="allow-nan"
         )
 
@@ -230,7 +231,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False, force_all_finite="allow-nan")
+        X = self._validate_data_version_safe(
+            X=X, reset=False, force_all_finite="allow-nan"
+        )
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):

@@ -20,4 +20,9 @@ class ZeroChangePoints(ZeroAnomalies):
     """
 
     # same code except the tag
-    _tags = {"task": "change_point_detection"}
+    _tags = {
+        "task": "change_point_detection",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }

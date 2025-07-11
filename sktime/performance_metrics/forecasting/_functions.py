@@ -13,7 +13,6 @@ from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sklearn.metrics._regression import _check_reg_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
@@ -21,6 +20,7 @@ from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
 )
+from sktime.utils.sklearn import _check_reg_targets
 from sktime.utils.stats import _weighted_geometric_mean
 
 if sklearn.__version__ >= "1.4.0":
@@ -1647,7 +1647,7 @@ def median_absolute_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1785,7 +1785,7 @@ def mean_squared_percentage_error(
     the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1929,7 +1929,7 @@ def median_squared_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 

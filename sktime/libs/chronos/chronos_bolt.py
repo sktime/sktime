@@ -12,47 +12,29 @@ import copy
 import logging
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Any, Optional
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-    class torch:
-        """Dummy class if torch is unavailable."""
+AutoConfig = _safe_import("transformers.AutoConfig")
+ACT2FN = _safe_import("transformers.models.t5.modeling_t5.ACT2FN")
+T5LayerNorm = _safe_import("transformers.models.t5.modeling_t5.T5LayerNorm")
+T5PreTrainedModel = _safe_import("transformers.models.t5.modeling_t5.T5PreTrainedModel")
+T5Stack = _safe_import("transformers.models.t5.modeling_t5.T5Stack")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
-        class Tensor:
-            """Dummy class if torch is unavailable."""
-
-    class nn:
-        """Dummy class if torch is unavailable."""
-
-        class Module:
-            """Dummy class if torch is unavailable."""
+logger = logging.getLogger(__file__)
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import AutoConfig
-    from transformers.models.t5.modeling_t5 import (
-        ACT2FN,
-        T5LayerNorm,
-        T5PreTrainedModel,
-        T5Stack,
-    )
-    from transformers.utils import ModelOutput
-else:
-
-    class T5PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
+# workaround condition for the case where ModelOutput cannot be imported
+# using the mock class does not work here
+if ModelOutput.__class__.__name__ == "CommonMagicMeta":
 
     class ModelOutput:
         """Dummy model output if transformers is unavailable."""
-
-
-logger = logging.getLogger(__file__)
 
 
 @dataclass
@@ -71,10 +53,10 @@ class ChronosBoltConfig:
 class ChronosBoltOutput(ModelOutput):
     """Description of the output of the model."""
 
-    loss: Optional[torch.Tensor] = None
-    quantile_preds: Optional[torch.Tensor] = None
-    attentions: Optional[torch.Tensor] = None
-    cross_attentions: Optional[torch.Tensor] = None
+    loss: Optional[Any] = None
+    quantile_preds: Optional[Any] = None
+    attentions: Optional[Any] = None
+    cross_attentions: Optional[Any] = None
 
 
 class Patch(nn.Module):
@@ -92,7 +74,7 @@ class Patch(nn.Module):
         self.patch_size = patch_size
         self.patch_stride = patch_stride
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         """
         Convert input time series `x` into patches for further processing.
 
@@ -129,13 +111,8 @@ class InstanceNorm(nn.Module):
         super().__init__()
         self.eps = eps
 
-    def forward(
-        self,
-        x: torch.Tensor,
-        loc_scale: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Apply instance normalization to the input tensor.
+    def forward(self, x, loc_scale=None):
+        """Apply instance normalization to the input tensor.
 
         This method normalizes the input tensor by subtracting the mean and dividing by
         the standard deviation, computed separately for each instance of the batch.
@@ -161,11 +138,8 @@ class InstanceNorm(nn.Module):
 
         return (x - loc) / scale, (loc, scale)
 
-    def inverse(
-        self, x: torch.Tensor, loc_scale: tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
-        """
-        Reverses the normalization process of the InstanceNorm during ``forward()``.
+    def inverse(self, x, loc_scale):
+        """Reverses the normalization process of the InstanceNorm during ``forward()``.
 
         Parameter
         ---------
@@ -187,7 +161,7 @@ class ResidualBlock(nn.Module):
     """
     A Residual Block for optional LayerNorm and Dropout.
 
-    This block implementes a standard residual connection that allows gradients to flow
+    This block implements a standard residual connection that allows gradients to flow
     through the layers more effectively. It consists of two layers with an activation
     function in between with an option dropout and layer normalization operation.
 
@@ -228,7 +202,7 @@ class ResidualBlock(nn.Module):
         if use_layer_norm:
             self.layer_norm = T5LayerNorm(out_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         """
         Forward pass through the Residual Block.
 
@@ -369,13 +343,8 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
             ):
                 module.output_layer.bias.data.zero_()
 
-    def encode(
-        self, context: torch.Tensor, mask: Optional[torch.Tensor] = None
-    ) -> tuple[
-        torch.Tensor, tuple[torch.Tensor, torch.Tensor], torch.Tensor, torch.Tensor
-    ]:
-        """
-        Encode the input context tensor using the model's architecture.
+    def encode(self, context, mask=None):
+        """Encode the input context tensor using the model's architecture.
 
         Parameters
         ----------
@@ -454,15 +423,8 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
         return encoder_outputs[0], loc_scale, input_embeds, attention_mask
 
-    def forward(
-        self,
-        context: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        target: Optional[torch.Tensor] = None,
-        target_mask: Optional[torch.Tensor] = None,
-    ) -> ChronosBoltOutput:
-        """
-        Predict the future sample tokens for the given sequences.
+    def forward(self, context, mask=None, target=None, target_mask=None):
+        """Predict the future sample tokens for the given sequences.
 
         Arguments `context`, `mask`, `target` and `target_mask` can be used to customize
         the model inference at runtime.
@@ -643,9 +605,7 @@ class ChronosBoltPipeline:
     model: ChronosBoltModelForForecasting
     default_context_length: int = 2048
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -655,11 +615,8 @@ class ChronosBoltPipeline:
 
         return context
 
-    def embed(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Get encoder embeddings for the given time series.
+    def embed(self, context):
+        """Get encoder embeddings for the given time series.
 
         Parameters
         ----------
@@ -697,12 +654,11 @@ class ChronosBoltPipeline:
 
     def predict(  # type: ignore[override]
         self,
-        context: Union[torch.Tensor, list[torch.Tensor]],
+        context,
         prediction_length: Optional[int] = None,
         limit_prediction_length: bool = False,
-    ) -> torch.Tensor:
-        """
-        Get forecasts for the given time series.
+    ):
+        """Get forecasts for the given time series.
 
         Refer to the base method (``BaseChronosPipeline.predict``)
         for details on shared parameters.
@@ -726,7 +682,7 @@ class ChronosBoltPipeline:
         ------
         ValueError
             When limit_prediction_length is True and the prediction_length is
-            greater than model's trainig prediction_length.
+            greater than model's training prediction_length.
         """
         context_tensor = self._prepare_and_validate_context(context=context)
 

@@ -147,7 +147,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         SERIES_MTYPES = ["pd.DataFrame", "pd.Series", "np.ndarray"]
         self.set_tags(**{"X_inner_mtype": SERIES_MTYPES})
 
-        if self.get_tags()["y_inner_mtype"] not in [None, "None"]:
+        if self.get_tag("y_inner_mtype") not in [None, "None"]:
             self.set_tags(**{"y_inner_mtype": SERIES_MTYPES})
 
     def _fit(self, X, y=None):

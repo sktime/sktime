@@ -75,6 +75,8 @@ SERIALIZATION_FORMATS = {
 class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
+    Base class for all parametric objects in sktime.
+
     Extends skbase BaseObject with additional features.
     """
 
@@ -84,6 +86,11 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
         "sktime_version": SKTIME_VERSION,  # current sktime version
+        # default tags for testing
+        "tests:core": False,  # core objects have wider trigger conditions in testing
+        "tests:vm": False,  # whether the object should be tested in its own VM
+        "tests:skip_all": False,  # whether all tests for the object should be skipped
+        "tests:skip_by_name": None,  # list of test names to skip for this object
     }
 
     _config = {
@@ -122,7 +129,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         backend:parallel : str, optional, default="None"
             backend to use for parallelization when broadcasting/vectorizing, one of
 
-            - "None": executes loop sequentally, simple list comprehension
+            - "None": executes loop sequentially, simple list comprehension
             - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
             - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
             - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -369,6 +376,9 @@ class TagAliaserMixin(_TagAliaserMixin):
 
     alias_dict = {"handles-missing-data": "capability:missing_values"}
     deprecate_dict = {"handles-missing-data": "1.0.0"}
+
+    # package name used for deprecation warnings
+    _package_name = "sktime"
 
 
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
