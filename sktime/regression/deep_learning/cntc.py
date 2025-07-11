@@ -70,6 +70,8 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
+        "tests:skip_all": True,
+        "tests:skip_by_name": ["test_fit_idempotent"]
     }
 
     def __init__(
@@ -250,11 +252,6 @@ class CNTCRegressor(BaseDeepRegressor):
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
         preds = np.squeeze(preds, axis=-1)
         return preds
-    def _more_tags(self):
-        return {
-            "tests:skip_all": True,
-            "tests:skip_by_name": ["test_fit_idempotent"]
-        }
     
 
     @classmethod
