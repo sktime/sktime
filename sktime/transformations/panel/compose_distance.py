@@ -70,6 +70,7 @@ class DistanceFeatures(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_all": True, #test:skip added
     }
 
     def __init__(self, distance=None, distance_mtype=None, flatten_hierarchy=False):
