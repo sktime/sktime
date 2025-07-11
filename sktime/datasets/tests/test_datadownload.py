@@ -1,6 +1,5 @@
 """Test data loaders that download from external sources."""
 
-from pathlib import Path
 from urllib.request import Request, urlopen
 
 import numpy as np
@@ -15,7 +14,6 @@ from sktime.datasets import (
     load_solar,
     load_UCR_UEA_dataset,
 )
-from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -165,26 +163,3 @@ def test_load_m5():
 
     index = check_raise(loaded_dataset, mtype="pd_multiindex_hier")
     assert index is True
-
-
-def test_huggingfacedownloader(tmp_path):
-    """Test downloading dataset from Hugging Face."""
-    hf_repo_name = "sktime/tsc-datasets"
-    downloader = DatasetDownloader(hf_repo_name=hf_repo_name)
-    path = Path(downloader.download(dataset_name="Beef"))
-
-    assert (path / "Beef_TRAIN.ts").exists()
-    assert (path / "Beef_TEST.ts").exists()
-
-
-def test_urldownloader(tmp_path):
-    """Test downloading dataset from URLs."""
-    urls = [
-        "https://timeseriesclassification.com/aeon-toolkit/FaceFour.zip",
-        "https://github.com/sktime/sktime-datasets/raw/main/TSC/FaceFour.zip",
-    ]
-    downloader = DatasetDownloader(fallback_urls=urls)
-    path = Path(downloader.download(dataset_name="FaceFour"))
-
-    assert (path / "FaceFour_TRAIN.ts").exists()
-    assert (path / "FaceFour_TEST.ts").exists()

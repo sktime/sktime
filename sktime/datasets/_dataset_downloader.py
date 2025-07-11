@@ -86,10 +86,6 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     https://huggingface.co/docs/huggingface_hub/en/guides/download#filter-files-to-download
     """
 
-    _tags = {
-        "python_dependencies": "huggingface-hub",
-    }
-
     def __init__(self, repo_name, repo_type="dataset", token=None):
         self.repo_name = repo_name
         self.repo_type = repo_type
