@@ -2,7 +2,7 @@
 
 __author__ = ["jgyasu"]
 
-__all__ = ["DatasetDownloader"]
+__all__ = ["DatasetDownloader", "HuggingFaceDownloader", "URLDownloader"]
 
 import os
 import shutil
@@ -85,6 +85,10 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     ----------
     https://huggingface.co/docs/huggingface_hub/en/guides/download#filter-files-to-download
     """
+
+    _tags = {
+        "python_dependencies": "huggingface-hub",
+    }
 
     def __init__(self, repo_name, repo_type="dataset", token=None):
         self.repo_name = repo_name
@@ -288,10 +292,6 @@ class FallbackDownloader(DatasetDownloadStrategy):
 
 class DatasetDownloader:
     """Main dataset downloader class using the composite pattern."""
-
-    _tags = {
-        "python_dependencies": "huggingface-hub",
-    }
 
     def __init__(self, hf_repo_name=None, fallback_urls=None):
         """

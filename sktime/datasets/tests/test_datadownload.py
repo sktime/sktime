@@ -167,7 +167,6 @@ def test_load_m5():
     assert index is True
 
 
-@pytest.mark.datadownload
 def test_huggingfacedownloader(tmp_path):
     """Test downloading dataset from Hugging Face."""
     hf_repo_name = "sktime/tsc-datasets"
@@ -178,7 +177,6 @@ def test_huggingfacedownloader(tmp_path):
     assert (path / "Beef_TEST.ts").exists()
 
 
-@pytest.mark.datadownload
 def test_urldownloader(tmp_path):
     """Test downloading dataset from URLs."""
     urls = [
