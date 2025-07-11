@@ -92,7 +92,6 @@ EXCLUDE_ESTIMATORS = [
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
-    "CNTCRegressor",
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
@@ -209,9 +208,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
-        "test_fit_idempotent",
-    ],
-    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
