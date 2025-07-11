@@ -86,6 +86,10 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     https://huggingface.co/docs/huggingface_hub/en/guides/download#filter-files-to-download
     """
 
+    _tags = {
+        "python_dependencies": "huggingface-hub",
+    }
+
     def __init__(self, repo_name, repo_type="dataset", token=None):
         self.repo_name = repo_name
         self.repo_type = repo_type
@@ -148,6 +152,7 @@ class URLDownloader(DatasetDownloadStrategy):
 
     def __init__(self, base_urls):
         self.base_urls = base_urls
+        self.available = True
 
     def _download(self, dataset_name, download_path, **kwargs):
         """Download and extract a dataset from URL.
@@ -258,12 +263,15 @@ class FallbackDownloader(DatasetDownloadStrategy):
         errors = []
 
         for i, strategy in enumerate(self.strategies):
-            if isinstance(strategy, HuggingFaceDownloader) and not strategy.available:
-                next_strategy = type(self.strategies[i + 1]).__name__
+            if not strategy.available:
+                strategy_name = type(self.strategies[i]).__name__
+                soft_dependency = strategy._tags["python_dependencies"]
                 warnings.warn(
-                    f"huggingface_hub is not available, please install it to"
-                    f" use Hugging Face for dataset downloads, skipping "
-                    f"HuggingFaceDownloader, using {next_strategy}."
+                    f"DatasetDownloader skipping {strategy_name} as "
+                    f"it requires {soft_dependency}. We recommend this location as "
+                    f"download mirror no. {self.strategies.index(strategy) + 1}, "
+                    f"to use this please install dependencies "
+                    f"{soft_dependency}, by pip install {soft_dependency}."
                 )
                 continue
             for attempt in range(self.retries):
