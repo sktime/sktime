@@ -21,15 +21,15 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n`,
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and
-    benchmark predicted values :math:`\widehat{y}_1^b, \dots, \widehat{y}_n^b`
+    benchmark predicted values :math:`\widehat{y}_{1,b}, \dots, \widehat{y}_{n,b}`
     (in :math:`\mathbb{R}`),
     at time indices :math:`t_1, \dots, t_n`,
     ``evaluate`` or call returns the Geometric Mean Relative Absolute Error,
     :math:`\left(\prod_{i=1}^n |r_i|\right)^{1/n}`,
-    where :math:`r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}_i^b}`
+    where :math:`r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}_{i,b}}`
     is the relative error at time index :math:`t_i`.
 
-    If the benchmark error :math:`y_i - \widehat{y}_i^b` is zero, a large
+    If the benchmark error :math:`y_i - \widehat{y}_{i,b}` is zero, a large
     value is returned.
 
     ``multioutput`` and ``multilevel`` control averaging across variables and
