@@ -100,7 +100,12 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        # packaging metadata
+        # ------------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator properties
+        # --------------------
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -112,6 +117,10 @@ class SFA(BaseTransformer):
         "requires_y": True,  # does y need to be passed in fit?
         "python_dependencies": ["numba", "joblib"],
         "tests:skip_all": True #added entry test:skip tag
+        # testing configuration
+        # ---------------------
+        # SFA is non-compliant with any transformer interfaces, #2064
+        "tests:skip_all": True,
     }
 
     def __init__(

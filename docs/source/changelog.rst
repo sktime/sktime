@@ -16,6 +16,370 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.38.3 - 2025-07-04
+---------------------------
+
+Hotfix for failures of ``ChronosForecaster`` and ``TinyTimeMixerForecaster``.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix accidental removal of dataclass types in ``ChronosForecaster`` and ``TinyTimeMixerForecaster`` (:pr:`8488`) :user:`fkiraly`
+
+Version 0.38.2 - 2025-07-03
+---------------------------
+
+``transformers 4.53`` compatibility patch, minor maintenance and documentation updates.
+
+Contents
+~~~~~~~~
+
+* [MNT] CI: ``Add ubuntu-22.04-arm`` runners to enhance arm aarch64 architecture testing and maintenance (:pr:`7695`) :user:`abhishek-iitmadras`
+* [MNT] fix: add ``aarch64`` installation constraint for ``esig`` and ``ts2vg`` (:pr:`8471`) :user:`abhishek-iitmadras`
+* [MNT] Skip mlflow test jobs if ``sktime`` folder or ``pyproject.toml`` is untouched (:pr:`8474`) :user:`yarnabrina`
+* [MNT] replace unsafe imports from ``torch`` and ``transformers`` with ``_safe_import`` pattern (:pr:`8476`) :user:`fkiraly`
+* [MNT] update ``transformers`` imports for 4.53 compatibility (:pr:`8478`) :user:`fkiraly`
+* [DOC] use clearer language in extension template preamble (:pr:`8466`) :user:`fkiraly`
+* [DOC] add missing API reference for ``GreykiteForecaster`` (:pr:`8472`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`abhishek-iitmadras`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
+Version 0.38.1 - 2025-06-26
+---------------------------
+
+``scikit-learn 1.7`` compatibility hotfix, thanks go to :user:`andretheronsa`.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix forecasting metric functions incompatible with ``scikit-learn 1.7`` (:pr:`8459`) :user:`andretheronsa`
+* [MNT] revert docs to pre-8385 state (:pr:`8454`, :pr:`8444`) :user:`fkiraly`, :user:`yarnabrina`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`andretheronsa`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
+Version 0.38.0 - 2025-06-24
+---------------------------
+
+Maintenance release with scheduled deprecations and change actions.
+
+For the last non-maintenance content update, see 0.37.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.4``
+* ``pandas`` (core dependency) bounds have been updated to ``<2.4``
+* ``scikit-learn`` (core dependency) bounds have been updated to ``<1.8``
+* ``scipy`` (core dependency) bounds have been updated to ``<1.17``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* deprecated methods from ``BaseBenchmark`` have been removed
+* ``forecasting_validation`` utility has been removed - users should call ``ForecastingBenchmark`` instead
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* unused copies datasets have been removed from ``sktime.datasets.data``.
+  Users should replace any direct read of data files in ``sktime.datasets.data`` with loading
+  via dataset classes or loader functions. For example, reading ``ArrowHead_TRAIN.tsv``
+  should be replaced by calling ``load`` from
+  ``sktime.datasets.classification.ArrowHead``.
+
+Forecasting
+^^^^^^^^^^^
+
+* removed: the ``proba`` module has been removed from ``sktime``. Users should replace
+  imports from ``sktime.proba`` with imports from ``skpro.distributions``, in the ``skpro`` package.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update pandas requirement from ``<2.3.0,>=1.1`` to ``>=1.1,<2.4.0`` (:pr:`8349`) :user:`dependabot[bot]`
+* [MNT] lint ``conf.py`` (:pr:`8437`) :user:`fkiraly`
+* [MNT] increase ``joblib`` bound to ``joblib<1.7`` (:pr:`8424`) :user:`fkiraly`
+* [MNT] revert documentation PR 8385 (:pr:`8442`) :user:`fkiraly`
+* [MNT] add ``scipy<1.16`` bounds to incompatible estimators (:pr:`8447`) :user:`fkiraly`
+* [MNT] raise ``numpy`` bound to ``numpy<2.4`` (:pr:`8414`) :user:`fkiraly`
+* [MNT] 0.38.0 deprecations and change actions (:pr:`8429`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+* [MNT] ``sklearn 1.7`` compatibility (:pr:`8439`) :user:`fkiraly`
+* [MNT] raise ``scikit-learn`` bound to  ``<1.8.0`` (:pr:`8402`) :user:`fkiraly`
+* [MNT] Delete Redundant Dataset Files (:pr:`8441`) :user:`jgyasu`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add new reconcilers to API reference (:pr:`8440`) :user:`felipeangelimvieira`
+
+Fixes
+~~~~~
+
+* [BUG] Documentation ``conf.py`` is missing mandatory extensions (:pr:`8435`) :user:`felipeangelimvieira`
+* [BUG] fix sphinx changelog link generation and panel overview (:pr:`8432`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`jgyasu`,
+:user:`yarnabrina`
+
+
+Version 0.37.1 - 2025-06-22
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* new reconciler module, new non-negative reconciliation (:pr:`7697`) :user:`felipeangelimvieira`
+* ``ClassificationBenchmark`` and ``evaluate`` utility for benchmarking time series classifiers (:pr:`8267`, :pr:`8357`) :user:`ksharma6`, :user:`jgyasu`
+* ``momentfm`` foundation model forecaster (:pr:`6570`) :user:`julian-fong`
+* ``momentfm`` foundation model time series classifier  (:pr:`8263`) :user:`julian-fong`
+* ``ForecastKnownValues`` can now handle multi-index prescribed forecasts (:pr:`8236`) :user:`RobKuebler`
+* sliding greedy splitter (:pr:`8168`) :user:`marrov`
+* forecast ``evaluate`` utility can now handle temporal and global splits (:pr:`8064`) :user:`benHeid`
+* ``SkforecastRecursive`` now supports in-sample ``predict_quantiles`` (:pr:`8255`) :user:`nahcol10`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``optuna`` (tuning soft dependency) bounds have been updated to ``<4.5``
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] improve formatting of ``_safe_import`` docstrings (:pr:`8226`) :user:`fkiraly`
+* [ENH] ``_placeholder_record`` to allow mirroring of multiple locations, update of ``skchange`` import locations (:pr:`8232`) :user:`fkiraly`
+* [ENH] avoid all-tags retrieval, add package name to tag aliaser (:pr:`8401`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add temporal global split to forecast ``evaluate`` utility (:pr:`8064`) :user:`benHeid`
+* [ENH] sliding greedy splitter (:pr:`8168`) :user:`marrov`
+* [ENH] make ``numpy`` output coercions consistent in metrics and distances (:pr:`8194`) :user:`fkiraly`
+* [ENH] Visualisation utility for global splits (:pr:`8204`) :user:`benHeid`
+* [ENH] Add ``relative_to`` parameter to percentage error metrics to enable relative-by-prediction metrics - part 1, functions (:pr:`8266`) :user:`OmBiradar`
+* [ENH] refactor forecasting metrics into individual private submodules (:pr:`8279`) :user:`fkiraly`
+* [ENH] enforce ``MeanSquaredErrorPercentage`` to be positive (:pr:`8318`) :user:`fkiraly`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Use ``sktime`` Provided Dataset in ``TSC`` Dataset Loaders (:pr:`8416`) :user:`jgyasu`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add ``is_hierarchical`` method to check whether a dataframe is hierarchical (:pr:`8170`) :user:`gbilleyPeco`
+
+Documentation build
+^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Speed up docs building and minor docs fixes (:pr:`8385`) :user:`mateuszkasprowicz`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] interfacing ``momentfm`` forecaster as a deep learning module  (:pr:`6570`) :user:`julian-fong`
+* [ENH] make ``ForecastKnownValues`` multiindex-ready (:pr:`8236`) :user:`RobKuebler`
+* [ENH] Add regularization hyperparameter in ``ReconcilerForecaster`` (:pr:`7660`) :user:`HarshvirSandhu`
+* [ENH] ``Greykite`` forecaster integration (:pr:`7902`) :user:`vedantag17`
+* [ENH] change forecaster default tag value of `capability:categorical_in_X` to `True` to enable composition case (:pr:`8231`) :user:`fkiraly`
+* [ENH] ``SkforecastRecursive`` - support in-sample ``predict_quantiles`` (:pr:`8255`) :user:`nahcol10`
+* [ENH] enable univariate mode for ``DynamicFactor`` forecaster (:pr:`8345`) :user:`fkiraly`
+* [ENH] minor improvements to ``MultiplexForecaster`` (:pr:`8422`) :user:`fkiraly`
+
+MLOps & Deployment
+^^^^^^^^^^^^^^^^^^
+
+* [ENH] Fix MLflow 3.0 compatibility while maintaining 2.x support (:pr:`8395`) :user:`amanmogal`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``skchange`` homogenization: variable identification + minor fixes (:pr:`7509`) :user:`Tveten`
+* [ENH] update of ``skchange`` import locations (:pr:`8232`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Extending categorical framework support in ``X`` to time series classifiers (:pr:`8114`) :user:`Ankit-1204`
+* [ENH] Make grid search parameters in ``ShapeDTW`` configurable to enable faster testing (:pr:`8324`) :user:`benHeid`
+* [ENH] ``momentfm`` classifier  (:pr:`8263`) :user:`julian-fong`
+* [ENH] ``evaluate`` for TSC and TSR (:pr:`8267`, :pr:`6888`) :user:`jgyasu`, :user:`ksharma6`
+* [ENH] Second Set of Test Parameters ``TimeSeriesForest`` (:pr:`8337`) :user:`nmwitzig`
+* [ENH] Add ``predict_proba`` tag for classifier to estimator overview table (:pr:`8344`) :user:`jgyasu`
+* [ENH] Add parallelization support for TSC ``evaluate`` (:pr:`8347`) :user:`jgyasu`
+* [ENH] ``ClassificationBenchmark`` for benchmarking time series classifiers (:pr:`8357`) :user:`jgyasu`
+* [ENH] Tests for TSC ``evaluate`` Parallel Backend (:pr:`8359`) :user:`jgyasu`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] make ``numpy`` output coercions consistent in metrics and distances (:pr:`8194`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Extending categorical framework support in ``X`` to time series regressors (:pr:`8114`) :user:`Ankit-1204`
+* [ENH] ``evaluate`` for TSC and TSR (:pr:`8267`, :pr:`6888`) :user:`jgyasu`, :user:`ksharma6`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Enable ``EnbPIForecaster`` to work with ``sktime`` native bootstrap algorithms (:pr:`7562`) :user:`benHeid`
+* [ENH] Simplify ``HampelFilter`` code and add a unit test (:pr:`8249`) :user:`RobKuebler`
+* [ENH] Add missing space to ``Pipeline`` constructor warning (:pr:`8275`) :user:`yury-fedotov`
+* [ENH] Implement reconcilers as transformations, and add new non-negative reconciliation (:pr:`7697`) :user:`felipeangelimvieira`
+* [ENH] faster ``MovingBlockBootstrapTransformer`` tests, improved docstring (:pr:`8420`) :user:`fkiraly`
+
+Test Framework
+^^^^^^^^^^^^^^
+
+* [ENH] move ``run_doctest`` to ``scikit-base`` (:pr:`8319`) :user:`fkiraly`
+* [ENH] refactor test flag logic to ``tests._config`` (:pr:`8000`) :user:`fkiraly`
+* [ENH] test framework: "core classes" and non-core classes with different test trigger conditions (:pr:`8408`) :user:`fkiraly`
+* [ENH] core dependency changes also trigger estimator tests (:pr:`8415`) :user:`fkiraly`
+* [ENH] remove some unstable and long running estimators from the core testing set (:pr:`8421`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] mathematical reference for probabilistic forecasting metrics (:pr:`8213`) :user:`fkiraly`
+* [DOC] improve ``VARReduce`` docstring (:pr:`8179`) :user:`fkiraly`
+* [DOC] GC.OS sponsoring badge in ``README.md`` (:pr:`8320`) :user:`fkiraly`
+* [DOC] add missing imports in ``fracdiff`` docstrings (:pr:`8317`) :user:`fkiraly`
+* [DOC] fix broken docstring of ``KNeighborsTimeSeriesClassifierTslearn`` (:pr:`8341`) :user:`fkiraly`
+* [DOC] mathematical formulae for MASE and MedASE (:pr:`8339`) :user:`piyushbiraje`
+* [DOC] Add reference to the updated roadmap page in ``contributing.rst`` (:pr:`8350`) :user:`jgyasu`
+* [DOC] fix ``KNeighborsTimeSeriesClassifierTslearn`` docstring (:pr:`8410`) :user:`fkiraly`
+* [DOC] Fix citation formatting in ``lower_bounding.py`` to resolve doc warnings (:pr:`8389`) :user:`mohamed-halemo`
+* [DOC] Fix failing doctest in ``ARLagOrderSelector`` example (:pr:`8407`) :user:`andoriyaprashant`
+* [DOC] fix ``MomentFMClassifier`` docstring example (:pr:`8419`) :user:`fkiraly`
+* [DOC] Update ``glossary.rst`` (:pr:`8214`) :user:`pcpp94`
+* [DOC] Improves documentation in ``Testing and continuous integration`` webpage (:pr:`8247`) :user:`julian-fong`
+* [DOC] Fix Docstring Example of Distance Based Classifiers (:pr:`8313`) :user:`jgyasu`
+* [DOC] Update ``utils.rst`` API reference to add ``plot_windows`` (:pr:`7993`) :user:`Prahitha`
+* [DOC] Fix documentation typos throughout the code base5 (:pr:`8301`) :user:`szepeviktor`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] remove soft dependency from ``ForecastingOptunaSearchCV`` docstring example (:pr:`8202`) :user:`fkiraly`
+* [MNT] fix ``VECM`` docstring example skip (:pr:`8207`) :user:`fkiraly`
+* [MNT] fix ``apply_split`` doctest and skip ``SARIMAX`` failures (:pr:`8220`) :user:`fkiraly`
+* [MNT] remove ``stefanzweifel/git-auto-commit-action`` from ``all-contributors`` workflow (:pr:`8369`) :user:`fkiraly`
+* [MNT] add ``scipy<1.16`` bound to ``statsforecast`` and ``pmdarima`` based forecasters (:pr:`8427`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``pytest-timeout`` requirement from ``<2.4,>=2.1`` to ``>=2.1,<2.5`` (:pr:`8242`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pytest-xdist`` requirement from ``<3.7,>=3.3`` to ``>=3.3,<3.8`` (:pr:`8303`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pytest`` requirement from ``<8.4,>=7.4`` to ``>=7.4,<8.5`` (:pr:`8338`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pytorch-forecasting`` requirement from ``<1.4.0,>=1.0.0`` to ``>=1.0.0,<1.5.0`` (:pr:`8399`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``optuna`` requirement from ``<4.3`` to ``<4.4`` (:pr:`8197`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``optuna`` requirement from ``<4.4`` to ``<4.5`` (:pr:`8400`) :user:`dependabot[bot]`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix links to documentation from estimator html repr (:pr:`8178`) :user:`mateuszkasprowicz`
+* [BUG] ``_safe_import`` to avoid failures due to soft dependency chains in ``sktime/libs/uni2ts/forecast.py`` (:pr:`8192`) :user:`jgyasu`
+* [BUG] fix ``_check_soft_dependencies`` error message if version is wrong (:pr:`8430`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``fh`` handling in greedy splitters (:pr:`8200`) :user:`marrov`
+* [BUG] Fix ``"kkwargs"`` typo in ``ForecastingBenchmark`` (:pr:`8306`) :user:`yury-fedotov`
+* [BUG] Fix boundary equality in ``EmpiricalCoverage`` (:pr:`8372`) :user:`marrov`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Fix aggregation function assignment in ``EnbPI`` class (:pr:`8230`) :user:`marrov`
+* [BUG] fix recursive reduction tests (:pr:`8274`) :user:`fkiraly`
+* [BUG] fix pandas future warning in ``pytorch-forecasting`` adapter due to in-place modification of a copy (:pr:`8269`) :user:`jobs-git`
+* [BUG] fix: use names keyword instead of name (:pr:`8257`) :user:`RobKuebler`
+* [BUG] fix wrong return of fit in doc tests of ``MoiraiForecaster`` and ``TimeLLM`` (:pr:`8326`) :user:`benHeid`
+* [BUG] fix incorrect scitype inference in forecasting pipelines for polymorphic forecasters (:pr:`8237`) :user:`nahcol10`
+* [BUG] remove broken reducer tests (:pr:`8412`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fixed ``AlignerDTW`` when ``window_size`` needs to be passed given ``window_type`` (:pr:`8124`) :user:`OmBiradar`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``RotationForest`` for a custom ``base_estimator`` (:pr:`8270`) :user:`fkiraly`
+* [BUG] reindex features in ``TSFreshClassifier.predict_proba`` to match training columns (:pr:`8285`) :user:`Pranavsingh431`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``Aggregator`` ``inverse_transform`` being skipped (:pr:`8358`) :user:`felipeangelimvieira`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] fix accidental failure in fixture generating utility ``_get_parallel_test_fixtures``, (:pr:`8193`) :user:`fkiraly`
+* [BUG] fix differential testing logic for ``DateTimeFeatures`` specific test (:pr:`8293`) :user:`andoriyaprashant`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`amanmogal`,
+:user:`andoriyaprashant`,
+:user:`Ankit-1204`,
+:user:`benHeid`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`gbilleyPeco`,
+:user:`HarshvirSandhu`,
+:user:`jgyasu`,
+:user:`jobs-git`,
+:user:`julian-fong`,
+:user:`ksharma6`,
+:user:`marrov`,
+:user:`mateuszkasprowicz`,
+:user:`mohamed-halemo`,
+:user:`nahcol10`,
+:user:`nmwitzig`,
+:user:`OmBiradar`,
+:user:`pcpp94`,
+:user:`piyushbiraje`,
+:user:`Prahitha`,
+:user:`Pranavsingh431`,
+:user:`RobKuebler`,
+:user:`szepeviktor`,
+:user:`Tveten`,
+:user:`vedantag17`,
+:user:`yury-fedotov`
+
 
 Version 0.37.0 - 2025-04-12
 ---------------------------
@@ -1480,7 +1844,7 @@ Documentation
 
 * [DOC] Add SVG version of the sktime logo with no text  (:pr:`7024`) :user:`wirrywoo`
 * [DOC] Improve documentation for ``TinyTimeMixer`` (:pr:`7009`) :user:`geetu040`
-* [DOC] fix broken links in continous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
+* [DOC] fix broken links in continuous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
 * [DOC] split list of transformation pipeline components into subcategories (:pr:`7075`) :user:`fkiraly`
 
 Fixes
@@ -1736,7 +2100,7 @@ Contents
 * [MNT] update versions of ``pre-commit`` hooks (:pr:`6947`) :user:`yarnabrina`
 * [MNT] 0.32.0 release action - revert temporary skip ``get_test_params`` number check for 0.21.1 and 0.22.0 release (:pr:`5114`) :user:`fkiraly`
 * [MNT] Bump ``skforecast`` to ``0.13`` version allowing support for python ``3.12`` (:pr:`6946`) :user:`yarnabrina`
-* [BUG] Fix ``Xt_msg`` type in ``tranformations.base`` (:pr:`6944`) :user:`hliebert`
+* [BUG] Fix ``Xt_msg`` type in ``transformations.base`` (:pr:`6944`) :user:`hliebert`
 
 Contributors
 ~~~~~~~~~~~~
@@ -4413,7 +4777,7 @@ Forecasting
 * [ENH] in ``NaiveForecaster``, add valid variance prediction for in-sample forecasts (:pr:`5499`) :user:`fkiraly`
 
 MLOps & Deployment
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 * [ENH] in ``mlflow`` plugin, improve informativity of ``ModuleNotFoundError`` messages (:pr:`5487`) :user:`achieveordie`
 * [ENH] Add support for DL estimator persistence in ``mlflow`` plugin (:pr:`5526`) :user:`achieveordie`
@@ -7309,7 +7673,7 @@ Enhancements
 ~~~~~~~~~~~~
 
 MLOps & Deployment
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 * [ENH] MLflow custom flavor for ``sktime`` forecasting (:pr:`3912`) :user:`benjaminbluhm`
 
@@ -8468,7 +8832,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
-* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
+* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformance fix (:pr:`3121`) :user:`fkiraly`
 * [BUG] fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
 * [BUG] fix ``check_equal_time_index`` with numpy arrays as input (:pr:`3160`, :pr:`3167`) :user:`benHeid`
 * [BUG] fix broken ``AutoEnsembleForecaster`` inverse variance method (:pr:`3208`) :user:`AnH0ang`
@@ -9838,7 +10202,7 @@ Refactored
 *  [ENH] renamed ``fit-in-transform`` and ``fit-in-predict`` to ``fit_is_empty`` (:pr:`2250`) :user:`fkiraly`
 *  [ENH] refactoring `test_all_classifiers` to test class architecture (:pr:`2257`) :user:`fkiraly`
 *  [ENH] test parameter refactor: all classifiers (:pr:`2288`) :user:`MatthewMiddlehurst`
-*  [ENH] test paraneter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
+*  [ENH] test parameter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``RocketClassifier`` (:pr:`2166`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``TimeSeriesForestClassifier`` (:pr:`2277`) :user:`lielleravid`
 *  [ENH] ``FeatureUnion`` refactor - moved to ``transformations``, tags, dunder method (:pr:`2231`) :user:`fkiraly`

@@ -96,7 +96,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> # first fit polyomial trend, if fails make naive forecast
+    >>> # first fit polynomial trend, if fails make naive forecast
     >>> forecasters = [
     ...     ("poly", PolynomialTrendForecaster()),
     ...     ("naive", NaiveForecaster())
@@ -115,6 +115,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self

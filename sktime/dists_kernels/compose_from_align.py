@@ -22,6 +22,9 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, aligner=None):

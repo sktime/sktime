@@ -98,6 +98,9 @@ class SeasonalDummiesOneHot(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

@@ -4,10 +4,35 @@ Also contains some other configs, these should be gradually refactored
 to registry or to individual tags, where applicable.
 """
 
-__all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = [
+    "EXCLUDE_ESTIMATORS",
+    "EXCLUDED_TESTS",
+    "MATRIXDESIGN",
+    "CYTHON_ESTIMATORS",
+    "ONLY_CHANGED_MODULES",
+]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
 
+# --------------------
+# configs for test run
+# --------------------
+
+# whether to subsample estimators per os/version partition matrix design
+# default is False, can be set to True by pytest --matrixdesign True flag
+MATRIXDESIGN = False
+
+# whether to test only estimators that require cython, C compiler such as gcc
+# default is False, can be set to True by pytest --only_cython_estimators True flag
+CYTHON_ESTIMATORS = False
+
+# whether to test only estimators from modules that are changed w.r.t. main
+# default is False, can be set to True by pytest --only_changed_modules True flag
+ONLY_CHANGED_MODULES = False
+
+
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     # removed SFA 
@@ -80,6 +105,8 @@ EXCLUDE_ESTIMATORS = [
 ]
 
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
     # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
@@ -93,8 +120,6 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
-    # test fails in the Panel case for Differencer, see #2522
-    "Differencer": ["test_transform_inverse_transform_equivalent"],
     # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
@@ -247,11 +272,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    # pickling problem
-    "ChronosForecaster": [
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     "ClusterSegmenter": [
         "test_doctest_examples",
         "test_predict_points",
@@ -288,12 +308,10 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
-    "MomentFMClassifier": [
-        "test_fit_idempotent",
-        "test_multiprocessing_idempotent",
-    ],  # see 8253
 }
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
