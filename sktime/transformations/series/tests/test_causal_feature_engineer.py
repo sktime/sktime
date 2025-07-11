@@ -7,10 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies import _check_soft_dependencies
 
-# Skip all tests if pgmpy is not available
 pytestmark = pytest.mark.skipif(
     not _check_soft_dependencies("pgmpy>=0.1.20", severity="none"),
     reason="pgmpy not available",
@@ -53,34 +51,44 @@ def sample_multivariate_data():
 class TestCausalFeatureEngineer:
     """Test class for CausalFeatureEngineer."""
 
-    def test_causal_feature_engineer_check_estimator(self):
-        """Test that CausalFeatureEngineer passes the estimator checks."""
+    def test_check_estimator(self):
+        """Test that CausalFeatureEngineer passes check_estimator."""
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
-        run_test_for_class(CausalFeatureEngineer)
+        estimator = CausalFeatureEngineer(
+            max_lag=2,
+            causal_method="pc",
+        )
+
+        check_estimator(estimator)
 
     def test_causal_feature_engineer_univariate(self, sample_univariate_data):
         """Test CausalFeatureEngineer with univariate time series."""
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         y = sample_univariate_data
 
         transformer = CausalFeatureEngineer(
             max_lag=3,
             causal_method="pc",
-            significance_level=0.1,  # More lenient for small sample
+            # More lenient for small sample (can be increased later e.g. 0.05, 0.01)
+            significance_level=0.1,
         )
+
+        check_estimator(transformer)
 
         Xt = transformer.fit_transform(y)
 
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) > 0
         assert Xt.shape[0] <= len(y)
-        assert Xt.shape[1] >= 0  # May be 0 if no relationships found
+        assert Xt.shape[1] >= 0  # Maybe 0 if no relationships found
         assert transformer.n_features_generated_ >= 0
 
         assert hasattr(transformer, "causal_graph_")
@@ -92,6 +100,7 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -100,6 +109,8 @@ class TestCausalFeatureEngineer:
             causal_method="hill_climb",
             significance_level=0.1,
         )
+
+        check_estimator(transformer)
 
         Xt = transformer.fit_transform(X, y)
 
@@ -118,6 +129,7 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -135,19 +147,24 @@ class TestCausalFeatureEngineer:
                 max_lag=2,
                 causal_method="pc",
                 feature_types=feature_types,
-                significance_level=0.2,  # Very lenient for testing
+                # More lenient for testing (can be increased later e.g. 0.05, 0.01)
+                significance_level=0.1,
             )
+
+            # Check estimator compliance for all feature type combinations
+            check_estimator(transformer)
 
             Xt = transformer.fit_transform(X, y)
 
             assert isinstance(Xt, pd.DataFrame)
-            assert len(Xt) >= 0  # May be empty if no relationships found
+            assert len(Xt) >= 0  # Maybe empty if no relationships found
 
     def test_causal_feature_engineer_expert_knowledge(self, sample_multivariate_data):
         """Test CausalFeatureEngineer with expert knowledge."""
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -163,6 +180,8 @@ class TestCausalFeatureEngineer:
             significance_level=0.2,
         )
 
+        check_estimator(transformer)
+
         Xt = transformer.fit_transform(X, y)
 
         assert isinstance(Xt, pd.DataFrame)
@@ -175,6 +194,7 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -188,6 +208,9 @@ class TestCausalFeatureEngineer:
                 significance_level=0.2,
             )
 
+            # Check estimator compliance for all weighting strategies
+            check_estimator(transformer)
+
             Xt = transformer.fit_transform(X, y)
 
             assert isinstance(Xt, pd.DataFrame)
@@ -198,6 +221,7 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
+        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -209,6 +233,9 @@ class TestCausalFeatureEngineer:
                 causal_method="hill_climb",
                 scoring_method=method,
             )
+
+            # Check estimator compliance for all scoring methods
+            check_estimator(transformer)
 
             Xt = transformer.fit_transform(X, y)
 
@@ -224,6 +251,10 @@ class TestCausalFeatureEngineer:
         y = sample_univariate_data
 
         transformer = CausalFeatureEngineer(causal_method="invalid_method")
+
+        # For error testing we only check parameters validation
+        # (not full estimator check)
+        # since this transformer is intentionally misconfigured
 
         with pytest.raises(ValueError, match="Unsupported causal discovery method"):
             transformer.fit_transform(y)
@@ -241,6 +272,10 @@ class TestCausalFeatureEngineer:
         transformer = CausalFeatureEngineer(
             causal_method="hill_climb", scoring_method="invalid_method"
         )
+
+        # For error testing, we only check parameters validation
+        # (not full estimator check)
+        # since this transformer is intentionally misconfigured
 
         with pytest.raises(ValueError, match="Invalid scoring method"):
             transformer.fit_transform(y)
@@ -296,7 +331,7 @@ class TestCausalFeatureEngineer:
 
         Xt = transformer.fit_transform(y)
 
-        # Should still return a DataFrame, even if empty
+        # (Should still return a DataFrame even if empty)
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) >= 0
         assert transformer.n_features_generated_ >= 0

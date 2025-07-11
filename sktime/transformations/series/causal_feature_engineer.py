@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Causal Feature Engineering Transformer for Time Series.
+"""
+Causal Feature Engineering Transformer for Time Series.
 
 Automatically discovers and generates causally-informed features for time series
 forecasting.
@@ -21,9 +22,11 @@ class CausalFeatureEngineer(BaseTransformer):
     """Causal Feature Engineering Transformer for Time Series.
 
     This transformer automatically discovers causal relationships in time series data
-    and generates causally-informed features for forecasting models. It leverages
-    pgmpy for causal discovery and creates features based on identified causal
-    relationships.
+    and generates causally-informed features for forecasting models. It leverages pgmpy
+    for causal discovery and creates features based on identified causal relationships.
+
+    The transformer supports several causal discovery algorithms from pgmpy and can
+    generate various types of features based on the discovered causal structure.
 
     Parameters
     ----------
@@ -36,9 +39,9 @@ class CausalFeatureEngineer(BaseTransformer):
     feature_types : List[str], default=["direct", "interaction", "temporal"]
         Types of features to generate:
         - "direct" : Direct causal features (parents in the causal graph)
-        - "interaction" : Interaction features (cross-products of causal parents)
+        - "interaction" : Interaction features (cross-products of parents)
         - "temporal" : Time-aware features capturing temporal patterns
-        - "confounding" : Features designed to control for confounding variables
+        - "confounding" : Features to control for confounding variables
     weighting_strategy : str, default="causal_strength"
         Method for computing feature weights:
         - "causal_strength" : Weight by causal strength/effect size
@@ -54,6 +57,7 @@ class CausalFeatureEngineer(BaseTransformer):
         - "forbidden_edges" : List of tuples representing forbidden causal edges
         - "required_edges" : List of tuples representing required causal edges
         - "temporal_tiers" : Dict mapping variables to their temporal tier
+
     scoring_method : str, default="auto"
         Scoring method for hill climb search. Options:
         - "auto" : Automatically select based on data type
@@ -65,6 +69,7 @@ class CausalFeatureEngineer(BaseTransformer):
         - "bic-g" : BIC score for Gaussian (continuous) data
         - "aic-g" : AIC score for Gaussian (continuous) data
         - "ll-g" : Log-likelihood for Gaussian data
+
 
     Attributes
     ----------
@@ -89,7 +94,7 @@ class CausalFeatureEngineer(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["XAheli"],
+        "authors": ["Aheli"],
         "python_dependencies": "pgmpy>=0.1.20",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
@@ -127,11 +132,6 @@ class CausalFeatureEngineer(BaseTransformer):
 
         super().__init__()
 
-        # Check for pgmpy dependency
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        _check_soft_dependencies("pgmpy>=0.1.20", obj=self)
-
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -149,19 +149,14 @@ class CausalFeatureEngineer(BaseTransformer):
         self : object
             Returns self
         """
-        # Prepare data for causal discovery
         data = self._prepare_data_for_causal_discovery(X, y)
 
-        # Initialize expert knowledge if provided
         expert_knowledge = self._initialize_expert_knowledge()
 
-        # Discover causal structure
         self.causal_graph_ = self._discover_causal_structure(data, expert_knowledge)
 
-        # Calculate causal strengths and feature weights
         self.feature_importance_weights_ = self._calculate_feature_weights(data)
 
-        # Generate feature definitions based on causal structure
         self.features_generated_ = self._define_causal_features()
         self.n_features_generated_ = len(self.features_generated_)
 
@@ -184,27 +179,21 @@ class CausalFeatureEngineer(BaseTransformer):
         Xt : pd.DataFrame
             Transformed X with causally-informed features
         """
-        # Create lagged data with appropriate time indices
         data = self._prepare_data_for_feature_generation(X)
 
-        # Generate features based on causal structure
         Xt = self._generate_causal_features(data)
 
-        # Ensure index matches the expected forecast horizon
         Xt = self._align_index_with_forecast_horizon(X, Xt)
 
         return Xt
 
     def _prepare_data_for_causal_discovery(self, X, y=None):
         """Prepare time series data for causal discovery."""
-        # Combine X and y if both are provided
+        # Combines X and y if both are provided
         if y is not None:
             if isinstance(X, pd.Series) and isinstance(y, pd.Series):
                 combined_data = pd.DataFrame(
-                    {
-                        X.name if X.name else "X": X,
-                        y.name if y.name else "y": y,
-                    }
+                    {X.name if X.name else "X": X, y.name if y.name else "y": y}
                 )
             elif isinstance(X, pd.DataFrame) and isinstance(y, pd.Series):
                 combined_data = X.copy()
@@ -217,14 +206,14 @@ class CausalFeatureEngineer(BaseTransformer):
             else:
                 combined_data = X.copy()
 
-        # Create lagged variables up to max_lag
+        # Creates lagged variables up to max_lag
         lagged_data = combined_data.copy()
         for col in combined_data.columns:
             for lag in range(1, self.max_lag + 1):
                 lag_name = f"{col}_lag_{lag}"
                 lagged_data[lag_name] = combined_data[col].shift(lag)
 
-        # Drop rows with NaN values (due to lagging)
+        # Drops rows with NaN values (due to lagging)
         lagged_data = lagged_data.dropna()
 
         return lagged_data
@@ -234,13 +223,16 @@ class CausalFeatureEngineer(BaseTransformer):
         if not self.expert_knowledge:
             return None
 
-        # Import when needed
         from pgmpy.estimators.ExpertKnowledge import ExpertKnowledge
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        _check_soft_dependencies("pgmpy>=0.1.20", obj=self)
 
         ek = ExpertKnowledge()
 
         try:
-            # Try the newer pgmpy API first
+            # Newer pgmpy API first
             if "forbidden_edges" in self.expert_knowledge:
                 for edge in self.expert_knowledge["forbidden_edges"]:
                     ek.add_edge(edge[0], edge[1], constraint_type="forbidden")
@@ -261,10 +253,12 @@ class CausalFeatureEngineer(BaseTransformer):
                         ek.require_edge(*edge)
 
             except AttributeError:
-                # Final fallback - create basic ExpertKnowledge without constraints
+                # Final fallback (creates basic ExpertKnowledge without constraints)
+                import warnings
+
                 warnings.warn(
-                    "Expert knowledge constraints not supported in this pgmpy "
-                    "version. Proceeding without expert knowledge constraints."
+                    "Expert knowledge constraints not supported in this pgmpy version. "
+                    "Proceeding without expert knowledge constraints."
                 )
                 return None
 
@@ -272,13 +266,16 @@ class CausalFeatureEngineer(BaseTransformer):
 
     def _discover_causal_structure(self, data, expert_knowledge=None):
         """Discover causal structure from time series data."""
-        # Import dependencies when needed
         from pgmpy.estimators import PC, HillClimbSearch
         from pgmpy.estimators.CITests import chi_square, pearsonr
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        _check_soft_dependencies("pgmpy>=0.1.20", obj=self)
+
         if self.causal_method == "pc":
-            # Use PC algorithm (constraint-based)
-            ci_test = chi_square if self._is_discrete(data) else pearsonr
+            # Use PC algorithm (constraint based)
+            ci_test = chi_square if _is_discrete(data) else pearsonr
             pc = PC(data=data)
             model = pc.estimate(
                 ci_test=ci_test,
@@ -289,18 +286,18 @@ class CausalFeatureEngineer(BaseTransformer):
             return model
 
         elif self.causal_method == "hill_climb":
-            # Use Hill Climbing Search (score-based)
+            # Use Hill Climbing Search (score based)
             hc = HillClimbSearch(data=data)
 
             # Determine scoring method
             if self.scoring_method == "auto":
-                # Auto-select based on data type
-                if self._is_discrete(data):
+                # Auto select based on data type
+                if _is_discrete(data):
                     scoring_method = "bic-d"  # Discrete BIC
                 else:
                     scoring_method = "bic-g"  # Gaussian BIC for continuous data
             else:
-                # Validate user-specified scoring method
+                # Validate user specified scoring method
                 valid_methods = [
                     "k2",
                     "bdeu",
@@ -391,12 +388,9 @@ class CausalFeatureEngineer(BaseTransformer):
                 lagged_parents = [p for p in parents if "_lag_" in p]
                 for lag_var in lagged_parents:
                     base_var = lag_var.split("_lag_")[0]
-                    try:
-                        lag = int(lag_var.split("_lag_")[1])
-                        if lag > 1:
-                            features.append(f"{base_var}_rate_{lag}")
-                    except (IndexError, ValueError):
-                        continue
+                    lag = int(lag_var.split("_lag_")[1])
+                    if lag > 1:
+                        features.append(f"{base_var}_rate_{lag}")
 
         # Remove duplicates
         unique_features = []
@@ -461,7 +455,23 @@ class CausalFeatureEngineer(BaseTransformer):
                     weight = self.feature_importance_weights_[weight_key]
                     Xt[feature] = Xt[feature] * weight
 
-        Xt = Xt.dropna()
+        # Empty features case
+        if Xt.shape[1] == 0:
+            valid_index = data.dropna().index
+
+            # Detect if this was originally univariate input
+            original_columns = [col for col in data.columns if "_lag_" not in col]
+
+            if len(original_columns) == 1:
+                # Univariate case: creates placeholder column
+                col_name = f"{original_columns[0]}_no_causal_features"
+                Xt = pd.DataFrame({col_name: np.nan}, index=valid_index)
+            else:
+                # Multivariate case: returns empty DataFrame
+                Xt = pd.DataFrame(index=valid_index)
+        else:
+            Xt = Xt.dropna()
+
         return Xt
 
     def _align_index_with_forecast_horizon(self, X, Xt):
@@ -473,7 +483,6 @@ class CausalFeatureEngineer(BaseTransformer):
                 f"Features are aligned with the end of the series."
             )
 
-            # Store the original index for proper alignment during forecasting
             self._reduced_index_ = Xt.index
             self._original_index_ = X.index
         else:
@@ -493,19 +502,10 @@ class CausalFeatureEngineer(BaseTransformer):
         """Return a safe index that only contains values present in target_index."""
         aligned_index = self.get_aligned_target_index()
         if aligned_index is not None:
-            # Only return intersection to avoid KeyError
+            # Only returns intersection to avoid KeyError
             safe_index = aligned_index.intersection(target_index)
             return safe_index if len(safe_index) > 0 else None
         return None
-
-    def _is_discrete(self, data):
-        """Check if data appears to be discrete or continuous."""
-        for col in data.columns:
-            if not np.issubdtype(data[col].dtype, np.integer):
-                return False
-            if len(data[col].unique()) > 10:
-                return False
-        return True
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -518,73 +518,11 @@ class CausalFeatureEngineer(BaseTransformer):
         return params
 
 
-# Simple test/example to verify the class works
-if __name__ == "__main__":
-    print("Testing CausalFeatureEngineer...")
-
-    # Create some sample data
-    import numpy as np
-    import pandas as pd
-
-    # Generate simple synthetic time series
-    np.random.seed(42)
-    dates = pd.date_range("2020-01-01", periods=50, freq="D")
-
-    # Create a simple causal relationship: X causes Y with a lag
-    X_vals = np.random.randn(50)
-    Y_vals = np.zeros(50)
-    Y_vals[0] = np.random.randn()  # Initialize first value
-
-    # Y depends on X with 1-day lag plus noise
-    for i in range(1, 50):
-        Y_vals[i] = 0.7 * X_vals[i - 1] + 0.3 * Y_vals[i - 1] + np.random.randn() * 0.1
-
-    # Create time series
-    X = pd.Series(X_vals, index=dates, name="X")
-    y = pd.Series(Y_vals, index=dates, name="Y")
-
-    print("Created sample data:")
-    print(f"X shape: {X.shape}")
-    print(f"Y shape: {y.shape}")
-    print(f"X head: {X.head()}")
-    print(f"Y head: {y.head()}")
-
-    try:
-        # Test the transformer
-        transformer = CausalFeatureEngineer(
-            causal_method="pc",
-            max_lag=3,
-            feature_types=["direct", "temporal"],
-            significance_level=0.1,
-        )
-
-        print("\nFitting transformer...")
-        transformer.fit(X, y)
-
-        print(
-            f"Causal graph discovered with "
-            f"{len(transformer.causal_graph_.nodes())} nodes"
-        )
-        print(f"Causal graph edges: {list(transformer.causal_graph_.edges())}")
-
-        print("\nTransforming data...")
-        Xt = transformer.transform(X)
-
-        print(f"Transformed data shape: {Xt.shape}")
-        print(f"Generated features: {transformer.features_generated_}")
-        print(f"Number of features: {transformer.n_features_generated_}")
-
-        if not Xt.empty:
-            print(f"Transformed data head:\n{Xt.head()}")
-        else:
-            print("No features generated (this can happen with small datasets)")
-
-        print("\nCausalFeatureEngineer test completed successfully!")
-
-    except ImportError as e:
-        print(f"Import error: {e}")
-        print("Make sure 'pgmpy' is installed: pip install pgmpy")
-
-    except Exception as e:
-        print(f"Error during testing: {e}")
-        print("This might be due to insufficient data or pgmpy version compatibility")
+def _is_discrete(data):
+    """Check if data appears to be discrete or continuous."""
+    for col in data.columns:
+        if not np.issubdtype(data[col].dtype, np.integer):
+            return False
+        if len(data[col].unique()) > 10:
+            return False
+    return True
