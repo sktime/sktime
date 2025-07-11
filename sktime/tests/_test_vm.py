@@ -30,7 +30,8 @@ def run_test_vm(cls_name):
 
     cls = craft(cls_name)
     if _check_estimator_deps(cls, severity="none"):
-        check_estimator(cls, raise_exceptions=True)
+        skips = cls.get_class_tag("tests:skip_by_name", None)
+        check_estimator(cls, raise_exceptions=True, tests_to_exclude=skips)
     else:
         print(
             f"Skipping estimator: {cls} due to incompatibility "
