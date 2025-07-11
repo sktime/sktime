@@ -31,9 +31,9 @@ CYTHON_ESTIMATORS = False
 ONLY_CHANGED_MODULES = False
 
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # SFA is non-compliant with any transformer interfaces, #2064
-    "SFA",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
@@ -103,6 +103,8 @@ EXCLUDE_ESTIMATORS = [
 ]
 
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
     # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
@@ -116,8 +118,6 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
-    # test fails in the Panel case for Differencer, see #2522
-    "Differencer": ["test_transform_inverse_transform_equivalent"],
     # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
@@ -270,11 +270,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    # pickling problem
-    "ChronosForecaster": [
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     "ClusterSegmenter": [
         "test_doctest_examples",
         "test_predict_points",
@@ -311,12 +306,10 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
-    "MomentFMClassifier": [
-        "test_fit_idempotent",
-        "test_multiprocessing_idempotent",
-    ],  # see 8253
 }
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
