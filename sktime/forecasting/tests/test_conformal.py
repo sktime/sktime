@@ -4,6 +4,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.datatypes import check_is_mtype
+from sktime.forecasting.base import upto
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
@@ -21,7 +22,7 @@ def test_conformal_standard():
     forecaster = NaiveForecaster(strategy="drift")
 
     conformal_forecaster = ConformalIntervals(forecaster)
-    conformal_forecaster.fit(y, fh=[1, 2, 3])
+    conformal_forecaster.fit(y, fh=upto(3))
     pred_int = conformal_forecaster.predict_interval()
 
     assert check_is_mtype(pred_int, "pred_interval", "Proba", msg_return_dict="list")
@@ -104,7 +105,7 @@ def test_conformal_with_hierarchical():
         ForecastX(endogenous_model.clone(), exogenous_model.clone()), initial_window=15
     )
 
-    forecaster.fit(y_train, X=X_train, fh=range(1, 3))
+    forecaster.fit(y_train, X=X_train, fh=upto(2))
 
     forecaster.predict(X=X_test)
     forecaster.predict_interval(X=X_test)

@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes._utilities import get_cutoff
+from sktime.forecasting import upto
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
@@ -136,7 +137,7 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
 
     f = NaiveForecaster(strategy="mean", sp=sp)
     f.fit(y)
-    fh = np.arange(1, sp + 1)
+    fh = upto(sp)
     y_pred = f.predict(fh)
 
     np.testing.assert_array_equal(y_pred, expected)

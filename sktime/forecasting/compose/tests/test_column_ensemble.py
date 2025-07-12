@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting import upto
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
@@ -31,9 +32,7 @@ from sktime.transformations.hierarchical.reconcile import Reconciler
         ]
     ],
 )
-@pytest.mark.parametrize(
-    "fh", [(np.arange(1, 11)), (np.arange(1, 33)), (np.arange(1, 3))]
-)
+@pytest.mark.parametrize("fh", [upto(10), upto(32), upto(2)])
 def test_column_ensemble_shape(forecasters, fh):
     """Check the shape of the returned prediction."""
     y = pd.DataFrame(np.random.randint(0, 100, size=(100, 3)), columns=list("ABC"))

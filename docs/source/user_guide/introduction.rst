@@ -29,6 +29,7 @@ can simply write:
 
     import numpy as np
     from sktime.datasets import load_airline
+    from sktime.forecasting import upto
     from sktime.forecasting.compose import make_reduction
     from sklearn.ensemble import RandomForestRegressor
     from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
@@ -36,15 +37,15 @@ can simply write:
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
-    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
+    fh=upto(len(y_test))  # forecasting horizon
     regressor = RandomForestRegressor()
     forecaster = make_reduction(
     	regressor,
     	strategy="recursive",
     	window_length=12,
     )
-    forecaster.fit(y_train)
-    y_pred = forecaster.predict(fh)
+    forecaster.fit(y_train, fh=fh)
+    y_pred = forecaster.predict()
     smape = MeanAbsolutePercentageError()
     smape(y_test, y_pred)
     >>> 0.1261192310833735

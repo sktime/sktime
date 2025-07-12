@@ -61,12 +61,12 @@ class AutoREG(_StatsModelsAdapter):
 
     >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting import upto
     >>> data = load_airline()
     >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
     >>> autoreg_sktime.fit(y=data)  # doctest: +SKIP
     AutoREG(lags=2)
-    >>> fh = ForecastingHorizon([x for x in range(1, 13)])
+    >>> fh = upto(12)  # doctest: +SKIP
     >>> y_pred = autoreg_sktime.predict(fh=fh)  # doctest: +SKIP
 
 
@@ -74,7 +74,7 @@ class AutoREG(_StatsModelsAdapter):
 
     >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting import upto
     >>> y, X_og = load_longley()
     >>> X_oos = X_og.iloc[-5:, :]
     >>> y, X = y.iloc[:-5], X_og.iloc[:-5, :]
@@ -82,7 +82,7 @@ class AutoREG(_StatsModelsAdapter):
     >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
     >>> autoreg_sktime.fit(y=y, X=X)  # doctest: +SKIP
     AutoREG(lags=2)
-    >>> fh = ForecastingHorizon([x for x in range(1, 4)])
+    >>> fh = upto(4)  # doctest: +SKIP
     >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)  # doctest: +SKIP
     """
 
