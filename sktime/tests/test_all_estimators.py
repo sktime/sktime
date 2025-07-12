@@ -313,7 +313,7 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
+        # estimator_instance is cloned at the start of every test
         return request.param.clone()
 
     def _generate_scenario(self, test_name, **kwargs):
