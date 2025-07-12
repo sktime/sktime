@@ -3544,6 +3544,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lcastri",
+      "name": "Luca Castri",
+      "avatar_url": "https://avatars.githubusercontent.com/lcastri",
+      "profile": "https://github.com/lcastri",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
