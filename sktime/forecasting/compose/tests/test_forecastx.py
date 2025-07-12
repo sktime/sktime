@@ -262,6 +262,11 @@ def test_forecastx_flow_known_unknown_columns(
     assert not hasattr(model, "forecaster_y_")
     assert not hasattr(model, "forecaster_X_")
 
+    if not forecasting_algorithm.get_tag("capability:missing_values"):
+        pytest.skip(
+            f"Skipping test for estimator - {forecasting_algorithm.__class__.__name__}"
+        )
+
     model.fit(y_train, X=X_train, fh=fh)
 
     assert hasattr(model, "forecaster_y_")
