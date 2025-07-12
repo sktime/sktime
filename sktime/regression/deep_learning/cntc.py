@@ -74,6 +74,8 @@ class CNTCRegressor(BaseDeepRegressor):
         "tests:skip_all": True,
         # `test_fit_idempotent` fails with `AssertionError`, see #3616
         "tests:skip_by_name": ["test_fit_idempotent"],
+        # isolated due to suspected memory leaks, see #8518
+        "tests:vm": True,
     }
 
     def __init__(
