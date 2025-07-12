@@ -431,7 +431,7 @@ def test_nullable_dtypes(nullable_type):
 
     f = YfromX.create_test_instance()
 
-    fh = upto(len(X_test))s
+    fh = upto(len(X_test))
     f.fit(X=X_train, y=y, fh=fh)
     y_pred = f.predict(X=X_test)
     assert isinstance(y_pred, pd.Series)
