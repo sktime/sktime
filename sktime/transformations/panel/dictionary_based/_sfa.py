@@ -116,7 +116,6 @@ class SFA(BaseTransformer):
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
         "python_dependencies": ["numba", "joblib"],
-        "tests:skip_all": True #added entry test:skip tag
         # testing configuration
         # ---------------------
         # SFA is non-compliant with any transformer interfaces, #2064
