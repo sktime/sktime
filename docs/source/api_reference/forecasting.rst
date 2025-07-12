@@ -483,6 +483,14 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
+.. currentmodule:: sktime.forecasting.neuralprophet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralProphet
+
 .. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::
