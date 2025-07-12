@@ -152,7 +152,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
+        "python_version": ">=3.10,<3.14",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -162,7 +162,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
-        "env_marker": "sys_platform=='linux'",
+        
         # estimator type
         # --------------
         "y_inner_mtype": [
