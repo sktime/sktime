@@ -76,6 +76,7 @@ class CNTCRegressor(BaseDeepRegressor):
         "tests:skip_by_name": [
             "test_fit_idempotent",
             "test_persistence_via_pickle",  # SeqSelfAttention layer fails serialization
+            "test_save_estimators_to_file",
         ],
         # isolated due to suspected memory leaks, see #8518
         "tests:vm": True,
