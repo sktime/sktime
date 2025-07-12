@@ -82,7 +82,7 @@ class AutoREG(_StatsModelsAdapter):
     >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
     >>> autoreg_sktime.fit(y=y, X=X)  # doctest: +SKIP
     AutoREG(lags=2)
-    >>> fh = upto(4)  # doctest: +SKIP
+    >>> fh = upto(3)  # doctest: +SKIP
     >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)  # doctest: +SKIP
     """
 
