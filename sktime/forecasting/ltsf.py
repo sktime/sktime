@@ -173,7 +173,9 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "AdamW",
                 "batch_size": 5,
                 "num_epochs": 1,
-                "individual": True # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
             },
             {
                 "seq_len": 2,
@@ -182,7 +184,9 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": False # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
             }
         ]
 
@@ -355,7 +359,9 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "AdamW",
                 "batch_size": 5,
                 "num_epochs": 1,
-                "individual": True # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
             },
             {
                 "seq_len": 2,
@@ -364,7 +370,9 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": False # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
             }
         ]
 
@@ -537,7 +545,9 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "AdamW",
                 "batch_size": 5,
                 "num_epochs": 1,
-                "individual": True # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
             },
             {
                 "seq_len": 2,
@@ -546,7 +556,9 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": False # To see a difference num_channels needs to be >1
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
             }
         ]
 
