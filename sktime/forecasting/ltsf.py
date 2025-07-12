@@ -169,9 +169,9 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             {
                 "seq_len": 2,
                 "pred_len": 2,
-                "lr": 0.005,
-                "optimizer": "Adam",
-                "batch_size": 1,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
                 "num_epochs": 1,
                 "individual": True # To see a difference num_channels needs to be >1
             },
@@ -351,9 +351,9 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             {
                 "seq_len": 2,
                 "pred_len": 2,
-                "lr": 0.005,
-                "optimizer": "Adam",
-                "batch_size": 1,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
                 "num_epochs": 1,
                 "individual": True # To see a difference num_channels needs to be >1
             },
@@ -533,9 +533,9 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             {
                 "seq_len": 2,
                 "pred_len": 2,
-                "lr": 0.005,
-                "optimizer": "Adam",
-                "batch_size": 1,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
                 "num_epochs": 1,
                 "individual": True # To see a difference num_channels needs to be >1
             },
