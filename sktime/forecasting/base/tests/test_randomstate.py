@@ -14,7 +14,7 @@ from sktime.forecasting.var import VAR
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
-@pytest.skip(reason="this test was failing but previously deactivated")
+@pytest.mark.skip(reason="this test was failing but previously deactivated")
 @pytest.mark.parametrize(
     "model",
     [AutoETS, ExponentialSmoothing, SARIMAX, UnobservedComponents, VAR],
