@@ -31,7 +31,8 @@ def _check_soft_dependencies(
 
         Note that the PEP 440 specifier is what one writes while installing a package,
         e.g., ``scikit-learn``, ``huggingface-hub``, ``scikit-base`` etc. and not what
-        one writes when importing a package.
+        one writes when importing a package. e.g., ``sklearn`, `huggingface_hub`,
+        `skbase` etc.
 
         The argument ``packages`` can be str, kwargs tuple, or tuple/list of str,
         following calls are valid:
