@@ -187,7 +187,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 # For individual to make a difference
                 # num_channels needs to be > 1
                 "individual": False,
-            }
+            },
         ]
 
         return params
@@ -373,7 +373,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
                 # For individual to make a difference
                 # num_channels needs to be > 1
                 "individual": False,
-            }
+            },
         ]
 
         return params
@@ -559,7 +559,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 # For individual to make a difference
                 # num_channels needs to be > 1
                 "individual": False,
-            }
+            },
         ]
 
         return params
