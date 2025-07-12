@@ -173,6 +173,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.momentfm"],
     }
 
     def __init__(

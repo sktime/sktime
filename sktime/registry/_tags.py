@@ -457,6 +457,44 @@ class tests__vm(_BaseTag):
     }
 
 
+class tests__libs(_BaseTag):
+    """Important library dependencies of the object, for test triggers.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:libs"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.libs.chronos"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull request,
+    usually only estimators that have changed.
+
+    The ``tests:libs`` tag of an object is a list of strings,
+    it specifies important library dependencies of the object within ``sktime``.
+
+    Setting this tag triggers testing the estimator whenever any of the modules
+    in the ``tests:libs`` tags have changed, in additional to the other
+    test trigger conditions such as a direct change to the object class.
+
+    Developers should not specify framework imports here, e.g., ``sktime.base``,
+    but any modules that contain estimator specific logic, which are not
+    identical with the location of the class.
+
+    The ``tests:libs`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:libs",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Core libraries used by the estimator, to trigger tests.",
+        "user_facing": False,
+    }
+
+
 class tests__skip_all(_BaseTag):
     """Whether all tests for this estimator should be skipped.
 

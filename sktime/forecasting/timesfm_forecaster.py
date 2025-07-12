@@ -182,6 +182,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.timesfm"],
     }
 
     def __init__(

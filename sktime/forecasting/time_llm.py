@@ -85,6 +85,10 @@ class TimeLLMForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.time_llm"],
     }
 
     def __init__(
