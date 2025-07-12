@@ -29,10 +29,12 @@ def _check_soft_dependencies(
         For instance, the PEP 440 compatible package name such as ``"pandas"``;
         or a package requirement specifier string such as ``"pandas>1.2.3"``.
 
-        Note that the package name is what one writes while installing a package,
-        e.g., ``scikit-learn``, ``huggingface-hub``, ``scikit-base`` etc.
+        Note that the PEP 440 specifier is what one writes while installing a package,
+        e.g., ``scikit-learn``, ``huggingface-hub``, ``scikit-base`` etc. and not what
+        one writes when importing a package.
 
-        arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
+        The argument ``packages`` can be str, kwargs tuple, or tuple/list of str,
+        following calls are valid:
 
         * ``_check_soft_dependencies("package1")``
         * ``_check_soft_dependencies("package1", "package2")``
