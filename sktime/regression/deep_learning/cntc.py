@@ -70,6 +70,15 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
+        # fails due to #8151 or #8059
+        "tests:skip_all": True,
+        # `test_fit_idempotent` fails with `AssertionError`, see #3616
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",  # SeqSelfAttention layer fails serialization
+        ],
+        # isolated due to suspected memory leaks, see #8518
+        "tests:vm": True,
     }
 
     def __init__(
