@@ -168,13 +168,26 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
@@ -341,13 +354,26 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
@@ -514,13 +540,26 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
