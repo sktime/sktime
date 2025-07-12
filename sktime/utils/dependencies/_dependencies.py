@@ -48,6 +48,14 @@ def _check_soft_dependencies(
 
         is the same as ``_check_soft_dependencies(("package1", "package2"))``
 
+        If the import name differs from the package name used for installation
+        (e.g., on PyPI), you must provide the **package name**, not the import
+        name, for example:
+
+        - import name: ``"sklearn"`` -> ``_check_soft_dependencies("scikit-learn")``
+        - import name: ``"huggingface_hub"`` ->
+        ``_check_soft_dependencies("huggingface-hub")``
+
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
 
