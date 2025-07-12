@@ -3,11 +3,12 @@
 
 __all__ = ["upto"]
 
+
 def upto(n):
     """Return an integer forecasting horizon that goes up to n, starting from 1.
 
     Same as range(1, n + 1), i.e., predicting the next n time points or periods.
-    
+
     Parameters
     ----------
     n : int
