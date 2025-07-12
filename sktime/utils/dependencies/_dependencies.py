@@ -28,6 +28,10 @@ def _check_soft_dependencies(
         Each str must be a PEP 440 compatible specifier string, for a single package.
         For instance, the PEP 440 compatible package name such as ``"pandas"``;
         or a package requirement specifier string such as ``"pandas>1.2.3"``.
+
+        Note that the package name is what one writes while installing a package,
+        e.g., ``scikit-learn``, ``huggingface-hub``, ``scikit-base`` etc.
+
         arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
 
         * ``_check_soft_dependencies("package1")``
@@ -47,14 +51,6 @@ def _check_soft_dependencies(
         ``_check_soft_dependencies("package1", "package2")``
 
         is the same as ``_check_soft_dependencies(("package1", "package2"))``
-
-        If the import name differs from the package name used for installation
-        (e.g., on PyPI), you must provide the **package name**, not the import
-        name, for example:
-
-        - import name: ``"sklearn"`` -> ``_check_soft_dependencies("scikit-learn")``
-        - import name: ``"huggingface_hub"`` ->
-        ``_check_soft_dependencies("huggingface-hub")``
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
