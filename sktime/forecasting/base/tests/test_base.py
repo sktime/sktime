@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
+from sktime.forecasting import upto
 from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
@@ -430,7 +431,7 @@ def test_nullable_dtypes(nullable_type):
 
     f = YfromX.create_test_instance()
 
-    fh = list(range(1, len(X_test) + 1))
+    fh = upto(len(X_test))s
     f.fit(X=X_train, y=y, fh=fh)
     y_pred = f.predict(X=X_test)
     assert isinstance(y_pred, pd.Series)
@@ -447,7 +448,7 @@ def test_range_fh_in_fit():
     """Test using ``range`` in ``fit``."""
     test_dataset = _make_panel(n_instances=10, n_columns=5)
 
-    var_model = VAR().fit(test_dataset, fh=range(1, 2 + 1))
+    var_model = VAR().fit(test_dataset, fh=upto(2))
     var_predictions = var_model.predict()
 
     assert isinstance(var_predictions, pd.DataFrame)
@@ -474,7 +475,7 @@ def test_range_fh_in_predict():
     ):
         _ = var_model.predict()
 
-    var_predictions = var_model.predict(fh=range(1, 2 + 1))
+    var_predictions = var_model.predict(fh=upto(2))
 
     assert isinstance(var_predictions, pd.DataFrame)
     assert var_predictions.shape == (10 * 2, 5)
@@ -540,7 +541,7 @@ def test_panel_with_inner_freq():
     # test predictions against no panel case (simple here :))
     forecaster = NaiveForecaster(sp=24)
     forecaster.fit(y)
-    fh = np.arange(1, 49)
+    fh = upto(48)
     y_pred_simple = forecaster.predict(fh=fh)
 
     msg = "Panel not returning same predictions as simple case."

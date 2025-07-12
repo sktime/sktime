@@ -13,6 +13,7 @@ import pytest
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
+from sktime.forecasting import upto
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
@@ -965,7 +966,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             return None
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
             max_prediction_length
         )
@@ -985,7 +986,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             return None
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
         X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
 
         estimator_instance.fit(y_train, X_train, fh=fh)
@@ -1009,7 +1010,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
         y_train = data
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
 
         estimator_instance.fit(y=y_train, fh=fh)
 
@@ -1031,7 +1032,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             return None
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
             max_prediction_length
         )
@@ -1056,7 +1057,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             return None
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
         X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
         estimator_instance.fit(y_train, X_train, fh=fh)
 
@@ -1086,7 +1087,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
             return None
 
         max_prediction_length = 3
-        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        fh = upto(max_prediction_length)
         _, y_train, _, y_test = self._multiindex_data(max_prediction_length)
 
         estimator_instance.fit(y=y_train, fh=fh)

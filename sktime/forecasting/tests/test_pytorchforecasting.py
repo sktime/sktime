@@ -7,6 +7,7 @@ import pytest
 from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
+from sktime.forecasting import upto
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.pytorchforecasting import (
     PytorchForecastingDeepAR,
@@ -66,7 +67,7 @@ def test_load_model_from_disk(model_class) -> None:
         x, y, test_size=0.2, train_size=0.8, shuffle=False
     )
     max_prediction_length = 3
-    fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    fh = upto(max_prediction_length)
 
     # fit the model to generate the checkpoint
     model.fit(y_train, X_train, fh=fh)

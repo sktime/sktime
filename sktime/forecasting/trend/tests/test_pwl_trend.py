@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.forecasting import upto
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import (
     PolynomialTrendForecaster,
@@ -47,7 +48,7 @@ def test_for_changes_in_original():
 
     # ------sktime Prophet-----------
     skprophet = skProphet()
-    y_pred_sktime = skprophet.fit_predict(y, fh=np.arange(1, 13))
+    y_pred_sktime = skprophet.fit_predict(y, fh=upto(12))
 
     np.testing.assert_array_equal(y_pred_original.values, y_pred_sktime.values)  # exact
 

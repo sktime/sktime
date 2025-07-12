@@ -9,6 +9,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.datatypes import convert_to, scitype_to_mtype
+from sktime.forecasting import upto
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
@@ -86,13 +87,13 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
 
     if splitter == SlidingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 7),
+            fh=upto(6),
             window_length=24,
             step_length=6,
         )
     elif splitter == ExpandingWindowSplitter:
         cv = splitter(
-            fh=np.arange(1, 7),
+            fh=upto(6),
             initial_window=24,
             step_length=6,
         )
