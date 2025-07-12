@@ -8,7 +8,6 @@ from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting import upto
-from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.pytorchforecasting import (
     PytorchForecastingDeepAR,
     PytorchForecastingNBeats,

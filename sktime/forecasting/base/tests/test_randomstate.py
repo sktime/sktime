@@ -2,7 +2,6 @@
 """Tests for random_state Parameter."""
 
 __author__ = ["Ris-Bali"]
-import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
