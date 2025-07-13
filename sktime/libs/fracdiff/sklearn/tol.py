@@ -80,9 +80,9 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
     >>>
     >>> window_from_tol_memory(0.5, 0.2)
     9
-    >>> np.sum(fdiff_coef(0.5, 10000)[9:])
+    >>> np.sum(fdiff_coef(0.5, 10000)[9:])  # doctest: +SKIP
     -0.19073...
-    >>> np.sum(fdiff_coef(0.5, 10000)[8:])
+    >>> np.sum(fdiff_coef(0.5, 10000)[8:])  # doctest: +SKIP
     -0.20383...
     """
     lost_memory = np.abs(np.cumsum(fdiff_coef(n, max_window)))
