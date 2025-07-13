@@ -13,7 +13,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class PyFableARIMA(BaseForecaster):
-    """A wrapper to the ARIMA model in the CRAN package fable.
+    r"""A wrapper to the ARIMA model in the CRAN package fable.
 
     (See https://cran.r-project.org/web/packages/fable/index.html)
     (The documentation here is lifted from the documentation there. Consult the fable
@@ -60,6 +60,24 @@ class PyFableARIMA(BaseForecaster):
         will be outputted to the console.
     is_regular : logical (default = True)
         Is the series regular? (i.e. are the time-steps equal throughout)
+
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.PyFableARIMA import PyFableARIMA
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> airline = load_airline()  # a pandas Series with a PeriodIndex (freq='M')
+    >>> airline.name = "Passengers"  # Ensure the name matches your ARIMA formula
+    >>> train, test = temporal_train_test_split(airline, test_size=12)
+    >>> best = PyFableARIMA(formula='Passengers').fit(train)
+    >>> print(best.report())
+    >>> fitted = best.predict(train.index)
+    >>> print(f"fitted = \n{fitted}")
+    >>> pred = best.predict(test.index)
+    >>> print(f"pred = \n{pred}")
+    >>> pred_int = best.predict_interval(fh=test.index, coverage=[0.95, 0.50])
+    >>> print(f"pred_int = \n{pred_int}")
     """
 
     _tags = {
