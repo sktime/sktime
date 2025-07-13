@@ -48,7 +48,11 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         whether to print runtime information
     loss: str, default="categorical_crossentropy"
     metrics: optional
-
+    class_weight: dict, optional, default=None
+        Dictionary mapping class indices (integers) to a weight (float) value to be used during model training.
+        For example, ``{0: 1.0, 1: 2.5}`` will assign a weight of 1.0 to class 0 and 2.5 to class 1.
+        This is passed directly to Keras' ``fit`` method as the ``class_weight`` argument.
+        If None, all classes are given equal weight.
     Notes
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
@@ -87,6 +91,10 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
+
+        # capabilities
+        # ------------
+        "capability:class_weight": True,
     }
 
     def __init__(
@@ -104,6 +112,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
+        class_weight=None
     ):
         _check_dl_dependencies(severity="error")
 
@@ -121,6 +130,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
+        self.class_weight = class_weight
 
         super().__init__()
 
@@ -206,6 +216,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
+            class_weight=self.class_weight,
         )
         return self
 
