@@ -95,6 +95,7 @@ class Catch22Classifier(_DelegatedClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,  # should tests run in their own VM?
     }
 
     def __init__(
