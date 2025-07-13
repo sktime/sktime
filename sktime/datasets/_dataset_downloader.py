@@ -2,7 +2,7 @@
 
 __author__ = ["jgyasu"]
 
-__all__ = ["DatasetDownloader", "HuggingFaceDownloader", "URLDownloader"]
+__all__ = ["DatasetDownloader"]
 
 import os
 import shutil
@@ -24,16 +24,12 @@ class DatasetDownloadStrategy:
     ):
         """Download a dataset using this strategy.
 
-        This method handles common boilerplate, then delegates to
-        _download for strategy-specific implementation.
-
         Parameters
         ----------
         dataset_name : str
             Name of the dataset to download.
         download_path : str or Path, optional
-            Local directory where the dataset should be saved. If not specified,
-            defaults to a 'local_data' folder in the current working directory.
+            Local directory where the dataset should be saved.
         force_download : bool, default=False
             Whether to force re-download the dataset even if it's cached locally.
         **kwargs
@@ -52,12 +48,10 @@ class DatasetDownloadStrategy:
         download_path.mkdir(parents=True, exist_ok=True)
         local_dataset_path = download_path / dataset_name
 
-        if local_dataset_path.exists():
-            if force_download:
-                return self._download(dataset_name, download_path, **kwargs)
-            return local_dataset_path
+        if not local_dataset_path.exists() or force_download:
+            self._download(dataset_name, download_path, **kwargs)
 
-        return self._download(dataset_name, download_path, **kwargs)
+        return local_dataset_path
 
     def _download(self, dataset_name, download_path, **kwargs):
         """Strategy-specific download implementation."""
@@ -97,22 +91,6 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
     def _download(self, dataset_name, download_path, **kwargs):
-        """Download a specific dataset folder from the Hugging Face repository.
-
-        Parameters
-        ----------
-        dataset_name : str
-            Name of the folder (dataset) inside the repository to download.
-        download_path : Path
-            Local directory where the dataset should be saved.
-        **kwargs
-            Additional keyword arguments passed to `snapshot_download`.
-
-        Returns
-        -------
-        Path
-            Path to the downloaded dataset folder.
-        """
         local_dataset_path = download_path / dataset_name
 
         if self.available:
@@ -133,10 +111,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
             if not local_dataset_path.exists():
                 raise ValueError(
                     f"Dataset folder '{dataset_name}' not found"
-                    " in repository '{self.repo_name}'"
+                    f" in repository '{self.repo_name}'"
                 )
-
-            return local_dataset_path
 
         except (RepositoryNotFoundError, HfHubHTTPError, ValueError):
             raise
@@ -174,20 +150,15 @@ class URLDownloader(DatasetDownloadStrategy):
         last_error = None
         for url in self.base_urls:
             try:
-                result_path = self._download_and_extract(url, download_path)
-                if result_path:
-                    return result_path
-
+                self._download_and_extract(url, download_path)
+                return
             except Exception as e:
                 last_error = e
                 continue
 
-        if last_error:
-            raise last_error
-        else:
-            raise RuntimeError(
-                f"Failed to download dataset '{dataset_name}' from any URL"
-            )
+        raise last_error or RuntimeError(
+            f"Failed to download dataset '{dataset_name}' from any URL"
+        )
 
     def _download_and_extract(self, url: str, extract_path=None):
         """Download and unzip datasets (helper function)."""
@@ -221,67 +192,50 @@ class URLDownloader(DatasetDownloadStrategy):
             raise RuntimeError(error_msg)
 
 
-class FallbackDownloader(DatasetDownloadStrategy):
+class DatasetDownloader(DatasetDownloadStrategy):
     """
-    Composite downloader that tries multiple strategies in sequence.
+    Main dataset downloader class with fallback logic built-in.
 
     Parameters
     ----------
-    strategies : List[DatasetDownloadStrategy]
-        List of download strategies to try in order.
+    hf_repo_name : str
+        Hugging Face repository name, e.g., "sktime/tsf-datasets".
+    fallback_urls : list of str
+        List of URLs to attempt if Hugging Face fails.
     retries : int, default=1
-        Number of retries for each strategy before moving to the next.
+        Number of retries for each strategy.
     """
 
-    def __init__(self, strategies, retries=1):
-        self.strategies = strategies
+    def __init__(self, hf_repo_name=None, fallback_urls=None, retries=1):
+        self.strategies = [
+            HuggingFaceDownloader(hf_repo_name),
+            URLDownloader(fallback_urls),
+        ]
         self.retries = retries
 
     def _download(self, dataset_name, download_path, **kwargs):
-        """
-        Try each strategy in sequence until one succeeds.
-
-        Parameters
-        ----------
-        dataset_name : str
-            Name of the dataset to download.
-        download_path : Path
-            Local directory where the dataset should be saved.
-        **kwargs
-            Arguments passed to each strategy's download method.
-
-        Returns
-        -------
-        Path
-            Path to the downloaded dataset.
-
-        Raises
-        ------
-        RuntimeError
-            If all strategies fail after retries.
-        """
         errors = []
 
         for i, strategy in enumerate(self.strategies):
             if not strategy.available:
-                strategy_name = type(self.strategies[i]).__name__
+                strategy_name = type(strategy).__name__
                 soft_dependency = strategy._tags["python_dependencies"]
                 warnings.warn(
                     f"DatasetDownloader skipping {strategy_name} as "
                     f"it requires {soft_dependency}. We recommend this location as "
-                    f"download mirror no. {self.strategies.index(strategy) + 1}, "
-                    f"to use this please install dependencies "
+                    f"download mirror no. {i + 1}, to use this please install "
                     f"{soft_dependency}, by pip install {soft_dependency}."
                 )
                 continue
+
             for attempt in range(self.retries):
                 try:
-                    return strategy._download(dataset_name, download_path, **kwargs)
+                    strategy._download(dataset_name, download_path, **kwargs)
+                    return
                 except Exception as e:
-                    strategy_name = type(strategy).__name__
                     error_msg = (
                         f"Strategy {i + 1} (attempt {attempt + 1}/{self.retries}): "
-                        f"{strategy_name} failed: {e}"
+                        f"{type(strategy).__name__} failed: {e}"
                     )
                     errors.append(error_msg)
 
@@ -291,52 +245,4 @@ class FallbackDownloader(DatasetDownloadStrategy):
         raise RuntimeError(
             f"All download strategies failed after {self.retries} retries each.\n"
             + "\n".join(errors)
-        )
-
-
-class DatasetDownloader:
-    """Main dataset downloader class using the composite pattern."""
-
-    def __init__(self, hf_repo_name=None, fallback_urls=None):
-        """
-        Initialize the Dataset Downloader with multiple strategies.
-
-        Parameters
-        ----------
-        hf_repo_name : str
-            Hugging Face repository name, in the format: "organisation/repo_name"
-        fallback_urls : list of str
-            List of base URLs for fallback downloads
-        """
-        strategies = [HuggingFaceDownloader(hf_repo_name), URLDownloader(fallback_urls)]
-
-        self._downloader = FallbackDownloader(strategies)
-
-    def download(
-        self, dataset_name, download_path=None, force_download=False, **kwargs
-    ):
-        """
-        Download a dataset using the configured fallback strategy.
-
-        Parameters
-        ----------
-        dataset_name : str
-            Name of the dataset to download.
-        download_path : str or Path, optional
-            Local directory where the dataset should be saved.
-        force_download : bool, default=False
-            Whether to force re-download the dataset.
-        **kwargs
-            Additional keyword arguments passed to the download strategies.
-
-        Returns
-        -------
-        Path
-            Path to the downloaded dataset.
-        """
-        return self._downloader.download(
-            dataset_name=dataset_name,
-            download_path=download_path,
-            force_download=force_download,
-            **kwargs,
         )
