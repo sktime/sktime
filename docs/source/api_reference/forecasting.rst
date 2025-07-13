@@ -328,6 +328,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     SARIMAX
 
+.. currentmodule:: sktime.forecasting.PyFableARIMA
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyFableARIMA
+
 .. currentmodule:: sktime.forecasting.var
 
 .. autosummary::
