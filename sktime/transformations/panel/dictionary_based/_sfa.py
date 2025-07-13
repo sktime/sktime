@@ -115,7 +115,6 @@ class SFA(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
-        "python_dependencies": ["numba", "joblib"],
         # testing configuration
         # ---------------------
         # SFA is non-compliant with any transformer interfaces, #2064
