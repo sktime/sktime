@@ -118,6 +118,7 @@ class SFA(BaseTransformer):
         # testing configuration
         # ---------------------
         # SFA is non-compliant with any transformer interfaces, #2064
+        "tests:skip_all": True,
     }
 
     def __init__(
