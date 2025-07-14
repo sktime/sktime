@@ -4,7 +4,7 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import OptionalPassthrough
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -24,11 +24,9 @@ def test_optionalpassthrough():
 
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.forecasting.model_selection import (
-        ForecastingGridSearchCV,
-        SlidingWindowSplitter,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.naive import NaiveForecaster
+    from sktime.split import SlidingWindowSplitter
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     from sktime.transformations.series.detrend import Deseasonalizer
 
@@ -50,9 +48,7 @@ def test_optionalpassthrough():
         "scaler__passthrough": [True, False],
         "forecaster__strategy": ["drift", "mean", "last"],
     }
-    gscv = ForecastingGridSearchCV(
-        forecaster=pipe, param_grid=param_grid, cv=cv, n_jobs=-1
-    )
+    gscv = ForecastingGridSearchCV(forecaster=pipe, param_grid=param_grid, cv=cv)
     gscv.fit(load_airline())
 
 

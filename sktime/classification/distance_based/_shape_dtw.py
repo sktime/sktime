@@ -15,7 +15,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
 
@@ -38,7 +38,7 @@ class ShapeDTW(BaseClassifier):
 
     Parameters
     ----------
-    n_neighbours                : int, int, set k for knn (default =1).
+    n_neighbors                : int, int, set k for knn (default =1).
     subsequence_length          : int, defines the length of the
                                   subsequences(default=sqrt(n_timepoints)).
 
@@ -71,10 +71,10 @@ class ShapeDTW(BaseClassifier):
                                 - params = None
 
         - 'hog1d'               : use a histogram of gradients in one
-                                  dimension as the shape desciptor
+                                  dimension as the shape descriptor
                                   function.
                                 - params = num_intervals_hog1d
-                                                    (defualt=2)
+                                                    (default=2)
                                          = num_bins_hod1d
                                                     (default=8)
                                          = scaling_factor_hog1d
@@ -103,14 +103,43 @@ class ShapeDTW(BaseClassifier):
     metric_params               : dictionary for metric parameters
                                   (default = None).
 
+
+    n_splits                : int, number of splits for cross-validation
+                              (default = 10). Used for finding  the
+                              weighting_factor if 'shape_descriptor_function'
+                              is set to 'compound' and weighting_factor is
+                              not given in 'metric_params'.
+
     Notes
     -----
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ShapeDTW
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = ShapeDTW(n_neighbors=1,
+    ...     subsequence_length=30,
+    ...     shape_descriptor_function="raw",
+    ...     shape_descriptor_functions=None,
+    ...     metric_params=None,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ShapeDTW(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["vincent-nich12"],
+        "maintainers": ["vincent-nich12"],
+        # estimator type
+        # --------------
         "capability:predict_proba": True,
         "classifier_type": "distance",
     }
@@ -122,8 +151,10 @@ class ShapeDTW(BaseClassifier):
         shape_descriptor_function="raw",
         shape_descriptor_functions=None,
         metric_params=None,
+        n_splits=10,
     ):
         self.n_neighbors = n_neighbors
+        self.n_splits = n_splits
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
@@ -159,6 +190,8 @@ class ShapeDTW(BaseClassifier):
         if self.metric_params is None:
             self.metric_params = {}
             _reset = True
+        else:
+            _reset = False
 
         # If the shape descriptor is 'compound',
         # calculate the appropriate weighting_factor
@@ -198,25 +231,32 @@ class ShapeDTW(BaseClassifier):
         self.metric_params = {k.lower(): v for k, v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
-        if self.metric_params.get("weighting_factor") is not None:
+        if isinstance(self.metric_params.get("weighting_factor"), float) or isinstance(
+            self.metric_params.get("weighting_factor"), int
+        ):
             self.weighting_factor = self.metric_params.get("weighting_factor")
         else:
-            # Tune it otherwise
-            self._param_matrix = {
-                "metric_params": [
-                    {"weighting_factor": 0.1},
-                    {"weighting_factor": 0.125},
-                    {"weighting_factor": (1 / 6)},
-                    {"weighting_factor": 0.25},
-                    {"weighting_factor": 0.5},
-                    {"weighting_factor": 1},
-                    {"weighting_factor": 2},
-                    {"weighting_factor": 4},
-                    {"weighting_factor": 6},
-                    {"weighting_factor": 8},
-                    {"weighting_factor": 10},
-                ]
-            }
+            if isinstance(self.metric_params.get("weighting_factor"), list):
+                self._param_matrix = {
+                    "metric_params": self.metric_params.get("weighting_factor")
+                }
+            else:
+                # Tune it otherwise
+                self._param_matrix = {
+                    "metric_params": [
+                        {"weighting_factor": 0.1},
+                        {"weighting_factor": 0.125},
+                        {"weighting_factor": (1 / 6)},
+                        {"weighting_factor": 0.25},
+                        {"weighting_factor": 0.5},
+                        {"weighting_factor": 1},
+                        {"weighting_factor": 2},
+                        {"weighting_factor": 4},
+                        {"weighting_factor": 6},
+                        {"weighting_factor": 8},
+                        {"weighting_factor": 10},
+                    ]
+                }
 
             n = self.n_neighbors
             sl = self.subsequence_length
@@ -232,14 +272,14 @@ class ShapeDTW(BaseClassifier):
 
             grid = GridSearchCV(
                 estimator=ShapeDTW(
-                    n_neighbours=n,
+                    n_neighbors=n,
                     subsequence_length=sl,
                     shape_descriptor_function=sdf,
                     shape_descriptor_functions=sdfs,
                     metric_params=mp,
                 ),
                 param_grid=self._param_matrix,
-                cv=KFold(n_splits=10, shuffle=True),
+                cv=KFold(n_splits=self.n_splits, shuffle=True),
                 scoring="accuracy",
             )
             grid.fit(X, y)
@@ -395,7 +435,7 @@ class ShapeDTW(BaseClassifier):
             num_bins = parameters.get("num_bins_hog1d")
             scaling_factor = parameters.get("scaling_factor_hog1d")
 
-            # All 3 paramaters are None
+            # All 3 parameters are None
             if num_intervals is None and num_bins is None and scaling_factor is None:
                 return HOG1DTransformer()
 
@@ -426,7 +466,7 @@ class ShapeDTW(BaseClassifier):
                 scaling_factor=scaling_factor,
             )
         else:
-            raise ValueError("Invalid shape desciptor function.")
+            raise ValueError("Invalid shape descriptor function.")
 
     def _check_metric_params(self, parameters):
         """Check for an invalid metric_params."""
@@ -443,7 +483,7 @@ class ShapeDTW(BaseClassifier):
         names = list(parameters.keys())
 
         for x in names:
-            if not (x in valid_metric_params):
+            if x not in valid_metric_params:
                 raise ValueError(
                     x
                     + " is not a valid metric parameter."
@@ -496,3 +536,32 @@ class ShapeDTW(BaseClassifier):
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
         return df
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "n_neighbors": 3,
+            "shape_descriptor_function": "compound",
+            "shape_descriptor_functions": ["paa", "dwt"],
+            "n_splits": 2,
+        }
+        return [params1, params2]

@@ -1,4 +1,5 @@
 """Tests the AutoReg model."""
+
 __author__ = ["CTFallon", "mgazian000", "jonathanbechtel"]
 
 import pytest
@@ -7,16 +8,17 @@ from numpy.testing import assert_allclose
 # from sktime.datasets import
 from sktime.forecasting.auto_reg import AutoREG
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoREG, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoREG),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels():
     """Compare sktime's AutoREG interface with statsmodels AutoREG,
-    without exog data."""
+    without exog data.
+    """
     from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
     from sktime.datasets import load_airline
@@ -37,12 +39,13 @@ def test_against_statsmodels():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoREG, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoREG),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_fit_results():
     """Compare fit stats of sktime's AutoREG interface with statsmodels AutoREG,
-    without exog data"""
+    without exog data
+    """
     from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
     from sktime.datasets import load_airline
@@ -66,8 +69,8 @@ def test_against_statsmodels_fit_results():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoREG, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(AutoREG),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_against_statsmodels_exog():
     """Compare sktime's autoReg interface with statsmodels autoReg, with exog data."""

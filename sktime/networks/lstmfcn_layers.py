@@ -6,12 +6,10 @@ Ported over from sktime-dl.
 
 def make_attention_lstm():
     """Return AttentionLSTM class used by the LSTM-FCN Network."""
-    from tensorflow.keras import activations
+    from tensorflow.keras import activations, constraints, initializers, regularizers
     from tensorflow.keras import backend as K
-    from tensorflow.keras import constraints, initializers, regularizers
-
-    # from keras.legacy import interfaces
     from tensorflow.keras.layers import RNN, InputSpec, Layer
+    from tensorflow.keras.saving import register_keras_serializable
 
     def _time_distributed_dense(
         x,
@@ -29,7 +27,7 @@ def make_attention_lstm():
             x: input tensor.
             w: weight matrix.
             b: optional bias vector.
-            dropout: wether to apply dropout (same dropout mask
+            dropout: whether to apply dropout (same dropout mask
                 for every temporal slice of the input).
             input_dim: integer; optional dimensionality of the input.
             output_dim: integer; optional dimensionality of the output.
@@ -65,6 +63,7 @@ def make_attention_lstm():
             x = K.reshape(x, (-1, timesteps, output_dim))
         return x
 
+    @register_keras_serializable(package="sktime")
     class AttentionLSTMCell(Layer):
         """Long-Short Term Memory unit - with Attention.
 
@@ -94,7 +93,7 @@ def make_attention_lstm():
             attention_initializer: Initializer for the `attention_kernel` weights
                 matrix, used for the linear transformation of the inputs.
                 (see [initializers](../initializers.md)).
-            use_chrono_initialization: Boolean.
+            unit_forget_bias: Boolean.
                 If True, add 1 to the bias of the forget gate at initialization.
                 Setting it to true will also force `bias_initializer="zeros"`.
                 This is recommended in [Jozefowicz et al.]
@@ -169,7 +168,6 @@ def make_attention_lstm():
             kernel_regularizer=None,
             recurrent_regularizer=None,
             bias_regularizer=None,
-            activity_regularizer=None,
             attention_regularizer=None,
             kernel_constraint=None,
             recurrent_constraint=None,
@@ -198,7 +196,6 @@ def make_attention_lstm():
             self.kernel_regularizer = regularizers.get(kernel_regularizer)
             self.recurrent_regularizer = regularizers.get(recurrent_regularizer)
             self.bias_regularizer = regularizers.get(bias_regularizer)
-            self.activity_regularizer = regularizers.get(activity_regularizer)
             self.attention_regularizer = regularizers.get(attention_regularizer)
 
             self.kernel_constraint = constraints.get(kernel_constraint)
@@ -494,6 +491,7 @@ def make_attention_lstm():
                     h._uses_learning_phase = True
             return h, [h, c]
 
+    @register_keras_serializable(package="sktime")
     class AttentionLSTM(RNN):
         """Long-Short Term Memory unit - with Attention.
 
@@ -523,7 +521,7 @@ def make_attention_lstm():
             attention_initializer: Initializer for the `attention_kernel` weights
                 matrix, used for the linear transformation of the inputs.
                 (see [initializers](../initializers.md)).
-            use_chrono_initialization: Boolean.
+            unit_forget_bias: Boolean.
                 If True, add 1 to the bias of the forget gate at initialization.
                 Setting it to true will also force `bias_initializer="zeros"`.
                 This is recommended in [Jozefowicz et al.]
@@ -616,7 +614,6 @@ def make_attention_lstm():
             kernel_regularizer=None,
             recurrent_regularizer=None,
             bias_regularizer=None,
-            activity_regularizer=None,
             attention_regularizer=None,
             kernel_constraint=None,
             recurrent_constraint=None,
@@ -671,7 +668,6 @@ def make_attention_lstm():
                 kernel_regularizer=kernel_regularizer,
                 recurrent_regularizer=recurrent_regularizer,
                 bias_regularizer=bias_regularizer,
-                activity_regularizer=activity_regularizer,
                 attention_regularizer=attention_regularizer,
                 kernel_constraint=kernel_constraint,
                 recurrent_constraint=recurrent_constraint,
@@ -698,12 +694,15 @@ def make_attention_lstm():
             self.cell.timesteps = input_shape[1]
             self.cell.build(input_shape)
 
-        def call(self, inputs, mask=None, training=None, initial_state=None):
+        def call(self, sequences, mask=None, training=None, initial_state=None):
             """Call the AttentionLSTM object."""
-            self.cell._generate_dropout_mask(inputs, training=training)
-            self.cell._generate_recurrent_dropout_mask(inputs, training=training)
+            self.cell._generate_dropout_mask(sequences, training=training)
+            self.cell._generate_recurrent_dropout_mask(sequences, training=training)
             return super().call(
-                inputs, mask=mask, training=training, initial_state=initial_state
+                sequences=sequences,
+                mask=mask,
+                training=training,
+                initial_state=initial_state,
             )
 
         @property
@@ -772,11 +771,6 @@ def make_attention_lstm():
             return self.cell.bias_regularizer
 
         @property
-        def activity_regularizer(self):
-            """Return property activity_regularizer."""
-            return self.cell.activity_regularizer
-
-        @property
         def attention_regularizer(self):
             """Return property attention_regularizer."""
             return self.cell.attention_regularizer
@@ -836,15 +830,12 @@ def make_attention_lstm():
                 "attention_initializer": initializers.serialize(
                     self.attention_initializer
                 ),
-                "use_chrono_initialization": self.unit_forget_bias,
+                "unit_forget_bias": self.unit_forget_bias,
                 "kernel_regularizer": regularizers.serialize(self.kernel_regularizer),
                 "recurrent_regularizer": regularizers.serialize(
                     self.recurrent_regularizer
                 ),
                 "bias_regularizer": regularizers.serialize(self.bias_regularizer),
-                "activity_regularizer": regularizers.serialize(
-                    self.activity_regularizer
-                ),
                 "attention_regularizer": regularizers.serialize(
                     self.attention_regularizer
                 ),

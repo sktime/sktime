@@ -84,7 +84,7 @@ class TimeSeriesSVC(BaseClassifier):
         relatively high computational cost compared to a simple predict.
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generation for shuffling the data for
-        probability estimates. Ignored when `probability` is False.
+        probability estimates. Ignored when ``probability`` is False.
         Pass an int for reproducible output across multiple function calls.
 
     Examples
@@ -104,12 +104,20 @@ class TimeSeriesSVC(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "kernel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     DELEGATED_PARAMS = [
@@ -203,8 +211,8 @@ class TimeSeriesSVC(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
-            data to fit the estimator to
+        X : sktime compatible Panel data container, of mtype X_inner_mtype,
+            with n time series to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
@@ -267,7 +275,7 @@ class TimeSeriesSVC(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -278,8 +286,9 @@ class TimeSeriesSVC(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # testing that callables/classes can be passed
         from sktime.dists_kernels.compose_tab_to_panel import FlatDist

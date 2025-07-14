@@ -48,7 +48,7 @@ class ClaSPTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.clasp import ClaSPTransformer
-    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.detection.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_electric_devices_segmentation
     >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
     >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
@@ -58,6 +58,13 @@ class ClaSPTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ermshaua", "patrickzib"],
+        "maintainers": ["ermshaua"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -67,7 +74,6 @@ class ClaSPTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -122,7 +128,7 @@ class ClaSPTransformer(BaseTransformer):
 
         Returns
         -------
-        scoring_metric_call : a callable, keyed by the `scoring_metric` input
+        scoring_metric_call : a callable, keyed by the ``scoring_metric`` input
             _roc_auc_score, if scoring_metric = "ROC_AUC"
             _binary_f1_score, if scoring_metric = "F1"
         """
@@ -149,7 +155,7 @@ class ClaSPTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -157,7 +163,8 @@ class ClaSPTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"window_length": 5}

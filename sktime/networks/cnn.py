@@ -3,13 +3,13 @@
 __author__ = ["James-Large", "Withington", "TonyBagnall"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNNNetwork(BaseDeepNetwork):
     """Establish the network structure for a CNN.
 
-    Adapted from the implementation used in [1]
+    Adapted from the implementation used in [1]_.
 
     Parameters
     ----------
@@ -19,22 +19,17 @@ class CNNNetwork(BaseDeepNetwork):
         size of the average pooling windows
     n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes : array of int, shape = (nb_conv_layers)
+    filter_sizes : array of int, shape = (n_conv_layers)
     activation : string, default = sigmoid
         keras activation function
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
-        - "auto": as per original implementation, ``"sam"`` is passed if
+        - "auto": as per original implementation, ``"same"`` is passed if
           ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
     random_state    : int, default = 0
         seed to any needed random actions
-
-    Notes
-    -----
-    Adapted from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
 
     References
     ----------
@@ -42,7 +37,12 @@ class CNNNetwork(BaseDeepNetwork):
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
@@ -60,7 +60,7 @@ class CNNNetwork(BaseDeepNetwork):
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
-        self.filter_sizes = None
+        self.filter_sizes = filter_sizes
         if filter_sizes is None:
             self._filter_sizes = [6, 12]
         else:
@@ -120,3 +120,36 @@ class CNNNetwork(BaseDeepNetwork):
         flatten_layer = keras.layers.Flatten()(conv)
 
         return input_layer, flatten_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "filter_sizes": [10],
+            "kernel_size": 3,
+            "avg_pool_size": 1,
+            "padding": "valid",
+            "n_conv_layers": 1,
+        }
+        params3 = {"kernel_size": 5, "padding": "same"}
+        return [params1, params2, params3]

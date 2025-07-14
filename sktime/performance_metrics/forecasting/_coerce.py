@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Output coercion utilities for metric classes."""
 
+import numpy as np
 import pandas as pd
 
 
@@ -13,11 +14,15 @@ def _coerce_to_scalar(obj):
     if isinstance(obj, pd.Series):
         assert len(obj) == 1
         return obj.iloc[0]
+    if not isinstance(obj, np.float64):
+        obj = np.float64(obj)
     return obj
 
 
 def _coerce_to_df(obj):
     """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
+    if isinstance(obj, (float, int)):
+        return pd.DataFrame([obj])
     return pd.DataFrame(obj)
 
 

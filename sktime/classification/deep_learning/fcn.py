@@ -1,4 +1,4 @@
-"""Fully Connected Neural Network (CNN) for classification."""
+"""Fully Convolutional Network (FCN) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["FCNClassifier"]
@@ -9,11 +9,14 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1]_.
+    """Fully Convolutional Network (FCN), as described in [1]_.
+
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
 
     Parameters
     ----------
@@ -39,15 +42,11 @@ class FCNClassifier(BaseDeepClassifier):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-    Notes
-    -----
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
-
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
-    Journal of Systems Engineering and Electronics, 28(1):2017.
+    .. [1] Wang et al, Time series classification from scratch with
+    deep neural networks: A strong baseline.
+    2017 International Joint Conference on Neural Networks (IJCNN)
 
     Examples
     --------
@@ -59,6 +58,15 @@ class FCNClassifier(BaseDeepClassifier):
     >>> fcn.fit(X_train, y_train)  # doctest: +SKIP
     FCNClassifier(...)
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        # hfawaz for dl-4-tsc
+        "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -74,7 +82,7 @@ class FCNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -86,9 +94,10 @@ class FCNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = FCNNetwork(
-            random_state=self.random_state,
-        )
+
+        super().__init__()
+
+        self._network = FCNNetwork(random_state=self.random_state)
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -152,7 +161,7 @@ class FCNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -179,7 +188,7 @@ class FCNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -190,10 +199,11 @@ class FCNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

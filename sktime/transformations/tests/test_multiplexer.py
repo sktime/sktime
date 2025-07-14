@@ -12,16 +12,21 @@ from sklearn.base import clone
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
+RELEVANT_MODULES = ["sktime.transformations", "sktime.forecasting", "sktime.split"]
 
+
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_transformer_alone():
     """Test behavior of MultiplexTransformer.
 
@@ -69,6 +74,10 @@ def _find_best_transformer(forecaster, transformers, cv, y):
     return best_name
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_transformer_in_grid():
     """Test behavior of MultiplexTransformer.
 
@@ -109,6 +118,10 @@ def test_multiplex_transformer_in_grid():
     assert gscv_best_name == best_name
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_or_dunder():
     """Test that the MultiplexTransforemer magic "|" dunder works.
 

@@ -1,8 +1,6 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
-__author__ = [
-    "JamesLarge",
-]
+__author__ = ["James-Large"]
 
 from copy import deepcopy
 
@@ -11,11 +9,14 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNRegressor(BaseDeepRegressor):
     """Multi Channel Deep Convolutional Neural Regressor, adopted from [1]_.
+
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
 
     Parameters
     ----------
@@ -48,20 +49,15 @@ class MCDCNNRegressor(BaseDeepRegressor):
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
         The string which will be used during model compilation. If left as None,
-        then "mean_squared_error" is passed to `model.compile()`.
+        then "mean_squared_error" is passed to ``model.compile()``.
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
-        then `keras.optimizers.SGD` is used with the following parameters -
-        `learning_rate=0.01, momentum=0.9, weight_decay=0.0005`.
-    callbacks : None or list of keras.callbacks.Callback, optinal (default=None)
+        then ``keras.optimizers.SGD`` is used with the following parameters -
+        ``learning_rate=0.01, momentum=0.9, weight_decay=0.0005``.
+    callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
-
-    Notes
-    -----
-    Adapted from the implementation of Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
 
     References
     ----------
@@ -79,7 +75,13 @@ class MCDCNNRegressor(BaseDeepRegressor):
     MCDCNRegressor(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz", "James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
@@ -101,7 +103,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -119,6 +120,9 @@ class MCDCNNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+
+        super().__init__()
+
         self.history = None
         self._network = MCDCNNNetwork(
             kernel_size=self.kernel_size,

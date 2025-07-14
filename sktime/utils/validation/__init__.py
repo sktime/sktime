@@ -10,6 +10,7 @@ __all__ = [
     "is_timedelta_or_date_offset",
     "check_n_jobs",
     "check_window_length",
+    "array_is_int",
 ]
 __author__ = ["mloning", "thayeylolu", "khrapovs"]
 
@@ -118,7 +119,7 @@ def all_inputs_are_iloc_like(args: list) -> bool:
 
 
 def all_inputs_are_time_like(args: list) -> bool:
-    """Check if all inputs in teh list are time-like."""
+    """Check if all inputs in the list are time-like."""
     return all([is_time_like(x) if x is not None else True for x in args])
 
 
@@ -184,8 +185,7 @@ def check_window_length(
         # Check `n_timepoints`.
         if not is_int(n_timepoints) or n_timepoints < 2:
             raise ValueError(
-                f"`n_timepoints` must be a positive integer, but found:"
-                f" {n_timepoints}."
+                f"`n_timepoints` must be a positive integer, but found: {n_timepoints}."
             )
 
         # Compute fraction relative to `n_timepoints`.

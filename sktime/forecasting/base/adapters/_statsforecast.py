@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
-__author__ = ["FedericoGarza"]
+__author__ = ["AzulGarza"]
 __all__ = ["_StatsForecastAdapter"]
 
 
@@ -15,9 +15,11 @@ class _StatsForecastAdapter(BaseForecaster):
     """Base class for interfacing StatsForecast."""
 
     _tags = {
+        "authors": ["AzulGarza"],
+        "maintainers": ["AzulGarza"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
@@ -198,8 +200,7 @@ class _StatsForecastAdapter(BaseForecaster):
         else:
             return pd.Series(mean, index=fh_abs.to_pandas())
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -232,7 +233,7 @@ class _StatsForecastAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # initializaing cutoff and fh related info
+        # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
         fh_ins = fh.to_in_sample(cutoff)
@@ -240,9 +241,7 @@ class _StatsForecastAdapter(BaseForecaster):
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])

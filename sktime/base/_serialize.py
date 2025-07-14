@@ -34,7 +34,7 @@ def load(serial):
 
     Examples
     --------
-    Example 1: saving an estimator as pickle and loading
+    Example 1: saving an estimator in-memory and loading it back
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -79,6 +79,30 @@ def load(serial):
     >>> # 4. continue using the loaded estimator
     >>> pred = cnn.predict(X=sample_test_X) # doctest: +SKIP
     >>> loaded_pred = loaded_cnn.predict(X=sample_test_X) # doctest: +SKIP
+
+    Example 3:  saving an estimator using cloudpickle's serialization functionality
+                and loading it back
+        Note: `cloudpickle` is a soft dependency and is not present
+        with the base-installation.
+
+    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sktime.datasets import load_basic_motions  # doctest: +SKIP
+    >>>
+    >>> # 1. Fit the estimator
+    >>> X_train, y_train = load_basic_motions(split="TRAIN")  # doctest: +SKIP
+    >>> X_test, y_test = load_basic_motions(split="TEST")  # doctest: +SKIP
+    >>> est = Catch22Classifier().fit(X_train, y_train)  # doctest: +SKIP
+    >>>
+    >>> # 2. save the fitted estimator
+    >>> cpkl_serialized = est.save(serialization_format="cloudpickle")  # doctest: +SKIP
+    >>>
+    >>> # 3. load the saved estimator (possibly after sending it across a stream)
+    >>> from sktime.base import load  # doctest: +SKIP
+    >>> loaded_est = load(cpkl_serialized)  # doctest: +SKIP
+    >>>
+    >>> # 4. continue using the estimator as normal
+    >>> pred = loaded_est.predict(X_test)    # doctest: +SKIP
+    >>> loaded_pred = loaded_est.predict(X_test)  # doctest: +SKIP
     """
     import pickle
     from pathlib import Path

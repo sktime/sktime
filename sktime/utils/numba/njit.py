@@ -1,9 +1,9 @@
 """Dispatch njit decorator used to isolate numba."""
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # exports numba.njit if numba is present, otherwise an identity njit
-if _check_soft_dependencies("numba", severity="warning"):
+if _check_soft_dependencies("numba", severity="none"):
     from numba import jit, njit  # noqa E402
 
 else:

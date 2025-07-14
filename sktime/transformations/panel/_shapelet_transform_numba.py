@@ -11,7 +11,7 @@ from sktime.utils.numba.njit import njit
 
 
 @njit(fastmath=True, cache=True)
-def _online_shapelet_distance(series, shapelet, sorted_indicies, position, length):
+def _online_shapelet_distance(series, shapelet, sorted_indices, position, length):
     subseq = series[position : position + length]
 
     sum = 0.0
@@ -21,7 +21,7 @@ def _online_shapelet_distance(series, shapelet, sorted_indicies, position, lengt
         sum2 += i * i
 
     mean = sum / length
-    std = (sum2 - mean * mean * length) / length
+    std = math.sqrt((sum2 - mean * mean * length) / length)
     if std > 0:
         subseq = (subseq - mean) / std
     else:
@@ -56,10 +56,12 @@ def _online_shapelet_distance(series, shapelet, sorted_indicies, position, lengt
             std = math.sqrt((sums2[n] - mean * mean * length) / length)
 
             dist = 0
-            use_std = std != 0
+
+            eps = 1e-8  # numerical eps, to avoid division by zero
+            use_std = std > eps  # use a numerical tolerance to prevent NaN values
             for j in range(length):
-                val = (series[pos + sorted_indicies[j]] - mean) / std if use_std else 0
-                temp = shapelet[sorted_indicies[j]] - val
+                val = (series[pos + sorted_indices[j]] - mean) / std if use_std else 0
+                temp = shapelet[sorted_indices[j]] - val
                 dist += temp * temp
 
                 if dist > best_dist:
@@ -70,7 +72,7 @@ def _online_shapelet_distance(series, shapelet, sorted_indicies, position, lengt
 
         i += 1
 
-    return best_dist if best_dist == 0 else 1 / length * best_dist
+    return 1 / length * best_dist
 
 
 @njit(fastmath=True, cache=True)
@@ -198,7 +200,7 @@ def _find_shapelet_quality(
     X,
     y,
     shapelet,
-    sorted_indicies,
+    sorted_indices,
     position,
     length,
     dim,
@@ -215,7 +217,7 @@ def _find_shapelet_quality(
     for i, series in enumerate(X):
         if i != inst_idx:
             distance = _online_shapelet_distance(
-                series[dim], shapelet, sorted_indicies, position, length
+                series[dim], shapelet, sorted_indices, position, length
             )
         else:
             distance = 0

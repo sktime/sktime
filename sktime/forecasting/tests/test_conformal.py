@@ -1,4 +1,5 @@
 """Tests for the ConformalIntervals probability wrapper."""
+
 import pytest
 
 from sktime.datasets import load_airline
@@ -23,7 +24,7 @@ def test_conformal_standard():
     conformal_forecaster.fit(y, fh=[1, 2, 3])
     pred_int = conformal_forecaster.predict_interval()
 
-    assert check_is_mtype(pred_int, "pred_interval", "Proba")
+    assert check_is_mtype(pred_int, "pred_interval", "Proba", msg_return_dict="list")
 
 
 @pytest.mark.skipif(
@@ -32,11 +33,9 @@ def test_conformal_standard():
 )
 def test_conformal_with_gscv():
     """With ForecastingGridSearchCV and parameter plugin."""
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.param_est.plugin import PluginParamsForecaster
+    from sktime.split import ExpandingWindowSplitter
 
     y = load_airline()
 
@@ -62,7 +61,9 @@ def test_conformal_with_gscv():
 
     y_pred_quantiles = gscv_with_conformal.predict_quantiles()
 
-    assert check_is_mtype(y_pred_quantiles, "pred_quantiles", "Proba")
+    assert check_is_mtype(
+        y_pred_quantiles, "pred_quantiles", "Proba", msg_return_dict="list"
+    )
 
 
 @pytest.mark.skipif(
@@ -77,7 +78,7 @@ def test_conformal_with_hierarchical():
     from sklearn.linear_model import LinearRegression
 
     from sktime.forecasting.compose import ForecastX, make_reduction
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     df = _make_hierarchical(

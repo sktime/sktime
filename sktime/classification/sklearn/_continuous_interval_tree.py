@@ -13,31 +13,33 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 
 
-class ContinuousIntervalTree(BaseEstimator):
+class ContinuousIntervalTree(_SklVersionBridgeMixin, BaseEstimator):
     """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-    The `Time Series Tree` described in the Time Series Forest (TSF) paper Deng et al
+    The ``Time Series Tree`` described in the Time Series Forest (TSF) paper Deng et al
     (2013) [1]. A simple information gain based tree for continuous attributes using a
     bespoke margin gain metric for tie breaking.
 
     Implemented as a bade classifier for interval based time series classifiers such as
-    `CanonicalIntervalForest` and `DrCIF`.
+    ``CanonicalIntervalForest`` and ``DrCIF``.
 
     Parameters
     ----------
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
     thresholds : int, default=20
-        Number of thresholds to split continous attributes on at tree nodes.
+        Number of thresholds to split continuous attributes on at tree nodes.
     random_state : int, RandomState instance or None, default=None
-        If `int`, random_state is the seed used by the random number generator;
-        If `RandomState` instance, random_state is the random number generator;
-        If `None`, the random number generator is the `RandomState` instance used
-        by `np.random`.
+        If ``int``, random_state is the seed used by the random number generator;
+        If ``RandomState`` instance, random_state is the random number generator;
+        If ``None``, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     Attributes
     ----------
@@ -128,7 +130,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(
+        X, y = self._validate_data_version_safe(
             X=X, y=y, ensure_min_samples=2, force_all_finite="allow-nan"
         )
 
@@ -186,6 +188,8 @@ class ContinuousIntervalTree(BaseEstimator):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        check_is_fitted(self)
+
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -207,6 +211,8 @@ class ContinuousIntervalTree(BaseEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        check_is_fitted(self)
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -225,7 +231,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False, force_all_finite="allow-nan")
+        X = self._validate_data_version_safe(
+            X=X, reset=False, force_all_finite="allow-nan"
+        )
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):

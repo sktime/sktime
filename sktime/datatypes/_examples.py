@@ -13,6 +13,9 @@ the representation is considered "lossy" if the representation is incomplete
     e.g., metadata such as column names are missing
 """
 
+from copy import deepcopy
+from functools import lru_cache
+
 from sktime.datatypes._registry import mtype_to_scitype
 
 __author__ = ["fkiraly"]
@@ -21,55 +24,35 @@ __all__ = [
     "get_examples",
 ]
 
-from sktime.datatypes._alignment import example_dict_Alignment
-from sktime.datatypes._hierarchical import (
-    example_dict_Hierarchical,
-    example_dict_lossy_Hierarchical,
-    example_dict_metadata_Hierarchical,
-)
-from sktime.datatypes._panel import (
-    example_dict_lossy_Panel,
-    example_dict_metadata_Panel,
-    example_dict_Panel,
-)
-from sktime.datatypes._proba import (
-    example_dict_lossy_Proba,
-    example_dict_metadata_Proba,
-    example_dict_Proba,
-)
-from sktime.datatypes._series import (
-    example_dict_lossy_Series,
-    example_dict_metadata_Series,
-    example_dict_Series,
-)
-from sktime.datatypes._table import (
-    example_dict_lossy_Table,
-    example_dict_metadata_Table,
-    example_dict_Table,
-)
 
-# pool example_dict-s
-example_dict = dict()
-example_dict.update(example_dict_Alignment)
-example_dict.update(example_dict_Series)
-example_dict.update(example_dict_Panel)
-example_dict.update(example_dict_Hierarchical)
-example_dict.update(example_dict_Table)
-example_dict.update(example_dict_Proba)
+@lru_cache(maxsize=1)
+def generate_example_dicts(soft_deps="present"):
+    """Generate example dicts using lookup."""
+    from sktime.datatypes._base import BaseExample
+    from sktime.utils.dependencies import _check_estimator_deps
+    from sktime.utils.retrieval import _all_classes
 
-example_dict_lossy = dict()
-example_dict_lossy.update(example_dict_lossy_Series)
-example_dict_lossy.update(example_dict_lossy_Panel)
-example_dict_lossy.update(example_dict_lossy_Hierarchical)
-example_dict_lossy.update(example_dict_lossy_Table)
-example_dict_lossy.update(example_dict_lossy_Proba)
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseExample)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
 
-example_dict_metadata = dict()
-example_dict_metadata.update(example_dict_metadata_Series)
-example_dict_metadata.update(example_dict_metadata_Panel)
-example_dict_metadata.update(example_dict_metadata_Hierarchical)
-example_dict_metadata.update(example_dict_metadata_Table)
-example_dict_metadata.update(example_dict_metadata_Proba)
+    # subset only to data types with soft dependencies present
+    if soft_deps == "present":
+        classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
+
+    example_dict = dict()
+    example_dict_lossy = dict()
+    example_dict_metadata = dict()
+    for cls in classes:
+        k = cls()
+        key = k._get_key()
+        key_meta = (key[1], key[2])
+        example_dict[key] = k
+        example_dict_lossy[key] = k.get_class_tags().get("lossy", False)
+        example_dict_metadata[key_meta] = k.get_class_tags().get("metadata", {})
+
+    return example_dict, example_dict_lossy, example_dict_metadata
 
 
 def get_examples(
@@ -105,6 +88,8 @@ def get_examples(
     if as_scitype is None:
         as_scitype = mtype_to_scitype(mtype)
 
+    example_dict, example_dict_lossy, example_dict_metadata = generate_example_dicts()
+
     # retrieve all keys that match the query
     exkeys = example_dict.keys()
     keys = [k for k in exkeys if k[0] == mtype and k[1] == as_scitype]
@@ -114,14 +99,15 @@ def get_examples(
 
     for k in keys:
         if return_lossy:
-            fixtures[k[2]] = (example_dict.get(k), example_dict_lossy.get(k))
+            fixtures[k[2]] = (example_dict.get(k).build(), example_dict_lossy.get(k))
         elif return_metadata:
             fixtures[k[2]] = (
-                example_dict.get(k),
+                example_dict.get(k).build(),
                 example_dict_lossy.get(k),
                 example_dict_metadata.get((k[1], k[2])),
             )
         else:
-            fixtures[k[2]] = example_dict.get(k)
+            fixtures[k[2]] = example_dict.get(k).build()
 
-    return fixtures
+    # deepcopy to avoid side effects
+    return deepcopy(fixtures)

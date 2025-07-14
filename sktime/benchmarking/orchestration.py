@@ -1,4 +1,5 @@
 """Benchmarking orchestration module."""
+
 __all__ = ["Orchestrator"]
 __author__ = ["viktorkaz", "mloning"]
 
@@ -84,7 +85,7 @@ class Orchestrator:
                     strategy, data.dataset_name
                 )
             ):
-                log.warn(
+                log.warning(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -139,7 +140,7 @@ class Orchestrator:
             test_pred_exist = self.results.check_predictions_exist(
                 strategy.name, dataset.name, cv_fold, train_or_test="test"
             )
-            fitted_stategy_exists = self.results.check_fitted_strategy_exists(
+            fitted_strategy_exists = self.results.check_fitted_strategy_exists(
                 strategy.name, dataset.name, cv_fold
             )
 
@@ -150,9 +151,9 @@ class Orchestrator:
                 and test_pred_exist
                 and (train_pred_exist or not predict_on_train)
                 and not overwrite_fitted_strategies
-                and (fitted_stategy_exists or not save_fitted_strategies)
+                and (fitted_strategy_exists or not save_fitted_strategies)
             ):
-                log.warn(
+                log.warning(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -174,7 +175,7 @@ class Orchestrator:
             # and overwrite is set to True or the
             # fitted strategy does not already exist
             if save_fitted_strategies and (
-                overwrite_fitted_strategies or not fitted_stategy_exists
+                overwrite_fitted_strategies or not fitted_strategy_exists
             ):
                 self.results.save_fitted_strategy(
                     strategy, dataset_name=dataset.name, cv_fold=cv_fold
@@ -265,9 +266,7 @@ class Orchestrator:
         # Check uniqueness of strategy names
         names = [strategy.name for strategy in strategies]
         if not len(names) == len(set(names)):
-            raise ValueError(
-                f"Names of provided strategies are not unique: " f"{names}"
-            )
+            raise ValueError(f"Names of provided strategies are not unique: {names}")
 
         # Check for conflicts with estimator kwargs
         all_params = []
@@ -286,7 +285,7 @@ class Orchestrator:
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                f"Estimator names must not contain __: got " f"{invalid_names}"
+                f"Estimator names must not contain __: got {invalid_names}"
             )
 
     @staticmethod
@@ -336,7 +335,7 @@ class Orchestrator:
 
             n_splits = self.cv.get_n_splits() - 1  # zero indexing
 
-            log.warn(
+            log.warning(
                 f"strategy: {self._strategy_counter}/{self.n_strategies} - "
                 f"{strategy_name} "
                 f"on CV-fold: {cv_fold}/{n_splits} "

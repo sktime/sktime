@@ -1,4 +1,5 @@
 """Tabularizer transform, for pipelining."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly", "kcc-lion"]
@@ -11,6 +12,7 @@ import pandas as pd
 
 from sktime.datatypes import convert, convert_to
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 
 class Tabularizer(BaseTransformer):
@@ -24,6 +26,7 @@ class Tabularizer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -95,6 +98,8 @@ class TimeBinner(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
         "univariate-only": False,
         "scitype:transform-input": "Series",
@@ -108,9 +113,9 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-        assert isinstance(
-            idx, pd.IntervalIndex
-        ), "idx should be of type pd.IntervalIndex"
+        assert isinstance(idx, pd.IntervalIndex), (
+            "idx should be of type pd.IntervalIndex"
+        )
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
@@ -120,7 +125,7 @@ class TimeBinner(BaseTransformer):
             )
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(
@@ -150,7 +155,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.applymap(lambda x: x.groupby(idx).apply(self._aggfunc))
+        Xt = df_map(X)(lambda x: x.groupby(idx, observed=False).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 
@@ -162,7 +167,7 @@ class TimeBinner(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -170,8 +175,9 @@ class TimeBinner(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         import pandas as pd
 

@@ -6,16 +6,22 @@ __author__ = ["ciaran-g"]
 
 import pytest
 
+from sktime.datatypes import get_examples
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 
 # test for equal output with with named/unnamed indexes
+@pytest.mark.skipif(
+    not run_test_for_class(Aggregator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("flatten_single_levels", [True, False])
 def test_aggregator_fit_transform_index(flatten_single_levels):
     """Tests fit_transform of aggregator function.
 
-    This test asserts that the output of Aggregator using fit_transfrom() with a named
+    This test asserts that the output of Aggregator using fit_transform() with a named
     multiindex is equal to an unnamed one. It also tests that Aggregator does not change
     the names of the input index in both cases.
     """
@@ -40,6 +46,10 @@ def test_aggregator_fit_transform_index(flatten_single_levels):
 
 
 # test that flatten_single_levels works as expected
+@pytest.mark.skipif(
+    not run_test_for_class(Aggregator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_aggregator_flatten():
     """Tests Aggregator flattening single levels.
 
@@ -70,3 +80,32 @@ def test_aggregator_flatten():
         "with the time index removed, for random_seed=111."
     )
     assert len(X_agg_flat.droplevel(-1).index.unique()) == 17, msg
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Aggregator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_aggregator_inverse_transform():
+    """Tests inverse_transform of aggregator function.
+
+    This test asserts that the output of Aggregator using inverse_transform() is equal
+    to the original input data.
+    """
+
+    y = get_examples("pd_multiindex_hier")[1]
+
+    agg_bypass_invt = Aggregator(bypass_inverse_transform=True)
+    agg = Aggregator(bypass_inverse_transform=False)
+
+    yt_bypass_invt = agg_bypass_invt.fit_transform(y)
+    yt = agg.fit_transform(y)
+
+    # inverse transform with bypass
+    yinvt_bypass_invt = agg_bypass_invt.inverse_transform(yt_bypass_invt)
+    yinvt = agg.inverse_transform(yt)
+
+    # When bypassing, totals are kept in the output.
+    ## When not bypassing, we should find the same indexes as before
+    assert yinvt_bypass_invt.index.droplevel(-1).nunique() == 9
+    assert yinvt.index.droplevel(-1).nunique() == y.index.droplevel(-1).nunique()

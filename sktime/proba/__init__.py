@@ -1,1 +1,0 @@
-"""Probability distribution objects."""

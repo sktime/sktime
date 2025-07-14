@@ -3,17 +3,21 @@
 __author__ = ["fkiraly"]
 
 import numpy as np
+import pandas
+import pytest
 
 from sktime.datatypes._check import (
     AMBIGUOUS_MTYPES,
-    check_dict,
     check_is_mtype,
     check_is_scitype,
+    check_raise,
+    generate_check_dict,
 )
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
+from sktime.tests.test_switch import run_test_module_changed
 
 SCITYPES = SCITYPE_LIST
 
@@ -90,7 +94,7 @@ def pytest_generate_tests(metafunc):
         for tuple in keys:
             ids += [f"{tuple[0]}-{tuple[1]}-fixture:{tuple[2]}"]
 
-        # parameterize test with from-mtpes
+        # parameterize test with from-mytpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
     elif {"scitype", "mtype"}.issubset(fixturenames):
@@ -104,6 +108,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("scitype,mtype", keys, ids=ids)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_check_positive(scitype, mtype, fixture_index):
     """Tests that check_is_mtype correctly confirms the mtype of examples.
 
@@ -123,11 +131,14 @@ def test_check_positive(scitype, mtype, fixture_index):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # todo: possibly remove this once all checks are defined
+    check_dict = generate_check_dict()
     check_is_defined = (mtype, scitype) in check_dict.keys()
 
     # check fixtures that exist against checks that exist, when full metadata is queried
     if fixture is not None and check_is_defined:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -138,7 +149,9 @@ def test_check_positive(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist, when no metadata is queried
     if fixture is not None and check_is_defined:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=[])
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=[], msg_return_dict="list"
+        )
         if not check_result[0]:
             msg = (
                 f"check_is_mtype returns False on scitype {scitype}, mtype {mtype} "
@@ -148,6 +161,10 @@ def test_check_positive(scitype, mtype, fixture_index):
         assert check_result[0], msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_check_positive_check_scitype(scitype, mtype, fixture_index):
     """Tests that check_is_scitype correctly confirms the scitype of examples.
 
@@ -170,6 +187,7 @@ def test_check_positive_check_scitype(scitype, mtype, fixture_index):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # todo: possibly remove this once all checks are defined
+    check_dict = generate_check_dict()
     check_is_defined = (mtype, scitype) in check_dict.keys()
 
     # check fixtures that exist against checks that exist, when full metadata is queried
@@ -197,6 +215,10 @@ def test_check_positive_check_scitype(scitype, mtype, fixture_index):
         assert check_result[2]["mtype"] == mtype
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_check_metadata_inference(scitype, mtype, fixture_index):
     """Tests that check_is_mtype correctly infers metadata of examples.
 
@@ -213,18 +235,29 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
     error if check itself raises an error
     """
     # retrieve fixture for checking
-    fixture, _, expected_metadata = get_examples(
+    fixture, lossy, expected_metadata = get_examples(
         mtype=mtype, as_scitype=scitype, return_metadata=True
     ).get(fixture_index)
 
     # todo: possibly remove this once all checks are defined
+    check_dict = generate_check_dict()
     check_is_defined = (mtype, scitype) in check_dict.keys()
     # if the examples have no metadata to them, don't test
     metadata_provided = expected_metadata is not None
 
     # metadata keys to ignore
     # is_equal_index is not fully supported yet in inference
-    EXCLUDE_KEYS = ["is_equal_index"]
+    # feature_kind is not supported yet, simple_feature_kind is used instead
+    EXCLUDE_KEYS = ["is_equal_index", "dtypekind_dfip"]
+
+    # metadata keys to ignore if mtype is lossy
+    EXCLUDE_IF_LOSSY = [
+        "feature_names",  # lossy mtypes do not have feature names
+    ]
+
+    # if mtype is in the list, add mtype specific keys to exclude
+    if lossy:
+        EXCLUDE_KEYS += EXCLUDE_IF_LOSSY
 
     if metadata_provided:
         expected_metadata = expected_metadata.copy()
@@ -233,7 +266,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist, full metadata query
     if fixture is not None and check_is_defined and metadata_provided:
-        check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
+        check_result = check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
         metadata = check_result[2]
 
         # remove mtype & scitype key if exists, since comparison is on scitype level
@@ -242,21 +277,32 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
         if "scitype" in metadata:
             del metadata["scitype"]
 
+        # remove keys that are not checked
+        for key in EXCLUDE_KEYS:
+            if key in metadata:
+                del metadata[key]
+
         # currently we do not check this field in metadata inference
 
         msg = (
             f"check_is_mtype returns wrong metadata on scitype {scitype}, "
-            f"mtype {mtype}, fixture {fixture_index}, when quering full metadata. "
+            f"mtype {mtype}, fixture {fixture_index}, when querying full metadata. "
             f"returned: {metadata}; expected: {expected_metadata}"
         )
 
-        assert metadata == expected_metadata, msg
+        for k, v in metadata.items():
+            if v != "NA":  # NA means "cannot be determined", e.g., for lazy containers
+                assert v == expected_metadata[k], msg
 
-    # check fixtures that exist against checks that exist
+    # check fixtures that exist against checks that exist, partial metadata query
     if fixture is not None and check_is_defined and metadata_provided:
         for metadata_key in subset_keys:
             check_result = check_is_mtype(
-                fixture, mtype, scitype, return_metadata=[metadata_key]
+                fixture,
+                mtype,
+                scitype,
+                return_metadata=[metadata_key],
+                msg_return_dict="list",
             )
             metadata = check_result[2]
 
@@ -268,15 +314,21 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
             msg = (
                 f"check_is_mtype returns wrong metadata on scitype {scitype}, "
-                f"mtype {mtype}, fixture {fixture_index}, when quering "
+                f"mtype {mtype}, fixture {fixture_index}, when querying "
                 f"metadata for metadata key {metadata_key}. "
                 f"returned: {metadata[metadata_key]}; "
                 f"expected: {expected_metadata[metadata_key]}"
             )
 
-            assert metadata[metadata_key] == expected_metadata[metadata_key], msg
+            # NA means "cannot be determined", e.g., for lazy containers
+            if metadata[metadata_key] != "NA":
+                assert metadata[metadata_key] == expected_metadata[metadata_key], msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_check_negative(scitype, mtype):
     """Tests that check_is_mtype correctly identifies wrong mtypes of examples.
 
@@ -313,26 +365,33 @@ def test_check_negative(scitype, mtype):
             fixture_wrong_type = fixtures[wrong_mtype].get(i)
 
             # todo: possibly remove this once all checks are defined
+            check_dict = generate_check_dict()
             check_is_defined = (mtype, scitype) in check_dict.keys()
 
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
-                assert not check_is_mtype(fixture_wrong_type, mtype, scitype), (
-                    f"check_is_mtype {mtype} returns True "
-                    f"on {wrong_mtype} fixture {i}"
-                )
+                assert not check_is_mtype(
+                    fixture_wrong_type, mtype, scitype, msg_return_dict="list"
+                ), f"check_is_mtype {mtype} returns True on {wrong_mtype} fixture {i}"
 
             # check fixtures that exist against checks that exist
             if fixture_wrong_type is not None and check_is_defined:
                 result = check_is_mtype(
-                    fixture_wrong_type, mtype, scitype, return_metadata=[]
+                    fixture_wrong_type,
+                    mtype,
+                    scitype,
+                    return_metadata=[],
+                    msg_return_dict="list",
                 )[0]
                 assert not result, (
-                    f"check_is_mtype {mtype} returns True "
-                    f"on {wrong_mtype} fixture {i}"
+                    f"check_is_mtype {mtype} returns True on {wrong_mtype} fixture {i}"
                 )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_mtype_infer(scitype, mtype, fixture_index):
     """Tests that mtype correctly infers the mtype of examples.
 
@@ -356,13 +415,14 @@ def test_mtype_infer(scitype, mtype, fixture_index):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # todo: possibly remove this once all checks are defined
+    check_dict = generate_check_dict()
     check_is_defined = (mtype, scitype) in check_dict.keys()
 
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined:
-        assert mtype == infer_mtype(
-            fixture, as_scitype=scitype, exclude_mtypes=[]
-        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        assert mtype == infer_mtype(fixture, as_scitype=scitype, exclude_mtypes=[]), (
+            f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        )
 
     # check indirect mtype inference via check_is_scitype
     if fixture is not None and check_is_defined:
@@ -370,9 +430,9 @@ def test_mtype_infer(scitype, mtype, fixture_index):
             fixture, scitype=scitype, exclude_mtypes=[], return_metadata=[]
         )
         inferred_mtype = scitype_res[2]["mtype"]
-        assert (
-            mtype == inferred_mtype
-        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        assert mtype == inferred_mtype, (
+            f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        )
 
 
 # exclude these scitypes in inference of scitype test
@@ -381,6 +441,10 @@ SKIP_SCITYPES = ["Alignment", "Table", "Proba"]
 SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_scitype_infer(scitype, mtype, fixture_index):
     """Tests that scitype correctly infers the mtype of examples.
 
@@ -404,6 +468,7 @@ def test_scitype_infer(scitype, mtype, fixture_index):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # todo: possibly remove this once all checks are defined
+    check_dict = generate_check_dict()
     check_is_defined = (mtype, scitype) in check_dict.keys()
 
     # check fixtures that exist against checks that exist
@@ -411,3 +476,14 @@ def test_scitype_infer(scitype, mtype, fixture_index):
         assert scitype == infer_scitype(
             fixture, candidate_scitypes=SCITYPES_FOR_INFER_TEST
         ), f"scitype {scitype} not correctly identified for fixture {fixture_index}"
+
+
+def test_object_support_for_series_scitype() -> None:
+    """Test that passing object dtype does not fail series scitype check."""
+
+    sample_dataset = pandas.Series(
+        np.random.default_rng().choice(["A", "B"], size=(31 + 29 + 31), replace=True),
+        index=pandas.date_range(start="2000-01-01", end="2000-03-31", freq="D"),
+    )
+
+    assert check_raise(sample_dataset, "pd.Series")

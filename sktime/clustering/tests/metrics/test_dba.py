@@ -1,8 +1,11 @@
 """Tests for DBA."""
+
 import numpy as np
+import pytest
 
 from sktime.clustering.metrics.averaging import dba
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
 
 expected_dba = np.array(
     [
@@ -130,6 +133,10 @@ expected_dba = np.array(
 )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(dba),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_dba():
     """Test dba functionality."""
     X_train = create_test_distance_numpy(10, 10, 10)

@@ -1,4 +1,5 @@
 """Tests for TabularToSeriesAdaptor."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
@@ -8,13 +9,13 @@ import pytest
 from sklearn.preprocessing import PowerTransformer
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("scipy", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class([TabularToSeriesAdaptor, PowerTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_boxcox_transform():
     """Test whether adaptor based transformer behaves like the raw wrapped method."""

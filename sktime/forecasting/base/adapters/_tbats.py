@@ -17,12 +17,15 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
+        # cotterpl for tbats package
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "python_dependencies": "tbats",
+        "capability:missing_values": False,
+        # todo 0.39.0: check whether numpy and scipy bounds are still needed
+        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
     }
 
     def __init__(
@@ -246,8 +249,7 @@ class _TbatsAdapter(BaseForecaster):
 
         return pred_int
 
-    # todo 0.23.0 - remove legacy_interface arg and logic using it
-    def _predict_interval(self, fh, X, coverage, legacy_interface=False):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -287,9 +289,7 @@ class _TbatsAdapter(BaseForecaster):
         cutoff = self.cutoff
 
         # accumulator of results
-        var_names = self._get_varnames(
-            default="Coverage", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])

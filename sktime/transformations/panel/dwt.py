@@ -1,4 +1,5 @@
 """Discrete wavelet transform."""
+
 import math
 
 import numpy as np
@@ -7,7 +8,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = ["Vincent Nicholson"]
+__author__ = ["vnicholson1"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -18,10 +19,21 @@ class DWTTransformer(BaseTransformer):
     Parameters
     ----------
     num_levels : int, number of levels to perform the Haar wavelet
-                 transformation.
+        transformation.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.dwt import DWTTransformer
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.datatypes import convert
+    >>>
+    >>> y = load_airline()
+    >>> transformer = DWTTransformer(num_levels=3)
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     _tags = {
+        "authors": "vnicholson1",
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -30,6 +42,9 @@ class DWTTransformer(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, num_levels=3):

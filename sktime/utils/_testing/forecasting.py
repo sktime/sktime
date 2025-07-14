@@ -88,7 +88,7 @@ def make_forecasting_problem(
     Parameters
     ----------
     n_timepoints : int, optional
-        Lenght of data, by default 50
+        Length of data, by default 50
     all_positive : bool, optional
         Only positive values or not, by default True
     index_type : e.g. pd.PeriodIndex, optional
@@ -131,7 +131,7 @@ def make_forecasting_problem(
 def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
-    expected = fh.to_absolute_index(cutoff)
+    expected = fh.get_expected_pred_idx(y_pred_index, cutoff)
     assert y_pred_index.equals(expected)
 
 
