@@ -67,7 +67,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         "multioutput": multioutput,
         "dtype": dtype,
     }
-    if _check_soft_dependencies("scikit-learn>=1.6"):
+    if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
         return _check_reg_targets_post_16(xp=xp, **kwargs)
     else:
         return _check_reg_targets_pre16(**kwargs)
