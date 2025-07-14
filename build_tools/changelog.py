@@ -16,22 +16,7 @@ GITHUB_REPOS = "https://api.github.com/repos"
 
 
 def fetch_merged_pull_requests(page: int = 1) -> list[dict]:
-    """Fetch a page of merged pull requests.
-
-    Parameters
-    ----------
-    page : int, optional
-        Page number to fetch, by default 1.
-        Returns all merged pull request from the ``page``-th page of closed PRs,
-        where pages are in descending order of last update.
-
-    Returns
-    -------
-    list
-        List of merged pull requests from the ``page``-th page of closed PRs.
-        Elements of list are dictionaries with PR details, as obtained
-        from the GitHub API via ``httpx.get``, from the ``pulls`` endpoint.
-    """
+    """Fetch a page of merged pull requests."""
     import httpx
 
     params = {
@@ -50,16 +35,8 @@ def fetch_merged_pull_requests(page: int = 1) -> list[dict]:
     return [pr for pr in r.json() if pr["merged_at"]]
 
 
-def fetch_latest_release():  # noqa: D103
-    """Fetch the latest release from the GitHub API.
-
-    Returns
-    -------
-    dict
-        Dictionary with details of the latest release.
-        Dictionary is as obtained from the GitHub API via ``httpx.get``,
-        for ``releases/latest`` endpoint.
-    """
+def fetch_latest_release():
+    """Fetch the latest release from the GitHub API."""
     import httpx
 
     response = httpx.get(
@@ -73,15 +50,7 @@ def fetch_latest_release():  # noqa: D103
 
 
 def fetch_pull_requests_since_last_release() -> list[dict]:
-    """Fetch all pull requests merged since last release.
-
-    Returns
-    -------
-    list
-        List of pull requests merged since the latest release.
-        Elements of list are dictionaries with PR details, as obtained
-        from the GitHub API via ``httpx.get``, through ``fetch_merged_pull_requests``.
-    """
+    """Fetch all pull requests merged since last release."""
     from dateutil import parser
 
     release = fetch_latest_release()
@@ -115,7 +84,7 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
 
 
 def render_contributors(prs: list, fmt: str = "rst"):
-    """Find unique authors and print a list in  given format."""
+    """Find unique authors and print a list in given format."""
     authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
     header = "Contributors"
@@ -128,31 +97,26 @@ def render_contributors(prs: list, fmt: str = "rst"):
         print(",\n".join(f":user:`{user}`" for user in authors))
 
 
+# CHANGE 1: Assign both category and module 
 def assign_prs(prs, categs):
-    """Assign PRs into categories and modules based on labels."""
-    from collections import defaultdict
-
-    assigned = defaultdict(lambda: defaultdict(list))
+    assigned = defaultdict(list)
+    pr_modules = {}
 
     for i, pr in enumerate(prs):
         pr_labels = [label["name"] for label in pr["labels"]]
 
-        category_found = False
-
         for cat in categs:
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
-                category_found = True
+                assigned[cat["title"]].append(i)
 
-                # Find module label
-                module_labels = [l for l in pr_labels if l.startswith("module:")]
-                module = module_labels[0] if module_labels else "Other"
+        for label in pr_labels:
+            if label.startswith("module:"):
+                pr_modules[i] = label.replace("module:", "")
 
-                assigned[cat["title"]][module].append(i)
+    assigned["Other"] = list(set(range(len(prs))) - {i for lst in assigned.values() for i in lst})
 
-        if not category_found:
-            assigned["Other"]["Other"].append(i)
+    return assigned, pr_modules
 
-    return assigned
 
 def render_row(pr):
     """Render a single row with PR in restructuredText format."""
@@ -164,21 +128,57 @@ def render_row(pr):
     )
 
 
-def render_changelog(prs, assigned):
-    # sourcery skip: use-named-expression
-    """Render changelog with sections and subsections."""
+# CHANGE 2: Group under modules using pr_modules
+def render_changelog(prs, assigned, pr_modules):
     from dateutil import parser
 
-    for category, modules in assigned.items():
+    module_to_title = {
+        "forecasting": "Forecasting",
+        "classification": "Time Series Classification",
+        "regression": "Time Series Regression",
+        "clustering": "Time Series Clustering",
+        "transformations": "Transformations",
+        "annotation": "Annotation, Changepoints",
+        "metrics": "Benchmarking, Metrics",
+        "tests": "Test Framework",
+        "vis": "Visualization",
+        "registry": "Registry and Search",
+        "pipeline": "Pipelines",
+        "base": "Base Classes",
+    }
+
+    for category, pr_indices in assigned.items():
+        if not pr_indices:
+            continue
+
         print(f"\n{category}")
         print("~" * len(category), end="\n\n")
 
-        for module, pr_indices in modules.items():
-            if module != "Other":
-                print(f"{module.replace('module:', '').capitalize()}")
-                print("^" * len(module), end="\n\n")
+        if category in ["Enhancements", "Fixes"]:
+            by_module = defaultdict(list)
+            others = []
 
-            for i in sorted(pr_indices, key=lambda x: parser.parse(prs[x]["merged_at"])):
+            for i in pr_indices:
+                if i in pr_modules:
+                    key = pr_modules[i]
+                    title = module_to_title.get(key, "Other")
+                    by_module[title].append(prs[i])
+                else:
+                    others.append(prs[i])
+
+            for module_title in sorted(by_module):
+                print(module_title)
+                print("^" * len(module_title), end="\n\n")
+                for pr in sorted(by_module[module_title], key=lambda p: parser.parse(p["merged_at"])):
+                    render_row(pr)
+
+            if others:
+                print("Other")
+                print("^^^^^\n")
+                for pr in sorted(others, key=lambda p: parser.parse(p["merged_at"])):
+                    render_row(pr)
+        else:
+            for i in sorted(pr_indices, key=lambda i: parser.parse(prs[i]["merged_at"])):
                 render_row(prs[i])
 
 
@@ -193,8 +193,9 @@ if __name__ == "__main__":
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned = assign_prs(pulls, categories)
-    render_changelog(pulls, assigned)
+    # CHANGE 3: unpack both values
+    assigned, pr_modules = assign_prs(pulls, categories)
+    render_changelog(pulls, assigned, pr_modules)
     print()
     render_contributors(pulls)
 
@@ -206,3 +207,4 @@ if __name__ == "__main__":
             f"There are {len(pulls)} PRs but {diff['total_commits']} in the diff. "
             "Please verify that all PRs are included in the changelog."
         )
+    
