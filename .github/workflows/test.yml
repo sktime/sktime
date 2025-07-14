@@ -261,6 +261,34 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
+  test-lowerdeps:
+    needs: test-nosoftdeps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev,dependencies_lower]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make test_without_datasets
+
   test-mlflow:
     needs: detect-package-change
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
