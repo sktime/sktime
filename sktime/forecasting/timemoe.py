@@ -100,6 +100,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)
+    TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
     >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)
     """
 
@@ -127,6 +128,10 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.timemoe"],
     }
 
     def __init__(
