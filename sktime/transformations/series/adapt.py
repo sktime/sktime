@@ -178,7 +178,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        if get_sklearn_tag(transformer, "capability:categorical")
+        if get_sklearn_tag(transformer, "capability:categorical"):
             self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
