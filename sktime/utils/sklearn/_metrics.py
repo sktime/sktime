@@ -212,9 +212,9 @@ def _check_reg_targets_pre16(y_true, y_pred, multioutput, dtype="numeric"):
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
-                f"y_true and y_pred have different number of output "
-                f"({y_true.shape[1]}!={y_pred.shape[1]})"
-            )
+            f"y_true and y_pred have different number of output "
+            f"({y_true.shape[1]}!={y_pred.shape[1]})"
+        )
 
     n_outputs = y_true.shape[1]
     allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
