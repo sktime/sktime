@@ -279,19 +279,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
+
     def _get_safe_device(self):
         """Get appropriate device, defaulting to CPU in virtualized environments."""
         import platform
         import torch
-    
+
         if platform.system() == 'Darwin':  # macOS
             try:
                 if torch.backends.mps.is_available():
                     return torch.device('mps')
             except Exception:
                 pass
-    
-        return torch.device('cpu')        
+
+        return torch.device('cpu')
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -729,10 +730,10 @@ class PyTorchDataset(Dataset):
         m = i % self.single_length
         n = i // self.single_length
 
-        past_values = self.y[n, m : m + self.context_length, :]
+        past_values = self.y[n, m: m + self.context_length, :]
         future_values = self.y[
             n,
-            m + self.context_length : m + self.context_length + self.prediction_length,
+            m + self.context_length: m + self.context_length + self.prediction_length,
             :,
         ]
         observed_mask = np.ones_like(past_values)
