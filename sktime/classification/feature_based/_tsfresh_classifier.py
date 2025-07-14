@@ -118,6 +118,10 @@ class TSFreshClassifier(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
 
@@ -165,9 +169,7 @@ class TSFreshClassifier(BaseClassifier):
             if self.verbose < 1:
                 self._transformer.disable_progressbar = True
 
-        m = getattr(self._estimator, "n_jobs", None)
-        if m is not None:
-            self._estimator.n_jobs = self._threads_to_use
+        self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._Xt_colnames = X_t.columns
