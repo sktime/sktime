@@ -162,7 +162,6 @@ jobs:
           python -m pip install --upgrade pip
           EXTRA_DEPS=$(python -c "from sktime.registry import deps; print(' '.join(deps('${{ matrix.flag }}')))")
           python -m pip install .[dev] $EXTRA_DEPS
-          pip install -r deps.txt
         continue-on-error: true
 
       - name: Show dependencies
