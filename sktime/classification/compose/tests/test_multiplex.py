@@ -38,7 +38,7 @@ def test_multiplex_classifier():
     parameter_tuning = TSCGridSearchCV(
         multiplexer,
         param_grid,
-        error_score=np.nan, # "raise" np.nan
+        error_score=np.nan,  # "raise" np.nan
         cv=3,
         scoring="accuracy",  # accuracy balanced_accuracy
         verbose=3,
