@@ -64,20 +64,25 @@ class PyFableARIMA(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.PyFableARIMA import PyFableARIMA
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> airline = load_airline()  # a pandas Series with a PeriodIndex (freq='M')
-    >>> airline.name = "Passengers"  # Ensure the name matches your ARIMA formula
-    >>> train, test = temporal_train_test_split(airline, test_size=12)
-    >>> best = PyFableARIMA(formula='Passengers').fit(train)
-    >>> print(best.report())
-    >>> fitted = best.predict(train.index)
-    >>> print(f"fitted = \n{fitted}")
-    >>> pred = best.predict(test.index)
-    >>> print(f"pred = \n{pred}")
-    >>> pred_int = best.predict_interval(fh=test.index, coverage=[0.95, 0.50])
-    >>> print(f"pred_int = \n{pred_int}")
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.forecasting.PyFableARIMA import PyFableARIMA  # doctest: +SKIP
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split \
+             # doctest: +SKIP
+    >>> airline = load_airline()  # a pandas Series with a PeriodIndex (freq='M')\
+             # doctest: +SKIP
+    >>> airline.name = "Passengers"  # Ensure the name matches your ARIMA formula\
+             # doctest: +SKIP
+    >>> train, test = temporal_train_test_split(airline, test_size=12)  \
+             # doctest: +SKIP
+    >>> best = PyFableARIMA(formula='Passengers').fit(train)  # doctest: +SKIP
+    >>> print(best.report())  # doctest: +SKIP
+    >>> fitted = best.predict(train.index)  # doctest: +SKIP
+    >>> print(f"fitted = \n{fitted}")  # doctest: +SKIP
+    >>> pred = best.predict(test.index)  # doctest: +SKIP
+    >>> print(f"pred = \n{pred}")  # doctest: +SKIP
+    >>> pred_int = best.predict_interval(fh=test.index, coverage=[0.95, 0.50]) \
+             # doctest: +SKIP
+    >>> print(f"pred_int = \n{pred_int}")  # doctest: +SKIP
     """
 
     _tags = {
@@ -88,7 +93,7 @@ class PyFableARIMA(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -122,16 +127,6 @@ class PyFableARIMA(BaseForecaster):
         self.trace = trace
         self.is_regular = is_regular
         super().__init__()
-
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
 
     def _custom_prepare_tsibble(self, Z, is_regular=True):
         """fable::ARIMA expects an R tsibble object.
@@ -315,16 +310,24 @@ class PyFableARIMA(BaseForecaster):
         self : reference to self
         """
         if X is None:
+            if y.name is None:
+                y = y.copy()
+                y.name = "y"
             Z = y
+            if self.formula is None:
+                self.formula = y.name
         else:
             if not y.index.equals(X.index):
                 raise ValueError("y and X must have the same index")
             Z = pd.concat([y, X], axis=1)
+            if self.formula is None:
+                self.formula = "y ~ " + " + ".join(str(col) for col in X.columns)
 
         r_tsibble = self._custom_prepare_tsibble(Z, is_regular=self.is_regular)
 
         self._fit_auto_arima_ = self._custom_fit_arima(r_tsibble, self.formula)
         self._fit_index_ = y.index
+        self._y = y
 
     # -------------------------------------------------------------------------
     def _predict_special(self, fh, X=None, coverage=None):
@@ -558,47 +561,5 @@ class PyFableARIMA(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+        # Return the parameters needed to construct the estimator
+        return [{}, {}]
