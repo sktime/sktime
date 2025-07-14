@@ -284,11 +284,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """Get appropriate device, defaulting to CPU in virtualized environments."""
         import platform
         import torch
-
-        if platform.system() == 'Darwin':  # macOS
+    
+        if platform.system() == "Darwin":  # macOS
             try:
                 if torch.backends.mps.is_available():
-                    return torch.device('mps')
+                    return torch.device("mps")
             except Exception:
                 pass
 
