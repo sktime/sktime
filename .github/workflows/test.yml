@@ -287,7 +287,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
+        run: make test_without_datasets
 
   test-mlflow:
     needs: detect-package-change
