@@ -2,12 +2,14 @@
 """Unit tests for (dunder) composition functionality attached to the base class."""
 
 import numpy as np
+import pytest
 
 from sktime.classification.compose import MultiplexClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.classification.feature_based import SummaryClassifier
 from sktime.classification.model_selection import TSCGridSearchCV
 from sktime.datasets import load_unit_test
+from sktime.tests.test_switch import run_test_module_changed
 
 
 @pytest.mark.skipif(
