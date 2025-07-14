@@ -2064,7 +2064,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         yt = prep_skl_df(yt)
 
         estimator = clone(self.estimator)
-        if not get_sklearn_tag(self.regressor_, "capability:multioutput"):
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
