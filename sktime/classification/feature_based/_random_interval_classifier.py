@@ -139,7 +139,9 @@ class RandomIntervalClassifier(BaseClassifier):
             self.random_state,
         )
 
-        self._estimator.n_jobs = self._threads_to_use
+        m = getattr(self._estimator, "n_jobs", None)
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)

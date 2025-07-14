@@ -126,7 +126,9 @@ class Catch22Classifier(_DelegatedClassifier):
             estimator = RandomForestClassifier(n_estimators=200)
 
         estimator = _clone_estimator(estimator, random_state)
-        estimator.n_jobs = self._threads_to_use
+        m = getattr(estimator, "n_jobs", None)
+        if m is not None:
+            estimator.n_jobs = self._threads_to_use
 
         self.estimator_ = make_pipeline(transformer, estimator)
 

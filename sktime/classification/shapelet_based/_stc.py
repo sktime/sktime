@@ -235,7 +235,9 @@ class ShapeletTransformClassifier(BaseClassifier):
         if isinstance(self._estimator, RotationForest):
             self._estimator.save_transformed_data = self.save_transformed_data
 
-        self._estimator.n_jobs = self._threads_to_use
+        m = getattr(self._estimator, "n_jobs", None)
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         m = getattr(self._estimator, "time_limit_in_minutes", None)
         if m is not None and self.time_limit_in_minutes > 0:

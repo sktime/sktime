@@ -169,7 +169,9 @@ class TSFreshClassifier(BaseClassifier):
             if self.verbose < 1:
                 self._transformer.disable_progressbar = True
 
-        self._estimator.n_jobs = self._threads_to_use
+        m = getattr(self._estimator, "n_jobs", None)
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._Xt_colnames = X_t.columns
