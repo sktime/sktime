@@ -18,7 +18,6 @@ def test_multiplex_classifier():
     """
     # Load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test =load_unit_test(split="test", return_X_y=True)
 
     estimators_list = [
         ("SimpleRNNClassifier", DummyClassifier()),
@@ -33,7 +32,7 @@ def test_multiplex_classifier():
     parameter_tuning = TSCGridSearchCV(
         multiplexer,
         param_grid,
-        error_score=np.nan, # "raise" np.nan
+        error_score=np.nan,  # "raise" np.nan
         cv=3,
         scoring="accuracy",  # accuracy balanced_accuracy
         verbose=3,

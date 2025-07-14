@@ -29,7 +29,6 @@ import numpy as np
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 
 
 class BaseRegressor(BasePanelMixin):
