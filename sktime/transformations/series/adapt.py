@@ -423,6 +423,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
         from sklearn.feature_selection import VarianceThreshold
         from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
             "transformer": StandardScaler(),
@@ -447,6 +449,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
             "pooling": "global",
             "input_type": "numpy",
         }
+
+        # LabelEncoder has inconsistent API on older scikit-learn versions
+        if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
+            return [params1, params2, params3, params4, params6, params7, params8]
 
         return [params1, params2, params3, params4, params5, params6, params7, params8]
 
