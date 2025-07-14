@@ -5,19 +5,24 @@ import numpy as np
 
 from sktime.classification.compose import MultiplexClassifier
 from sktime.classification.dummy import DummyClassifier
+from sktime.classification.feature_based import SummaryClassifier
 from sktime.classification.model_selection import TSCGridSearchCV
 from sktime.datasets import load_unit_test
 
 
 def test_multiplex_classifier():
-    """Test the MultiplexClassifier with a grid search."""
+    """Test the MultiplexClassifier with a grid search.
+
+    Failure case of #8547 as it includes a classifier with
+    capability:multithreading tag.
+    """
     # Load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test =load_unit_test(split="test", return_X_y=True)
 
     estimators_list = [
         ("SimpleRNNClassifier", DummyClassifier()),
-        ("Arsenal", DummyClassifier()),
+        ("Arsenal", SummaryClassifier()),
         ("ContractableBOSS", DummyClassifier()),
     ]
 
