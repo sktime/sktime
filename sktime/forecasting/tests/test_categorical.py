@@ -16,8 +16,8 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sktime.forecasting.compose import SkforecastAutoreg
 from sktime.forecasting.compose._reduce import YfromX
 from sktime.forecasting.dummy import ForecastKnownValues
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def test_dummy_est_with_categorical_capability():
