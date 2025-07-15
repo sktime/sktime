@@ -58,7 +58,7 @@ jobs:
 
   detect-notebooks-change:
     needs: code-quality
-    name: detect package changes
+    name: detect change affecting notebooks
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
