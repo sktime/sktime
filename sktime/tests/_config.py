@@ -78,7 +78,6 @@ EXCLUDE_ESTIMATORS = [
     # Test estimators
     "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
-    "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
     "PytorchForecastingNHiTS",
     "PytorchForecastingDeepAR",
