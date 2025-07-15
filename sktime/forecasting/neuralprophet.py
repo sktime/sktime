@@ -5,12 +5,13 @@
 __author__ = ["vedantag17"]
 __all__ = ["NeuralProphet"]
 
+import pandas as pd
 
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base.adapters import _ProphetAdapter
 
 
-class NeuralProphet(_ProphetAdapter):
+class NeuralProphet(BaseForecaster):
     """NeuralProphet forecaster by wrapping NeuralProphet algorithm [1]_.
 
     Direct interface to NeuralProphet, using the sktime interface.
@@ -94,14 +95,20 @@ class NeuralProphet(_ProphetAdapter):
     """
 
     _tags = {
-        **_ProphetAdapter._tags,
         "authors": ["vedantag17"],
+        "maintainers": ["vedantag17"],
         "python_dependencies": "neuralprophet",
+        "ignores-exogeneous-X": False,
+        "handles-missing-data": True,
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
     }
 
     def __init__(
         self,
-        # Args due to wrapping
         freq=None,
         add_seasonality=None,
         custom_seasonalities=None,
@@ -132,7 +139,6 @@ class NeuralProphet(_ProphetAdapter):
         self.add_seasonality = add_seasonality
         self.custom_seasonalities = custom_seasonalities
         self.add_country_holidays = add_country_holidays
-
         self.growth = growth
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
@@ -157,14 +163,30 @@ class NeuralProphet(_ProphetAdapter):
 
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data."""
         from neuralprophet import NeuralProphet as _NeuralProphet
 
-        self._ModelClass = _NeuralProphet
+        # Convert PeriodIndex to DatetimeIndex if needed
+        if hasattr(y.index, "to_timestamp"):
+            y = y.copy()
+            y.index = y.index.to_timestamp()
 
-    def _instantiate_model(self):
-        """Instantiate the NeuralProphet model."""
-        self._forecaster = self._ModelClass(
+        # Prepare data for NeuralProphet
+        df = pd.DataFrame({"ds": y.index, "y": y.values})
+
+        # Add exogenous variables if provided
+        if X is not None:
+            if hasattr(X.index, "to_timestamp"):
+                X = X.copy()
+                X.index = X.index.to_timestamp()
+            df = df.join(X, how="left")
+
+        # Store training dataframe for future predictions
+        self._training_df = df
+
+        # Initialize and configure NeuralProphet model
+        self._model = _NeuralProphet(
             growth=self.growth,
             changepoints=self.changepoints,
             n_changepoints=self.n_changepoints,
@@ -182,7 +204,70 @@ class NeuralProphet(_ProphetAdapter):
             loss_func=self.loss_func,
         )
 
+        # Add custom seasonalities, holidays, etc. (same as before)
+        if self.custom_seasonalities:
+            for seasonality in self.custom_seasonalities:
+                self._model.add_seasonality(**seasonality)
+
+        if self.add_country_holidays:
+            self._model.add_country_holidays(**self.add_country_holidays)
+
+        if self.holidays is not None:
+            for holiday in self.holidays.itertuples():
+                self._model.add_events(
+                    holiday.holiday,
+                    mode=self.holidays_mode,
+                    regularization=self.holidays_reg,
+                )
+
+        # Fit the model
+        self._model.fit(df)
+
         return self
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        # Get absolute forecasting horizon and convert to pandas Index
+        absolute_fh = self.fh.to_absolute(self.cutoff)
+        fh_index = absolute_fh.to_pandas()
+
+        # Create future dataframe using the stored training data
+        future_df = self._model.make_future_dataframe(
+            df=self._training_df, periods=len(fh_index)
+        )
+
+        # Add exogenous variables if provided
+        if X is not None:
+            if hasattr(X.index, "to_timestamp"):
+                X = X.copy()
+                X.index = X.index.to_timestamp()
+            # Merge exogenous variables with future dataframe
+            X_reset = X.reset_index()
+            X_reset.columns = ["ds"] + list(X.columns)
+            future_df = future_df.merge(X_reset, on="ds", how="left")
+
+        # Make predictions
+        forecast = self._model.predict(future_df)
+
+        # Extract predictions and create pd.Series with correct index
+        y_pred = pd.Series(
+            forecast["yhat1"].values[-len(fh_index) :], index=fh_index, name="y_pred"
+        )
+
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
