@@ -7,8 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
+    _get_kwarg,
     mean_relative_absolute_error,
 )
 
@@ -94,3 +97,54 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = mean_relative_absolute_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+        **kwargs : dict
+            Additional keyword arguments, including y_pred_benchmark.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+            index is equal to index of y_true
+            entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+            index and columns equal to those of y_true
+            i,j-th entry is metric at time i, at variable j
+        """
+        y_pred_benchmark = _get_kwarg(
+            "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
+        )
+
+        multioutput = self.multioutput
+
+        denominator = y_true - y_pred_benchmark
+        numerator = y_true - y_pred
+
+        EPS = np.finfo(np.float64).eps
+        denominator_safe = denominator.where(denominator != 0, EPS)
+        relative_errors = numerator / denominator_safe
+        raw_values = relative_errors.abs()
+
+        if multioutput == "raw_values":
+            return raw_values
+        if multioutput == "uniform_average":
+            return raw_values.mean(axis=1)
+        weights = np.asarray(multioutput)
+        return raw_values.dot(weights)
