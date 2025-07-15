@@ -102,6 +102,7 @@ def test_run_test_for_class():
         "True_changed_class",
         "True_changed_tests",
         "True_changed_framework",
+        "True_changed_libs",
     ]
 
     if not ONLY_CHANGED_MODULES:

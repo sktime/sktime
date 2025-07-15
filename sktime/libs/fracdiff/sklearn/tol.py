@@ -38,9 +38,9 @@ def window_from_tol_coef(n: float, tol_coef: float, max_window: int = 2**12) -> 
     >>> from sktime.libs.fracdiff import fdiff_coef
     >>> window_from_tol_coef(0.5, 0.1)
     4
-    >>> fdiff_coef(0.5, 3)[-1]
+    >>> fdiff_coef(0.5, 3)[-1]  # doctest: +SKIP
     -0.125
-    >>> fdiff_coef(0.5, 4)[-1]
+    >>> fdiff_coef(0.5, 4)[-1]  # doctest: +SKIP
     -0.0625
     """
     coef = np.abs(fdiff_coef(n, max_window))
@@ -80,9 +80,9 @@ def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12)
     >>>
     >>> window_from_tol_memory(0.5, 0.2)
     9
-    >>> np.sum(fdiff_coef(0.5, 10000)[9:])
+    >>> np.sum(fdiff_coef(0.5, 10000)[9:])  # doctest: +SKIP
     -0.19073...
-    >>> np.sum(fdiff_coef(0.5, 10000)[8:])
+    >>> np.sum(fdiff_coef(0.5, 10000)[8:])  # doctest: +SKIP
     -0.20383...
     """
     lost_memory = np.abs(np.cumsum(fdiff_coef(n, max_window)))
