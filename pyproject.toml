@@ -283,7 +283,7 @@ cython_extras = [
   "numba<0.62",
 ]
 datasets = [
-  "huggingface-hub"
+  "huggingface-hub",
   "rdata",
   "requests",
 ]
