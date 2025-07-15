@@ -46,17 +46,17 @@ def test_downloader_strategy_behavior(tmp_path, strategy):
         fname: (dataset_path / fname).stat().st_mtime for fname in EXPECTED_FILES
     }
 
-    # 2 sec sleep to ensure time difference
-    time.sleep(2)
+    # 1 sec sleep to ensure time difference
+    time.sleep(1)
 
-    # download again (force_download=True)
+    # download for the third time (force_download=True)
     strategy.download(DATASET_NAME, download_path=download_path, force_download=True)
     assert dataset_path.exists()
 
     for fname in EXPECTED_FILES:
         fpath = dataset_path / fname
         assert fpath.exists()
-        # timestamp after second download
+        # timestamp after third download
         new_timestamp = fpath.stat().st_mtime
         assert new_timestamp > old_timestamps[fname], (
             f"Expected {fname} to be re-downloaded (newer timestamp), "
