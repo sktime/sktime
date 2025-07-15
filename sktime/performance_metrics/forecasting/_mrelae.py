@@ -9,14 +9,14 @@ the lower the better.
 
 import numpy as np
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
     mean_relative_absolute_error,
 )
 
 
-class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Mean relative absolute error (MRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -141,9 +141,5 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         denominator_safe = denominator.where(denominator != 0, EPS)
         relative_errors = numerator / denominator_safe
         raw_values = relative_errors.abs()
-        if isinstance(multioutput, str) and multioutput == "raw_values":
-            return raw_values
-        if isinstance(multioutput, str) and multioutput == "uniform_average":
-            return raw_values.mean(axis=1)
-        weights = np.asarray(multioutput)
-        return raw_values.dot(weights)
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        return self._handle_multioutput(raw_values, multioutput)
