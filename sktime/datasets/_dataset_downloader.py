@@ -19,9 +19,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 class DatasetDownloadStrategy:
     """Base class for dataset download strategies."""
 
-    def download(
-        self, dataset_name, download_path=None, force_download=False, **kwargs
-    ):
+    def download(self, dataset_name, download_path=None, force_download=False):
         """Download a dataset using this strategy.
 
         Parameters
@@ -32,8 +30,6 @@ class DatasetDownloadStrategy:
             Local directory where the dataset should be saved.
         force_download : bool, default=False
             Whether to force re-download the dataset even if it's cached locally.
-        **kwargs
-            Additional keyword arguments passed to the strategy implementation.
 
         Returns
         -------
@@ -49,36 +45,17 @@ class DatasetDownloadStrategy:
         local_dataset_path = download_path / dataset_name
 
         if not local_dataset_path.exists() or force_download:
-            self._download(dataset_name, download_path, **kwargs)
+            self._download(dataset_name, download_path, force_download=force_download)
 
         return local_dataset_path
 
-    def _download(self, dataset_name, download_path, **kwargs):
+    def _download(self, dataset_name, download_path, force_download=False):
         """Strategy-specific download implementation."""
         raise NotImplementedError("Subclasses must implement _download method")
 
 
 class HuggingFaceDownloader(DatasetDownloadStrategy):
-    """Download datasets using the Hugging Face Hub snapshot mechanism.
-
-    Implements a strategy to download datasets stored in Hugging Face
-    repositories.
-
-    Parameters
-    ----------
-    repo_name : str
-        Name of the Hugging Face repository containing the datasets.
-        In the format: "organisation/repository_name",
-        e.g., "sktime/tsf-datasets"
-    repo_type : str, default="dataset"
-        Type of repository (e.g., "dataset", "model", etc.).
-    token : str, optional
-        Hugging Face authentication token for private repositories.
-
-    References
-    ----------
-    https://huggingface.co/docs/huggingface_hub/en/guides/download#filter-files-to-download
-    """
+    """Download datasets using the Hugging Face Hub snapshot mechanism."""
 
     _tags = {
         "python_dependencies": "huggingface-hub",
@@ -90,12 +67,14 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.token = token
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
-    def _download(self, dataset_name, download_path, **kwargs):
+    def _download(self, dataset_name, download_path, force_download=False):
         local_dataset_path = download_path / dataset_name
 
-        if self.available:
-            from huggingface_hub import snapshot_download
-            from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
+        if not self.available:
+            return 0
+
+        from huggingface_hub import snapshot_download
+        from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
 
         try:
             snapshot_download(
@@ -103,9 +82,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
                 repo_type=self.repo_type,
                 allow_patterns=f"{dataset_name}/**",
                 local_dir=download_path,
-                force_download=False,
+                force_download=force_download,
                 token=self.token,
-                **kwargs,
             )
 
             if not local_dataset_path.exists():
@@ -119,38 +97,17 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
 
 class URLDownloader(DatasetDownloadStrategy):
-    """Strategy for downloading datasets from URLs (with zip extraction).
-
-    Parameters
-    ----------
-    base_urls: List of URLs to attempt downloading from.
-    """
+    """Strategy for downloading datasets from URLs (with zip extraction)."""
 
     def __init__(self, base_urls):
         self.base_urls = base_urls
         self.available = True
 
-    def _download(self, dataset_name, download_path, **kwargs):
-        """Download and extract a dataset from URL.
-
-        Parameters
-        ----------
-        dataset_name : str
-            Name of the dataset to download.
-        download_path : Path
-            Local directory where the dataset should be saved.
-        **kwargs
-            Additional keyword arguments (unused in this implementation).
-
-        Returns
-        -------
-        Path
-            Path to the downloaded dataset folder.
-        """
+    def _download(self, dataset_name, download_path, force_download=False):
         last_error = None
         for url in self.base_urls:
             try:
-                self._download_and_extract(url, download_path)
+                self._download_and_extract(url, download_path, force_download)
                 return
             except Exception as e:
                 last_error = e
@@ -160,8 +117,7 @@ class URLDownloader(DatasetDownloadStrategy):
             f"Failed to download dataset '{dataset_name}' from any URL"
         )
 
-    def _download_and_extract(self, url: str, extract_path=None):
-        """Download and unzip datasets (helper function)."""
+    def _download_and_extract(self, url: str, extract_path=None, force=False):
         file_name = os.path.basename(url)
         dl_dir = tempfile.mkdtemp()
         zip_file_name = os.path.join(dl_dir, file_name)
@@ -173,6 +129,9 @@ class URLDownloader(DatasetDownloadStrategy):
                 extract_path = Path.cwd() / "local_data" / file_name.split(".")[0]
             else:
                 extract_path = Path(extract_path) / file_name.split(".")[0]
+
+            if extract_path.exists() and force:
+                shutil.rmtree(extract_path)
 
             extract_path.mkdir(parents=True, exist_ok=True)
 
@@ -188,8 +147,7 @@ class URLDownloader(DatasetDownloadStrategy):
             if extract_path and extract_path.exists():
                 shutil.rmtree(extract_path)
 
-            error_msg = f"Could not download/extract dataset from {url}: {e}"
-            raise RuntimeError(error_msg)
+            raise RuntimeError(f"Could not download/extract dataset from {url}: {e}")
 
 
 class DatasetDownloader(DatasetDownloadStrategy):
@@ -213,7 +171,7 @@ class DatasetDownloader(DatasetDownloadStrategy):
         ]
         self.retries = retries
 
-    def _download(self, dataset_name, download_path, **kwargs):
+    def _download(self, dataset_name, download_path, force_download=False):
         errors = []
 
         for i, strategy in enumerate(self.strategies):
@@ -230,7 +188,11 @@ class DatasetDownloader(DatasetDownloadStrategy):
 
             for attempt in range(self.retries):
                 try:
-                    strategy._download(dataset_name, download_path, **kwargs)
+                    strategy._download(
+                        dataset_name,
+                        download_path,
+                        force_download=force_download,
+                    )
                     return
                 except Exception as e:
                     error_msg = (
