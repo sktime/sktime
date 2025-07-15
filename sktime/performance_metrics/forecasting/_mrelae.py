@@ -141,10 +141,9 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         denominator_safe = denominator.where(denominator != 0, EPS)
         relative_errors = numerator / denominator_safe
         raw_values = relative_errors.abs()
-
-        if multioutput == "raw_values":
+        if isinstance(multioutput, str) and multioutput == "raw_values":
             return raw_values
-        if multioutput == "uniform_average":
+        if isinstance(multioutput, str) and multioutput == "uniform_average":
             return raw_values.mean(axis=1)
         weights = np.asarray(multioutput)
         return raw_values.dot(weights)
