@@ -57,7 +57,7 @@ jobs:
         shell: bash
 
   run-notebook-examples:
-    needs: code-quality
+    needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
         shell: bash
 
   run-blogpost-examples:
-    needs: code-quality
+    needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +91,8 @@ jobs:
         shell: bash
 
   detect-changed-classes:
-    needs: code-quality
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       obj_list: ${{ steps.get-change-list.outputs.obj_list }}
@@ -172,7 +173,7 @@ jobs:
         run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
 
   detect-package-change:
-    needs: [code-quality, detect-changed-classes]
+    needs: test-nodevdeps
     name: detect package changes
     runs-on: ubuntu-latest
     permissions:
@@ -190,8 +191,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-package-change
-    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
+    needs: code-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -290,8 +290,7 @@ jobs:
         run: make test_without_datasets
 
   test-mlflow:
-    needs: detect-package-change
-    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
+    needs: test-nosoftdeps
     runs-on: ubuntu-latest
     strategy:
       matrix:
