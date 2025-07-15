@@ -936,9 +936,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if not non_default_pred_proba and not skpro_present:
             warn(msg, obj=self, stacklevel=2)
 
-        if non_default_pred_proba and not skpro_present:
-            raise ImportError(msg)
-
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -948,7 +945,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         X_inner = self._check_X(X=X)
 
         # pass to inner _predict_proba
-        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        try:  # try/except for handling notification about missing skpro softdep
+            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        except ImportError as e:
+            if non_default_pred_proba and not skpro_present:
+                raise ImportError(msg)
+            else:
+                raise e
 
         return pred_dist
 
