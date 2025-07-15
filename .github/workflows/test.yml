@@ -173,7 +173,25 @@ jobs:
         run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
 
   detect-package-change:
-    needs: test-nodevdeps
+    needs: code-quality
+    name: detect package changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      sktime: ${{ steps.filter.outputs.sktime }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sktime:
+              - sktime/**
+              - pyproject.toml
+
+  detect-notebooks-change:
+    needs: code-quality
     name: detect package changes
     runs-on: ubuntu-latest
     permissions:
@@ -191,7 +209,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: code-quality
+    needs: detect-package-change
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
