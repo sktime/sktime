@@ -56,7 +56,7 @@ def _assert_index_equal(a, b):
 @pytest.fixture(params=None)
 def good_absolute_input_arg(request):
     """Parametrized by integer values."""
-    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    pandas2 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
     if pandas2:
         m_freq = "ME"
     else:
