@@ -418,7 +418,7 @@ class ForecastingHorizon:
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
-    def to_pandas(self) -> pd.Index:
+    def to_pandas(self) -> pd.Index:  # to_pandas
         """Return forecasting horizon's underlying values as pd.Index.
 
         Returns
