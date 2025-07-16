@@ -347,7 +347,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MVCAPA",
         "MatrixProfile",
         "MatrixProfileTransformer",
-        "MiniRocketMultivariateVariable",
         "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
