@@ -508,7 +508,7 @@ class ChronosForecaster(BaseForecaster):
         if y is not None:
             return self.fit_predict(fh=_fh, X=X, y=y)
 
-        super().predict(fh=fh, X=X, y=y)
+        super().predict(fh=fh, X=X)
 
     def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
