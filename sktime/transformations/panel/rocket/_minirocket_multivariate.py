@@ -147,6 +147,21 @@ class MiniRocketMultivariate(BaseTransformer):
             self.num_kernels_ = (self.num_kernels // 84) * 84
 
         return self
+    
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter sets for the estimator."""
+        params1 = {
+            "num_kernels": 84,
+            "random_state": 42,
+        }
+
+        params2 = {
+            "num_kernels": 168,
+            "random_state": 123,
+        }
+
+        return [params1, params2]
 
     def _transform(self, X, y=None):
         """Transform input time series.
