@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -177,7 +177,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(_BaseGlobalForecaster):
+class ChronosForecaster(BaseForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -441,6 +441,75 @@ class ChronosForecaster(_BaseGlobalForecaster):
         }
         return str(sorted(kwargs_plus_model_path.items()))
 
+    def predict(self, fh=None, X=None, y=None):
+        """Forecast time series at future horizon.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at ``fh``, with same index as ``fh``.
+            ``y_pred`` has same type as the ``y`` that has been passed most recently:
+            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if self._fh is None and fh is not None:
+            _fh = fh
+        else:
+            _fh = self._fh
+
+        if y is not None:
+            return self.fit_predict(fh=_fh, X=X, y=y)
+
+        super().predict(fh=fh, X=X, y=y)
+
     def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
 
@@ -500,7 +569,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
         pred.index.names = index_names
 
-        return pred.loc[dateindex]
+        y_pred = pred.loc[dateindex]
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
