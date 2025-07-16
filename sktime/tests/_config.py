@@ -360,7 +360,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MatrixProfileTransformer",
         "MiniRocketMultivariateVariable",
         "MovingWindow",
-        "MultiRocket",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
