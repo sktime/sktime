@@ -471,10 +471,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         _y_df = _y
 
         index_names = _y.index.names
-        if isinstance(_y.index, pd.MultiIndex):
-            _y = _frame2numpy(_y)
-        else:
-            _y = _y.values.reshape(1, -1, 1)
+        _y = _y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
@@ -540,24 +537,6 @@ class ChronosForecaster(_BaseGlobalForecaster):
             }
         )
         return test_params
-
-
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
 
 
 @_multiton
