@@ -62,8 +62,7 @@ class TestCausalFeatureEngineer:
             max_lag=2,
             causal_method="pc",
         )
-
-        check_estimator(estimator)
+        check_estimator(estimator, raise_exceptions=True, verbose=True)
 
     def test_causal_feature_engineer_univariate(self, sample_univariate_data):
         """Test CausalFeatureEngineer with univariate time series."""
