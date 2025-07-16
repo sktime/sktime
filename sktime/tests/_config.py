@@ -46,7 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
-    "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
@@ -87,12 +86,9 @@ EXCLUDE_ESTIMATORS = [
     "STDBSCAN",
     # Temporarily remove RRF from tests, while #7380 is not merged
     "RecursiveReductionForecaster",
-    # DistanceFeatures does ont work for hierarchical data, see #8077
-    "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
-    "CNTCRegressor",
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
@@ -142,12 +138,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
         "test_fit_idempotent",  # see 6201
         "test_multiprocessing_idempotent",  # see 6637
-    ],
-    # TapNet fails due to Lambda layer, see #3539 and #3616
-    "TapNetClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
     ],
     "TapNetRegressor": [
         "test_fit_idempotent",
@@ -209,9 +199,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
-        "test_fit_idempotent",
-    ],
-    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
