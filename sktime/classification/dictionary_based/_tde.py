@@ -741,6 +741,10 @@ class IndividualTDE(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):
         """Return state as dictionary for pickling, required for typed Dict objects."""
