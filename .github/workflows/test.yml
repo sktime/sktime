@@ -151,15 +151,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install sktime with dev dependencies
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Install sktime with dependencies for ${{ matrix.flag }}
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[dev]
-
-      - name: Install dependencies for ${{ matrix.flag }}
-        run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
-          pip install -r deps.txt
+          EXTRA_DEPS=$(python -c "from sktime.registry import deps; print(' '.join(deps('${{ matrix.flag }}')))")
+          python -m pip install .[dev] $EXTRA_DEPS
         continue-on-error: true
 
       - name: Show dependencies
