@@ -91,15 +91,31 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     def _transform(self, X, y=None):
         from scipy.stats import norm
 
-        if self.scale in self._allowed_statistics:
-            scale = self.scale(X)
-        elif isinstance(self.scale, (int, float)):
-            scale = self.scale
-        else:
-            raise TypeError(
-                "Type of parameter 'scale' must be a non-negative float value."
-            )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+    if self.scale in self._allowed_statistics:
+        scale = self.scale(X)
+    elif isinstance(self.scale, (int, float)):
+        scale = self.scale
+    else:
+        raise TypeError(
+            "Type of parameter 'scale' must be a non-negative float value or a callable."
+        )
+
+    rng = check_random_state(self.random_state)
+
+    if isinstance(X, pd.Series):
+        noise = norm.rvs(0, scale, size=len(X), random_state=rng)
+        return X + noise
+
+    elif isinstance(X, pd.DataFrame):
+        noise_df = pd.DataFrame(
+            norm.rvs(0, scale, size=X.shape, random_state=rng),
+            index=X.index,
+            columns=X.columns,
+        )
+        return X + noise_df
+
+    else:
+        raise ValueError("Input X must be a pandas Series or DataFrame.")
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
