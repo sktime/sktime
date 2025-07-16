@@ -301,12 +301,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "capability:insample": False,
         "capability:pred_int:insample": False,
@@ -491,28 +487,12 @@ class ChronosForecaster(_BaseGlobalForecaster):
             results.append(values)
 
         pred = np.stack(results, axis=1)
-        if isinstance(_y_df.index, pd.MultiIndex):
-            ins = np.array(
-                list(np.unique(_y_df.index.droplevel(-1)).repeat(pred.shape[0]))
-            )
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
-            idx = (
-                ForecastingHorizon(range(1, pred.shape[0] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[1]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y_df.index.names,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[0] + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
+        index = (
+            ForecastingHorizon(range(1, pred.shape[0] + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
         pred = pd.DataFrame(
