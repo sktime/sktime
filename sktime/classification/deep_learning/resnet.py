@@ -71,8 +71,6 @@ class ResNetClassifier(BaseDeepClassifier):
         # `test_fit_idempotent` fails with `AssertionError`, see #3616
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
         ],
     }
 
