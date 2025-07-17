@@ -959,7 +959,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator.predict()
 
         assert isinstance(y_pred, pd.DataFrame)
-        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict=False)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
 
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
