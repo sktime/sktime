@@ -16,6 +16,16 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.38.4 - 2025-07-17
+---------------------------
+
+Release focusing on bugfixes and ``scikit-learn`` downwards compatibility after 1.7.0.
+
+Contents
+~~~~~~~~
+
+
+
 Version 0.38.3 - 2025-07-04
 ---------------------------
 
