@@ -32,10 +32,13 @@ Enhancements
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] The trend argument for ARDL forecaster can now also be 'ctt'. (:pr:`8062`) :user:`ericjb`
+* [ENH] The trend argument for ARDL forecaster can now also be 'ctt' (:pr:`8062`) :user:`ericjb`
+* [ENH] remove internal broadcasting in ``ChronosForecaster`` in favour of programmatic broadcasting (:pr:`8561`) :user:`fkiraly`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] more robust tag cloning in multiplexers for classification and regression (:pr:`8550`) :user:`fkiraly`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -70,6 +73,7 @@ Maintenance
 * [MNT] fix two instances of empty strategy in GHA (:pr:`8500`) :user:`fkiraly`
 * [MNT] [Dependabot](deps): Bump ``actions/setup-python`` from ``4`` to ``5`` (:pr:`8507`) :user:`dependabot[bot]`
 * [MNT] full test run on mid-to-lower dependency version range, 2023 state of core deps (:pr:`4016`) :user:`fkiraly`
+* [MNT] replace ``dorny/paths-filter`` third party action with ``git diff`` call in ``detect-package-change`` (:pr:`8556`) :user:`fkiraly`
 
 Fixes
 ~~~~~
