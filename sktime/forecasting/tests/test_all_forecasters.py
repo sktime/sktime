@@ -937,11 +937,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
 
-    def test_unequal_length_hierarchical_fit_predict(estimator_class):
+    def test_unequal_length_hierarchical_fit_predict(self, estimator_instance):
         """Test forecaster support for hierarchical series of unequal length."""
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
-        estimator = estimator_class.create_test_instance()
+        estimator = estimator_instance
 
         y = _make_hierarchical(
             hierarchy_levels=(2, 3),
