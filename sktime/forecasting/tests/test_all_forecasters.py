@@ -937,6 +937,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
 
+    def test_unequal_length_hierarchical_fit_predict(estimator_class):
+        """Test forecaster support for hierarchical series of unequal length."""
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        estimator = estimator_class.create_test_instance()
+
+        y = _make_hierarchical(
+            hierarchy_levels=(2, 3),
+            min_timepoints=5,
+            max_timepoints=12,
+            n_columns=1,
+            index_type="range",
+            random_state=42,
+            same_cutoff=False,
+        )
+
+        fh = [1, 2]
+
+        estimator.fit(y, fh=fh)
+        y_pred = estimator.predict()
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict=False)
+
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
