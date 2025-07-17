@@ -103,11 +103,9 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         )
         self._set_classifier()
 
-        self.clone_tags(self.classifier_)
+        self._set_delegated_tags()
+
         self.set_tags(**{"fit_is_empty": False})
-        # this ensures that we convert in the inner estimator, not in the multiplexer
-        self.set_tags(**{"X_inner_mtype": MTYPE_LIST_PANEL})
-        self.set_tags(**{"y_inner_mtype": MTYPE_LIST_TABLE})
 
     @property
     def _classifiers(self):
