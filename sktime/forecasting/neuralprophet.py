@@ -260,10 +260,23 @@ class NeuralProphet(BaseForecaster):
             if hasattr(X.index, "to_timestamp"):
                 X = X.copy()
                 X.index = X.index.to_timestamp()
-            # Merge exogenous variables with future dataframe
-            X_reset = X.reset_index()
-            X_reset.columns = ["ds"] + list(X.columns)
-            future_df = future_df.merge(X_reset, on="ds", how="left")
+
+            # Create a dataframe with the future dates and exogenous variables
+            future_X = pd.DataFrame(index=fh_index)
+
+            # Align X with the future prediction dates
+            for col in X.columns:
+                if col in self._training_df.columns:
+                    # Map the exogenous values to the corresponding future dates
+                    future_X[col] = X.reindex(fh_index)[col]
+
+            # Update the future_df with the exogenous variables
+            # Only update the rows that correspond to the prediction horizon
+            for col in future_X.columns:
+                if not future_X[col].isna().all():  # Only if column has non-NaN values
+                    future_df.loc[future_df.index[-len(fh_index) :], col] = future_X[
+                        col
+                    ].values
 
         # Make predictions
         forecast = self._model.predict(future_df)
