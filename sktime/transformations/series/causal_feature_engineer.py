@@ -97,7 +97,7 @@ class CausalFeatureEngineer(BaseTransformer):
         "authors": ["Aheli"],
         "python_dependencies": "pgmpy>=0.1.20",
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "y_inner_mtype": ["pd.Series", "pd.DataFrame", "None"],
@@ -127,7 +127,7 @@ class CausalFeatureEngineer(BaseTransformer):
         self.weighting_strategy = weighting_strategy
         self.significance_level = significance_level
         self.min_causal_strength = min_causal_strength
-        self.expert_knowledge = expert_knowledge if expert_knowledge else {}
+        self.expert_knowledge = expert_knowledge
         self.scoring_method = scoring_method
 
         super().__init__()
@@ -220,7 +220,7 @@ class CausalFeatureEngineer(BaseTransformer):
 
     def _initialize_expert_knowledge(self):
         """Initialize expert knowledge for causal discovery."""
-        if not self.expert_knowledge:
+        if self.expert_knowledge is None:
             return None
 
         from pgmpy.estimators.ExpertKnowledge import ExpertKnowledge

@@ -174,3 +174,7 @@ examples/local/
 profile.svg
 test_output/*
 mlruns/*
+
+# Custom requirements files for development
+requirements.txt
+test_output*
