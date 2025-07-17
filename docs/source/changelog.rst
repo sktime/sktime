@@ -23,8 +23,6 @@ Version 0.38.4 - 2025-07-17
 Release focusing on bugfixes and ``scikit-learn`` downwards compatibility after 1.7.0
 and increasing test framework reliability.
 
-Contents
-~~~~~~~~
 
 Enhancements
 ~~~~~~~~~~~~
@@ -59,7 +57,7 @@ Documentation
 ~~~~~~~~~~~~~
 
 * [DOC] Notebook Demonstrating Benchmarking of Classifiers (:pr:`8373`) :user:`jgyasu`
-* [DOC] Correct note about unequal-length TS support in sktime (:pr:`8510`) :user:`jgyasu`
+* [DOC] Correct note about unequal-length time series support in ``sktime`` (:pr:`8510`) :user:`jgyasu`
 * [DOC] fix ``TimeMoEForecaster`` doctest (:pr:`8541`) :user:`fkiraly`
 * [DOC] Update the broken ``all-contributors.org`` website link to the correct GitHub repository URL (:pr:`8539`) :user:`Tirath5504`
 * [DOC] Note about package names in ``_check_soft_dependencies`` (:pr:`8529`) :user:`jgyasu`
@@ -68,6 +66,7 @@ Documentation
 
 Maintenance
 ~~~~~~~~~~~
+
 * [MNT] do not trigger VM tests for non-core estimators on framework changes (:pr:`8497`) :user:`fkiraly`
 * [MNT] CI steps to test by estimator with estimator specific dependencies, controlled by tag for separate VM (:pr:`7087`) :user:`fkiraly`, :user:`julianfong`
 * [MNT] fix two instances of empty strategy in GHA (:pr:`8500`) :user:`fkiraly`
