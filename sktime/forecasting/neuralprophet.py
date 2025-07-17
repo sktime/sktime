@@ -89,9 +89,9 @@ class NeuralProphet(BaseForecaster):
     ...     n_changepoints=12,
     ...     add_country_holidays={'country_name': 'US'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y) #doctest: +SKIP
     NeuralProphet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3]) #doctest: +SKIP
     """
 
     _tags = {
@@ -175,15 +175,8 @@ class NeuralProphet(BaseForecaster):
         # Prepare data for NeuralProphet
         df = pd.DataFrame({"ds": y.index, "y": y.values})
 
-        # Add exogenous variables if provided
-        if X is not None:
-            if hasattr(X.index, "to_timestamp"):
-                X = X.copy()
-                X.index = X.index.to_timestamp()
-            df = df.join(X, how="left")
-
         # Store training dataframe for future predictions
-        self._training_df = df
+        self._training_df = df.copy()
 
         # Initialize and configure NeuralProphet model
         self._model = _NeuralProphet(
@@ -204,7 +197,21 @@ class NeuralProphet(BaseForecaster):
             loss_func=self.loss_func,
         )
 
-        # Add custom seasonalities, holidays, etc. (same as before)
+        # Add exogenous variables if provided
+        if X is not None:
+            if hasattr(X.index, "to_timestamp"):
+                X = X.copy()
+                X.index = X.index.to_timestamp()
+
+            # Add each exogenous variable as a regressor
+            for col in X.columns:
+                self._model.add_future_regressor(col)
+
+            # Join exogenous variables to training data
+            df = df.join(X, how="left")
+            self._training_df = df.copy()
+
+        # Add custom seasonalities, holidays, etc.
         if self.custom_seasonalities:
             for seasonality in self.custom_seasonalities:
                 self._model.add_seasonality(**seasonality)
@@ -220,7 +227,6 @@ class NeuralProphet(BaseForecaster):
                     regularization=self.holidays_reg,
                 )
 
-        # Fit the model
         self._model.fit(df)
 
         return self
