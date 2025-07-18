@@ -108,6 +108,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogeneous X?
+        "capability:unequal_length": True, # can estimator handle unequal length panel TS?
     }
 
     # configs and default config values
