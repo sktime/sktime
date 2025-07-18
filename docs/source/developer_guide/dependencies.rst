@@ -28,7 +28,7 @@ For adding a new soft dependency, see the section "adding a new soft dependency"
 
 **Best practice:**
 
-* (a) Soft dependencies should be restricted to estimators whenever possible.
+* (a) Soft dependencies should be restricted to estimators whenever possible, see the section "Isolating soft dependencies to estimators".
 * (b) If restricting to estimators is not possible, follow the section "Isolating soft dependencies at module level".
 
 Isolating soft dependencies to estimators
