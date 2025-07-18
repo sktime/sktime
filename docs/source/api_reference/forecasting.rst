@@ -461,6 +461,14 @@ Structural time series models
 
     DynamicFactor
 
+.. currentmodule:: sktime.forecasting.greykite
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GreykiteForecaster
+
 Deep learning based forecasters
 -------------------------------
 

@@ -36,7 +36,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    MAPE has no limit on how large the error can be, particulalrly when ``y_true``
+    MAPE has no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``. While sMAPE is bounded at 2.
 

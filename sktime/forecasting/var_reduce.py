@@ -269,15 +269,16 @@ class VARReduce(BaseForecaster):
         """
         from sklearn.multioutput import MultiOutputRegressor
 
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
+
         self.var_names = y.columns
         self.num_series = y.shape[1]
 
         X, Y = self._prepare_for_fit(y, return_as_ndarray=False)
 
-        native_multioutput_support = self.regressor_._get_tags().get(
-            "multioutput", False
-        )
-        if not native_multioutput_support:
+        capa_multioutput = get_sklearn_tag(self.regressor_, "capability:multioutput")
+
+        if not capa_multioutput:
             self.regressor_ = MultiOutputRegressor(self.regressor_)
         self.regressor_.fit(X, Y)
 

@@ -13,14 +13,9 @@
 # limitations under the License.
 """Configuration for TimeMOE model."""
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import PretrainedConfig
-else:
-
-    class PretrainedConfig:
-        """Dummy class if transformers is not installed."""
+PretrainedConfig = _safe_import("transformers.PretrainedConfig")
 
 
 class TimeMoeConfig(PretrainedConfig):
