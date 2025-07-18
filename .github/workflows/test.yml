@@ -178,16 +178,25 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      sktime: ${{ steps.filter.outputs.sktime }}
+      sktime: ${{ steps.check.outputs.sktime }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            sktime:
-              - sktime/**
-              - pyproject.toml
+          fetch-depth: 0  # Needed to access the full git history
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Check if sktime or pyproject.toml changed
+        id: check
+        run: |
+          if git diff --quiet origin/main -- sktime/ pyproject.toml; then
+            echo "No sktime-related changes"
+            echo "sktime=false" >> $GITHUB_OUTPUT
+          else
+            echo "Detected changes in sktime"
+            echo "sktime=true" >> $GITHUB_OUTPUT
+          fi
 
   test-nodevdeps:
     needs: detect-package-change
