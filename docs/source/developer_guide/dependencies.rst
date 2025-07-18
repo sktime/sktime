@@ -65,7 +65,8 @@ Estimators with a soft dependency need to ensure the following:
    for an example of ``_check_soft_dependencies`` usage.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
-Usually, such warnings are already raised in ``__init__`` of the respective estimator.
+Usually, such warnings are automatically raised in ``__init__`` of the respective estimator by the base framework, via ``BaseObject``,
+and do not need to be added manually.
 
 In case a step-out is needed, the ``_check_soft_dependencies`` utility
 `here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__ can be used.
