@@ -943,24 +943,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         estimator = estimator_instance
 
-        if estimator._tags["capability:unequal_length"]:
-            y = _make_hierarchical(
-                hierarchy_levels=(2, 3),
-                min_timepoints=5,
-                max_timepoints=12,
-                n_columns=1,
-                index_type="range",
-                random_state=42,
-                same_cutoff=False,
-            )
+        y = _make_hierarchical(
+            hierarchy_levels=(2, 3),
+            min_timepoints=5,
+            max_timepoints=12,
+            n_columns=1,
+            index_type="range",
+            random_state=42,
+            same_cutoff=False,
+        )
 
-            fh = [1, 2]
+        fh = [1, 2]
 
-            estimator.fit(y, fh=fh)
-            y_pred = estimator.predict()
+        estimator.fit(y, fh=fh)
+        y_pred = estimator.predict()
 
-            assert isinstance(y_pred, pd.DataFrame)
-            assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
 
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
