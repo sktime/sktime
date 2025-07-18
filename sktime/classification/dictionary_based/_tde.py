@@ -214,6 +214,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Fit an ensemble on cases (X,y), where y is the target variable.
 
@@ -736,6 +740,10 @@ class IndividualTDE(BaseClassifier):
         self._train_predictions = []
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):

@@ -152,6 +152,10 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(
                 f"Invalid use_multivariate value, must be one of "
