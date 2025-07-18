@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import pandas as pd
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
@@ -134,12 +135,44 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
 
         multioutput = self.multioutput
 
-        denominator = y_true - y_pred_benchmark
-        numerator = y_true - y_pred
+        if hasattr(y_true, "index") and hasattr(y_pred_benchmark, "index"):
+            # Both are pandas objects, ensure they have the same index
+            if not y_true.index.equals(y_pred_benchmark.index):
+                y_pred_benchmark = y_pred_benchmark.reindex(y_true.index)
+        elif hasattr(y_true, "index") and not hasattr(y_pred_benchmark, "index"):
+            # y_true is pandas, y_pred_benchmark is numpy array
+            if isinstance(y_true, pd.Series):
+                y_pred_benchmark = pd.Series(y_pred_benchmark, index=y_true.index)
+            elif isinstance(y_true, pd.DataFrame):
+                y_pred_benchmark = pd.DataFrame(
+                    y_pred_benchmark, index=y_true.index, columns=y_true.columns
+                )
+        elif not hasattr(y_true, "index") and hasattr(y_pred_benchmark, "index"):
+            # y_true is numpy, y_pred_benchmark is pandas - convert to numpy
+            y_pred_benchmark = y_pred_benchmark.values
 
+        abs_error_pred = (y_true - y_pred).abs()
+        abs_error_bench = (y_true - y_pred_benchmark).abs()
         EPS = np.finfo(np.float64).eps
-        denominator_safe = denominator.where(denominator != 0, EPS)
-        relative_errors = numerator / denominator_safe
-        raw_values = relative_errors.abs()
+        both_zero = (abs_error_pred == 0) & (abs_error_bench == 0)
+        print(f"ABS_ERROR_PRED: {abs_error_pred},ABS_ERROR_BENCH: {abs_error_bench}")
+
+        if hasattr(abs_error_bench, "mask"):
+            abs_error_bench_safe = abs_error_bench.copy()
+            abs_error_bench_safe = abs_error_bench_safe.mask(
+                (abs_error_bench == 0) & ~both_zero, EPS
+            )
+            raw_values = abs_error_pred / abs_error_bench_safe
+            raw_values = raw_values.mask(both_zero, 0)
+            print("********IN mask branch raw_values:***************", raw_values)
+
+        else:
+            abs_error_bench_safe = np.where(
+                (abs_error_bench == 0) & ~both_zero, EPS, abs_error_bench
+            )
+            raw_values = abs_error_pred / abs_error_bench_safe
+            raw_values = np.where(both_zero, 0, raw_values)
+            print("********IN np.where branch raw_values:***************", raw_values)
+
         raw_values = self._get_weighted_df(raw_values, **kwargs)
         return self._handle_multioutput(raw_values, multioutput)
