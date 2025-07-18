@@ -26,7 +26,8 @@ Handling soft dependencies
 This section explains how to handle existing soft dependencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
 
-**Best practices:**
+**Best practice:**
+
 * (a) Soft dependencies should be restricted to estimators whenever possible.
 * (b) If restricting to estimators is not possible, follow the section "Isolating soft dependencies at module level".
 
