@@ -7,6 +7,7 @@ from typing import Optional, Union
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
@@ -337,7 +338,19 @@ class _DartsRegressionAdapter(BaseForecaster):
         expected_index = fh.get_expected_pred_idx(self.cutoff)
         abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
 
-        endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
+
+        darts_ge_035 = [
+            _check_soft_dependencies("darts>=0.35", severity="none")
+            or _check_soft_dependencies("u8darts>=0.35", severity="none")
+        ]
+
+        if darts_ge_035:
+            to_df_name = "to_dataframe"
+        else:
+            to_df_name = "pd_dataframe"
+
+        end_pp_to_df_method = getattr(endogenous_point_predictions, to_df_name)
+        endogenous_point_predictions = end_pp_to_df_method()
 
         if _is_int64_type(expected_index):
             if X is not None:
