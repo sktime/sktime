@@ -338,7 +338,6 @@ class _DartsRegressionAdapter(BaseForecaster):
         expected_index = fh.get_expected_pred_idx(self.cutoff)
         abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
 
-
         darts_ge_035 = [
             _check_soft_dependencies("darts>=0.35", severity="none")
             or _check_soft_dependencies("u8darts>=0.35", severity="none")
