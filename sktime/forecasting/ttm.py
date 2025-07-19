@@ -592,6 +592,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        import platform
+
+        os = platform.system()
+        if os == "Darwin":
+            import torch
+
+            torch.backends.mps.is_available = lambda: False
+
         test_params = [
             {
                 "training_args": {
