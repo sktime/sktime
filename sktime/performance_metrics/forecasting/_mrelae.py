@@ -7,13 +7,17 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+import numpy as np
+import pandas as pd
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
+    _get_kwarg,
     mean_relative_absolute_error,
 )
 
 
-class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Mean relative absolute error (MRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -94,3 +98,138 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = mean_relative_absolute_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+        **kwargs : dict
+            Additional keyword arguments, including y_pred_benchmark.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+            index is equal to index of y_true
+            entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+            index and columns equal to those of y_true
+            i,j-th entry is metric at time i, at variable j
+        """
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point."""
+        benchmark = self._get_benchmark(y_true, kwargs)
+        y_true, y_pred, benchmark = self._align_indices(y_true, y_pred, benchmark)
+        self._ensure_no_nan(benchmark)
+
+        abs_error_pred = (y_true - y_pred).abs()
+        abs_error_bench = (y_true - benchmark).abs()
+        raw = self._compute_raw_values(abs_error_pred, abs_error_bench)
+        weighted = self._get_weighted_df(raw, **kwargs)
+
+        return self._handle_multioutput(weighted, self.multioutput)
+
+    def _get_benchmark(self, y_true, kwargs):
+        """Extract and validate the y_pred_benchmark argument."""
+        bench = _get_kwarg(
+            "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
+        )
+        if (
+            isinstance(bench, pd.DataFrame)
+            and bench.shape[1] == 1
+            and isinstance(y_true, pd.Series)
+        ):
+            bench = bench.iloc[:, 0]
+        return bench
+
+    def _align_indices(self, y_true, y_pred, benchmark):
+        """
+        Align indices or shapes between y_true, y_pred, and benchmark.
+
+        Returns aligned y_true, y_pred, benchmark.
+        """
+        if hasattr(y_true, "index"):
+            benchmark = self._align_to_index(y_true, benchmark)
+            if hasattr(y_pred, "index"):
+                y_pred = y_pred.reindex(benchmark.index)
+        else:
+            if hasattr(benchmark, "index"):
+                benchmark = benchmark.values
+        return y_true, y_pred, benchmark
+
+    def _align_to_index(self, y_true, bench):
+        idx = y_true.index
+        if hasattr(bench, "index"):
+            if bench.index.equals(idx):
+                return bench
+            overlap = idx.intersection(bench.index)
+            if len(overlap) == 0:
+                return self._align_by_position(y_true, bench)
+            return bench.reindex(idx)
+        else:
+            arr = np.asarray(bench)
+            if arr.ndim == 2 and arr.shape[1] == 1:
+                arr = arr.flatten()
+            if arr.shape[0] != len(idx):
+                raise ValueError(
+                    f"Benchmark length {arr.shape[0]} != y_true length {len(idx)}"
+                )
+            if isinstance(y_true, pd.Series):
+                return pd.Series(arr, index=idx)
+            return pd.DataFrame(arr, index=idx, columns=y_true.columns)
+
+    def _align_by_position(self, y_true, bench):
+        """Align when indices do not overlap: match by positional order."""
+        idx = y_true.index
+        arr = np.asarray(bench)
+        if arr.ndim == 2 and arr.shape[1] == 1:
+            arr = arr.flatten()
+        if arr.shape[0] != len(idx):
+            raise ValueError(
+                f"Benchmark length {arr.shape[0]} != y_true length {len(idx)}"
+            )
+        if isinstance(y_true, pd.Series):
+            return pd.Series(arr, index=idx)
+        return pd.DataFrame(arr, index=idx, columns=y_true.columns)
+
+    def _ensure_no_nan(self, bench):
+        """Raise if benchmark contains NaN after alignment."""
+        if hasattr(bench, "isna"):
+            if bench.isna().any().any():
+                raise ValueError(
+                    "y_pred_benchmark contains NaN values after alignment."
+                )
+        else:
+            if np.isnan(bench).any():
+                raise ValueError("y_pred_benchmark contains NaN values.")
+
+    def _compute_raw_values(self, abs_pred, abs_bench):
+        """Compute raw relative absolute errors, handling zeros."""
+        EPS = np.finfo(np.float64).eps
+        both_zero = (abs_pred == 0) & (abs_bench == 0)
+        safe_den = abs_bench.copy() if hasattr(abs_bench, "mask") else abs_bench
+        safe_den = (
+            safe_den.mask((abs_bench == 0) & ~both_zero, EPS)
+            if hasattr(abs_bench, "mask")
+            else np.where((abs_bench == 0) & ~both_zero, EPS, abs_bench)
+        )
+        raw = abs_pred / safe_den
+        return (
+            raw.mask(both_zero, 0)
+            if hasattr(raw, "mask")
+            else np.where(both_zero, 0, raw)
+        )
