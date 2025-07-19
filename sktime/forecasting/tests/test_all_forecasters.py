@@ -943,7 +943,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         estimator = estimator_instance
 
-        if estimator._tags["capability:unequal_length"]:
+        if estimator.get_tag("capability:unequal_length"):
             y = _make_hierarchical(
                 hierarchy_levels=(2, 3),
                 min_timepoints=5,
