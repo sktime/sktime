@@ -1,4 +1,5 @@
 """Tabularizer transform, for pipelining."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly", "kcc-lion"]
@@ -112,9 +113,9 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-        assert isinstance(
-            idx, pd.IntervalIndex
-        ), "idx should be of type pd.IntervalIndex"
+        assert isinstance(idx, pd.IntervalIndex), (
+            "idx should be of type pd.IntervalIndex"
+        )
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
@@ -124,7 +125,7 @@ class TimeBinner(BaseTransformer):
             )
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(

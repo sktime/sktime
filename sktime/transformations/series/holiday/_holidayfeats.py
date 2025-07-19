@@ -8,7 +8,6 @@ __all__ = ["HolidayFeatures"]
 import datetime
 from collections import defaultdict
 from datetime import date
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -61,6 +60,7 @@ class HolidayFeatures(BaseTransformer):
 
     Returns country holiday features with custom holiday windows
 
+    >>> from sktime.transformations.series.holiday import HolidayFeatures
     >>> transformer = HolidayFeatures(
     ...    calendar=country_holidays(country="FR"),
     ...    return_categorical=True,
@@ -102,7 +102,7 @@ class HolidayFeatures(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
         "univariate-only": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
@@ -111,12 +111,15 @@ class HolidayFeatures(BaseTransformer):
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
         self,
-        calendar: Dict[date, str],
-        holiday_windows: Dict[str, tuple] = None,
+        calendar: dict[date, str],
+        holiday_windows: dict[str, tuple] = None,
         include_bridge_days: bool = False,
         include_weekend: bool = False,
         return_dummies: bool = True,
@@ -224,7 +227,7 @@ class HolidayFeatures(BaseTransformer):
 
 def _generate_holidays(
     index: pd.DatetimeIndex,
-    calendar: Dict[date, str],
+    calendar: dict[date, str],
     holiday_windows: dict = None,
     include_bridge_days: bool = False,
     include_weekend: bool = False,
@@ -402,8 +405,8 @@ def _generate_holidays(
 
 def _check_params(
     index: pd.DatetimeIndex,
-    calendar: Dict[date, str],
-    holiday_windows: Dict[str, tuple],
+    calendar: dict[date, str],
+    holiday_windows: dict[str, tuple],
     include_bridge_days: bool,
     include_weekend: bool,
     return_dummies: bool,
@@ -474,7 +477,7 @@ def _check_params(
         _check_holiday_windows(holiday_windows)
 
 
-def _check_holiday_windows(holiday_windows: Dict[str, tuple]):
+def _check_holiday_windows(holiday_windows: dict[str, tuple]):
     """Check holiday windows.
 
     Parameters
@@ -505,7 +508,7 @@ def _check_holiday_windows(holiday_windows: Dict[str, tuple]):
                 )
 
 
-def _check_calendar(calendar: Dict[date, str]):
+def _check_calendar(calendar: dict[date, str]):
     """Check calendar param.
 
     Parameters

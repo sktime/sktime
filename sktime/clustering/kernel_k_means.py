@@ -1,5 +1,6 @@
 """Time series kernel kmeans."""
-from typing import Dict, Union
+
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -64,6 +65,17 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sktime.clustering.kernel_k_means import TimeSeriesKernelKMeans
+    >>> from sktime.datasets import load_arrow_head
+    >>> X_train, y_train = load_arrow_head(split="train")
+    >>> X_test, y_test = load_arrow_head(split="test")
+    >>> clusterer = TimeSeriesKernelKMeans(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    TimeSeriesKernelKMeans(n_clusters=3)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -74,6 +86,12 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         # estimator type
         # --------------
         "capability:multivariate": True,
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # defines the name of the attribute containing the tslearn estimator
@@ -117,7 +135,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         super().__init__(n_clusters=n_clusters)
 
     @classmethod
-    def get_test_params(cls, parameter_set="default") -> Dict:
+    def get_test_params(cls, parameter_set="default") -> dict:
         """Return testing parameter settings for the estimator.
 
         Parameters

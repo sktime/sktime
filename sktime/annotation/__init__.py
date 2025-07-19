@@ -1,1 +1,0 @@
-"""Implements time series annotation."""

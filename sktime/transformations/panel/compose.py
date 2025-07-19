@@ -109,7 +109,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
 
     _tags = {
         "authors": ["mloning", "sajaysurya", "fkiraly"],
-        "python_dependencies": ["scipy", "sklearn<1.4"],
+        "python_dependencies": ["scipy", "scikit-learn<1.4"],
     }
 
     def __init__(
@@ -133,7 +133,9 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        if not _check_soft_dependencies("sklearn<1.4", severity="none"):
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
+
+        if not sklearn_lneq_14:
             raise ModuleNotFoundError(
                 "ColumnTransformer is not fully compliant with the sktime interface "
                 "and distributed only for reasons of downwards compatibility. "
@@ -193,8 +195,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame)."
                 )
 
     @classmethod
@@ -210,16 +212,32 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        TRANSFORMERS = [
-            ("transformer1", ExponentTransformer()),
-            ("transformer2", ExponentTransformer()),
+        TRANSFORMERS_1 = [
+            ("transformer1", ExponentTransformer(power=2)),
+            ("transformer2", ExponentTransformer(power=3)),
+        ]
+        TRANSFORMERS_2 = [
+            ("transformer1", ExponentTransformer(power=1)),
+            ("transformer2", Detrender()),
         ]
 
-        return {
-            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-        }
+        return [
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_1
+                ]
+            },
+            {
+                "transformers": [
+                    (name, estimator, [0]) for name, estimator in TRANSFORMERS_2
+                ],
+                "remainder": "passthrough",
+                "preserve_dataframe": False,
+            },
+        ]
 
     def fit(self, X, y=None):
         """Fit the transformer."""
@@ -289,6 +307,7 @@ class ColumnConcatenator(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def _transform(self, X, y=None):
@@ -314,10 +333,13 @@ class ColumnConcatenator(BaseTransformer):
 
         # the above has the right structure, but the wrong index
         # the time index is in general non-unique now, we replace it by integer index
-        inst_idx = Xt.index.get_level_values(0)
+        levels = list(range(Xt.index.nlevels - 1))
+        inst_arr = [Xt.index.get_level_values(level) for level in levels]
+        inst_idx = pd.MultiIndex.from_arrays(inst_arr)
+
         t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
         t_idx = np.concatenate(t_idx)
 
-        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index = pd.MultiIndex.from_arrays(inst_arr + [t_idx])
         Xt.index.names = X.index.names
         return Xt

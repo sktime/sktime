@@ -1,4 +1,5 @@
 """Implemenents Box-Cox and Log Transformations."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["mloning", "aiwalter", "fkiraly"]
@@ -175,6 +176,9 @@ class BoxCoxTransformer(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

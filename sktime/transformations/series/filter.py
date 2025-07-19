@@ -31,6 +31,14 @@ class Filter(BaseTransformer):
         Additional parameters passed on to ``mne.filter.filter_data``.
         See ``mne.filter.filter_data``
         documentation for a detailed description of all options.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.filter import Filter
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")
+    >>> transformer = Filter(sfreq=128, l_freq=0.5, h_freq=40)
+    >>> X_filtered = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     # default tag values for "Series-to-Series"
@@ -72,7 +80,7 @@ class Filter(BaseTransformer):
             if not ((l_freq > 0) & (h_freq > 0)):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
-                raise ValueError("High frequency must be higher" " than low frequency")
+                raise ValueError("High frequency must be higher than low frequency")
         super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:
@@ -135,4 +143,8 @@ class Filter(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"sfreq": 3}
+        param1 = {"sfreq": 3}
+        param2 = {"sfreq": 5000, "l_freq": 10, "h_freq": 1000}
+        params = [param1, param2]
+
+        return params

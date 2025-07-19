@@ -1,4 +1,5 @@
 """Time binning for turning series equally spaced."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -43,8 +44,8 @@ class TimeBinAggregate(BaseTransformer):
         "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
         "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
-    Example
-    -------
+    Examples
+    --------
     from sktime.datatypes import get_examples
     from sktime.transformations.series.binning import TimeBinAggregate
 
@@ -66,11 +67,14 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
@@ -87,7 +91,7 @@ class TimeBinAggregate(BaseTransformer):
             self._aggfunc = np.mean
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(

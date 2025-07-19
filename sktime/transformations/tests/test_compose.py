@@ -157,9 +157,9 @@ def test_missing_unequal_tag_inference():
     assert t1.get_tag("capability:unequal_length")
     assert t1.get_tag("capability:unequal_length:removes")
     assert not t2.get_tag("capability:unequal_length:removes")
-    assert t3.get_tag("handles-missing-data")
+    assert t3.get_tag("capability:missing_values")
     assert t3.get_tag("capability:missing_values:removes")
-    assert not t4.get_tag("handles-missing-data")
+    assert not t4.get_tag("capability:missing_values")
     assert not t4.get_tag("capability:missing_values:removes")
 
 
@@ -371,9 +371,42 @@ def test_input_output_series_panel_chain():
     X = load_airline()
     bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
 
-    assert bootstrap_trafo.get_tags()["scitype:transform-input"] == "Series"
-    assert bootstrap_trafo.get_tags()["scitype:transform-output"] == "Panel"
+    assert bootstrap_trafo.get_tag("scitype:transform-input") == "Series"
+    assert bootstrap_trafo.get_tag("scitype:transform-output") == "Panel"
 
     Xt = bootstrap_trafo.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
     assert isinstance(Xt.index, pd.MultiIndex)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_requires_tags_trafopipe():
+    """Test correct handling of requires_X tag, failure case in ."""
+    from sktime.transformations.compose import TransformerPipeline, YtoX
+    from sktime.transformations.series.fourier import FourierFeatures
+
+    # data with no exogenous features
+    X = load_airline()
+
+    # create a pipeline with Fourier features and ARIMA
+    pipe = TransformerPipeline(
+        steps=[
+            YtoX(),
+            FourierFeatures(
+                sp_list=[24, 24 * 7],
+                fourier_terms_list=[10, 5],
+                keep_original_columns=True,
+            ),
+        ]
+    )
+
+    assert not pipe.get_tag("requires_X")
+    # should not requires X as input, because YtoX does not
+
+    assert pipe.get_tag("requires_y")
+    # should require y as input, because YtoX does
+
+    pipe.fit_transform(X=None, y=X)

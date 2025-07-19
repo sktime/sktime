@@ -36,7 +36,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     Note that the more flexible options above may be less performant.
 
     The algorithms are also available as alignment estimators
-    ``sktime.alignmnent.dtw_numba``, producing alignments aka alignment paths.
+    ``sktime.alignment.dtw_numba``, producing alignments aka alignment paths.
 
     DTW was originally proposed in [1]_, DTW computes the distance between two
     time series by considering their alignments during the calculation.
@@ -132,6 +132,9 @@ class DtwDist(BasePairwiseTransformerPanel):
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
         "capability:unequal_length": False,  # can dist handle unequal length panels?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

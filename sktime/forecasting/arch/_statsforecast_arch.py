@@ -30,19 +30,39 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         AR parameter - number of auto-regressive lags.
     q: int (default 1)
         GARCH heteroskedasticity lag parameter - number of lags for variance term.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arch import StatsForecastGARCH
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastGARCH(p=2,q=1)
+    >>> forecaster.fit(y)
+    StatsForecastGARCH(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["eyjo"],
+        "authors": [
+            "MMenchero",
+            "AzulGarza",
+            "jmoralez",
+            "eyjo",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero, AzulGarza, and jmoralez for statsforecast GARCH
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(
@@ -101,6 +121,16 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     ----------
     p: int (default 1)
         AR parameter - number of auto-regressive lags.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arch import StatsForecastARCH
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastARCH(p=2)
+    >>> forecaster.fit(y)
+    StatsForecastARCH(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
@@ -113,7 +143,8 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.5.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.5.0", "scipy<1.16"],
     }
 
     def __init__(

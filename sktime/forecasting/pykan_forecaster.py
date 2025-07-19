@@ -1,27 +1,21 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["bheidri"]
+__author__ = ["benheid"]
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
+if _check_soft_dependencies(["pykan", "torch"], severity="none"):
     import torch
     from torch.utils.data import Dataset
 else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
-
-        pass
-
-
-if _check_soft_dependencies("kan", severity="none"):
-    from kan import KAN
 
 
 class PyKANForecaster(BaseForecaster):
@@ -61,6 +55,13 @@ class PyKANForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid"],
+        "maintainers": ["benheid"],
+        "python_dependencies": ["pykan", "torch", "matplotlib"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -68,12 +69,10 @@ class PyKANForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
-        "python_version": None,
-        "python_dependencies": ["kan", "torch"],
     }
 
     def __init__(
@@ -127,6 +126,8 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from kan import KAN
+
         output_size = max(fh.to_relative(self.cutoff)._values)
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
@@ -178,7 +179,7 @@ class PyKANForecaster(BaseForecaster):
                     device=self.device,
                     **self._model_params,
                 ).initialize_from_another_model(model, ds_new["train_input"])
-            results = model.train(ds_new, device=self.device, **self._fit_params)
+            results = model.fit(ds_new, **self._fit_params)
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
@@ -215,6 +216,8 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        from kan import KAN
+
         model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
         model.load_state_dict(self._state_dict)
         if X is not None:
@@ -226,10 +229,12 @@ class PyKANForecaster(BaseForecaster):
                     torch.from_numpy(X.values).reshape((1, -1)),
                 ],
                 dim=-1,
-            )
+            ).type(torch.float32)
         else:
-            input_ = torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
-                (1, -1)
+            input_ = (
+                torch.from_numpy(self._y.values[-self.input_layer_size :])
+                .reshape((1, -1))
+                .type(torch.float32)
             )
 
         prediction = model(input_).detach().numpy().reshape((-1,))

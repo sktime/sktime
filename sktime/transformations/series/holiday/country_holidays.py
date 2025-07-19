@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformer to add binary column based on country holidays."""
+
 import pandas
 
 from sktime.transformations.base import BaseTransformer
@@ -86,7 +87,10 @@ class CountryHolidaysTransformer(BaseTransformer):
         "enforce_index_type": [pandas.DatetimeIndex, pandas.PeriodIndex],
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

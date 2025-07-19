@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
+
 __author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 
@@ -201,6 +202,9 @@ class PeakTimeFeature(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -247,6 +251,7 @@ class PeakTimeFeature(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
+
         Parameters
         ----------
         X : pd.Series or pd.DataFrame
@@ -371,7 +376,7 @@ class PeakTimeFeature(BaseTransformer):
                 ]["frequency"].tolist()
             ):
                 for i, (start, end) in enumerate(zip(start_values, end_values)):
-                    peaktime_data[f"{is_peak_col}_{i+1}"] = (
+                    peaktime_data[f"{is_peak_col}_{i + 1}"] = (
                         (peaktime_data[f"{freq_name}"] >= start)
                         & (peaktime_data[f"{freq_name}"] <= end)
                     ).astype(bool)
@@ -415,7 +420,7 @@ class PeakTimeFeature(BaseTransformer):
                 ]["frequency"].tolist()
             ):
                 for i, (start, end) in enumerate(zip(start_values, end_values)):
-                    peaktime_data[f"{is_working_col}_{i+1}"] = (
+                    peaktime_data[f"{is_working_col}_{i + 1}"] = (
                         (peaktime_data[f"{freq_name}"] >= start)
                         & (peaktime_data[f"{freq_name}"] <= end)
                     ).astype(bool)

@@ -78,6 +78,12 @@ class RocketClassifier(_DelegatedClassifier):
         The classes labels.
     estimator_ : ClassifierPipeline
         RocketClassifier as a ClassifierPipeline, fitted to data internally
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. When
+        rocket_transform="rocket", this is num_kernels. When rocket_transform
+        is either "minirocket" or "multirocket", this is num_kernels rounded
+        down to the nearest multiple of 84. It is 84 if num_kernels is less
+        than 84.
 
     See Also
     --------
@@ -136,6 +142,16 @@ class RocketClassifier(_DelegatedClassifier):
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
+
+        if rocket_transform in ["multirocket", "minirocket"]:
+            if self.num_kernels < 84:
+                self.num_kernels_ = 84
+            else:
+                self.num_kernels_ = (self.num_kernels // 84) * 84
+
+        else:
+            self.num_kernels_ = num_kernels
+
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate
@@ -235,5 +251,9 @@ class RocketClassifier(_DelegatedClassifier):
         """
         if parameter_set == "results_comparison":
             return {"num_kernels": 100}
-        else:
-            return {"num_kernels": 20}
+
+        params1 = {"num_kernels": 100}
+        params2 = {"num_kernels": 20}
+        params3 = {"num_kernels": 20, "rocket_transform": "minirocket"}
+        params4 = {"num_kernels": 20, "rocket_transform": "multirocket"}
+        return [params1, params2, params3, params4]

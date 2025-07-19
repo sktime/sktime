@@ -1,4 +1,5 @@
 """Multiplexer transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["miraep8", "fkiraly"]
@@ -8,7 +9,6 @@ from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose._common import _coerce_to_sktime
 
 
 class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
@@ -94,6 +94,9 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         "fit_is_empty": False,
         "univariate-only": False,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -218,7 +221,9 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         ------
         ValueError if other is not of type MultiplexTransformer or BaseTransformer.
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -244,7 +249,9 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
             (first). not nested, contains only non-MultiplexTransformer ``sktime``
             transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,

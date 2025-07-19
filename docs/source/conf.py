@@ -4,6 +4,7 @@
 import datetime
 import os
 import sys
+import warnings
 
 import sktime
 
@@ -108,7 +109,9 @@ numpydoc_show_class_members = True
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
-numpydoc_validation_checks = {"all"}
+# https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
+# Let's turn of the check for building but keep it in pre-commit hooks
+numpydoc_validation_checks = set()
 
 # generate autosummary even if no references
 autosummary_generate = True
@@ -132,7 +135,17 @@ add_function_parentheses = False
 # configuration. This ensures that MathJax processes only math, identified by the
 # dollarmath and amsmath extensions, or specified in math directives. We here silence
 # the corresponding warning that this override happens.
-suppress_warnings = ["myst.mathjax"]
+suppress_warnings = [
+    "myst.mathjax",
+    "docutils",
+    "toc.not_included",
+    "autodoc.import_object",
+    "autosectionlabel",
+    "ref",
+]
+# FIXME: Temporary solution until numpydoc issues are fixed
+warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
+show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
 issues_github_path = "sktime/sktime"
@@ -171,10 +184,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/sktime/sktime/blob/{}/{}".format(
-        CURRENT_VERSION,
-        filename,
-    )
+    return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -205,13 +215,6 @@ html_theme_options = {
             "url": "https://www.linkedin.com/company/scikit-time/",
             "icon": "fab fa-linkedin",
         },
-    ],
-    "favicons": [
-        {
-            "rel": "icon",
-            "sizes": "16x16",
-            "href": "images/sktime-favicon.ico",
-        }
     ],
     "show_prev_next": False,
     "use_edit_page_button": False,
@@ -327,14 +330,16 @@ def _make_estimator_overview(app):
         with the final name always preceded by "&".
         """
         if isinstance(author_info, str) and author_info.lower() == "sktime developers":
-            link = '<a href="about/team">' "sktime developers</a>"
+            link = '<a href="about/team.html">sktime developers</a>'
             return link
 
         if not isinstance(author_info, list):
             author_info = [author_info]
 
         def _add_link(github_id_str):
-            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            link = (
+                f'<a href="https://www.github.com/{github_id_str}">{github_id_str}</a>'
+            )
             return link
 
         author_info = [_add_link(author) for author in author_info]
@@ -345,12 +350,13 @@ def _make_estimator_overview(app):
             return author_info[0]
 
     # hard-coded for better user experience
-    tags_by_category = {
+    tags_by_object_type = {
         "forecaster": [
+            "capability:categorical_in_X",
             "capability:insample",
             "capability:pred_int",
             "capability:pred_int:insample",
-            "handles-missing-data",
+            "capability:missing_values",
             "ignores-exogeneous-X",
             "scitype:y",
             "requires-fh-in-fit",
@@ -364,7 +370,7 @@ def _make_estimator_overview(app):
             "scitype:transform-output",
             "scitype:transform-labels",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "capability:missing_values:removes",
             "capability:unequal_length",
             "capability:unequal_length:removes",
@@ -393,6 +399,9 @@ def _make_estimator_overview(app):
             "capability:unequal_length",
             "capability:missing_values",
             "capability:contractable",
+            "capability:predict",
+            "capability:predict:proba",
+            "capability:out_of_sample",
             "python_dependencies",
             "authors",
             "maintainers",
@@ -411,6 +420,7 @@ def _make_estimator_overview(app):
         ],
         "classifier": [
             "capability:multivariate",
+            "capability:predict_proba",
             "capability:multioutput",
             "capability:unequal_length",
             "capability:missing_values",
@@ -454,6 +464,15 @@ def _make_estimator_overview(app):
             "authors",
             "maintainers",
         ],
+        "detector": [
+            "task",
+            "learning_type",
+            "capability:multivariate",
+            "capability:missing_values",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
     }
 
     # todo: replace later by code similar to below
@@ -476,44 +495,55 @@ def _make_estimator_overview(app):
 
     records = []
 
-    for modname, modclass in all_estimators():
-        author_tag = modclass.get_class_tag("authors", "sktime developers")
+    for obj_name, obj_class in all_estimators():
+        author_tag = obj_class.get_class_tag("authors", "sktime developers")
         author_info = _process_author_info(author_tag)
-        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_tag = obj_class.get_class_tag("maintainers", "sktime developers")
         maintainer_info = _process_author_info(maintainer_tag)
 
-        python_dependencies = modclass.get_class_tag("python_dependencies", [])
+        python_dependencies = obj_class.get_class_tag("python_dependencies", [])
         if isinstance(python_dependencies, list) and len(python_dependencies) == 1:
             python_dependencies = python_dependencies[0]
 
-        algorithm_type = modclass.get_class_tag("object_type", "object")
-        if isinstance(algorithm_type, list):
-            algorithm_type = algorithm_type[0]
+        object_types = obj_class.get_class_tag("object_type", "object")
+        # the tag can contain multiple object types
+        # it is a str or a lis of str - we normalize to a list
+        if not isinstance(object_types, list):
+            object_types = [object_types]
 
+        # set of object types that are also in the dropdown menu
+        obj_types_in_menu = list(set(object_types) & set(tags_by_object_type.keys()))
+
+        # we populate the tags for object types that are in the dropdown
+        # these will be selectable by checkboxes in the table
         tags = {}
-
-        for category in tags_by_category:
-            if algorithm_type == category:
-                for tag in tags_by_category[category]:
-                    tags[tag] = modclass.get_class_tag(tag, None)
+        for object_type in obj_types_in_menu:
+            for tag in tags_by_object_type[object_type]:
+                tags[tag] = obj_class.get_class_tag(tag, None)
 
         # includes part of class string
-        modpath = str(modclass)[8:-2]
+        modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
-        clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
+        # includes part of class string
+        url = obj_class._generate_doc_link()
         # adds html link reference
-        modname = (
-            """<a href='#'"""
-            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{modname}</a>"""
-        )
+        obj_name = f"""<a href={url}>{obj_name}</a>"""
+
+        # determine the "main" object type
+        # this is the first in the list that also appears in the dropdown menu
+        # if obj_types_in_register is an empty list,
+        # in which case the object will appear only in the "ALL" table
+        if obj_types_in_menu == []:
+            first_obj_type_in_register = object_types[0]
+        else:
+            first_obj_type_in_register = obj_types_in_menu[0]
 
         records.append(
             [
-                modname,
-                algorithm_type,
+                obj_name,
+                first_obj_type_in_register,
                 author_info,
                 maintainer_info,
                 str(python_dependencies),
@@ -564,7 +594,7 @@ nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
-binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"  # noqa
+binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"
 nbsphinx_prolog = f"""
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: {binder_url}
@@ -573,9 +603,7 @@ nbsphinx_prolog = f"""
 """
 
 # add link to original notebook at the bottom
-notebook_url = (
-    f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
-)
+notebook_url = f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"
 nbsphinx_epilog = f"""
 ----
 

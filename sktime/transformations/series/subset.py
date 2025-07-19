@@ -1,4 +1,5 @@
 """Transformers for index and column subsetting."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["fkiraly"]
@@ -49,6 +50,9 @@ class IndexSubset(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": False,
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, index_treatment="keep"):
@@ -163,6 +167,7 @@ class ColumnSelect(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, columns=None, integer_treatment="col", index_treatment="remove"):

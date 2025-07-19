@@ -1,7 +1,8 @@
 """Clustering averaging metrics."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Dict
+from collections.abc import Callable
 
 import numpy as np
 
@@ -30,8 +31,8 @@ _AVERAGE_DICT = {"mean": mean_average, "dba": dba}
 
 
 def _resolve_average_callable(
-    averaging_method: [str, Callable[[np.ndarray], np.ndarray]]
-) -> Callable[[np.ndarray, Dict], np.ndarray]:
+    averaging_method: [str, Callable[[np.ndarray], np.ndarray]],
+) -> Callable[[np.ndarray, dict], np.ndarray]:
     """Resolve a string or callable to a averaging callable.
 
     Parameters
@@ -49,7 +50,7 @@ def _resolve_average_callable(
     if isinstance(averaging_method, str):
         if averaging_method not in _AVERAGE_DICT:
             raise ValueError(
-                "averaging_method string is invalid. Please use one of the" "following",
+                "averaging_method string is invalid. Please use one of thefollowing",
                 _AVERAGE_DICT.keys(),
             )
         return _AVERAGE_DICT[averaging_method]

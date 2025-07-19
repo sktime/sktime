@@ -1,11 +1,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Doctest checks directed through pytest with conditional skipping."""
+
 import importlib
 import inspect
 import pkgutil
 from functools import lru_cache
 
-from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+from sktime.tests._config import ONLY_CHANGED_MODULES
 from sktime.tests.test_switch import run_test_module_changed
 
 EXCLUDE_MODULES_STARTING_WITH = ("all", "test", "contrib", "mlflow")
@@ -102,7 +103,7 @@ def pytest_generate_tests(metafunc):
     funcs_and_names = _all_functions("sktime")
 
     if len(funcs_and_names) > 0:
-        funcs, names = zip(*funcs_and_names)
+        names, funcs = zip(*funcs_and_names)
 
         metafunc.parametrize("func", funcs, ids=names)
     else:
@@ -111,6 +112,6 @@ def pytest_generate_tests(metafunc):
 
 def test_all_functions_doctest(func):
     """Run doctest for all functions in sktime."""
-    import doctest
+    from skbase.utils.doctest_run import run_doctest
 
-    doctest.run_docstring_examples(func, globals())
+    run_doctest(func, name=f"function {func.__name__}")

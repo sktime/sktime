@@ -1,4 +1,5 @@
 """Columnwise transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -9,6 +10,7 @@ import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
@@ -125,7 +127,11 @@ class ColumnEnsembleTransformer(
         "y_inner_mtype": PANDAS_MTYPES,
         "fit_is_empty": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
+        "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -164,10 +170,11 @@ class ColumnEnsembleTransformer(
                 "transform-returns-same-time-index",
                 "capability:unequal_length",
                 "capability:unequal_length:removes",
-                "handles-missing-data",
+                "capability:missing_values",
                 "capability:missing_values:removes",
                 "scitype:transform-output",
                 "scitype:transform-labels",
+                "capability:categorical_in_X",
             ]
             self.clone_tags(transformers, tags_to_clone)
         else:
@@ -187,9 +194,14 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set(
                 "capability:unequal_length:removes", False, True, l_transformers
             )
-            self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_transformers
+            )
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:categorical_in_X", True, False, l_transformers
             )
 
             # must be all the same, currently not checking
@@ -212,7 +224,7 @@ class ColumnEnsembleTransformer(
 
     @_transformers.setter
     def _transformers(self, value):
-        if len(value) == 1 and isinstance(value, BaseTransformer):
+        if isinstance(value, BaseTransformer):
             self.transformers = value
         elif len(value) == 1 and isinstance(value, list):
             self.transformers = value[0][1]
@@ -365,6 +377,14 @@ class ColumnEnsembleTransformer(
 
         return [params1, params2, params3]
 
+    def _sk_visual_block_(self):
+        transformers = self._transformers + [("remainder", self.remainder)]
+
+        names, transformers = zip(*transformers)
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind"), transformers, names=names
+        )
+
 
 class ColumnwiseTransformer(BaseTransformer):
     """Apply a transformer columnwise to multivariate series.
@@ -424,10 +444,11 @@ class ColumnwiseTransformer(BaseTransformer):
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",
+            "capability:categorical_in_X",
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 

@@ -80,7 +80,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                        f"invalid classLabel value in file {full_file_path_and_name}"
                     )
                 if token_len == 2 and meta_data["class_labels"]:
                     raise OSError(
@@ -94,8 +94,7 @@ def _read_header(file, full_file_path_and_name):
                     meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise OSError(
-                        "invalid targetlabel value in file "
-                        f"{full_file_path_and_name}"
+                        f"invalid targetlabel value in file {full_file_path_and_name}"
                     )
                 if token_len > 2:
                     raise OSError(
@@ -299,6 +298,6 @@ def get_path(path: Union[str, pathlib.Path], suffix: str) -> str:
     if not p_.suffix:
         # Checks if a file with the same name exists
         if not os.path.exists(resolved_path):
-            # adds the specified extention to the path
+            # adds the specified extension to the path
             resolved_path += suffix
     return resolved_path

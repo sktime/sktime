@@ -106,7 +106,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = YfromX.create_test_instance()
-    assert f.get_tags()["scitype:y"] == "univariate"  # check the assumption
+    assert f.get_tag("scitype:y") == "univariate"  # check the assumption
 
     f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])

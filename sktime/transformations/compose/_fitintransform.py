@@ -1,4 +1,5 @@
 """Fit-in-transform wrapper."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["aiwalter", "fkiraly"]
@@ -61,7 +62,12 @@ class FitInTransform(BaseTransformer):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
-    _tags = {"authors": ["aiwalter", "fkiraly"]}
+    _tags = {
+        "authors": ["aiwalter", "fkiraly"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
 
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer

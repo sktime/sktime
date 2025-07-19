@@ -1,4 +1,5 @@
 """class that implements a graph pipeline."""
+
 import warnings
 from copy import copy, deepcopy
 
@@ -164,7 +165,7 @@ class Pipeline(BaseEstimator):
             "such as TransformedTargetForecaster, ForecastingPipeline, "
             "ClassificationPipeline, etc., see for instance "
             "notebooks 01_forecasting.ipynb and "
-            "02_classification.ipynb at"
+            "02_classification.ipynb at "
             "https://github.com/sktime/sktime/blob/main/examples/.",
             stacklevel=1,
         )

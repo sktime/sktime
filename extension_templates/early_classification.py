@@ -17,13 +17,13 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting                 - _fit(self, X, y)
     predicting classes      - _predict(self, X)
     updating predictions    - _update_predict(self, X)
     performance metrics     - _score(X, y)
 
-Optional implements:
+Optional methods to implement:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
@@ -34,6 +34,7 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
 # todo: write an informative docstring for the file or module, remove the above
 # todo: add an appropriate copyright notice for your estimator
 #       estimators contributed to sktime should have the copyright notice at the top
@@ -41,7 +42,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
-
 
 from sktime.classification.early_classification import BaseEarlyClassifier
 
@@ -53,23 +53,14 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
 
     todo: describe your custom early time series classifier here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-
-    Components
-    ----------
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
     """
 
     # optional todo: override base class estimator default tags here if necessary
@@ -88,30 +79,31 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
-        self.paramc = paramc
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
+        self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite

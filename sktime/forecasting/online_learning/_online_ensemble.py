@@ -16,7 +16,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     Parameters
     ----------
     ensemble_algorithm : ensemble algorithm
-    forecasters : list of (str, estimator) tuples
+
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
+        Estimators to apply to the input series.
+
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -32,7 +39,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
         "scitype:y": "univariate",
     }
@@ -41,7 +48,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
 
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -59,7 +66,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
         return self
@@ -100,7 +107,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)
 
-        for forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
 
         return self

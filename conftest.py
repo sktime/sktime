@@ -22,6 +22,7 @@ by default, all options are off, including for default local runs of pytest
 if multiple options are turned on, they are combined with AND,
 i.e., intersection of estimators satisfying the conditions
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -48,11 +49,11 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Pytest configuration preamble."""
-    from sktime.tests import test_all_estimators
+    from sktime.tests import _config
 
     if config.getoption("--matrixdesign") in [True, "True"]:
-        test_all_estimators.MATRIXDESIGN = True
+        _config.MATRIXDESIGN = True
     if config.getoption("--only_cython_estimators") in [True, "True"]:
-        test_all_estimators.CYTHON_ESTIMATORS = True
+        _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
-        test_all_estimators.ONLY_CHANGED_MODULES = True
+        _config.ONLY_CHANGED_MODULES = True

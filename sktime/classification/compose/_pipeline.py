@@ -1,4 +1,5 @@
 """Pipeline with a classifier."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -105,6 +106,10 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -125,7 +130,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
         missing = classifier.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -159,6 +166,16 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.classifier)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -427,6 +444,10 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -446,7 +467,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -471,6 +492,16 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.classifier)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.

@@ -62,6 +62,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
         "capability:predict_proba": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
@@ -76,6 +77,7 @@ class BaseClassifier(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -177,15 +179,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit the estimator to.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -270,25 +282,37 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
             predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
@@ -314,15 +338,24 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
@@ -364,15 +397,24 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit to and predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
@@ -404,13 +446,16 @@ class BaseClassifier(BasePanelMixin):
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
             predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         return self._fit_predict_boilerplate(
@@ -431,15 +476,24 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit to and predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
@@ -498,15 +552,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to score predicted labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]

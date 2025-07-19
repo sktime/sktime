@@ -358,9 +358,11 @@ def test_auto_arima_model_pyfunc_without_conf_output(auto_arima_model, model_pat
     """Test auto arima prediction of loaded pyfunc model without config."""
     from sktime.utils import mlflow_sktime
 
-    delattr(auto_arima_model, "pyfunc_predict_conf") if hasattr(
-        auto_arima_model, "pyfunc_predict_conf"
-    ) else None
+    (
+        delattr(auto_arima_model, "pyfunc_predict_conf")
+        if hasattr(auto_arima_model, "pyfunc_predict_conf")
+        else None
+    )
     mlflow_sktime.save_model(
         sktime_model=auto_arima_model,
         path=model_path,
@@ -603,15 +605,30 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             conda_env=str(conda_env),
             serialization_format=serialization_format,
         )
-        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-        assert model_info.model_uri == model_uri
+
+        if _check_soft_dependencies("mlflow<3.0", severity="none"):
+            # MLflow 2.x format
+            assert model_info.model_uri.startswith("runs:/")
+            # Check format: runs:/run_id/artifact_path
+            uri_parts = model_info.model_uri.split("/")
+            assert len(uri_parts) >= 3
+            assert uri_parts[0] == "runs:"
+            assert uri_parts[2] == artifact_path
+        else:
+            # MLflow 3.x format
+            assert model_info.model_uri.startswith("models:/m-")
+            # Check format: models:/m-model_id
+            assert model_info.model_uri.count("/") == 1
+            assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
-            model_uri=model_uri,
+            model_uri=model_info.model_uri,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(), reloaded_model.predict()
         )
-        model_path = Path(_download_artifact_from_uri(artifact_uri=model_uri))
+        model_path = Path(
+            _download_artifact_from_uri(artifact_uri=model_info.model_uri)
+        )
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:

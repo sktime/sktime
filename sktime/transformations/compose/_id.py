@@ -3,6 +3,7 @@
 Note to developers: this is used as a component in many other transformers, therefore
 one should avoid importing other transformers from here.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -25,7 +26,10 @@ class Id(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def _transform(self, X, y=None):

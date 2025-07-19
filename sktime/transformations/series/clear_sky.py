@@ -5,7 +5,6 @@ __author__ = ["ciaran-g"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
 
@@ -77,7 +76,7 @@ class ClearSky(BaseTransformer):
         # --------------
         "authors": ["ciaran-g"],
         "maintainers": ["ciaran-g"],
-        "python_dependencies": ["statsmodels", "scipy"],
+        "python_dependencies": ["statsmodels", "joblib", "scipy"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -101,7 +100,7 @@ class ClearSky(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         "capability:unequal_length:removes": True,  # ?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": True,
     }
 
@@ -138,6 +137,8 @@ class ClearSky(BaseTransformer):
         -------
         self: reference to self
         """
+        from joblib import Parallel, delayed
+
         # check that the data is formatted correctly etc
         self.freq = _check_index(X)
         # now get grid of model

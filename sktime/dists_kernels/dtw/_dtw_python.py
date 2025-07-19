@@ -40,9 +40,8 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
         "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
         # estimator type
         # --------------
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
@@ -50,6 +49,9 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "X_inner_mtype": "df-list",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

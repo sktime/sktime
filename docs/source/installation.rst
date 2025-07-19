@@ -13,17 +13,23 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 .. contents::
    :local:
 
-For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
+For frequent issues with installation, consult the `Troubleshooting`_ section.
 
-There are three different installation types:
-* Installing sktime releases
-* Installing the latest sktime development version
-* For developers of sktime and 3rd party extensions: Developer setup
+There are three different installation types, depending on your use case:
+
+* Installing stable ``sktime`` releases - for most users, for production environments
+* Installing the latest unstable ``sktime`` development version - for pre-release tests
+* For developers of ``sktime`` and 3rd party extensions: Developer setup for extensions and contributions
 
 Each of these three setups are explained below.
 
-Release versions
-----------------
+Installing release versions
+---------------------------
+
+For:
+
+* Most users
+* Use in production environments
 
 Installing sktime from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +52,7 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 These are curated selections of the most common soft dependencies for the respective learning task.
 The available dependency sets are of the same names as the respective modules:
 ``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param_est``,
-``networks``, ``annotation``, ``alignment``.
+``networks``, ``detection``, ``alignment``.
 
 .. warning::
 
@@ -82,48 +88,41 @@ Note: not all soft dependencies of ``sktime`` are also available on ``conda-forg
 The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
 
 
-Development versions
---------------------
-To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
+Installing latest unstable development version
+----------------------------------------------
 
-Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
-Step 2 - ensure build requirements are satisfied
-Step 3 - ``pip`` install the package from a ``git`` clone, with the ``editable`` parameter.
+For:
 
-Detail instructions for all steps are given below.
-For brevity, we discuss steps 1 and 3 first; step 2 is discussed at the end, as it will depend on the operating system.
+* pre-release tests, e.g., early testing of new features
+* not for reliable production use
+* not for contributors or extenders
 
-Step 1 - clone the git repository
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This type of ``sktime`` installation obtains a latest static snapshot of the repository.
+It is intended for developers that wish to build or test code using a version of the library
+that contains the all of the latest and current updates.
 
-The ``sktime`` repository should be cloned to a local directory, using a graphical user interface, or the command line.
+.. note::
+    For an full editible developer setup, please read the section "Full developer setup for contributors and extension developers" below.
 
-Using the ``git`` command line, the sequence of commands to install the latest version is as follows:
-
-.. code-block:: bash
-
-    git clone https://github.com/sktime/sktime.git
-    cd sktime
-    git checkout main
-    git pull
-
-
-To build a previous version, replace line 3 with:
+To install the latest version of ``sktime`` directly from the repository,
+you can use the ``pip`` package manager to install directly from the GitHub repository:
 
 .. code-block:: bash
 
-    git checkout <VERSION>
-
-This will checkout the code for the version ``<VERSION>``, where ``<VERSION>`` is a valid version string.
-Valid version strings are the repository's ``git`` tags, which can be inspected by running ``git tag``.
-
-You can also `download <https://github.com/sktime/sktime/releases>`_ a zip archive of the version from GitHub.
+    pip install git+https://github.com/sktime/sktime.git
 
 
-Step 2 - building sktime from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To install from a specific branch, use the following command:
 
-To build and install ``sktime`` from source, navigate to the local clone's root directory and type:
+.. code-block:: bash
+
+    pip install git+https://github.com/sktime/sktime.git@<branch_name>
+
+Alternatively, a latest version install can be obtained from a local clone of the repository.
+
+For steps on how to obtain a local clone of the repository, please follow the steps described here:
+:ref:`Creating a fork and cloning the repository <Creating a fork and cloning the repository - initial one time setup>`
+
 
 .. code-block:: bash
 
@@ -131,77 +130,53 @@ To build and install ``sktime`` from source, navigate to the local clone's root 
 
 Alternatively, the ``.`` may be replaced with a full or relative path to the root directory.
 
-For a developer install that updates the package each time the local source code is changed, install ``sktime`` in editable mode, via:
 
-.. code-block:: bash
+Full developer setup for contributors and extension developers
+--------------------------------------------------------------
 
-    pip install --editable .[dev]
+For whom:
 
-This allows editing and extending the code in-place. See also
-`pip reference on editable installs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
+* contributors to the ``sktime`` project
+* developers of extensions in closed code bases
+* developers of 3rd party extensions released as open source
 
-.. note::
+To develop ``sktime`` locally, or to contribute to the project, you need to set up:
 
-    You will have to re-run:
+* a local clone of the ``sktime`` repository.
+* a virtual environment with an editable install of ``sktime`` and its developer dependencies.
 
-    .. code-block:: bash
+The following steps guide you through the process:
 
-        pip install --editable .
+1. Follow the Git workflow: :ref:`Creating a fork and cloning the repository <Creating a fork and cloning the repository - initial one time setup>`
 
-    every time the source code of a compiled extension is changed (for
-    instance when switching branches or pulling changes from upstream).
+2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment, which tends to be beginner friendly.
+The process will be similar for ``venv`` or other virtual environment managers.
 
-Building binary packages and installers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. warning::
+    Using ``conda`` via one of the commercial distributions such as Anaconda
+    is in general not free for commercial use and may incur significant costs or liabilities.
+    Consider using free distributions and channels for package management,
+    and be aware of applicable terms and conditions.
 
-The ``.whl`` package and ``.exe`` installers can be built with:
-
-.. code-block:: bash
-
-    pip install build
-    python -m build --wheel
-
-The resulting packages are generated in the ``dist/`` folder.
-
-Contributor or 3rd party extension developer setup
---------------------------------------------------
-
-1. Follow the Git workflow: Fork and clone the repository as described in [Git and GitHub workflow](https://www.sktime.net/en/stable/developer_guide/git_workflow.html)
-
-2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
-This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
-
-In the ``anaconda prompt`` terminal:
+In the ``conda`` terminal:
 
 3. Navigate to your local sktime folder, :code:`cd sktime` or similar
 
-4. Create a new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
+4. Create a new environment with a supported python version: :code:`conda create -n sktime-dev python=3.11` (or :code:`python=3.12` etc)
 
    .. warning::
-       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
+       If you already have an environment called ``sktime-dev`` from a previous attempt you will first need to remove this.
 
 5. Activate the environment: :code:`conda activate sktime-dev`
 
 6. Build an editable version of sktime.
-In order to install only the dev dependencies, :code:`pip install -e .[dev]`
+In order to install only the dev dependencies, :code:`pip install -e ".[dev]"`
 If you also want to install soft dependencies, install them individually, after the above,
-or instead use: :code:`pip install -e .[all_extras,dev]` to install all of them.
+or instead use: :code:`pip install -e ".[all_extras,dev]"` to install all of them.
 
-    .. note::
-
-        If this step results in a "no matches found" error, it may be due to how your shell handles special characters.
-
-        - Possible solution: use quotation marks:
-
-            .. code-block:: bash
-
-                pip install -e ."[dev]"
-
-7. If everything has worked you should see message "successfully installed sktime"
+7. If everything has worked, you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
-
-
 
 .. note::
 
@@ -227,7 +202,7 @@ Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual
 adding your virtual environment as a new kernel for your notebook.
 
 Installing ``all_extras`` on mac with ARM processor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are using a mac with an ARM processor, you may encounter an error when installing
 ``sktime[all_extras]``.  This is due to the fact that some libraries included in ``all_extras``
 are not compatible with ARM-based processors.
@@ -256,8 +231,8 @@ Virtual environments
 
 Two good options for virtual environment managers are:
 
-* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
-* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
+* `conda <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`_ (beginner friendly, but may incur license fees for commercial use if using a commercial distribution).
+* `venv <https://docs.python.org/3/library/venv.html>`_ (also quite good!).
 
 Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
 in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.

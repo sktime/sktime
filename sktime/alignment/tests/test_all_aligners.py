@@ -15,7 +15,7 @@ INVALID_y_INPUT_TYPES = [list(), tuple()]
 
 
 class AlignerFixtureGenerator(BaseFixtureGenerator):
-    """Fixture generator for classifier tests.
+    """Fixture generator for time series aligner tests.
 
     Fixtures parameterized
     ----------------------

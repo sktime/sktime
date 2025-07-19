@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class MCDCNNClassifier(BaseDeepClassifier):
     """Multi Channel Deep Convolutional Neural Classifier, as described in [1]_.
 
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
+
     Parameters
     ----------
     n_epochs : int, optional (default=120)
@@ -57,11 +60,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
     random_state : int, optional (default=0)
         The seed to any random action.
 
-    Notes
-    -----
-    Adapted from the implementation of Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
-
     References
     ----------
     .. [1] Zheng et. al, Time series classification using multi-channels deep
@@ -81,7 +79,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["james-large"],
+        "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

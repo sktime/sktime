@@ -9,17 +9,15 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class FCNNetwork(BaseDeepNetwork):
     """Establish the network structure for a FCN.
 
-    Adapted from the implementation used in [1]
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+
+    Implements network in [1]_.
 
     Parameters
     ----------
-    random_state    : int, default = 0
+    random_states : int, default = 0
         seed to any needed random actions
-
-    Notes
-    -----
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
 
     References
     ----------

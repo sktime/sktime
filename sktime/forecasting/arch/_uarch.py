@@ -154,7 +154,7 @@ class ARCH(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": "Vasudeva-bit",
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
         "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
         # estimator type
@@ -163,7 +163,7 @@ class ARCH(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": True,
         "ignores-exogeneous-X": True,
     }
