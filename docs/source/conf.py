@@ -420,6 +420,7 @@ def _make_estimator_overview(app):
         ],
         "classifier": [
             "capability:multivariate",
+            "capability:predict_proba",
             "capability:multioutput",
             "capability:unequal_length",
             "capability:missing_values",

@@ -387,10 +387,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         ]
         if "to_quantiles" not in methods_list:
             raise NotImplementedError(
-                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "To perform probabilistic forecast, QuantileLoss or other loss"
                 "metrics that support to_quantiles function has to be used in fit."
                 f"With {self.best_model.loss}, it doesn't support probabilistic"
-                "forcast. Details can be found:"
+                "forecast. Details can be found:"
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 
@@ -506,7 +506,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             time_varying_known_reals = []
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
-        data["_target_column"].fillna(0, inplace=True)
+        data = data.copy()
+        data["_target_column"] = data["_target_column"].fillna(0)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
