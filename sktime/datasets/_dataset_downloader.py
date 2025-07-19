@@ -177,7 +177,7 @@ class DatasetDownloader(DatasetDownloadStrategy):
         for i, strategy in enumerate(self.strategies):
             if not strategy.available:
                 strategy_name = type(strategy).__name__
-                soft_dependency = strategy._tags["python_dependencies"]
+                soft_dependency = strategy.get_tag("python_dependencies")
                 warnings.warn(
                     f"DatasetDownloader skipping {strategy_name} as "
                     f"it requires {soft_dependency}. We recommend this location as "
