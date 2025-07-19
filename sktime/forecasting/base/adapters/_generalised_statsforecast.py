@@ -6,6 +6,7 @@ from warnings import warn
 
 import pandas
 
+from sktime.forecasting import upto
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.adapters.forward import _clone_fitted_params
 
@@ -516,7 +517,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        mean = self.estimator.predict(fh=upto(h), X=X)[:, 0]
         if level is None:
             return {"mean": mean}
         # if a level is passed, and if prediction_intervals has not been instantiated
@@ -529,9 +530,7 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
 
-        pred_int = self.estimator.predict_interval(
-            fh=range(1, h + 1), X=X, coverage=coverage
-        )
+        pred_int = self.estimator.predict_interval(fh=upto(h), X=X, coverage=coverage)
 
         return self.format_pred_int("mean", mean, pred_int, coverage, level)
 
