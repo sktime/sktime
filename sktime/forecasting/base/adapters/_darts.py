@@ -343,6 +343,9 @@ class _DartsRegressionAdapter(BaseForecaster):
             or _check_soft_dependencies("u8darts>=0.35", severity="none")
         ]
 
+        # darts changed the name of the method converting "TimeSeries" to "DataFrame"
+        # in version 0.35, so we need to check the version
+        # also, darts is distributed as "darts" and "u8darts", so we need to check both
         if darts_ge_035:
             to_df_name = "to_dataframe"
         else:
