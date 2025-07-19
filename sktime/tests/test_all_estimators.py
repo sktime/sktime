@@ -55,6 +55,12 @@ from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 
 
+@pytest.fixture(autouse=True)
+def disable_mps(monkeypatch):
+    """Disable MPS for all tests"""
+    monkeypatch.setattr("torch._C._mps_is_available", lambda: False)
+
+
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
 
