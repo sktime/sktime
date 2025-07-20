@@ -324,6 +324,7 @@ notebooks = [
   # needed for the examples
   "prophet",
   "skpro",
+  "statsforecast",
   "huggingface-hub",
 ]
 numpy1 = [
