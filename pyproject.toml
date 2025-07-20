@@ -315,13 +315,16 @@ mlflow_tests = [
   "moto",
 ]
 notebooks = [
-  "huggingface-hub",
+  # needed for the blog post notebooks
   "matplotlib",
   "numpy<2",
   "pmdarima",
   "seaborn",
-  "skpro",
   "tbats",
+  # needed for the examples
+  "prophet"
+  "skpro",
+  "huggingface-hub",
 ]
 numpy1 = [
   "numpy<2.0.0",
