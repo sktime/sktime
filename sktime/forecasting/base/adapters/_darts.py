@@ -132,7 +132,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
-        "tests:libs": ["sktime.forecasting.base.adapters._darts"]
+        "tests:libs": ["sktime.forecasting.base.adapters._darts"],
     }
 
     def __init__(
