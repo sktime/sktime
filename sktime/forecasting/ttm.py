@@ -597,9 +597,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         os = platform.system()
         if os == "Darwin":
-            import torch
+            if _check_soft_dependencies("torch", severity="none"):
+                import torch
 
-            torch.backends.mps.is_available = lambda: False
+                torch.backends.mps.is_available = lambda: False
+            else:
+                pass
 
         test_params = [
             {
