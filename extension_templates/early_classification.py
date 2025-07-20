@@ -17,13 +17,13 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting                 - _fit(self, X, y)
     predicting classes      - _predict(self, X)
     updating predictions    - _update_predict(self, X)
     performance metrics     - _score(X, y)
 
-Optional implements:
+Optional methods to implement:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)

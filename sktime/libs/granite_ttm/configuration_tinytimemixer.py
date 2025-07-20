@@ -2,14 +2,9 @@
 
 from typing import Optional, Union
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers.configuration_utils import PretrainedConfig
-else:
-
-    class PretrainedConfig:
-        """Dummy class if transformers is unavailable."""
+PretrainedConfig = _safe_import("transformers.configuration_utils.PretrainedConfig")
 
 
 class TinyTimeMixerConfig(PretrainedConfig):

@@ -8,6 +8,7 @@ import pandas as pd
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _all_ = ["ARDL"]
 __author__ = ["kcc-lion"]
@@ -37,13 +38,15 @@ class ARDL(_StatsModelsAdapter):
     causal : bool, optional
         Whether to include lag 0 of exog variables.  If True, only includes
         lags 1, 2, ...
-    trend : {'n', 'c', 't', 'ct'}, optional
+    trend : {'n', 'c', 't', 'ct', 'ctt'}, optional
         The trend to include in the model:
 
         * 'n' - No trend.
         * 'c' - Constant only.
         * 't' - Time trend only.
         * 'ct' - Constant and time trend.
+        * 'ctt' - Constant plus linear plus quadratic time trends.
+                N.B. The choice of 'ctt' requires statsmodels >= 0.15.0.
 
         The default is 'c'.
 
@@ -243,6 +246,16 @@ class ARDL(_StatsModelsAdapter):
         self.fixed = fixed
         self.causal = causal
         self.trend = trend
+        if self.trend == "ctt":
+            present = _check_soft_dependencies(
+                "statsmodels<0.15.0",
+                severity="none",
+            )
+            if present:
+                raise ImportError(
+                    "Using trend='ctt' requires statsmodels >= 0.15.0. "
+                    "Please install statsmodels."
+                )
         self.seasonal = seasonal
         self.deterministic = deterministic
         self.hold_back = hold_back

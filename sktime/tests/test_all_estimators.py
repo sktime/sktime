@@ -207,9 +207,9 @@ class BaseFixtureGenerator:
         # to make it possible to set custom tags to filter
         # as class attributes, similar to `estimator_type_filter`
         if CYTHON_ESTIMATORS:
-            filter_tags = {"requires_cython": True}
+            filter_tags = {"requires_cython": True, "tests:skip_all": False}
         else:
-            filter_tags = None
+            filter_tags = {"tests:skip_all": False}
 
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
@@ -256,7 +256,16 @@ class BaseFixtureGenerator:
     @staticmethod
     def is_excluded(test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
-        return test_name in EXCLUDED_TESTS.get(est.__name__, [])
+        # there are two conditions for exclusion:
+        # 1. the estimator is excluded in the legacy EXCLUDED_TESTS list
+        # 2. the excluded test appears in the "tests:skip_by_name" tag
+        cond1 = test_name in EXCLUDED_TESTS.get(est.__name__, [])
+        excl_tag = est.get_class_tag("tests:skip_by_name", [])
+        if excl_tag is None:
+            excl_tag = []
+        cond2 = test_name in excl_tag
+        excluded = cond1 or cond2
+        return excluded
 
     # the following functions define fixture generation logic for pytest_generate_tests
     # each function is of signature (test_name:str, **kwargs) -> List of fixtures
@@ -313,7 +322,7 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
+        # estimator_instance is cloned at the start of every test
         return request.param.clone()
 
     def _generate_scenario(self, test_name, **kwargs):

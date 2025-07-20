@@ -220,3 +220,6 @@ They are primarily useful for developers managing CI behaviour of individual obj
     :nosignatures:
 
     tests__core
+    tests__vm
+    tests__skip_all
+    tests__skip_by_name
