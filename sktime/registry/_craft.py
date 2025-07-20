@@ -92,15 +92,22 @@ def build_obj():
 def deps(spec):
     """Get PEP 440 dependency requirements for a craft spec.
 
+    This will result in a list of PEP 440 compatible requirement string.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all imports were present
+        i.e., a string that executes to construct an object if all imports were present.
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
