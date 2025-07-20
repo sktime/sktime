@@ -293,7 +293,7 @@ class ChronosForecaster(BaseForecaster):
         ],
         # abdulfatir and lostella for amazon-science/chronos-forecasting
         "maintainers": ["geetu040"],
-        "python_dependencies": ["torch", "transformers", "accelerate", "numpy"],
+        "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
         "requires-fh-in-fit": False,
@@ -308,7 +308,7 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         # testing configuration
-        # ---------------------
+        # ----------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
         "tests:skip_by_name": [  # pickling problems
