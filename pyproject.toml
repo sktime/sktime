@@ -321,6 +321,7 @@ notebooks = [
   "pmdarima",
   "seaborn",
   "skpro",
+  "tbats",
 ]
 numpy1 = [
   "numpy<2.0.0",
