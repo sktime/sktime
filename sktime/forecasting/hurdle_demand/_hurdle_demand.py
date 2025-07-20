@@ -33,8 +33,9 @@ if _check_soft_dependencies("prophetverse", severity="none"):
 else:
     from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
 
-if _check_soft_dependencies("xarray", severity="none"):
-    from xarray import DataArray
+if _check_soft_dependencies("skpro", severity="none"):
+    from skpro.distributions import Hurdle as skpro_Hurdle
+    from skpro.distributions import Poisson as skpro_Poisson
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
@@ -75,21 +76,23 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
             "mask": True,
         }
 
+    def _get_distribution(
+        self, samples: dict[str, np.ndarray], index: pd.DatetimeIndex
+    ):
+        raise NotImplementedError()
+
     def _predict_proba(self, marginal=True, **kwargs):
         if self._is_vectorized:
             return self._vectorize_predict_method("_predict_components", **kwargs)
 
-        predictive_samples = self._get_predictive_samples_dict(**kwargs)
-        y_hat = predictive_samples["obs"]
+        samples = self._get_predictive_samples_dict(**kwargs)
 
-        index = kwargs["fh"].to_absolute(self.cutoff).to_numpy()
-        as_array = DataArray(y_hat, dims=["sample", "time"], coords={"time": index})
+        index = kwargs["fh"].to_absolute(self.cutoff).to_pandas()
+        base_distribution = self._get_distribution(samples, index)
 
-        as_frame = as_array.to_dataframe(self._y_metadata["feature_names"][0])
+        p = samples["gate"].mean(axis=0)[..., np.newaxis]
 
-        from skpro.distributions import Empirical
-
-        return Empirical(as_frame, time_indep=False)
+        return skpro_Hurdle(p, base_distribution)
 
     def _predict(self, fh, X):
         # TODO: this is technically "wrong" since we should use median rather than mean
@@ -214,7 +217,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "authors": ["tingiskhan", "felipeangleimvieira"],
         "maintainers": ["tingiskhan"],
         "python_version": None,
-        "python_dependencies": ["prophetverse", "xarray", "jax", "numpyro"],
+        "python_dependencies": ["prophetverse", "jax", "numpyro", "skpro"],
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
@@ -316,6 +319,18 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
         return demand
 
+    def _get_distribution(
+        self,
+        samples,
+        index,
+    ):
+        if self.family == "negative-binomial":
+            raise NotImplementedError("Negative binomial not implemented yet!")
+        elif self.family == "poisson":
+            return skpro_Poisson(samples["demand"].mean(axis=0), index=index)
+
+        raise NotImplementedError(f"Unknown family: {self.family}!")
+
     def model(  # noqa: D102
         self,
         length: int,
@@ -344,9 +359,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
             observed_demand = y
 
         with numpyro.handlers.mask(mask=mask):
-            sampled_events = numpyro.sample(
-                "events:ignore", Bernoulli(1.0 - prob), obs=events
-            )
+            numpyro.sample("events:ignore", Bernoulli(1.0 - prob), obs=events)
 
         if self.family == "negative-binomial":
             concentration = numpyro.sample(
@@ -361,13 +374,12 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         truncated = TruncatedDiscrete(dist)
 
         with numpyro.handlers.mask(mask=events_mask & mask):
-            sampled_demand = numpyro.sample(
-                "demand:ignore", truncated, obs=observed_demand
-            )
+            numpyro.sample("demand:ignore", truncated, obs=observed_demand)
 
         if index is None:
             return
 
-        numpyro.deterministic("obs", sampled_events * sampled_demand)
+        numpyro.deterministic("gate", 1.0 - prob)
+        numpyro.deterministic("demand", demand)
 
         return
