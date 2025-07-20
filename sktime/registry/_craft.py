@@ -135,7 +135,9 @@ def deps(spec):
                 return dep[0]  # pick first dependency in disjunction
             return dep
 
-        if isinstance(new_deps, str) and len(new_deps) > 0:
+        if new_deps is None:
+            new_deps_coerced = []
+        elif isinstance(new_deps, str) and len(new_deps) > 0:
             new_deps_coerced = [new_deps]
         elif isinstance(new_deps, str) and len(new_deps) == 0:
             new_deps_coerced = []
