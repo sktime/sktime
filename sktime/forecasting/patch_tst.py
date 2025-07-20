@@ -274,6 +274,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         "maintainers": ["julian-fong"],
         "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
+        "tests:vm": True,
     }
 
     def __init__(
