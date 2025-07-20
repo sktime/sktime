@@ -391,6 +391,21 @@ class _DartsRegressionAdapter(BaseForecaster):
         return endogenous_point_predictions.loc[abs_idx]
 
 
+def _get_darts_quantiles(obj, q):
+    """Get quantiles from Darts object."""
+    # darts changed the name of the method converting "TimeSeries" to "quantiles"
+    # in version 0.35, so we need to check the version
+    # also, darts is distributed as "darts" and "u8darts", so we need to check both
+    darts_ge_035 = [
+        _check_soft_dependencies("darts>=0.35", severity="none")
+        or _check_soft_dependencies("u8darts>=0.35", severity="none")
+    ]
+    if darts_ge_035:
+        return obj.quantiles(q).to_dataframe()
+    else:
+        return obj.pd_quantiles(q)
+
+
 class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
     """Adapter class for Darts Regression models.
 
@@ -576,12 +591,16 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         absolute_fh = fh.to_absolute(self.cutoff)
+
         endogenous_quantile_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
             past_covariates=unknown_exogenous,
             future_covariates=known_exogenous,
             num_samples=self.num_samples,
-        ).quantiles_df(quantiles=alpha)
+        )
+        endogenous_quantile_predictions = _get_darts_quantiles(
+            endogenous_quantile_predictions, q=alpha
+        )
         variable_names = self._get_varnames()
         multi_index = pd.MultiIndex.from_product(
             [variable_names, alpha], names=["variable", "quantile"]
