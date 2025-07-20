@@ -408,7 +408,7 @@ def _get_darts_quantiles(obj, q):
         or _check_soft_dependencies("u8darts>=0.37", severity="none")
     ]
     if darts_ge_037:
-        return obj.quantiles(q).to_dataframe()
+        return obj.quantile(q).to_dataframe()
     elif darts_ge_035:
         return obj.quantile_timeseries(q).to_dataframe()
     else:
