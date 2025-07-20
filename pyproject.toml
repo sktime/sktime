@@ -274,7 +274,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
   "skchange",
 ]
 cython_extras = [
