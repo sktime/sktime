@@ -393,15 +393,24 @@ class _DartsRegressionAdapter(BaseForecaster):
 
 def _get_darts_quantiles(obj, q):
     """Get quantiles from Darts object."""
-    # darts changed the name of the method converting "TimeSeries" to "quantiles"
-    # in version 0.35, so we need to check the version
+    # darts changed the name of the method converting "TimeSeries" to quantiles
+    # data frames multiple times in succession
+    # pre version 0.35, it was called pd_quantiles
+    # post version 0.35, on needs to call quantile_timeseries first
+    # in version 0.37, quantile_timeseries was renamed to quantiles
     # also, darts is distributed as "darts" and "u8darts", so we need to check both
     darts_ge_035 = [
         _check_soft_dependencies("darts>=0.35", severity="none")
         or _check_soft_dependencies("u8darts>=0.35", severity="none")
     ]
-    if darts_ge_035:
+    darts_ge_037 = [
+        _check_soft_dependencies("darts>=0.37", severity="none")
+        or _check_soft_dependencies("u8darts>=0.37", severity="none")
+    ]
+    if darts_ge_037:
         return obj.quantiles(q).to_dataframe()
+    elif darts_ge_035:
+        return obj.quantile_timeseries(q).to_dataframe()
     else:
         return obj.pd_quantiles(q)
 
