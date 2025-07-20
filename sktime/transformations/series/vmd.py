@@ -136,6 +136,7 @@ class VmdTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.libs.vmdpy"],
     }
 
     def __init__(
