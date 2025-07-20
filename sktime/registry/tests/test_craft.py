@@ -124,6 +124,6 @@ def test_imports():
     assert imports(pipe_spec_with_deps) == pipe_imports
 
 
-def test_deps_with_disjunction(spec):
+def test_deps_with_disjunction():
     """Check that deps retrieves the correct requirement set for disjunctions."""
     assert deps("DartsXGBModel") == ["u8darts>=0.29"]
