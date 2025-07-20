@@ -308,7 +308,7 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         # testing configuration
-        # ----------------------
+        # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
         "tests:skip_by_name": [  # pickling problems
