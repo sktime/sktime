@@ -316,7 +316,9 @@ mlflow_tests = [
 ]
 notebooks = [
   "huggingface-hub",
+  "matplotlib",
   "pmdarima",
+  "seaborn",
   "skpro",
 ]
 numpy1 = [
