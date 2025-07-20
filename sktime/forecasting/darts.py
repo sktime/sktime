@@ -314,6 +314,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
+        "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
         "scitype:y": "univariate",
