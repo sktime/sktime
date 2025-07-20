@@ -316,9 +316,9 @@ mlflow_tests = [
   "moto",
 ]
 notebooks = [
-  huggingface-hub,
-  pmdarima,
-  skpro,
+  "huggingface-hub",
+  "pmdarima",
+  "skpro",
 ]
 numpy1 = [
   "numpy<2.0.0",
