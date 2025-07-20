@@ -116,6 +116,10 @@ class _DartsRegressionAdapter(BaseForecaster):
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": [["u8darts>=0.29", "darts>=0.29"]],
+        # darts is distributed in two packages of which exactly one must be installed
+        # either "darts" or "u8darts" - the first one has a leaner dependency set,
+        # so u8darts is preferred (first in the list)
+        #
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
@@ -124,6 +128,9 @@ class _DartsRegressionAdapter(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
