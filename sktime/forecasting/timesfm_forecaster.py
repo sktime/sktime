@@ -155,8 +155,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "python_dependencies": [
             "tensorflow",
             "einshape",
-            "jax",
-            "jaxlib==0.4.26",
+            "jax==0.6.2",
+            "jaxlib==0.6.2",
             "praxis",
             "huggingface-hub",
             "paxml",
