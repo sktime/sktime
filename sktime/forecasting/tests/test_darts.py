@@ -99,7 +99,7 @@ def test_darts_regression_models_with_weather_dataset(model):
     # Load the dataset
     series = WeatherDataset().load()
 
-   # Predicting atmospheric pressure
+    # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
     target_df = _darts_to_series(target)
 
