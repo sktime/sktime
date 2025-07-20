@@ -114,6 +114,10 @@ class Catch22Classifier(_DelegatedClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
         transformer = Catch22(
             outlier_norm=self.outlier_norm, replace_nans=self.replace_nans
         )
@@ -122,7 +126,6 @@ class Catch22Classifier(_DelegatedClassifier):
             estimator = RandomForestClassifier(n_estimators=200)
 
         estimator = _clone_estimator(estimator, random_state)
-
         m = getattr(estimator, "n_jobs", None)
         if m is not None:
             estimator.n_jobs = self._threads_to_use
