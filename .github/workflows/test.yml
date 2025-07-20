@@ -68,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder,dev]
+          python -m pip install .[notebooks,dev]
 
       - name: Show dependencies
         run: python -m pip list
@@ -89,7 +89,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder,mlflow]
+          python -m pip install .[notebooks,mlflow]
 
       - name: Show dependencies
         run: python -m pip list
