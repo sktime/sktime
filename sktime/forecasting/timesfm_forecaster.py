@@ -153,10 +153,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         "python_version": ">=3.10,<3.11",
         "python_dependencies": [
-            "tensorflow",
+            "tensorflow>=2.18.0",
             "einshape",
-            "jax==0.6.2",
-            "jaxlib==0.6.2",
+            "jax>=0.6.0",
+            "jaxlib>=0.6.0",
             "praxis",
             "huggingface-hub",
             "paxml",
