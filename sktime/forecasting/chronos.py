@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -177,7 +177,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(_BaseGlobalForecaster):
+class ChronosForecaster(BaseForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -301,12 +301,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "capability:insample": False,
         "capability:pred_int:insample": False,
@@ -314,6 +310,11 @@ class ChronosForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.chronos"],
+        "tests:skip_by_name": [  # pickling problems
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
     }
 
     _default_chronos_config = {
@@ -440,6 +441,75 @@ class ChronosForecaster(_BaseGlobalForecaster):
         }
         return str(sorted(kwargs_plus_model_path.items()))
 
+    def predict(self, fh=None, X=None, y=None):
+        """Forecast time series at future horizon.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at ``fh``, with same index as ``fh``.
+            ``y_pred`` has same type as the ``y`` that has been passed most recently:
+            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if self._fh is None and fh is not None:
+            _fh = fh
+        else:
+            _fh = self._fh
+
+        if y is not None:
+            return self.fit_predict(fh=_fh, X=X, y=y)
+
+        return super().predict(fh=fh, X=X)
+
     def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
 
@@ -470,10 +540,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         _y_df = _y
 
         index_names = _y.index.names
-        if isinstance(_y.index, pd.MultiIndex):
-            _y = _frame2numpy(_y)
-        else:
-            _y = _y.values.reshape(1, -1, 1)
+        _y = _y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
@@ -486,28 +553,12 @@ class ChronosForecaster(_BaseGlobalForecaster):
             results.append(values)
 
         pred = np.stack(results, axis=1)
-        if isinstance(_y_df.index, pd.MultiIndex):
-            ins = np.array(
-                list(np.unique(_y_df.index.droplevel(-1)).repeat(pred.shape[0]))
-            )
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
-            idx = (
-                ForecastingHorizon(range(1, pred.shape[0] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[1]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y_df.index.names,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[0] + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
+        index = (
+            ForecastingHorizon(range(1, pred.shape[0] + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
         pred = pd.DataFrame(
@@ -518,7 +569,8 @@ class ChronosForecaster(_BaseGlobalForecaster):
         dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
         pred.index.names = index_names
 
-        return pred.loc[dateindex]
+        y_pred = pred.loc[dateindex]
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -555,24 +607,6 @@ class ChronosForecaster(_BaseGlobalForecaster):
             }
         )
         return test_params
-
-
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
 
 
 @_multiton

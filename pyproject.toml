@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.38.3"
+version = "0.38.4"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -323,6 +323,21 @@ pandas1 = [
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
+]
+
+dependencies_lowest = [
+    "numpy==1.21.0",
+    "pandas==1.1.0",
+    "scikit-learn==0.24.0",
+    "scipy==1.4.0",
+]
+
+# June 2023
+dependencies_lower = [
+    "numpy==1.25.0",
+    "pandas==2.0.2",
+    "scikit-learn==1.3.0",
+    "scipy==1.10.1",
 ]
 
 [project.urls]
