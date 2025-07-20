@@ -272,7 +272,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "Jayant Kalagnanam",
         ],
         "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers", "torch"],
+        "python_dependencies": ["transformers", "torch", "accelerate"],
         "capability:global_forecasting": True,
         "tests:vm": True,
     }
