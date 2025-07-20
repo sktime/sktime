@@ -69,7 +69,6 @@ EXCLUDE_ESTIMATORS = [
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
-    "DartsXGBModel",
     # models with large weights
     "MomentFMForecaster",
     # Large datasets

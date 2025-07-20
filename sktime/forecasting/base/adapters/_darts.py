@@ -128,9 +128,6 @@ class _DartsRegressionAdapter(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,
     }
 
     def __init__(
