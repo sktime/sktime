@@ -323,6 +323,7 @@ notebooks = [
   "tbats",
   # needed for the examples
   "prophet",
+  "pytorch-forecasting",
   "skpro",
   "statsforecast",
   "huggingface-hub",
