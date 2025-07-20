@@ -122,10 +122,22 @@ def deps(spec):
 
         new_deps = cls.get_class_tag("python_dependencies")
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        if isinstance(new_deps, str) and len(new_deps) > 0:
+            new_deps_coerced = [new_deps]
+        elif isinstance(new_deps, str) and len(new_deps) == 0:
+            new_deps_coerced = []
+        elif isinstance(new_deps, list):
+            new_deps_coerced = [_resolve_disjunctions(dep) for dep in new_deps]
+        else:
+            new_deps_coerced = new_deps
+
+        dep_strs += new_deps_coerced
 
         reqs = list(set(dep_strs))
 
