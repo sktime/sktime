@@ -31,18 +31,18 @@ def sample_univariate_data():
 def sample_multivariate_data():
     """Create sample multivariate time series data with causal relationships."""
     np.random.seed(42)
-    n = 50
+    n = 100
     dates = pd.date_range("2020-01-01", periods=n, freq="D")
 
     # Create causal relationships: X1 -> X2 -> X3
     X1 = np.random.normal(0, 1, n)
-    X2 = 0.7 * X1 + np.random.normal(0, 0.3, n)
-    X3 = 0.5 * X2 + 0.2 * X1 + np.random.normal(0, 0.2, n)
+    X2 = 0.8 * X1 + np.random.normal(0, 0.2, n)
+    X3 = 0.7 * X2 + 0.3 * X1 + np.random.normal(0, 0.15, n)
 
     X = pd.DataFrame({"X1": X1, "X2": X2, "X3": X3}, index=dates)
 
     y = pd.Series(
-        0.6 * X3 + 0.3 * X2 + np.random.normal(0, 0.1, n), index=dates, name="target"
+        0.7 * X3 + 0.4 * X2 + np.random.normal(0, 0.1, n), index=dates, name="target"
     )
 
     return X, y
@@ -287,10 +287,14 @@ class TestCausalFeatureEngineer:
 
         params = CausalFeatureEngineer.get_test_params()
 
-        assert isinstance(params, dict)
-        assert "causal_method" in params
-        assert "max_lag" in params
-        assert "feature_types" in params
+        assert isinstance(params, list)
+        assert len(params) >= 2  # must return at least 2 param sets
+
+        for param_set in params:
+            assert isinstance(param_set, dict)
+            assert "causal_method" in param_set
+            assert "max_lag" in param_set
+            assert "feature_types" in param_set
 
     def test_causal_feature_engineer_alignment_methods(self, sample_multivariate_data):
         """Test index alignment utility methods."""
