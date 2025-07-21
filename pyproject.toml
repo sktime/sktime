@@ -272,7 +272,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
   "skchange",
 ]
 cython_extras = [
@@ -312,6 +311,20 @@ mlflow_tests = [
   "botocore",
   "mlflow<4.0",
   "moto",
+]
+notebooks = [
+  # needed for the blog post notebooks
+  "matplotlib",
+  "numpy<2",
+  "pmdarima",
+  "seaborn",
+  "tbats",
+  # needed for the examples
+  "dtw-python",
+  "prophet",
+  "pytorch-forecasting",
+  "skpro",
+  "statsforecast",
 ]
 numpy1 = [
   "numpy<2.0.0",

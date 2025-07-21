@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras_pandas2,binder,dev,mlflow,dl]
+          python -m pip install .[notebooks,binder,dev]
 
       - name: Show dependencies
         run: python -m pip list
@@ -93,7 +93,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras_pandas2,binder,dev,mlflow]
+          python -m pip install .[notebooks,binder]
 
       - name: Show dependencies
         run: python -m pip list
