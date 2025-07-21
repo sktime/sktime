@@ -26,12 +26,18 @@ Handling soft dependencies
 This section explains how to handle existing soft dependencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
 
+**Best practice:**
+
+* (a) Soft dependencies should be restricted to estimators whenever possible, see the section "Isolating soft dependencies to estimators".
+* (b) If restricting to estimators is not possible, follow the section "Isolating soft dependencies at module level".
+
+Isolating soft dependencies to estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
-Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
-This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__.
-There are specific conventions to add such warnings in estimators, as below.
+This means, importing only in methods of the estimator, such as ``_fit``, ``_predict``, or ``__init__``, and not at the module level.
+This ensures that the soft dependency is only loaded when the estimator is used, and does not affect ``sktime`` as a whole.
 
 Estimators with a soft dependency need to ensure the following:
 
