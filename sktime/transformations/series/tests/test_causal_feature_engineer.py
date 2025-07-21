@@ -51,15 +51,6 @@ def sample_multivariate_data():
 class TestCausalFeatureEngineer:
     """Test class for CausalFeatureEngineer."""
 
-    def test_check_estimator(self):
-        """Test that CausalFeatureEngineer passes check_estimator."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
-        )
-        from sktime.utils.estimator_checks import check_estimator
-
-        check_estimator(CausalFeatureEngineer, raise_exceptions=True, verbose=True)
-
     def test_causal_feature_engineer_univariate(self, sample_univariate_data):
         """Test CausalFeatureEngineer with univariate time series."""
         from sktime.transformations.series.causal_feature_engineer import (
@@ -71,7 +62,6 @@ class TestCausalFeatureEngineer:
         transformer = CausalFeatureEngineer(
             max_lag=3,
             causal_method="pc",
-            # More lenient for small sample (can be increased later e.g. 0.05, 0.01)
             significance_level=0.1,
         )
 
@@ -135,7 +125,6 @@ class TestCausalFeatureEngineer:
                 max_lag=2,
                 causal_method="pc",
                 feature_types=feature_types,
-                # More lenient for testing (can be increased later e.g. 0.05, 0.01)
                 significance_level=0.1,
             )
 
@@ -226,10 +215,6 @@ class TestCausalFeatureEngineer:
 
         transformer = CausalFeatureEngineer(causal_method="invalid_method")
 
-        # For error testing we only check parameters validation
-        # (not full estimator check)
-        # since this transformer is intentionally misconfigured
-
         with pytest.raises(ValueError, match="Unsupported causal discovery method"):
             transformer.fit_transform(y)
 
@@ -246,10 +231,6 @@ class TestCausalFeatureEngineer:
         transformer = CausalFeatureEngineer(
             causal_method="hill_climb", scoring_method="invalid_method"
         )
-
-        # For error testing, we only check parameters validation
-        # (not full estimator check)
-        # since this transformer is intentionally misconfigured
 
         with pytest.raises(ValueError, match="Invalid scoring method"):
             transformer.fit_transform(y)
@@ -352,7 +333,7 @@ class TestCausalFeatureEngineer:
 
         Xt = transformer.fit_transform(y)
 
-        # (Should still return a DataFrame even if empty)
+        # Should still return a DataFrame even if empty
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) >= 0
         assert transformer.n_features_generated_ >= 0

@@ -205,6 +205,8 @@ class CausalFeatureEngineer(BaseTransformer):
             else:
                 combined_data = X.copy()
 
+        combined_data.columns = combined_data.columns.astype(str)
+
         # Validate data size vs max_lag
         min_required_rows = self.max_lag + 5  # Need at least 5 rows after lagging
         if len(combined_data) < min_required_rows:
@@ -421,6 +423,8 @@ class CausalFeatureEngineer(BaseTransformer):
             data = pd.DataFrame({X.name if X.name else "X": X})
         else:
             data = X.copy()
+
+        data.columns = data.columns.astype(str)
 
         for col in data.columns:
             for lag in range(1, self.max_lag + 1):
