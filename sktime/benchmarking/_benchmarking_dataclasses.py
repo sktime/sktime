@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.benchmarking.base import BaseMetric
 from sktime.split.base._base_splitter import BaseSplitter
+from sktime.split.singlewindow import SingleWindowSplitter
 
 
 def _coerce_data_for_evaluate(dataset_loader):
@@ -40,7 +41,7 @@ class TaskObject:
     data: Union[Callable, tuple]
         Can be
         - a function which returns a dataset, like from `sktime.datasets`.
-        - a tuple contianing two data container that are sktime comptaible.
+        - a tuple containing two data container that are sktime comptaible.
         - single data container that is sktime compatible (only endogenous data).
     cv_splitter: BaseSplitter object
         Splitter used for generating validation folds.
@@ -54,6 +55,13 @@ class TaskObject:
         Splitter used for generating global cross-validation folds.
     error_score: str, optional (default="raise")
         The error score strategy to use.
+    cv_global_temporal:  SingleWindowSplitter, default=None
+        ignored if cv_global is None. If passed, it splits the Panel temporally
+        before the instance split from cv_global is applied. This avoids
+        temporal leakage in the global evaluation across time series.
+        Has to be a SingleWindowSplitter.
+        cv is applied on the test set of the combined application of
+        cv_global and cv_global_temporal.
     """
 
     data: Union[Callable, tuple]
@@ -63,6 +71,7 @@ class TaskObject:
     cv_X = None
     cv_global: Optional[BaseSplitter] = None
     error_score: str = "raise"
+    cv_global_temporal: Optional[SingleWindowSplitter] = None
 
     def get_y_X(self):
         """Get the endogenous and exogenous data."""

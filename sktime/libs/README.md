@@ -26,6 +26,9 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
+* `momentfm` - a package implementing the `momentfm` library, unofficial fork
+  maintained since April 2025.
+
 * `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package is not available.
 
 * `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package is not available.
@@ -45,3 +48,5 @@ in folders starting with underscore. These should not be accessed by users of `s
 * `_aws_fortuna-enbpi` - Parts of the `EnbPI` class from aws-fortuna.
   The installation of the original package is not working due to dependency
   mismatches.
+
+* `_keras_self_attention` - fork of some layers from the [abandoned package `keras-self-attention`](https://github.com/CyberZHG/keras-self-attention), archived in March 2024.

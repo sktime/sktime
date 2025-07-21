@@ -92,6 +92,9 @@ def test_all_tags(estimator_scitype):
 
     VALID_SCITYPES_SET = set(get_obj_scitype_list() + get_obj_scitype_list(mixin=True))
 
+    # stepout for "distribution" due to silent copy of Normal in sktime
+    VALID_SCITYPES_SET.add("distribution")
+
     # checks return type specification (see docstring)
     for tag in tags:
         assert isinstance(tag, tuple)
@@ -216,7 +219,9 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
-@pytest.mark.parametrize("tag_name", ["capability:pred_int", "handles-missing-data"])
+@pytest.mark.parametrize(
+    "tag_name", ["capability:pred_int", "capability:missing_values"]
+)
 @pytest.mark.parametrize("tag_value", [True, False])
 def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""
@@ -248,10 +253,9 @@ def test_scitype_inference(estimator_scitype):
     inferred_scitype = all_scitypes[0]
 
     # stepout for detector due to rename in scitype
-    # todo 0.37.0 - replace "detector" with "series-annotator"
     # todo 1.0.0 - remove this stepout entirely
-    if estimator_scitype == "detector":
-        assert "detector" in all_scitypes
+    if estimator_scitype == "series-annotator":
+        assert "series-annotator" in all_scitypes
         return None
 
     assert inferred_scitype == estimator_scitype, (

@@ -8,11 +8,11 @@ How to contribute
    :maxdepth: 1
    :hidden:
 
-   developer_guide
-   installation
-   contributing/enhancement_proposals
-   contributing/reporting_bugs
-   contributing/reviewer_guide
+   ../developer_guide
+   ../installation
+   ../contributing/enhancement_proposals
+   ../contributing/reporting_bugs
+   ../contributing/reviewer_guide
 
 Welcome to sktime's contributing guide!
 
@@ -134,7 +134,7 @@ Acknowledging contributions
 ---------------------------
 
 We follow the `all-contributors
-specification <https://allcontributors.org>`_ and recognize various
+specification <https://github.com/all-contributors/all-contributors>`_ and recognize various
 types of contributions.
 Take a look at our past and current
 `contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`_!

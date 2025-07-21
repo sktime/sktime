@@ -94,10 +94,13 @@ class SeasonalDummiesOneHot(BaseTransformer):
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
         #   not relevant for transformers that return Primitives in transform-output
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
