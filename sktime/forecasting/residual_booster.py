@@ -16,7 +16,10 @@ from sktime.forecasting.base import BaseForecaster
 
 class ResidualBoostingForecaster(BaseForecaster):
     """
-    Residual boosting: add exogenous support to any base forecaster.
+    Residual boosting lets an endogenous forecaster act as if it were exogenous.
+
+    It is a two stage reduction: we fit an auxiliary model on the in-sample residuals
+    of the base model and add its future predictions back to the base forecasts.
 
     Parameters
     ----------
@@ -25,21 +28,22 @@ class ResidualBoostingForecaster(BaseForecaster):
     residual_forecaster : sktime forecaster
         Model trained on the base model's in-sample residuals.
 
-
     Example
     -------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.arima import ARIMA
-    >>> from sktime.forecasting import ResidualBoostingForecaster
-    >>> y = load_airline()
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sklearn.linear_model import LinearRegression
+    >>> y, X = load_longley()
     >>> fh = [1, 2, 3]
-    >>> booster = ResidualBoostingForecaster(
-    ...     base_forecaster=ARIMA(order=(1, 0, 0)),
-    ...     residual_forecaster=NaiveForecaster(strategy="mean"),
+    >>> base = NaiveForecaster(strategy="last")
+    >>> resid = make_reduction(
+    ...     estimator=LinearRegression(),
+    ...     strategy="recursive",
+    ...     window_length=3,
     ... )
-    >>> booster.fit(y, fh=fh)
-    >>> y_pred = booster.predict(fh)
+    >>> booster = ResidualBoostingForecaster(base, resid).fit(y, X=X, fh=fh)
+    >>> y_pred = booster.predict(fh, X=X)
     >>> print(y_pred.head())
     """
 
@@ -48,6 +52,7 @@ class ResidualBoostingForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:exogenous": False,
         "capability:missing_values": False,
+        "python_dependencies": ["pmdarima"],
     }
 
     def __init__(self, base_forecaster, residual_forecaster):
@@ -65,11 +70,21 @@ class ResidualBoostingForecaster(BaseForecaster):
 
         pred_int = self.residual_forecaster.get_tag("capability:pred_int")
 
+        in_sample = self.base_forecaster.get_tag(
+            "capability:insample"
+        ) or self.residual_forecaster.get_tag("capability:insample")
+
+        pred_int_insample = self.residual_forecaster.get_tag(
+            "capability:pred_int:insample"
+        )
+
         self.set_tags(
             **{
                 "capability:exogenous": exog,
                 "capability:missing_values": miss,
                 "capability:pred_int": pred_int,
+                "capability:insample": in_sample,
+                "capability:pred_int:insample": pred_int_insample,
             }
         )
 
@@ -83,7 +98,7 @@ class ResidualBoostingForecaster(BaseForecaster):
         3. Fit clone of residual_forecaster to X, r
         """
         # clone A: fit on (y,X) to obtain in-sample residuals
-        self.base_insample_ = clone(self.base_forecaster).fit(y, X, fh)
+        self.base_insample_ = clone(self.base_forecaster).fit(y, X, fh=y.index)
         residuals = self.base_insample_.predict_residuals(y=y, X=X)
 
         # clone B: fit a fresh copy that knows the final fh
