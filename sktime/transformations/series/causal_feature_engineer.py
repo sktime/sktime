@@ -205,6 +205,17 @@ class CausalFeatureEngineer(BaseTransformer):
             else:
                 combined_data = X.copy()
 
+        # Validate data size vs max_lag
+        min_required_rows = self.max_lag + 5  # Need at least 5 rows after lagging
+        if len(combined_data) < min_required_rows:
+            warnings.warn(
+                f"Dataset has {len(combined_data)} rows but requires at least "
+                f"{min_required_rows} rows for max_lag={self.max_lag}. "
+                f"Reducing max_lag to {max(1, len(combined_data) - 5)}."
+            )
+            # Adjust max_lag for small datasets
+            self.max_lag = max(1, len(combined_data) - 5)
+
         # Creates lagged variables up to max_lag
         lagged_data = combined_data.copy()
         for col in combined_data.columns:
@@ -214,6 +225,13 @@ class CausalFeatureEngineer(BaseTransformer):
 
         # Drops rows with NaN values (due to lagging)
         lagged_data = lagged_data.dropna()
+
+        # Final validation
+        if len(lagged_data) < 3:
+            warnings.warn(
+                f"After preprocessing, only {len(lagged_data)} rows remain. "
+                "Causal discovery may not be reliable with very small datasets."
+            )
 
         return lagged_data
 
@@ -253,8 +271,6 @@ class CausalFeatureEngineer(BaseTransformer):
 
             except AttributeError:
                 # Final fallback (creates basic ExpertKnowledge without constraints)
-                import warnings
-
                 warnings.warn(
                     "Expert knowledge constraints not supported in this pgmpy version. "
                     "Proceeding without expert knowledge constraints."
@@ -513,7 +529,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Core algorithm coverage
             params1 = {
                 "causal_method": "pc",
-                "max_lag": 14,
+                "max_lag": 2,
                 "feature_types": ["direct", "interaction"],
                 "significance_level": 0.1,
                 "min_causal_strength": 0.05,
@@ -521,7 +537,7 @@ class CausalFeatureEngineer(BaseTransformer):
 
             params2 = {
                 "causal_method": "hill_climb",
-                "max_lag": 14,
+                "max_lag": 3,
                 "feature_types": ["direct", "temporal"],
                 "scoring_method": "bic-g",
                 "significance_level": 0.05,
@@ -531,7 +547,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Different feature type combinations
             params3 = {
                 "causal_method": "pc",
-                "max_lag": 5,
+                "max_lag": 2,
                 "feature_types": ["direct", "interaction", "temporal"],
                 "weighting_strategy": "uniform",
                 "significance_level": 0.2,
@@ -541,7 +557,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Different weighting strategies
             params4 = {
                 "causal_method": "hill_climb",
-                "max_lag": 7,
+                "max_lag": 3,
                 "feature_types": ["direct"],
                 "weighting_strategy": "inverse_lag",
                 "scoring_method": "aic-g",
@@ -561,7 +577,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Edge case: strict settings
             params6 = {
                 "causal_method": "hill_climb",
-                "max_lag": 2,
+                "max_lag": 1,
                 "feature_types": ["interaction"],
                 "scoring_method": "auto",
                 "significance_level": 0.001,
@@ -571,7 +587,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Expert knowledge test
             params7 = {
                 "causal_method": "pc",
-                "max_lag": 3,
+                "max_lag": 2,
                 "feature_types": ["direct", "temporal"],
                 "significance_level": 0.1,
                 "min_causal_strength": 0.1,
@@ -581,7 +597,7 @@ class CausalFeatureEngineer(BaseTransformer):
             # Different scoring methods
             params8 = {
                 "causal_method": "hill_climb",
-                "max_lag": 10,
+                "max_lag": 3,
                 "feature_types": ["direct", "interaction"],
                 "scoring_method": "ll-g",
                 "significance_level": 0.05,

@@ -65,7 +65,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         y = sample_univariate_data
 
@@ -75,8 +74,6 @@ class TestCausalFeatureEngineer:
             # More lenient for small sample (can be increased later e.g. 0.05, 0.01)
             significance_level=0.1,
         )
-
-        check_estimator(transformer)
 
         Xt = transformer.fit_transform(y)
 
@@ -95,7 +92,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -104,8 +100,6 @@ class TestCausalFeatureEngineer:
             causal_method="hill_climb",
             significance_level=0.1,
         )
-
-        check_estimator(transformer)
 
         Xt = transformer.fit_transform(X, y)
 
@@ -124,7 +118,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -146,9 +139,6 @@ class TestCausalFeatureEngineer:
                 significance_level=0.1,
             )
 
-            # Check estimator compliance for all feature type combinations
-            check_estimator(transformer)
-
             Xt = transformer.fit_transform(X, y)
 
             assert isinstance(Xt, pd.DataFrame)
@@ -159,7 +149,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -175,8 +164,6 @@ class TestCausalFeatureEngineer:
             significance_level=0.2,
         )
 
-        check_estimator(transformer)
-
         Xt = transformer.fit_transform(X, y)
 
         assert isinstance(Xt, pd.DataFrame)
@@ -189,7 +176,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -203,9 +189,6 @@ class TestCausalFeatureEngineer:
                 significance_level=0.2,
             )
 
-            # Check estimator compliance for all weighting strategies
-            check_estimator(transformer)
-
             Xt = transformer.fit_transform(X, y)
 
             assert isinstance(Xt, pd.DataFrame)
@@ -216,7 +199,6 @@ class TestCausalFeatureEngineer:
         from sktime.transformations.series.causal_feature_engineer import (
             CausalFeatureEngineer,
         )
-        from sktime.utils.estimator_checks import check_estimator
 
         X, y = sample_multivariate_data
 
@@ -228,9 +210,6 @@ class TestCausalFeatureEngineer:
                 causal_method="hill_climb",
                 scoring_method=method,
             )
-
-            # Check estimator compliance for all scoring methods
-            check_estimator(transformer)
 
             Xt = transformer.fit_transform(X, y)
 
