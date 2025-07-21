@@ -322,6 +322,7 @@ notebooks = [
   "seaborn",
   "tbats",
   # needed for the examples
+  "dtw-python",
   "prophet",
   "pytorch-forecasting",
   "skpro",
