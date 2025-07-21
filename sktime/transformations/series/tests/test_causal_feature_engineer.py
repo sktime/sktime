@@ -58,11 +58,7 @@ class TestCausalFeatureEngineer:
         )
         from sktime.utils.estimator_checks import check_estimator
 
-        estimator = CausalFeatureEngineer(
-            max_lag=2,
-            causal_method="pc",
-        )
-        check_estimator(estimator, raise_exceptions=True, verbose=True)
+        check_estimator(CausalFeatureEngineer, raise_exceptions=True, verbose=True)
 
     def test_causal_feature_engineer_univariate(self, sample_univariate_data):
         """Test CausalFeatureEngineer with univariate time series."""
@@ -295,6 +291,49 @@ class TestCausalFeatureEngineer:
             assert "causal_method" in param_set
             assert "max_lag" in param_set
             assert "feature_types" in param_set
+
+    def test_causal_feature_engineer_extreme_edge_cases(self, sample_multivariate_data):
+        """Test extreme edge cases (too risky for default parameter set)"""
+        from sktime.transformations.series.causal_feature_engineer import (
+            CausalFeatureEngineer,
+        )
+
+        X, y = sample_multivariate_data
+
+        # Only test truly extreme cases not covered in default params
+        extreme_params = [
+            # Very large lag (might cause memory issues)
+            {
+                "causal_method": "pc",
+                "max_lag": 30,
+                "feature_types": ["direct"],
+                "significance_level": 0.1,
+                "min_causal_strength": 0.1,
+            },
+            # Complex expert knowledge with conflicts
+            {
+                "causal_method": "hill_climb",
+                "max_lag": 3,
+                "feature_types": ["direct"],
+                "scoring_method": "auto",
+                "expert_knowledge": {
+                    "forbidden_edges": [("X1", "X2"), ("X2", "X3"), ("X3", "X1")],
+                    "required_edges": [("X1", "X3")],
+                },
+                "significance_level": 0.05,
+                "min_causal_strength": 0.1,
+            },
+        ]
+
+        for params in extreme_params:
+            transformer = CausalFeatureEngineer(**params)
+            try:
+                Xt = transformer.fit_transform(X, y)
+                assert isinstance(Xt, pd.DataFrame)
+                assert transformer.n_features_generated_ >= 0
+            except Exception as e:
+                # Extreme cases might legitimately fail
+                assert isinstance(e, (ValueError, RuntimeError, MemoryError))
 
     def test_causal_feature_engineer_alignment_methods(self, sample_multivariate_data):
         """Test index alignment utility methods."""

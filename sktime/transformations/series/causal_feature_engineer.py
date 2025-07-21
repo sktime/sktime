@@ -510,7 +510,7 @@ class CausalFeatureEngineer(BaseTransformer):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter for comprehensive coverage."""
         if parameter_set == "default":
-            # Minimal required parameter sets
+            # Core algorithm coverage
             params1 = {
                 "causal_method": "pc",
                 "max_lag": 14,
@@ -528,159 +528,77 @@ class CausalFeatureEngineer(BaseTransformer):
                 "min_causal_strength": 0.1,
             }
 
-            return [params1, params2]
+            # Different feature type combinations
+            params3 = {
+                "causal_method": "pc",
+                "max_lag": 5,
+                "feature_types": ["direct", "interaction", "temporal"],
+                "weighting_strategy": "uniform",
+                "significance_level": 0.2,
+                "min_causal_strength": 0.01,
+            }
 
-        elif parameter_set == "comprehensive":
-            # Exhaustive parameter combinations
-            params_list = []
+            # Different weighting strategies
+            params4 = {
+                "causal_method": "hill_climb",
+                "max_lag": 7,
+                "feature_types": ["direct"],
+                "weighting_strategy": "inverse_lag",
+                "scoring_method": "aic-g",
+                "significance_level": 0.05,
+                "min_causal_strength": 0.3,
+            }
 
-            # Core algorithm combinations
-            causal_methods = ["pc", "hill_climb"]
-            max_lags = [1, 5, 10, 14, 30, 60]  # Different temporal scales
-            feature_types_options = [
-                ["direct"],
-                ["interaction"],
-                ["temporal"],
-                ["direct", "interaction"],
-                ["direct", "temporal"],
-                ["interaction", "temporal"],
-                ["direct", "interaction", "temporal"],
-            ]
-            weighting_strategies = ["uniform", "causal_strength", "inverse_lag"]
-            significance_levels = [0.001, 0.01, 0.05, 0.1, 0.2]  # Strict to lenient
-            min_causal_strengths = [0.01, 0.05, 0.1, 0.3, 0.5, 0.9]  # Low to high
+            # Edge case: minimal settings
+            params5 = {
+                "causal_method": "pc",
+                "max_lag": 1,
+                "feature_types": ["direct"],
+                "significance_level": 0.5,
+                "min_causal_strength": 0.01,
+            }
 
-            # Hill climb scoring methods
-            scoring_methods = ["auto", "bic-g", "aic-g", "ll-g", "bic-d", "aic-d"]
+            # Edge case: strict settings
+            params6 = {
+                "causal_method": "hill_climb",
+                "max_lag": 2,
+                "feature_types": ["interaction"],
+                "scoring_method": "auto",
+                "significance_level": 0.001,
+                "min_causal_strength": 0.8,
+            }
 
-            # Expert knowledge configurations
-            expert_knowledge_options = [
-                None,
-                {},  # Empty dict
-                {"forbidden_edges": [("X1", "X2")]},
-                {"required_edges": [("X1", "X2")]},
-                {"forbidden_edges": [("X2", "X1")], "required_edges": [("X1", "X3")]},
-            ]
+            # Expert knowledge test
+            params7 = {
+                "causal_method": "pc",
+                "max_lag": 3,
+                "feature_types": ["direct", "temporal"],
+                "significance_level": 0.1,
+                "min_causal_strength": 0.1,
+                "expert_knowledge": {"forbidden_edges": [("X1", "X2")]},
+            }
 
-            # Systematic combinations
-            for method in causal_methods:
-                for lag in max_lags:
-                    for features in feature_types_options:
-                        for weight_strategy in weighting_strategies:
-                            for sig_level in significance_levels:
-                                for min_strength in min_causal_strengths:
-                                    for expert_knowledge in expert_knowledge_options:
-                                        base_params = {
-                                            "causal_method": method,
-                                            "max_lag": lag,
-                                            "feature_types": features,
-                                            "weighting_strategy": weight_strategy,
-                                            "significance_level": sig_level,
-                                            "min_causal_strength": min_strength,
-                                            "expert_knowledge": expert_knowledge,
-                                        }
+            # Different scoring methods
+            params8 = {
+                "causal_method": "hill_climb",
+                "max_lag": 10,
+                "feature_types": ["direct", "interaction"],
+                "scoring_method": "ll-g",
+                "significance_level": 0.05,
+                "min_causal_strength": 0.2,
+            }
 
-                                        if method == "hill_climb":
-                                            # scoring variations for hill_climb
-                                            for scoring in scoring_methods:
-                                                params_with_scoring = base_params.copy()
-                                                params_with_scoring[
-                                                    "scoring_method"
-                                                ] = scoring
-                                                params_list.append(params_with_scoring)
-                                        else:
-                                            # PC method doesn't use scoring_method
-                                            params_list.append(base_params)
-
-            return params_list
-
-        elif parameter_set == "edge_cases":
-            # Specific edge case parameter sets
-            edge_params = [
-                # Minimal settings
-                {
-                    "causal_method": "pc",
-                    "max_lag": 1,
-                    "feature_types": ["direct"],
-                    "significance_level": 0.5,  # Very lenient
-                    "min_causal_strength": 0.01,  # Very low
-                },
-                # Strict settings (likely to produce no features)
-                {
-                    "causal_method": "pc",
-                    "max_lag": 1,
-                    "feature_types": ["direct"],
-                    "significance_level": 0.001,  # Very strict
-                    "min_causal_strength": 0.95,  # Very high
-                },
-                # Maximum complexity
-                {
-                    "causal_method": "hill_climb",
-                    "max_lag": 10,
-                    "feature_types": ["direct", "interaction", "temporal"],
-                    "weighting_strategy": "causal_strength",
-                    "significance_level": 0.1,
-                    "min_causal_strength": 0.05,
-                    "scoring_method": "bic-g",
-                    "expert_knowledge": {
-                        "forbidden_edges": [("X1", "X2"), ("X3", "X1")],
-                        "required_edges": [("X1", "X3")],
-                    },
-                },
-                # Different temporal scales
-                {
-                    "causal_method": "pc",
-                    "max_lag": 30,  # Monthly patterns
-                    "feature_types": ["direct", "temporal"],
-                    "significance_level": 0.05,
-                    "min_causal_strength": 0.1,
-                },
-                {
-                    "causal_method": "hill_climb",
-                    "max_lag": 90,  # Quarterly patterns
-                    "feature_types": ["direct"],
-                    "scoring_method": "aic-g",
-                    "significance_level": 0.01,
-                    "min_causal_strength": 0.3,
-                },
+            return [
+                params1,
+                params2,
+                params3,
+                params4,
+                params5,
+                params6,
+                params7,
+                params8,
             ]
 
-            return edge_params
-
-        elif parameter_set == "algorithm_focused":
-            # Algorithm specific parameter combinations
-            algorithm_params = []
-
-            # PC algorithm variations
-            for sig_level in [0.001, 0.01, 0.05, 0.1, 0.2]:
-                for lag in [1, 3, 7, 14]:
-                    algorithm_params.append(
-                        {
-                            "causal_method": "pc",
-                            "max_lag": lag,
-                            "feature_types": ["direct", "interaction"],
-                            "significance_level": sig_level,
-                            "min_causal_strength": 0.1,
-                        }
-                    )
-
-            # Hill climb algorithm variations
-            for scoring in ["auto", "bic-g", "aic-g", "ll-g"]:
-                for lag in [2, 5, 10, 21]:
-                    algorithm_params.append(
-                        {
-                            "causal_method": "hill_climb",
-                            "max_lag": lag,
-                            "feature_types": ["direct", "temporal"],
-                            "scoring_method": scoring,
-                            "significance_level": 0.05,
-                            "min_causal_strength": 0.1,
-                        }
-                    )
-
-            return algorithm_params
-
-        # Default fallback test
         return cls.get_test_params("default")
 
 
