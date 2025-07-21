@@ -5,8 +5,8 @@ Tutorials
 
 Step-by-step tutorials to learn sktime from the ground up.
 
-These tutorials provide hands-on experience with sktime's key features through 
-practical examples. Each tutorial is a Jupyter notebook that you can run 
+These tutorials provide hands-on experience with sktime's key features through
+practical examples. Each tutorial is a Jupyter notebook that you can run
 interactively or view online.
 
 .. toctree::
@@ -371,5 +371,5 @@ Each tutorial includes:
 
 .. note::
 
-    All tutorials are available as Jupyter notebooks that you can download 
+    All tutorials are available as Jupyter notebooks that you can download
     and run locally. Look for the download button at the top of each tutorial page.

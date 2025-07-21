@@ -4,7 +4,7 @@
 Quickstart
 ==========
 
-The code snippets below are designed to introduce sktime's functionality so you can start using it quickly. 
+The code snippets below are designed to introduce sktime's functionality so you can start using it quickly.
 
 For more detailed information see the :ref:`tutorials <tutorials_index>`, :ref:`examples <examples>` and :ref:`API reference <api_reference>`.
 

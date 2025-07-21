@@ -6,7 +6,7 @@ Get Started
 
 Everything you need to get up and running with sktime quickly.
 
-This section provides essential information for new users, from installation 
+This section provides essential information for new users, from installation
 to first steps and key concepts.
 
 .. toctree::
@@ -84,8 +84,8 @@ Welcome to sktime! This section will help you:
 2. **Try quick examples** - See sktime in action with minimal code
 3. **Understand key concepts** - Learn the fundamental ideas behind sktime
 
-After completing this section, you'll be ready to dive into our comprehensive 
-:ref:`tutorials <tutorials_index>` for in-depth learning or check out our 
+After completing this section, you'll be ready to dive into our comprehensive
+:ref:`tutorials <tutorials_index>` for in-depth learning or check out our
 :ref:`how-to guides <how_to_index>` for solving specific problems.
 
 Next Steps
@@ -94,5 +94,5 @@ Next Steps
 Once you've completed the getting started guide:
 
 - **For Learning**: Check out our :ref:`tutorials <tutorials_index>` for step-by-step learning
-- **For Problem Solving**: Browse our :ref:`how-to guides <how_to_index>` for specific tasks  
+- **For Problem Solving**: Browse our :ref:`how-to guides <how_to_index>` for specific tasks
 - **For Reference**: Explore our :ref:`API documentation <api_reference>` and :ref:`examples <examples>`

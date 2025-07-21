@@ -5,8 +5,8 @@ Documentation
 
 Comprehensive reference materials, examples, and explanatory content for sktime users.
 
-This section contains installation guides, video tutorials, usage examples, 
-detailed explanations of concepts, and overview materials to help you understand 
+This section contains installation guides, video tutorials, usage examples,
+detailed explanations of concepts, and overview materials to help you understand
 and effectively use sktime.
 
 .. toctree::
