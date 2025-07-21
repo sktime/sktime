@@ -97,7 +97,7 @@ Of course, attempts at using the module will result in runtime failures or unexp
 
 .. code-block:: python
 
-    from sktime.utils.importing import _safe_import
+    from sktime.utils.dependencies import _safe_import
 
     nn = _safe_import("torch.nn")
 
