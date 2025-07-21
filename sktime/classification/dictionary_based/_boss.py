@@ -622,6 +622,33 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
         self._class_vals = y
 
+        if hasattr(self._transformer, "vocabulary_"):
+            vocab = self._transformer.vocabulary_
+        elif hasattr(self._transformer, "words_"):
+            vocab = self._transformer.words_
+        else:
+            vocab = None
+
+        if hasattr(self._transformed_data, "toarray") and vocab is not None:
+            arr = self._transformed_data.toarray()
+            if isinstance(vocab, dict):
+                if all(isinstance(v, int) for v in vocab.values()):
+                    idx_to_word = {v: k for k, v in vocab.items()}
+                else:
+                    idx_to_word = vocab  # already idx->word
+            else:
+                idx_to_word = {i: str(i) for i in range(arr.shape[1])}
+            self.histograms_ = [
+                {
+                    idx_to_word[idx]: int(count)
+                    for idx, count in enumerate(row)
+                    if count > 0
+                }
+                for row in arr
+            ]
+        else:
+            self.histograms_ = self._transformed_data
+
         return self
 
     def _predict(self, X):
@@ -659,6 +686,15 @@ class IndividualBOSS(BaseClassifier):
             classes[:] = np.argmax(counts)
 
         return classes
+
+    def get_fitted_params(self):
+        params = {
+            "classes": self._class_vals,
+            "n_classes": len(np.unique(self._class_vals)),
+        }
+        if hasattr(self, "histograms_"):
+            params["histograms"] = self.histograms_
+        return params
 
     def _train_predict(self, train_num, distance_matrix):
         distance_vector = distance_matrix[train_num]
