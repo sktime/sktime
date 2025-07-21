@@ -513,6 +513,8 @@ class IndividualBOSS(BaseClassifier):
         Number of classes. Extracted from the data.
     classes_ : list
         The classes labels.
+    histograms_ : list
+        Instance word histograms.
 
     See Also
     --------
@@ -624,8 +626,8 @@ class IndividualBOSS(BaseClassifier):
 
         if hasattr(self._transformer, "vocabulary_"):
             vocab = self._transformer.vocabulary_
-        elif hasattr(self._transformer, "words_"):
-            vocab = self._transformer.words_
+        elif hasattr(self._transformer, "words"):
+            vocab = self._transformer.words
         else:
             vocab = None
 
@@ -640,7 +642,7 @@ class IndividualBOSS(BaseClassifier):
                 idx_to_word = {i: str(i) for i in range(arr.shape[1])}
             self.histograms_ = [
                 {
-                    idx_to_word[idx]: int(count)
+                    str(idx_to_word[idx]): int(count)
                     for idx, count in enumerate(row)
                     if count > 0
                 }
@@ -686,15 +688,6 @@ class IndividualBOSS(BaseClassifier):
             classes[:] = np.argmax(counts)
 
         return classes
-
-    def get_fitted_params(self):
-        params = {
-            "classes": self._class_vals,
-            "n_classes": len(np.unique(self._class_vals)),
-        }
-        if hasattr(self, "histograms_"):
-            params["histograms"] = self.histograms_
-        return params
 
     def _train_predict(self, train_num, distance_matrix):
         distance_vector = distance_matrix[train_num]
