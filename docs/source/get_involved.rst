@@ -12,6 +12,7 @@ Get Involved
    get_involved/meetups
    get_involved/code_of_conduct
    get_involved/governance
+   developers
 
 ``sktime`` is an open, community-driven project, seeking to provide opportunities to all.
 Therefore, we invite and wamly welcome any kind of contribution (not just code).
@@ -129,3 +130,21 @@ We greatly appreciate your support and look forward to collaborating with you!
             :expand:
 
             Governance
+
+    .. grid-item-card::
+        :text-align: center
+
+        Developer Guide
+
+        ^^^
+
+        Technical information for developers and contributors.
+
+        +++
+
+        .. button-ref:: developers
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Developer Guide

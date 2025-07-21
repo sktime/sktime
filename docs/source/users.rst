@@ -3,14 +3,20 @@
 Documentation
 =============
 
+Comprehensive reference materials, examples, and explanatory content for sktime users.
+
+This section contains installation guides, video tutorials, usage examples, 
+detailed explanations of concepts, and overview materials to help you understand 
+and effectively use sktime.
+
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   installation
    tutorials
    examples
    estimator_overview
+   explanation
    glossary
    changelog
    related_software
@@ -21,29 +27,11 @@ Documentation
     .. grid-item-card::
         :text-align: center
 
-        Installation
+        Video Tutorials
 
         ^^^
 
-        Stable version, developer version, and build requirements.
-
-        +++
-
-        .. button-ref:: installation
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Installation Guide
-
-    .. grid-item-card::
-        :text-align: center
-
-        Video tutorials
-
-        ^^^
-
-        ``sktime`` video tutorials.
+        Video walkthroughs and introductions.
 
         +++
 
@@ -52,7 +40,7 @@ Documentation
             :click-parent:
             :expand:
 
-            Tutorials
+            Video Tutorials
 
     .. grid-item-card::
         :text-align: center
@@ -71,6 +59,24 @@ Documentation
             :expand:
 
             Notebook Examples
+
+    .. grid-item-card::
+        :text-align: center
+
+        Explanation
+
+        ^^^
+
+        In-depth explanations of concepts and algorithms.
+
+        +++
+
+        .. button-ref:: explanation_index
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Explanations
 
     .. grid-item-card::
         :text-align: center

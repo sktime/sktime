@@ -1,7 +1,7 @@
-.. _tutorials:
+.. _video_tutorials:
 
-Tutorials
-=========
+Video Tutorials
+================
 
 Below are introductory video tutorials for ``sktime``.
 

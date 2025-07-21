@@ -40,15 +40,13 @@ Contents
    :maxdepth: 1
    :hidden:
 
-   get_started
+   get_started/index
+   tutorials/index
+   how_to
    users
-   installation
-   estimator_overview
    api_reference
    get_involved
-   developers
    about
-   examples
 
 .. grid:: 1 2 2 2
     :gutter: 3
@@ -60,11 +58,11 @@ Contents
 
         ^^^
 
-        Get started using ``sktime`` quickly.
+        Installation guide and quick start information.
 
         +++
 
-        .. button-ref:: get_started
+        .. button-ref:: get_started_index
             :color: primary
             :click-parent:
             :expand:
@@ -74,11 +72,47 @@ Contents
     .. grid-item-card::
         :text-align: center
 
+        Tutorials
+
+        ^^^
+
+        Step-by-step interactive learning tutorials.
+
+        +++
+
+        .. button-ref:: tutorials/index
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Tutorials
+
+    .. grid-item-card::
+        :text-align: center
+
+        How-to Guides
+
+        ^^^
+
+        Practical guides for specific tasks.
+
+        +++
+
+        .. button-ref:: how_to_index
+            :color: primary
+            :click-parent:
+            :expand:
+
+            How-to Guides
+
+    .. grid-item-card::
+        :text-align: center
+
         Documentation
 
         ^^^
 
-        User documentation.
+        Reference documentation, examples, and guides.
 
         +++
 
@@ -92,47 +126,11 @@ Contents
     .. grid-item-card::
         :text-align: center
 
-        Installation
-
-        ^^^
-
-        Installation Guide.
-
-        +++
-
-        .. button-ref:: installation
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Installation
-
-    .. grid-item-card::
-        :text-align: center
-
-        Estimator Overview
-
-        ^^^
-
-        Overview of all estimators in ``sktime``.
-
-        +++
-
-        .. button-ref:: estimator_overview
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Estimator Overview
-
-    .. grid-item-card::
-        :text-align: center
-
         API Reference
 
         ^^^
 
-        Understand sktime's API.
+        Complete API documentation.
 
         +++
 
@@ -150,7 +148,7 @@ Contents
 
         ^^^
 
-        Find out how you can contribute.
+        Contributing and community resources.
 
         +++
 
@@ -160,24 +158,6 @@ Contents
             :expand:
 
             Get Involved
-
-    .. grid-item-card::
-        :text-align: center
-
-        Developers
-
-        ^^^
-
-        Information for developers.
-
-        +++
-
-        .. button-ref:: developers
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Developers
 
     .. grid-item-card::
         :text-align: center
@@ -195,4 +175,4 @@ Contents
             :click-parent:
             :expand:
 
-            Learn More
+            About
