@@ -6,6 +6,7 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 
+
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.utils.parallel")
     or not _check_soft_dependencies("ray"),
