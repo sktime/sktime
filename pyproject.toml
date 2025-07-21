@@ -327,7 +327,6 @@ notebooks = [
   "pytorch-forecasting",
   "skpro",
   "statsforecast",
-  "huggingface-hub",
 ]
 numpy1 = [
   "numpy<2.0.0",
