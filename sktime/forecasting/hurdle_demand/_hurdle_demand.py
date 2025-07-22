@@ -266,7 +266,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
         eps = Normal().expand((length, 1)).to_event(1)
         time_varying_component = numpyro.sample(
-            "x",
+            "x:ignore",
             TransformedDistribution(
                 eps,
                 [
@@ -281,7 +281,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
             eps_oos = Normal().expand((oos, 1)).to_event(1)
 
             x_oos = numpyro.sample(
-                "x_oos",
+                "x_oos:ignore",
                 TransformedDistribution(
                     eps_oos,
                     [
