@@ -92,7 +92,9 @@ def test_individual_boss_histograms(dataset):
     """Test Individual BOSS histograms_ attribute type and size."""
     X_train, y_train, _, _ = dataset
 
-    iboss = IndividualBOSS(window_size=10, word_length=4, alphabet_size=2)
+    iboss = IndividualBOSS(
+        window_size=10, word_length=4, alphabet_size=2, store_histogram=True
+    )
     iboss.fit(X_train, y_train)
 
     assert isinstance(iboss.histograms_, list), "histograms_ should be a list"
@@ -112,3 +114,19 @@ def test_individual_boss_histograms(dataset):
             assert isinstance(value, int), (
                 f"histogram value should be int, found {type(value)}"
             )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IndividualBOSS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_individual_boss_no_histograms(dataset):
+    """Test Individual BOSS with store_histogram=False."""
+    X_train, y_train, _, _ = dataset
+
+    iboss = IndividualBOSS(
+        window_size=10, word_length=4, alphabet_size=2, store_histogram=False
+    )
+    iboss.fit(X_train, y_train)
+
+    assert iboss.histograms_ == [], "histograms_ should be an empty list"
