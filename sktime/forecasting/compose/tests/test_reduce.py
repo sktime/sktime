@@ -849,13 +849,13 @@ def test_recursive_reduction_with_period_index():
     y = pd.Series(
         [1, 2, 3, 4],
         index=pd.PeriodIndex(
-            ["2025-01-01", "2025-03-01", "2025-05-01", "2025-07-01"], freq="2M"
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
         ),
     )
     X = pd.DataFrame(
         {"x1": [10, 30, 50, 70], "x2": [20, 40, 60, 80]},
         index=pd.PeriodIndex(
-            ["2025-01-01", "2025-03-01", "2025-05-01", "2025-07-01"], freq="2M"
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
         ),
     )
     window_length = 2
@@ -872,12 +872,12 @@ def test_recursive_reduction_with_period_index():
     forecaster = RecursiveReductionForecaster(
         estimator=LinearRegression(), window_length=window_length
     )
-    forecaster.fit(y, X=X, fh=pd.PeriodIndex(["2025-09-01"], freq="2M"))
+    forecaster.fit(y, X=X, fh=pd.PeriodIndex(["2025-01-09"], freq="2D"))
 
     # Future Exogenous Data
     X_new = pd.DataFrame(
         [[90, 100]],
-        index=pd.PeriodIndex(["2025-09-01"], freq="2M"),
+        index=pd.PeriodIndex(["2025-01-09"], freq="2D"),
         columns=["x1", "x2"],
     )
 
