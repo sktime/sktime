@@ -872,7 +872,7 @@ def test_recursive_reduction_with_period_index():
     forecaster = RecursiveReductionForecaster(
         estimator=LinearRegression(), window_length=window_length
     )
-    forecaster.fit(y, X=X, fh=ForecastingHorizon([1], is_relative=True))
+    forecaster.fit(y, X=X, fh=pd.PeriodIndex(["2025-09-01"], freq="2M"))
 
     # Future Exogenous Data
     X_new = pd.DataFrame(
@@ -881,7 +881,6 @@ def test_recursive_reduction_with_period_index():
         columns=["x1", "x2"],
     )
 
-    print(X_new)
     y_pred = forecaster.predict(X=X_new)
     last_window = y.iloc[-window_length:].values.reshape(1, -1)
     manual_input = np.hstack([last_window, X_new.values])
