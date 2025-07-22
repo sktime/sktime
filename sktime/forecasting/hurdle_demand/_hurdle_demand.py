@@ -404,6 +404,6 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         mean = predictive_samples["obs"]
 
         col_names = self._y_metadata["feature_names"]
-        y_pred = mean.to_frame(col_names)
+        y_pred = mean.to_frame(col_names[0])
 
         return self._postprocess_output(y_pred)
