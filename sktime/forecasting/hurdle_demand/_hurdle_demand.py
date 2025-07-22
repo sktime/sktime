@@ -35,7 +35,12 @@ else:
     from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
 
 if _check_soft_dependencies("skpro", severity="none"):
-    from skpro.distributions import Hurdle as skpro_Hurdle
+    from skpro.distributions import (
+        Hurdle as skpro_Hurdle,
+    )
+    from skpro.distributions import (
+        NegativeBinomial as skpro_NegativeBinomial,
+    )
     from skpro.distributions import Poisson as skpro_Poisson
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -320,10 +325,18 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         samples,
         index,
     ):
+        mu = samples["demand"].mean(axis=0)
         if self.family == "negative-binomial":
-            raise NotImplementedError("Negative binomial not implemented yet!")
+            alpha = self.posterior_samples_["concentration"]
+
+            # NB: I had thought numpy would have handled this internally?
+            if alpha.size > 1:
+                alpha = alpha.mean(axis=0)
+
+            return skpro_NegativeBinomial(mu, alpha, index=index)
+
         elif self.family == "poisson":
-            return skpro_Poisson(samples["demand"].mean(axis=0), index=index)
+            return skpro_Poisson(mu, index=index)
 
         raise NotImplementedError(f"Unknown family: {self.family}!")
 
