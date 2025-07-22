@@ -14,7 +14,6 @@ import pandas as pd
 if _check_soft_dependencies("numpyro", severity="none"):
     import numpyro.handlers
     from numpyro.distributions import (
-        Bernoulli,
         LogNormal,
         NegativeBinomial2,
         Normal,
@@ -27,6 +26,8 @@ if _check_soft_dependencies("numpyro", severity="none"):
         RecursiveLinearTransform,
         SoftplusTransform,
     )
+
+    from ._hurdle_distribution import HurdleDistribution
 
 if _check_soft_dependencies("prophetverse", severity="none"):
     from prophetverse.sktime.base import BaseBayesianForecaster
@@ -93,11 +94,6 @@ class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
         p = samples["gate"].mean(axis=0)[..., np.newaxis]
 
         return skpro_Hurdle(p, base_distribution)
-
-    def _predict(self, fh, X):
-        # TODO: this is technically "wrong" since we should use median rather than mean
-        predictive_samples = self.predict_components(fh=fh, X=X)
-        return predictive_samples["obs"]
 
     def model(
         self,
@@ -346,20 +342,12 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         with numpyro.handlers.scope(prefix="demand"):
             demand = self._sample_demand(length, X, oos=oos)
 
+        observed_demand = y
         if index is not None:
             prob = prob[index]
             demand = demand[index]
 
-            events = None
-            events_mask = True
             observed_demand = None
-        else:
-            events = y > 0.0
-            events_mask = events
-            observed_demand = y
-
-        with numpyro.handlers.mask(mask=mask):
-            numpyro.sample("events:ignore", Bernoulli(1.0 - prob), obs=events)
 
         if self.family == "negative-binomial":
             concentration = numpyro.sample(
@@ -371,15 +359,51 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         else:
             raise ValueError(f"Unknown family: {self.family}!")
 
-        truncated = TruncatedDiscrete(dist)
+        truncated = TruncatedDiscrete(dist, low=0)
 
-        with numpyro.handlers.mask(mask=events_mask & mask):
-            numpyro.sample("demand:ignore", truncated, obs=observed_demand)
+        with numpyro.handlers.mask(mask=mask):
+            dist = HurdleDistribution(prob, truncated)
+            samples = numpyro.sample("demand:ignore", dist, obs=observed_demand)
 
         if index is None:
             return
 
-        numpyro.deterministic("gate", 1.0 - prob)
+        numpyro.deterministic("gate", prob)
         numpyro.deterministic("demand", demand)
+        numpyro.deterministic("obs", samples)
 
         return
+
+    def predict_components(self, fh, X=None):
+        if self._is_vectorized:
+            return self._vectorize_predict_method("predict_components", X=X, fh=fh)
+
+        fh_as_index = self.fh_to_index(fh)
+
+        X_inner = self._check_X(X=X)
+        predictive_samples_ = self._get_predictive_samples_dict(fh=fh, X=X_inner)
+
+        moment_functions = {
+            "gate": np.mean,
+            "demand": np.mean,
+            "obs": np.median,
+        }
+
+        out = pd.DataFrame(
+            data={
+                site: moment_functions[site](data, axis=0).flatten()
+                for site, data in predictive_samples_.items()
+            },
+            index=self.periodindex_to_multiindex(fh_as_index),
+        ).sort_index()
+
+        return self._inv_scale_y(out)
+
+    def _predict(self, fh, X):
+        predictive_samples = self.predict_components(fh=fh, X=X)
+        mean = predictive_samples["obs"]
+
+        col_names = self._y_metadata["feature_names"]
+        y_pred = mean.to_frame(col_names)
+
+        return self._postprocess_output(y_pred)

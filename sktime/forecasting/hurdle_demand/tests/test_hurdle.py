@@ -47,3 +47,4 @@ def test_hurdle_model(family: str, time_varying: bool, engine):
     y_pred = forecaster.predict(fh=fh)
 
     assert y_pred.shape == fh.shape
+    # TODO: add test for distribution
