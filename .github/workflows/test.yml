@@ -61,10 +61,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -82,14 +84,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder,mlflow]
+          python -m pip install .[notebooks,binder]
 
       - name: Show dependencies
         run: python -m pip list
@@ -158,6 +162,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime with dev dependencies
         run: |
@@ -288,6 +295,7 @@ jobs:
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
