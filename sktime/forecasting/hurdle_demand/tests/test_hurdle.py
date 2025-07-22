@@ -11,6 +11,9 @@ from sktime.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("prophetverse", severity="none"):
     from prophetverse.engine import MAPInferenceEngine, MCMCInferenceEngine
 
+if _check_soft_dependencies("skpro", severity="none"):
+    from skpro.distributions import Hurdle, NegativeBinomial, Poisson
+
 
 @pytest.mark.skipif(
     not run_test_for_class(HurdleDemandForecaster),
@@ -47,4 +50,12 @@ def test_hurdle_model(family: str, time_varying: bool, engine):
     y_pred = forecaster.predict(fh=fh)
 
     assert y_pred.shape == fh.shape
-    # TODO: add test for distribution
+
+    y_dist = forecaster.predict_proba(fh=fh)
+
+    assert isinstance(y_dist, Hurdle)
+
+    if family == "poisson":
+        assert isinstance(y_dist.distribution, Poisson)
+    elif family == "negative-binomial":
+        assert isinstance(y_dist.distribution, NegativeBinomial)
