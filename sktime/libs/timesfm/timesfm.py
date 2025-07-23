@@ -251,6 +251,8 @@ class TimesFm:
 
         # Initialize and jit the decode fn.
         def _decode(inputs):
+            jax.debug.print("input_ts.shape = {}", inputs["input_ts"].shape)
+            jax.debug.print("num_devices = {}", self.num_devices)
             assert self._model is not None
             assert self._train_state is not None
             return self._model.apply(
