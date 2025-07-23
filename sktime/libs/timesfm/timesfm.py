@@ -255,6 +255,8 @@ class TimesFm:
         def _decode(inputs):
             assert self._model is not None
             assert self._train_state is not None
+            jax.debug.print("inputs[input_ts].shape = {}", inputs["input_ts"].shape)
+            return inputs
             return self._model.apply(
                 self._train_state.mdl_vars,
                 inputs,
