@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 """TimesFM forecast API for inference."""
 
 import collections
@@ -55,6 +56,7 @@ import numpy as np
 from sktime.libs.timesfm import patched_decoder, xreg_lib
 
 _TOL = 1e-6
+jax.config.update("jax_traceback_filtering", "off")
 
 
 def process_group(key, group, value_name, forecast_context_len):
@@ -251,8 +253,8 @@ class TimesFm:
 
         # Initialize and jit the decode fn.
         def _decode(inputs):
-            jax.debug.print("input_ts.shape = {}", inputs["input_ts"].shape)
-            jax.debug.print("num_devices = {}", self.num_devices)
+            print("input_ts.shape = {}", inputs["input_ts"].shape)
+            print("num_devices = {}", self.num_devices)
             assert self._model is not None
             assert self._train_state is not None
             return self._model.apply(
