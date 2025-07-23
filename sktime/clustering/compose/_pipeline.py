@@ -339,21 +339,26 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         params = []
 
-        # construct without names
+        # Parameter set 1
         t1 = ExponentTransformer(power=2)
-        c = TimeSeriesDBSCAN.create_test_instance()
+        c_dbscan = TimeSeriesDBSCAN.create_test_instance()
 
-        params1 = {"transformers": [t1], "clusterer": c}
-        params = params + [params1]
+        params1 = {"transformers": [t1], "clusterer": c_dbscan}
+        params.append(params1)
+
+        # Parameter set 2
+        t_half_power = ExponentTransformer(power=0.5)
+        c_dbscan_eps = TimeSeriesDBSCAN(eps=0.7, min_samples=3)
+        params2 = {"transformers": [t_half_power], "clusterer": c_dbscan_eps}
+        params.append(params2)
 
         if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
-            t1 = ExponentTransformer(power=2)
-            t2 = ExponentTransformer(power=0.5)
-            c = TimeSeriesKMeans(random_state=42)
+            t_exp2 = ExponentTransformer(power=2)
+            t_exp05 = ExponentTransformer(power=0.5)
+            c_kmeans = TimeSeriesKMeans(random_state=42)
 
-            params2 = {"transformers": [t1, t2], "clusterer": c}
-
-            params = params + [params2]
+            params_kmeans = {"transformers": [t_exp2, t_exp05], "clusterer": c_kmeans}
+            params.append(params_kmeans)
 
         return params
 
