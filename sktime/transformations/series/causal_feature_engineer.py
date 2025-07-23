@@ -219,11 +219,16 @@ class CausalFeatureEngineer(BaseTransformer):
             self.max_lag = max(1, len(combined_data) - 5)
 
         # Creates lagged variables up to max_lag
-        lagged_data = combined_data.copy()
+        # Vectorized approach to avoid DataFrame fragmentation
+        lag_columns = {}
         for col in combined_data.columns:
             for lag in range(1, self.max_lag + 1):
-                lag_name = f"{col}_lag_{lag}"
-                lagged_data[lag_name] = combined_data[col].shift(lag)
+                lag_columns[f"{col}_lag_{lag}"] = combined_data[col].shift(lag)
+
+        lagged_data = pd.concat(
+            [combined_data, pd.DataFrame(lag_columns, index=combined_data.index)],
+            axis=1,
+        )
 
         # Drops rows with NaN values (due to lagging)
         lagged_data = lagged_data.dropna()
@@ -426,10 +431,13 @@ class CausalFeatureEngineer(BaseTransformer):
 
         data.columns = data.columns.astype(str)
 
+        # Vectorized approach to avoid DataFrame fragmentation
+        lag_columns = {}
         for col in data.columns:
             for lag in range(1, self.max_lag + 1):
-                lag_name = f"{col}_lag_{lag}"
-                data[lag_name] = data[col].shift(lag)
+                lag_columns[f"{col}_lag_{lag}"] = data[col].shift(lag)
+
+        data = pd.concat([data, pd.DataFrame(lag_columns, index=data.index)], axis=1)
 
         return data
 
