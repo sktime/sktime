@@ -253,8 +253,6 @@ class TimesFm:
 
         # Initialize and jit the decode fn.
         def _decode(inputs):
-            print("input_ts.shape = {}", inputs["input_ts"].shape)
-            print("num_devices = {}", self.num_devices)
             assert self._model is not None
             assert self._train_state is not None
             return self._model.apply(
@@ -271,6 +269,8 @@ class TimesFm:
                 method=self._model.decode,
             )
 
+        # print("input_ts.shape = {}", inputs["input_ts"].shape)
+        print("num_devices = {}", self.num_devices)
         self._logging("Jitting decoding.")
         start_time = time.time()
         self._pmapped_decode = jax.pmap(
