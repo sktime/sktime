@@ -255,8 +255,6 @@ class TimesFm:
         def _decode(inputs):
             assert self._model is not None
             assert self._train_state is not None
-            jax.debug.print("inputs[input_ts].shape = {}", inputs["input_ts"].shape)
-            return inputs
             return self._model.apply(
                 self._train_state.mdl_vars,
                 inputs,
@@ -271,8 +269,6 @@ class TimesFm:
                 method=self._model.decode,
             )
 
-        # print("input_ts.shape = {}", inputs["input_ts"].shape)
-        print("num_devices = {}", self.num_devices)
         self._logging("Jitting decoding.")
         start_time = time.time()
         self._pmapped_decode = jax.pmap(
@@ -280,7 +276,7 @@ class TimesFm:
             axis_name="batch",
             devices=jax.devices(self.backend),
             backend=self.backend,
-            axis_size=self.num_devices,
+            # axis_size=self.num_devices,
         )
         with base_layer.JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
