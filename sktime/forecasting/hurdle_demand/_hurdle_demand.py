@@ -19,8 +19,8 @@ if _check_soft_dependencies("numpyro", severity="none"):
         Normal,
         Poisson,
         TransformedDistribution,
-        TruncatedNormal,
-    )
+        TruncatedNormal, HalfNormal,
+)
     from numpyro.distributions.transforms import (
         AffineTransform,
         RecursiveLinearTransform,
@@ -363,9 +363,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
             observed_demand = None
 
         if self.family == "negative-binomial":
-            concentration = numpyro.sample(
-                "concentration", TransformedDistribution(Normal(), SoftplusTransform())
-            )
+            concentration = numpyro.sample("concentration", HalfNormal())
             dist = NegativeBinomial2(demand, concentration)
         elif self.family == "poisson":
             dist = Poisson(demand)
