@@ -128,6 +128,7 @@ class TimesFm:
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
         self.num_devices = jax.local_device_count(self.backend)
+        self.num_cores = self.num_devices
         self.global_batch_size = self.per_core_batch_size * self.num_devices
 
         self.context_len = context_len
@@ -271,33 +272,28 @@ class TimesFm:
 
         self._logging("Jitting decoding.")
         start_time = time.time()
-
-        # Get actual available devices
-        available_devices = jax.devices(self.backend)
-
         self._pmapped_decode = jax.pmap(
             _decode,
             axis_name="batch",
-            devices=available_devices,
+            devices=jax.devices(self.backend),
             backend=self.backend,
-            # Use actual device count instead of self.num_devices
-            axis_size=len(available_devices),
+            axis_size=self.num_cores,
         )
-
-        # Use actual device count for input shapes
-        num_devices = len(available_devices)
-
         with base_layer.JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
                 NestedMap(
                     {
                         "input_ts": jnp.zeros(
-                            (num_devices, self.per_core_batch_size, self.context_len),
+                            (
+                                self.num_cores,
+                                self.per_core_batch_size,
+                                self.context_len,
+                            ),
                             dtype=jnp.float32,
                         ),
                         "input_padding": jnp.zeros(
                             (
-                                num_devices,
+                                self.num_cores,
                                 self.per_core_batch_size,
                                 self.context_len + self.horizon_len,
                             ),
@@ -305,13 +301,12 @@ class TimesFm:
                         ),
                         "date_features": None,
                         "freq": jnp.zeros(
-                            (num_devices, self.per_core_batch_size, 1),
+                            (self.num_cores, self.per_core_batch_size, 1),
                             dtype=jnp.int32,
                         ),
                     }
                 )
             )
-
         self._logging(f"Jitted decoding in {time.time() - start_time:.2f} seconds.")
 
     def _preprocess(self, inputs, freq):
