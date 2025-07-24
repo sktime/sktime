@@ -837,3 +837,53 @@ def test_recursive_reduction_with_X():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_recursive_reduction_with_period_index():
+    """Test RecursiveReductionForecaster with periodIndex that has not-one frequency"""
+
+    y = pd.Series(
+        [1, 2, 3, 4],
+        index=pd.PeriodIndex(
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
+        ),
+    )
+    X = pd.DataFrame(
+        {"x1": [10, 30, 50, 70], "x2": [20, 40, 60, 80]},
+        index=pd.PeriodIndex(
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
+        ),
+    )
+    window_length = 2
+
+    # Construct rolling window manually
+    y_rolled = np.column_stack(
+        [y.shift(i).values[window_length:] for i in range(window_length, 0, -1)]
+    )
+    X_manual = np.hstack([y_rolled, X.iloc[window_length:].values])
+    y_manual = y.iloc[window_length:].values
+
+    manual_lr = LinearRegression().fit(X_manual, y_manual)
+
+    forecaster = RecursiveReductionForecaster(
+        estimator=LinearRegression(), window_length=window_length
+    )
+    forecaster.fit(y, X=X, fh=pd.PeriodIndex(["2025-01-09"], freq="2D"))
+
+    # Future Exogenous Data
+    X_new = pd.DataFrame(
+        [[90, 100]],
+        index=pd.PeriodIndex(["2025-01-09"], freq="2D"),
+        columns=["x1", "x2"],
+    )
+
+    y_pred = forecaster.predict(X=X_new)
+    last_window = y.iloc[-window_length:].values.reshape(1, -1)
+    manual_input = np.hstack([last_window, X_new.values])
+    manual_pred = manual_lr.predict(manual_input)
+
+    assert np.allclose(y_pred, manual_pred)
