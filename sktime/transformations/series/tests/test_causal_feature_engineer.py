@@ -51,6 +51,15 @@ def sample_multivariate_data():
 class TestCausalFeatureEngineer:
     """Test class for CausalFeatureEngineer."""
 
+    def test_check_estimator(self):
+        """Test that CausalFeatureEngineer passes check_estimator."""
+        from sktime.transformations.series.causal_feature_engineer import (
+            CausalFeatureEngineer,
+        )
+        from sktime.utils.estimator_checks import check_estimator
+
+        check_estimator(CausalFeatureEngineer, raise_exceptions=True, verbose=True)
+
     def test_causal_feature_engineer_univariate(self, sample_univariate_data):
         """Test CausalFeatureEngineer with univariate time series."""
         from sktime.transformations.series.causal_feature_engineer import (
