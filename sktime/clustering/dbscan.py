@@ -207,4 +207,4 @@ class TimeSeriesDBSCAN(BaseClusterer):
         params2 = {"distance": DtwDist()}
         params3 = {"distance": EditDist()}
 
-        return [params1, params2, params3]
+        return [{}, params1, params2, params3]
