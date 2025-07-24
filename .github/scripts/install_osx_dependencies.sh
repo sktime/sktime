@@ -10,7 +10,7 @@ if [ "$(uname)" = "Darwin" ]; then
     echo "installing necessary dependencies..."
     brew install libomp
     echo "Verifying libomp installation..."
-    ls -l /usr/local/opt/libomp/lib/libomp.dylib
+    ls /opt/homebrew/opt/libomp/lib/libomp.dylib
     {
         echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:\$DYLD_LIBRARY_PATH"
         echo "LDFLAGS=-L/usr/local/opt/libomp/lib"
