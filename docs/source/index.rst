@@ -1,40 +1,119 @@
-.. _home:
+.. _main_index:
 
-=================
-Welcome to sktime
-=================
+=====
+sktime
+=====
 
 A unified framework for machine learning with time series.
 
-.. topic:: Register as a user!
+.. topic:: 🚀 Quick Start
 
-    Prioritized bugfixes, shape the tech roadmap and governance policy.
-    `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
+   New to sktime? Start here to get up and running quickly!
 
+   :doc:`Installation Guide <get_started/installation>` |
+   :doc:`Quick Examples <get_started/quickstart>` |
+   :doc:`Key Concepts <get_started/key_concepts>`
 
-Mission
-=======
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-.. include:: about/_mission.rst
+    .. grid-item-card::
+        :text-align: center
 
-Features
-========
+        🎯 Get Started
+        ^^^
+        New to sktime? Learn the basics and start building with time series.
 
-* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
-* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
-* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
-* interactive user experience with **scikit-learn like interface conventions**
+        +++
+        .. button-ref:: get_started/index
+            :color: primary
+            :expand:
 
-Technical specification
-=======================
+            Get Started
 
-* In-memory computation of a single machine, no distributed computing
-* Medium-sized data in pandas and NumPy based containers
-* Modular, principled and object-oriented API
-* Using interactive Python interpreter, no command-line interface or graphical user interface
+    .. grid-item-card::
+        :text-align: center
 
-Contents
-========
+        📚 Tutorials
+        ^^^
+        Step-by-step guides to learn sktime concepts and workflows.
+
+        +++
+        .. button-ref:: tutorials/index
+            :color: primary
+            :expand:
+
+            Tutorials
+
+    .. grid-item-card::
+        :text-align: center
+
+        🔧 How-to Guides
+        ^^^
+        Practical solutions for specific tasks and problems.
+
+        +++
+        .. button-ref:: how_to
+            :color: primary
+            :expand:
+
+            How-to Guides
+
+    .. grid-item-card::
+        :text-align: center
+
+        📖 Examples
+        ^^^
+        Jupyter notebook examples and use cases.
+
+        +++
+        .. button-ref:: examples
+            :color: primary
+            :expand:
+
+            Examples
+
+    .. grid-item-card::
+        :text-align: center
+
+        📚 Reference
+        ^^^
+        Complete reference documentation and explanations.
+
+        +++
+        .. button-ref:: reference
+            :color: primary
+            :expand:
+
+            Reference
+
+    .. grid-item-card::
+        :text-align: center
+
+        🔍 API Reference
+        ^^^
+        Detailed API documentation for all components.
+
+        +++
+        .. button-ref:: api_reference
+            :color: primary
+            :expand:
+
+            API Reference
+
+    .. grid-item-card::
+        :text-align: center
+
+        🤝 Get Involved
+        ^^^
+        Join our community and contribute to sktime.
+
+        +++
+        .. button-ref:: get_involved
+            :color: primary
+            :expand:
+
+            Get Involved
 
 .. toctree::
    :maxdepth: 1
@@ -43,136 +122,87 @@ Contents
    get_started/index
    tutorials/index
    how_to
-   users
+   estimator_overview
+   examples
+   explanation
+   glossary
+   changelog
+   related_software
+   video_tutorials
    api_reference
    get_involved
    about
 
+Key Features
+============
+
 .. grid:: 1 2 2 2
-    :gutter: 3
+    :gutter: 2
+
+    .. grid-item-card:: 🔄 Unified API
+        :text-align: center
+
+        Consistent interface across all time series learning tasks
+
+    .. grid-item-card:: 🎯 Multiple Tasks
+        :text-align: center
+
+        Forecasting, classification, regression, clustering, and more
+
+    .. grid-item-card:: 🔧 Composable Models
+        :text-align: center
+
+        Build complex pipelines with transformations and ensembles
+
+    .. grid-item-card:: 🚀 Scikit-learn Compatible
+        :text-align: center
+
+        Familiar interface for machine learning practitioners
+
+Community & Support
+==================
+
+.. grid:: 1 3 3 3
+    :gutter: 2
 
     .. grid-item-card::
         :text-align: center
 
-        Get Started
-
+        💬 Discord
         ^^^
-
-        Installation guide and quick start information.
+        Join our community discussions
 
         +++
-
-        .. button-ref:: get_started_index
+        .. button-link:: https://discord.com/invite/54ACzaFsn7
             :color: primary
-            :click-parent:
             :expand:
 
-            Get Started
+            Join Discord
 
     .. grid-item-card::
         :text-align: center
 
-        Tutorials
-
+        🐛 GitHub Issues
         ^^^
-
-        Step-by-step interactive learning tutorials.
+        Report bugs or request features
 
         +++
-
-        .. button-ref:: tutorials/index
-            :color: primary
-            :click-parent:
+        .. button-link:: https://github.com/sktime/sktime/issues
+            :color: secondary
             :expand:
 
-            Tutorials
+            GitHub Issues
 
     .. grid-item-card::
         :text-align: center
 
-        How-to Guides
-
+        🎓 Mentoring
         ^^^
-
-        Practical guides for specific tasks.
+        Get guidance from experienced contributors
 
         +++
-
-        .. button-ref:: how_to_index
-            :color: primary
-            :click-parent:
+        .. button-ref:: get_involved/mentoring
+            :color: success
             :expand:
 
-            How-to Guides
-
-    .. grid-item-card::
-        :text-align: center
-
-        Documentation
-
-        ^^^
-
-        Reference documentation, examples, and guides.
-
-        +++
-
-        .. button-ref:: users
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Documentation
-
-    .. grid-item-card::
-        :text-align: center
-
-        API Reference
-
-        ^^^
-
-        Complete API documentation.
-
-        +++
-
-        .. button-ref:: api_reference
-            :color: primary
-            :click-parent:
-            :expand:
-
-            API Reference
-
-    .. grid-item-card::
-        :text-align: center
-
-        Get Involved
-
-        ^^^
-
-        Contributing and community resources.
-
-        +++
-
-        .. button-ref:: get_involved
-            :color: primary
-            :click-parent:
-            :expand:
-
-            Get Involved
-
-    .. grid-item-card::
-        :text-align: center
-
-        About
-
-        ^^^
-
-        Learn more about ``sktime``.
-
-        +++
-
-        .. button-ref:: about
-            :color: primary
-            :click-parent:
-            :expand:
-
-            About
+            Apply for Mentoring

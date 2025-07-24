@@ -1,4 +1,4 @@
-  /* example_toggle that hides >>>, ..., etc */
+/* example_toggle that hides >>>, ..., etc */
 .example_toggle {
     cursor: pointer;
     position: absolute;
@@ -9,9 +9,9 @@
     font-family: monospace;
     padding-left: 0.2rem;
     padding-right: 0.2rem;
-  }
+}
 
-  div.highlight:hover span.example_toggle::after {
+div.highlight:hover span.example_toggle::after {
     background: #3F556B;
     border-radius: 0.25rem;
     color: white;
@@ -23,4 +23,52 @@
     font-size: 0.7rem;
     top: 0;
     right: 0;
-  }
+}
+
+/* Improve card consistency and readability */
+.sd-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.sd-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Standardize card headers */
+.sd-card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* Improve button consistency */
+.sd-btn-primary {
+    background-color: #0066cc;
+    border-color: #0066cc;
+    color: white;
+}
+
+.sd-btn-primary:hover {
+    background-color: #0052a3;
+    border-color: #0052a3;
+}
+
+/* Better spacing for grid items */
+.sd-card-body {
+    padding: 1.25rem;
+}
+
+.sd-card-text {
+    margin-bottom: 1rem;
+}
+
+/* Improve emoji spacing in headers */
+.sd-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}

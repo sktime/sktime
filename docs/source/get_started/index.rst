@@ -1,34 +1,61 @@
-.. _get_started_index:
+.. _get_started:
 
-===========
+=================
 Get Started
-===========
+=================
 
-Everything you need to get up and running with sktime quickly.
+A unified framework for machine learning with time series.
 
-This section provides essential information for new users, from installation
-to first steps and key concepts.
+.. topic:: Register as a user!
+
+    Prioritized bugfixes, shape the tech roadmap and governance policy.
+    `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started Guide
-   :hidden:
+   :caption: Get Started
 
    installation
    quickstart
    key_concepts
 
-.. grid:: 1 2 2 2
+Mission
+=======
+
+.. include:: ../about/_mission.rst
+
+Features
+========
+
+* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
+* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
+* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
+* interactive user experience with **scikit-learn like interface conventions**
+
+Technical specification
+=======================
+
+* In-memory computation of a single machine, no distributed computing
+* Medium-sized data in pandas and NumPy based containers
+* Modular, principled and object-oriented API
+* Using interactive Python interpreter, no command-line interface or graphical user interface
+
+Get Started
+===========
+
+Ready to start using sktime? Follow these essential steps to get up and running quickly.
+
+.. grid:: 1 3 3 3
     :gutter: 3
+    :class-container: text-center
 
     .. grid-item-card::
-        :text-align: center
 
-        Installation
+        1️⃣ Install
 
         ^^^
 
-        Step-by-step instructions to install sktime.
+        Install sktime on your system.
 
         +++
 
@@ -40,17 +67,16 @@ to first steps and key concepts.
             Install sktime
 
     .. grid-item-card::
-        :text-align: center
 
-        Quickstart
+        2️⃣ Try Examples
 
         ^^^
 
-        Code examples to get you started immediately.
+        See sktime in action with quick examples.
 
         +++
 
-        .. button-ref:: get_started_quickstart
+        .. button-ref:: quickstart
             :color: primary
             :click-parent:
             :expand:
@@ -58,41 +84,137 @@ to first steps and key concepts.
             Quick Examples
 
     .. grid-item-card::
-        :text-align: center
 
-        Key Concepts
+        3️⃣ Learn Concepts
 
         ^^^
 
-        Essential concepts and terminology.
+        Understand key concepts and terminology.
 
         +++
 
-        .. button-ref:: get_started_key_concepts
+        .. button-ref:: key_concepts
             :color: primary
             :click-parent:
             :expand:
 
-            Learn Concepts
+            Key Concepts
 
-Overview
---------
+After getting started, dive deeper with our :ref:`tutorials <tutorials_index>` for comprehensive learning,
+or check our :ref:`how-to guides <how_to_index>` for solving specific problems.
 
-Welcome to sktime! This section will help you:
+Documentation & Learning
+=========================
 
-1. **Install sktime** - Get the package installed on your system
-2. **Try quick examples** - See sktime in action with minimal code
-3. **Understand key concepts** - Learn the fundamental ideas behind sktime
+Continue your sktime journey with comprehensive learning resources and documentation.
 
-After completing this section, you'll be ready to dive into our comprehensive
-:ref:`tutorials <tutorials_index>` for in-depth learning or check out our
-:ref:`how-to guides <how_to_index>` for solving specific problems.
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-Next Steps
-----------
+    .. grid-item-card::
+        :text-align: center
 
-Once you've completed the getting started guide:
+        📚 Tutorials
 
-- **For Learning**: Check out our :ref:`tutorials <tutorials_index>` for step-by-step learning
-- **For Problem Solving**: Browse our :ref:`how-to guides <how_to_index>` for specific tasks
-- **For Reference**: Explore our :ref:`API documentation <api_reference>` and :ref:`examples <examples>`
+        ^^^
+
+        Step-by-step interactive learning tutorials.
+
+        +++
+
+        .. button-ref:: tutorials/index
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Tutorials
+
+    .. grid-item-card::
+        :text-align: center
+
+        🔧 How-to Guides
+
+        ^^^
+
+        Practical guides for specific tasks.
+
+        +++
+
+        .. button-ref:: how_to_index
+            :color: primary
+            :click-parent:
+            :expand:
+
+            How-to Guides
+
+    .. grid-item-card::
+        :text-align: center
+
+        📖 Documentation
+
+        ^^^
+
+        Reference documentation, examples, and explanations.
+
+        +++
+
+        .. button-ref:: users
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Documentation
+
+    .. grid-item-card::
+        :text-align: center
+
+        🔍 API Reference
+
+        ^^^
+
+        Complete API documentation.
+
+        +++
+
+        .. button-ref:: api_reference
+            :color: primary
+            :click-parent:
+            :expand:
+
+            API Reference
+
+    .. grid-item-card::
+        :text-align: center
+
+        🤝 Get Involved
+
+        ^^^
+
+        Contributing and community resources.
+
+        +++
+
+        .. button-ref:: get_involved
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Get Involved
+
+    .. grid-item-card::
+        :text-align: center
+
+        ℹ️ About
+
+        ^^^
+
+        Learn more about sktime.
+
+        +++
+
+        .. button-ref:: about
+            :color: primary
+            :click-parent:
+            :expand:
+
+            About

@@ -27,7 +27,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Video Tutorials
+        📹 Video Tutorials
 
         ^^^
 
@@ -45,7 +45,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Notebook Examples
+        📓 Notebook Examples
 
         ^^^
 
@@ -63,7 +63,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Explanation
+        📖 Explanation
 
         ^^^
 
@@ -81,7 +81,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Estimator Overview
+        🔍 Estimator Overview
 
         ^^^
 
@@ -99,7 +99,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Glossary
+        📚 Glossary
 
         ^^^
 
@@ -117,7 +117,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Change Logs
+        📋 Change Logs
 
         ^^^
 
@@ -135,7 +135,7 @@ and effectively use sktime.
     .. grid-item-card::
         :text-align: center
 
-        Related Software
+        🔗 Related Software
 
         ^^^
 
