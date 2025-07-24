@@ -207,6 +207,14 @@ class CausalFeatureEngineer(BaseTransformer):
 
         combined_data.columns = combined_data.columns.astype(str)
 
+        # new mapping every time fit is called
+        # (required by sktime's test_fit_does_not_overwrite_hyper_params)
+        self._colmap_ = {
+            col: _safe_identifier(str(col), i)
+            for i, col in enumerate(combined_data.columns)
+        }
+        combined_data = combined_data.rename(columns=self._colmap_)
+
         # Validate data size vs max_lag
         min_required_rows = self.max_lag + 5  # Need at least 5 rows after lagging
         if len(combined_data) < min_required_rows:
@@ -431,6 +439,15 @@ class CausalFeatureEngineer(BaseTransformer):
 
         data.columns = data.columns.astype(str)
 
+        # reuse the mapping learnt at fit; fall back if transform is called first
+        if hasattr(self, "_colmap_"):
+            data = data.rename(columns=self._colmap_)
+        else:
+            tmp_map = {
+                col: _safe_identifier(str(col), i) for i, col in enumerate(data.columns)
+            }
+            data = data.rename(columns=tmp_map)
+
         # Vectorized approach to avoid DataFrame fragmentation
         lag_columns = {}
         for col in data.columns:
@@ -628,6 +645,16 @@ class CausalFeatureEngineer(BaseTransformer):
             ]
 
         return cls.get_test_params("default")
+
+
+def _safe_identifier(name: str, i: int) -> str:
+    """Convert any column name to a valid Python identifier.
+
+    Accepted by pandas, pgmpy, and patsy/statsmodels.
+    """
+    if name.isidentifier() and not name[0].isdigit() and not name.startswith("_"):
+        return name
+    return f"var_{i}"
 
 
 def _is_discrete(data):
