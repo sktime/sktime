@@ -632,6 +632,12 @@ Intermittent time series forecasters
 
     StatsForecastADIDA
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurdleDemandForecaster
+
 Ensembles and stacking
 ----------------------
 
