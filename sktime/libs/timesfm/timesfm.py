@@ -269,6 +269,11 @@ class TimesFm:
                 method=self._model.decode,
             )
 
+        # Check actual vs expected device count
+        print(f"Expected devices (self.num_devices): {self.num_devices}")
+        print(f"Available devices: {len(jax.devices(self.backend))}")
+        print(f"Actual devices: {jax.devices(self.backend)}")
+
         self._logging("Jitting decoding.")
         start_time = time.time()
         self._pmapped_decode = jax.pmap(
@@ -276,8 +281,9 @@ class TimesFm:
             axis_name="batch",
             devices=jax.devices(self.backend),
             backend=self.backend,
-            # axis_size=self.num_devices,
+            axis_size=self.num_devices,
         )
+
         with base_layer.JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
                 NestedMap(
