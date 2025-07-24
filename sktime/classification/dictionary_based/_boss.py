@@ -568,10 +568,10 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=2,
         save_words=False,
-        store_histogram=False,
         typed_dict="deprecated",
         use_boss_distance=True,
         feature_selection="none",
+        store_histogram=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -583,8 +583,8 @@ class IndividualBOSS(BaseClassifier):
         self.use_boss_distance = use_boss_distance
 
         self.save_words = save_words
-        self.store_histogram = store_histogram
         self.typed_dict = typed_dict
+        self.store_histogram = store_histogram
         self.n_jobs = n_jobs
         self.random_state = random_state
 
