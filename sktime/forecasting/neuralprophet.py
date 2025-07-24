@@ -105,6 +105,7 @@ class NeuralProphet(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
+        "tests:vm": True,
     }
 
     def __init__(
