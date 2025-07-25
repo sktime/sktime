@@ -131,21 +131,27 @@ def render_contributors(prs: list, fmt: str = "rst"):
 def assign_prs(prs, categs: list[dict[str, list[str]]]):
     """Assign PR to categories based on labels."""
     assigned = defaultdict(list)
+    pr_module = {}
 
     for i, pr in enumerate(prs):
+        pr_labels = [label["name"] for label in pr["labels"]]
+
         for cat in categs:
-            pr_labels = [label["name"] for label in pr["labels"]]
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
                 assigned[cat["title"]].append(i)
+        for label in pr_labels:
+            if label.startswith("module:"):
+                pr_module[i] = label.replace("module:", "")
 
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
 
-    assigned["Other"] = list(
-        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
-    )
+    # if no match with any category
+    # assigned["Other"] = list(
+    #    set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
+    # )
 
-    return assigned
+    return assigned, pr_module
 
 
 def render_row(pr):
@@ -159,17 +165,65 @@ def render_row(pr):
 
 
 def render_changelog(prs, assigned):
+    """Render and print the changelog grouped by category and module."""
     # sourcery skip: use-named-expression
+    LABEL_TO_SUBSECTION = {
+        "module:forecasting": "Forecasting",
+        "module:classification": "Time Series Classification",
+        "module:regression": "Regression",
+        "module:transformations": "Transformations",
+        "module:datatypes": "Datatypes",
+        "module:alignment": "Alignment",
+        "module:annotation": "Annotation",
+        "module:dataprocessing": "Data Processing",
+        "module:proba": "Probability Estimation",
+        "module:clustering": "Clustering",
+        "module:plotting&utilities": "Plotting & Utilities",
+        "module:base-framework": "Base Framework",
+    }
+    # more can be added also
+    # labels start with module
+    # Subsection title comes after label
+
     """Render changelog."""
     from dateutil import parser
 
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
+    SECTION_ORDER = ["Enhancements", "Fixes", "Documentation", "Maintenance"]
+    for title in SECTION_ORDER:
+        if title in assigned:
+            pr_group = [prs[i] for i in assigned[title]]
+            if pr_group:
+                print()
+                print(title)
+                print("~" * len(title))
 
-            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+        # Group PRs by module labels
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = defaultdict(list)
+            for pr in pr_group:
+                labels = [label["name"] for label in pr["labels"]]
+                added = False
+
+                for label in labels:
+                    # print("hello",label)
+                    if label in LABEL_TO_SUBSECTION:
+                        #   print("hello")
+                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        added = True
+                if not added:
+                    subsection_map["Other"].append(pr)
+
+            # Render subsections
+            for subsection_title, pr_list in subsection_map.items():
+                if pr_list:
+                    print(f"\n{subsection_title}")
+                    print("^" * len(subsection_title))
+                    for pr in sorted(
+                        pr_list, key=lambda x: parser.parse(x["merged_at"])
+                    ):
+                        render_row(pr)
+        else:
+            for pr in sorted(pr_group, key=lambda x: parser.parse(pr["merged_at"])):
                 render_row(pr)
 
 
@@ -184,7 +238,7 @@ if __name__ == "__main__":
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned = assign_prs(pulls, categories)
+    assigned, pr_module = assign_prs(pulls, categories)
     render_changelog(pulls, assigned)
     print()
     render_contributors(pulls)
