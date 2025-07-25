@@ -150,9 +150,6 @@ EXCLUDED_TESTS = {
     "CNNRegressor": [
         "test_fit_idempotent",
     ],
-    "FCNClassifier": [
-        "test_fit_idempotent",
-    ],
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],

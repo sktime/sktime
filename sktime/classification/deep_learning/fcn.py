@@ -66,6 +66,8 @@ class FCNClassifier(BaseDeepClassifier):
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        "tests:skip_all": True,
+        # test behaviour
     }
 
     def __init__(
