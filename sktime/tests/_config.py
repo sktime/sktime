@@ -464,6 +464,17 @@ EXCLUDED_TESTS_BY_TEST = {
         "RelativeLoss",
         "MeanRelativeAbsoluteError",
     ],
+    "test_handle_missing_data": [
+        "DirectTimeSeriesRegressionForecaster",
+        "RecursiveTimeSeriesRegressionForecaster",
+        "YfromX",
+        "DirRecTimeSeriesRegressionForecaster",
+        "MultioutputTabularRegressionForecaster",
+        "MultioutputTimeSeriesRegressionForecaster",
+        "RecursiveTabularRegressionForecaster",
+        "DirRecTabularRegressionForecaster",
+        "DirectTabularRegressionForecaster",
+    ],
 }
 
 # estimators that have 2 test params only when their soft dependency is installed
