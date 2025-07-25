@@ -10,11 +10,12 @@ if [ "$(uname)" = "Darwin" ]; then
     echo "installing necessary dependencies..."
     brew install libomp
     echo "Verifying libomp installation..."
-    ls -l /usr/local/opt/libomp/lib/libomp.dylib
+    brew_prefix="$(brew --prefix libomp)"
+    ls -l "${brew_prefix}/lib/libomp.dylib"
     {
-        echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:\$DYLD_LIBRARY_PATH"
-        echo "LDFLAGS=-L/usr/local/opt/libomp/lib"
-        echo "CPPFLAGS=-I/usr/local/opt/libomp/include"
+        echo "DYLD_LIBRARY_PATH=${brew_prefix}/lib:\$DYLD_LIBRARY_PATH"
+        echo "LDFLAGS=-L${brew_prefix}/lib"
+        echo "CPPFLAGS=-I${brew_prefix}/include"
     } >> "$GITHUB_ENV"
 else
     echo "This script is intended to run on macOS (Darwin)."
