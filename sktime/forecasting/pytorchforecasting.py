@@ -41,6 +41,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
+    >>> from sktime.forecasting import upto
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -51,7 +52,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ... )
     >>> # define forecast horizon
     >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> fh = upto(max_prediction_length)
     >>> # split X, y data for train and test
     >>> x = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
@@ -329,6 +330,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
+    >>> from sktime.forecasting import upto
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -339,7 +341,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     ... )
     >>> # define forecast horizon
     >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> fh = upto(max_prediction_length)
     >>> # split y data for train and test
     >>> y_train, y_test = train_test_split(
     ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
@@ -622,6 +624,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
+    >>> from sktime.forecasting import upto
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -632,7 +635,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     ... )
     >>> # define forecast horizon
     >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> fh = upto(max_prediction_length)
     >>> # split X, y data for train and test
     >>> x = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
@@ -901,6 +904,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
+    >>> from sktime.forecasting import upto
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -911,7 +915,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     ... )
     >>> # define forecast horizon
     >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> fh = upto(max_prediction_length)
     >>> # split X, y data for train and test
     >>> x = data["c0", "c1"]
     >>> y = data["c2"].to_frame()

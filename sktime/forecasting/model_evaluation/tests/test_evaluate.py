@@ -24,6 +24,7 @@ from sktime.datasets import load_airline, load_longley
 
 # from sktime.exceptions import FitFailedWarning
 # commented out until bugs are resolved, see test_evaluate_error_score
+from sktime.forecasting import upto
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import BaseForecaster
@@ -523,7 +524,7 @@ def test_evaluate_bigger_X(cls):
     y, X = load_longley()
 
     f = cls.create_test_instance()
-    cv = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=np.arange(1, 4))
+    cv = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=upto(3))
     loss = MeanAbsoluteError()
 
     # check that this does not break
