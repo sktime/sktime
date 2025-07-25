@@ -10,11 +10,13 @@ __author__ = ["muslehal", "vedantag17"]
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.dependencies import _safe_import
 from sktime.utils.validation.forecasting import check_y
+
+nn = _safe_import("torch.nn")
+torch = _safe_import("torch")
 
 
 class sLSTMBlock(nn.Module):
@@ -316,6 +318,7 @@ class XLSTMForecaster(BaseForecaster):
     """
 
     _tags = {
+        "python_dependencies": "torch>=2.0.0,<2.4.0",
         "capability:pred_int": False,
         "capability:pred_var": False,
         "requires-fh-in-fit": False,
@@ -351,12 +354,18 @@ class XLSTMForecaster(BaseForecaster):
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.sequence_length = sequence_length
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         super().__init__()
+        import torch
+
+        self.device = self._device_param or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Fit the xLSTM forecaster to training data."""
+        import torch
+
         y = check_y(y)
         y_np = y.values.astype(np.float32)
 
