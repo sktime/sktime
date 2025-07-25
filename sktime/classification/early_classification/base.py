@@ -86,7 +86,6 @@ class BaseEarlyClassifier(BaseEstimator):
         self.n_classes_ = 0
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
         """An array containing the state info for each decision in X from update and
         predict methods.
 

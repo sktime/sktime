@@ -2025,6 +2025,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
         lags = self._lags
@@ -2065,7 +2066,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         yt = prep_skl_df(yt)
 
         estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator

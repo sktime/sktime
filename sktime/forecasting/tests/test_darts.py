@@ -17,6 +17,7 @@ from sktime.forecasting.darts import (
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["fnhirwa"]
 
@@ -65,6 +66,22 @@ def test_darts_regression_model_without_X(model):
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
 
 
+def _darts_to_series(obj):
+    """Convert Darts object to pandas Series."""
+    # darts changed the name of the method converting "TimeSeries" to "pandas.Series"
+    # in version 0.35, so we need to check the version
+    # also, darts is distributed as "darts" and "u8darts", so we need to check both
+    darts_ge_035 = [
+        _check_soft_dependencies("darts>=0.35", severity="none")
+        or _check_soft_dependencies("u8darts>=0.35", severity="none")
+    ]
+    if darts_ge_035:
+        to_ser_name = "to_series"
+    else:
+        to_ser_name = "pd_series"
+    return getattr(obj, to_ser_name)()
+
+
 @pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
     not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
@@ -84,12 +101,11 @@ def test_darts_regression_models_with_weather_dataset(model):
 
     # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
-    target_df = target.pd_series()
+    target_df = _darts_to_series(target)
 
     darts_model.fit(target)
-
     # Make a prediction for the next 6 time steps
-    darts_pred = darts_model.predict(6).pd_series()
+    darts_pred = _darts_to_series(darts_model.predict(6))
     assert isinstance(target_df, pd.Series)
     sktime_model = model(
         lags=12,
@@ -157,12 +173,12 @@ def test_darts_regression_with_weather_dataset(model):
 
     # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
-    target_df = target.pd_series()
+    target_df = _darts_to_series(target)
 
     darts_model.fit(target)
 
     # Make a prediction for the next 6 time steps
-    darts_pred = darts_model.predict(6).pd_series()
+    darts_pred = _darts_to_series(darts_model.predict(6))
     assert isinstance(target_df, pd.Series)
     sktime_model = model(
         lags=12,

@@ -270,10 +270,11 @@ class python_dependencies(_BaseTag):
     * ``"numba"``: ``numba`` must be present
     * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
     * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
-        higher, and ``pandas`` must be version 1.3.0 or higher
+      higher, and ``pandas`` must be version 1.3.0 or higher
     * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
-        ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
-        version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+      ``scikit-learn`` must be version 0.24.0 or higher, and at least one of the
+      following should be true> ``numpy`` must be
+      version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
 
     Developers should note that package names in the PEP 440 specifier strings
     that should be provided
@@ -453,6 +454,44 @@ class tests__vm(_BaseTag):
         "parent_type": "object",
         "tag_type": "bool",
         "short_descr": "whether to test the object in its own VM",
+        "user_facing": False,
+    }
+
+
+class tests__libs(_BaseTag):
+    """Important library dependencies of the object, for test triggers.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:libs"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.libs.chronos"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull request,
+    usually only estimators that have changed.
+
+    The ``tests:libs`` tag of an object is a list of strings,
+    it specifies important library dependencies of the object within ``sktime``.
+
+    Setting this tag triggers testing the estimator whenever any of the modules
+    in the ``tests:libs`` tags have changed, in additional to the other
+    test trigger conditions such as a direct change to the object class.
+
+    Developers should not specify framework imports here, e.g., ``sktime.base``,
+    but any modules that contain estimator specific logic, which are not
+    identical with the location of the class.
+
+    The ``tests:libs`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:libs",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Core libraries used by the estimator, to trigger tests.",
         "user_facing": False,
     }
 

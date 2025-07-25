@@ -28,7 +28,7 @@ jnp = _safe_import("jax.numpy")
 
 snapshot_download = _safe_import(
     "huggingface_hub.snapshot_download",
-    pkg_name="huggingfaec-hub",
+    pkg_name="huggingface-hub",
 )
 
 checkpoints = _safe_import("paxml.checkpoints")
