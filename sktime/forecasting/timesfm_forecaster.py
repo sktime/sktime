@@ -156,6 +156,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "tensorflow",
             "einshape",
             "jax",
+            "jaxlib==0.4.26",
             "praxis",
             "huggingface-hub",
             "paxml",

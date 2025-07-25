@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 """TimesFM forecast API for inference."""
 
 import collections
@@ -55,6 +56,7 @@ import numpy as np
 from sktime.libs.timesfm import patched_decoder, xreg_lib
 
 _TOL = 1e-6
+jax.config.update("jax_traceback_filtering", "off")
 
 
 def process_group(key, group, value_name, forecast_context_len):
@@ -126,6 +128,7 @@ class TimesFm:
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
         self.num_devices = jax.local_device_count(self.backend)
+        self.num_cores = self.num_devices
         self.global_batch_size = self.per_core_batch_size * self.num_devices
 
         self.context_len = context_len
@@ -274,7 +277,7 @@ class TimesFm:
             axis_name="batch",
             devices=jax.devices(self.backend),
             backend=self.backend,
-            axis_size=self.num_devices,
+            axis_size=self.num_cores,
         )
         with base_layer.JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
@@ -282,7 +285,7 @@ class TimesFm:
                     {
                         "input_ts": jnp.zeros(
                             (
-                                self.num_devices,
+                                self.num_cores,
                                 self.per_core_batch_size,
                                 self.context_len,
                             ),
@@ -290,7 +293,7 @@ class TimesFm:
                         ),
                         "input_padding": jnp.zeros(
                             (
-                                self.num_devices,
+                                self.num_cores,
                                 self.per_core_batch_size,
                                 self.context_len + self.horizon_len,
                             ),
@@ -298,7 +301,7 @@ class TimesFm:
                         ),
                         "date_features": None,
                         "freq": jnp.zeros(
-                            (self.num_devices, self.per_core_batch_size, 1),
+                            (self.num_cores, self.per_core_batch_size, 1),
                             dtype=jnp.int32,
                         ),
                     }
