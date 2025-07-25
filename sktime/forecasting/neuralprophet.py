@@ -176,9 +176,6 @@ class NeuralProphet(BaseForecaster):
         # Prepare data for NeuralProphet
         df = pd.DataFrame({"ds": y.index, "y": y.values})
 
-        # Store training dataframe for future predictions
-        self._training_df = df.copy()
-
         # Initialize and configure NeuralProphet model
         self._model = _NeuralProphet(
             growth=self.growth,
@@ -198,19 +195,28 @@ class NeuralProphet(BaseForecaster):
             loss_func=self.loss_func,
         )
 
+        # Store which regressors were added for prediction
+        self._regressors = []
+
         # Add exogenous variables if provided
         if X is not None:
             if hasattr(X.index, "to_timestamp"):
                 X = X.copy()
                 X.index = X.index.to_timestamp()
 
-            # Add each exogenous variable as a regressor
+            # Add each exogenous variable as a future regressor
             for col in X.columns:
-                self._model.add_future_regressor(col)
+                # Check if column has any non-NaN values
+                if X[col].notna().any():
+                    self._model.add_future_regressor(col)
+                    self._regressors.append(col)
 
             # Join exogenous variables to training data
-            df = df.join(X, how="left")
-            self._training_df = df.copy()
+            if self._regressors:
+                df = df.join(X[self._regressors], how="left")
+
+        # Store training dataframe for future predictions
+        self._training_df = df.copy()
 
         # Add custom seasonalities, holidays, etc.
         if self.custom_seasonalities:
@@ -228,6 +234,7 @@ class NeuralProphet(BaseForecaster):
                     regularization=self.holidays_reg,
                 )
 
+        # Fit the model
         self._model.fit(df)
 
         return self
@@ -256,28 +263,30 @@ class NeuralProphet(BaseForecaster):
             df=self._training_df, periods=len(fh_index)
         )
 
-        # Add exogenous variables if provided
-        if X is not None:
+        # Add exogenous variables if provided and regressors were added during fit
+        if X is not None and hasattr(self, "_regressors") and self._regressors:
             if hasattr(X.index, "to_timestamp"):
                 X = X.copy()
                 X.index = X.index.to_timestamp()
 
-            # Create a dataframe with the future dates and exogenous variables
-            future_X = pd.DataFrame(index=fh_index)
+            # For each regressor that was added during training
+            for col in self._regressors:
+                if col in X.columns:
+                    # Get future values for this regressor
+                    future_values = X[col].reindex(fh_index)
 
-            # Align X with the future prediction dates
-            for col in X.columns:
-                if col in self._training_df.columns:
-                    # Map the exogenous values to the corresponding future dates
-                    future_X[col] = X.reindex(fh_index)[col]
+                    # NeuralProphet expects the future regressor values to be present
+                    # in the future_df for the prediction period
+                    prediction_mask = future_df["ds"].isin(fh_index)
 
-            # Update the future_df with the exogenous variables
-            # Only update the rows that correspond to the prediction horizon
-            for col in future_X.columns:
-                if not future_X[col].isna().all():  # Only if column has non-NaN values
-                    future_df.loc[future_df.index[-len(fh_index) :], col] = future_X[
-                        col
-                    ].values
+                    # Update future_df with the regressor values
+                    if col in future_df.columns:
+                        future_df.loc[prediction_mask, col] = future_values.values
+                    else:
+                        # If column doesn't exist, add it with NaN for historical data
+                        # and the actual values for prediction period
+                        future_df[col] = pd.NA
+                        future_df.loc[prediction_mask, col] = future_values.values
 
         # Make predictions
         forecast = self._model.predict(future_df)
