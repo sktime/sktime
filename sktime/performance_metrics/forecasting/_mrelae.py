@@ -7,13 +7,16 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
+    _get_kwarg,
     mean_relative_absolute_error,
 )
 
 
-class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Mean relative absolute error (MRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -94,3 +97,67 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = mean_relative_absolute_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+        **kwargs : dict
+            Additional keyword arguments, including y_pred_benchmark.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+            index is equal to index of y_true
+            entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+            index and columns equal to those of y_true
+            i,j-th entry is metric at time i, at variable j
+        """
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point."""
+        y_pred_benchmark = _get_kwarg(
+            "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
+        )
+
+        if hasattr(y_pred_benchmark, "index"):
+            y_pred_benchmark.index = y_true.index
+
+        abs_error_pred = (y_true - y_pred).abs()
+        abs_error_bench = (y_true - y_pred_benchmark).abs()
+
+        EPS = np.finfo(np.float64).eps
+
+        both_zero = (abs_error_pred == 0) & (abs_error_bench == 0)
+        bench_zero_only = (abs_error_bench == 0) & ~both_zero
+
+        safe_denominator = abs_error_bench.copy()
+        if hasattr(safe_denominator, "mask"):
+            safe_denominator = safe_denominator.mask(bench_zero_only, EPS)
+        else:
+            safe_denominator = np.where(bench_zero_only, EPS, safe_denominator)
+
+        relative_errors = abs_error_pred / safe_denominator
+
+        if hasattr(relative_errors, "mask"):
+            relative_errors = relative_errors.mask(both_zero, 0)
+        else:
+            relative_errors = np.where(both_zero, 0, relative_errors)
+
+        weighted_errors = self._get_weighted_df(relative_errors, **kwargs)
+        return self._handle_multioutput(weighted_errors, self.multioutput)
