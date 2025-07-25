@@ -16,6 +16,59 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.38.3 - 2025-07-04
+---------------------------
+
+Hotfix for failures of ``ChronosForecaster`` and ``TinyTimeMixerForecaster``.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix accidental removal of dataclass types in ``ChronosForecaster`` and ``TinyTimeMixerForecaster`` (:pr:`8488`) :user:`fkiraly`
+
+Version 0.38.2 - 2025-07-03
+---------------------------
+
+``transformers 4.53`` compatibility patch, minor maintenance and documentation updates.
+
+Contents
+~~~~~~~~
+
+* [MNT] CI: ``Add ubuntu-22.04-arm`` runners to enhance arm aarch64 architecture testing and maintenance (:pr:`7695`) :user:`abhishek-iitmadras`
+* [MNT] fix: add ``aarch64`` installation constraint for ``esig`` and ``ts2vg`` (:pr:`8471`) :user:`abhishek-iitmadras`
+* [MNT] Skip mlflow test jobs if ``sktime`` folder or ``pyproject.toml`` is untouched (:pr:`8474`) :user:`yarnabrina`
+* [MNT] replace unsafe imports from ``torch`` and ``transformers`` with ``_safe_import`` pattern (:pr:`8476`) :user:`fkiraly`
+* [MNT] update ``transformers`` imports for 4.53 compatibility (:pr:`8478`) :user:`fkiraly`
+* [DOC] use clearer language in extension template preamble (:pr:`8466`) :user:`fkiraly`
+* [DOC] add missing API reference for ``GreykiteForecaster`` (:pr:`8472`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`abhishek-iitmadras`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
+Version 0.38.1 - 2025-06-26
+---------------------------
+
+``scikit-learn 1.7`` compatibility hotfix, thanks go to :user:`andretheronsa`.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix forecasting metric functions incompatible with ``scikit-learn 1.7`` (:pr:`8459`) :user:`andretheronsa`
+* [MNT] revert docs to pre-8385 state (:pr:`8454`, :pr:`8444`) :user:`fkiraly`, :user:`yarnabrina`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`andretheronsa`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
 Version 0.38.0 - 2025-06-24
 ---------------------------
 
