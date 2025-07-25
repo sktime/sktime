@@ -38,6 +38,53 @@ class _DelegatedRegressor(BaseRegressor):
     def _get_delegate(self):
         return getattr(self, self._delegate_name)
 
+    def _set_delegated_tags(self, delegate=None):
+        """Set delegated tags, only tags for boilerplate control.
+
+        Writes tags to self.
+        Can be used by descendant classes to set dependent tags.
+        Makes safe baseline assumptions about tags, which can be overwritten.
+
+        * data mtype tags are set to the most general value.
+          This is to ensure that conversion is left to the inner estimator.
+        * packaging tags such as "author" or "python_dependencies" are not cloned.
+        * other boilerplate tags are cloned.
+
+        Parameters
+        ----------
+        delegate : object, optional (default=None)
+            object to get tags from, if None, uses self._get_delegate()
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_TABLE
+
+        if delegate is None:
+            delegate = self._get_delegate()
+
+        TAGS_TO_DELEGATE = [
+            "capability:multioutput",
+            "capability:multivariate",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "capability:train_estimate",
+            "capability:feature_importance",
+            "capability:contractable",
+            "capability:categorical_in_X",
+        ]
+
+        TAGS_TO_SET = {
+            "X_inner_mtype": MTYPE_LIST_PANEL,
+            "y_inner_mtype": MTYPE_LIST_TABLE,
+        }
+
+        self.clone_tags(delegate, tag_names=TAGS_TO_DELEGATE)
+        self.set_tags(**TAGS_TO_SET)
+
+        return self
+
     def _fit(self, X, y):
         """Fit time series regressor to training data.
 

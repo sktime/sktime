@@ -24,7 +24,7 @@ def run_test_for_class(cls, return_reason=False):
        If yes, behaviour depends on ONLY_CHANGED_MODULES setting:
        if off (False), always runs the test (return True);
        if on (True), runs test if and only if
-       at least one of conditions 2, 3, 4, 5 below are met.
+       at least one of conditions 2, 3, 4, 5, 6 below are met.
 
     2. Condition 2:
 
@@ -50,6 +50,11 @@ def run_test_for_class(cls, return_reason=False):
       If the object is an sktime ``BaseObject``,
       and one of the core framework modules ``datatypes``, ``tests``, ``utils``
       have changed, then condition 5 is met.
+
+    6. Condition 6:
+
+      If the object is an sktime ``BaseObject``, and any of the modules
+      in the class tag ``tests:libs`` hvae changed, condition 6 is met.
 
     cls can also be a list of classes or functions,
     in this case the test is run if and only if both of the following are True:
@@ -86,6 +91,7 @@ def run_test_for_class(cls, return_reason=False):
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
         * "True_changed_framework" - run reason, core framework modules changed
+        * "True_changed_libs" - run reason, library dependencies have changed
 
         If multiple reasons are present, the first one in the above list is returned.
 
@@ -130,6 +136,7 @@ def run_test_for_class(cls, return_reason=False):
             "True_changed_tests",
             "True_changed_class",
             "True_changed_framework",
+            "True_changed_libs",
         ]
         for pos_reason in POS_REASONS:
             if any(reason == pos_reason for reason in reasons):
@@ -202,6 +209,7 @@ def _run_test_for_class(
         * "True_changed_tests" - run reason, test(s) covering class have changed
         * "True_changed_class" - run reason, module(s) containing class changed
         * "True_changed_framework" - run reason, core framework modules changed
+        * "True_changed_libs" - run reason, library dependencies changed
 
         If multiple reasons are present, the first one in the above list is returned.
     """
@@ -281,6 +289,17 @@ def _run_test_for_class(
 
         return any(x in PACKAGE_REQ_CHANGED for x in package_deps)
 
+    def _is_impacted_by_lib_dep_change(cls, only_changed_modules):
+        """Check if library dependencies have changed, return bool."""
+        if not isclass(cls) or not hasattr(cls, "get_class_tags"):
+            return False
+
+        libs = cls.get_class_tag("tests:libs", [])
+        if libs is None or libs == []:
+            return False
+
+        return run_test_module_changed(libs, only_changed_modules=only_changed_modules)
+
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
     if not ignore_deps and not _required_deps_present(cls):
@@ -342,12 +361,17 @@ def _run_test_for_class(
         if any([is_module_changed(x) for x in FRAMEWORK_MODULES]):
             return True, "True_changed_framework"
 
+    # Condition 6:
+    # any of the specified library dependencies within sktime have changed
+    if _is_impacted_by_lib_dep_change(cls, only_changed_modules=only_changed_modules):
+        return True, "True_changed_libs"
+
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
     return False, "False_no_change"
 
 
-def run_test_module_changed(module):
+def run_test_module_changed(module, only_changed_modules=None):
     """Check if test should run based on module changes
 
     This switch can be used to decorate tests not pertaining to a specific class.
@@ -365,6 +389,12 @@ def run_test_module_changed(module):
     ----------
     module : string, or list of strings
         modules to check for changes, e.g., ``sktime.forecasting``
+    only_changed_modules : boolean or None, default=_config.ONLY_CHANGED_MODULES
+        whether to run tests only for classes impacted by changed modules.
+        If False, will only check active "False" conditions to skip.
+        If True, always returns True.
+        if None, uses the global setting from
+        sktime.tests._config.ONLY_CHANGED_MODULES
 
     Returns
     -------
@@ -372,13 +402,18 @@ def run_test_module_changed(module):
         True iff: at least one of the modules or its submodules have changed,
         or if ``ONLY_CHANGED_MODULES`` is False
     """
-    from sktime.tests._config import ONLY_CHANGED_MODULES
-    from sktime.utils.git_diff import is_module_changed
+    # default value for only_changed_modules
+    if only_changed_modules is None:
+        from sktime.tests._config import ONLY_CHANGED_MODULES
 
-    # if ONLY_CHANGED_MODULES is off: always True
+        only_changed_modules = ONLY_CHANGED_MODULES
+
+    # if only_changed_modules is off: always True
     # tests are always run if soft dependencies are present
-    if not ONLY_CHANGED_MODULES:
+    if not only_changed_modules:
         return True
+
+    from sktime.utils.git_diff import is_module_changed
 
     if not isinstance(module, (list, tuple)):
         module = [module]
