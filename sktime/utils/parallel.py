@@ -66,7 +66,8 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
 
         - "ray": The following keys can be passed:
 
-            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "ray_init_args": dictionary of valid keys for ``ray.init``
+            - "ray_remote_args": dictionary of valid keys for ``ray.remote``
             - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
@@ -178,8 +179,10 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     if "ray_remote_args" not in backend_params.keys():
         backend_params["ray_remote_args"] = {}
+    if "ray_init_args" not in backend_params.keys():
+        backend_params["ray_remote_args"] = {}
 
-    @ray.remote  # pragma: no cover
+    @ray.remote(**backend_params["ray_remote_args"])  # pragma: no cover
     def _ray_execute_function(
         fun, params: dict, meta: dict, mute_warnings: bool = False
     ):
@@ -191,7 +194,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     if not ray.is_initialized():
         logger.info("Starting Ray Parallel")
-        context = ray.init(**backend_params["ray_remote_args"])
+        context = ray.init(**backend_params["ray_init_args"])
         logger.info(
             f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
         )
@@ -270,12 +273,15 @@ def _get_parallel_test_fixtures(naming="estimator"):
 
     # test ray backend
     if _check_soft_dependencies("ray", severity="none"):
+        import os
+
         fixtures.append(
             {
                 "backend": "ray",
                 "backend_params": {
                     "mute_warnings": True,
                     "ray_remote_args": {"memory": 4 * 1024 * 1024 * 1024},
+                    "ray_init_args": {"num_cpus": os.cpu_count() - 1},
                 },
             }
         )
