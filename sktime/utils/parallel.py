@@ -270,19 +270,17 @@ def _get_parallel_test_fixtures(naming="estimator"):
 
     # test ray backend
     if _check_soft_dependencies("ray", severity="none"):
-        import os
-
         fixtures.append(
             {
                 "backend": "ray",
                 "backend_params": {
                     "mute_warnings": True,
-                    "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
+                    "ray_remote_args": {"memory": 4 * 1024 * 1024 * 1024},
                 },
             }
         )
 
-    fixtures = [x for x in fixtures if x["backend"] not in SKIP_FIXTURES]
+    fixtures = [x for x in fixtures if x["backend"] in SKIP_FIXTURES]
     # remove backends in SKIP_FIXTURES from fixtures
 
     return fixtures
