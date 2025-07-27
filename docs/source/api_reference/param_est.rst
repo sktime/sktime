@@ -48,8 +48,8 @@ Composition
     PluginParamsForecaster
     PluginParamsTransformer
 
-Naive
-~~~~~
+Naive parameter estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.fixed
 
@@ -91,8 +91,16 @@ Stationarity tests
     StationarityVarianceRatio
     BreakvarHeteroskedasticityTest
 
-Autocorrelation estimators
-~~~~~~~~~~~~~~~~~~~~~~
+Lag and autocorrelation estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARLagOrderSelector
 
 .. currentmodule:: sktime.param_est.autocorrelation
 
@@ -102,8 +110,8 @@ Autocorrelation estimators
 
     AcorrLjungbox
 
-Residual estimators
-~~~~~~~~~~~~~~~~~~~~~~
+Residual tests and estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.residuals
 
@@ -112,14 +120,3 @@ Residual estimators
     :template: class.rst
 
     JarqueBera
-
-Lag estimators
-~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.param_est.lag
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ARLagOrderSelector
