@@ -21,7 +21,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     of experts algorithm to make predictions. designed to operate in an auto-regressive
     manner, enabling universal forecasting with arbitrary prediction horizons
     and context lengths of up to 4096. This method has been proposed in [2]_ and the
-    official code is avalaible at [2]_.
+    official code is available at [2]_.
 
     Parameters
     ----------
@@ -100,6 +100,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)
+    TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
     >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)
     """
 
@@ -115,7 +116,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
@@ -127,6 +128,10 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.timemoe"],
     }
 
     def __init__(

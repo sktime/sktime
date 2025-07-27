@@ -131,8 +131,12 @@ class VmdTransformer(BaseTransformer):
         "skip-inverse-transform": False,
         "capability:unequal_length": False,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.libs.vmdpy"],
     }
 
     def __init__(

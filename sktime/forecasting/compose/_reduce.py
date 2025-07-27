@@ -231,7 +231,7 @@ class _Reducer(_BaseWindowForecaster):
             "benheid",
         ],
         "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -254,7 +254,9 @@ class _Reducer(_BaseWindowForecaster):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
         # for dealing with probabilistic regressors:
         # self._est_type encodes information what type of estimator is passed
@@ -1934,7 +1936,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         or a different number of observations.
 
         * `True` : Uniform window of length (total observations - maximum
-          forecasting horizon). Note: Currently, there are no missings arising
+          forecasting horizon). Note: Currently, there are no missing arising
           from window length due to backwards imputation in
           `ReductionTransformer`. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
@@ -1951,6 +1953,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -1992,7 +1997,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
         # therefore this is commented out until sktime and sklearn are better aligned
-        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
+        # self.set_tags(
+        #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
+        # )
 
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
@@ -2016,6 +2023,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
         lags = self._lags
@@ -2056,7 +2064,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         yt = prep_skl_df(yt)
 
         estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
@@ -2762,7 +2770,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,

@@ -23,6 +23,7 @@ from sktime.forecasting.compose import (
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
@@ -416,7 +417,7 @@ def test_tag_handles_missing_data():
     """
     forecaster = MockForecaster()
     # make sure that test forecaster can't handle missing data
-    forecaster.set_tags(**{"handles-missing-data": False})
+    forecaster.set_tags(**{"capability:missing_values": False})
 
     y = _make_series()
     y.iloc[10] = np.nan
@@ -622,3 +623,18 @@ def test_pipeline_display():
 
     f = ForecastingPipeline([Detrender(), YfromX.create_test_instance()])
     f._sk_visual_block_()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([TransformedTargetForecaster, PytorchForecastingNBeats]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_pipeline_with_gf_tag():
+    """Test that pipeline with gf tag works."""
+
+    from sklearn.preprocessing import MinMaxScaler
+
+    model = PytorchForecastingNBeats()
+
+    pipe = MinMaxScaler() * model
+    assert isinstance(pipe, TransformedTargetForecaster)

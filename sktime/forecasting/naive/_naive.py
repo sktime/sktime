@@ -124,11 +124,14 @@ class NaiveForecaster(_BaseWindowForecaster):
         # --------------
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "ignores-exogeneous-X": True,
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -140,7 +143,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         # Override tag for handling missing data
         # todo: remove if GH1367 is fixed
         if self.strategy in ("last", "mean"):
-            self.set_tags(**{"handles-missing-data": True})
+            self.set_tags(**{"capability:missing_values": True})
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -677,7 +680,7 @@ class NaiveVariance(BaseForecaster):
         # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_var": True,
@@ -692,7 +695,7 @@ class NaiveVariance(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
-            "handles-missing-data",
+            "capability:missing_values",
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",
