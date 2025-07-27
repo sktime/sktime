@@ -1,3 +1,3 @@
 """Module for Hurdle Demand Forecaster."""
 
-from ._hurdle_demand import HurdleDemandForecaster
+from ._forecaster import HurdleDemandForecaster
