@@ -30,8 +30,12 @@ if _check_soft_dependencies("numpyro", severity="none"):
 
 if _check_soft_dependencies("prophetverse", severity="none"):
     from prophetverse.sktime.base import BaseBayesianForecaster
+
+    FOUND_PROPHETVERSE = True
 else:
     from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
+
+    FOUND_PROPHETVERSE = False
 
 if _check_soft_dependencies("skpro", severity="none"):
     from skpro.distributions import (
@@ -307,7 +311,12 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         time_varying_demand: Literal["ar", "rw", False] = False,
         inference_engine=None,
     ):
-        super().__init__(scale=1.0, inference_engine=inference_engine)
+        # NB: this is a bit hacky tbh... Perhaps it might have been easier to
+        # implement this as a model and then wrap it?
+        if FOUND_PROPHETVERSE:
+            super().__init__(scale=1.0, inference_engine=inference_engine)
+        else:
+            super().__init__()
 
         self.family = family
         self.time_varying_probability = time_varying_probability
@@ -446,15 +455,9 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        from prophetverse.engine import MCMCInferenceEngine
-
-        engine = MCMCInferenceEngine(
-            num_samples=10, num_chains=1, num_warmup=10, r_hat=None
-        )
-
         return {
             "family": "negative-binomial",
             "time_varying_probability": "rw",
             "time_varying_demand": "ar",
-            "engine": engine,
+            "engine": None,
         }
