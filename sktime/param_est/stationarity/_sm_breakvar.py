@@ -11,6 +11,14 @@ class BreakvarHeteroskedasticityTest(BaseParamFitter):
     the sum-of-squares in the first subset of the sample is significantly different
     than the sum-of-squares in the last subset of the sample.
 
+    The null hypothesis is of no heteroskedasticity.
+
+    In literature, this test is typically applied to residuals of a fitted model,
+    but can be applied to any time series.
+
+    It can also be used as a weak test for non-stationarity,
+    as hetoroskedasticity implies non-stationarity, but not vice versa.
+
     Parameters
     ----------
     p_threshold : float, optional, default=0.05
