@@ -65,7 +65,7 @@ def _sample_components(
     sigma = numpyro.sample("sigma", HalfNormal())
     reversion_speed = numpyro.sample("phi", Beta(1.0, 1.0))
 
-    transition_matrix = reversion_speed.reshape((1, 1))
+    transition_matrix = jnp.reshape(reversion_speed, (1, 1))
 
     eps = Normal().expand((length, 1)).to_event(1)
     time_varying_component = numpyro.sample(
