@@ -72,8 +72,8 @@ Seasonality estimators
     SeasonalityACFqstat
     SeasonalityPeriodogram
 
-Stationarity estimators
-~~~~~~~~~~~~~~~~~~~~~~
+Stationarity tests
+~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.stationarity
 
@@ -91,7 +91,7 @@ Stationarity estimators
     StationarityVarianceRatio
 
 Lag estimators
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.lag
 
