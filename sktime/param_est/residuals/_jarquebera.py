@@ -33,11 +33,11 @@ class JarqueBera(BaseParamFitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.residuals.jarquebera import JarqueBera
+    >>> from sktime.param_est.residuals import JarqueBera
     >>>
     >>> X = load_airline()
-    >>> sty_est = JarqueBera()
-    >>> sty_est.fit(X)
+    >>> param_est = JarqueBera()
+    >>> param_est.fit(X)
     JarqueBera(...)
     """
 

@@ -51,11 +51,11 @@ class AcorrLjungbox(BaseParamFitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.autocorrelation.acorrljungbox import AcorrLjungbox
+    >>> from sktime.param_est.lag import AcorrLjungbox
     >>>
     >>> X = load_airline()
-    >>> sty_est = AcorrLjungbox()
-    >>> sty_est.fit(X)
+    >>> lag_est = AcorrLjungbox()
+    >>> lag_est.fit(X)
     AcorrLjungbox(...)
     """
 
