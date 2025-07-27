@@ -14,17 +14,17 @@ import pandas as pd
 if _check_soft_dependencies("numpyro", severity="none"):
     import numpyro.handlers
     from numpyro.distributions import (
+        HalfNormal,
         LogNormal,
         NegativeBinomial2,
         Normal,
         Poisson,
         TransformedDistribution,
-        TruncatedNormal, HalfNormal,
-)
+        TruncatedNormal,
+    )
     from numpyro.distributions.transforms import (
         AffineTransform,
         RecursiveLinearTransform,
-        SoftplusTransform,
     )
 
     from ._hurdle_distribution import HurdleDistribution
@@ -45,6 +45,61 @@ if _check_soft_dependencies("skpro", severity="none"):
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
+
+
+def _sample_components(
+    length: int, X: np.ndarray, time_regressor: bool = False, oos: int = 0
+) -> np.ndarray:
+    features = np.ones((length + oos, 1))
+
+    if X is not None:
+        features = np.concatenate((features, X), axis=1)
+
+    with numpyro.plate("factors", features.shape[-1]):
+        beta = numpyro.sample("beta", Normal())
+
+    regressors = features @ beta
+
+    if not time_regressor:
+        return regressors
+
+    sigma = numpyro.sample("sigma", LogNormal()) ** 0.5
+    reversion_speed = numpyro.sample("phi", TruncatedNormal(low=-1.0, high=1.0))
+
+    transition_matrix = reversion_speed.reshape((1, 1))
+
+    eps = Normal().expand((length, 1)).to_event(1)
+    time_varying_component = numpyro.sample(
+        "x:ignore",
+        TransformedDistribution(
+            eps,
+            [
+                AffineTransform(0.0, sigma),
+                RecursiveLinearTransform(transition_matrix=transition_matrix),
+            ],
+        ),
+    )
+
+    if oos > 0:
+        mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
+        eps_oos = Normal().expand((oos, 1)).to_event(1)
+
+        x_oos = numpyro.sample(
+            "x_oos:ignore",
+            TransformedDistribution(
+                eps_oos,
+                [
+                    AffineTransform(mean, sigma),
+                    RecursiveLinearTransform(transition_matrix=transition_matrix),
+                ],
+            ),
+        )
+
+        time_varying_component = jnp.concatenate(
+            (time_varying_component, x_oos), axis=0
+        )
+
+    return regressors + time_varying_component.squeeze(-1)
 
 
 # TODO: think about priors, can we make them more informative?
@@ -248,64 +303,10 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         self.time_varying_probability = time_varying_probability
         self.time_varying_demand = time_varying_demand
 
-    def _sample_parameters(
-        self, length: int, X: np.ndarray, time_regressor: bool = False, oos: int = 0
-    ) -> np.ndarray:
-        features = np.ones((length + oos, 1))
-
-        if X is not None:
-            features = np.concatenate((features, X), axis=1)
-
-        with numpyro.plate("factors", features.shape[-1]):
-            beta = numpyro.sample("beta", Normal())
-
-        regressors = features @ beta
-
-        if not time_regressor:
-            return regressors
-
-        sigma = numpyro.sample("sigma", LogNormal()) ** 0.5
-        reversion_speed = numpyro.sample("phi", TruncatedNormal(low=-1.0, high=1.0))
-
-        transition_matrix = reversion_speed.reshape((1, 1))
-
-        eps = Normal().expand((length, 1)).to_event(1)
-        time_varying_component = numpyro.sample(
-            "x:ignore",
-            TransformedDistribution(
-                eps,
-                [
-                    AffineTransform(0.0, sigma),
-                    RecursiveLinearTransform(transition_matrix=transition_matrix),
-                ],
-            ),
-        )
-
-        if oos > 0:
-            mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
-            eps_oos = Normal().expand((oos, 1)).to_event(1)
-
-            x_oos = numpyro.sample(
-                "x_oos:ignore",
-                TransformedDistribution(
-                    eps_oos,
-                    [
-                        AffineTransform(mean, sigma),
-                        RecursiveLinearTransform(transition_matrix=transition_matrix),
-                    ],
-                ),
-            )
-
-            time_varying_component = jnp.concatenate(
-                (time_varying_component, x_oos), axis=0
-            )
-
-        return regressors + time_varying_component.squeeze(-1)
-
     def _sample_probability(
         self, length: int, X: np.ndarray, oos: int = 0
     ) -> np.ndarray:
-        logit_prob = self._sample_parameters(
+        logit_prob = _sample_components(
             length=length, X=X, time_regressor=self.time_varying_probability, oos=oos
         )
         prob = expit(logit_prob)
@@ -313,7 +314,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         return prob
 
     def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> np.ndarray:
-        log_demand = self._sample_parameters(
+        log_demand = _sample_components(
             length=length, time_regressor=self.time_varying_demand, X=X, oos=oos
         )
         demand = jnp.exp(log_demand)
