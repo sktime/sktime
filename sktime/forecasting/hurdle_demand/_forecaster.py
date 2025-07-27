@@ -443,3 +443,18 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         y_pred = mean.to_frame(col_names[0])
 
         return self._postprocess_output(y_pred)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        from prophetverse.engine import MCMCInferenceEngine
+
+        engine = MCMCInferenceEngine(
+            num_samples=10, num_chains=1, num_warmup=10, r_hat=None
+        )
+
+        return {
+            "family": "negative-binomial",
+            "time_varying_probability": "rw",
+            "time_varying_demand": "ar",
+            "engine": engine,
+        }
