@@ -31,6 +31,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     Example
     -------
     >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting import ResidualBoostingForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sklearn.linear_model import LinearRegression
@@ -137,7 +138,9 @@ class ResidualBoostingForecaster(BaseForecaster):
         params : dict or list of dict
             Parameters to create test instances of the estimator.
         """
-        from sktime.forecasting.arima import ARIMA
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import make_reduction
         from sktime.forecasting.naive import NaiveForecaster
 
         params1 = {
@@ -145,8 +148,14 @@ class ResidualBoostingForecaster(BaseForecaster):
             "residual_forecaster": NaiveForecaster(strategy="mean"),
         }
 
-        params2 = {
-            "base_forecaster": ARIMA(order=(1, 0, 0)),
-            "residual_forecaster": NaiveForecaster(strategy="mean"),
-        }
+        params2 = (
+            {
+                "base_forecaster": make_reduction(
+                    estimator=LinearRegression(),
+                    strategy="recursive",
+                    window_length=3,
+                ),
+                "residual_forecaster": NaiveForecaster(strategy="mean"),
+            },
+        )
         return [params1, params2]
