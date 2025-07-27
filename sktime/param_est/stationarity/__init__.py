@@ -21,8 +21,8 @@ from sktime.param_est.stationarity._arch import (
     StationarityVarianceRatio,
     StationarityZivotAndrews,
 )
+from sktime.param_est.stationarity._sm_breakvar import BreakvarHeteroskedasticityTest
 from sktime.param_est.stationarity._statsmodels import (
-    BreakvarHeteroskedasticityTest,
     StationarityADF,
     StationarityKPSS,
 )
