@@ -44,9 +44,9 @@ class BreakvarHeteroskedasticityTest(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import BreakvarHeteroskedasticityTest
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = BreakvarHeteroskedasticityTest()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = BreakvarHeteroskedasticityTest()
+    >>> sty_est.fit(X)
     BreakvarHeteroskedasticityTest(...)
     """
 

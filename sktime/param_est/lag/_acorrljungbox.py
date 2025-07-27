@@ -48,9 +48,9 @@ class AcorrLjungbox(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.autocorrelation.acorrljungbox import AcorrLjungbox
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = AcorrLjungbox()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = AcorrLjungbox()
+    >>> sty_est.fit(X)
     AcorrLjungbox(...)
     """
 
