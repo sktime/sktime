@@ -53,6 +53,8 @@ class ResidualBoostingForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:exogenous": False,
         "capability:missing_values": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "python_dependencies": ["pmdarima"],
     }
 
@@ -148,14 +150,13 @@ class ResidualBoostingForecaster(BaseForecaster):
             "residual_forecaster": NaiveForecaster(strategy="mean"),
         }
 
-        params2 = (
-            {
-                "base_forecaster": make_reduction(
-                    estimator=LinearRegression(),
-                    strategy="recursive",
-                    window_length=3,
-                ),
-                "residual_forecaster": NaiveForecaster(strategy="mean"),
-            },
-        )
+        params2 = {
+            "base_forecaster": make_reduction(
+                estimator=LinearRegression(),
+                strategy="recursive",
+                window_length=3,
+            ),
+            "residual_forecaster": NaiveForecaster(strategy="mean"),
+        }
+
         return [params1, params2]
