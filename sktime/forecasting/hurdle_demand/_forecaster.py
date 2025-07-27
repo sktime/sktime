@@ -14,7 +14,6 @@ import pandas as pd
 if _check_soft_dependencies("numpyro", severity="none"):
     import numpyro.handlers
     from numpyro.distributions import (
-        Beta,
         HalfNormal,
         NegativeBinomial2,
         Normal,
@@ -24,6 +23,7 @@ if _check_soft_dependencies("numpyro", severity="none"):
     from numpyro.distributions.transforms import (
         AffineTransform,
         RecursiveLinearTransform,
+        SigmoidTransform,
     )
 
     from ._hurdle_distribution import HurdleDistribution
@@ -63,7 +63,9 @@ def _sample_components(
         return regressors
 
     sigma = numpyro.sample("sigma", HalfNormal())
-    reversion_speed = numpyro.sample("phi", Beta(1.0, 1.0))
+    reversion_speed = numpyro.sample(
+        "phi", TransformedDistribution(Normal(scale=1.5), SigmoidTransform())
+    )
 
     transition_matrix = jnp.reshape(reversion_speed, (1, 1))
 
