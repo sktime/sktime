@@ -50,7 +50,33 @@ class DatasetDownloadStrategy:
         return local_dataset_path
 
     def _download(self, dataset_name, download_path, force_download=False):
-        """Strategy-specific download implementation."""
+        """
+        Strategy-specific download implementation.
+
+        This method contains the specific logic for downloading a dataset
+        using a particular strategy (e.g., from Hugging Face, URLs, etc.).
+
+        The implementation must ensure that the downloaded and extracted dataset
+        is located in a directory named `dataset_name` inside the `download_path`.
+        For example, if `download_path` is `/path/to/data` and `dataset_name`
+        is `MyDataset`, the final data must be in `/path/to/data/MyDataset/`.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset to download.
+        download_path : Path
+            The root directory where the dataset folder should be created.
+        force_download : bool
+            Whether to force the download even if a local copy might exist.
+            Subclasses should respect this flag.
+
+        Raises
+        ------
+        Exception
+            Should raise an exception if the download fails, allowing the
+            `DatasetDownloader` to try the next strategy.
+        """
         raise NotImplementedError("Subclasses must implement _download method")
 
 
@@ -68,6 +94,30 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
     def _download(self, dataset_name, download_path, force_download=False):
+        """
+        Download a dataset from the Hugging Face Hub.
+
+        This implementation uses `snapshot_download` to fetch a specific
+        dataset folder from the configured repository.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset folder to download from the Hub.
+        download_path : Path
+            The local root directory to save the dataset folder into.
+        force_download : bool
+            Passed to `snapshot_download` to force re-downloading.
+
+        Raises
+        ------
+        RepositoryNotFoundError
+            If the repository is not found on the Hugging Face Hub.
+        HfHubHTTPError
+            For other Hugging Face Hub related HTTP errors.
+        ValueError
+            If the expected dataset folder is not found in the downloaded snapshot.
+        """
         local_dataset_path = download_path / dataset_name
 
         if not self.available:
@@ -104,10 +154,32 @@ class URLDownloader(DatasetDownloadStrategy):
         self.available = True
 
     def _download(self, dataset_name, download_path, force_download=False):
+        """
+        Download and extract a dataset from a list of URLs.
+
+        This method attempts to download a zip file from each URL in `self.base_urls`
+        in order. The first successful download is extracted and used.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset. This is used to name the final output directory.
+        download_path : Path
+            The local root directory to save the extracted dataset into.
+        force_download : bool
+            If True, any existing local directory will be removed before extraction.
+
+        Raises
+        ------
+        RuntimeError
+            If downloading from all provided URLs fails.
+        """
         last_error = None
         for url in self.base_urls:
             try:
-                self._download_and_extract(url, download_path, force_download)
+                self._download_and_extract(
+                    url, download_path, dataset_name, force=force_download
+                )
                 return
             except Exception as e:
                 last_error = e
@@ -117,18 +189,16 @@ class URLDownloader(DatasetDownloadStrategy):
             f"Failed to download dataset '{dataset_name}' from any URL"
         )
 
-    def _download_and_extract(self, url: str, extract_path=None, force=False):
+    def _download_and_extract(self, url, root_path, dataset_name, force=False):
+        """Download a zip file, extract it, and place it in the target directory."""
         file_name = os.path.basename(url)
         dl_dir = tempfile.mkdtemp()
         zip_file_name = os.path.join(dl_dir, file_name)
 
+        extract_path = root_path / dataset_name
+
         try:
             urlretrieve(url, zip_file_name)
-
-            if extract_path is None:
-                extract_path = Path.cwd() / "local_data" / file_name.split(".")[0]
-            else:
-                extract_path = Path(extract_path) / file_name.split(".")[0]
 
             if extract_path.exists() and force:
                 shutil.rmtree(extract_path)
@@ -172,6 +242,28 @@ class DatasetDownloader(DatasetDownloadStrategy):
         self.retries = retries
 
     def _download(self, dataset_name, download_path, force_download=False):
+        """
+        Download dataset using a sequence of strategies.
+
+        This method iterates through the available download strategies
+        (e.g., HuggingFaceDownloader, URLDownloader) and attempts to download
+        the dataset using each one, with a specified number of retries.
+        The first strategy to succeed will terminate the process.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Name of the dataset to download.
+        download_path : Path
+            The root directory where the dataset folder should be created.
+        force_download : bool
+            Whether to force the download for each attempt.
+
+        Raises
+        ------
+        RuntimeError
+            If all strategies fail after all retries.
+        """
         errors = []
 
         for i, strategy in enumerate(self.strategies):
