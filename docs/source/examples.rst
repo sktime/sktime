@@ -1,39 +1,39 @@
 .. _examples:
 
-Examples
-========
+=================
+Notebook Examples
+=================
 
-Jupyter notebook examples and practical use cases for sktime.
+Welcome to sktime's notebook examples!
 
-This section contains usage examples in jupyter notebooks, demonstrating
-various sktime functionalities and real-world applications.
+These consist of introductory notebooks, ordered by learning task.
 
-.. grid:: 1 1 1 1
-    :gutter: 3
+For guided tutorials with videos, see our :ref:`tutorials` page.
 
-    .. grid-item-card::
-        :text-align: center
+To run the notebooks interactively, you can
+`launch them on binder <https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples>`_
+without having to install anything.
 
-        Notebook Examples
+We assume basic familiarity with `scikit-learn`_.
+If you haven't worked with scikit-learn before, check out their
+`getting-started guide`_ or the introduction notebook below.
 
-        ^^^
+.. _scikit-learn: https://scikit-learn.org/stable/
+.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
-        Usage examples in jupyter notebooks.
 
-        +++
+Introduction
+============
 
-        .. button-ref:: examples
-            :color: primary
-            :click-parent:
-            :expand:
+.. nbgallery::
+    :glob:
 
-            Browse Examples
-        .. button-ref:: examples/index
-            :color: primary
-            :click-parent:
-            :expand:
+    examples/00_sktime_intro.ipynb
 
-            Browse Examples
+Forecasting
+===========
+
+.. nbgallery::
     :glob:
 
     examples/01_forecasting.ipynb

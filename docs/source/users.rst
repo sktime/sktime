@@ -58,7 +58,7 @@ and effectively use sktime.
             :click-parent:
             :expand:
 
-            Notebook Examples
+            :doc:`Notebook Examples <examples>`
 
     .. grid-item-card::
         :text-align: center
@@ -112,7 +112,7 @@ and effectively use sktime.
             :click-parent:
             :expand:
 
-            Glossary
+            :doc:`Glossary <glossary>`
 
     .. grid-item-card::
         :text-align: center
@@ -130,7 +130,7 @@ and effectively use sktime.
             :click-parent:
             :expand:
 
-            Change Logs
+            :doc:`Change Logs <changelog>`
 
     .. grid-item-card::
         :text-align: center
@@ -148,4 +148,4 @@ and effectively use sktime.
             :click-parent:
             :expand:
 
-            Related Software
+            :doc:`Related Software <related_software>`

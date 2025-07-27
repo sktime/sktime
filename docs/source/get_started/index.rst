@@ -14,31 +14,11 @@ A unified framework for machine learning with time series.
 .. toctree::
    :maxdepth: 2
    :caption: Get Started
+   :hidden:
 
    installation
    quickstart
    key_concepts
-
-Mission
-=======
-
-.. include:: ../about/_mission.rst
-
-Features
-========
-
-* **unified API** for ML/AI with time series, for model building, fitting, application, and validation
-* **support for a variety of learning tasks** including :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`regression <regression_ref>`, :ref:`clustering <clustering_ref>`.
-* **composite model building**, including pipelines with transformations, ensembles, tuning, reduction
-* interactive user experience with **scikit-learn like interface conventions**
-
-Technical specification
-=======================
-
-* In-memory computation of a single machine, no distributed computing
-* Medium-sized data in pandas and NumPy based containers
-* Modular, principled and object-oriented API
-* Using interactive Python interpreter, no command-line interface or graphical user interface
 
 Get Started
 ===========
