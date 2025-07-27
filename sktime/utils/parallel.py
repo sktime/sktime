@@ -172,9 +172,9 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     import ray
 
     # remove the possible excess keys
-    logger = logging.getLogger(backend_params.pop("logger_name", None))
-    mute_warnings = backend_params.pop("mute_warnings", False)
-    shutdown_ray = backend_params.pop("shutdown_ray", True)
+    logger = logging.getLogger(backend_params.get("logger_name", None))
+    mute_warnings = backend_params.get("mute_warnings", False)
+    shutdown_ray = backend_params.get("shutdown_ray", True)
 
     if "ray_remote_args" not in backend_params.keys():
         backend_params["ray_remote_args"] = {}
