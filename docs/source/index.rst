@@ -99,11 +99,11 @@ For specific functionality, install with extras:
    pip install sktime[all_extras]
 
 .. topic:: 🚀 Quick Start
-   
+
    New to sktime? Start here to get up and running quickly!
-   
-   :doc:`Installation Guide <get_started/installation>` | 
-   :doc:`Quick Examples <get_started/quickstart>` | 
+
+   :doc:`Installation Guide <get_started/installation>` |
+   :doc:`Quick Examples <get_started/quickstart>` |
    :doc:`Key Concepts <get_started/key_concepts>`
 
 Documentation & Resources
@@ -118,13 +118,13 @@ Documentation & Resources
         🎯 Get Started
         ^^^
         New to sktime? Learn the basics.
-        
+
         +++
         .. button-ref:: get_started/index
             :color: primary
             :click-parent:
             :expand:
-            
+
             Get Started
 
     .. grid-item-card::
@@ -133,12 +133,12 @@ Documentation & Resources
         📚 Tutorials
         ^^^
         Step-by-step learning guides.
-        
+
         +++
         .. button-ref:: tutorials/index
             :color: primary
             :expand:
-            
+
             Tutorials
 
     .. grid-item-card::
@@ -147,12 +147,12 @@ Documentation & Resources
         🔧 How-to Guides
         ^^^
         Solutions for specific tasks.
-        
+
         +++
         .. button-ref:: how_to
             :color: primary
             :expand:
-            
+
             How-to Guides
 
 Additional Resources:
@@ -188,4 +188,4 @@ Community & Support
 * 🤝 **Get Involved** - :doc:`Contribute to sktime <get_involved>`
 * 🎓 **Mentoring** - :doc:`Get guidance from experienced contributors <get_involved/mentoring>`
 * 📂 **Related Software** - :doc:`Other time series packages <related_software>`
-   
+
