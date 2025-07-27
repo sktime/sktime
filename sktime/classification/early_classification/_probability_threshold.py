@@ -108,6 +108,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
         if not callable(m):
