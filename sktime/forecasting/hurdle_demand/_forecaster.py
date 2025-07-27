@@ -14,13 +14,12 @@ import pandas as pd
 if _check_soft_dependencies("numpyro", severity="none"):
     import numpyro.handlers
     from numpyro.distributions import (
+        Beta,
         HalfNormal,
-        LogNormal,
         NegativeBinomial2,
         Normal,
         Poisson,
         TransformedDistribution,
-        TruncatedNormal,
     )
     from numpyro.distributions.transforms import (
         AffineTransform,
@@ -63,8 +62,8 @@ def _sample_components(
     if not time_regressor:
         return regressors
 
-    sigma = numpyro.sample("sigma", LogNormal()) ** 0.5
-    reversion_speed = numpyro.sample("phi", TruncatedNormal(low=-1.0, high=1.0))
+    sigma = numpyro.sample("sigma", HalfNormal())
+    reversion_speed = numpyro.sample("phi", Beta(1.0, 1.0))
 
     transition_matrix = reversion_speed.reshape((1, 1))
 
@@ -220,11 +219,13 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     time_varying_probability: bool, default=False
         Whether to use a time varying probability for the Bernoulli distribution.
-        If True, the probability will be modeled as a time series.
+        If True, the probability will be modeled as an AR(1) process with positive
+        but stationary reversion speed.
 
     time_varying_demand: bool, default=False
         Whether to use a time varying demand for the Poisson distribution.
-        If True, the demand will be modeled as a time series.
+        If True, the demand will be modeled as an AR(1) process with positive
+        but stationary reversion speed.
 
     Notes
     -----
