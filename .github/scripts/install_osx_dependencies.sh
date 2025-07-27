@@ -4,7 +4,9 @@
 # It is called by test workflow in .github/workflows/
 # To build necessary system dependencies for MacOS, run:
 
+# check if os is MacOS using uname
 if [ "$(uname)" = "Darwin" ]; then
+    # install necessary dependencies
     echo "installing necessary dependencies..."
     brew install libomp
 
