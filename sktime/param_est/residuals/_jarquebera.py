@@ -19,7 +19,6 @@ class JarqueBera(BaseParamFitter):
     axis : int, optional
         Axis to use if data has more than 1 dimension. Default is 0.
 
-
     Attributes
     ----------
     jb_stat_ : float
@@ -36,9 +35,9 @@ class JarqueBera(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.residuals.jarquebera import JarqueBera
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = JarqueBera()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = JarqueBera()
+    >>> sty_est.fit(X)
     JarqueBera(...)
     """
 

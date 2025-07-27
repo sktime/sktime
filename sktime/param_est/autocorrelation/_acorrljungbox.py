@@ -26,7 +26,6 @@ class AcorrLjungbox(BaseParamFitter):
     boxpierce : bool, default=False
         If true, then Box-Pierce test results are also returned.
 
-
     Attributes
     ----------
     lb_statistic_ : array

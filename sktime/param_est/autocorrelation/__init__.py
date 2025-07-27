@@ -4,4 +4,4 @@ __author__ = ["HarshvirSandhu"]
 __all__ = [
     "AcorrLjungbox",
 ]
-from sktime.param_est.autocorrelation.acorrljungbox import AcorrLjungbox
+from sktime.param_est.autocorrelation._acorrljungbox import AcorrLjungbox

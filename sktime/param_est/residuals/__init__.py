@@ -4,4 +4,4 @@ __author__ = ["HarshvirSandhu"]
 __all__ = [
     "JarqueBera",
 ]
-from sktime.param_est.residuals.jarquebera import JarqueBera
+from sktime.param_est.residuals._jarquebera import JarqueBera
