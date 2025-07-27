@@ -8,7 +8,7 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import (
-    BaseForecastingErrorMetricFunc,
+    BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
 from sktime.performance_metrics.forecasting._functions import (
@@ -16,7 +16,7 @@ from sktime.performance_metrics.forecasting._functions import (
 )
 
 
-class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
+class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     r"""Mean absolute scaled error (MASE).
 
     For a univariate, non-hierarchical sample of
@@ -123,6 +123,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     np.float64(0.21935483870967742)
     """
 
+    _tags = {
+        "requires-y-train": True,
+    }
+
     func = mean_absolute_scaled_error
 
     def __init__(
@@ -169,11 +173,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
-        try:
-            y_train = kwargs["y_train"]
-        except Exception:
-            raise ValueError("y_train not provided for MASE evaluation.")
-
+        y_train = kwargs["y_train"]
         multioutput = self.multioutput
         sp = self.sp
 
