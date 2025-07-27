@@ -10,38 +10,43 @@ from sktime.param_est.base import BaseParamFitter
 
 
 class AcorrLjungbox(BaseParamFitter):
-    """Performs the Ljung-Box test of autocorrelation in residuals.
+    """Ljung-Box test of autocorrelation.
 
-    Uses ``statsmodels.stats.diagnostic.acorr_ljungbox`` as a test of
-    autocorrelation in residuals.
+    Direct interface to ``statsmodels.stats.diagnostic.acorr_ljungbox``.
+
+    Tests whether the autocorrelation of a time series is significantly different
+    from zero at given lags.
 
     Parameters
     ----------
     lags : int or array_like, default=None
-        If lags is an integer then this is taken to be the largest lag that is included.
-        If lags is an array, then all lags are included upto largest lag in the list.
-        If lags is None, then the default maxlag is min(10, nobs // 5).
-            The default number of lags changes if period is set.
+
+        * If lags is an integer then this is taken to be the largest lag that
+          is included.
+        * If lags is an array, then all lags are included upto largest lag in the list.
+        * If lags is None, then the default maxlag is f``min(10, nobs // 5)``,
+          where ``nobs`` is the length of the time series passed in ``fit``.
+          The default number of lags changes if period is set.
 
     boxpierce : bool, default=False
         If true, then Box-Pierce test results are also returned.
 
     Attributes
     ----------
-    lb_statistic_ : array
-        The Ljung-Box test statistic.
-    lb_pvalue_ : array
+    lb_statistic_ : pd.Series
+        The Ljung-Box test statistic, for each lag.
+    lb_pvalue_ : pd.Series
         The p-value based on chi-square distribution. The p-value is computed as:
-          1 - chi2.cdf(lb_stat, dof) where dof is lag - model_df.
-        If lag - model_df <= 0, then NaN is returned for the pvalue.
-    bp_stat_ : array
-        The Box-Pierce test statistic.
-    bp_pvalue_ : array
+        ``1 - chi2.cdf(lb_stat, dof)`` where ``dof`` is ``lag - model_df``.
+        If ``lag - model_df <= 0``, then NaN is returned for the pvalue.
+    bp_stat_ : pd.Series
+        The Box-Pierce test statistic, for each lag.
+        Only returned if ``boxpierce`` is True.
+    bp_pvalue_ : pd.Series
         The p-value based for Box-Pierce test on chi-square distribution, computed as:
-         1 - chi2.cdf(bp_stat, dof) where dof is lag - model_df.
-        If lag - model_df <= 0, then NaN is returned for the pvalue.
-    lags_ : int
-        The truncation lag parameter.
+        ``1 - chi2.cdf(bp_stat, dof)`` where ``dof`` is ``lag - model_df``.
+        If ``lag - model_df <= 0``, then NaN is returned for the pvalue.
+        Only returned if ``boxpierce`` is True.
 
     Examples
     --------
@@ -70,11 +75,11 @@ class AcorrLjungbox(BaseParamFitter):
         from statsmodels.stats.diagnostic import acorr_ljungbox
 
         res = acorr_ljungbox(x=X, lags=self.lags, boxpierce=self.boxpierce)
-        self.lb_statistic_ = res["lb_stat"].to_numpy()
-        self.lb_pvalue_ = res["lb_pvalue"].to_numpy()
+        self.lb_statistic_ = res["lb_stat"]
+        self.lb_pvalue_ = res["lb_pvalue"]
         if self.boxpierce:
-            self.bp_statistic_ = res["bp_stat"].to_numpy()
-            self.bp_pvalue_ = res["bp_pvalue"].to_numpy()
+            self.bp_statistic_ = res["bp_stat"]
+            self.bp_pvalue_ = res["bp_pvalue"]
         return self
 
     @classmethod
