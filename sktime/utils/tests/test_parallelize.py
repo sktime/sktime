@@ -5,6 +5,10 @@ import pytest
 from sktime.utils.parallel import _get_parallel_test_fixtures, parallelize
 
 
+def square(x, **kwargs):
+    return x**2
+
+
 @pytest.mark.parametrize("fixture", _get_parallel_test_fixtures())
 def test_parallelize_simple_loop(fixture):
     backend = fixture["backend"]
@@ -15,7 +19,10 @@ def test_parallelize_simple_loop(fixture):
     expected = [x**2 for x in nums]
 
     result = parallelize(
-        lambda x: x**2, nums, backend=backend, backend_params=backend_params
+        square,
+        nums,
+        backend=backend,
+        backend_params=backend_params,
     )
 
     assert list(result) == expected
