@@ -277,12 +277,13 @@ def _get_parallel_test_fixtures(naming="estimator"):
                 "backend": "ray",
                 "backend_params": {
                     "mute_warnings": True,
+                    "shutdown_ray": False,
                     "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
                 },
             }
         )
 
-    fixtures = [x for x in fixtures if x["backend"] not in SKIP_FIXTURES]
+    fixtures = [x for x in fixtures if x["backend"] in SKIP_FIXTURES]
     # remove backends in SKIP_FIXTURES from fixtures
 
     return fixtures
