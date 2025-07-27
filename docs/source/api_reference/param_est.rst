@@ -101,13 +101,6 @@ Lag and autocorrelation estimators
     :template: class.rst
 
     ARLagOrderSelector
-
-.. currentmodule:: sktime.param_est.autocorrelation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     AcorrLjungbox
 
 Residual tests and estimators
