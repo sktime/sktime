@@ -14,17 +14,16 @@ import pandas as pd
 if _check_soft_dependencies("numpyro", severity="none"):
     import numpyro.handlers
     from numpyro.distributions import (
-        LogNormal,
+        HalfNormal,
         NegativeBinomial2,
         Normal,
         Poisson,
         TransformedDistribution,
-        TruncatedNormal, HalfNormal,
-)
+    )
     from numpyro.distributions.transforms import (
         AffineTransform,
         RecursiveLinearTransform,
-        SoftplusTransform,
+        SigmoidTransform,
     )
 
     from ._hurdle_distribution import HurdleDistribution
@@ -45,6 +44,70 @@ if _check_soft_dependencies("skpro", severity="none"):
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
+
+
+def _sample_components(
+    length: int,
+    X: np.ndarray,
+    mean_reverting: bool,
+    use_timeseries: bool = False,
+    oos: int = 0,
+) -> np.ndarray:
+    features = np.ones((length + oos, 1))
+
+    if X is not None:
+        features = np.concatenate((features, X), axis=1)
+
+    with numpyro.plate("factors", features.shape[-1]):
+        beta = numpyro.sample("beta", Normal())
+
+    regressors = features @ beta
+
+    if not use_timeseries:
+        return regressors
+
+    sigma = numpyro.sample("sigma", HalfNormal())
+
+    reversion_speed = 1.0
+    if mean_reverting:
+        reversion_speed = numpyro.sample(
+            "phi", TransformedDistribution(Normal(scale=1.5), SigmoidTransform())
+        )
+
+    transition_matrix = jnp.reshape(reversion_speed, (1, 1))
+
+    eps = Normal().expand((length, 1)).to_event(1)
+    time_varying_component = numpyro.sample(
+        "x:ignore",
+        TransformedDistribution(
+            eps,
+            [
+                AffineTransform(0.0, sigma),
+                RecursiveLinearTransform(transition_matrix=transition_matrix),
+            ],
+        ),
+    )
+
+    if oos > 0:
+        mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
+        eps_oos = Normal().expand((oos, 1)).to_event(1)
+
+        x_oos = numpyro.sample(
+            "x_oos:ignore",
+            TransformedDistribution(
+                eps_oos,
+                [
+                    AffineTransform(mean, sigma),
+                    RecursiveLinearTransform(transition_matrix=transition_matrix),
+                ],
+            ),
+        )
+
+        time_varying_component = jnp.concatenate(
+            (time_varying_component, x_oos), axis=0
+        )
+
+    return regressors + time_varying_component.squeeze(-1)
 
 
 # TODO: think about priors, can we make them more informative?
@@ -165,11 +228,13 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
 
     time_varying_probability: bool, default=False
         Whether to use a time varying probability for the Bernoulli distribution.
-        If True, the probability will be modeled as a time series.
+        If True, the probability will be modeled as an AR(1) process with positive
+        but stationary reversion speed.
 
     time_varying_demand: bool, default=False
         Whether to use a time varying demand for the Poisson distribution.
-        If True, the demand will be modeled as a time series.
+        If True, the demand will be modeled as an AR(1) process with positive
+        but stationary reversion speed.
 
     Notes
     -----
@@ -238,8 +303,8 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     def __init__(
         self,
         family: Literal["poisson", "negative-binomial"] = "negative-binomial",
-        time_varying_probability: bool = False,
-        time_varying_demand: bool = False,
+        time_varying_probability: Literal["ar", "rw", False] = False,
+        time_varying_demand: Literal["ar", "rw", False] = False,
         inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
@@ -248,73 +313,33 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         self.time_varying_probability = time_varying_probability
         self.time_varying_demand = time_varying_demand
 
-    def _sample_parameters(
-        self, length: int, X: np.ndarray, time_regressor: bool = False, oos: int = 0
-    ) -> np.ndarray:
-        features = np.ones((length + oos, 1))
-
-        if X is not None:
-            features = np.concatenate((features, X), axis=1)
-
-        with numpyro.plate("factors", features.shape[-1]):
-            beta = numpyro.sample("beta", Normal())
-
-        regressors = features @ beta
-
-        if not time_regressor:
-            return regressors
-
-        sigma = numpyro.sample("sigma", LogNormal()) ** 0.5
-        reversion_speed = numpyro.sample("phi", TruncatedNormal(low=-1.0, high=1.0))
-
-        transition_matrix = reversion_speed.reshape((1, 1))
-
-        eps = Normal().expand((length, 1)).to_event(1)
-        time_varying_component = numpyro.sample(
-            "x:ignore",
-            TransformedDistribution(
-                eps,
-                [
-                    AffineTransform(0.0, sigma),
-                    RecursiveLinearTransform(transition_matrix=transition_matrix),
-                ],
-            ),
-        )
-
-        if oos > 0:
-            mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
-            eps_oos = Normal().expand((oos, 1)).to_event(1)
-
-            x_oos = numpyro.sample(
-                "x_oos:ignore",
-                TransformedDistribution(
-                    eps_oos,
-                    [
-                        AffineTransform(mean, sigma),
-                        RecursiveLinearTransform(transition_matrix=transition_matrix),
-                    ],
-                ),
-            )
-
-            time_varying_component = jnp.concatenate(
-                (time_varying_component, x_oos), axis=0
-            )
-
-        return regressors + time_varying_component.squeeze(-1)
-
     def _sample_probability(
         self, length: int, X: np.ndarray, oos: int = 0
     ) -> np.ndarray:
-        logit_prob = self._sample_parameters(
-            length=length, X=X, time_regressor=self.time_varying_probability, oos=oos
+        use_timeseries = self.time_varying_probability is not False
+        mean_reverting = self.time_varying_probability == "ar"
+
+        logit_prob = _sample_components(
+            length=length,
+            X=X,
+            use_timeseries=use_timeseries,
+            mean_reverting=mean_reverting,
+            oos=oos,
         )
         prob = expit(logit_prob)
 
         return prob
 
     def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> np.ndarray:
-        log_demand = self._sample_parameters(
-            length=length, time_regressor=self.time_varying_demand, X=X, oos=oos
+        use_timeseries = self.time_varying_demand is not False
+        mean_reverting = self.time_varying_demand == "ar"
+
+        log_demand = _sample_components(
+            length=length,
+            use_timeseries=use_timeseries,
+            mean_reverting=mean_reverting,
+            X=X,
+            oos=oos,
         )
         demand = jnp.exp(log_demand)
 
