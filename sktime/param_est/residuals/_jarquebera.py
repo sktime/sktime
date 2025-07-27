@@ -10,7 +10,7 @@ from sktime.param_est.base import BaseParamFitter
 
 
 class JarqueBera(BaseParamFitter):
-    """Performs the Jarque-Bera test of normality.
+    """Jarque-Bera test of normality.
 
     Uses ``statsmodels.stats.stattools.jarque_bera`` as a test of normality.
 

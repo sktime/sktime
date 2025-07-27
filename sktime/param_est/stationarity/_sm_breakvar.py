@@ -5,7 +5,7 @@ from sktime.param_est.base import BaseParamFitter
 
 
 class BreakvarHeteroskedasticityTest(BaseParamFitter):
-    """Performs the variance break test for heteroskedasticity.
+    """Variance break test for heteroskedasticity.
 
     Uses ``statsmodels.tsa.stattools.breakvar_heteroskedasticity_test`` to test whether
     the sum-of-squares in the first subset of the sample is significantly different
