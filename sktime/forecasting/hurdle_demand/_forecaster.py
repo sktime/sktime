@@ -47,7 +47,11 @@ from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscre
 
 
 def _sample_components(
-    length: int, X: np.ndarray, time_regressor: bool = False, oos: int = 0
+    length: int,
+    X: np.ndarray,
+    mean_reverting: bool,
+    use_timeseries: bool = False,
+    oos: int = 0,
 ) -> np.ndarray:
     features = np.ones((length + oos, 1))
 
@@ -59,13 +63,16 @@ def _sample_components(
 
     regressors = features @ beta
 
-    if not time_regressor:
+    if not use_timeseries:
         return regressors
 
     sigma = numpyro.sample("sigma", HalfNormal())
-    reversion_speed = numpyro.sample(
-        "phi", TransformedDistribution(Normal(scale=1.5), SigmoidTransform())
-    )
+
+    reversion_speed = 1.0
+    if mean_reverting:
+        reversion_speed = numpyro.sample(
+            "phi", TransformedDistribution(Normal(scale=1.5), SigmoidTransform())
+        )
 
     transition_matrix = jnp.reshape(reversion_speed, (1, 1))
 
@@ -296,8 +303,8 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     def __init__(
         self,
         family: Literal["poisson", "negative-binomial"] = "negative-binomial",
-        time_varying_probability: bool = False,
-        time_varying_demand: bool = False,
+        time_varying_probability: Literal["ar", "rw", False] = False,
+        time_varying_demand: Literal["ar", "rw", False] = False,
         inference_engine=None,
     ):
         super().__init__(scale=1.0, inference_engine=inference_engine)
@@ -309,16 +316,30 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     def _sample_probability(
         self, length: int, X: np.ndarray, oos: int = 0
     ) -> np.ndarray:
+        use_timeseries = self.time_varying_probability is not False
+        mean_reverting = self.time_varying_probability == "ar"
+
         logit_prob = _sample_components(
-            length=length, X=X, time_regressor=self.time_varying_probability, oos=oos
+            length=length,
+            X=X,
+            use_timeseries=use_timeseries,
+            mean_reverting=mean_reverting,
+            oos=oos,
         )
         prob = expit(logit_prob)
 
         return prob
 
     def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> np.ndarray:
+        use_timeseries = self.time_varying_demand is not False
+        mean_reverting = self.time_varying_demand == "ar"
+
         log_demand = _sample_components(
-            length=length, time_regressor=self.time_varying_demand, X=X, oos=oos
+            length=length,
+            use_timeseries=use_timeseries,
+            mean_reverting=mean_reverting,
+            X=X,
+            oos=oos,
         )
         demand = jnp.exp(log_demand)
 
