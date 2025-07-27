@@ -69,7 +69,6 @@ EXCLUDE_ESTIMATORS = [
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
-    "DartsXGBModel",
     # models with large weights
     "MomentFMForecaster",
     # Large datasets
@@ -77,7 +76,6 @@ EXCLUDE_ESTIMATORS = [
     # Test estimators
     "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
-    "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
     "PytorchForecastingNHiTS",
     "PytorchForecastingDeepAR",
@@ -329,9 +327,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "IndividualBOSS",
         "IndividualTDE",
         "InformationGainSegmentation",
-        "LTSFDLinearForecaster",
-        "LTSFLinearForecaster",
-        "LTSFNLinearForecaster",
         "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",

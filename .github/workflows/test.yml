@@ -61,14 +61,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow,dl]
+          python -m pip install .[notebooks,binder,dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
@@ -78,14 +84,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow]
+          python -m pip install .[notebooks,binder]
+
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: Run example notebooks
         run: build_tools/run_blogposts.sh
         shell: bash
@@ -151,6 +163,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: Install sktime with dev dependencies
         run: |
           python -m pip install --upgrade pip
@@ -178,16 +193,25 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      sktime: ${{ steps.filter.outputs.sktime }}
+      sktime: ${{ steps.check.outputs.sktime }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            sktime:
-              - sktime/**
-              - pyproject.toml
+          fetch-depth: 0  # Needed to access the full git history
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Check if sktime or pyproject.toml changed
+        id: check
+        run: |
+          if git diff --quiet origin/main -- sktime/ pyproject.toml; then
+            echo "No sktime-related changes"
+            echo "sktime=false" >> $GITHUB_OUTPUT
+          else
+            echo "Detected changes in sktime"
+            echo "sktime=true" >> $GITHUB_OUTPUT
+          fi
 
   test-nodevdeps:
     needs: detect-package-change
@@ -271,6 +295,7 @@ jobs:
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
