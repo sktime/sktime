@@ -513,8 +513,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
-            - "cpus_per_task": int, default=1, sets the number of cpus that get
-                assigned to each task
 
 
     Attributes
@@ -863,8 +861,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
-            - "cpus_per_task": int, default=1, sets the number of cpus that get
-                assigned to each task
 
 
     Attributes
@@ -1131,8 +1127,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
-            - "cpus_per_task": int, default=1, sets the number of cpus that get
-                assigned to each task
 
 
     Attributes

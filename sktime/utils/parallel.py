@@ -71,8 +71,6 @@ def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
-            - "cpus_per_task": int, default=1, sets the number of cpus that get
-                assigned to each task
 
     """
     if meta is None:
@@ -183,7 +181,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     if "ray_remote_args" not in par_params.keys():
         par_params["ray_remote_args"] = {}
 
-    @ray.remote(num_cpus=backend_params.get("cpus_per_task", 1))  # pragma: no cover
+    @ray.remote  # pragma: no cover
     def _ray_execute_function(
         fun, params: dict, meta: dict, mute_warnings: bool = False
     ):
