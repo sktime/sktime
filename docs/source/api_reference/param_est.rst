@@ -89,6 +89,29 @@ Stationarity tests
     StationarityKPSSArch
     StationarityZivotAndrews
     StationarityVarianceRatio
+    BreakvarHeteroskedasticityTest
+
+Autocorrelation estimators
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.autocorrelation
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AcorrLjungbox
+
+Residual estimators
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.residuals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JarqueBera
 
 Lag estimators
 ~~~~~~~~~~~~~~
