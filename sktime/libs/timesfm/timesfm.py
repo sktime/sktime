@@ -247,7 +247,7 @@ class TimesFm:
             step=step,
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
-        self.jit_decode()
+        # self.jit_decode()
 
     def jit_decode(self):
         """Jitting decoding function."""
