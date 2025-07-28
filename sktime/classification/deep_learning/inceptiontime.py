@@ -49,10 +49,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     loss: str, default="categorical_crossentropy"
     metrics: optional
     class_weight: dict, optional, default=None
-        Dictionary mapping class indices (integers) to a weight (float) value to be used during model training.
-        For example, ``{0: 1.0, 1: 2.5}`` will assign a weight of 1.0 to class 0 and 2.5 to class 1.
-        This is passed directly to Keras' ``fit`` method as the ``class_weight`` argument.
+        Dictionary mapping class indices (integers) to a weight (float) value to
+        be used during model training.
+        For example, ``{0: 1.0, 1: 2.5}`` will assign a weight of 1.0 to class 0
+        and 2.5 to class 1.
+        This is passed directly to Keras' ``fit`` method as the ``class_weight``
+        argument.
         If None, all classes are given equal weight.
+
     Notes
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
