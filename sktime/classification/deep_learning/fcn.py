@@ -68,6 +68,7 @@ class FCNClassifier(BaseDeepClassifier):
         # estimator type handled by parent class
         "tests:skip_all": True,
         # test behaviour
+        "tests:skip_by_name": ["test_fit_idempotent"],
     }
 
     def __init__(
