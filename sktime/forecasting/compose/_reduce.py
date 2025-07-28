@@ -2546,7 +2546,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = apply_method_per_series(
-                    y_plus_preds, "asfreq", self.fh.freq
+                    y_plus_preds,
+                    "asfreq",
+                    self.fh.freq,
+                    how="start",
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
