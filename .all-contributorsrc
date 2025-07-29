@@ -3554,6 +3554,16 @@
         "code",
         "doc"
       ]
+    }, 
+    {
+      "login": "akshathmangudi", 
+      "name": "Akshath", 
+      "avatar_url": "https://avatars.githubusercontent.com/akshathmangudi", 
+      "profile": "https://github.com/akshathmangudi", 
+      "contributions": [
+        "code", 
+        "maintenance"
+      ]
     }
   ]
 }
