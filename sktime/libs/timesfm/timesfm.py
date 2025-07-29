@@ -52,24 +52,6 @@ JTensor = pytypes.JTensor
 
 make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
 
-imports_list = [
-    base_hyperparams,
-    base_layer,
-    pax_fiddle,
-    py_utils,
-    pytypes,
-    normalizations,
-    transformers,
-    instantiate,
-    NestedMap,
-    JTensor,
-    make_future_dataframe,
-]
-
-for imp in imports_list:
-    if isinstance(imp, CommonMagicMeta):
-        raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
-
 import numpy as np
 
 from sktime.libs.timesfm import patched_decoder, xreg_lib
@@ -266,6 +248,24 @@ class TimesFm:
             step=step,
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
+
+        imports_list = [
+            base_hyperparams,
+            base_layer,
+            pax_fiddle,
+            py_utils,
+            pytypes,
+            normalizations,
+            transformers,
+            instantiate,
+            NestedMap,
+            JTensor,
+            make_future_dataframe,
+        ]
+
+        for imp in imports_list:
+            if isinstance(imp, CommonMagicMeta):
+                raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
         self.jit_decode()
 
     def jit_decode(self):
