@@ -23,7 +23,7 @@ from os import path
 
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-es = _safe_import("sktime.utils.einshape")
+es = _safe_import("einshape")
 jax = _safe_import("jax")
 jnp = _safe_import("jax.numpy")
 
