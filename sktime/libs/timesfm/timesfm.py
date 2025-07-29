@@ -37,6 +37,8 @@ tasks_lib = _safe_import("paxml.tasks_lib")
 
 FLAX = checkpoints.CheckpointType.FLAX
 
+praxis = _safe_import("praxis")
+
 base_hyperparams = _safe_import("praxis.base_hyperparams")
 base_layer = _safe_import("praxis.base_layer")
 pax_fiddle = _safe_import("praxis.pax_fiddle")
@@ -249,17 +251,18 @@ class TimesFm:
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
 
         imports_list = [
-            base_hyperparams,
-            base_layer,
-            pax_fiddle,
-            py_utils,
-            pytypes,
-            normalizations,
-            transformers,
-            instantiate,
-            NestedMap,
-            JTensor,
-            make_future_dataframe,
+            # base_hyperparams,
+            # base_layer,
+            # pax_fiddle,
+            # py_utils,
+            # pytypes,
+            # normalizations,
+            # transformers,
+            # instantiate,
+            # NestedMap,
+            # JTensor,
+            # make_future_dataframe,
+            praxis
         ]
 
         for imp in imports_list:
