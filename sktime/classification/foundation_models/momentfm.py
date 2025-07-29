@@ -126,8 +126,8 @@ class MomentFMClassifier(BaseClassifier):
             "tqdm",
             "huggingface-hub",
             # "momentfm",
-            "accelerate",
-            "transformers",
+            # "accelerate",
+            # "transformers",
         ],
         "python_version": ">= 3.10",
         # testing configuration
