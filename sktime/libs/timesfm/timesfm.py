@@ -21,7 +21,8 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import CommonMagicMeta, _safe_import
+from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies._safe_import import CommonMagicMeta
 
 es = _safe_import("sktime.utils.einshape")
 jax = _safe_import("jax")
