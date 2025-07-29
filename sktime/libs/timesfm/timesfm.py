@@ -22,7 +22,6 @@ import time
 from os import path
 
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.dependencies._safe_import import CommonMagicMeta
 
 es = _safe_import("sktime.utils.einshape")
 jax = _safe_import("jax")
@@ -250,7 +249,7 @@ class TimesFm:
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
 
         imports_list = [
-            # base_hyperparams,
+            base_hyperparams,
             base_layer,
             pax_fiddle,
             py_utils,
@@ -264,11 +263,11 @@ class TimesFm:
         ]
 
         for imp in imports_list:
-            if isinstance(imp, CommonMagicMeta):
-                print(type(imp))
-                raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
-            else:
-                print(type(imp))
+            # if isinstance(imp, CommonMagicMeta):
+            #     print(imp, type(imp))
+            #     raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
+            # else:
+            print(imp, type(imp))
         self.jit_decode()
 
     def jit_decode(self):
