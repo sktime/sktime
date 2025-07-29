@@ -175,7 +175,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True,
         "tests:libs": ["sktime.libs.momentfm"],
     }
 
