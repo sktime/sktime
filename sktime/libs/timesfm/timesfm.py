@@ -265,7 +265,10 @@ class TimesFm:
 
         for imp in imports_list:
             if isinstance(imp, CommonMagicMeta):
+                print(type(imp))
                 raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
+            else:
+                print(type(imp))
         self.jit_decode()
 
     def jit_decode(self):
