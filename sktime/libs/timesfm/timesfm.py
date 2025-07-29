@@ -233,6 +233,13 @@ class TimesFm:
     ):
         """load_from_checkpoint."""
         imports_list = [
+            es,
+            jax,
+            jnp,
+            snapshot_download,
+            checkpoints,
+            tasks_lib,
+            FLAX,
             # base_hyperparams,
             base_layer,
             pax_fiddle,
