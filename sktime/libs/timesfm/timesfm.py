@@ -39,18 +39,24 @@ FLAX = checkpoints.CheckpointType.FLAX
 
 praxis = _safe_import("praxis")
 
+# dont work
 base_hyperparams = _safe_import("praxis.base_hyperparams")
 base_layer = _safe_import("praxis.base_layer")
 pax_fiddle = _safe_import("praxis.pax_fiddle")
 py_utils = _safe_import("praxis.py_utils")
 pytypes = _safe_import("praxis.pytypes")
+
+# works
 normalizations = _safe_import("praxis.layers.normalizations")
 transformers = _safe_import("praxis.layers.transformers")
 
-instantiate = base_hyperparams.instantiate
+instantiate = praxis.base_hyperparams.instantiate
+
+# dont work
+
 NestedMap = py_utils.NestedMap
 JTensor = pytypes.JTensor
-
+# works
 make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
 
 import numpy as np
@@ -258,11 +264,11 @@ class TimesFm:
             # pytypes,
             # normalizations,
             # transformers,
-            # instantiate,
+            instantiate,
             # NestedMap,
             # JTensor,
             # make_future_dataframe,
-            praxis
+            praxis,
         ]
 
         for imp in imports_list:
