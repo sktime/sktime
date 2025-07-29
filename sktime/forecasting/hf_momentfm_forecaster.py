@@ -165,8 +165,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "tqdm",
             "huggingface-hub",
             # "momentfm",
-            # "accelerate",
-            # "transformers",
+            "accelerate",
+            "transformers",
         ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
@@ -175,7 +175,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         # testing configuration
         # ---------------------
-        # "tests:vm": True,
+        "tests:vm": True,
         "tests:libs": ["sktime.libs.momentfm"],
     }
 
