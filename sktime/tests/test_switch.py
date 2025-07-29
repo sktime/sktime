@@ -445,5 +445,5 @@ def _get_all_changed_classes(vm=False):
         run, _ = _run_test_for_class(cls, ignore_deps=True, only_vm_required=vm)
         return run
 
-    names = ["TimesFMForecaster", "TinyTimeMixerForecaster"]
+    names = ["TimesFMForecaster"]
     return names

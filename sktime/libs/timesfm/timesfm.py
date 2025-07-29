@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 """TimesFM forecast API for inference."""
 
 import collections
@@ -21,65 +20,43 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies
 
-es = _safe_import("einshape")
-jax = _safe_import("jax")
-jnp = _safe_import("jax.numpy")
+if _check_soft_dependencies("einshape", severity="none"):
+    import einshape as es
 
-snapshot_download = _safe_import(
-    "huggingface_hub.snapshot_download",
-    pkg_name="huggingface-hub",
-)
+if _check_soft_dependencies("jax", severity="none"):
+    import jax
+    import jax.numpy as jnp
 
-checkpoints = _safe_import("paxml.checkpoints")
-tasks_lib = _safe_import("paxml.tasks_lib")
+if _check_soft_dependencies("huggingface-hub", severity="none"):
+    from huggingface_hub import snapshot_download
 
-FLAX = checkpoints.CheckpointType.FLAX
+if _check_soft_dependencies("paxml", severity="none"):
+    from paxml import checkpoints, tasks_lib
 
-praxis = _safe_import("praxis")
-
-# dont work
-# base_hyperparams = _safe_import("praxis.base_hyperparams", pkg_name="praxis")
+    FLAX = checkpoints.CheckpointType.FLAX
+else:
+    FLAX = None
 
 if _check_soft_dependencies("praxis", severity="none"):
-    from praxis import base_layer, pax_fiddle
-else:
-    base_layer = None
-    pax_fiddle = None
+    from praxis import base_hyperparams, base_layer, pax_fiddle, py_utils, pytypes
+    from praxis.layers import normalizations, transformers
 
-# base_layer = _safe_import("praxis.base_layer")
-# pax_fiddle = _safe_import("praxis.pax_fiddle")
-# py_utils = _safe_import("praxis.py_utils", pkg_name="praxis")
+    instantiate = base_hyperparams.instantiate
+    NestedMap = py_utils.NestedMap
+    JTensor = pytypes.JTensor
 
-# pytypes = _safe_import("praxis.pytypes")
 
-# base_hyperparams = praxis.base_hyperparams
-# base_layer = praxis.base_layer
-# pax_fiddle = praxis.pax_fiddle
-# py_utils = praxis.py_utils
-# pytypes = praxis.pytypes
+if _check_soft_dependencies("utilsforecast", severity="none"):
+    from utilsforecast.processing import make_future_dataframe
 
-# works
-normalizations = _safe_import("praxis.layers.normalizations")
-transformers = _safe_import("praxis.layers.transformers")
-
-instantiate = _safe_import("praxis.base_hyperparams.instantiate")
-NestedMap = _safe_import("praxis.py_utils.NestedMap")
-JTensor = _safe_import("praxis.pytypes.JTensor")
-# dont work
-
-# NestedMap = py_utils.NestedMap
-# JTensor = pytypes.JTensor
-# works
-make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
 
 import numpy as np
 
 from sktime.libs.timesfm import patched_decoder, xreg_lib
 
 _TOL = 1e-6
-jax.config.update("jax_traceback_filtering", "off")
 
 
 def process_group(key, group, value_name, forecast_context_len):
@@ -151,7 +128,6 @@ class TimesFm:
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
         self.num_devices = jax.local_device_count(self.backend)
-        self.num_cores = self.num_devices
         self.global_batch_size = self.per_core_batch_size * self.num_devices
 
         self.context_len = context_len
@@ -232,35 +208,6 @@ class TimesFm:
         step=None,
     ):
         """load_from_checkpoint."""
-        imports_list = [
-            es,
-            jax,
-            jnp,
-            snapshot_download,
-            checkpoints,
-            tasks_lib,
-            FLAX,
-            # base_hyperparams,
-            base_layer,
-            pax_fiddle,
-            # py_utils,
-            # pytypes,
-            normalizations,
-            transformers,
-            instantiate,
-            NestedMap,
-            JTensor,
-            make_future_dataframe,
-            # praxis,
-        ]
-
-        for imp in imports_list:
-            # if isinstance(imp, CommonMagicMeta):
-            #     print(imp, type(imp))
-            #     raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
-            # else:
-            print(imp, type(imp))
-
         # Download the checkpoint from Hugging Face Hub if not given
         if checkpoint_path is None:
             checkpoint_path = path.join(snapshot_download(repo_id), "checkpoints")
@@ -299,7 +246,6 @@ class TimesFm:
             step=step,
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
-
         self.jit_decode()
 
     def jit_decode(self):
@@ -330,7 +276,7 @@ class TimesFm:
             axis_name="batch",
             devices=jax.devices(self.backend),
             backend=self.backend,
-            axis_size=self.num_cores,
+            axis_size=self.num_devices,
         )
         with base_layer.JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
@@ -338,7 +284,7 @@ class TimesFm:
                     {
                         "input_ts": jnp.zeros(
                             (
-                                self.num_cores,
+                                self.num_devices,
                                 self.per_core_batch_size,
                                 self.context_len,
                             ),
@@ -346,7 +292,7 @@ class TimesFm:
                         ),
                         "input_padding": jnp.zeros(
                             (
-                                self.num_cores,
+                                self.num_devices,
                                 self.per_core_batch_size,
                                 self.context_len + self.horizon_len,
                             ),
@@ -354,7 +300,7 @@ class TimesFm:
                         ),
                         "date_features": None,
                         "freq": jnp.zeros(
-                            (self.num_cores, self.per_core_batch_size, 1),
+                            (self.num_devices, self.per_core_batch_size, 1),
                             dtype=jnp.int32,
                         ),
                     }
