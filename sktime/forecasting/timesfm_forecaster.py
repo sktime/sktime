@@ -159,7 +159,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "jaxlib==0.4.26",
             "praxis",
             "huggingface-hub",
-            "paxml",
+            "paxml>=1.4.0",
             "utilsforecast",
         ],
         "env_marker": "sys_platform=='linux'",
