@@ -21,7 +21,7 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import CommonMagicMeta, _safe_import
 
 es = _safe_import("sktime.utils.einshape")
 jax = _safe_import("jax")
@@ -50,6 +50,24 @@ NestedMap = py_utils.NestedMap
 JTensor = pytypes.JTensor
 
 make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
+
+imports_list = [
+    base_hyperparams,
+    base_layer,
+    pax_fiddle,
+    py_utils,
+    pytypes,
+    normalizations,
+    transformers,
+    instantiate,
+    NestedMap,
+    JTensor,
+    make_future_dataframe,
+]
+
+for imp in imports_list:
+    if isinstance(imp, CommonMagicMeta):
+        raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
 
 import numpy as np
 
@@ -247,33 +265,6 @@ class TimesFm:
             step=step,
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
-
-        _ = _safe_import("sktime.utils.einshape", error="error")
-        _ = _safe_import("jax", error="error")
-        _ = _safe_import("jax.numpy", error="error")
-
-        _ = _safe_import(
-            "huggingface_hub.snapshot_download",
-            pkg_name="huggingface-hub",
-            error="error",
-        )
-
-        _ = _safe_import("paxml.checkpoints", error="error")
-        _ = _safe_import("paxml.tasks_lib", error="error")
-
-        _ = checkpoints.CheckpointType.FLAX
-
-        _ = _safe_import("praxis.base_hyperparams", error="error")
-        _ = _safe_import("praxis.base_layer", error="error")
-        _ = _safe_import("praxis.pax_fiddle", error="error")
-        _ = _safe_import("praxis.py_utils", error="error")
-        _ = _safe_import("praxis.pytypes", error="error")
-        _ = _safe_import("praxis.layers.normalizations", error="error")
-        _ = _safe_import("praxis.layers.transformers", error="error")
-        _ = _safe_import(
-            "utilsforecast.processing.make_future_dataframe", error="error"
-        )
-
         self.jit_decode()
 
     def jit_decode(self):
