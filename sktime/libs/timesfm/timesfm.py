@@ -41,9 +41,12 @@ praxis = _safe_import("praxis")
 
 # dont work
 # base_hyperparams = _safe_import("praxis.base_hyperparams")
-base_layer = _safe_import("praxis.base_layer")
-pax_fiddle = _safe_import("praxis.pax_fiddle")
+# base_layer = _safe_import("praxis.base_layer")
+# pax_fiddle = _safe_import("praxis.pax_fiddle")
 # py_utils = _safe_import("praxis.py_utils")
+
+from praxis import base_layer, pax_fiddle
+
 # pytypes = _safe_import("praxis.pytypes")
 
 # base_hyperparams = praxis.base_hyperparams
