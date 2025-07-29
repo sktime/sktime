@@ -250,7 +250,7 @@ class TimesFm:
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
 
         imports_list = [
-            base_hyperparams,
+            # base_hyperparams,
             base_layer,
             pax_fiddle,
             py_utils,
