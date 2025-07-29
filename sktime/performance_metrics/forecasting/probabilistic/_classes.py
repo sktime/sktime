@@ -8,7 +8,7 @@ from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert, convert_to
-from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 
 # TODO: Rework tests now
@@ -679,7 +679,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         y_true_np = np.tile(y_true_np, no_scores)
 
-        truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
+        truth_array = (y_true_np >= lower).astype(int) * (y_true_np <= upper).astype(
+            int
+        )
 
         out_df = pd.DataFrame(
             truth_array, columns=pd.MultiIndex.from_product([vars, scores])
