@@ -40,17 +40,25 @@ FLAX = checkpoints.CheckpointType.FLAX
 praxis = _safe_import("praxis")
 
 # dont work
-base_hyperparams = _safe_import("praxis.base_hyperparams")
-base_layer = _safe_import("praxis.base_layer")
-pax_fiddle = _safe_import("praxis.pax_fiddle")
-py_utils = _safe_import("praxis.py_utils")
-pytypes = _safe_import("praxis.pytypes")
+# base_hyperparams = _safe_import("praxis.base_hyperparams")
+# base_layer = _safe_import("praxis.base_layer")
+# pax_fiddle = _safe_import("praxis.pax_fiddle")
+# py_utils = _safe_import("praxis.py_utils")
+# pytypes = _safe_import("praxis.pytypes")
+
+base_hyperparams = praxis.base_hyperparams
+base_layer = praxis.base_layer
+pax_fiddle = praxis.pax_fiddle
+py_utils = praxis.py_utils
+pytypes = praxis.pytypes
 
 # works
 normalizations = _safe_import("praxis.layers.normalizations")
 transformers = _safe_import("praxis.layers.transformers")
 
-instantiate = praxis.base_hyperparams.instantiate
+instantiate = base_hyperparams.instantiate
+NestedMap = py_utils.NestedMap
+JTensor = pytypes.JTensor
 
 # dont work
 
@@ -257,18 +265,18 @@ class TimesFm:
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
 
         imports_list = [
-            # base_hyperparams,
-            # base_layer,
-            # pax_fiddle,
-            # py_utils,
-            # pytypes,
-            # normalizations,
-            # transformers,
+            base_hyperparams,
+            base_layer,
+            pax_fiddle,
+            py_utils,
+            pytypes,
+            normalizations,
+            transformers,
             instantiate,
-            # NestedMap,
-            # JTensor,
-            # make_future_dataframe,
-            praxis,
+            NestedMap,
+            JTensor,
+            make_future_dataframe,
+            # praxis,
         ]
 
         for imp in imports_list:
