@@ -224,6 +224,28 @@ class TimesFm:
         step=None,
     ):
         """load_from_checkpoint."""
+        imports_list = [
+            # base_hyperparams,
+            base_layer,
+            pax_fiddle,
+            # py_utils,
+            # pytypes,
+            normalizations,
+            transformers,
+            instantiate,
+            NestedMap,
+            JTensor,
+            make_future_dataframe,
+            # praxis,
+        ]
+
+        for imp in imports_list:
+            # if isinstance(imp, CommonMagicMeta):
+            #     print(imp, type(imp))
+            #     raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
+            # else:
+            print(imp, type(imp))
+
         # Download the checkpoint from Hugging Face Hub if not given
         if checkpoint_path is None:
             checkpoint_path = path.join(snapshot_download(repo_id), "checkpoints")
@@ -263,27 +285,6 @@ class TimesFm:
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
 
-        imports_list = [
-            # base_hyperparams,
-            base_layer,
-            pax_fiddle,
-            # py_utils,
-            # pytypes,
-            normalizations,
-            transformers,
-            instantiate,
-            NestedMap,
-            JTensor,
-            make_future_dataframe,
-            # praxis,
-        ]
-
-        for imp in imports_list:
-            # if isinstance(imp, CommonMagicMeta):
-            #     print(imp, type(imp))
-            #     raise ImportError(f"Failed to import {imp.__name__}. TESTESTEST")
-            # else:
-            print(imp, type(imp))
         self.jit_decode()
 
     def jit_decode(self):
