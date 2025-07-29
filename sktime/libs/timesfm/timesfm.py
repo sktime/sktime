@@ -23,33 +23,34 @@ from os import path
 
 from sktime.utils.dependencies import _safe_import
 
-es = _safe_import("sktime.utils.einshape")
-jax = _safe_import("jax")
-jnp = _safe_import("jax.numpy")
+es = _safe_import("sktime.utils.einshape", error="error")
+jax = _safe_import("jax", error="error")
+jnp = _safe_import("jax.numpy", error="error")
 
 snapshot_download = _safe_import(
-    "huggingface_hub.snapshot_download",
-    pkg_name="huggingface-hub",
+    "huggingface_hub.snapshot_download", pkg_name="huggingface-hub", error="error"
 )
 
-checkpoints = _safe_import("paxml.checkpoints")
-tasks_lib = _safe_import("paxml.tasks_lib")
+checkpoints = _safe_import("paxml.checkpoints", error="error")
+tasks_lib = _safe_import("paxml.tasks_lib", error="error")
 
 FLAX = checkpoints.CheckpointType.FLAX
 
-base_hyperparams = _safe_import("praxis.base_hyperparams")
-base_layer = _safe_import("praxis.base_layer")
-pax_fiddle = _safe_import("praxis.pax_fiddle")
-py_utils = _safe_import("praxis.py_utils")
-pytypes = _safe_import("praxis.pytypes")
-normalizations = _safe_import("praxis.layers.normalizations")
-transformers = _safe_import("praxis.layers.transformers")
+base_hyperparams = _safe_import("praxis.base_hyperparams", error="error")
+base_layer = _safe_import("praxis.base_layer", error="error")
+pax_fiddle = _safe_import("praxis.pax_fiddle", error="error")
+py_utils = _safe_import("praxis.py_utils", error="error")
+pytypes = _safe_import("praxis.pytypes", error="error")
+normalizations = _safe_import("praxis.layers.normalizations", error="error")
+transformers = _safe_import("praxis.layers.transformers", error="error")
 
 instantiate = base_hyperparams.instantiate
 NestedMap = py_utils.NestedMap
 JTensor = pytypes.JTensor
 
-make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
+make_future_dataframe = _safe_import(
+    "utilsforecast.processing.make_future_dataframe", error="error"
+)
 
 import numpy as np
 

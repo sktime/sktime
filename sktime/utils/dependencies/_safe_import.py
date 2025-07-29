@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-def _safe_import(import_path, pkg_name=None):
+def _safe_import(import_path, pkg_name=None, error="none"):
     """Import a module/class, return a Mock object if import fails.
 
     Idiomatic usage is ``obj = _safe_import("a.b.c.obj")``.
@@ -74,7 +74,7 @@ def _safe_import(import_path, pkg_name=None):
         pkg_name = path_list[0]
     obj_name = path_list[-1]
 
-    if _check_soft_dependencies(pkg_name, severity="error"):
+    if _check_soft_dependencies(pkg_name, severity=error):
         try:
             if len(path_list) == 1:
                 return importlib.import_module(pkg_name)
