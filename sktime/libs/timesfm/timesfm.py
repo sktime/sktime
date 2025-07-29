@@ -21,7 +21,7 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 es = _safe_import("sktime.utils.einshape")
 jax = _safe_import("jax")
@@ -41,8 +41,15 @@ praxis = _safe_import("praxis")
 
 # dont work
 # base_hyperparams = _safe_import("praxis.base_hyperparams", pkg_name="praxis")
-base_layer = _safe_import("praxis.base_layer", pkg_name="praxis")
-pax_fiddle = _safe_import("praxis.pax_fiddle", pkg_name="praxis")
+
+if _check_soft_dependencies("praxis", severity="none"):
+    from praxis import base_layer, pax_fiddle
+else:
+    base_layer = None
+    pax_fiddle = None
+
+# base_layer = _safe_import("praxis.base_layer")
+# pax_fiddle = _safe_import("praxis.pax_fiddle")
 # py_utils = _safe_import("praxis.py_utils", pkg_name="praxis")
 
 # pytypes = _safe_import("praxis.pytypes")
