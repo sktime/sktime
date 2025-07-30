@@ -7,11 +7,10 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-import numpy as np
-
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
+    _relative_error,
     mean_relative_absolute_error,
 )
 
@@ -138,26 +137,12 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
         if hasattr(y_pred_benchmark, "index"):
             y_pred_benchmark.index = y_true.index
 
-        abs_error_pred = (y_true - y_pred).abs()
-        abs_error_bench = (y_true - y_pred_benchmark).abs()
-
-        EPS = np.finfo(np.float64).eps
-
-        both_zero = (abs_error_pred == 0) & (abs_error_bench == 0)
-        bench_zero_only = (abs_error_bench == 0) & ~both_zero
-
-        safe_denominator = abs_error_bench.copy()
-        if hasattr(safe_denominator, "mask"):
-            safe_denominator = safe_denominator.mask(bench_zero_only, EPS)
-        else:
-            safe_denominator = np.where(bench_zero_only, EPS, safe_denominator)
-
-        relative_errors = abs_error_pred / safe_denominator
-
-        if hasattr(relative_errors, "mask"):
-            relative_errors = relative_errors.mask(both_zero, 0)
-        else:
-            relative_errors = np.where(both_zero, 0, relative_errors)
+        relative_errors = _relative_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+            absolute=True,
+        )
 
         weighted_errors = self._get_weighted_df(relative_errors, **kwargs)
         return self._handle_multioutput(weighted_errors, self.multioutput)
