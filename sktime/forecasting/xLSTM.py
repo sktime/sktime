@@ -342,7 +342,6 @@ class XLSTMForecaster(BaseForecaster):
         batch_size=32,
         n_epochs=50,
         sequence_length=20,
-        device=None,
     ):
         self.input_size = input_size
         self.hidden_size = hidden_size
