@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""
-Causal Feature Engineering Transformer for Time Series.
 
-Automatically discovers and generates causally-informed features for time series
-forecasting.
-"""
+"""Transformers for causal feature engineering in time series data."""
 
 __author__ = ["XAheli"]
 __all__ = ["CausalFeatureEngineer"]
@@ -19,13 +15,13 @@ from sktime.transformations.base import BaseTransformer
 
 
 class CausalFeatureEngineer(BaseTransformer):
-    """Causal Feature Engineering Transformer for Time Series.
+    """Causal Feature Transformer for Time Series.
 
-    This transformer automatically discovers causal relationships in time series data
-    and generates causally-informed features for forecasting models. It leverages pgmpy
+    This transformer discovers causal relationships in time series data
+    and generates causally informed features for forecasting models. It leverages pgmpy
     for causal discovery and creates features based on identified causal relationships.
 
-    The transformer supports several causal discovery algorithms from pgmpy and can
+    The transformer supports pc and hill climb algorithms from pgmpy and can
     generate various types of features based on the discovered causal structure.
 
     Parameters
@@ -55,7 +51,6 @@ class CausalFeatureEngineer(BaseTransformer):
         Optional domain knowledge constraints:
         - "forbidden_edges" : List of tuples representing forbidden causal edges
         - "required_edges" : List of tuples representing required causal edges
-        - "temporal_tiers" : Dict mapping variables to their temporal tier
 
     scoring_method : str, default="auto"
         Scoring method for hill climb search. Options:
@@ -96,7 +91,7 @@ class CausalFeatureEngineer(BaseTransformer):
         "authors": ["Aheli"],
         "python_dependencies": "pgmpy>=0.1.20",
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Primitives",
+        "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "y_inner_mtype": ["pd.Series", "pd.DataFrame", "None"],
@@ -148,7 +143,9 @@ class CausalFeatureEngineer(BaseTransformer):
         self : object
             Returns self
         """
+        self._original_index_ = X.index
         data = self._prepare_data_for_causal_discovery(X, y)
+        self._reduced_index_ = data.index
 
         expert_knowledge = self._initialize_expert_knowledge()
 
@@ -182,13 +179,18 @@ class CausalFeatureEngineer(BaseTransformer):
 
         Xt = self._generate_causal_features(data)
 
-        Xt = self._align_index_with_forecast_horizon(X, Xt)
+        if len(Xt) < len(X):
+            warnings.warn(
+                f"Generated features have fewer observations ({len(Xt)}) than "
+                f"input data ({len(X)}) due to lags of up to {self.max_lag}. "
+                f"Features are aligned with the end of the series."
+            )
 
         return Xt
 
     def _prepare_data_for_causal_discovery(self, X, y=None):
         """Prepare time series data for causal discovery."""
-        # Combines X and y if both are provided
+        # Combine X and y if both are provided
         if y is not None:
             if isinstance(X, pd.Series) and isinstance(y, pd.Series):
                 combined_data = pd.DataFrame(
@@ -208,7 +210,7 @@ class CausalFeatureEngineer(BaseTransformer):
         combined_data.columns = combined_data.columns.astype(str)
 
         # new mapping every time fit is called
-        # (required by sktime's test_fit_does_not_overwrite_hyper_params)
+        # p.s. test_fit_does_not_overwrite_hyper_params
         self._colmap_ = {
             col: _safe_identifier(str(col), i)
             for i, col in enumerate(combined_data.columns)
@@ -226,8 +228,8 @@ class CausalFeatureEngineer(BaseTransformer):
             # Adjust max_lag for small datasets
             self.max_lag = max(1, len(combined_data) - 5)
 
-        # Creates lagged variables up to max_lag
-        # Vectorized approach to avoid DataFrame fragmentation
+        # Create lagged variables up to max_lag
+        # Vectorize to avoid DataFrame fragmentation
         lag_columns = {}
         for col in combined_data.columns:
             for lag in range(1, self.max_lag + 1):
@@ -238,10 +240,10 @@ class CausalFeatureEngineer(BaseTransformer):
             axis=1,
         )
 
-        # Drops rows with NaN values (due to lagging)
+        # Drop rows with NaN values (due to lagging)
         lagged_data = lagged_data.dropna()
 
-        # Final validation
+        # Validate minimum data requirements
         if len(lagged_data) < 3:
             warnings.warn(
                 f"After preprocessing, only {len(lagged_data)} rows remain. "
@@ -264,7 +266,6 @@ class CausalFeatureEngineer(BaseTransformer):
         ek = ExpertKnowledge()
 
         try:
-            # Newer pgmpy API first
             if "forbidden_edges" in self.expert_knowledge:
                 for edge in self.expert_knowledge["forbidden_edges"]:
                     ek.add_edge(edge[0], edge[1], constraint_type="forbidden")
@@ -274,7 +275,7 @@ class CausalFeatureEngineer(BaseTransformer):
                     ek.add_edge(edge[0], edge[1], constraint_type="required")
 
         except (AttributeError, TypeError):
-            # Fallback for older pgmpy versions or different API
+            # older pgmpy API
             try:
                 if "forbidden_edges" in self.expert_knowledge:
                     for edge in self.expert_knowledge["forbidden_edges"]:
@@ -285,7 +286,6 @@ class CausalFeatureEngineer(BaseTransformer):
                         ek.require_edge(*edge)
 
             except AttributeError:
-                # Final fallback (creates basic ExpertKnowledge without constraints)
                 warnings.warn(
                     "Expert knowledge constraints not supported in this pgmpy version. "
                     "Proceeding without expert knowledge constraints."
@@ -321,13 +321,13 @@ class CausalFeatureEngineer(BaseTransformer):
 
             # Determine scoring method
             if self.scoring_method == "auto":
-                # Auto select based on data type
+                # Auto-select based on data type
                 if _is_discrete(data):
                     scoring_method = "bic-d"  # Discrete BIC
                 else:
                     scoring_method = "bic-g"  # Gaussian BIC for continuous data
             else:
-                # Validate user specified scoring method
+                # Check user specified scoring method
                 valid_methods = [
                     "k2",
                     "bdeu",
@@ -439,7 +439,7 @@ class CausalFeatureEngineer(BaseTransformer):
 
         data.columns = data.columns.astype(str)
 
-        # reuse the mapping learnt at fit; fall back if transform is called first
+        # Reuse mapping from fit; fallback if transform called first
         if hasattr(self, "_colmap_"):
             data = data.rename(columns=self._colmap_)
         else:
@@ -448,7 +448,7 @@ class CausalFeatureEngineer(BaseTransformer):
             }
             data = data.rename(columns=tmp_map)
 
-        # Vectorized approach to avoid DataFrame fragmentation
+        # Vectorize to avoid DataFrame fragmentation
         lag_columns = {}
         for col in data.columns:
             for lag in range(1, self.max_lag + 1):
@@ -503,36 +503,49 @@ class CausalFeatureEngineer(BaseTransformer):
         if Xt.shape[1] == 0:
             valid_index = data.dropna().index
 
-            # Detect if this was originally univariate input
+            # Check if this was originally univariate input
             original_columns = [col for col in data.columns if "_lag_" not in col]
 
             if len(original_columns) == 1:
-                # Univariate case: creates placeholder column
+                # Univariate case: creates placeholder column in Panel format
                 col_name = f"{original_columns[0]}_no_causal_features"
-                Xt = pd.DataFrame({col_name: np.nan}, index=valid_index)
+
+                # Create Panel format (MultiIndex DataFrame)
+                # Single instance (0) for Series input
+                instances = [0] * len(valid_index)
+                timepoints = valid_index
+
+                multi_index = pd.MultiIndex.from_arrays(
+                    [instances, timepoints], names=["instances", "timepoints"]
+                )
+
+                Xt = pd.DataFrame({col_name: np.nan}, index=multi_index)
+
             else:
-                # Multivariate case: returns empty DataFrame
-                Xt = pd.DataFrame(index=valid_index)
+                # Multivariate case: returns empty DataFrame in Panel format
+                # Create Panel format (MultiIndex DataFrame)
+                instances = [0] * len(valid_index)
+                timepoints = valid_index
+
+                multi_index = pd.MultiIndex.from_arrays(
+                    [instances, timepoints], names=["instances", "timepoints"]
+                )
+
+                Xt = pd.DataFrame(index=multi_index)
         else:
             Xt = Xt.dropna()
 
-        return Xt
+            # Convert regular DataFrame to Panel format
+            if not isinstance(Xt.index, pd.MultiIndex):
+                # Single instance (0) for Series input
+                instances = [0] * len(Xt.index)
+                timepoints = Xt.index
 
-    def _align_index_with_forecast_horizon(self, X, Xt):
-        """Align the transformed data with the expected forecast horizon."""
-        if len(Xt) < len(X):
-            warnings.warn(
-                f"Generated features have fewer observations ({len(Xt)}) than "
-                f"input data ({len(X)}) due to lags of up to {self.max_lag}. "
-                f"Features are aligned with the end of the series."
-            )
+                multi_index = pd.MultiIndex.from_arrays(
+                    [instances, timepoints], names=["instances", "timepoints"]
+                )
 
-            self._reduced_index_ = Xt.index
-            self._original_index_ = X.index
-        else:
-            # If Xt has more rows than X, we can assume it is aligned correctly
-            self._reduced_index_ = None
-            self._original_index_ = None
+                Xt.index = multi_index
 
         return Xt
 
