@@ -156,6 +156,9 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
             )
         # drop any time-index so we end up with a RangeIndex
         relative_errors = relative_errors.reset_index(drop=True)
-
+        _ = kwargs.pop("sample_weight", None)
         weighted_errors = self._get_weighted_df(relative_errors, **kwargs)
+        if hasattr(weighted_errors, "reset_index"):
+            weighted_errors = weighted_errors.reset_index(drop=True)
+
         return self._handle_multioutput(weighted_errors, self.multioutput)
