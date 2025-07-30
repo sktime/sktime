@@ -549,6 +549,14 @@ Deep learning based forecasters
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
@@ -556,6 +564,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 .. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
 
@@ -573,29 +589,13 @@ Pre-trained and foundation models
 
     PatchTSTForecaster
 
-.. currentmodule:: sktime.forecasting.chronos
+.. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ChronosForecaster
-
-.. currentmodule:: sktime.forecasting.moirai_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MOIRAIForecaster
-
-.. currentmodule:: sktime.forecasting.timesfm_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimesFMForecaster
+    TimeLLMForecaster
 
 .. currentmodule:: sktime.forecasting.timemoe
 
@@ -605,6 +605,14 @@ Pre-trained and foundation models
 
     TimeMoEForecaster
 
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
@@ -612,14 +620,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     TinyTimeMixerForecaster
-
-.. currentmodule:: sktime.forecasting.time_llm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimeLLMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
