@@ -31,7 +31,7 @@ def run_test_vm(cls_name):
     cls = craft(cls_name)
     if _check_estimator_deps(cls, severity="none"):
         skips = cls.get_class_tag("tests:skip_by_name", None)
-        skips += ["test_global_forecasting_hier_series"]
+        skips = ["test_global_forecasting_hier_series"]
         check_estimator(cls, raise_exceptions=True, tests_to_exclude=skips)
     else:
         print(
