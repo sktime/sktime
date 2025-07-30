@@ -7,13 +7,13 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     mean_absolute_percentage_error,
 )
 
 
-class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
+class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     r"""Mean absolute percentage error (MAPE) or symmetric MAPE.
 
     For a univariate, non-hierarchical sample
@@ -125,8 +125,6 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> smape(y_true, y_pred)
     np.float64(0.5668686868686869)
     """
-
-    func = mean_absolute_percentage_error
 
     def __init__(
         self,
