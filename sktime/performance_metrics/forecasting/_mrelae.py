@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import pandas as pd
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
@@ -143,6 +145,17 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetric):
             y_pred_benchmark=y_pred_benchmark,
             absolute=True,
         )
+
+        # ensure pandas object so .mul() works
+        if not hasattr(relative_errors, "mul"):
+            # if it's 1-d, make it a Series; if 2-d, make a DataFrame
+            relative_errors = (
+                pd.Series(relative_errors)
+                if relative_errors.ndim == 1
+                else pd.DataFrame(relative_errors)
+            )
+        # drop any time-index so we end up with a RangeIndex
+        relative_errors = relative_errors.reset_index(drop=True)
 
         weighted_errors = self._get_weighted_df(relative_errors, **kwargs)
         return self._handle_multioutput(weighted_errors, self.multioutput)
