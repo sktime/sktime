@@ -200,21 +200,19 @@ class NeuralProphet(BaseForecaster):
 
         # Add exogenous variables if provided
         if X is not None:
-            if hasattr(X.index, "to_timestamp"):
+            if not isinstance(X, pd.DataFrame):
+                X = pd.DataFrame(X, index=y.index)
+            else:
                 X = X.copy()
-                X.index = X.index.to_timestamp()
+                X = X.reindex(y.index)
 
-            # Add each exogenous variable as a future regressor
             for col in X.columns:
-                # Check if column has any non-NaN values
                 if X[col].notna().any():
                     self._model.add_future_regressor(col)
                     self._regressors.append(col)
 
-            # Join exogenous variables to training data
             if self._regressors:
                 df = df.join(X[self._regressors], how="left")
-
         # Store training dataframe for future predictions
         self._training_df = df.copy()
 
@@ -254,49 +252,34 @@ class NeuralProphet(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        # Get absolute forecasting horizon and convert to pandas Index
         absolute_fh = self.fh.to_absolute(self.cutoff)
         fh_index = absolute_fh.to_pandas()
 
-        # Create future dataframe using the stored training data
         future_df = self._model.make_future_dataframe(
             df=self._training_df, periods=len(fh_index)
         )
 
-        # Add exogenous variables if provided and regressors were added during fit
         if X is not None and hasattr(self, "_regressors") and self._regressors:
-            if hasattr(X.index, "to_timestamp"):
+            # coerce to DataFrame indexed by fh_index
+            if not isinstance(X, pd.DataFrame):
+                X = pd.DataFrame(X, index=fh_index)
+            else:
                 X = X.copy()
-                X.index = X.index.to_timestamp()
+                X = X.reindex(fh_index)
 
-            # For each regressor that was added during training
+            mask = future_df["ds"].isin(fh_index)
             for col in self._regressors:
                 if col in X.columns:
-                    # Get future values for this regressor
-                    future_values = X[col].reindex(fh_index)
-
-                    # NeuralProphet expects the future regressor values to be present
-                    # in the future_df for the prediction period
-                    prediction_mask = future_df["ds"].isin(fh_index)
-
-                    # Update future_df with the regressor values
-                    if col in future_df.columns:
-                        future_df.loc[prediction_mask, col] = future_values.values
-                    else:
-                        # If column doesn't exist, add it with NaN for historical data
-                        # and the actual values for prediction period
+                    values = X[col].values
+                    if col not in future_df.columns:
                         future_df[col] = pd.NA
-                        future_df.loc[prediction_mask, col] = future_values.values
+                    future_df.loc[mask, col] = values
 
-        # Make predictions
         forecast = self._model.predict(future_df)
 
-        # Extract predictions and create pd.Series with correct index
-        y_pred = pd.Series(
-            forecast["yhat1"].values[-len(fh_index) :], index=fh_index, name="y_pred"
-        )
+        yhat = forecast["yhat1"].iloc[-len(fh_index) :].values
 
-        return y_pred
+        return pd.Series(yhat, index=fh_index, name="y_pred")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
