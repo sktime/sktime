@@ -8,7 +8,6 @@ The :mod:`sktime.classification` module contains algorithms and composition tool
 All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="classifier"``, optionally filtered by tags.
 
-
 Valid tags are listed in :ref:`the classifier tags API reference <panel_tags>`,
 and can be listed using ``sktime.registry.all_tags``.
 
