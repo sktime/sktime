@@ -28,7 +28,8 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -464,7 +465,8 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -619,7 +621,8 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -723,7 +726,8 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -832,7 +836,8 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -1036,7 +1041,8 @@ class LogLoss(_BaseDistrForecastingMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -1095,7 +1101,8 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -1152,7 +1159,8 @@ class CRPS(_BaseDistrForecastingMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
@@ -1219,7 +1227,8 @@ class AUCalibration(_BaseDistrForecastingMetric):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 

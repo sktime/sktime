@@ -38,7 +38,8 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
 
         * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
-        * If array-like, values used as weights to average the errors.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
         * If ``'raw_values'``,
           does not average across variables (outputs), per-variable errors are returned.
 
