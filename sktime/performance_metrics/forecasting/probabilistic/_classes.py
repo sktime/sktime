@@ -27,7 +27,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'raw_values', does not average across variables (outputs), per-variable errors are returned.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
     score_average : bool, optional, default=True
         for interval and quantile losses only

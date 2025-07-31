@@ -47,7 +47,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
           errors of all outputs are averaged with uniform weight.
         * If array-like, values used as weights to average the errors.
         * If ``'raw_values'``,
-          returns a full set of errors in case of multioutput input.
+          does not average across variables (outputs), per-variable errors are returned.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         How to aggregate the metric for hierarchical data (with levels).
