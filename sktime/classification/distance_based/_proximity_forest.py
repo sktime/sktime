@@ -713,6 +713,10 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -1024,6 +1028,10 @@ class ProximityTree(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -1324,6 +1332,10 @@ class ProximityForest(BaseClassifier):
         self._random_object = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def pick_distance_measure(self):
         """Pick a distance measure.

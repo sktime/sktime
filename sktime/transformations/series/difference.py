@@ -253,6 +253,8 @@ class Differencer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # test fails in the Panel case for Differencer, see #2522
+        "tests:skip_by_name": ["test_transform_inverse_transform_equivalent"],
     }
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]

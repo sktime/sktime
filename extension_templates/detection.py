@@ -17,11 +17,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     annotating     - _predict(self, X)
 
-Optional implements:
+Optional methods to implement:
     updating        - _update(self, X, y=None)
 
 Testing - required for sktime test framework and check_estimator usage:
