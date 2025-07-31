@@ -123,10 +123,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     np.float64(0.21935483870967742)
     """
 
-    _tags = {
-        "requires-y-train": True,
-    }
-
     func = mean_absolute_scaled_error
 
     def __init__(
@@ -178,6 +174,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         sp = self.sp
 
         raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         # Calculating the naive forecasting error
         naive_forecast_true = y_train[sp:]
