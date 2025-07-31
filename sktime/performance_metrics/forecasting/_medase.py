@@ -139,59 +139,6 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
             by_index=by_index,
         )
 
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-        """Return the metric evaluated at each time point.
-
-        private _evaluate_by_index containing core logic, called from evaluate_by_index
-
-        Parameters
-        ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
-
-        Returns
-        -------
-        loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
-        """
-        multioutput = self.multioutput
-
-        raw_values = (y_true - y_pred) ** 2
-
-        if self.square_root:
-            n = raw_values.shape[0]
-            mse = raw_values.mean(axis=0)
-            rmse = mse.pow(0.5)
-            sqe_sum = raw_values.sum(axis=0)
-            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
-            rmse_jackknife = mse_jackknife.pow(0.5)
-            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
-        else:
-            pseudo_values = raw_values
-
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return pseudo_values
-
-            if multioutput == "uniform_average":
-                return pseudo_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return pseudo_values.dot(multioutput)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
