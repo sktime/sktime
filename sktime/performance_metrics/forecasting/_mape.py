@@ -8,6 +8,7 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import _percentage_error
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
@@ -51,6 +52,17 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -129,8 +141,12 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true",
+        eps=None,
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to
+        self.eps = eps
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -168,14 +184,13 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
         multioutput = self.multioutput
         symmetric = self.symmetric
 
-        numer_values = (y_true - y_pred).abs()
-
-        if symmetric:
-            denom_values = (y_true.abs() + y_pred.abs()) / 2
-        else:
-            denom_values = y_true.abs()
-
-        raw_values = numer_values / denom_values
+        raw_values = _percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            symmetric=symmetric,
+            relative_to=self.relative_to,
+            eps=self.eps,
+        )
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)
