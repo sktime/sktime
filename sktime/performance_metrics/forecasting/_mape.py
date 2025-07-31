@@ -8,9 +8,6 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
-from sktime.performance_metrics.forecasting._functions import (
-    mean_absolute_percentage_error,
-)
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
@@ -179,16 +176,9 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
             denom_values = y_true.abs()
 
         raw_values = numer_values / denom_values
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
