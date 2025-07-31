@@ -11,9 +11,6 @@ from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._functions import (
-    mean_absolute_scaled_error,
-)
 
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
@@ -122,8 +119,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     >>> mase(y_true, y_pred, y_train=y_train)
     np.float64(0.21935483870967742)
     """
-
-    func = mean_absolute_scaled_error
 
     def __init__(
         self,
