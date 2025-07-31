@@ -2758,7 +2758,7 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     return linex_error
 
 
-def _relative_error(y_true, y_pred, y_pred_benchmark):
+def _relative_error(y_true, y_pred, y_pred_benchmark, absolute=False):
     """Relative error for observations to benchmark method.
 
     Parameters
@@ -2775,6 +2775,9 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
              (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
+    absolute : bool, default=False
+        If True, returns absolute relative error.
+
     Returns
     -------
     relative_error : float
@@ -2785,12 +2788,23 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
-    denominator = np.where(
-        y_true - y_pred_benchmark >= 0,
-        np.maximum((y_true - y_pred_benchmark), EPS),
-        np.minimum((y_true - y_pred_benchmark), -EPS),
+    EPS = np.finfo(np.float64).eps
+    error = y_true - y_pred
+    benchmark_error = y_true - y_pred_benchmark
+
+    if absolute:
+        abs_error = np.abs(error)
+        abs_benchmark_error = np.abs(benchmark_error)
+        negligible = (abs_error < EPS) & (abs_benchmark_error < EPS)
+        rel_error = abs_error / abs_benchmark_error
+        return np.where(negligible, 0.0, rel_error)
+
+    denom = np.where(
+        benchmark_error >= 0,
+        np.maximum(benchmark_error, EPS),
+        np.minimum(benchmark_error, -EPS),
     )
-    return (y_true - y_pred) / denominator
+    return error / denom
 
 
 def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true"):
