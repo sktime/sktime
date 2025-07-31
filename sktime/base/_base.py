@@ -90,6 +90,10 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "sktime_version": SKTIME_VERSION,  # current sktime version
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
+        "tests:vm": False,  # whether the object should be tested in its own VM
+        "tests:libs": None,  # required libraries, for change conditional testing
+        "tests:skip_all": False,  # whether all tests for the object should be skipped
+        "tests:skip_by_name": None,  # list of test names to skip for this object
     }
 
     _config = {

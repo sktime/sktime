@@ -9,40 +9,27 @@ Authors: Lorenzo Stella <stellalo@amazon.com>, Abdul Fatir Ansari <ansarnd@amazo
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-    class torch:
-        """Dummy class if torch is unavailable."""
+AutoConfig = _safe_import("transformers.AutoConfig")
+AutoModelForCausalLM = _safe_import("transformers.AutoModelForCausalLM")
+AutoModelForSeq2SeqLM = _safe_import("transformers.AutoModelForSeq2SeqLM")
+GenerationConfig = _safe_import("transformers.GenerationConfig")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
 
-        class Tensor:
-            """Dummy class if torch is unavailable."""
+# this is required as a workaround for the dataclass fields
+if not _check_soft_dependencies("torch", severity="none"):
 
     class nn:
         """Dummy class if torch is unavailable."""
 
         class Module:
             """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import (
-        AutoConfig,
-        AutoModelForCausalLM,
-        AutoModelForSeq2SeqLM,
-        GenerationConfig,
-        PreTrainedModel,
-    )
-else:
-
-    class PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
 
 
 @dataclass
@@ -267,13 +254,13 @@ class ChronosModel(nn.Module):
 
     Parameters
     ----------
-    config
+    config: ChronosConfig
         The configuration to use.
-    model
+    model: PreTrainedModel
         The pretrained model to use.
     """
 
-    def __init__(self, config: ChronosConfig, model: PreTrainedModel) -> None:
+    def __init__(self, config, model) -> None:
         super().__init__()
         self.config = config
         self.model = model
@@ -283,13 +270,8 @@ class ChronosModel(nn.Module):
         """The device where the model is stored."""
         return self.model.device
 
-    def encode(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ):
-        """
-        Extract the encoder embedding for the given token sequences.
+    def encode(self, input_ids, attention_mask):
+        """Extract the encoder embedding for the given token sequences.
 
         Parameters
         ----------
@@ -315,16 +297,15 @@ class ChronosModel(nn.Module):
 
     def forward(
         self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
+        input_ids,
+        attention_mask,
         prediction_length: Optional[int] = None,
         num_samples: Optional[int] = None,
         temperature: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
-    ) -> torch.Tensor:
-        """
-        Predict future sample tokens for the given token sequences.
+    ):
+        """Predict future sample tokens for the given token sequences.
 
         Arguments ``prediction_length``, ``num_samples``, ``temperature``,
         ``top_k``, ``top_p`` can be used to customize the model inference,
@@ -407,9 +388,7 @@ class ChronosPipeline:
     tokenizer: ChronosTokenizer
     model: ChronosModel
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -419,15 +398,12 @@ class ChronosPipeline:
 
         return context
 
-    def embed(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, Any]:
-        """
-        Get encoder embeddings for the given time series.
+    def embed(self, context):
+        """Get encoder embeddings for the given time series.
 
         Parameters
         ----------
-        context
+        context : Union[torch.Tensor, list[torch.Tensor]]
             Input series. This is either a 1D tensor, or a list
             of 1D tensors, or a 2D tensor whose first dimension
             is batch. In the latter case, use left-padding with
@@ -435,7 +411,7 @@ class ChronosPipeline:
 
         Returns
         -------
-        embeddings, tokenizer_state
+        embeddings, tokenizer_state : tuple[torch.Tensor, Any]
             A tuple of two tensors: the encoder embeddings and the tokenizer_state,
             e.g., the scale of the time series in the case of mean scaling.
             The encoder embeddings are shaped (batch_size, context_length, d_model)
@@ -457,20 +433,20 @@ class ChronosPipeline:
 
     def predict(
         self,
-        context: Union[torch.Tensor, list[torch.Tensor]],
+        context,
         prediction_length: Optional[int] = None,
         num_samples: Optional[int] = None,
         temperature: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
         limit_prediction_length: bool = True,
-    ) -> torch.Tensor:
+    ):
         """
         Get forecasts for the given time series.
 
         Parameters
         ----------
-        context
+        context : Union[torch.Tensor, list[torch.Tensor]]
             Input series. This is either a 1D tensor, or a list
             of 1D tensors, or a 2D tensor whose first dimension
             is batch. In the latter case, use left-padding with
@@ -498,7 +474,7 @@ class ChronosPipeline:
 
         Returns
         -------
-        samples
+        samples : torch.Tensor
             Tensor of sample forecasts, of shape
             (batch_size, num_samples, prediction_length).
         """

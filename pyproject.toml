@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.38.1"
+version = "0.38.4"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -83,7 +83,7 @@ all_extras = [
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
-  'esig==0.9.7; python_version < "3.10"',
+  'esig==0.9.7; python_version < "3.10" and platform_machine != "aarch64"',
   'filterpy>=1.4.5; python_version < "3.11"',
   'gluonts>=0.9; python_version < "3.13"',
   'h5py; python_version < "3.12"',
@@ -115,7 +115,6 @@ all_extras = [
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
-  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
 ]
 
@@ -128,7 +127,7 @@ all_extras_pandas2 = [
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
-  'esig==0.9.7; python_version < "3.10"',
+  'esig==0.9.7; python_version < "3.10" and platform_machine != "aarch64"',
   'filterpy>=1.4.5; python_version < "3.11"',
   'gluonts>=0.9; python_version < "3.13"',
   'h5py; python_version < "3.12"',
@@ -158,7 +157,6 @@ all_extras_pandas2 = [
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
-  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
 ]
 
@@ -182,7 +180,7 @@ annotation = [
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
-  'esig<0.10,>=0.9.7; python_version < "3.11"',
+  'esig<0.10,>=0.9.7; python_version < "3.11" and platform_machine != "aarch64"',
   'numba<0.62,>=0.53; python_version < "3.13"',
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
@@ -191,7 +189,7 @@ clustering = [
   'networkx<3.5',
   'numba<0.62,>=0.53; python_version < "3.13"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
-  'ts2vg<1.3; python_version < "3.13"',
+  'ts2vg<1.3; python_version < "3.13" and platform_machine != "aarch64"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
@@ -221,7 +219,7 @@ regression = [
   'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 transformations = [
-  'esig<0.10,>=0.9.7; python_version < "3.11"',
+  'esig<0.10,>=0.9.7; python_version < "3.11" and platform_machine != "aarch64"',
   'filterpy<1.5,>=1.4.5; python_version < "3.13"',
   'holidays>=0.29,<0.59; python_version < "3.13"',
   'mne>=1.5,<1.9; python_version < "3.13"',
@@ -274,7 +272,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
   "skchange",
 ]
 cython_extras = [
@@ -315,6 +312,20 @@ mlflow_tests = [
   "mlflow<4.0",
   "moto",
 ]
+notebooks = [
+  # needed for the blog post notebooks
+  "matplotlib",
+  "numpy<2",
+  "pmdarima",
+  "seaborn",
+  "tbats",
+  # needed for the examples
+  "dtw-python",
+  "prophet",
+  "pytorch-forecasting",
+  "skpro",
+  "statsforecast",
+]
 numpy1 = [
   "numpy<2.0.0",
 ]
@@ -323,6 +334,21 @@ pandas1 = [
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
+]
+
+dependencies_lowest = [
+    "numpy==1.21.0",
+    "pandas==1.1.0",
+    "scikit-learn==0.24.0",
+    "scipy==1.4.0",
+]
+
+# June 2023
+dependencies_lower = [
+    "numpy==1.25.0",
+    "pandas==2.0.2",
+    "scikit-learn==1.3.0",
+    "scipy==1.10.1",
 ]
 
 [project.urls]

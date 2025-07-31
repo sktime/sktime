@@ -171,13 +171,15 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     import ray
 
-    # remove the possible excess keys
-    logger = logging.getLogger(backend_params.pop("logger_name", None))
-    mute_warnings = backend_params.pop("mute_warnings", False)
-    shutdown_ray = backend_params.pop("shutdown_ray", True)
+    par_params = backend_params.copy()
 
-    if "ray_remote_args" not in backend_params.keys():
-        backend_params["ray_remote_args"] = {}
+    # read the possible additional keys
+    logger = logging.getLogger(par_params.get("logger_name", None))
+    mute_warnings = par_params.get("mute_warnings", False)
+    shutdown_ray = par_params.get("shutdown_ray", True)
+
+    if "ray_remote_args" not in par_params.keys():
+        par_params["ray_remote_args"] = {}
 
     @ray.remote  # pragma: no cover
     def _ray_execute_function(
@@ -191,7 +193,7 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
 
     if not ray.is_initialized():
         logger.info("Starting Ray Parallel")
-        context = ray.init(**backend_params["ray_remote_args"])
+        context = ray.init(**par_params["ray_remote_args"])
         logger.info(
             f"Ray initialized. Open dashboard at http://{context.dashboard_url}"
         )

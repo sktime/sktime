@@ -20,11 +20,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
-Optional implements:
+Optional methods to implement:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)

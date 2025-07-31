@@ -14,8 +14,7 @@ from sktime.utils.singleton import _multiton
 
 
 class TimesFMForecaster(_BaseGlobalForecaster):
-    """
-    Implementation of TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
+    """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
     developed by Google Research for time-series forecasting. This method has been
@@ -152,10 +151,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        # when relaxing deps, check whether the extra test in
-        # test_timesfm.py are still needed
         "python_version": ">=3.10,<3.11",
-        "env_marker": "sys_platform=='linux'",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -165,6 +161,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
+        "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -182,6 +179,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.timesfm"],
     }
 
     def __init__(

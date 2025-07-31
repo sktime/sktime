@@ -270,10 +270,11 @@ class python_dependencies(_BaseTag):
     * ``"numba"``: ``numba`` must be present
     * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
     * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
-        higher, and ``pandas`` must be version 1.3.0 or higher
+      higher, and ``pandas`` must be version 1.3.0 or higher
     * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
-        ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
-        version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+      ``scikit-learn`` must be version 0.24.0 or higher, and at least one of the
+      following should be true> ``numpy`` must be
+      version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
 
     Developers should note that package names in the PEP 440 specifier strings
     that should be provided
@@ -405,7 +406,7 @@ class tests__core(_BaseTag):
     tag set to true, to avoid that all estimators in ``sktime`` are triggered
     by a framework change.
 
-    It is not used in user facing checks, error messages,
+    The ``tests:core`` tag is not used in user facing checks, error messages,
     or recommended build processes otherwise.
     """
 
@@ -414,6 +415,157 @@ class tests__core(_BaseTag):
         "parent_type": "object",
         "tag_type": "bool",
         "short_descr": "whether framework changes trigger estimator tests",
+        "user_facing": False,
+    }
+
+
+class tests__vm(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:vm"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:vm`` tag of an object is a boolean,
+    it specifies whether the estimator should be tested in a separate VM,
+    with a fresh environment set up using the ``python_dependencies`` tag,
+    with version/OS matrix defined by ``python_version`` and ``env_marker`` tags.
+
+    This tag should be set to ``True`` for estimators that have a complex
+    dependency setup, or that are known to have issues with the default
+    ``sktime`` CI environment.
+    It can also be used for estimators with soft dependencies that occur
+    only in one or few specific estimators.
+    Otherwise, it should be used sparingly.
+
+    The ``tests:vm`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:vm",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to test the object in its own VM",
+        "user_facing": False,
+    }
+
+
+class tests__libs(_BaseTag):
+    """Important library dependencies of the object, for test triggers.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:libs"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.libs.chronos"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull request,
+    usually only estimators that have changed.
+
+    The ``tests:libs`` tag of an object is a list of strings,
+    it specifies important library dependencies of the object within ``sktime``.
+
+    Setting this tag triggers testing the estimator whenever any of the modules
+    in the ``tests:libs`` tags have changed, in additional to the other
+    test trigger conditions such as a direct change to the object class.
+
+    Developers should not specify framework imports here, e.g., ``sktime.base``,
+    but any modules that contain estimator specific logic, which are not
+    identical with the location of the class.
+
+    The ``tests:libs`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:libs",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Core libraries used by the estimator, to trigger tests.",
+        "user_facing": False,
+    }
+
+
+class tests__skip_all(_BaseTag):
+    """Whether all tests for this estimator should be skipped.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_all"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_all`` tag of an object is a boolean.
+    If set to ``True``, all tests for the estimator are skipped.
+
+    WARNING: this tag should be used with caution,
+    as it will skip all tests for the estimator,
+    including those that are necessary for the estimator to be considered
+    a valid estimator in ``sktime``.
+
+    The ``tests:skip_all`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_all",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to skip all tests for the object",
+        "user_facing": False,
+    }
+
+
+class tests__skip_by_name(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_by_name``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ["test_fit_idempotent", "test_persistence_via_pickle"]
+    - Default: None
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_by_name`` tag of an object is list of strings,
+    with strings being names of tests that should be skipped for the object.
+    The names should be the same as names of test functions in the "test all"
+    suite, and will be the same as test names in ``check_estimator`` returns.
+    If set to ``None`` (default), no tests are skipped.
+
+    WARNING: this tag should be used with caution.
+    When it is set, developers should leave a comment
+    next to the tag, explaining why the tests are skipped,
+    and optimally link from the comment to an open issue with the purpose to resolving
+    the skipped test(s).
+
+    The ``tests:skip_by_name`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_by_name",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "list of names of tests that should be skipped for this object",
         "user_facing": False,
     }
 
