@@ -172,6 +172,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         only in the fields of forecasters_.
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.forecasting.model_selection._base"],
+    }
+
     def __init__(
         self,
         forecaster,

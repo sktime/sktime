@@ -225,6 +225,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int:insample": True,
         "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run on separate VM since scikit-optimize is deprecated
+        "tests:libs": ["sktime.forecasting.model_selection._base"],
     }
 
     def __init__(

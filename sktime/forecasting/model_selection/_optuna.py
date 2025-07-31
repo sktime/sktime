@@ -166,6 +166,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "capability:pred_int:insample": True,
         "python_dependencies": ["optuna"],
         "python_version": ">= 3.6",
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.forecasting.model_selection._base"],
     }
 
     def __init__(

@@ -234,6 +234,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.forecasting.model_selection._base"],
     }
 
     def __init__(
