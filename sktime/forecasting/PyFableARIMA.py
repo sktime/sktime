@@ -13,19 +13,18 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class PyFableARIMA(BaseForecaster):
-    r"""A wrapper to the ARIMA model in the CRAN package fable.
+    r"""ARIMA model from the CRAN package fable.
 
-    (See https://cran.r-project.org/web/packages/fable/index.html)
-    (The documentation here is lifted from the documentation there. Consult the fable
-    version for additional detail.)
+    Wraps the ``ARIMA`` model from the ``fable`` package in R, see [1] for details.
+
     Searches through the model space specified in the specials to identify
     the best ARIMA model, with the lowest AIC, AICc or BIC value. It is
-    implemented using R's stats::arima() and allows ARIMA models to be used
-    in the fable framework.
+    implemented using R's ``stats::arima()`` and allows ARIMA models to be used
+    in the ``fable`` framework.
 
     Parameters
     ----------
-    formula	: string, optional (default = None)
+    formula : string, optional (default = None)
         Model specification (e.g. "y ~ z")
         N.B. To specify a model fully (avoid automatic selection), the
         intercept and `pdq()/PDQ()` values must be specified. For example,
@@ -33,7 +32,7 @@ class PyFableARIMA(BaseForecaster):
     ic : string, optional (default = "aicc")
         The information criterion used in selecting the model.
         One of "aic", "aicc", "bic"
-    selection_metric : opitonal; a function
+    selection_metric : optional; a function
         selection_metric = function(x) x[[ic]],
         A function used to compute a metric from an Arima object which is minimised
         to select the best model.
@@ -83,6 +82,10 @@ class PyFableARIMA(BaseForecaster):
     >>> pred_int = best.predict_interval(fh=test.index, coverage=[0.95, 0.50]) \
              # doctest: +SKIP
     >>> print(f"pred_int = \n{pred_int}")  # doctest: +SKIP
+
+    References
+    ----------
+    .. [1] Fable: https://cran.r-project.org/web/packages/fable/index.html
     """
 
     _tags = {
@@ -101,6 +104,9 @@ class PyFableARIMA(BaseForecaster):
         "maintainers": ["ericjb"],
         "python_version": None,
         "python_dependencies": ["rpy2"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run on separate VM to rpy2 in extras dep set
     }
 
     def __init__(
@@ -562,4 +568,12 @@ class PyFableARIMA(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # Return the parameters needed to construct the estimator
-        return [{}, {}]
+        params0 = {}
+        params1 = {
+            "ic": "bic",
+            "selection_metric": None,
+            "stepwise": False,
+            "greedy": False,
+
+        }
+        return [params0, params1]
