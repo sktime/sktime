@@ -61,13 +61,12 @@ class BaseForecastingErrorMetric(BaseMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Defines whether and how to aggregate metric for across variables.
 
         * If 'uniform_average' (default), errors are mean-averaged across variables.
         * If array-like, errors are weighted averaged across variables,
-          values as weights.
+          values as weights. Must be of shape (n_outputs,).
         * If 'raw_values', does not average errors across variables,
           columns are retained.
 
