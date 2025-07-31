@@ -574,6 +574,5 @@ class PyFableARIMA(BaseForecaster):
             "selection_metric": None,
             "stepwise": False,
             "greedy": False,
-
         }
         return [params0, params1]
