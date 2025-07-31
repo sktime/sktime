@@ -181,6 +181,10 @@ class WEASEL(BaseClassifier):
 
         set_num_threads(n_jobs)
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
 
