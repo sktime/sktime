@@ -65,6 +65,13 @@ class ResNetClassifier(BaseDeepClassifier):
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
         # estimator type handled by parent class
+        # known ResNetClassifier sporafic failures, see #3954
+        # fails due to #3954 or #3616
+        "tests:skip_all": True,
+        # `test_fit_idempotent` fails with `AssertionError`, see #3616
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+        ],
     }
 
     def __init__(
