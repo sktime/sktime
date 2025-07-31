@@ -13,7 +13,7 @@ from sktime.performance_metrics.forecasting._functions import (
 )
 
 
-class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
+class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     r"""Mean absolute percentage error (MAPE) or symmetric MAPE.
 
     For a univariate, non-hierarchical sample
