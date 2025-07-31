@@ -562,4 +562,11 @@ class PyFableARIMA(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # Return the parameters needed to construct the estimator
-        return [{}, {}]
+        params0 = {}
+        params1 = {
+            "ic": "bic",
+            "selection_metric": None,
+            "stepwise": False,
+            "greedy": False,
+        }
+        return [params0, params1]
