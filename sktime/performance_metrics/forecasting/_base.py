@@ -83,9 +83,10 @@ class BaseForecastingErrorMetric(BaseMetric):
     by_index : bool, default=False
         Controls averaging over time points in direct call to metric object.
 
-        * If False, direct call to the metric object averages over time points,
+        * If ``False`` (default),
+          direct call to the metric object averages over time points,
           equivalent to a call of the ``evaluate`` method.
-        * If True, direct call to the metric object evaluates the metric at each
+        * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
