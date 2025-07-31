@@ -1971,6 +1971,7 @@ class capability__variable_identification(_BaseTag):
 # Metrics tags
 # ------------
 
+
 class requires_y_true(_BaseTag):
     """Behaviour flag: metric requires y_true in evaluate.
 
