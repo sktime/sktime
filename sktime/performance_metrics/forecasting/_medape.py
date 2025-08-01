@@ -8,6 +8,7 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._common import _percentage_error
 from sktime.performance_metrics.forecasting._functions import (
     median_absolute_percentage_error,
 )
@@ -57,11 +58,11 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
 
-    relative_to : {'y_true', 'y_pred'}, default='y_true'
-        Defines the reference values for normalizing the percentage error.
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Determines the denominator of the percentage error.
 
-            * 'y_true': normalize errors relative to the true values,
-            * 'y_pred': normalize errors relative to the predicted values.
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -165,14 +166,14 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
             Series scitype: pd.DataFrame
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred : time series in sktime compatible data container format
+        y_pred :time series in sktime compatible data container format
             Forecasted values to evaluate
             must be of same format as y_true, same indices and columns if indexed
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point.
+            Calculated metric, by time point (default=jackknife pseudo-values).
             pd.Series if self.multioutput="uniform_average" or array-like
                 index is equal to index of y_true
                 entry at index i is metric at time i, averaged over variables
@@ -180,30 +181,19 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
-        if self.symmetric and self.relative_to != "y_true":
-            raise ValueError("relative_to cannot be used with symmetric=True")
-
         multioutput = self.multioutput
+        symmetric = self.symmetric
 
-        numer_values = (y_true - y_pred).abs()
+        raw_values = _percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            symmetric=symmetric,
+            relative_to=self.relative_to,
+            eps=self.eps,
+        )
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if self.symmetric:
-            denom_values = (y_true.abs() + y_pred.abs()) / 2
-        elif self.relative_to == "y_pred":
-            denom_values = y_pred.abs()    
-        else:
-            denom_values = y_true.abs()
-
-        raw_values = numer_values / denom_values
-
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.median(axis=1)
-
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
