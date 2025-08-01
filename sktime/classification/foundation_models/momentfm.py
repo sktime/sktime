@@ -131,7 +131,7 @@ class MomentFMClassifier(BaseClassifier):
         ],
         "python_version": ">= 3.10",
         # testing configuration
-        # ----------------------
+        # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.momentfm"],
         "tests:skip_by_name": [
