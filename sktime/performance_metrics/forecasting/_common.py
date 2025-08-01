@@ -89,7 +89,7 @@ def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps
 
     Returns
     -------
-    percentage_error : np.ndarray
+    percentage_error : np.ndarray, same shape as y_true and y_pred
         The element-wise percentage error.
 
     References
