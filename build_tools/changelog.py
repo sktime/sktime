@@ -159,27 +159,94 @@ def render_row(pr):
 
 
 def render_changelog(prs, assigned):
-    # sourcery skip: use-named-expression
     """Render changelog."""
+    # sourcery skip: use-named-expression
+    LABEL_TO_SUBSECTION = {
+        "module:forecasting": "Forecasting",
+        "module:classification": "Time Series Classification",
+        "module:regression": "Regression",
+        "module:transformations": "Transformations",
+        "module:datatypes": "Datatypes",
+        "module:alignment": "Alignment",
+        "module:annotation": "Annotation",
+        "module:dataprocessing": "Data Processing",
+        "module:proba": "Probability Estimation",
+        "module:clustering": "Clustering",
+        "module:plotting&utilities": "Plotting & Utilities",
+        "module:base-framework": "Base Framework",
+    }
+    # more can be added also
+    # labels start with module
+    # Subsection title comes after label
+
+    MODULE_ORDER = [
+        "Base Framework",
+        "Benchmarking, Metrics, Splitters",
+        "Clustering",
+        "Data Processing",
+        "Datatypes",
+        "Forecasting",
+        "Probability Estimation",
+        "Regression",
+        "Time Series Classification",
+        "Alignment",
+        "Annotation",
+        "Transformations",
+        "Plotting & Utilities",
+        "Other",
+    ]
+
     from dateutil import parser
 
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
+    SECTION_ORDER = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Other"]
+    for title in SECTION_ORDER:
+        if title not in assigned:
+            continue
 
-            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+        pr_group = [prs[i] for i in assigned[title]]
+        if not pr_group:
+            continue
+        print(title)
+        print("~" * len(title))
+        print()
+
+        # Group PRs by module labels
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = defaultdict(list)
+            for pr in pr_group:
+                labels = [label["name"] for label in pr["labels"]]
+                added = False
+
+                for label in labels:
+                    # print("hello",label)
+                    if label in LABEL_TO_SUBSECTION:
+                        #   print("hello")
+                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        added = True
+                if not added:
+                    subsection_map["Other"].append(pr)
+
+            # Render subsections
+            for subsection_title in MODULE_ORDER:
+                pr_list = subsection_map.get(subsection_title, [])
+                if pr_list:
+                    print(subsection_title)
+                    print("^" * len(subsection_title))
+                    for pr in sorted(
+                        pr_list, key=lambda x: parser.parse(x["merged_at"])
+                    ):
+                        render_row(pr)
+        else:
+            for pr in sorted(pr_group, key=lambda x: parser.parse(pr["merged_at"])):
                 render_row(pr)
 
 
 if __name__ == "__main__":
     categories = [
         {"title": "Enhancements", "labels": ["feature", "enhancement"]},
-        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
-        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
-        {"title": "Refactored", "labels": ["refactor"]},
         {"title": "Documentation", "labels": ["documentation"]},
+        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
+        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
     ]
 
     pulls = fetch_pull_requests_since_last_release()
