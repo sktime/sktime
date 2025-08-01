@@ -45,6 +45,11 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     square_root : bool, default = False
         Whether to take the square root of the metric
 
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
+
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -129,10 +134,12 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         square_root=False,
         by_index=False,
         relative_to="y_true",
+        eps=None,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
         self.relative_to = relative_to
+        self.eps = eps
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
