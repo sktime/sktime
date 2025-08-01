@@ -85,7 +85,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
     def __init__(
         self,
-        distance,
+        distance="euclidean",
         eps=0.5,
         min_samples=5,
         algorithm="auto",
@@ -207,4 +207,4 @@ class TimeSeriesDBSCAN(BaseClusterer):
         params2 = {"distance": DtwDist()}
         params3 = {"distance": EditDist()}
 
-        return [params1, params2, params3]
+        return [{}, params1, params2, params3]
