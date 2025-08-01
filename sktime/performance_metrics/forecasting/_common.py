@@ -70,8 +70,8 @@ def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps
     y_true : array-like of ground truth values
         Ground truth (correct) target values.
 
-    y_pred : array-like of predicte values
-        Forecasted values.
+    y_pred : array-like of predicted values, must be same shape as y_true
+        Predicted values.
 
     symmetric : bool, default = False
         Whether to calculate symmetric percentage error.
