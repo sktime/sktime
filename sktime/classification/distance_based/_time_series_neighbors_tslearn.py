@@ -61,7 +61,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
     --------
     >>> from sktime.classification.distance_based import (
     ...     KNeighborsTimeSeriesClassifierTslearn
-    ...)
+    ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
@@ -87,6 +87,9 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # defines the name of the attribute containing the tslearn estimator

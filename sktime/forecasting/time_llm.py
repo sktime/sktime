@@ -71,7 +71,7 @@ class TimeLLMForecaster(BaseForecaster):
     ...     llm_model='GPT2'
     ... )
     >>> forecaster.fit(y, fh=[1])
-    TimeLLMForecaster(pred_len=1)
+    TimeLLMForecaster(pred_len=36)
     >>> y_pred = forecaster.predict(fh=[1])
     """
 
@@ -85,6 +85,10 @@ class TimeLLMForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.time_llm"],
     }
 
     def __init__(

@@ -221,15 +221,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return pseudo_values
-
-            if multioutput == "uniform_average":
-                return pseudo_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return pseudo_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
