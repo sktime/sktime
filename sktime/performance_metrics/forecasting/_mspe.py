@@ -35,7 +35,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
-    
+
     relative_to : {"y_true", "y_pred"}, default="y_true"
         Determines the denominator of the percentage error.
 
