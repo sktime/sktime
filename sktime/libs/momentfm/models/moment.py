@@ -229,7 +229,9 @@ if _check_soft_dependencies(
 
         def _get_transformer_backbone(self, config) -> nn.Module:
             if config.getattr("randomly_initialize_backbone", False):
-                model_config = T5Config.from_pretrained(config.transformer_backbone)
+                model_config = T5Config.from_pretrained(
+                    config.transformer_backbone, force_download=True
+                )
                 transformer_backbone = T5Model(model_config)
                 logging.info(
                     f"Initializing randomly initialized transformer from "
@@ -237,7 +239,7 @@ if _check_soft_dependencies(
                 )
             else:
                 transformer_backbone = T5EncoderModel.from_pretrained(
-                    config.transformer_backbone
+                    config.transformer_backbone, force_download=True
                 )
                 logging.info(
                     f"Initializing pre-trained transformer from "
