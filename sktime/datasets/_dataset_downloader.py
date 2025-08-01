@@ -87,8 +87,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         "python_dependencies": "huggingface-hub",
     }
 
-    def __init__(self, repo_name, repo_type="dataset", token=None):
-        self.repo_name = repo_name
+    def __init__(self, hf_repo_name, repo_type="dataset", token=None):
+        self.hf_repo_name = hf_repo_name
         self.repo_type = repo_type
         self.token = token
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
@@ -128,7 +128,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
         try:
             snapshot_download(
-                repo_id=self.repo_name,
+                repo_id=self.hf_repo_name,
                 repo_type=self.repo_type,
                 allow_patterns=f"{dataset_name}/**",
                 local_dir=download_path,
@@ -139,7 +139,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
             if not local_dataset_path.exists():
                 raise ValueError(
                     f"Dataset folder '{dataset_name}' not found"
-                    f" in repository '{self.repo_name}'"
+                    f" in repository '{self.hf_repo_name}'"
                 )
 
         except (RepositoryNotFoundError, HfHubHTTPError, ValueError):
