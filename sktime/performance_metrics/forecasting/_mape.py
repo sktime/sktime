@@ -222,5 +222,3 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
         params2 = {"symmetric": True}
         params3 = { "relative_to": "y_pred"}
         return [params1, params2, params3]
-    
-    
