@@ -181,10 +181,6 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
-
-        if self.symmetric and self.relative_to != "y_true":
-            raise ValueError("relative_to cannot be used with symmetric=True")
-        
         multioutput = self.multioutput
         symmetric = self.symmetric
 
