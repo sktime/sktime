@@ -7,13 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import (
-    mean_absolute_percentage_error,
-)
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import _percentage_error
 
 
-class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
+class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     r"""Mean absolute percentage error (MAPE) or symmetric MAPE.
 
     For a univariate, non-hierarchical sample
@@ -54,6 +52,17 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -127,16 +136,18 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.5668686868686869)
     """
 
-    func = mean_absolute_percentage_error
-
     def __init__(
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true",
+        eps=None,
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to
+        self.eps = eps
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -174,24 +185,16 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multioutput = self.multioutput
         symmetric = self.symmetric
 
-        numer_values = (y_true - y_pred).abs()
+        raw_values = _percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            symmetric=symmetric,
+            relative_to=self.relative_to,
+            eps=self.eps,
+        )
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if symmetric:
-            denom_values = (y_true.abs() + y_pred.abs()) / 2
-        else:
-            denom_values = y_true.abs()
-
-        raw_values = numer_values / denom_values
-
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
