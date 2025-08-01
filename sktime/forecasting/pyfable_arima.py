@@ -181,6 +181,8 @@ class PyFableARIMA(BaseForecaster):
         if isinstance(Z.index, pd.PeriodIndex):
             Z[date_col_name] = Z.index.to_timestamp()
 
+        Z[date_col_name] = Z[date_col_name].dt.strftime("%Y-%m-%d")
+
         # Convert the pandas DataFrame to an R data frame
         with localconverter(robjects.default_converter + pandas2ri.converter):
             r_data = robjects.conversion.py2rpy(Z)
@@ -202,10 +204,12 @@ class PyFableARIMA(BaseForecaster):
 
             r_script = f"""
             r_data <- dplyr::as_tibble(r_data) |>
-                dplyr::mutate(idx = {freq_func}({date_col_name})) |>
+                dplyr::mutate({date_col_name} = as.Date({date_col_name}),
+                              idx = {freq_func}({date_col_name})) |>
                 tsibble::as_tsibble(index = idx, regular = TRUE)
             r_data
             """
+
         else:
             r_script = f"""
             r_data <- dplyr::as_tibble(r_data) |>
@@ -285,9 +289,9 @@ class PyFableARIMA(BaseForecaster):
         import rpy2.robjects as robjects
 
         fitted_values = robjects.r["fitted"](self._fit_auto_arima_)
-        fitted_values_series = robjects.pandas2ri.rpy2py(fitted_values)
-        fitted_values_series.index = self._fit_index_
-        series = fitted_values_series[".fitted"].squeeze()
+        fitted_values_df = robjects.pandas2ri.rpy2py(fitted_values)
+        fitted_values_df.index = self._fit_index_
+        series = fitted_values_df[".fitted"].squeeze()
         series.name = self._y.name
 
         return series
