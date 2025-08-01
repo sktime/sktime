@@ -49,21 +49,38 @@ def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
 def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps=None):
     """Percentage error.
 
+    For arrays ``y_true`` and ``y_pred``,
+    writing :math:`y` for ``y_true`` and :math:`\widehat{y}` for ``y_pred``,
+    this function calculates the element-wise percentage error, defined as
+
+    * :math:`\frac{|y - \widehat{y}|}{|y|}` if ``symmetric`` is ``False``,
+      and ``relative_to`` is ``'y_true'``,
+    * :math:`\frac{|y - \widehat{y}|}{|\widehat{y}|}` if ``symmetric`` is ``False``,
+      and ``relative_to`` is ``'y_pred'``,
+    * :math:`2 \frac{|y - \widehat{y}|}{|y| + |\widehat{y}|}`
+      if ``symmetric`` is ``True``,
+
+    where all operations are element-wise.
+
+    All denominators are replaced by ``eps`` if they are smaller than ``eps``,
+    entry-wise.
+
     Parameters
     ----------
-    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
+    y_true : array-like of ground truth values
         Ground truth (correct) target values.
 
-    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
+    y_pred : array-like of predicte values
         Forecasted values.
 
     symmetric : bool, default = False
         Whether to calculate symmetric percentage error.
 
-    relative_to : bool, default = "y_true"
-        Whether to calculate percentage error by forecast.
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If ``'y_true'``, the denominator is the true values,
+        * If ``'y_pred'``, the denominator is the predicted values.
 
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
@@ -72,7 +89,8 @@ def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps
 
     Returns
     -------
-    percentage_error : float
+    percentage_error : np.ndarray
+        The element-wise percentage error.
 
     References
     ----------
