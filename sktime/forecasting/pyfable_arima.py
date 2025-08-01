@@ -60,7 +60,6 @@ class PyFableARIMA(BaseForecaster):
     is_regular : logical (default = True)
         Is the series regular? (i.e. are the time-steps equal throughout)
 
-
     Examples
     --------
     >>> from sktime.datasets import load_airline  # doctest: +SKIP
