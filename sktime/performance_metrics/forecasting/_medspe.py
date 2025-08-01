@@ -40,11 +40,11 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
 
-    relative_to : {'y_true', 'y_pred'}, default='y_true'
-        Defines the reference values for normalizing the percentage error.
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Determines the denominator of the percentage error.
 
-            * 'y_true': normalize errors relative to the true values,
-            * 'y_pred': normalize errors relative to the predicted values.
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
 
     square_root : bool, default = False
         Whether to take the square root of the metric
