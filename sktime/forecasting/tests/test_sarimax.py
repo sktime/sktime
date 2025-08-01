@@ -121,21 +121,21 @@ def test_SARIMAX_update_with_exogenous_variables():
 
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    
+
     # Test with update_params=True
     forecaster = SARIMAX(order=(1, 0, 0))
     forecaster.fit(y_train, X=X_train, fh=1)
     forecaster.update(y_test, X=X_test, update_params=True)
-    
+
     # Verify that the forecaster state is correctly updated
     assert forecaster.cutoff == y_test.index[-1]
     assert forecaster._is_fitted
-        
+
     # Test with update_params=False
     forecaster2 = SARIMAX(order=(1, 0, 0))
     forecaster2.fit(y_train, X=X_train, fh=1)
     forecaster2.update(y_test, X=X_test, update_params=False)
-    
+
     # Verify that the forecaster state is correctly updated
     assert forecaster2.cutoff == y_test.index[-1]
     assert forecaster2._is_fitted

@@ -764,41 +764,42 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         assert f.cutoff == y_test.index[-1]
 
-    def test_update_with_exogenous_variables(self, estimator_instance, n_columns, update_params):
+    def test_update_with_exogenous_variables(
+        self, estimator_instance, n_columns, update_params
+    ):
         """Test update method with exogenous variables"""
         # Skip test if forecaster ignores exogenous variables
         if estimator_instance.get_tag("ignores-exogeneous-X"):
             return None
-            
-        index = pd.date_range('2020-01-01', periods=25, freq='D')
-        
+
+        index = pd.date_range("2020-01-01", periods=25, freq="D")
+
         # Create y data
         if n_columns == 1:
-            y = pd.Series(range(25), index=index, name='y')
+            y = pd.Series(range(25), index=index, name="y")
         else:
             y_data = {}
             for i in range(n_columns):
-                y_data[f'y_{i}'] = range(25)
+                y_data[f"y_{i}"] = range(25)
             y = pd.DataFrame(y_data, index=index)
-        
+
         # Create X data (exogenous variables)
-        X = pd.DataFrame({
-            'exog1': range(25),
-            'exog2': [x * 2 for x in range(25)]
-        }, index=index)
-        
+        X = pd.DataFrame(
+            {"exog1": range(25), "exog2": [x * 2 for x in range(25)]}, index=index
+        )
+
         # Split into train and test
         y_train = y.iloc[:20]
         y_test = y.iloc[20:]
         X_train = X.iloc[:20]
         X_test = X.iloc[20:]
-        
+
         # Fit with exogenous variables
         estimator_instance.fit(y_train, X=X_train, fh=FH0)
-        
+
         # Test update with exogenous variables
         estimator_instance.update(y_test, X=X_test, update_params=update_params)
-        
+
         # Verify that the forecaster state is correctly updated
         assert estimator_instance.cutoff == y_test.index[-1]
         assert estimator_instance._is_fitted
