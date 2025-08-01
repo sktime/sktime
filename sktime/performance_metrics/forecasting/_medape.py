@@ -166,7 +166,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
             Series scitype: pd.DataFrame
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
+        y_pred : time series in sktime compatible data container format
             Forecasted values to evaluate
             must be of same format as y_true, same indices and columns if indexed
 
