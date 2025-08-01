@@ -146,7 +146,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         relative_to="y_true",
     ):
         self.symmetric = symmetric
-        self.relative_to=relative_to
+        self.relative_to = relative_to
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
