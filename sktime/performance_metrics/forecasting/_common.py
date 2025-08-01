@@ -4,21 +4,32 @@ import numpy as np
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
-    """Relative error for observations to benchmark method.
+    """Relative error with respect to benchmark predictions.
+
+    For arrays ``y_true``, ``y_pred``, and ``y_pred_benchmark``,
+    writing :math:`y` for ``y_true``, writing :math:`\widehat{y}` for ``y_pred``,
+    and writing :math:`\widehat{y}_b` for ``y_pred_benchmark``,
+    this function calculates the element-wise relative error,
+    of :math:`\widehat{y}` with respect to the benchmark :math:`\widehat{y}_b`,
+    defined as
+
+    .. math::
+        \frac{y - \widehat{y}}{\widehat{y} - \widehat{y}_b}
+
+    where all operations are element-wise.
+
+    The denominator is replaced by ``eps`` if it is smaller than ``eps``, entry-wise.
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : array-like of ground truth values
         Ground truth (correct) target values.
 
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
+    y_pred : array-like of predicted values, must be same shape as y_true
+        Predicted values.
 
-    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+    y_pred_benchmark : array-like of benchmark predictions, must be same shape as y_true
+        Benchmark predictions to compare against.
 
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
@@ -27,8 +38,8 @@ def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
 
     Returns
     -------
-    relative_error : float
-        relative error
+    relative_error : np.ndarray, same shape as y_true and y_pred
+        The element-wise relative error.
 
     References
     ----------
