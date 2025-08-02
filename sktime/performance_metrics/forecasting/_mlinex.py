@@ -12,7 +12,7 @@ from sktime.performance_metrics.forecasting._functions import mean_linex_error
 
 
 class MeanLinexError(BaseForecastingErrorMetricFunc):
-    """Calculate mean linex error.
+    r"""Calculate mean linex error.
 
     Output is non-negative floating point. The best value is 0.0.
 
@@ -22,12 +22,17 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     Asymmetric loss functions are useful when the cost of under- and over-
     prediction are not the same.
 
-    The linex error function accounts for this by penalizing errors on one side
-    of a threshold approximately linearly, while penalizing errors on the other
-    side approximately exponentially. If ``a`` > 0 then negative errors
-    (over-predictions) are penalized approximately linearly and positive errors
-    (under-predictions) are penalized approximately exponentially. If ``a`` < 0
-    the reverse is true.
+    The LinEx error is calculated as:
+
+    .. math::
+
+      L(e) = b \\cdot \\left( \\exp(a \\cdot e) - a \\cdot e - 1 \\right)
+
+    where :math:`e = y - \\hat{y}`, and :math:`a \\neq 0, b > 0`.
+
+    This function penalizes underpredictions and overpredictions differently
+    based on the sign and magnitude of the error.
+
 
     Parameters
     ----------
@@ -67,6 +72,8 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
           equivalent to a call of the``evaluate`` method.
         * If True, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
+        *`evaluate_by_index` returns the LinEx loss at each individual time point
+        in the input data.
 
     See Also
     --------
@@ -76,6 +83,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     -----
     Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
     according to formula in [2]_.
+    this formula let you control what kind of mistake you want to punish more.
 
     References
     ----------
