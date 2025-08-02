@@ -10,15 +10,12 @@ the lower the better.
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import (
-    BaseForecastingErrorMetricFunc,
+    BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._functions import (
-    mean_absolute_scaled_error,
-)
 
 
-class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
+class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     r"""Mean absolute scaled error (MASE).
 
     For a univariate, non-hierarchical sample of
@@ -130,8 +127,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     np.float64(0.21935483870967742)
     """
 
-    func = mean_absolute_scaled_error
-
     def __init__(
         self,
         multioutput="uniform_average",
@@ -178,11 +173,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
                 index and columns equal to those of y_true
                 i,j-th entry is metric at time i, at variable j
         """
-        try:
-            y_train = kwargs["y_train"]
-        except Exception:
-            raise ValueError("y_train not provided for MASE evaluation.")
-
+        y_train = kwargs["y_train"]
         multioutput = self.multioutput
         sp = self.sp
 
@@ -191,6 +182,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
             eps = np.finfo(np.float64).eps
 
         raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         # Calculating the naive forecasting error
         naive_forecast_true = y_train[sp:]
