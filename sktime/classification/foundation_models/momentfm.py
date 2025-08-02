@@ -124,7 +124,7 @@ class MomentFMClassifier(BaseClassifier):
         "python_dependencies": [
             "torch",
             "tqdm",
-            "huggingface-hub==0.30.0",
+            "huggingface-hub<0.33.0",
             # "momentfm",
             "accelerate",
             "transformers",
@@ -156,7 +156,6 @@ class MomentFMClassifier(BaseClassifier):
         config=None,
         to_cpu_after_fit=False,
     ):
-        super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.head_dropout = head_dropout
         self.batch_size = batch_size
@@ -170,6 +169,7 @@ class MomentFMClassifier(BaseClassifier):
         self.config = config
         self._config = config if config is not None else {}
         self.to_cpu_after_fit = to_cpu_after_fit
+        super().__init__()
 
     def _fit(self, X, y):
         """MomentFMClassifier fit method.

@@ -163,7 +163,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "python_dependencies": [
             "torch",
             "tqdm",
-            "huggingface-hub==0.30.0",
+            "huggingface-hub<0.33.0",
             # "momentfm",
             "accelerate",
             "transformers",
