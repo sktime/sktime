@@ -160,4 +160,5 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         """
         params1 = {}
         params2 = {"sp": 2}
+
         return [params1, params2]
