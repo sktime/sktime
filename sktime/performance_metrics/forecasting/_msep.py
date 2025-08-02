@@ -86,26 +86,30 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         )
 
     def _evaluate(self, y_true, y_pred, **kwargs):
-        r"""
-        Evaluate the Mean Squared Error Percentage (MSE%) between `y_true` and `y_pred`.
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
 
         Parameters
         ----------
-        y_true : pd.Series or pd.DataFrame
-            Ground truth (actual) target values.
-            Can be a Series or DataFrame for univariate or multivariate forecasts.
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
-        y_pred : pd.Series or pd.DataFrame
-            Forecasted target values.
-            Must have the same shape as `y_true`.
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
-        loss : float or pd.Series
-            The calculated Mean Squared Error Percentage.
-            - If `multioutput='raw_values'`, returns a Series with the MSPE for
-            each output.
-            - Otherwise, returns a scalar value representing the aggregated MSPE.
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
         """
         multioutput = self.multioutput
         raw_values = (y_true - y_pred) ** 2
@@ -127,26 +131,25 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
 

@@ -53,11 +53,11 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
 
-    relative_to : {'y_true', 'y_pred'}, default='y_true'
+    relative_to : {"y_true", "y_pred"}, default="y_true"
         Determines the denominator of the percentage error.
 
-        * If 'y_true', the denominator is the true values,
-        * If 'y_pred', the denominator is the predicted values.
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
 
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
@@ -161,26 +161,25 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
         symmetric = self.symmetric
@@ -217,4 +216,5 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]

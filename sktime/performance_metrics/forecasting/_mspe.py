@@ -35,8 +35,20 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
+
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Determines the denominator of the percentage error.
+
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
+
     square_root : bool, default = False
         Whether to take the square root of the metric
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -122,9 +134,13 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         symmetric=False,
         square_root=False,
         by_index=False,
+        relative_to="y_true",
+        eps=None,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
+        self.relative_to = relative_to
+        self.eps = eps
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -152,4 +168,5 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]
