@@ -165,6 +165,7 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "ignores-exogeneous-X": True,
     }
 
