@@ -17,10 +17,12 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
-    from torch.utils.data import Dataset
+
+    Dataset = _safe_import("torch.utils.data.Dataset")
 else:
 
     class Dataset:
@@ -29,14 +31,11 @@ else:
         pass
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import (
-        PatchTSTConfig,
-        PatchTSTForPrediction,
-        PatchTSTModel,
-        Trainer,
-        TrainingArguments,
-    )
+PatchTSTConfig = _safe_import("transformers.PatchTSTConfig")
+PatchTSTForPrediction = _safe_import("transformers.PatchTSTForPrediction")
+PatchTSTModel = _safe_import("transformers.PatchTSTModel")
+Trainer = _safe_import("transformers.Trainer")
+TrainingArguments = _safe_import("transformers.TrainingArguments")
 
 
 class PatchTSTForecaster(_BaseGlobalForecaster):
@@ -66,11 +65,14 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         model_path is passed, the remaining model config parameters will be
         ignored except for specific training or dataset parameters.
         This has 3 options:
-            - model id to an online pretrained PatchTST Model hosted on HuggingFace
-            - A path or url to a saved configuration JSON file
-            - A path to a *directory* containing a configuration file saved
-            using the `~PretrainedConfig.save_pretrained` method
-            or the `~PreTrainedModel.save_pretrained` method
+
+        - model id to an online pretrained PatchTST Model hosted on HuggingFace
+        - A path or url to a saved configuration JSON file
+        - A path to a *directory* containing a configuration file saved
+
+        using the ``~PretrainedConfig.save_pretrained`` method
+        or the ``~PreTrainedModel.save_pretrained`` method
+
     fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
         String to set the fit_strategy of the model.
 
