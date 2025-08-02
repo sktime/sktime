@@ -53,11 +53,11 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
 
-    relative_to : {'y_true', 'y_pred'}, default='y_true'
+    relative_to : {"y_true", "y_pred"}, default="y_true"
         Determines the denominator of the percentage error.
 
-        * If 'y_true', the denominator is the true values,
-        * If 'y_pred', the denominator is the predicted values.
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
 
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
@@ -216,4 +216,5 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]
