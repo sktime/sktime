@@ -1,12 +1,17 @@
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.hierarchical.reconcile._utils import (
     _promote_hierarchical_indexes,
     _recursively_propagate_topdown,
 )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
+    reason="run test only if module has changed",
+)
 @pytest.mark.parametrize(
     "idx_tuple, expected_result",
     [
@@ -92,6 +97,10 @@ def example_data_for_topdown_varied():
     return X, expected
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
+    reason="run test only if module has changed",
+)
 @pytest.mark.parametrize(
     "example_func", [example_data_for_topdown_all_ones, example_data_for_topdown_varied]
 )

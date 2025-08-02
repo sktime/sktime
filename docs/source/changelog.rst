@@ -16,6 +16,132 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.38.4 - 2025-07-17
+---------------------------
+
+Release focusing on bugfixes and ``scikit-learn`` downwards compatibility after 1.7.0
+and increasing test framework reliability.
+
+
+Enhancements
+~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] The trend argument for ARDL forecaster can now also be 'ctt' (:pr:`8062`) :user:`ericjb`
+* [ENH] remove internal broadcasting in ``ChronosForecaster`` in favour of programmatic broadcasting (:pr:`8561`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] more robust tag cloning in multiplexers for classification and regression (:pr:`8550`) :user:`fkiraly`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] move test skip config to estimators (:pr:`8496`) :user:`fkiraly`
+* [ENH] move test skips to estimators for estimators with their own VM (:pr:`8514`) :user:`fkiraly`
+* [ENH] fix some failing doctests (:pr:`8536`) :user:`fkiraly`
+* [ENH] ``tests:libs`` tag to specify library dependencies of estimators for differential testing (:pr:`8513`) :user:`fkiraly`
+* [ENH] ``scikit-learn`` and ``pandas`` downwards compatibility patch (:pr:`8552`) :user:`fkiraly`
+* [ENH] loosen condition for ``skpro`` dependency exception in ``BaseForecaster.predict_proba`` (:pr:`8554`) :user:`fkiraly`
+* [ENH] add conditional testing to ``transformations.hierarchical.reconcile`` module (:pr:`8494`) :user:`fkiraly`
+* [ENH] Move test skip config of ``TapNetClassifier`` from ``tests._config`` to estimator tags (:pr:`8516`) :user:`xenonnn4w`
+* [ENH] Move test skip config of ``CNTCRegressor`` from ``tests._config`` to estimator tags (:pr:`8527`) :user:`Ghxst07`
+* [ENH] Moved test skip config of ``DistanceFeatures`` from ``tests._config`` to estimator tags (:pr:`8520`) :user:`IsaiasRT`
+* [ENH] Moved test skip config of ``ResNetClassifier`` from ``tests._config`` to estimator tags  (:pr:`8564`) :user:`Burnie-Murray`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Notebook Demonstrating Benchmarking of Classifiers (:pr:`8373`) :user:`jgyasu`
+* [DOC] Correct note about unequal-length time series support in ``sktime`` (:pr:`8510`) :user:`jgyasu`
+* [DOC] fix ``TimeMoEForecaster`` doctest (:pr:`8541`) :user:`fkiraly`
+* [DOC] Update the broken ``all-contributors.org`` website link to the correct GitHub repository URL (:pr:`8539`) :user:`Tirath5504`
+* [DOC] Note about package names in ``_check_soft_dependencies`` (:pr:`8529`) :user:`jgyasu`
+* [DOC] fix broken API reference of ``ColumnSelect`` and ``IndexSubset`` (:pr:`8504`) :user:`fkiraly`
+* [DOC] A typo in ``test_all_estimators`` (:pr:`8534`) :user:`phoeenniixx`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] do not trigger VM tests for non-core estimators on framework changes (:pr:`8497`) :user:`fkiraly`
+* [MNT] CI steps to test by estimator with estimator specific dependencies, controlled by tag for separate VM (:pr:`7087`) :user:`fkiraly`, :user:`julianfong`
+* [MNT] fix two instances of empty strategy in GHA (:pr:`8500`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Bump ``actions/setup-python`` from ``4`` to ``5`` (:pr:`8507`) :user:`dependabot[bot]`
+* [MNT] full test run on mid-to-lower dependency version range, 2023 state of core deps (:pr:`4016`) :user:`fkiraly`
+* [MNT] replace ``dorny/paths-filter`` third party action with ``git diff`` call in ``detect-package-change`` (:pr:`8556`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``sklearn`` tag inspection in ``scikit-learn < 1.6`` (:pr:`8546`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Fix ``TimesFM`` ``_safe_import`` (:pr:`8511`) :user:`thearshkumar`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] fix ``run_test_for_module`` usage in ``tests:libs`` tag (:pr:`8548`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Burnie-Murray`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`Ghxst07`,
+:user:`IsaiasRT`,
+:user:`jgyasu`,
+:user:`julianfong`,
+:user:`phoeenniixx`,
+:user:`thearshkumar`,
+:user:`Tirath5504`,
+:user:`xenonnn4w`
+
+
+Version 0.38.3 - 2025-07-04
+---------------------------
+
+Hotfix for failures of ``ChronosForecaster`` and ``TinyTimeMixerForecaster``.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix accidental removal of dataclass types in ``ChronosForecaster`` and ``TinyTimeMixerForecaster`` (:pr:`8488`) :user:`fkiraly`
+
+Version 0.38.2 - 2025-07-03
+---------------------------
+
+``transformers 4.53`` compatibility patch, minor maintenance and documentation updates.
+
+Contents
+~~~~~~~~
+
+* [MNT] CI: ``Add ubuntu-22.04-arm`` runners to enhance arm aarch64 architecture testing and maintenance (:pr:`7695`) :user:`abhishek-iitmadras`
+* [MNT] fix: add ``aarch64`` installation constraint for ``esig`` and ``ts2vg`` (:pr:`8471`) :user:`abhishek-iitmadras`
+* [MNT] Skip mlflow test jobs if ``sktime`` folder or ``pyproject.toml`` is untouched (:pr:`8474`) :user:`yarnabrina`
+* [MNT] replace unsafe imports from ``torch`` and ``transformers`` with ``_safe_import`` pattern (:pr:`8476`) :user:`fkiraly`
+* [MNT] update ``transformers`` imports for 4.53 compatibility (:pr:`8478`) :user:`fkiraly`
+* [DOC] use clearer language in extension template preamble (:pr:`8466`) :user:`fkiraly`
+* [DOC] add missing API reference for ``GreykiteForecaster`` (:pr:`8472`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`abhishek-iitmadras`,
+:user:`fkiraly`,
+:user:`yarnabrina`
+
+
 Version 0.38.1 - 2025-06-26
 ---------------------------
 

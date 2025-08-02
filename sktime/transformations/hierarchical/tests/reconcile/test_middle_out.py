@@ -3,11 +3,16 @@ import functools
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.hierarchical.reconcile._utils import (
     _get_series_for_each_hierarchical_level,
 )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
+    reason="run test only if module has changed",
+)
 @pytest.mark.parametrize(
     "hierarchical_level_nodes",
     [

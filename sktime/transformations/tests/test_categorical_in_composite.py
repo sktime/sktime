@@ -1,14 +1,22 @@
 """Tests for checking composites with categorical data."""
 
 import pandas as pd
+import pytest
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import ColumnEnsembleTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.subset import ColumnSelect
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations")
+    or _check_soft_dependencies("scikit-learn<1.6", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_pipeline_with_categorical():
     """Test pipeline which can handle categorical inputs.
 
@@ -27,6 +35,11 @@ def test_pipeline_with_categorical():
     pipeline.fit_transform(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations")
+    or _check_soft_dependencies("scikit-learn<1.6", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_ColumnEnsemble_with_categorical():
     df = pd.DataFrame(
         {"categorical": ["a", "b", "c", "a", "b", "c"], "num_col": [1, 2, 3, 4, 5, 6]}
