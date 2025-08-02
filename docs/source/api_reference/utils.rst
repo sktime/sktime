@@ -115,6 +115,7 @@ Plotting
     plot_series
     plot_lags
     plot_correlations
+    plot_windows
 
 Estimator Validity Checking
 ---------------------------
@@ -132,4 +133,3 @@ Estimator Validity Checking
     :template: function.rst
 
     check_estimator
-.. autofunction:: sktime.utils.plot_windows
