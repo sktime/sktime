@@ -23,6 +23,24 @@ from sktime.libs.time_llm.layers.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
+imports_list = [
+    torch,
+    nn,
+    transformers,
+    BertConfig,
+    BertModel,
+    BertTokenizer,
+    GPT2Config,
+    GPT2Model,
+    GPT2Tokenizer,
+    LlamaConfig,
+    LlamaModel,
+    LlamaTokenizer,
+]
+
+for imp in imports_list:
+    print(imp, type(imp))
+
 
 class FlattenHead(nn.Module):
     """A module that flattens and transforms the input data."""
