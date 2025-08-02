@@ -331,25 +331,40 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame
+            Ground truth (correct) target values.
+            y can be a pd.DataFrame in one of the following formats:
+
+            * pd.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            * only if the "inner-implements-multilevel" tag is True:
+              pd.DataFrame with row MultiIndex, last level is time index
+
+        y_pred : pandas.DataFrame
+            Predicted values to evaluate.
+            y can be a pd.DataFrame in one of the following formats:
+
+            * pd.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            * only if the "inner-implements-multilevel" tag is True:
+              pd.DataFrame with row MultiIndex, last level is time index
 
         Returns
         -------
         loss : float or np.ndarray
             Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                value is metric averaged over variables (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                i-th entry is metric calculated for i-th variable
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+
+            If ``inner-implements-multilevel`` tag is True, the following should
+            be returned if ``multilevel="raw_values"``:
+            
+            * ``pd.DataFrame`` if ``multilevel="raw_values"``.
+              of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
+              of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
+              metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """
         # multioutput = self.multioutput
         # multilevel = self.multilevel
