@@ -98,8 +98,10 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         - If `fit_strategy` is set to "zero-shot", requires only the `model_path`
         parameter. It will load the model via the `fit` function with the argument
         `model_path` and ignore any passed `y`.
+
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
+
     config : dict, optional, default = {}
         A config dict specifying parameters to initialize an full
         PatchTST model. Missing parameters in the config will be automatically
@@ -110,6 +112,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         model. If `prediction_length` is passed as in smaller than the passed
         `fh` in the `fit` function, the passed `fh` will be used to train the
         model.
+
     training_args : dict, optional, default = None
         Training arguments to use for the model. If this is passed,
         the remaining applicable training arguments will be ignored
