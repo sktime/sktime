@@ -182,13 +182,12 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
         y_true = np.array([3, -0.5, 2, 7, 2])
         y_pred = np.array([2.5, 0.5, 2, 8, 2.25])
-        y_pred_benchmark = np.array([2.45, 0.55, 2.05, 7.8, 2.3])
         wts = np.array([0.1, 0.2, 0.1, 0.3, 2.4])
 
         y_kwargs = {
             "y_true": y_true,
             "y_pred": y_pred,
-            "y_pred_benchmark": y_pred_benchmark,
+            "y_pred_benchmark": y_true,
             "y_train": y_true,
         }
 
