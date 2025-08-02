@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
@@ -53,6 +55,11 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     ----------
     sp : int, default = 1
         Seasonal periodicity of the data
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -131,8 +138,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         multilevel="uniform_average",
         sp=1,
         by_index=False,
+        eps=None,
     ):
         self.sp = sp
+        self.eps = eps
         super().__init__(
             multioutput=multioutput, multilevel=multilevel, by_index=by_index
         )
@@ -177,6 +186,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         multioutput = self.multioutput
         sp = self.sp
 
+        eps = self.eps
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
         raw_values = (y_true - y_pred).abs()
 
         # Calculating the naive forecasting error
@@ -185,7 +198,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
         naive_error = naive_diff.mean()
 
-        raw_values = raw_values / naive_error
+        raw_values = raw_values / np.maximum(naive_error, eps)
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
