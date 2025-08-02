@@ -151,6 +151,7 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform
     capability__inverse_transform__exact
     capability__inverse_transform__range
+    capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
 
@@ -200,3 +201,25 @@ The tags below have limited use in retrieval or inspection of objects.
     x_inner_mtype
     y_inner_mtype
     visual_block_kind
+
+.. _dev_testing_tags:
+
+Testing and CI tags
+-------------------
+
+These tags control behaviour of estimators in the ``sktime`` continuous integration
+tests.
+
+They are primarily useful for developers managing CI behaviour of individual objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    tests__core
+    tests__vm
+    tests__skip_all
+    tests__skip_by_name

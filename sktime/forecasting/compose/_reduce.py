@@ -1936,7 +1936,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         or a different number of observations.
 
         * `True` : Uniform window of length (total observations - maximum
-          forecasting horizon). Note: Currently, there are no missings arising
+          forecasting horizon). Note: Currently, there are no missing arising
           from window length due to backwards imputation in
           `ReductionTransformer`. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
@@ -1953,6 +1953,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -2020,6 +2023,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
         lags = self._lags
@@ -2060,7 +2064,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         yt = prep_skl_df(yt)
 
         estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator

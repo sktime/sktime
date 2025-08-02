@@ -106,6 +106,10 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -171,7 +175,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def steps_(self):
-        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -440,6 +444,10 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -493,7 +501,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def steps_(self):
-        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
