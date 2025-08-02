@@ -178,6 +178,30 @@ detectors.
     capability__multivariate
     capability__missing_values
 
+
+.. _metric_tags:
+
+Tags for metrics
+----------------
+
+This section lists tags applying to time series metrics (``"metric"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    lower_is_better
+    capability__sample_weight
+    scitype__y_pred
+    requires_y_true
+    requires_y_pred_benchmark
+    requires_y_train
+    inner_implements_multilevel
+
+
 .. _dev_common_tags:
 
 Common developer tags
