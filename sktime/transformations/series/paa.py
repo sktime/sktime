@@ -31,7 +31,7 @@ class PAA(BaseTransformer):
     .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
         Dimensionality Reduction for Fast Similarity Search
         in Large Time Series Databases.
-        Knowledge and Information Systems 3, 263–286 (2001).
+        Knowledge and Information Systems 3, 263-286 (2001).
         https://doi.org/10.1007/PL00011669
 
     Examples
@@ -60,7 +60,7 @@ class PAA(BaseTransformer):
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, frames=8, frame_size=0):

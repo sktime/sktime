@@ -35,9 +35,22 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_PANEL = [
+    "nested_univ",
+    "numpy3D",
+    "numpyflat",
+    "pd-multiindex",
+    "pd-wide",
+    "pd-long",
+    "df-list",
+    "gluonts_ListDataset_panel",
+    "gluonts_PandasDataset_panel",
+    "polars_panel",
+]
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -111,8 +124,8 @@ def _check_equal_index(X):
 
     Returns
     -------
-    indexes : list of indixes
-        List of indixes with one index for each column
+    indexes : list of indexes
+        List of indexes with one index for each column
     """
     # TODO handle 1d series, not only 2d dataframes
     # TODO assumes columns are typed (i.e. all rows for a given column have
@@ -236,8 +249,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     else:
         raise ValueError(
-            f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}"
+            f"Expected input is pandas Series or pandas DataFrame, but found: {type(X)}"
         )
 
     if return_numpy:
@@ -845,7 +857,11 @@ def from_nested_to_multi_index_adp(obj, store=None):
         time_index = store["index_names"][1]
     else:
         instance_index = obj.index.names[0]
-        time_index = "timepoints"
+        ser = obj.iloc[0, 0]
+        if hasattr(ser, "index"):
+            time_index = ser.index.names[0]
+        else:
+            time_index = None
 
     res = from_nested_to_multi_index(
         X=obj, instance_index=instance_index, time_index=time_index
@@ -1121,6 +1137,30 @@ if _check_soft_dependencies("dask", severity="none"):
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_pd_as_panel(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
+        convert_polars_to_pd_as_panel
+    )
+
+    def convert_pd_to_polars_as_panel(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
+        convert_pd_to_polars_as_panel
+    )
+
+    _extend_conversions(
+        "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
     )
 
 if _check_soft_dependencies("gluonts", severity="none"):

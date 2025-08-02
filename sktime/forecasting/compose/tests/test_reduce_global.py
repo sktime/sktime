@@ -28,17 +28,9 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-sklearn_zero_x = _check_soft_dependencies(
-    "scikit-learn<1.4",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-)
+sklearn_zero_x = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
-if _check_soft_dependencies(
-    "scikit-learn<1.0",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-):
+if _check_soft_dependencies("scikit-learn<1.0", severity="none"):
     from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 

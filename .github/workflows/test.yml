@@ -19,18 +19,40 @@ jobs:
     steps:
       - name: repository checkout step
         uses: actions/checkout@v4
+
       - name: python environment step
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: install pre-commit
         run: python3 -m pip install pre-commit
-      - id: changed-files
-        name: identify modified files
-        uses: tj-actions/changed-files@v44
-      - name: run pre-commit hooks on modified files
-        run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tr '\n' ' ')
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+
+      - name: Print changed files
+        run: |
+          echo "Changed files:" && echo "$CHANGED_FILES" | tr ' ' '\n'
+
+      - name: Run pre-commit on changed files
+        run: |
+          if [ -n "$CHANGED_FILES" ]; then
+            pre-commit run --color always --files $CHANGED_FILES --show-diff-on-failure
+          else
+            echo "No changed files to check."
+          fi
+
       - name: check missing __init__ files
+
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
@@ -39,14 +61,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow]
+          python -m pip install .[notebooks,binder,dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
@@ -56,35 +84,134 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev,mlflow]
+          python -m pip install .[notebooks,binder]
+
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: Run example notebooks
         run: build_tools/run_blogposts.sh
         shell: bash
 
-  detect-package-change:
+  detect-changed-classes:
     needs: code-quality
+    runs-on: ubuntu-latest
+    outputs:
+      obj_list: ${{ steps.get-change-list.outputs.obj_list }}
+      obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Get list of names of changed classes
+        id: get-change-list
+        run: |
+          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; obj_list = _get_all_changed_classes(vm=True); print(json.dumps(obj_list))')
+          OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
+          echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
+          echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
+          echo "::set-output name=obj_list::$OBJ_LIST"
+          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
+
+      - name: Print changed classes
+        run: |
+          echo "Number of changed classes: $OBJ_LIST_LENGTH"
+          echo "Changed classes: $OBJ_LIST"
+
+  test-est:
+    needs: detect-changed-classes
+    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Install dependencies for ${{ matrix.flag }}
+        run: |
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
+          pip install -r deps.txt
+        continue-on-error: true
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests with ${{ matrix.flag }}
+        env:
+          FLAG: ${{ matrix.flag }}
+        shell: bash
+        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
+
+  detect-package-change:
+    needs: [code-quality, detect-changed-classes]
     name: detect package changes
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     outputs:
-      sktime: ${{ steps.filter.outputs.sktime }}
+      sktime: ${{ steps.check.outputs.sktime }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            sktime:
-              - sktime/**
-              - pyproject.toml
+          fetch-depth: 0  # Needed to access the full git history
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Check if sktime or pyproject.toml changed
+        id: check
+        run: |
+          if git diff --quiet origin/main -- sktime/ pyproject.toml; then
+            echo "No sktime-related changes"
+            echo "sktime=false" >> $GITHUB_OUTPUT
+          else
+            echo "Detected changes in sktime"
+            echo "sktime=true" >> $GITHUB_OUTPUT
+          fi
 
   test-nodevdeps:
     needs: detect-package-change
@@ -156,13 +283,19 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --matrixdesign=False --timeout=600" test_softdeps_full
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
-    needs: test-nosoftdeps
+    needs: detect-package-change
+    if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mlflow-version: ['2.9.2', '3.latest']
+    name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -172,7 +305,11 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+            python -m pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
+          else
+            python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+          fi
 
       - name: Show dependencies
         run: python -m pip list
@@ -197,8 +334,9 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OS packages
-        run: brew install libomp
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
@@ -210,10 +348,33 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
+  test-lowerdeps:
+    needs: test-nosoftdeps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          python-version: 3.11
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev,dependencies_lower]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
   detect:
     needs: test-nosoftdeps
@@ -263,12 +424,14 @@ jobs:
 
   test-full:
     needs: test-nosoftdeps
+
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-        os: [ubuntu-latest, macos-13, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macos-13, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -284,9 +447,12 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras_pandas2,dev,dl] --no-cache-dir
+        shell: bash
+        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
@@ -297,17 +463,12 @@ jobs:
       - name: Run tests
         run: make test_without_datasets
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   test-unix-pandas1:
     needs: test-nosoftdeps
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -336,8 +497,3 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}

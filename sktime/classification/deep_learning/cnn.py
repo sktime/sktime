@@ -15,6 +15,9 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
 
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
     Parameters
     ----------
     n_epochs       : int, default = 2000
@@ -51,11 +54,6 @@ class CNNClassifier(BaseDeepClassifier):
           ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
 
-    Notes
-    -----
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
-
     References
     ----------
     .. [1] Zhao et. al, Convolutional neural networks for time series classification,
@@ -75,7 +73,8 @@ class CNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["James-Large", "TonyBagnall"],
+        "authors": ["hfawaz", "James-Large"],
+        # hfawaz for dl-4-tsc
         "maintainers": ["James-Large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

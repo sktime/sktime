@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Splitter that uses an sklearn splitter to split by instance."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ksharma6"]
 
 __all__ = [
     "InstanceSplitter",
@@ -10,11 +10,11 @@ __all__ = [
 
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
+from sktime.utils.multiindex import apply_split
 
 
 class InstanceSplitter(BaseSplitter):
@@ -62,15 +62,10 @@ class InstanceSplitter(BaseSplitter):
             y = pd.MultiIndex.from_arrays([zeros, y])
 
         inst_ix = y.droplevel(-1).unique()
-        iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
 
         for y_train_inst_iloc, y_test_inst_iloc in self.cv.split(inst_ix):
-            y_train_inst_loc = inst_ix[np.array(y_train_inst_iloc)]
-            y_test_inst_loc = inst_ix[np.array(y_test_inst_iloc)]
-            tr_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in y_train_inst_loc]
-            tt_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in y_test_inst_loc]
-            y_train_iloc = np.concatenate(tr_np)
-            y_test_iloc = np.concatenate(tt_np)
+            y_train_iloc = apply_split(y, y_train_inst_iloc)
+            y_test_iloc = apply_split(y, y_test_inst_iloc)
             yield y_train_iloc, y_test_iloc
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:

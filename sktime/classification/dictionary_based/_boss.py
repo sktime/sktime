@@ -11,7 +11,6 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -24,11 +23,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
-if _check_soft_dependencies(
-    "scikit-learn>=1.3",
-    package_import_alias={"scikit-learn": "sklearn"},
-    severity="none",
-):
+if _check_soft_dependencies("scikit-learn>=1.3", severity="none"):
     from sklearn.utils.parallel import delayed
 else:
     from sklearn.utils.fixes import delayed
@@ -138,7 +133,7 @@ class BOSSEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:train_estimate": True,
@@ -506,6 +501,9 @@ class IndividualBOSS(BaseClassifier):
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
         ``word_length`` (since the last "n" letters can be removed).
+    store_histogram : bool, default = False
+        Whether to store the histograms of words in ``fit``. If False, avoids
+        storing the histograms in memory, which can be large for some datasets.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
@@ -518,6 +516,12 @@ class IndividualBOSS(BaseClassifier):
         Number of classes. Extracted from the data.
     classes_ : list
         The classes labels.
+    histograms_ : list of dict
+        A list of dictionaries, where each dictionary is a word histogram for an
+        individual time series instance. The length of the list is equal to
+        the number of instances passed to ``fit``. Each dictionary maps SFA words
+        (str) to their frequency (int). Only created if ``store_histogram``
+        is ``True``.
 
     See Also
     --------
@@ -551,7 +555,7 @@ class IndividualBOSS(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -567,6 +571,7 @@ class IndividualBOSS(BaseClassifier):
         typed_dict="deprecated",
         use_boss_distance=True,
         feature_selection="none",
+        store_histogram=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -579,6 +584,7 @@ class IndividualBOSS(BaseClassifier):
 
         self.save_words = save_words
         self.typed_dict = typed_dict
+        self.store_histogram = store_histogram
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -588,6 +594,7 @@ class IndividualBOSS(BaseClassifier):
         self._accuracy = 0
         self._subsample = []
         self._train_predictions = []
+        self.histograms_ = []
 
         super().__init__()
 
@@ -627,7 +634,38 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
         self._class_vals = y
 
+        if self.store_histogram:
+            self._create_histograms()
+
         return self
+
+    def _create_histograms(self):
+        if hasattr(self._transformer, "vocabulary_"):
+            vocab = self._transformer.vocabulary_
+        elif hasattr(self._transformer, "words"):
+            vocab = self._transformer.words
+        else:
+            vocab = None
+
+        if hasattr(self._transformed_data, "toarray") and vocab is not None:
+            arr = self._transformed_data.toarray()
+            if isinstance(vocab, dict):
+                if all(isinstance(v, int) for v in vocab.values()):
+                    idx_to_word = {v: k for k, v in vocab.items()}
+                else:
+                    idx_to_word = vocab
+            else:
+                idx_to_word = {i: str(i) for i in range(arr.shape[1])}
+            self.histograms_ = [
+                {
+                    str(idx_to_word[idx]): int(count)
+                    for idx, count in enumerate(row)
+                    if count > 0
+                }
+                for row in arr
+            ]
+        else:
+            self.histograms_ = self._transformed_data
 
     def _predict(self, X):
         """Predict class values of all instances in X.
@@ -711,6 +749,8 @@ def _dist_wrapper(dist_matrix, X, Y, s, XX_all=None, XY_all=None):
 
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
     """Find the euclidean distance between all pairs of bop-models."""
+    from joblib import Parallel, effective_n_jobs
+
     if use_boss_distance:
         if Y is None:
             Y = X

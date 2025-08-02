@@ -21,7 +21,7 @@ class AutoTS(BaseForecaster):
     ----------
     model_name : str, optional (default="fast")
         The name of the model. NOTE: Overwrites the model_list parameter.
-        For using only one model oder a default model_list.
+        For using only one model over a default model_list.
     model_list : str
         The list of models to use.
         str alias or list of names of model objects to use now can be a dictionary
@@ -207,9 +207,15 @@ class AutoTS(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        # packaging info
+        # --------------
         "authors": ["winedarksea", "MBristle"],  # winedarksea for autots library
         "maintainers": ["MBristle"],
+        "python_dependencies": ["autots", "pandas", "statsmodels", "scipy"],
+        "python_version": ">=3.6",
+        # estimator type
+        # --------------
+        "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,  # TODO: add capability
@@ -217,8 +223,6 @@ class AutoTS(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability
         "requires-fh-in-fit": True,
-        "python_dependencies": ["autots", "pandas", "statsmodels", "scipy"],
-        "python_version": ">=3.6",
     }
 
     def __init__(

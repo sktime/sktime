@@ -63,7 +63,7 @@ class Croston(BaseForecaster):
     References
     ----------
     .. [1] J. D. Croston. Forecasting and stock control for intermittent demands.
-       Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+       Operational Research Quarterly (1970-1977), 23(3):pp. 289-303, 1972.
     .. [2] N. Vandeput. Forecasting Intermittent Demand with the Croston Model.
 
        https://towardsdatascience.com/croston-forecast-model-for-intermittent-demand-360287a17f5f
@@ -77,6 +77,10 @@ class Croston(BaseForecaster):
         # estimator type
         # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "ignores-exogeneous-X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, smoothing=0.1):

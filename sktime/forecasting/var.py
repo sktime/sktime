@@ -49,7 +49,7 @@ class VAR(_StatsModelsAdapter):
         hqic : Hannan-Quinn
         bic : Bayesian a.k.a. Schwarz
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -58,7 +58,7 @@ class VAR(_StatsModelsAdapter):
     ----------
     [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
     Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
-    Econometric Reviews, 31(1), 60–83, 2012.
+    Econometric Reviews, 31(1), 60-83, 2012.
 
     Examples
     --------
@@ -76,7 +76,16 @@ class VAR(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["thayeylolu", "aiwalter", "lbventura"],
+        "authors": [
+            "yogabonito",
+            "ChadFulton",
+            "bashtage",
+            "josef-pkt",
+            "thayeylolu",
+            "aiwalter",
+            "lbventura",
+        ],
+        # yogabonito, ChadFulton, bashtage, josef-pkt for statsmodels VAR
         "maintainers": "lbventura",
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
@@ -84,7 +93,6 @@ class VAR(_StatsModelsAdapter):
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "univariate-only": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,

@@ -97,6 +97,9 @@ class TransformIf(_DelegatedTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -205,13 +208,13 @@ class TransformIf(_DelegatedTransformer):
         -------
         self : a fitted instance of the estimator
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if_estimator_ = self.if_estimator.clone()
 
-        if scitype(if_estimator_) == "forecaster":
+        if is_scitype(if_estimator_, "forecaster"):
             self.if_estimator_ = if_estimator_.fit(y=X, X=y)
-        elif scitype(if_estimator_) == "transformer":
+        elif is_scitype(if_estimator_, "transformer"):
             self.if_estimator_ = if_estimator_.fit(X=X, y=y)
         else:
             try:

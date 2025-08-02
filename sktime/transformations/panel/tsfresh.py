@@ -6,6 +6,7 @@ __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import check_n_jobs
 
 
@@ -23,7 +24,11 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "tsfresh",
+        "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
+        # if tsfresh is <0.21, it is incompatible with scipy>=1.15
+        # therefore, we need to restrict the version of scipy
+        # the dependency tag translates to:
+        # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
     }
 
     def __init__(
@@ -92,6 +97,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             "profiling_sorting": PROFILING_SORTING,
             "profiling_filename": PROFILING_FILENAME,
             "profile": PROFILING,
+            "distributor": None,
         }
 
         # Replace defaults with user defined parameters
@@ -192,10 +198,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -391,10 +396,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
     test_for_binary_target_binary_feature : str or None, default=None
         Which test to be used for binary target, binary feature (currently unused).
     test_for_binary_target_real_feature : str or None, default=None
@@ -484,6 +488,16 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
+        self.test_for_binary_target_binary_feature = (
+            test_for_binary_target_binary_feature
+        )
+        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
+        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
+        self.test_for_real_target_real_feature = test_for_real_target_real_feature
+        self.fdr_level = fdr_level
+        self.hypotheses_independent = hypotheses_independent
+        self.ml_task = ml_task
+
         super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
@@ -497,16 +511,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=profiling_sorting,
             distributor=distributor,
         )
-
-        self.test_for_binary_target_binary_feature = (
-            test_for_binary_target_binary_feature
-        )
-        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
-        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
-        self.test_for_real_target_real_feature = test_for_real_target_real_feature
-        self.fdr_level = fdr_level
-        self.hypotheses_independent = hypotheses_independent
-        self.ml_task = ml_task
 
         self.default_fs_parameters_ = self._get_selection_params()
 
@@ -619,6 +623,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -667,6 +672,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -730,4 +736,17 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "disable_progressbar": True,
             "show_warnings": False,
         }
-        return [params, params2]
+        params = [params, params2]
+
+        if _check_estimator_deps(cls, severity="none"):
+            from tsfresh.utilities.distribution import MapDistributor
+
+            params3 = {
+                "default_fc_parameters": "minimal",
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "distributor": MapDistributor(),
+            }
+            params.append(params3)
+
+        return params

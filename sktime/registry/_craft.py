@@ -70,11 +70,8 @@ def craft(spec):
     """
     register = dict(all_estimators())  # noqa: F841
 
-    for x in _extract_class_names(spec):
-        exec(f"{x} = register['{x}']")
-
     try:
-        obj = eval(spec)
+        obj = eval(spec, globals(), register)
     except Exception:
         from textwrap import indent
 
@@ -85,8 +82,9 @@ def build_obj():
         """
             + spec_fun
         )
-        exec(spec_fun, locals())
-        obj = eval("build_obj()")
+
+        exec(spec_fun, register, register)
+        obj = eval("build_obj()", register, register)
 
     return obj
 
@@ -94,15 +92,22 @@ def build_obj():
 def deps(spec):
     """Get PEP 440 dependency requirements for a craft spec.
 
+    This will result in a list of PEP 440 compatible requirement string.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all imports were present
+        i.e., a string that executes to construct an object if all imports were present.
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
@@ -124,10 +129,24 @@ def deps(spec):
 
         new_deps = cls.get_class_tag("python_dependencies")
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        if new_deps is None:
+            new_deps_coerced = []
         elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+            new_deps_coerced = [new_deps]
+        elif isinstance(new_deps, str) and len(new_deps) == 0:
+            new_deps_coerced = []
+        elif isinstance(new_deps, list):
+            new_deps_coerced = [_resolve_disjunctions(dep) for dep in new_deps]
+        else:
+            new_deps_coerced = new_deps
+
+        dep_strs += new_deps_coerced
 
         reqs = list(set(dep_strs))
 
@@ -165,7 +184,8 @@ def imports(spec):
             )
         cls = register[x]
 
-        import_str = f"from {cls.__module__} import {x}"
+        import_module = _get_public_import(cls.__module__)
+        import_str = f"from {import_module} import {x}"
         import_strs += [import_str]
 
     if len(import_strs) == 0:
@@ -174,3 +194,15 @@ def imports(spec):
         imports_str = "\n".join(sorted(import_strs))
 
     return imports_str
+
+
+def _get_public_import(module_path: str) -> str:
+    """Get the public import path from full import path.
+
+    Removes everything from the first private submodule (starting with '_') onwards.
+    """
+    parts = module_path.split(".")
+    for i, part in enumerate(parts):
+        if part.startswith("_"):
+            return ".".join(parts[:i])  # Keep only part before first private submodule
+    return module_path  # Return the original path if no private submodules are found

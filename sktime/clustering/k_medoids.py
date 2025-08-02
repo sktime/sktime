@@ -8,11 +8,11 @@ import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMedoids(TimeSeriesLloyds):
+class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
     """Time series K-medoids implementation.
 
     Parameters
@@ -82,6 +82,14 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         # --------------
         "authors": ["chrisholder", "TonyBagnall"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

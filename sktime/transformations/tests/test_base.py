@@ -27,6 +27,7 @@ from sktime.transformations.panel.tsfresh import (
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
@@ -444,7 +445,8 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
 @pytest.mark.skipif(
@@ -484,7 +486,8 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert valid, "fit.transform does not return a Hierarchical when given Hierarchical"
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be number of hierarchy levels times number of time points
-    assert len(Xt) == 2 * 4 * 12
+    expected_length = len(scenario.args["transform"]["X"])
+    assert len(Xt) == expected_length
 
 
 @pytest.mark.skipif(
@@ -737,3 +740,130 @@ def test_vectorize_reconstruct_correct_hierarchy():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == Xt.index).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_wrong_y_is_not_passed_to_transformer():
+    """Tests that y incompatible with internal type is not passed to transformer.
+
+    Failure case of bug #6417.
+    """
+    from datetime import datetime
+
+    import numpy as np
+    import pandas as pd
+
+    from sktime.pipeline import make_pipeline
+    from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    from sktime.transformations.compose import FitInTransform
+    from sktime.transformations.panel.interpolate import TSInterpolator
+    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
+
+    # this test requires the KalmanFilterTransformerFP to be runnable
+    if not _check_estimator_deps(KalmanFilterTransformerFP, severity="none"):
+        return None
+
+    # Define the multi-index
+    index = pd.MultiIndex.from_tuples(
+        [
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.877500", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                0,
+                datetime.strptime("2024-04-20 18:22:14.903000", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.453400", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+            (
+                1,
+                datetime.strptime("2024-04-20 18:24:42.478800", "%Y-%m-%d %H:%M:%S.%f"),
+            ),
+        ],
+        names=["instance", "Time"],
+    )
+
+    X = pd.DataFrame(
+        {"LeftControllerVelocity_0": [-0.01, -0.01, 0.06, 0.06]}, index=index
+    )
+    y = np.array([1, 0.5])
+
+    # noise filter only, this is a reduced MRE
+    noise_filter_only = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    noise_filter_only.fit(X, y)
+
+    # in pipeline, this is the full MRE from bug #6417
+    noise_filter = FitInTransform(KalmanFilterTransformerFP(1, denoising=True))
+    interpolator = TSInterpolator(4000)
+    regressor = KNeighborsTimeSeriesRegressor()
+
+    model = make_pipeline(noise_filter, interpolator, regressor)
+    model.fit(X, y)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_series_to_primitives_hierarchical():
+    """Test that the correct index is returned for hierarchical Series-to-Primitives.
+
+    Tests the vectorization case and the plain case.
+
+    Setting: transformer has tags
+        "scitype:transform-input" = "Series"
+        "scitype:transform-output" = "Panel"
+
+        Case 1: "X_inner_mtype" does not support Hierarchical, vectorizes
+        Case 2: "X_inner_mtype" does support Hierarchical, does not vectorize
+
+    X input to fit/transform has Hierarchical mtype
+    X output from fit/transform should be Table with hierarchical index, one level less
+    """
+    # case 1
+    # example of Series-to-Primitives not supporting Hierarchical
+    cls_vectorizes = SummaryTransformer
+    est = cls_vectorizes.create_test_instance()
+    # ensure cls is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of cls, but we need to choose another example)
+    assert "Series" in inner_X_scitypes(est)
+    assert "Panel" not in inner_X_scitypes(est)
+    assert "Hierarchical" not in inner_X_scitypes(est)
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Primitives"
+
+    X = _make_hierarchical()
+    Xt = est.fit_transform(X)
+    ix = Xt.index
+
+    # check that Xt.index is the same as X.index with time level dropped and made unique
+    assert (X.index.droplevel(-1).unique() == ix).all()
+
+    # case 2
+    from sktime.clustering.dbscan import TimeSeriesDBSCAN
+    from sktime.registry import coerce_scitype
+
+    # example of Series-to-Primitives supporting Hierarchical
+    clust = TimeSeriesDBSCAN.create_test_instance()
+    est = coerce_scitype(clust, "transformer")
+
+    # ensure est is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of est, but we need to choose another example)
+    assert "Hierarchical" in inner_X_scitypes(est)
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Primitives"
+
+    X = _make_hierarchical()
+    Xt = est.fit_transform(X)
+    ix = Xt.index
+
+    # check that Xt.index is the same as X.index with time level dropped and made unique
+    assert (X.index.droplevel(-1).unique() == ix).all()

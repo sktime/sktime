@@ -10,7 +10,7 @@ using ``estimator_types="classifier"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "classifier" in the "Estimator type" dropdown).
 
 
@@ -58,20 +58,37 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    CNTCClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    ResNetClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    cnn.CNNClassifier
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    lstmfcn.LSTMFCNClassifier
+    macnn.MACNNClassifier
+    mcdcnn.MCDCNNClassifier
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    tapnet.TapNetClassifier
+
+Foundation models
+-----------------
+
+.. currentmodule:: sktime.classification.foundation_models
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMClassifier
+
 
 Dictionary-based
 ----------------

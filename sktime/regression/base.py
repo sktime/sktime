@@ -29,7 +29,6 @@ import numpy as np
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 
 
 class BaseRegressor(BasePanelMixin):
@@ -58,6 +57,7 @@ class BaseRegressor(BasePanelMixin):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
@@ -69,6 +69,7 @@ class BaseRegressor(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -82,7 +83,6 @@ class BaseRegressor(BasePanelMixin):
     def __init__(self):
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
         self._X_metadata = {}
 
         # required for compatibility with some sklearn interfaces
@@ -166,15 +166,25 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit the estimator to.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -233,14 +243,6 @@ class BaseRegressor(BasePanelMixin):
 
         # Convert data as dictated by the regressor tags
         X = self._convert_X(X, X_mtype)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
@@ -254,25 +256,37 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
+            predicted regression labels
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         self.check_is_fitted()

@@ -9,7 +9,6 @@ __all__ = ["Arsenal"]
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -103,7 +102,7 @@ class Arsenal(BaseClassifier):
     >>> from sktime.classification.kernel_based import Arsenal
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = Arsenal(num_kernels=100, n_estimators=5) # doctest: +SKIP
     >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Arsenal(...)
@@ -115,7 +114,7 @@ class Arsenal(BaseClassifier):
         # --------------
         "authors": ["MatthewMiddlehurst", "kachayev"],
         "maintainers": ["kachayev"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -163,6 +162,10 @@ class Arsenal(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Fit Arsenal to training data.
 
@@ -183,6 +186,8 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -319,6 +324,8 @@ class Arsenal(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        from joblib import Parallel, delayed
+
         y_probas = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._predict_proba_for_estimator)(
                 X,
@@ -333,6 +340,8 @@ class Arsenal(BaseClassifier):
         )
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         from sktime.datatypes import convert_to
 
         self.check_is_fitted()
@@ -457,12 +466,20 @@ class Arsenal(BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
-            params = {"num_kernels": 20, "n_estimators": 5}
-        else:
-            params = {
-                "num_kernels": 10,
-                "n_estimators": 2,
-                "save_transformed_data": True,
-            }
+            return {"num_kernels": 20, "n_estimators": 5}
 
-        return params
+        params0 = {
+            "num_kernels": 10,
+            "n_estimators": 2,
+            "save_transformed_data": True,
+        }
+        params1 = {
+            "num_kernels": 23,
+            "n_estimators": 20,
+            "rocket_transform": "minirocket",
+            "max_dilations_per_kernel": 28,
+            "n_features_per_kernel": 2,
+            "contract_max_n_estimators": 113,
+            "save_transformed_data": True,
+        }
+        return [params0, params1]

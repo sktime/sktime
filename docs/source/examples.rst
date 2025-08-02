@@ -48,9 +48,6 @@ Time Series Classification, Regression, Clustering
     :glob:
 
     examples/02_classification.ipynb
-    examples/02a_classification_multivariate_cnn.ipynb
-    examples/02b_classification_multivariate_lstmfcn.ipynb
-    examples/02c_classification_multivariate_inceptiontime.ipynb
 
 Transformations, pipelines
 ==========================
@@ -68,6 +65,7 @@ Changepoint, Anomaly or Outlier Detection
 .. nbgallery::
     :glob:
 
+    examples/07_detection_anomaly_changepoints.ipynb
     examples/annotation/*
 
 Time series Distances, Kernels, Alignment

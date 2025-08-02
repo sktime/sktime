@@ -14,7 +14,7 @@ __all__ = [
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import (
     _make_classification_y,
@@ -76,11 +76,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if scitype(obj) not in (
-            "classifier",
-            "early_classifier",
-            "regressor",
-        ):
+        if not is_scitype(obj, ["classifier", "early_classifier", "regressor"]):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate

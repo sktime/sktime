@@ -49,8 +49,8 @@ class KinematicFeatures(BaseTransformer):
         * "a_abs" - absolute acceleration
         * "curv" - curvature
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.transformations.series.kinematic import KinematicFeatures
@@ -77,7 +77,7 @@ class KinematicFeatures(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
