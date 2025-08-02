@@ -185,7 +185,7 @@ def all_estimators(
         if isinstance(obj, (list, tuple)):
             return [_coerce_to_str(o) for o in obj]
         if isclass(obj):
-            obj = obj.get_tag("object_type")
+            obj = obj.get_class_tag("object_type")
         return obj
 
     def _coerce_to_list_of_str(obj):

@@ -58,11 +58,19 @@ Pipeline building - Structural
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnSelect
     FitInTransform
     InvertTransform
     YtoX
     IxToX
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
 
 Pipeline building - Broadcasting and apply-map
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -895,3 +903,17 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     :template: class.rst
 
     Reconciler
+
+For usage of Reconciliation with pipelines, these transformations below are more
+efficient and should be preferred:
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BottomUpReconciler
+    MiddleOutReconciler
+    NonNegativeOptimalReconciler
+    OptimalReconciler
+    TopdownReconciler

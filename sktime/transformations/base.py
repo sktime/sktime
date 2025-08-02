@@ -136,7 +136,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": False,
-        # does the transformer natively support categorical in exogeneous X?
+        # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -1304,7 +1304,7 @@ class BaseTransformer(BaseEstimator):
         #   skipped for output_scitype = "Primitives"
         #       since then the output always is a pd.DataFrame
         if case == "case 2: higher scitype supported" and output_scitype == "Series":
-            if self.get_tags()["scitype:transform-input"] == "Panel":
+            if self.get_tag("scitype:transform-input") == "Panel":
                 # Conversion from Series to Panel done for being compatible with
                 # algorithm. Thus, the returned Series should stay a Series.
                 pass
@@ -1368,7 +1368,7 @@ class BaseTransformer(BaseEstimator):
 
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
-            elif self.get_tags()["scitype:transform-input"] == "Panel":
+            elif self.get_tag("scitype:transform-input") == "Panel":
                 # Converting Panel to Series
                 if X_input_scitype == "Hierarchical":
                     # Input was Hierarchical, but output has dropped one level.

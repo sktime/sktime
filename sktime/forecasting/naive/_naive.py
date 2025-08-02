@@ -129,6 +129,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):

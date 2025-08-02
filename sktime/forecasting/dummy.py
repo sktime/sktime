@@ -69,6 +69,9 @@ class ForecastKnownValues(BaseForecaster):
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, y_known, method=None, fill_value=None, limit=None):
@@ -160,7 +163,7 @@ class ForecastKnownValues(BaseForecaster):
                 unique_levels = idx.droplevel(-1).unique()
                 fh_abs = pd.MultiIndex.from_tuples(
                     ((*level, time) for level in unique_levels for time in fh_abs),
-                    name=idx.names,
+                    names=idx.names,
                 )
 
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)

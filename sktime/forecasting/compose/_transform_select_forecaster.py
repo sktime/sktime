@@ -33,7 +33,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         A series-to-primitives sk-time transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
 
-        If a clusterer is used, it must suport cluster assignment,
+        If a clusterer is used, it must support cluster assignment,
         i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
@@ -107,6 +107,9 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "maintainers": ["shlok191"],
         "python_version": None,
         "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -195,7 +198,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         # Finally, dynamically adding implementation of probabilistic
         # functions depending on the tags set.
-        if self.get_tags()["capability:pred_int"]:
+        if self.get_tag("capability:pred_int"):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
