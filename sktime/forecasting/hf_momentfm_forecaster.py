@@ -514,6 +514,16 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        import platform
+
+        os = platform.system()
+        if os == "Darwin":
+            if _check_soft_dependencies("torch", severity="none"):
+                import torch
+
+                torch.backends.mps.is_available = lambda: False
+            else:
+                pass
         params_set = []
         params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
         params_set.append(params1)
