@@ -13,10 +13,12 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
+from skbase.base import BaseObject
+
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class DatasetDownloadStrategy:
+class DatasetDownloadStrategy(BaseObject):
     """Base class for dataset download strategies."""
 
     def download(self, dataset_name, download_path=None, force_download=False):
@@ -81,7 +83,19 @@ class DatasetDownloadStrategy:
 
 
 class HuggingFaceDownloader(DatasetDownloadStrategy):
-    """Download datasets using the Hugging Face Hub snapshot mechanism."""
+    """Download datasets using the Hugging Face Hub snapshot mechanism.
+
+    Examples
+    --------
+    >>> from sktime.datasets._dataset_downloader import HuggingFaceDownloader
+    >>> hf_repo_name = "sktime/tsc-datasets"
+    >>> downloader = HuggingFaceDownloader(hf_repo_name=hf_repo_name)
+    >>> downloader.download(dataset_name="Beef")
+
+    References
+    ----------
+    https://huggingface.co/docs/huggingface_hub/en/guides/download
+    """
 
     _tags = {
         "python_dependencies": "huggingface-hub",
@@ -147,7 +161,15 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
 
 class URLDownloader(DatasetDownloadStrategy):
-    """Strategy for downloading datasets from URLs (with zip extraction)."""
+    """Strategy for downloading datasets from URLs (with zip extraction).
+
+    Examples
+    --------
+    >>> from sktime.datasets._dataset_downloader import URLDownloader
+    >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
+    >>> downloader = URLDownloader(base_urls=urls)
+    >>> downloader.download(dataset_name="Beef")
+    """
 
     def __init__(self, base_urls):
         self.base_urls = base_urls
@@ -232,6 +254,14 @@ class DatasetDownloader(DatasetDownloadStrategy):
         List of URLs to attempt if Hugging Face fails.
     retries : int, default=1
         Number of retries for each strategy.
+
+    Examples
+    --------
+    >>> from sktime.datasets._dataset_downloader import DatasetDownloader
+    >>> hf_repo_name = "sktime/tsc-datasets"
+    >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
+    >>> downloader = DatasetDownloader(hf_repo_name=hf_repo_name, fallback_urls=urls)
+    >>> downloader.download(dataset_name="Beef")
     """
 
     def __init__(self, hf_repo_name=None, fallback_urls=None, retries=1):
