@@ -388,17 +388,19 @@ class ForecastingBenchmark(BaseBenchmark):
 
         for task_id, task in self.tasks.entities.items():
             for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(task_id, estimator_id) and (
-                    force_rerun == "none"
-                    or (
-                        isinstance(force_rerun, list)
-                        and estimator_id not in force_rerun
-                    )
-                ):
+                should_run = False
+
+                if force_rerun == "all":
+                    should_run = True
+                elif isinstance(force_rerun, list) and estimator_id in force_rerun:
+                    should_run = True
+                elif not results.contains(task_id, estimator_id):
+                    should_run = True
+
+                if not should_run:
                     logging.info(
-                        f"Skipping validation - model: "
-                        f"{task_id} - {estimator_id}"
-                        ", as found prior result in results."
+                        f"Skipping validation - model: {task_id} - {estimator_id}, "
+                        f"already present and not requested for rerun."
                     )
                     continue
 
