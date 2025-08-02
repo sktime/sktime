@@ -37,7 +37,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "maintainers": ["magittan"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],

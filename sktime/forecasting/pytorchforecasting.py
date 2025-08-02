@@ -402,7 +402,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     _tags = {
         "capability:global_forecasting": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
