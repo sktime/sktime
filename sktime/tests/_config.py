@@ -4,13 +4,36 @@ Also contains some other configs, these should be gradually refactored
 to registry or to individual tags, where applicable.
 """
 
-__all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = [
+    "EXCLUDE_ESTIMATORS",
+    "EXCLUDED_TESTS",
+    "MATRIXDESIGN",
+    "CYTHON_ESTIMATORS",
+    "ONLY_CHANGED_MODULES",
+]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
 
+# --------------------
+# configs for test run
+# --------------------
+
+# whether to subsample estimators per os/version partition matrix design
+# default is False, can be set to True by pytest --matrixdesign True flag
+MATRIXDESIGN = False
+
+# whether to test only estimators that require cython, C compiler such as gcc
+# default is False, can be set to True by pytest --only_cython_estimators True flag
+CYTHON_ESTIMATORS = False
+
+# whether to test only estimators from modules that are changed w.r.t. main
+# default is False, can be set to True by pytest --only_changed_modules True flag
+ONLY_CHANGED_MODULES = False
+
+
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # SFA is non-compliant with any transformer interfaces, #2064
-    "SFA",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
@@ -23,8 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
-    "TapNetClassifier",
-    "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
@@ -48,13 +69,13 @@ EXCLUDE_ESTIMATORS = [
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
-    "DartsXGBModel",
+    # models with large weights
+    "MomentFMForecaster",
     # Large datasets
     "M5Dataset",
     # Test estimators
     "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
-    "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
     "PytorchForecastingNHiTS",
     "PytorchForecastingDeepAR",
@@ -62,20 +83,21 @@ EXCLUDE_ESTIMATORS = [
     "STDBSCAN",
     # Temporarily remove RRF from tests, while #7380 is not merged
     "RecursiveReductionForecaster",
-    # DistanceFeatures does ont work for hierarchical data, see #8077
-    "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
-    "CNTCRegressor",
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "VARMAX",
+    "SARIMAX",
     "SCINetForecaster",  # known bug #7871
+    "MAPAForecaster",  # known bug #8039
 ]
 
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
     # issue when prediction intervals, see #3479 and #4504
     # known issue with prediction intervals that needs fixing, tracked in #4181
@@ -89,8 +111,6 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
-    # test fails in the Panel case for Differencer, see #2522
-    "Differencer": ["test_transform_inverse_transform_equivalent"],
     # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
@@ -116,20 +136,10 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",  # see 6201
         "test_multiprocessing_idempotent",  # see 6637
     ],
-    # TapNet fails due to Lambda layer, see #3539 and #3616
-    "TapNetClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
-    ],
-    # `test_fit_idempotent` fails with `AssertionError`, see #3616
-    "ResNetClassifier": [
-        "test_fit_idempotent",
     ],
     "ResNetRegressor": [
         "test_fit_idempotent",
@@ -182,9 +192,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "InceptionTimeRegressor": [
-        "test_fit_idempotent",
-    ],
-    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -243,11 +250,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    # pickling problem
-    "ChronosForecaster": [
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     "ClusterSegmenter": [
         "test_doctest_examples",
         "test_predict_points",
@@ -286,6 +288,8 @@ EXCLUDED_TESTS = {
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
+# DO NOT ADD ESTIMATORS HERE ANYMORE
+# ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
@@ -323,9 +327,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "IndividualBOSS",
         "IndividualTDE",
         "InformationGainSegmentation",
-        "LTSFDLinearForecaster",
-        "LTSFLinearForecaster",
-        "LTSFNLinearForecaster",
         "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",
@@ -383,8 +384,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "TimeBinner",
-        "TimeSeriesForestClassifier",
-        "TimeSeriesForestRegressor",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",

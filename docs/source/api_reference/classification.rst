@@ -58,23 +58,37 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    CNTCClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    GRUClassifier
-    GRUFCNNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    MVTSTransformerClassifier
-    ResNetClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    cnn.CNNClassifier
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    lstmfcn.LSTMFCNClassifier
+    macnn.MACNNClassifier
+    mcdcnn.MCDCNNClassifier
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    tapnet.TapNetClassifier
+
+Foundation models
+-----------------
+
+.. currentmodule:: sktime.classification.foundation_models
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMClassifier
+
 
 Dictionary-based
 ----------------

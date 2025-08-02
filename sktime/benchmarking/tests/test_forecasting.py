@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import KFold
 
-from sktime.benchmarking.benchmarks import coerce_estimator_and_id
+from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
@@ -195,7 +195,7 @@ def test_forecastingbenchmark_global_mode(
     expected_results_df,
     scorers,
 ):
-    """Test benchmarking a forecaster estimator in gloabl mode."""
+    """Test benchmarking a forecaster estimator in global mode."""
     from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
 
     benchmark = ForecastingBenchmark()
@@ -203,7 +203,7 @@ def test_forecastingbenchmark_global_mode(
     params = {
         "trainer_params": {
             # the training process is not deterministic
-            # train 10 epoches to make sure loss is low enough
+            # train 10 epochs to make sure loss is low enough
             "max_epochs": 1,
         },
         "model_params": {
@@ -258,7 +258,7 @@ def test_forecastingbenchmark_global_mode(
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
 def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     """Test coerce_estimator_and_id return expected output."""
-    assert coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
+    assert _coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
         "coerce_estimator_and_id does not return the expected output."
     )
 

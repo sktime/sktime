@@ -92,6 +92,9 @@ def test_all_tags(estimator_scitype):
 
     VALID_SCITYPES_SET = set(get_obj_scitype_list() + get_obj_scitype_list(mixin=True))
 
+    # stepout for "distribution" due to silent copy of Normal in sktime
+    VALID_SCITYPES_SET.add("distribution")
+
     # checks return type specification (see docstring)
     for tag in tags:
         assert isinstance(tag, tuple)

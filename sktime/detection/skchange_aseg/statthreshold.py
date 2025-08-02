@@ -6,7 +6,9 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.anomaly_detectors.anomalisers")
+@_placeholder_record(
+    ["skchange.anomaly_detectors", "skchange.anomaly_detectors.anomalisers"]
+)
 class StatThresholdAnomaliser(BaseDetector):
     """Anomaly detection based on thresholding values of segment statistics, skchange.
 

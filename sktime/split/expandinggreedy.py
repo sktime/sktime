@@ -9,6 +9,8 @@ __all__ = [
 ]
 __author__ = ["davidgilbertson"]
 
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 
@@ -62,12 +64,17 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": True}
 
-    def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
+    def __init__(
+        self,
+        test_size: Union[int, float],
+        folds: int = 5,
+        step_length: Optional[int] = None,
+    ):
         super().__init__()
         self.test_size = test_size
         self.folds = folds
         self.step_length = step_length
-        self.fh = np.arange(test_size) + 1
+        self.fh = np.arange(test_size) + 1 if isinstance(test_size, int) else None
 
         # no algorithm implemented that is faster for float than naive iteration
         if isinstance(test_size, float):
@@ -77,7 +84,8 @@ class ExpandingGreedySplitter(BaseSplitter):
         test_size = self.test_size
 
         if isinstance(test_size, float):
-            _test_size = np.ceil(len(y) * test_size)
+            _test_size = int(np.ceil(len(y) * test_size))
+            self.fh = np.arange(_test_size) + 1
         else:
             _test_size = test_size
 
