@@ -23,24 +23,6 @@ from sktime.libs.time_llm.layers.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
-imports_list = [
-    torch,
-    nn,
-    transformers,
-    BertConfig,
-    BertModel,
-    BertTokenizer,
-    GPT2Config,
-    GPT2Model,
-    GPT2Tokenizer,
-    LlamaConfig,
-    LlamaModel,
-    LlamaTokenizer,
-]
-
-for imp in imports_list:
-    print(imp, type(imp))
-
 
 class FlattenHead(nn.Module):
     """A module that flattens and transforms the input data."""
@@ -159,6 +141,24 @@ class Model(nn.Module):
             self.bert_config.output_attentions = True
             self.bert_config.output_hidden_states = True
             try:
+                imports_list = [
+                    torch,
+                    nn,
+                    transformers,
+                    BertConfig,
+                    BertModel,
+                    BertTokenizer,
+                    GPT2Config,
+                    GPT2Model,
+                    GPT2Tokenizer,
+                    LlamaConfig,
+                    LlamaModel,
+                    LlamaTokenizer,
+                ]
+
+                for imp in imports_list:
+                    print(imp, type(imp))
+
                 self.llm_model = BertModel.from_pretrained(
                     "google-bert/bert-base-uncased",
                     trust_remote_code=True,
