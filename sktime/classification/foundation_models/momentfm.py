@@ -390,16 +390,16 @@ class MomentFMClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import platform
+        # import platform
 
-        os = platform.system()
-        if os == "Darwin":
-            if _check_soft_dependencies("torch", severity="none"):
-                import torch
+        # os = platform.system()
+        # if os == "Darwin":
+        #     if _check_soft_dependencies("torch", severity="none"):
+        #         import torch
 
-                torch.backends.mps.is_available = lambda: False
-            else:
-                pass
+        #         torch.backends.mps.is_available = lambda: False
+        #     else:
+        #         pass
 
         params_set = []
         params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "batch_size": 64}

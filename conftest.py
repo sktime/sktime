@@ -25,6 +25,8 @@ i.e., intersection of estimators satisfying the conditions
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+import pytest
+
 __author__ = ["fkiraly"]
 
 
@@ -57,3 +59,9 @@ def pytest_configure(config):
         _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
+
+
+@pytest.fixture(autouse=True)
+def disable_mps(monkeypatch):
+    """Disable MPS for all tests."""
+    monkeypatch.setattr("torch._C._mps_is_available", lambda: False)
