@@ -112,6 +112,8 @@ ENV/
 env.bak/
 venv.bak/
 sktime-dev/
+myenv/
+sktime_venv/
 
 # mkdocs documentation
 /site
@@ -173,3 +175,7 @@ examples/local/
 profile.svg
 test_output/*
 mlruns/*
+
+# Custom requirements files for development
+requirements.txt
+test_output*
