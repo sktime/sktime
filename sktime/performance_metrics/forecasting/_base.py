@@ -360,7 +360,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
             If ``inner-implements-multilevel`` tag is True, the following should
             be returned if ``multilevel="raw_values"``:
-            
+
             * ``pd.DataFrame`` if ``multilevel="raw_values"``.
               of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
