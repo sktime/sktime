@@ -26,9 +26,8 @@ class GreykiteForecaster(BaseForecaster):
     Parameters
     ----------
     forecast_config : ForecastConfig, optional
-        Configuration object for Greykite's forecasting pipeline. If None,
-         a default configuration
-        is created.
+        Configuration object for Greykite's forecasting pipeline.
+        If None, a default configuration is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
     model_template : str, optional

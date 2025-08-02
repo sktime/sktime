@@ -15,62 +15,28 @@
 
 import math
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-else:
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
 
-    class torch:
-        """Dummy class if torch is not installed."""
-
-        class Tensor:
-            """Dummy class if torch is not installed."""
-
-        class LongTensor:
-            """Dummy class if torch is not installed."""
-
-        class FloatTensor:
-            """Dummy class if torch is not installed."""
-
-    class nn:
-        """Dummy class if torch is not installed."""
-
-        class Module:
-            """Dummy class if torch is not installed."""
-
-    class F:
-        """Dummy class if torch is not installed."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import Cache, DynamicCache, PreTrainedModel, StaticCache
-    from transformers.activations import ACT2FN
-    from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
-    from transformers.modeling_outputs import (
-        MoeCausalLMOutputWithPast,
-        MoeModelOutputWithPast,
-    )
-else:
-
-    class Cache:
-        """Dummy class if transformers is not installed."""
-
-    class StaticCache:
-        """Dummy class if transformers is not installed."""
-
-    class PreTrainedModel:
-        """Dummy class if transformers is not installed."""
-
-    class MoeModelOutputWithPast:
-        """Dummy class if transformers is not installed."""
-
-    class MoeCausalLMOutputWithPast:
-        """Dummy class if transformers is not installed."""
+Cache = _safe_import("transformers.Cache")
+DynamicCache = _safe_import("transformers.DynamicCache")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
+StaticCache = _safe_import("transformers.StaticCache")
+ACT2FN = _safe_import("transformers.activations.ACT2FN")
+_prepare_4d_causal_attention_mask = _safe_import(
+    "transformers.modeling_attn_mask_utils._prepare_4d_causal_attention_mask"
+)
+MoeCausalLMOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeCausalLMOutputWithPast"
+)
+MoeModelOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeModelOutputWithPast"
+)
 
 
 from .timemoe_config import TimeMoeConfig
@@ -90,13 +56,12 @@ def _get_unpad_data(attention_mask):
 
 
 def load_balancing_loss_func(
-    gate_logits: Union[torch.Tensor, tuple[torch.Tensor], list[torch.Tensor]],
+    gate_logits,
     top_k: int,
     num_experts: int = None,
-    attention_mask: Optional[torch.Tensor] = None,
-) -> torch.Tensor:
-    r"""
-    Compute auxiliary load balancing loss as in Switch Transformer.
+    attention_mask=None,
+):
+    r"""Compute auxiliary load balancing loss as in Switch Transformer.
 
     See Switch Transformer (https://arxiv.org/abs/2101.03961) for more details.
     This function implements the loss function presented in equations (4) - (6) of the
@@ -118,6 +83,7 @@ def load_balancing_loss_func(
 
     Returns
     -------
+        torch.Tensor
         The auxiliary loss.
     """
     if (
@@ -187,7 +153,7 @@ def load_balancing_loss_func(
 
 
 # Copied from transformers.models.llama.modeling_llama.repeat_kv
-def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
+def repeat_kv(hidden_states, n_rep: int):
     """
     Equivalent of torch.repeat_interleave(x, dim=1, repeats=n_rep).
 
@@ -512,9 +478,8 @@ class TimeMoeSparseExpertsLayer(nn.Module):
         )
         self.shared_expert_gate = torch.nn.Linear(config.hidden_size, 1, bias=False)
 
-    def forward(self, hidden_states: torch.Tensor):
-        """
-        Forward pass through the sparse experts layer.
+    def forward(self, hidden_states):
+        """Forward pass through the sparse experts layer.
 
         Parameters
         ----------
@@ -643,15 +608,14 @@ class TimeMoeAttention(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Cache] = None,
+        hidden_states,
+        attention_mask=None,
+        position_ids=None,
+        past_key_value=None,
         output_attentions: bool = False,
         **kwargs,
-    ) -> tuple[torch.Tensor, Optional[torch.Tensor], Optional[tuple[torch.Tensor]]]:
-        """
-        Forward pass through the attention layer.
+    ):
+        """Forward pass through the attention layer.
 
         Parameters
         ----------
@@ -670,7 +634,7 @@ class TimeMoeAttention(nn.Module):
 
         Returns
         -------
-        tuple
+        tuple[torch.Tensor, Optional[torch.Tensor], Optional[tuple[torch.Tensor]]]
             Output states, attention weights (optional), and cached states (optional)
         """
         if "padding_mask" in kwargs:
@@ -805,19 +769,14 @@ class TimeMoeDecoderLayer(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[tuple[torch.Tensor]] = None,
+        hidden_states,
+        attention_mask=None,
+        position_ids=None,
+        past_key_value=None,
         output_attentions: Optional[bool] = False,
         use_cache: Optional[bool] = False,
         **kwargs,
-    ) -> tuple[
-        torch.FloatTensor,
-        torch.FloatTensor,
-        Optional[torch.FloatTensor],
-        Optional[torch.FloatTensor],
-    ]:
+    ):
         """
         Perform a forward pass through the model.
 
@@ -958,16 +917,16 @@ class TimeMoeModel(TimeMoePreTrainedModel):
 
     def forward(
         self,
-        input_ids: torch.FloatTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[list[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
+        input_ids=None,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        inputs_embeds=None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-    ) -> Union[tuple, MoeModelOutputWithPast]:
+    ):
         """
         Perform a forward pass of the model.
 
@@ -1277,19 +1236,19 @@ class TimeMoeForPrediction(TimeMoePreTrainedModel, TSGenerationMixin):
 
     def forward(
         self,
-        input_ids: torch.FloatTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[list[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.FloatTensor] = None,
-        loss_masks: Optional[torch.FloatTensor] = None,
+        input_ids=None,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        inputs_embeds=None,
+        labels=None,
+        loss_masks=None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
         max_horizon_length: Optional[int] = None,
-    ) -> Union[tuple, MoeCausalLMOutputWithPast]:
+    ):
         """
         Perform a forward pass through the model.
 

@@ -13,6 +13,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.adapters._safe_call import _method_has_param_and_default
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
+from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
 
 class TabularToSeriesAdaptor(BaseTransformer):
@@ -177,23 +178,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        def sklearn_supports_categorical(estimator):
-            """Whether the sklearn estimator supports categorical."""
-            if _check_soft_dependencies("sklearn<1.6", severity="none"):
-                if hasattr(transformer, "_get_tags"):
-                    categorical_list = ["categorical", "1dlabels", "2dlabels"]
-                    tag_values = transformer._get_tags()["X_types"]
-                    return any(val in tag_values for val in categorical_list)
-            else:
-                from sklearn.utils import get_tags
-
-                cat1 = get_tags(estimator).input_tags.categorical
-                cat2 = get_tags(estimator).target_tags.one_d_labels
-                cat3 = get_tags(estimator).target_tags.two_d_labels
-                return cat1 or cat2 or cat3
-            return False
-
-        if sklearn_supports_categorical(transformer):
+        if get_sklearn_tag(transformer, "capability:categorical"):
             self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
@@ -438,6 +423,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
         from sklearn.feature_selection import VarianceThreshold
         from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
             "transformer": StandardScaler(),
@@ -462,6 +449,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
             "pooling": "global",
             "input_type": "numpy",
         }
+
+        # LabelEncoder has inconsistent API on older scikit-learn versions
+        if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
+            return [params1, params2, params3, params4, params6, params7, params8]
 
         return [params1, params2, params3, params4, params5, params6, params7, params8]
 
