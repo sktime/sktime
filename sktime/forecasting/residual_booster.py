@@ -7,11 +7,12 @@ Which is an easy way to turn a forecaster without exogenous capability into one 
 # copyright: sktime developers, BSD-3-Clause
 
 __all__ = ["ResidualBoostingForecaster"]
-__author__ = ["Sanchay117"]
+__author__ = ["Sanchay117", "felipeangelimvieira"]
 
+import pandas as pd
 from sklearn.base import clone
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class ResidualBoostingForecaster(BaseForecaster):
@@ -31,7 +32,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     Example
     -------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting import ResidualBoostingForecaster
+    >>> from sktime.forecasting.residual_booster import ResidualBoostingForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sklearn.linear_model import LinearRegression
@@ -45,17 +46,15 @@ class ResidualBoostingForecaster(BaseForecaster):
     ... )
     >>> booster = ResidualBoostingForecaster(base, resid).fit(y, X=X, fh=fh)
     >>> y_pred = booster.predict(fh, X=X)
-    >>> print(y_pred.head())
     """
 
     _tags = {
-        "authors": ["Sanchay117"],
+        "authors": ["Sanchay117", "felipeangelimvieira"],
         "capability:pred_int": False,
-        "capability:exogenous": False,
+        "ignores-exogeneous-X": True,
         "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "python_dependencies": ["pmdarima"],
     }
 
     def __init__(self, base_forecaster, residual_forecaster):
@@ -64,14 +63,12 @@ class ResidualBoostingForecaster(BaseForecaster):
         super().__init__()
 
         exog = self.base_forecaster.get_tag(
-            "capability:exogenous"
-        ) or self.residual_forecaster.get_tag("capability:exogenous")
+            "ignores-exogeneous-X"
+        ) or self.residual_forecaster.get_tag("ignores-exogeneous-X")
 
         miss = self.base_forecaster.get_tag(
             "capability:missing_values"
         ) and self.residual_forecaster.get_tag("capability:missing_values")
-
-        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
 
         in_sample = self.base_forecaster.get_tag(
             "capability:insample"
@@ -83,9 +80,8 @@ class ResidualBoostingForecaster(BaseForecaster):
 
         self.set_tags(
             **{
-                "capability:exogenous": exog,
+                "ignores-exogeneous-X": exog,
                 "capability:missing_values": miss,
-                "capability:pred_int": pred_int,
                 "capability:insample": in_sample,
                 "capability:pred_int:insample": pred_int_insample,
             }
@@ -101,13 +97,26 @@ class ResidualBoostingForecaster(BaseForecaster):
         3. Fit clone of residual_forecaster to X, r
         """
         # clone A: fit on (y,X) to obtain in-sample residuals
-        self.base_insample_ = clone(self.base_forecaster).fit(y, X, fh=y.index)
-        residuals = self.base_insample_.predict_residuals(y=y, X=X)
+        # 1. in-sample residuals
+        self.base_insample_ = clone(self.base_forecaster).fit(y, X, fh)
+
+        # Forecast insample
+        if isinstance(y.index, pd.MultiIndex):
+            time_idx = y.index.get_level_values(-1).unique()
+        else:
+            time_idx = y.index
+        insample_fh = ForecastingHorizon(time_idx, is_relative=False)
+
+        insample_preds = self.base_insample_.predict(fh=insample_fh, X=X)
+
+        residuals = y - insample_preds
 
         # clone B: fit a fresh copy that knows the final fh
+        # 2. future base model with final fh
         self.base_future_ = clone(self.base_forecaster).fit(y, X, fh)
 
         # clone C: fit residual model on errors
+        # 3. residual model
         self.residual_forecaster_ = clone(self.residual_forecaster).fit(
             residuals, X, fh
         )
@@ -140,9 +149,7 @@ class ResidualBoostingForecaster(BaseForecaster):
         params : dict or list of dict
             Parameters to create test instances of the estimator.
         """
-        from sklearn.linear_model import LinearRegression
-
-        from sktime.forecasting.compose import make_reduction
+        from sktime.forecasting.arima import StatsModelsARIMA
         from sktime.forecasting.naive import NaiveForecaster
 
         params1 = {
@@ -151,11 +158,7 @@ class ResidualBoostingForecaster(BaseForecaster):
         }
 
         params2 = {
-            "base_forecaster": make_reduction(
-                estimator=LinearRegression(),
-                strategy="recursive",
-                window_length=3,
-            ),
+            "base_forecaster": StatsModelsARIMA(order=(1, 0, 0)),
             "residual_forecaster": NaiveForecaster(strategy="mean"),
         }
 
