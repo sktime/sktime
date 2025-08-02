@@ -558,15 +558,39 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame
+            Ground truth (correct) target values.
+            y can be a pd.DataFrame in one of the following formats:
+
+            * pd.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            * only if the "inner-implements-multilevel" tag is True:
+              pd.DataFrame with row MultiIndex, last level is time index
+
+        y_pred : pandas.DataFrame
+            Predicted values to evaluate.
+            y can be a pd.DataFrame in one of the following formats:
+
+            * pd.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            * only if the "inner-implements-multilevel" tag is True:
+              pd.DataFrame with row MultiIndex, last level is time index
+
+        kwargs : dict, optional
+            Additional keyword arguments passed to the metric function.
+            Can include:
+
+            * y_pred_benchmark : pandas.DataFrame, same format as y_pred
+              Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+              Required only if metric requires benchmark predictions,
+              as indicated by tag ``requires-y-pred-benchmark``.
+              Otherwise, can be passed to ensure interface consistency, but is ignored.
+            * y_train : pandas.DataFrame, same format as y_true
+              Training data used to normalize the error metric.
+              Required only if metric requires training data,
+              as indicated by tag ``requires-y-train``.
+              Otherwise, can be passed to ensure interface consistency, but is ignored.
+            * sample_weight : 1D array-like, or callable, default=None
+              Sample weights or callable for each time point.
+              If ``None``, the time indices are considered equally weighted.
 
         Returns
         -------
