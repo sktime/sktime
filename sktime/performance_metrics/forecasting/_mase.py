@@ -181,11 +181,13 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
 
         # Calculating the naive forecasting error
         naive_forecast_true = y_train[sp:]
-        naive_forecast_pred = y_train[: len(y_train) - sp]
+        naive_forecast_pred = y_train[:-sp]
         naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
         naive_error = naive_diff.mean()
 
         raw_values = raw_values / naive_error
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)
 
