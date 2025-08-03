@@ -20,14 +20,18 @@ EXPECTED_FILES = ["Beef_TRAIN.ts", "Beef_TEST.ts"]
 )
 def test_downloader_strategy_behavior(tmp_path, strategy):
     """Test different dataset download strategies."""
-    if not strategy.available:
-        pytest.skip(f"{type(strategy).__name__} not available")
-
     download_path = tmp_path / "test_data"
     dataset_path = download_path / DATASET_NAME
 
     if dataset_path.exists():
         shutil.rmtree(dataset_path)
+
+    if not strategy.available:
+        with pytest.raises(ModuleNotFoundError):
+            strategy.download(
+                DATASET_NAME, download_path=download_path, force_download=False
+            )
+        return
 
     # download for the first time
     strategy.download(DATASET_NAME, download_path=download_path, force_download=False)
