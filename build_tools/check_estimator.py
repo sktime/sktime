@@ -16,7 +16,7 @@ def pytest_generate_tests(metafunc):
 
         test_names = _get_test_names_for_obj(craft(estimator))
         fixtures = [(estimator, test_name) for test_name in test_names]
-        names = [f"{estimator}::{test_name}" for test_name in test_names]
+        names = [f"{estimator}-{test_name}" for test_name in test_names]
         metafunc.parametrize("estimator,test_name", fixtures, ids=names)
 
 
