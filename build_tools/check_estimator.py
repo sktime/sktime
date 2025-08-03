@@ -18,7 +18,6 @@ def pytest_generate_tests(metafunc):
     """Generate tests for the estimator specified in the command line."""
     estimator = metafunc.config.getoption("estimator")
     if estimator == "__none__":
-        params = []
         metafunc.parametrize("estimator,test_name", [], ids=[])
 
     elif "estimator" in metafunc.fixturenames and "test_name" in metafunc.fixturenames:
