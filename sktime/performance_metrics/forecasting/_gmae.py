@@ -150,7 +150,8 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
               if `multioutput="raw_values"``
               i-th entry is the, metric calculated for i-th variable
         """
-        gmae = gmean(np.abs(y_true - y_pred), axis=0, weights=sample_weight)
+        abs_err_np = (y_true - y_pred).abs().values.flatten()
+        gmae = gmean(abs_err_np, axis=0, weights=sample_weight)
         gmae = pd.Series(gmae, index=y_true.columns)
 
         return self._handle_multioutput(gmae, self.multioutput)
