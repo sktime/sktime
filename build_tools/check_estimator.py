@@ -21,9 +21,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("estimator,test_name", [], ids=[])
 
     elif "estimator" in metafunc.fixturenames and "test_name" in metafunc.fixturenames:
-        from sktime.utils.estimator_checks import _get_test_names_from_class
+        from sktime.registry import craft
+        from sktime.utils.estimator_checks import _get_test_names_for_obj
 
-        test_names = _get_test_names_from_class(estimator)
+        test_names = _get_test_names_for_obj(craft(estimator))
         fixtures = [(estimator, test_name) for test_name in test_names]
         names = [f"{estimator}::{test_name}" for test_name in test_names]
         metafunc.parametrize("estimator,test_name", fixtures, ids=names)
