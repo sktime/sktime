@@ -143,7 +143,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
 
             check_sample_weight_generator(sample_weight_generator)
 
-        self.sp = sp
         self.sample_weight_generator = sample_weight_generator
 
         self.sp = sp
@@ -191,6 +190,14 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         if eps is None:
             eps = np.finfo(np.float64).eps
 
+        sample_weight_generator = kwargs.get(
+            "sample_weight_generator", self.sample_weight_generator
+        )
+        if sample_weight_generator is not None:
+            sample_weights = sample_weight_generator(y_true, y_pred, **kwargs)
+            if sample_weights is not None:
+                kwargs["sample_weights"] = sample_weights
+
         raw_values = (y_true - y_pred).abs()
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
@@ -227,4 +234,5 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         """
         params1 = {}
         params2 = {"sp": 2}
-        return [params1, params2]
+        params3 = {"sp": 1, "sample_weight_generator": None}
+        return [params1, params2, params3]
