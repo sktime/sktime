@@ -20,16 +20,22 @@ def pytest_generate_tests(metafunc):
     """Generate tests for the estimator specified in the command line."""
     estimator = metafunc.config.getoption("estimator")
 
-    if estimator == "__none__":
-        pytest.skip("No estimator specified, skipping test.")
-    elif "estimator" in metafunc.fixturenames:
-        metafunc.parametrize("estimator", [estimator], ids=[estimator])
+    if "estimator" in metafunc.fixturenames:
+        if estimator == "__none__":
+            est_list = []
+        else:
+            est_list = [estimator]
 
-    if "test_name" in metafunc.fixturenames:
+        metafunc.parametrize("estimator", est_list, ids=est_list)
+
+    if "test_name" in metafunc.fixturenames and estimator != "__none__":
         from sktime.utils.estimator_checks import _get_test_names_from_class
 
         test_names = _get_test_names_from_class(estimator)
         metafunc.parametrize("test_name", test_names, ids=test_names)
+    elif "test_name" in metafunc.fixturenames:
+        # If no specific estimator is provided, we skip the test_name parameterization
+        metafunc.parametrize("test_name", [], ids=[])
 
 
 def test_estimator(estimator, test_name):
