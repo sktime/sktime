@@ -10,6 +10,7 @@ the lower the better.
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import _relative_error
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
 )
@@ -154,30 +155,3 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
         relative_errors = self._get_weighted_df(relative_errors, **kwargs)
 
         return self._handle_multioutput(relative_errors, multioutput)
-
-    def _relative_error(self, y_true, y_pred, y_pred_benchmark):
-        """Calculate relative error for observations to benchmark method.
-
-        Parameters
-        ----------
-        y_true : pd.DataFrame
-            Ground truth (correct) target values
-        y_pred : pd.DataFrame
-            Forecasted values
-        y_pred_benchmark : pd.DataFrame
-            Forecasted values from benchmark method
-
-        Returns
-        -------
-        relative_error : pd.DataFrame
-            Relative errors
-        """
-        eps = np.finfo(np.float64).eps
-
-        denominator = np.where(
-            y_true - y_pred_benchmark >= 0,
-            np.maximum((y_true - y_pred_benchmark), eps),
-            np.minimum((y_true - y_pred_benchmark), -eps),
-        )
-
-        return (y_true - y_pred) / denominator
