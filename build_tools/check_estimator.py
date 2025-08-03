@@ -4,16 +4,6 @@ Used in test-est job for single-estimator-VM, and for manual testing via pytest.
 """
 
 
-def pytest_addoption(parser):
-    """Add command line options for pytest."""
-    parser.addoption(
-        "--estimator",
-        action="store",
-        default="__none__",
-        help="Estimator to test, e.g., 'NaiveForecaster'",
-    )
-
-
 def pytest_generate_tests(metafunc):
     """Generate tests for the estimator specified in the command line."""
     estimator = metafunc.config.getoption("estimator")

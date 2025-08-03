@@ -49,7 +49,10 @@ def pytest_addoption(parser):
         "--estimator",
         action="store",
         default="__none__",
-        help="Estimator to test, e.g., 'NaiveForecaster'",
+        help=(
+            "Estimator to test, e.g., 'NaiveForecaster'. "
+            "Used only build_tools/check_estimator.py"
+        ),
     )
 
 
