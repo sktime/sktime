@@ -60,7 +60,7 @@ def test_downloader_strategy_behavior(tmp_path, strategy):
     for fname in EXPECTED_FILES:
         fpath = dataset_path / fname
         assert fpath.exists()
-        # timestamp after third download
+        # timestamp after the third download
         new_timestamp = fpath.stat().st_mtime
         assert new_timestamp > old_timestamps[fname], (
             f"Expected {fname} to be re-downloaded (newer timestamp), "
