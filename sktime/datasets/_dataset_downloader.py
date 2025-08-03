@@ -29,7 +29,8 @@ class DatasetDownloadStrategy(BaseObject):
         dataset_name : str
             Name of the dataset to download.
         download_path : str or Path, optional
-            Local directory where the dataset should be saved.
+            Local directory where the dataset should be saved,
+            None defaults to sktime/datasets/local_data.
         force_download : bool, default=False
             Whether to force re-download the dataset even if it's cached locally.
 
@@ -67,11 +68,11 @@ class DatasetDownloadStrategy(BaseObject):
         ----------
         dataset_name : str
             Name of the dataset to download.
-        download_path : Path
-            The root directory where the dataset folder should be created.
-        force_download : bool
-            Whether to force the download even if a local copy might exist.
-            Subclasses should respect this flag.
+        download_path : str or Path, optional
+            Local directory where the dataset should be saved,
+            None defaults to sktime/datasets/local_data.
+        force_download : bool, default=False
+            Whether to force re-download the dataset even if it's cached locally.
 
         Raises
         ------
@@ -84,6 +85,13 @@ class DatasetDownloadStrategy(BaseObject):
 
 class HuggingFaceDownloader(DatasetDownloadStrategy):
     """Download datasets using the Hugging Face Hub snapshot mechanism.
+
+    Parameters
+    ----------
+    hf_repo_name: str
+        Name of the dataset repository.
+        Must be in the organisation/repository format, e.g.,
+        "sktime/tsc-datasets", "sktime/tsf-datasets"
 
     Examples
     --------
@@ -118,8 +126,9 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         ----------
         dataset_name : str
             Name of the dataset folder to download from the Hub.
-        download_path : Path
-            The local root directory to save the dataset folder into.
+        download_path : str or Path, optional
+            Local directory where the dataset should be saved,
+            None defaults to sktime/datasets/local_data.
         force_download : bool
             Passed to `snapshot_download` to force re-downloading.
 
@@ -163,6 +172,14 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 class URLDownloader(DatasetDownloadStrategy):
     """Strategy for downloading datasets from URLs (with zip extraction).
 
+    Parameters
+    ----------
+    base_urls: str or list of str
+        Direct URL or list of direct URLs to downloadable files
+        (e.g., .zip archives).
+        Each URL must point to the actual file to be downloaded,
+        not to an index or landing page.
+
     Examples
     --------
     >>> from sktime.datasets._dataset_downloader import URLDownloader
@@ -186,8 +203,9 @@ class URLDownloader(DatasetDownloadStrategy):
         ----------
         dataset_name : str
             Name of the dataset. This is used to name the final output directory.
-        download_path : Path
-            The local root directory to save the extracted dataset into.
+        download_path : str or Path, optional
+            Local directory where the dataset should be saved,
+            None defaults to sktime/datasets/local_data.
         force_download : bool
             If True, any existing local directory will be removed before extraction.
 
@@ -197,7 +215,7 @@ class URLDownloader(DatasetDownloadStrategy):
             If downloading from all provided URLs fails.
         """
         last_error = None
-        for url in self.base_urls:
+        for url in [self.base_urls]:
             try:
                 self._download_and_extract(
                     url, download_path, dataset_name, force=force_download
@@ -249,9 +267,9 @@ class DatasetDownloader(DatasetDownloadStrategy):
     Parameters
     ----------
     hf_repo_name : str
-        Hugging Face repository name, e.g., "sktime/tsf-datasets".
-    fallback_urls : list of str
-        List of URLs to attempt if Hugging Face fails.
+        Hugging Face repository name, e.g., "sktime/tsc-datasets".
+    fallback_urls : str or list of str
+        URL or List of URLs to attempt if previous strategy fails.
     retries : int, default=1
         Number of retries for each strategy.
 
@@ -284,8 +302,9 @@ class DatasetDownloader(DatasetDownloadStrategy):
         ----------
         dataset_name : str
             Name of the dataset to download.
-        download_path : Path
-            The root directory where the dataset folder should be created.
+        download_path : str or Path, optional
+            Local directory where the dataset should be saved,
+            None defaults to sktime/datasets/local_data.
         force_download : bool
             Whether to force the download for each attempt.
 
