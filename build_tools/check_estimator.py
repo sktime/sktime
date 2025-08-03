@@ -3,8 +3,6 @@
 Used in test-est job for single-estimator-VM, and for manual testing via pytest.
 """
 
-import pytest
-
 
 def pytest_addoption(parser):
     """Add command line options for pytest."""
