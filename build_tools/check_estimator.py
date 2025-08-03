@@ -12,7 +12,7 @@ def pytest_addoption(parser):
         "--estimator",
         action="store",
         default="__none__",
-        help="Custom string parameter for this file",
+        help="Estimator to test, e.g., 'NaiveForecaster'",
     )
 
 

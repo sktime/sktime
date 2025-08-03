@@ -45,6 +45,12 @@ def pytest_addoption(parser):
         default=False,
         help="test only estimators from modules that have changed compared to main",
     )
+    parser.addoption(
+        "--estimator",
+        action="store",
+        default="__none__",
+        help="Estimator to test, e.g., 'NaiveForecaster'",
+    )
 
 
 def pytest_configure(config):
