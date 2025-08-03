@@ -5,10 +5,9 @@ Used in test-est job for single-estimator-VM, and for manual testing via pytest.
 
 import pytest
 
-from sktime.utils.estimator_checks import _get_test_names_from_class
-
 
 def pytest_addoption(parser):
+    """Add command line options for pytest."""
     parser.addoption(
         "--estimator",
         action="store",
@@ -18,6 +17,7 @@ def pytest_addoption(parser):
 
 
 def pytest_generate_tests(metafunc):
+    """Generate tests for the estimator specified in the command line."""
     estimator = metafunc.config.getoption("estimator")
 
     if estimator == "__none__":
@@ -32,7 +32,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("test_name", test_names, ids=test_names)
 
 
-def test_sktime_compatible_estimator(estimator, test_name):
+def test_estimator(estimator, test_name):
+    """Run check_estimator API conformance tests for estimator."""
     from sktime.registry import craft
     from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.estimator_checks import check_estimator
