@@ -28,8 +28,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
-    """
-    Interface for forecasting with the deep learning time series model momentfm.
+    """MomentFM foundation model for forecasting.
 
     MomentFM is a collection of open source foundation models for the general
     purpose of time series analysis. The Moment Foundation Model is a pre-trained
