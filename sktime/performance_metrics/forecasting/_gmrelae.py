@@ -147,7 +147,7 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
 
         # Calculate relative errors at each time point
         # For GMRAE, we need the absolute relative errors
-        relative_errors = np.abs(self._relative_error(y_true, y_pred, y_pred_benchmark))
+        relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
 
         eps = np.finfo(np.float64).eps
         relative_errors = np.where(relative_errors == 0.0, eps, relative_errors)
