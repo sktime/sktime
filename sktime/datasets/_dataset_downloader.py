@@ -135,7 +135,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         local_dataset_path = download_path / dataset_name
 
         if not self.available:
-            return 0
+            raise ModuleNotFoundError
 
         from huggingface_hub import snapshot_download
         from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
