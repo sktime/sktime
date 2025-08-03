@@ -5,7 +5,7 @@ Used in test-est job for single-estimator-VM, and for manual testing via pytest.
 
 import pytest
 
-from sktime.utils.estimator_checks import _get_test_names_from_class, check_estimator
+from sktime.utils.estimator_checks import _get_test_names_from_class
 
 
 def pytest_addoption(parser):
