@@ -50,5 +50,5 @@ def test_sktime_compatible_estimator(estimator, test_name):
         cls,
         raise_exceptions=True,
         tests_to_run=test_name,
-        tests_to_exclude=skips;
+        tests_to_exclude=skips,
     )
