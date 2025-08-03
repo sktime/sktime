@@ -134,7 +134,18 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         sp=1,
         by_index=False,
         eps=None,
+        sample_weight_generator=None,
     ):
+        if sample_weight_generator is not None:
+            from sktime.performance_metrics.forecasting.sample_weight._types import (
+                check_sample_weight_generator,
+            )
+
+            check_sample_weight_generator(sample_weight_generator)
+
+        self.sp = sp
+        self.sample_weight_generator = sample_weight_generator
+
         self.sp = sp
         self.eps = eps
         super().__init__(

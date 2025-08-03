@@ -24,6 +24,9 @@ from sktime.performance_metrics.forecasting._common import (
     _percentage_error,
     _relative_error,
 )
+from sktime.performance_metrics.forecasting.sample_weight._types import (
+    check_sample_weight_generator,
+)
 from sktime.utils.sklearn import _check_reg_targets
 from sktime.utils.stats import _weighted_geometric_mean
 
@@ -196,6 +199,32 @@ def mean_linex_error(
     return _handle_output(loss, multioutput)
 
 
+def _combine_weights(horizon_weight, sample_weights):
+    """Combine horizon weights and sample weights.
+
+    Parameters
+    ----------
+    horizon_weight : array-like or None
+        Horizon-based weights
+    sample_weights : array-like or None
+        Sample-based weights from generator
+
+    Returns
+    -------
+    combined_weights : array-like or None
+        Combined weights, or None if both inputs are None
+    """
+    if horizon_weight is None and sample_weights is None:
+        return None
+    elif horizon_weight is None:
+        return sample_weights
+    elif sample_weights is None:
+        return horizon_weight
+    else:
+        # Element-wise multiplication of weights
+        return np.array(horizon_weight) * np.array(sample_weights)
+
+
 def mean_asymmetric_error(
     y_true,
     y_pred,
@@ -341,7 +370,13 @@ def mean_asymmetric_error(
 
 
 def mean_absolute_scaled_error(
-    y_true, y_pred, sp=1, horizon_weight=None, multioutput="uniform_average", **kwargs
+    y_true,
+    y_pred,
+    sp=1,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    sample_weight_generator=None,
+    **kwargs,
 ):
     """Mean absolute scaled error (MASE).
 
@@ -442,6 +477,17 @@ def mean_absolute_scaled_error(
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
+    sample_weights = None
+    if sample_weight_generator is not None:
+        check_sample_weight_generator(sample_weight_generator)
+        sample_weights = sample_weight_generator(y_true, y_pred, **kwargs)
+        if sample_weights is not None:
+            check_consistent_length(y_true, sample_weights)
+
+    combined_weights = _combine_weights(horizon_weight, sample_weights)
+    if combined_weights is not None:
+        check_consistent_length(y_true, combined_weights)
+
     # _check_reg_targets converts 1-dim y_true,y_pred to 2-dim so need to match
     if y_train.ndim == 1:
         y_train = np.expand_dims(y_train, 1)
@@ -461,7 +507,7 @@ def mean_absolute_scaled_error(
     mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
 
     mae_pred = mean_absolute_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=combined_weights, multioutput=multioutput
     )
     loss = mae_pred / np.maximum(mae_naive, EPS)
     return _handle_output(loss, multioutput)
