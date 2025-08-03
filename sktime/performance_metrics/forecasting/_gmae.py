@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import pandas as pd
 from scipy.stats import gmean
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
@@ -141,13 +142,16 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         Returns
         -------
         loss : float or np.ndarray
-            Calculated metric, averaged or by variable.
-            - If self.multioutput="uniform_average", returns the
-                average GMAE metric over variables.
-            - If self.multioutput="raw_values", returns an
-                array of GMAE values for each variable.
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
         """
         gmae = gmean(np.abs(y_true - y_pred), axis=0, weights=sample_weight)
+        gmae = pd.Series(gmae, index=y_true.columns)
 
         return self._handle_multioutput(gmae, self.multioutput)
 
@@ -158,26 +162,25 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
 
