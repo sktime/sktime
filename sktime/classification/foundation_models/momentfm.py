@@ -22,8 +22,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 
 class MomentFMClassifier(BaseClassifier):
-    """
-    Interface for classification with the deep learning time series model momentfm.
+    """MomentFM foundation model for time series classification.
 
     MomentFM is a collection of open source foundation models for the general
     purpose of time series analysis. The Moment Foundation Model is a pre-trained

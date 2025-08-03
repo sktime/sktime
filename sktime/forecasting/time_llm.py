@@ -17,8 +17,7 @@ torch = _safe_import("torch")
 
 
 class TimeLLMForecaster(BaseForecaster):
-    """
-    Interface to the Time-LLM.
+    """Time-LLM forecasting model.
 
     Time-LLM is a reprogramming framework
     to repurpose LLMs for general time series forecasting
