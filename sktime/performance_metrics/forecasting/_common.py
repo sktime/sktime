@@ -4,7 +4,7 @@ import numpy as np
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
-    """Relative error with respect to benchmark predictions.
+    r"""Relative error with respect to benchmark predictions.
 
     For arrays ``y_true``, ``y_pred``, and ``y_pred_benchmark``,
     writing :math:`y` for ``y_true``, writing :math:`\widehat{y}` for ``y_pred``,
@@ -58,7 +58,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
 
 
 def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps=None):
-    """Percentage error.
+    r"""Percentage error.
 
     For arrays ``y_true`` and ``y_pred``,
     writing :math:`y` for ``y_true`` and :math:`\widehat{y}` for ``y_pred``,
