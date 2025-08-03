@@ -14,7 +14,7 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Geometric mean absolute error (GMAE).
+    r"""Geometric mean absolute error (GMAE).
 
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
