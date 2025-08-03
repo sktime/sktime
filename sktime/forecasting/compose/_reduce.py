@@ -2023,6 +2023,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
         lags = self._lags
@@ -2062,19 +2063,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
 
-        def sklearn_multioutput(estimator):
-            """Get sklearn tags for estimator."""
-            from sktime.utils.dependencies import _check_soft_dependencies
-
-            if _check_soft_dependencies("sklearn<1.6", severity="none"):
-                return estimator._get_tags().get("multioutput", False)
-            else:
-                from sklearn.utils import get_tags
-
-                return get_tags(estimator).target_tags.multi_output
-
         estimator = clone(self.estimator)
-        if not sklearn_multioutput(estimator):
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
@@ -2556,7 +2546,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = apply_method_per_series(
-                    y_plus_preds, "asfreq", self.fh.freq
+                    y_plus_preds,
+                    "asfreq",
+                    self.fh.freq,
+                    how="start",
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
