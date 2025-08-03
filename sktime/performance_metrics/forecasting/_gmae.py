@@ -7,7 +7,6 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 
