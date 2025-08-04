@@ -6,6 +6,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
+
 from bs4 import BeautifulSoup
 
 import sktime
@@ -569,6 +570,7 @@ def _make_estimator_overview(app):
         df.to_json(file, orient="records")
     # pass
 
+
 # Removes class name from method names in right sidebar, aka, page-toc.
 # For example, on the page for a forecaster, the methods are listed with
 # forecasterclass.method_name on the right sidebar. This function removes
@@ -611,6 +613,7 @@ def setup(app):
 
     app.connect("builder-inited", _make_estimator_overview)
     app.connect("build-finished", _process_in_page_toc)
+
 
 # -- Extension configuration -------------------------------------------------
 
