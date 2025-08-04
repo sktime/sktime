@@ -7,22 +7,40 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import _relative_error
 from sktime.performance_metrics.forecasting._functions import (
-    geometric_mean_relative_absolute_error,
+    _get_kwarg,
 )
 
 
-class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Geometric mean relative absolute error (GMRAE).
+class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
+    r"""Geometric mean relative absolute error (GMRAE).
 
-    In relative error metrics, relative errors are first calculated by
-    scaling (dividing) the individual forecast errors by the error calculated
-    using a benchmark method at the same index position. If the error of the
-    benchmark method is zero then a large value is returned.
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n`,
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and
+    benchmark predicted values :math:`\widehat{y}_{1,b}, \dots, \widehat{y}_{n,b}`
+    (in :math:`\mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Geometric Mean Relative Absolute Error,
+    :math:`\left(\prod_{i=1}^n |r_i|\right)^{1/n}`,
+    where :math:`r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}_{i,b}}`
+    is the relative error at time index :math:`t_i`.
 
-    GMRAE applies geometric mean absolute error (GMAE) to the resulting relative
-    errors.
+    If the benchmark error :math:`y_i - \widehat{y}_{i,b}` is zero, a large
+    value is returned.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute relative error at that time index, :math:`|r_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
+
+    GMRAE output is non-negative floating point. The best value is 0.0.
 
     Parameters
     ----------
@@ -95,4 +113,42 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         "univariate-only": False,
     }
 
-    func = geometric_mean_relative_absolute_error
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
+
+        # Calculate relative errors at each time point
+        # For GMRAE, we need the absolute relative errors
+        relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
+
+        relative_errors = self._get_weighted_df(relative_errors, **kwargs)
+
+        return self._handle_multioutput(relative_errors, multioutput)
