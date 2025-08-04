@@ -8,6 +8,7 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._common import _percentage_error
 from sktime.performance_metrics.forecasting._functions import (
     median_absolute_percentage_error,
 )
@@ -56,6 +57,17 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ----------
     symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
+
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Determines the denominator of the percentage error.
+
+        * If ``"y_true"``, the denominator is the true values,
+        * If ``"y_pred"``, the denominator is the predicted values.
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -136,8 +148,12 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         symmetric=False,
         by_index=False,
+        relative_to="y_true",
+        eps=None,
     ):
         self.symmetric = symmetric
+        self.relative_to = relative_to
+        self.eps = eps
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -151,46 +167,39 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred : time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point.
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
+        symmetric = self.symmetric
 
-        numer_values = (y_true - y_pred).abs()
+        raw_values = _percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            symmetric=symmetric,
+            relative_to=self.relative_to,
+            eps=self.eps,
+        )
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if self.symmetric:
-            denom_values = (y_true.abs() + y_pred.abs()) / 2
-        else:
-            denom_values = y_true.abs()
-
-        raw_values = numer_values / denom_values
-
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.median(axis=1)
-
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -213,4 +222,5 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         """
         params1 = {}
         params2 = {"symmetric": True}
-        return [params1, params2]
+        params3 = {"relative_to": "y_pred"}
+        return [params1, params2, params3]
