@@ -49,12 +49,12 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     loss: str, default="categorical_crossentropy"
     metrics: optional
     class_weight: dict, optional, default=None
-        Dictionary mapping class indices (integers) to a weight (float) value to
+        Dictionary mapping class labels to a weight (float) value to
         be used during model training.
-        For example, ``{0: 1.0, 1: 2.5}`` will assign a weight of 1.0 to class 0
-        and 2.5 to class 1.
+        For example, ``{"A": 1.0, "B": 2.5}`` will assign a weight of 1.0 to class "A"
+        and 2.5 to class "B".
         This is passed directly to Keras' ``fit`` method as the ``class_weight``
-        argument.
+        argument after converting labels to integer encoding.
         If None, all classes are given equal weight.
 
     Notes
@@ -213,6 +213,20 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         callbacks = self._check_callbacks(self.callbacks)
 
+        # Convert class_weight dict from label to integer encoding
+        class_weight = self.class_weight
+        if class_weight is not None:
+            missing_labels = [label for label in class_weight if label not in self.label_encoder.classes_]
+            if missing_labels:
+                raise ValueError(
+                    f"The following labels in class_weight do not exist in the training labels: {missing_labels}"
+                )
+            # Use label_encoder to map labels to integers
+            class_weight = {
+            self.label_encoder.transform([label])[0]: weight
+            for label, weight in class_weight.items()
+            }
+
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -220,7 +234,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
-            class_weight=self.class_weight,
+            class_weight=class_weight,
         )
         return self
 
