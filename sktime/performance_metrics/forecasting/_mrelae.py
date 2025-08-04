@@ -10,9 +10,11 @@ the lower the better.
 import pandas as pd
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._common import (
+    _relative_error,
+)
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
-    _relative_error,
     mean_relative_absolute_error,
 )
 
