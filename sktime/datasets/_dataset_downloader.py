@@ -215,7 +215,9 @@ class URLDownloader(DatasetDownloadStrategy):
             If downloading from all provided URLs fails.
         """
         last_error = None
-        for url in [self.base_urls]:
+        if not isinstance(self.base_urls, list):
+            self.base_urls = [self.base_urls]
+        for url in self.base_urls:
             try:
                 self._download_and_extract(
                     url, download_path, dataset_name, force=force_download
