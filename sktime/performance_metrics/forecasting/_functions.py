@@ -20,6 +20,10 @@ from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
 )
+from sktime.performance_metrics.forecasting._common import (
+    _percentage_error,
+    _relative_error,
+)
 from sktime.utils.sklearn import _check_reg_targets
 from sktime.utils.stats import _weighted_geometric_mean
 
@@ -2756,90 +2760,3 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     a_error = a * error
     linex_error = b * (np.exp(a_error) - a_error - 1)
     return linex_error
-
-
-def _relative_error(y_true, y_pred, y_pred_benchmark, absolute=False):
-    """Relative error for observations to benchmark method.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
-
-    absolute : bool, default=False
-        If True, returns absolute relative error.
-
-    Returns
-    -------
-    relative_error : float
-        relative error
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-    """
-    EPS = np.finfo(np.float64).eps
-    error = y_true - y_pred
-    benchmark_error = y_true - y_pred_benchmark
-
-    if absolute:
-        abs_error = np.abs(error)
-        abs_benchmark_error = np.abs(benchmark_error)
-        negligible = (abs_error < EPS) & (abs_benchmark_error < EPS)
-        rel_error = abs_error / abs_benchmark_error
-        return np.where(negligible, 0.0, rel_error)
-
-    denom = np.where(
-        benchmark_error >= 0,
-        np.maximum(benchmark_error, EPS),
-        np.minimum(benchmark_error, -EPS),
-    )
-    return error / denom
-
-
-def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true"):
-    """Percentage error.
-
-    Parameters
-    ----------
-    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Forecasted values.
-
-    symmetric : bool, default = False
-        Whether to calculate symmetric percentage error.
-
-    relative_to : bool, default = "y_true"
-        Whether to calculate percentage error by forecast.
-
-    Returns
-    -------
-    percentage_error : float
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-    """
-    if symmetric:
-        denominator = np.maximum(np.abs(y_true) + np.abs(y_pred), EPS) / 2
-    elif relative_to == "y_pred":
-        denominator = np.maximum(np.abs(y_pred), EPS)
-    else:
-        denominator = np.maximum(np.abs(y_true), EPS)
-    percentage_error = np.abs(y_true - y_pred) / denominator
-    return percentage_error

@@ -7,16 +7,15 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import (
-    BaseForecastingErrorMetricFunc,
+    BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._functions import (
-    mean_absolute_scaled_error,
-)
 
 
-class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
+class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     r"""Mean absolute scaled error (MASE).
 
     For a univariate, non-hierarchical sample of
@@ -53,6 +52,11 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     ----------
     sp : int, default = 1
         Seasonal periodicity of the data
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -123,19 +127,73 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
     np.float64(0.21935483870967742)
     """
 
-    func = mean_absolute_scaled_error
-
     def __init__(
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
         by_index=False,
+        eps=None,
     ):
         self.sp = sp
+        self.eps = eps
         super().__init__(
             multioutput=multioutput, multilevel=multilevel, by_index=by_index
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_train : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Training data used to calculate the naive forecasting error.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        y_train = kwargs["y_train"]
+        multioutput = self.multioutput
+        sp = self.sp
+
+        eps = self.eps
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        # Calculating the naive forecasting error
+        naive_forecast_true = y_train[sp:]
+        naive_forecast_pred = y_train[:-sp]
+        naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
+        naive_error = naive_diff.mean()
+
+        raw_values = raw_values / np.maximum(naive_error, eps)
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
