@@ -111,11 +111,9 @@ all_extras = [
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
-  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
 ]
 
@@ -154,11 +152,9 @@ all_extras_pandas2 = [
   'statsmodels>=0.12.1; python_version < "3.13"',
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
-  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
 ]
 
@@ -230,7 +226,6 @@ transformations = [
   'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
-  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32" and platform_machine != "aarch64"' ,
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 
@@ -267,14 +262,13 @@ tests = [
   "pytest>=7.4,<8.5",
   "pytest-randomly>=3.15,<3.17",
   "pytest-timeout>=2.1,<2.5",
-  "pytest-xdist>=3.3,<3.8",
+  "pytest-xdist>=3.3,<3.9",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
   "skchange",
 ]
 cython_extras = [
@@ -314,6 +308,20 @@ mlflow_tests = [
   "botocore",
   "mlflow<4.0",
   "moto",
+]
+notebooks = [
+  # needed for the blog post notebooks
+  "matplotlib",
+  "numpy<2",
+  "pmdarima",
+  "seaborn",
+  "tbats",
+  # needed for the examples
+  "dtw-python",
+  "prophet",
+  "pytorch-forecasting",
+  "skpro",
+  "statsforecast",
 ]
 numpy1 = [
   "numpy<2.0.0",
