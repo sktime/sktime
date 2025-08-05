@@ -2,6 +2,8 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCClassifier"]
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -40,6 +42,7 @@ class CNTCClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
+    callbacks       : list of keras.callbacks, default = None,
 
     References
     ----------
@@ -229,8 +232,6 @@ class CNTCClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
         y_onehot = self._convert_y_to_keras(y)
 
         check_random_state(self.random_state)
@@ -245,7 +246,7 @@ class CNTCClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
