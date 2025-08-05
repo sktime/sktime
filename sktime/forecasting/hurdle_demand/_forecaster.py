@@ -459,5 +459,5 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
             "family": "negative-binomial",
             "time_varying_probability": "rw",
             "time_varying_demand": "ar",
-            "engine": None,
+            "inference_engine": None,
         }
