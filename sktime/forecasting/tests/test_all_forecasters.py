@@ -784,9 +784,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y = pd.DataFrame(y_data, index=index)
 
         # Create X data (exogenous variables)
+        np.random.seed(42)
         X = pd.DataFrame(
-            {"exog1": range(25), "exog2": [x * 2 for x in range(25)]}, index=index
-        )
+            {"exog1": np.random.randn(25), "exog2": np.random.randn(25)}, index=index
+        ).astype(float)
 
         # Split into train and test
         y_train = y.iloc[:20]
