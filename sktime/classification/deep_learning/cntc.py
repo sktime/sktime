@@ -85,7 +85,7 @@ class CNTCClassifier(BaseDeepClassifier):
         "python_dependencies": ["tensorflow"],
         # testing configuration
         # ---------------------
-        "tests:lib": ["sktime.networks.cntc"],
+        "tests:libs": ["sktime.networks.cntc"],
         "tests:skip_by_name": [
             "test_fit_idempotent",
             "test_persistence_via_pickle",
