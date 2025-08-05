@@ -30,8 +30,8 @@ def test_benchmark_output(tmp_path):
 
     benchmark2 = ForecastingBenchmark()
 
-    benchmark1.add_task(dataset_loader, splitter, scorers)
-    benchmark1.add_estimator(
+    benchmark2.add_task(dataset_loader, splitter, scorers)
+    benchmark2.add_estimator(
         NaiveForecaster(strategy="mean", sp=4), estimator_id="MEAN"
     )
 
