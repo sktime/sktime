@@ -62,11 +62,11 @@ class DatasetDownloadStrategy(BaseObject):
         local_dataset_path = download_path / dataset_name
 
         if not local_dataset_path.exists() or force_download:
-            self._download(dataset_name, download_path, force_download=force_download)
+            self._download(local_dataset_path)
 
         return local_dataset_path
 
-    def _download(self, dataset_name, download_path, force_download=False):
+    def _download(self, download_path):
         """
         Strategy-specific download implementation.
 
@@ -80,14 +80,8 @@ class DatasetDownloadStrategy(BaseObject):
 
         Parameters
         ----------
-        dataset_name : str
-            Name of the dataset. Used as the name of the folder in which the
-            dataset will be stored locally.
-        download_path : str or Path, optional
-            Path where the dataset folder will be created. Defaults to
-            `datasets/local_data`.
-        force_download : bool, default=False
-            If True, deletes and redownloads the dataset even if it already exists.
+        download_path : str or Path
+            Path where the dataset folder will be created
 
         Raises
         ------
