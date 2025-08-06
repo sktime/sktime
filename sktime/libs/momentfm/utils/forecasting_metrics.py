@@ -7,7 +7,6 @@ from typing import Optional, Union
 import numpy as np
 import numpy.typing as npt
 
-from sktime.libs.momentfm.utils import _reduce
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch"], severity="none"):
@@ -15,6 +14,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
     F = _safe_import("torch.nn.functional")
     Tensor = _safe_import("torch.Tensor")
     _Loss = _safe_import("torch.nn.modules.loss._Loss")
+    _reduce = _safe_import("sktime.libs.momentfm.utils._reduce")
 
     class sMAPELoss(_Loss):
         """sMAPELoss class."""
