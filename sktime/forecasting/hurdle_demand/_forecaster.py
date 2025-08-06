@@ -146,4 +146,4 @@ class HurdleDemandForecaster(_DelegatedForecaster):
             "inference_engine": None,
         }
 
-        return params_1, params_2
+        return [params_1, params_2]

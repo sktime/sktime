@@ -6,13 +6,6 @@ import pytest
 from sktime.datasets import load_PBS_dataset
 from sktime.forecasting.hurdle_demand import HurdleDemandForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("prophetverse", severity="none"):
-    from prophetverse.engine import MAPInferenceEngine, MCMCInferenceEngine
-
-if _check_soft_dependencies("skpro", severity="none"):
-    from skpro.distributions import Hurdle, NegativeBinomial, Poisson
 
 
 @pytest.mark.skipif(
@@ -29,6 +22,9 @@ if _check_soft_dependencies("skpro", severity="none"):
     ],
 )
 def test_hurdle_model(family: str, time_varying: bool, engine):
+    from prophetverse.engine import MAPInferenceEngine, MCMCInferenceEngine
+    from skpro.distributions import Hurdle, NegativeBinomial, Poisson
+
     """Test that Hurdle model can be instantiated and run with default parameters."""
     engine_type, kwargs = engine
 

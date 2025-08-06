@@ -1,11 +1,5 @@
 import pytest
 
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("numpyro", "jax", severity="none"):
-    import jax.random as jrnd
-    from numpyro.distributions import NegativeBinomial2, Poisson
-
 from sktime.forecasting.hurdle_demand import HurdleDemandForecaster
 from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
 from sktime.tests.test_switch import run_test_for_class
@@ -23,6 +17,9 @@ from sktime.tests.test_switch import run_test_for_class
     ],
 )
 def test_zero_truncated_distribution(distribution):
+    import jax.random as jrnd
+    from numpyro.distributions import NegativeBinomial2, Poisson
+
     dist_name, params = distribution
 
     if dist_name == "poisson":
