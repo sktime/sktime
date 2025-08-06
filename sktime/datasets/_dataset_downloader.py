@@ -26,22 +26,13 @@ class DatasetDownloadStrategy(BaseObject):
 
     Subclasses must implement `_download`, which contains the logic for
     downloading and storing datasets.
-
-    Side Effects
-    ------------
-    Upon download, a new directory named `dataset_name` will be created
-    inside the `download_path` directory. This will contain the extracted
-    dataset files.
     """
 
-    def download(self, dataset_name, download_path=None, force_download=False):
+    def download(self, download_path=None, force_download=False):
         """Download a dataset using this strategy.
 
         Parameters
         ----------
-        dataset_name : str
-            Name of the dataset. Used as the name of the folder in which the
-            dataset will be stored locally.
         download_path : str or Path, optional
             Path where the dataset folder will be created. Defaults to
             `datasets/local_data`.
@@ -59,12 +50,11 @@ class DatasetDownloadStrategy(BaseObject):
             download_path = Path(download_path)
 
         download_path.mkdir(parents=True, exist_ok=True)
-        local_dataset_path = download_path / dataset_name
 
-        if not local_dataset_path.exists() or force_download:
-            self._download(local_dataset_path)
+        if not download_path.exists() or force_download:
+            self._download(download_path)
 
-        return local_dataset_path
+        return download_path
 
     def _download(self, download_path):
         """
@@ -72,11 +62,6 @@ class DatasetDownloadStrategy(BaseObject):
 
         This method contains the specific logic for downloading a dataset
         using a particular strategy (e.g., from Hugging Face, URLs, etc.).
-
-        The implementation must ensure that the downloaded and extracted dataset
-        is located in a directory named `dataset_name` inside the `download_path`.
-        For example, if `download_path` is `/path/to/data` and `dataset_name`
-        is `MyDataset`, the final data must be in `/path/to/data/MyDataset/`.
 
         Parameters
         ----------
@@ -96,19 +81,19 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     """Downloads a dataset folder from a Hugging Face Hub repository.
 
     Uses the `snapshot_download` function from `huggingface_hub` to
-    download a specific subdirectory corresponding to `dataset_name`
+    download a specific subdirectory corresponding to `folder_name`
     from a dataset repository.
 
     Where It Looks
     --------------
     Downloads from a Hugging Face repo such as "sktime/tsc-datasets".
-    Only the subdirectory matching `dataset_name` is fetched.
+    Only the subdirectory matching `folder_name` is fetched.
 
     Files and Side Effects
     ----------------------
-    The contents of the `dataset_name` subdirectory in the repo will be
+    The contents of the `folder_name` subdirectory in the repo will be
     downloaded into a new directory:
-        {download_path}/{dataset_name}/
+        {download_path}/{folder_name}/
 
     This includes all files under that subdirectory, preserving hierarchy.
 
@@ -116,6 +101,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     ----------
     hf_repo_name : str
         Hugging Face repository in the format "org/repo".
+    folder_name : str
+        Dataset folder name inside the Hugging Face repository.
     repo_type : str, default="dataset"
         Type of Hugging Face repo.
     token : str, optional
@@ -125,8 +112,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
     --------
     >>> from sktime.datasets._dataset_downloader import HuggingFaceDownloader
     >>> hf_repo_name = "sktime/tsc-datasets"
-    >>> downloader = HuggingFaceDownloader(hf_repo_name=hf_repo_name)
-    >>> downloader.download(dataset_name="Beef")
+    >>> downloader = HuggingFaceDownloader(hf_repo_name, folder_name="Beef")
+    >>> downloader.download()
 
     References
     ----------
@@ -137,13 +124,15 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         "python_dependencies": "huggingface-hub",
     }
 
-    def __init__(self, hf_repo_name, repo_type="dataset", token=None):
+    def __init__(self, hf_repo_name, folder_name, repo_type="dataset", token=None):
+        super().__init__()
         self.hf_repo_name = hf_repo_name
+        self.folder_name = folder_name
         self.repo_type = repo_type
         self.token = token
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
-    def _download(self, dataset_name, download_path, force_download=False):
+    def _download(self, download_path):
         """
         Download a dataset from the Hugging Face Hub.
 
@@ -152,10 +141,6 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
         Parameters
         ----------
-        dataset_name : str
-            Name of the dataset. Used to download the specific subfolder
-            from the HF dataset repository and as the name of the folder
-            in which the dataset will be stored locally.
         download_path : str or Path, optional
             Path where the dataset folder will be created. Defaults to
             `datasets/local_data`.
@@ -172,7 +157,9 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         ValueError
             If the expected dataset folder is not found in the downloaded snapshot.
         """
-        local_dataset_path = download_path / dataset_name
+        local_dataset_path = download_path / self.folder_name
+        print(local_dataset_path)
+        print(self.folder_name)
 
         if not self.available:
             raise ModuleNotFoundError
@@ -184,15 +171,15 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
             snapshot_download(
                 repo_id=self.hf_repo_name,
                 repo_type=self.repo_type,
-                allow_patterns=f"{dataset_name}/**",
+                allow_patterns=f"{self.folder_name}/**",
                 local_dir=download_path,
-                force_download=force_download,
+                force_download=self.force_download,
                 token=self.token,
             )
 
             if not local_dataset_path.exists():
                 raise ValueError(
-                    f"Dataset folder '{dataset_name}' not found"
+                    f"Dataset folder '{self.folder_name}' not found"
                     f" in repository '{self.hf_repo_name}'"
                 )
 
@@ -213,7 +200,7 @@ class URLDownloader(DatasetDownloadStrategy):
     Files and Side Effects
     ----------------------
     The downloaded archive is extracted into:
-        {download_path}/{dataset_name}/
+        {download_path}/{folder_name}/
 
     The extracted files are assumed to be flat or internally organized.
 
@@ -228,14 +215,15 @@ class URLDownloader(DatasetDownloadStrategy):
     >>> from sktime.datasets._dataset_downloader import URLDownloader
     >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
     >>> downloader = URLDownloader(base_urls=urls)
-    >>> downloader.download(dataset_name="Beef")
+    >>> downloader.download()
     """
 
     def __init__(self, base_urls):
+        super().__init__()
         self.base_urls = base_urls
         self.available = True
 
-    def _download(self, dataset_name, download_path, force_download=False):
+    def _download(self, download_path):
         """
         Download and extract a dataset from a list of URLs.
 
@@ -244,9 +232,6 @@ class URLDownloader(DatasetDownloadStrategy):
 
         Parameters
         ----------
-        dataset_name : str
-            Name of the dataset. Used as the name of the folder in which the
-            dataset will be stored locally.
         download_path : str or Path, optional
             Path where the dataset folder will be created. Defaults to
             `datasets/local_data`.
@@ -263,19 +248,15 @@ class URLDownloader(DatasetDownloadStrategy):
             self.base_urls = [self.base_urls]
         for url in self.base_urls:
             try:
-                self._download_and_extract(
-                    url, download_path, dataset_name, force=force_download
-                )
+                self._download_and_extract(url, download_path)
                 return
             except Exception as e:
                 last_error = e
                 continue
 
-        raise last_error or RuntimeError(
-            f"Failed to download dataset '{dataset_name}' from any URL"
-        )
+        raise last_error or RuntimeError("Failed to download dataset from any URL")
 
-    def _download_and_extract(self, url, root_path, dataset_name, force=False):
+    def _download_and_extract(self, url, root_path, force=False):
         """Download zip from `url` and extract it to `{root_path}/{dataset_name}/`.
 
         The target directory is created (or overwritten if `force=True`).
@@ -285,7 +266,8 @@ class URLDownloader(DatasetDownloadStrategy):
         dl_dir = tempfile.mkdtemp()
         zip_file_name = os.path.join(dl_dir, file_name)
 
-        extract_path = root_path / dataset_name
+        basename = file_name.split(".")[0]
+        extract_path = root_path / basename
 
         try:
             urlretrieve(url, zip_file_name)
@@ -319,7 +301,7 @@ class DatasetDownloader(DatasetDownloadStrategy):
     Where It Looks
     --------------
     1. Attempts to download from Hugging Face repository (`hf_repo_name`)
-       by downloading only the subdirectory matching `dataset_name`.
+       by downloading only the subdirectory matching `folder_name`.
 
     2. Falls back to downloading zip files from `fallback_urls`.
 
@@ -343,18 +325,24 @@ class DatasetDownloader(DatasetDownloadStrategy):
     >>> from sktime.datasets._dataset_downloader import DatasetDownloader
     >>> hf_repo_name = "sktime/tsc-datasets"
     >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
-    >>> downloader = DatasetDownloader(hf_repo_name=hf_repo_name, fallback_urls=urls)
-    >>> downloader.download(dataset_name="Beef")
+    >>> downloader = DatasetDownloader(hf_repo_name=hf_repo_name,
+                        folder_name="Beef",
+                        fallback_urls=urls
+                    )
+    >>> downloader.download()
     """
 
-    def __init__(self, hf_repo_name=None, fallback_urls=None, retries=1):
+    def __init__(
+        self, hf_repo_name=None, folder_name=None, fallback_urls=None, retries=1
+    ):
+        super().__init__()
         self.strategies = [
-            HuggingFaceDownloader(hf_repo_name),
+            HuggingFaceDownloader(hf_repo_name, folder_name),
             URLDownloader(fallback_urls),
         ]
         self.retries = retries
 
-    def _download(self, dataset_name, download_path, force_download=False):
+    def _download(self, download_path):
         """
         Download dataset using a sequence of strategies.
 
@@ -365,9 +353,6 @@ class DatasetDownloader(DatasetDownloadStrategy):
 
         Parameters
         ----------
-        dataset_name : str
-            Name of the dataset. Used as the name of the folder in which the
-            dataset will be stored locally.
         download_path : str or Path, optional
             Path where the dataset folder will be created. Defaults to
             `datasets/local_data`.
@@ -396,9 +381,7 @@ class DatasetDownloader(DatasetDownloadStrategy):
             for attempt in range(self.retries):
                 try:
                     strategy._download(
-                        dataset_name,
                         download_path,
-                        force_download=force_download,
                     )
                     return
                 except Exception as e:
