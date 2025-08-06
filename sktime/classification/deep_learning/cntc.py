@@ -327,4 +327,14 @@ class CNTCClassifier(BaseDeepClassifier):
             "rnn_size": 16,
             "lstm_size": 16,
         }
-        return [param0, param1]
+
+        from tensorflow import keras
+
+        param_callbacks = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "callbacks": [
+                keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+            ],
+        }
+        return [param0, param1, param_callbacks]
