@@ -17,45 +17,26 @@ import abc
 from collections.abc import Callable
 from typing import Any, Optional, TypeVar
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 from sktime.libs.uni2ts.common.core import abstract_class_property
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch import nn
-    from torch.distributions import (
-        AffineTransform,
-        Distribution,
-        TransformedDistribution,
-    )
-    from torch.utils._pytree import tree_flatten, tree_map, tree_unflatten
+nn = _safe_import("torch.nn")
+AffineTransform = _safe_import("torch.distributions.AffineTransform")
+Distribution = _safe_import("torch.distributions.Distribution")
+TransformedDistribution = _safe_import("torch.distributions.TransformedDistribution")
+tree_flatten = _safe_import("torch.utils._pytree.tree_flatten")
+tree_unflatten = _safe_import("torch.utils._pytree.tree_unflatten")
+tree_map = _safe_import("torch.utils._pytree.tree_map")
 
-    from sktime.libs.uni2ts.module.ts_embed import MultiOutSizeLinear
+from sktime.libs.uni2ts.module.ts_embed import MultiOutSizeLinear
 
-else:
-    # Create Dummy class
-    class nn:
-        class Module:
-            pass
-
-    class Distribution:
-        pass
-
-    class TransformedDistribution:
-        pass
-
-    class MultiOutSizeLinear:
-        pass
-
-
-if _check_soft_dependencies("einops", severity="none"):
-    from einops import rearrange
+rearrange = _safe_import("einops.rearrange")
 
 T = TypeVar("T")
 
 
 # TODO: Replace with tree_map when multiple trees supported
-def tree_map_multi(func: Callable, tree: [Any, "T"], *other: [Any, "T"]) -> [Any, "T"]:
+def tree_map_multi(func: Callable, tree, *other):
     leaves, treespec = tree_flatten(tree)
     other_leaves = [tree_flatten(o)[0] for o in other]
     return_leaves = [func(*leaf) for leaf in zip(leaves, *other_leaves)]
@@ -85,7 +66,7 @@ class DistrParamProj(nn.Module):
         self,
         in_features: int,
         out_features,
-        args_dim: [int, "T"],
+        args_dim,
         domain_map,
         proj_layer,
         **kwargs: Any,
@@ -156,7 +137,7 @@ class AffineTransformed(TransformedDistribution):
 
 @abstract_class_property("distr_cls")
 class DistributionOutput:
-    distr_cls: type[Distribution] = NotImplemented
+    distr_cls: Any = NotImplemented
 
     def distribution(
         self,
@@ -179,7 +160,7 @@ class DistributionOutput:
 
     @property
     @abc.abstractmethod
-    def args_dim(self) -> [int, "T"]: ...
+    def args_dim(self): ...
 
     @property
     @abc.abstractmethod
@@ -189,9 +170,9 @@ class DistributionOutput:
         self,
         in_features: int,
         out_features,
-        proj_layer: Callable[..., nn.Module] = MultiOutSizeLinear,
+        proj_layer: Callable = MultiOutSizeLinear,
         **kwargs: Any,
-    ) -> nn.Module:
+    ):
         return DistrParamProj(
             in_features=in_features,
             out_features=out_features,

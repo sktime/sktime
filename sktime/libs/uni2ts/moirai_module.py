@@ -1,50 +1,25 @@
 from functools import partial
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch.nn.functional as F
-    from torch import nn
-    from torch.utils._pytree import tree_map
-
-    from .distribution import DistributionOutput
-    from .module.norm import RMSNorm
-    from .module.position import (
-        BinaryAttentionBias,
-        QueryKeyProjection,
-        RotaryProjection,
-    )
-    from .module.transformer import TransformerEncoder
-    from .module.ts_embed import MultiInSizeLinear
-else:
-
-    class nn:
-        class Module:
-            pass
-
-    class DistributionOutput:
-        pass
+from sktime.utils.dependencies import _safe_import
 
 
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import PyTorchModelHubMixin
-else:
-    # Create Dummy class
-    class PyTorchModelHubMixin:
-        def __init__(self):
-            pass
+F = _safe_import("torch.nn.functional")
+nn = _safe_import("torch.nn")
+tree_map = _safe_import("torch.utils._pytree.tree_map")
 
-        def __init_subclass__(cls, *args, **kwargs) -> None:
-            """Implement dummy version of __init_subclass__."""
-            pass
+from sktime.libs.uni2ts.common.torch_util import mask_fill, packed_attention_mask
+from sktime.libs.uni2ts.distribution import DistributionOutput
+from sktime.libs.uni2ts.module.norm import RMSNorm
+from sktime.libs.uni2ts.module.packed_scaler import PackedNOPScaler, PackedStdScaler
+from sktime.libs.uni2ts.module.position import (
+    BinaryAttentionBias,
+    QueryKeyProjection,
+    RotaryProjection,
+)
+from sktime.libs.uni2ts.module.transformer import TransformerEncoder
+from sktime.libs.uni2ts.module.ts_embed import MultiInSizeLinear
 
-        pass
-
-
-if _check_soft_dependencies("einops", severity="none"):
-    from .module.packed_scaler import PackedNOPScaler, PackedStdScaler
-
-from .common.torch_util import mask_fill, packed_attention_mask
+PyTorchModelHubMixin = _safe_import("huggingface_hub.PyTorchModelHubMixin")
 
 
 def encode_distr_output(
