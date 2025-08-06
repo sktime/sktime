@@ -4,12 +4,8 @@ __author__ = ["jgyasu"]
 __all__ = ["ClassificationBenchmark"]
 
 import logging
-import warnings
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import Any, Optional, Union
-
-import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
@@ -17,106 +13,13 @@ from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
-from sktime.benchmarking._storage_handlers import get_storage_backend
-from sktime.benchmarking._utils import _check_id_format
-from sktime.benchmarking.benchmarks import BaseBenchmark
+from sktime.benchmarking.benchmarks import (
+    BaseBenchmark,
+    _BenchmarkingResults,
+    _SktimeRegistry,
+)
 from sktime.classification.base import BaseClassifier
 from sktime.classification.model_evaluation import evaluate
-from sktime.utils.unique_str import _make_strings_unique
-
-
-@dataclass
-class _BenchmarkingResults:
-    """Results of a benchmarking run.
-
-    Parameters
-    ----------
-    results : list of ResultObject
-        The results of the benchmarking run.
-    """
-
-    path: str
-    results: list[ResultObject] = field(default_factory=list)
-
-    def __post_init__(self):
-        """Save the results to a file."""
-        self.storage_backend = get_storage_backend(self.path)
-        self.results = self.storage_backend(self.path).load()
-
-    def save(self):
-        """Save the results to a file."""
-        self.storage_backend(self.path).save(self.results)
-
-    def contains(self, task_id: str, model_id: str):
-        """
-        Check if the results contain a specific task and model.
-
-        Parameters
-        ----------
-        task_id : str
-            The task ID.
-        model_id : str
-            The model ID.
-        """
-        return any(
-            [
-                result.task_id == task_id and result.model_id == model_id
-                for result in self.results
-            ]
-        )
-
-    def to_dataframe(self):
-        """Convert the results to a pandas DataFrame."""
-        results = []
-        for result in self.results:
-            results.append(result.to_dataframe())
-
-        df = pd.concat(results, axis=0, ignore_index=True)
-        df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
-        return df
-
-
-class _SktimeRegistry:
-    """Register an entity by ID.
-
-    IDs should remain stable over time and should be guaranteed to resolve to
-    the same entity dynamics (or be desupported).
-    """
-
-    def __init__(self, entity_id_format: str = ""):
-        self.entity_id_format = entity_id_format
-        self.entities = {}
-
-    def register(self, entity_id, entity: Union[BaseEstimator, TaskObject]):
-        """Register an entity.
-
-        Parameters
-        ----------
-        entity_id: str
-            A unique entity ID.
-        entry_point: Callable or str
-            The python entrypoint of the entity class. Should be one of:
-            - the string path to the python object (e.g.module.name:factory_func, or
-                module.name:Class)
-            - the python object (class or factory) itself
-        deprecated: Bool, optional (default=False)
-            Flag to denote whether this entity should be skipped in validation runs
-            and considered deprecated and replaced by a more recent/better model
-        nondeterministic: Bool, optional (default=False)
-            Whether this entity is non-deterministic even after seeding
-        kwargs: Dict, optional (default=None)
-            kwargs to pass to the entity entry point when instantiating the entity.
-        """
-        entity_id_unique = _make_strings_unique(list(self.entities.keys()), entity_id)
-        _check_id_format(self.entity_id_format, entity_id_unique)
-        if entity_id != entity_id_unique:
-            warnings.warn(
-                message=f"Entity with ID [id={entity_id}] already registered, "
-                + "new id is {entity_id_unique}",
-                category=UserWarning,
-                stacklevel=2,
-            )
-        self.entities[entity_id_unique] = entity
 
 
 class ClassificationBenchmark(BaseBenchmark):
