@@ -24,6 +24,7 @@ if not _check_soft_dependencies("torch", severity="none"):
         class Module:
             pass
 
+
 HF_PRESENT = False
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
