@@ -60,7 +60,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -164,11 +163,6 @@ EXCLUDED_TESTS = {
     ],
     "MLPRegressor": [
         "test_fit_idempotent",
-    ],
-    "CNTCClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
     ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",
@@ -295,7 +289,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "BOSSEnsemble",
         "CAPA",
-        "CNTCClassifier",
         "CNTCNetwork",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
