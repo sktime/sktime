@@ -18,63 +18,169 @@ class CausalFeatureEngineer(BaseTransformer):
     """Causal Feature Transformer for Time Series.
 
     This transformer discovers causal relationships in time series data
-    and generates causally informed features for forecasting models. It leverages pgmpy
-    for causal discovery and creates features based on identified causal relationships.
+    and generates causally informed features for forecasting models. It leverages
+    pgmpy for causal discovery and creates features based on identified causal
+    relationships.
 
-    The transformer supports pc and hill climb algorithms from pgmpy and can
+    The transformer supports PC and Hill Climbing algorithms from pgmpy and can
     generate various types of features based on the discovered causal structure.
 
     Parameters
     ----------
     causal_method : str, default="pc"
-        Causal discovery algorithm to use, options:
-        - "pc" : PC algorithm, a constraint-based method
-        - "hill_climb" : Hill Climbing Search, a score-based method
+        Causal discovery algorithm to use. Options:
+
+        * "pc" : PC algorithm, a constraint-based method
+        * "hill_climb" : Hill Climbing Search, a score-based method
+
     max_lag : int, default=5
-        Maximum time lag to consider for temporal causal relationships
-    feature_types : List[str], default=["direct", "interaction", "temporal"]
+        Maximum time lag to consider for temporal causal relationships.
+
+    feature_types : list of str, default=["direct", "interaction", "temporal"]
         Types of features to generate:
-        - "direct" : Direct causal features (parents in the causal graph)
-        - "interaction" : Interaction features (cross-products of parents)
-        - "temporal" : Time-aware features capturing temporal patterns
+
+        * "direct" : Direct causal features (parents in the causal graph)
+        * "interaction" : Interaction features (cross-products of parents)
+        * "temporal" : Time-aware features capturing temporal patterns
+
     weighting_strategy : str, default="causal_strength"
         Method for computing feature weights:
-        - "causal_strength" : Weight by causal strength/effect size
-        - "uniform" : Equal weights for all causal features
-        - "inverse_lag" : Weight inversely proportional to lag length
+
+        * "causal_strength" : Weight by causal strength/effect size
+        * "uniform" : Equal weights for all causal features
+        * "inverse_lag" : Weight inversely proportional to lag length
+
     significance_level : float, default=0.05
         Significance level for conditional independence tests in constraint-based
-        algorithms
+        algorithms.
+
     min_causal_strength : float, default=0.1
-        Minimum causal strength required for a relationship to generate features
+        Minimum causal strength required for a relationship to generate features.
+
     expert_knowledge : dict, default=None
         Optional domain knowledge constraints:
-        - "forbidden_edges" : List of tuples representing forbidden causal edges
-        - "required_edges" : List of tuples representing required causal edges
+
+        * "forbidden_edges" : List of tuples representing forbidden causal edges
+        * "required_edges" : List of tuples representing required causal edges
 
     scoring_method : str, default="auto"
         Scoring method for hill climb search. Options:
-        - "auto" : Automatically select based on data type
-        - "k2" : K2 score for discrete data
-        - "bdeu" : BDeu score for discrete data
-        - "bds" : BDs score for discrete data
-        - "bic-d" : BIC score for discrete data
-        - "aic-d" : AIC score for discrete data
-        - "bic-g" : BIC score for Gaussian (continuous) data
-        - "aic-g" : AIC score for Gaussian (continuous) data
-        - "ll-g" : Log-likelihood for Gaussian data
 
+        * "auto" : Automatically select based on data type
+        * "k2" : K2 score for discrete data
+        * "bdeu" : BDeu score for discrete data
+        * "bds" : BDs score for discrete data
+        * "bic-d" : BIC score for discrete data
+        * "aic-d" : AIC score for discrete data
+        * "bic-g" : BIC score for Gaussian (continuous) data
+        * "aic-g" : AIC score for Gaussian (continuous) data
+        * "ll-g" : Log-likelihood for Gaussian data
 
     Attributes
     ----------
-    causal_graph_ : pgmpy.models.BayesianNetwork
-        Discovered causal graph stored as pgmpy BayesianNetwork
-    feature_importance_weights_ : dict
-        Dictionary of feature importance weights based on causal strength
-    features_generated_ : List[str]
-        List of names of all generated features
-    n_features_generated_ : int
-        Number of features generated
+    `causal_graph_` : pgmpy.models.BayesianNetwork
+        Discovered causal graph stored as pgmpy BayesianNetwork.
+
+    `feature_importance_weights_` : dict
+        Dictionary of feature importance weights based on causal strength.
+
+    `features_generated_` : List[str]
+        List of names of all generated features.
+
+    `n_features_generated_` : int
+        Number of features generated.
+
+    See Also
+    --------
+    sktime.transformations.base.BaseTransformer : Base transformer class.
+
+    Algorithm Details
+    -----------------
+    This transformer implements a five-phase causal feature engineering pipeline:
+
+    **Phase 1: Temporal Data Augmentation**
+
+    Creates lagged variables for all input features::
+
+        X_augmented = [X_t, X_{t-1}, X_{t-2}, ..., X_{t-max_lag}]
+
+    This enables discovery of both instantaneous and temporal causal relationships.
+
+    **Phase 2: Causal Structure Discovery**
+
+    Uses one of two causal discovery algorithms:
+
+    * **PC Algorithm**: Constraint-based method using conditional independence
+      tests. Uses Chi-square for discrete data, Pearson correlation for 
+      continuous data. Tests relationships X ⊥ Y | Z.
+
+    * **Hill Climbing**: Score-based method optimizing BIC/AIC scores.
+      Performs add/delete/reverse edge operations while maintaining DAG
+      constraints. Max in-degree limited to max_lag + 2.
+
+    **Phase 3: Feature Generation**
+
+    Generates three types of features from the causal graph:
+
+    * **Direct Features**: Extracts immediate causal parents from the
+      discovered graph. If the graph shows X₁ → Y, then X₁ becomes a
+      direct causal feature.
+
+    * **Interaction Features**: Creates cross-products of causal parents
+      to capture non-additive causal effects. For parents [X₁, X₂],
+      generates X₁ × X₂ interaction terms.
+
+    * **Temporal Rate Features**: Computes rate-of-change features over
+      different lag intervals using the formula:
+      rate_k = (X_{t-(k-1)} - X_{t-k}) / k
+
+    **Phase 4: Feature Weighting**
+
+    Applies weights to features based on causal strength:
+
+    * **Causal Strength**: Uses absolute correlation as a proxy for
+      causal effect magnitude within established causal relationships.
+    * **Inverse Lag**: Weights recent lags higher than distant ones
+      using w(lag) = 1/lag temporal decay.
+    * **Uniform**: Equal weights for all discovered causal relationships.
+
+    **Phase 5: Panel Output**
+
+    Converts features to sktime Panel format with MultiIndex
+    [instances, timepoints] for downstream compatibility.
+
+    **Key Implementation Details**
+
+    * Automatic algorithm selection based on data type (discrete/continuous)
+    * Expert knowledge constraints via forbidden/required edges
+    * Handles edge cases: small datasets, empty features, missing values
+    * Memory-efficient vectorized operations for lag creation
+
+    Notes
+    -----
+    Causal discovery uses established algorithms (PC, Hill Climbing) to identify
+    causal relationships. Correlation is then used as a strength proxy for
+    weighting already-established causal edges, not for establishing causation.
+
+    The algorithm handles temporal dependencies by creating systematic lags
+    and constraining graph complexity through max_indegree limits.
+
+    Notes
+    -----
+    This transformer requires the pgmpy library for causal discovery. The PC
+    algorithm is suitable for datasets where conditional independence tests are
+    reliable, while Hill Climbing is better for smaller datasets or when prior
+    knowledge is available.
+
+    The causal strength weighting strategy uses correlation coefficients as
+    a proxy for causal effect magnitude. While correlation does not establish
+    causation, it serves as a reasonable strength measure for relationships
+    already established through proper causal discovery algorithms.
+
+    For temporal relationships, the transformer creates lagged versions of
+    variables up to ``max_lag`` and discovers causal relationships that may
+    include temporal dependencies. The algorithm handles edge cases such as
+    small datasets, empty feature sets, and data type variations robustly.
 
     Examples
     --------
@@ -82,14 +188,14 @@ class CausalFeatureEngineer(BaseTransformer):
     >>> from sktime.transformations.series.causal_feature_engineer import (
     ...     CausalFeatureEngineer
     ... )
-    >>> y = load_airline()
-    >>> transformer = CausalFeatureEngineer(max_lag=3)
-    >>> Xt = transformer.fit_transform(y)
+    >>> y = load_airline()  
+    >>> transformer = CausalFeatureEngineer(max_lag=3)  
+    >>> Xt = transformer.fit_transform(y)  
     """
 
     _tags = {
         "authors": ["Aheli"],
-        "python_dependencies": "pgmpy>=0.1.20",
+        "python_dependencies": "pgmpy>=0.1.20;python_version>='3.10',<'3.14'",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
@@ -100,6 +206,7 @@ class CausalFeatureEngineer(BaseTransformer):
         "capability:inverse_transform": False,
         "univariate-only": False,
         "capability:missing_values": True,
+        "tests:vm": True,
     }
 
     def __init__(
@@ -550,13 +657,41 @@ class CausalFeatureEngineer(BaseTransformer):
         return Xt
 
     def get_aligned_target_index(self):
-        """Return the index that target variable should use for proper alignment."""
+        """Return the index that target variable should use for proper alignment.
+
+        Returns
+        -------
+        pd.Index or None
+            The reduced index after data preprocessing, or None if not available.
+
+        Notes
+        -----
+        This method is useful for aligning target variables with transformed
+        features when lags reduce the effective sample size.
+        """
         if hasattr(self, "_reduced_index_"):
             return self._reduced_index_
         return None
 
     def get_safe_target_index(self, target_index):
-        """Return a safe index that only contains values present in target_index."""
+        """Return a safe index that only contains values present in target_index.
+
+        Parameters
+        ----------
+        target_index : pd.Index
+            The original target index to intersect with.
+
+        Returns
+        -------
+        pd.Index or None
+            The intersection of aligned index and target_index, or None if
+            no intersection exists or aligned index is not available.
+
+        Notes
+        -----
+        This method prevents KeyError when indexing target variables by
+        ensuring only valid indices are returned.
+        """
         aligned_index = self.get_aligned_target_index()
         if aligned_index is not None:
             # Only returns intersection to avoid KeyError
@@ -566,7 +701,23 @@ class CausalFeatureEngineer(BaseTransformer):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter for comprehensive coverage."""
+        """Return testing parameters for the transformer.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests.
+            If no special parameters are defined for a value, will return
+            "default" set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance,
+            i.e., ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid
+            test instance.
+        """
         if parameter_set == "default":
             # Core algorithm coverage
             params1 = {
@@ -663,7 +814,23 @@ class CausalFeatureEngineer(BaseTransformer):
 def _safe_identifier(name: str, i: int) -> str:
     """Convert any column name to a valid Python identifier.
 
-    Accepted by pandas, pgmpy, and patsy/statsmodels.
+    Parameters
+    ----------
+    name : str
+        The original column name to convert.
+    i : int
+        Index to use as fallback identifier.
+
+    Returns
+    -------
+    str
+        A valid Python identifier that is accepted by pandas, pgmpy,
+        and patsy/statsmodels.
+
+    Notes
+    -----
+    This function ensures column names are valid Python identifiers
+    that won't cause issues in downstream libraries.
     """
     if name.isidentifier() and not name[0].isdigit() and not name.startswith("_"):
         return name
@@ -671,7 +838,24 @@ def _safe_identifier(name: str, i: int) -> str:
 
 
 def _is_discrete(data):
-    """Check if data appears to be discrete or continuous."""
+    """Check if data appears to be discrete or continuous.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input data to analyze.
+
+    Returns
+    -------
+    bool
+        True if data appears to be discrete (integer dtype with <= 10 unique
+        values per column), False otherwise.
+
+    Notes
+    -----
+    This function uses heuristics to determine data type for selecting
+    appropriate causal discovery algorithms and scoring methods.
+    """
     for col in data.columns:
         if not np.issubdtype(data[col].dtype, np.integer):
             return False
