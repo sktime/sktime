@@ -2,13 +2,20 @@ import copy
 
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.parallel import _get_parallel_test_fixtures, parallelize
+
+_should_run = run_test_module_changed("sktime.utils.parallel")
 
 
 def square(x, **kwargs):
     return x**2
 
 
+@pytest.mark.skipif(
+    not _should_run,
+    reason="sktime.utils.parallel unchanged, skipping parallelize tests",
+)
 @pytest.mark.parametrize("fixture", _get_parallel_test_fixtures())
 def test_parallelize_simple_loop(fixture):
     backend = fixture["backend"]
