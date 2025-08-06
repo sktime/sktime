@@ -3,13 +3,12 @@
 import math
 import warnings
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 from sktime.libs.momentfm.utils.masking import Masking
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch"], severity="none"):
-    import torch
-    import torch.nn as nn
+    torch = _safe_import("torch")
+    nn = _safe_import("torch.nn")
 
     class PositionalEmbedding(nn.Module):
         """Positional Embedding."""
