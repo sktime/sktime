@@ -12,7 +12,7 @@ from sktime.performance_metrics.forecasting._functions import mean_linex_error
 
 
 class MeanLinexError(BaseForecastingErrorMetricFunc):
-    r"""Calculate mean linex error.
+    r"""Mean linex error.
 
     Output is non-negative floating point. The best value is 0.0.
 
@@ -21,6 +21,13 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     may not align with the actual cost faced by users' of the forecasts.
     Asymmetric loss functions are useful when the cost of under- and over-
     prediction are not the same.
+
+    The linex error function accounts for this by penalizing errors on one side
+    of a threshold approximately linearly, while penalizing errors on the other
+    side approximately exponentially. If ``a`` > 0 then negative errors
+    (over-predictions) are penalized approximately linearly and positive errors
+    (under-predictions) are penalized approximately exponentially. If ``a`` < 0
+    the reverse is true.
 
     The LinEx error is calculated as:
 
@@ -75,6 +82,46 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         *`evaluate_by_index` returns the LinEx loss at each individual time point
         in the input data.
 
+        This metric calculates the average LinEx (Linear-Exponential) loss.
+        Calculation is between your actual values (y) and your predicted values (ŷ).
+
+    In simple terms:
+
+    - If the prediction is close to the true value, the loss is small.
+    - If the prediction is off, the loss increases.
+    - How much it increases depends on the parameters `a` and `b`.
+    - `a` controls which side you want to penalize more,
+      such as overpredicting or underpredicting.
+    - `b` is just a scale or multiplier for the loss.
+
+    The formula used is:
+
+    L(e) = b * (exp(a * e) - a * e - 1)
+
+    Where:
+    - `e = y - ŷ` (error)
+    - `a ≠ 0`, `b > 0`
+
+    ---
+
+    **When you use `.evaluate()` or call the metric directly:**
+
+    You get the average LinEx loss over all time points:
+
+    mean(L(e₁), L(e₂), ..., L(eₙ))
+
+    This tells you how well your overall predictions performed.
+
+    ---
+
+    **When you use `.evaluate_by_index()`:**
+
+    Instead of averaging, you get the LinEx loss at each individual time point:
+
+    [L(e₁), L(e₂), ..., L(eₙ)]
+
+    This is useful when you want to know exactly *when* the model made big mistakes.
+
     See Also
     --------
     mean_asymmetric_error
@@ -83,7 +130,9 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     -----
     Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
     according to formula in [2]_.
-    this formula let you control what kind of mistake you want to punish more.
+    this formula let you control what kind of mistake you want to punish more,
+    by adjusting the `a` parameter to shift the penalty between overpredictions
+    and underpredictions.
 
     References
     ----------
