@@ -236,7 +236,7 @@ class _HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "authors": ["tingiskhan", "felipeangleimvieira"],
         "maintainers": ["tingiskhan"],
         "python_version": None,
-        "python_dependencies": ["prophetverse", "jax", "numpyro", "skpro"],
+        "python_dependencies": [],
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,

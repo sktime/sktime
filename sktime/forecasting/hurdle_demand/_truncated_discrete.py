@@ -1,24 +1,17 @@
-from sktime.utils.dependencies import _check_soft_dependencies
+import jax
+import jax.numpy as jnp
+import numpyro.distributions as dist
+from jax import random
+from numpyro.distributions import constraints
+from numpyro.distributions.distribution import Distribution
+from numpyro.distributions.util import validate_sample
 
 from ._inverse_functions import _inverse_neg_binom, _inverse_poisson
 
-if _check_soft_dependencies("jax", "numpyro", severity="none"):
-    import jax
-    import jax.numpy as jnp
-    import numpyro.distributions as dist
-    from jax import random
-    from numpyro.distributions import constraints
-    from numpyro.distributions.distribution import Distribution
-    from numpyro.distributions.util import validate_sample
-
-    REGISTRY = {
-        dist.Poisson: _inverse_poisson,
-        dist.NegativeBinomial2: _inverse_neg_binom,
-    }
-else:
-    Distribution = object
-    REGISTRY = {}
-    validate_sample = lambda u: u  # type: ignore[no-untyped-def]
+REGISTRY = {
+    dist.Poisson: _inverse_poisson,
+    dist.NegativeBinomial2: _inverse_neg_binom,
+}
 
 
 class TruncatedDiscrete(Distribution):
