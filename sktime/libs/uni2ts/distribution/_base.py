@@ -18,7 +18,7 @@ from collections.abc import Callable
 from typing import Any, Optional, TypeVar
 
 from sktime.libs.uni2ts.common.core import abstract_class_property
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from sktime.utils.dependencies import _safe_import
 
 nn = _safe_import("torch.nn")
 AffineTransform = _safe_import("torch.distributions.AffineTransform")

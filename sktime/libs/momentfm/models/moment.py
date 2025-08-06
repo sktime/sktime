@@ -456,9 +456,7 @@ if _check_soft_dependencies(
                 metadata={"anomaly_criterion": anomaly_criterion},
             )
 
-        def forecast(
-            self, x_enc, input_mask=None, **kwargs
-        ) -> TimeseriesOutputs:
+        def forecast(self, x_enc, input_mask=None, **kwargs) -> TimeseriesOutputs:
             """Forecast Function."""
             batch_size, n_channels, seq_len = x_enc.shape
 

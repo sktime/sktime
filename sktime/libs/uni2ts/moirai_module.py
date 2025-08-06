@@ -2,7 +2,6 @@ from functools import partial
 
 from sktime.utils.dependencies import _safe_import
 
-
 F = _safe_import("torch.nn.functional")
 nn = _safe_import("torch.nn")
 tree_map = _safe_import("torch.utils._pytree.tree_map")
