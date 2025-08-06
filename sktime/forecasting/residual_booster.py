@@ -9,8 +9,10 @@ Which is an easy way to turn a forecaster without exogenous capability into one 
 __all__ = ["ResidualBoostingForecaster"]
 __author__ = ["Sanchay117", "felipeangelimvieira"]
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from skpro.distributions import Normal
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -50,9 +52,12 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["Sanchay117", "felipeangelimvieira"],
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "ignores-exogeneous-X": True,
         "capability:missing_values": False,
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "capability:categorical_in_X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
@@ -70,9 +75,17 @@ class ResidualBoostingForecaster(BaseForecaster):
             "capability:missing_values"
         ) and self.residual_forecaster.get_tag("capability:missing_values")
 
+        pred_int = self.base_forecaster.get_tag(
+            "capability:pred_int"
+        ) and self.residual_forecaster.get_tag("capability:pred_int")
+
         in_sample = self.base_forecaster.get_tag(
             "capability:insample"
         ) or self.residual_forecaster.get_tag("capability:insample")
+
+        cat = self.base_forecaster.get_tag(
+            "capability:categorical_in_X"
+        ) and self.residual_forecaster.get_tag("capability:categorical_in_X")
 
         pred_int_insample = self.residual_forecaster.get_tag(
             "capability:pred_int:insample"
@@ -84,6 +97,8 @@ class ResidualBoostingForecaster(BaseForecaster):
                 "capability:missing_values": miss,
                 "capability:insample": in_sample,
                 "capability:pred_int:insample": pred_int_insample,
+                "capability:pred_int": pred_int,
+                "capability:categorical_in_X": cat,
             }
         )
 
@@ -134,6 +149,39 @@ class ResidualBoostingForecaster(BaseForecaster):
         y_resid = self.residual_forecaster_.predict(fh=fh, X=X)
         return y_base + y_resid
 
+    def _predict_interval(self, fh, X=None, coverage=0.9):
+        """Combine prediction intervals from base and residual models."""
+        i_base = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+        i_res = self.residual_forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage
+        )
+        return i_base + i_res
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Combine arbitrary quantile forecasts."""
+        q_base = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        return q_base + q_res
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Combine predictive variances (or full covariances)."""
+        v_base = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
+        v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
+        return v_base + v_res
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Combine full distribution forecasts from base & residual models."""
+        p_base = self.base_future_.predict_proba(fh=fh, X=X, marginal=marginal)
+        p_res = self.residual_forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        mu_sum = p_base.mu + p_res.mu
+        var_sum = p_base.sigma**2 + p_res.sigma**2
+        sigma_sum = np.sqrt(var_sum)
+
+        return Normal(
+            mu=mu_sum, sigma=sigma_sum, index=p_base.index, columns=p_base.columns
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """
@@ -149,7 +197,9 @@ class ResidualBoostingForecaster(BaseForecaster):
         params : dict or list of dict
             Parameters to create test instances of the estimator.
         """
-        from sktime.forecasting.arima import StatsModelsARIMA
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
 
         params1 = {
@@ -158,7 +208,10 @@ class ResidualBoostingForecaster(BaseForecaster):
         }
 
         params2 = {
-            "base_forecaster": StatsModelsARIMA(order=(1, 0, 0)),
+            "base_forecaster": YfromX(
+                estimator=LinearRegression(),
+                pooling="local",
+            ),
             "residual_forecaster": NaiveForecaster(strategy="mean"),
         }
 
