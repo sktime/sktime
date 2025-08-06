@@ -1,6 +1,6 @@
 from functools import partial
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 F = _safe_import("torch.nn.functional")
 nn = _safe_import("torch.nn")
@@ -18,7 +18,26 @@ from sktime.libs.uni2ts.module.position import (
 from sktime.libs.uni2ts.module.transformer import TransformerEncoder
 from sktime.libs.uni2ts.module.ts_embed import MultiInSizeLinear
 
-PyTorchModelHubMixin = _safe_import("huggingface_hub.PyTorchModelHubMixin")
+
+HF_PRESENT = True
+
+if _check_soft_dependencies("huggingface-hub", severity="none"):
+    try:
+        from huggingface_hub import PyTorchModelHubMixin
+    except Exception:
+        HF_PRESENT = False
+
+if not HF_PRESENT:
+    # Create Dummy class
+    class PyTorchModelHubMixin:
+        def __init__(self):
+            pass
+
+        def __init_subclass__(cls, *args, **kwargs) -> None:
+            """Implement dummy version of __init_subclass__."""
+            pass
+
+        pass
 
 
 def encode_distr_output(
