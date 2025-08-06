@@ -30,7 +30,7 @@ def _handle_test_stepouts(estimator, error):
 
     # Handle ARM architecture tolerance for RotationForest
     if isinstance(estimator, RotationForest) and platform.machine() == "aarch64":
-        if "Arrays are not equal" in str(error) and "Mismatched elements: 1" in str(
+        if "Arrays are not equal" in str(error) and "Mismatched elements: 1 " in str(
             error
         ):
             return
