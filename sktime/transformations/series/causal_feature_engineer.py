@@ -111,7 +111,7 @@ class CausalFeatureEngineer(BaseTransformer):
     Uses one of two causal discovery algorithms:
 
     * **PC Algorithm**: Constraint-based method using conditional independence
-      tests. Uses Chi-square for discrete data, Pearson correlation for
+      tests. Uses Chi-square for discrete data, Pearson correlation for 
       continuous data. Tests relationships X ⊥ Y | Z.
 
     * **Hill Climbing**: Score-based method optimizing BIC/AIC scores.
@@ -128,7 +128,7 @@ class CausalFeatureEngineer(BaseTransformer):
 
     * **Interaction Features**: Creates cross-products of causal parents
       to capture non-additive causal effects. For parents [X₁, X₂],
-      generates X₁ x X₂ interaction terms.
+      generates X₁ × X₂ interaction terms.
 
     * **Temporal Rate Features**: Computes rate-of-change features over
       different lag intervals using the formula:
@@ -188,9 +188,9 @@ class CausalFeatureEngineer(BaseTransformer):
     >>> from sktime.transformations.series.causal_feature_engineer import (
     ...     CausalFeatureEngineer
     ... )
-    >>> y = load_airline()
-    >>> transformer = CausalFeatureEngineer(max_lag=3)
-    >>> Xt = transformer.fit_transform(y)
+    >>> y = load_airline()  
+    >>> transformer = CausalFeatureEngineer(max_lag=3)  
+    >>> Xt = transformer.fit_transform(y)  
     """
 
     _tags = {
