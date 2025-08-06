@@ -18,7 +18,6 @@ from sktime.libs.uni2ts.module.position import (
 from sktime.libs.uni2ts.module.transformer import TransformerEncoder
 from sktime.libs.uni2ts.module.ts_embed import MultiInSizeLinear
 
-
 HF_PRESENT = True
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
