@@ -18,11 +18,13 @@ from sktime.libs.uni2ts.module.position import (
 from sktime.libs.uni2ts.module.transformer import TransformerEncoder
 from sktime.libs.uni2ts.module.ts_embed import MultiInSizeLinear
 
-HF_PRESENT = True
+HF_PRESENT = False
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
     try:
         from huggingface_hub import PyTorchModelHubMixin
+
+        HF_PRESENT = True
     except Exception:
         HF_PRESENT = False
 
