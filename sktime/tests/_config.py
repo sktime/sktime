@@ -289,7 +289,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "BOSSEnsemble",
         "CAPA",
-        "CNTCClassifier",
         "CNTCNetwork",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
