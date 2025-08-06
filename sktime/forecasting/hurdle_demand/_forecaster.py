@@ -1,207 +1,12 @@
-"""Probabilistic Intermittent Demand Forecaster."""
-
 from typing import Literal
 
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("jax", severity="none"):
-    import jax.numpy as jnp
-    from jax.scipy.special import expit
-
-import numpy as np
-import pandas as pd
-
-if _check_soft_dependencies("numpyro", severity="none"):
-    import numpyro.handlers
-    from numpyro.distributions import (
-        HalfNormal,
-        NegativeBinomial2,
-        Normal,
-        Poisson,
-        TransformedDistribution,
-    )
-    from numpyro.distributions.transforms import (
-        AffineTransform,
-        RecursiveLinearTransform,
-        SigmoidTransform,
-    )
-
-    from ._hurdle_distribution import HurdleDistribution
-
-if _check_soft_dependencies("prophetverse", severity="none"):
-    from prophetverse.sktime.base import BaseBayesianForecaster
-
-    FOUND_PROPHETVERSE = True
-else:
-    from sktime.forecasting.base import BaseForecaster as BaseBayesianForecaster
-
-    FOUND_PROPHETVERSE = False
-
-if _check_soft_dependencies("skpro", severity="none"):
-    from skpro.distributions import (
-        Hurdle as skpro_Hurdle,
-    )
-    from skpro.distributions import (
-        NegativeBinomial as skpro_NegativeBinomial,
-    )
-    from skpro.distributions import Poisson as skpro_Poisson
-
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.hurdle_demand._truncated_discrete import TruncatedDiscrete
+from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.utils.dependencies import _placeholder_record
 
 
-def _sample_components(
-    length: int,
-    X: np.ndarray,
-    mean_reverting: bool,
-    use_timeseries: bool = False,
-    oos: int = 0,
-) -> np.ndarray:
-    features = np.ones((length + oos, 1))
-
-    if X is not None:
-        features = np.concatenate((features, X), axis=1)
-
-    with numpyro.plate("factors", features.shape[-1]):
-        beta = numpyro.sample("beta", Normal())
-
-    regressors = features @ beta
-
-    if not use_timeseries:
-        return regressors
-
-    sigma = numpyro.sample("sigma", HalfNormal())
-
-    reversion_speed = 1.0
-    if mean_reverting:
-        reversion_speed = numpyro.sample(
-            "phi", TransformedDistribution(Normal(scale=1.5), SigmoidTransform())
-        )
-
-    transition_matrix = jnp.reshape(reversion_speed, (1, 1))
-
-    eps = Normal().expand((length, 1)).to_event(1)
-    time_varying_component = numpyro.sample(
-        "x:ignore",
-        TransformedDistribution(
-            eps,
-            [
-                AffineTransform(0.0, sigma),
-                RecursiveLinearTransform(transition_matrix=transition_matrix),
-            ],
-        ),
-    )
-
-    if oos > 0:
-        mean = jnp.eye(oos, 1) * time_varying_component[-1] * reversion_speed
-        eps_oos = Normal().expand((oos, 1)).to_event(1)
-
-        x_oos = numpyro.sample(
-            "x_oos:ignore",
-            TransformedDistribution(
-                eps_oos,
-                [
-                    AffineTransform(mean, sigma),
-                    RecursiveLinearTransform(transition_matrix=transition_matrix),
-                ],
-            ),
-        )
-
-        time_varying_component = jnp.concatenate(
-            (time_varying_component, x_oos), axis=0
-        )
-
-    return regressors + time_varying_component.squeeze(-1)
-
-
-# TODO: think about priors, can we make them more informative?
-# TODO: add updating logic based on using means of posterior samples
-#  (do this in prophetverse
-class _BaseProbabilisticDemandForecaster(BaseBayesianForecaster):
-    """Base class for probabilistic intermittent demand forecasters."""
-
-    def _get_fit_data(self, y: pd.DataFrame, X: pd.DataFrame, fh: ForecastingHorizon):
-        return {
-            "length": y.shape[0],
-            "y": y.values,
-            "X": X.values if X is not None else None,
-            "mask": jnp.isfinite(y.values),
-        }
-
-    def _get_predict_data(self, X: pd.DataFrame, fh: ForecastingHorizon):
-        if X is not None:
-            temp = self._X.copy()
-            temp.update(X)
-
-            oos_index = X.index.difference(temp.index)
-            if oos_index.size > 0:
-                X = pd.concat([temp, X.loc[oos_index]], axis=0)
-
-        index = fh.to_absolute_int(self._y.index[0], self._cutoff)
-        oos = fh.to_out_of_sample(self.cutoff).to_numpy().size
-
-        return {
-            "length": self._y.shape[0],
-            "y": None,
-            "X": X.values if X is not None else None,
-            "oos": oos,
-            "index": index.to_numpy(),
-            "mask": True,
-        }
-
-    def _get_distribution(
-        self, samples: dict[str, np.ndarray], index: pd.DatetimeIndex
-    ):
-        raise NotImplementedError()
-
-    def _predict_proba(self, marginal=True, **kwargs):
-        if self._is_vectorized:
-            return self._vectorize_predict_method("_predict_components", **kwargs)
-
-        samples = self._get_predictive_samples_dict(**kwargs)
-
-        index = kwargs["fh"].to_absolute(self.cutoff).to_pandas()
-        base_distribution = self._get_distribution(samples, index)
-
-        p = samples["gate"].mean(axis=0)[..., np.newaxis]
-
-        return skpro_Hurdle(p, base_distribution)
-
-    def model(
-        self,
-        length: int,
-        y: np.ndarray,
-        X: np.ndarray,
-        mask: np.ndarray,
-        oos: int = 0,
-        index: np.ndarray = None,
-    ):
-        """
-        Build the model for the probabilistic intermittent demand forecaster.
-
-        Parameters
-        ----------
-        length: int
-            Length of the series to sample.
-        y: jnp.ndarray
-            Observed values.
-        X: np.ndarray
-            Exogenous variables.
-        mask: jnp.ndarray
-            Mask for the observed values.
-        oos: int
-            Number of out-of-sample points to forecast.
-        index: np.array
-            Index to select.
-
-        Returns
-        -------
-            Nothing.
-        """
-        raise NotImplementedError()
-
-
-class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
+# TODO 0.39.0: update upper and lower bounds when Prophetverse 0.9.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.9.0")
+class HurdleDemandForecaster(_DelegatedForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
 
     The definition of the model is as follows:
@@ -257,6 +62,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     >>> from sktime.transformations.series.fourier import FourierFeatures
     >>> from sktime.datasets import load_PBS_dataset
     >>> from sklearn.model_selection import train_test_split
+    >>> import numpyro
     >>>
     >>> numpyro.set_host_device_count(4)
     >>> numpyro.set_platform("cpu")
@@ -273,8 +79,8 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
     >>>    dense_mass=[("probability/beta",), ("demand/beta",)],
     >>> )
     >>> model = HurdleDemandForecaster(
-    >>>     time_varying_demand=True,
-    >>>     time_varying_probability=True,
+    >>>     time_varying_demand="ar",
+    >>>     time_varying_probability="rw",
     >>>     inference_engine=engine,
     >>> )
     >>> model.fit(y_train)
@@ -287,7 +93,7 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "authors": ["tingiskhan", "felipeangleimvieira"],
         "maintainers": ["tingiskhan"],
         "python_version": None,
-        "python_dependencies": ["prophetverse", "jax", "numpyro", "skpro"],
+        "python_dependencies": ["prophetverse", "skpro"],
         "object_type": "forecaster",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
@@ -304,6 +110,8 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         "capability:categorical_in_X": True,
     }
 
+    _delegate_name = "_delegate"
+
     def __init__(
         self,
         family: Literal["poisson", "negative-binomial"] = "negative-binomial",
@@ -311,153 +119,31 @@ class HurdleDemandForecaster(_BaseProbabilisticDemandForecaster):
         time_varying_demand: Literal["ar", "rw", False] = False,
         inference_engine=None,
     ):
-        # NB: this is a bit hacky tbh... Perhaps it might have been easier to
-        # implement this as a model and then wrap it?
-        if FOUND_PROPHETVERSE:
-            super().__init__(scale=1.0, inference_engine=inference_engine)
-        else:
-            super().__init__()
-
         self.family = family
         self.time_varying_probability = time_varying_probability
         self.time_varying_demand = time_varying_demand
+        self.inference_engine = inference_engine
 
-    def _sample_probability(
-        self, length: int, X: np.ndarray, oos: int = 0
-    ) -> np.ndarray:
-        use_timeseries = self.time_varying_probability is not False
-        mean_reverting = self.time_varying_probability == "ar"
+        super().__init__()
 
-        logit_prob = _sample_components(
-            length=length,
-            X=X,
-            use_timeseries=use_timeseries,
-            mean_reverting=mean_reverting,
-            oos=oos,
-        )
-        prob = expit(logit_prob)
+        from ._model import _HurdleDemandForecaster
 
-        return prob
-
-    def _sample_demand(self, length: int, X: np.ndarray, oos: int = 0) -> np.ndarray:
-        use_timeseries = self.time_varying_demand is not False
-        mean_reverting = self.time_varying_demand == "ar"
-
-        log_demand = _sample_components(
-            length=length,
-            use_timeseries=use_timeseries,
-            mean_reverting=mean_reverting,
-            X=X,
-            oos=oos,
-        )
-        demand = jnp.exp(log_demand)
-
-        return demand
-
-    def _get_distribution(
-        self,
-        samples,
-        index,
-    ):
-        mu = samples["demand"].mean(axis=0)
-        if self.family == "negative-binomial":
-            alpha = self.posterior_samples_["concentration"]
-
-            # NB: I had thought numpy would have handled this internally?
-            if alpha.size > 1:
-                alpha = alpha.mean(axis=0)
-
-            return skpro_NegativeBinomial(mu, alpha, index=index)
-
-        elif self.family == "poisson":
-            return skpro_Poisson(mu, index=index)
-
-        raise NotImplementedError(f"Unknown family: {self.family}!")
-
-    def model(  # noqa: D102
-        self,
-        length: int,
-        y: np.ndarray,
-        X: np.ndarray,
-        mask: np.ndarray,
-        oos: int = 0,
-        index: np.ndarray = None,
-    ):
-        with numpyro.handlers.scope(prefix="probability"):
-            prob = self._sample_probability(length, X, oos=oos)
-
-        with numpyro.handlers.scope(prefix="demand"):
-            demand = self._sample_demand(length, X, oos=oos)
-
-        observed_demand = y
-        if index is not None:
-            prob = prob[index]
-            demand = demand[index]
-
-            observed_demand = None
-
-        if self.family == "negative-binomial":
-            concentration = numpyro.sample("concentration", HalfNormal())
-            dist = NegativeBinomial2(demand, concentration)
-        elif self.family == "poisson":
-            dist = Poisson(demand)
-        else:
-            raise ValueError(f"Unknown family: {self.family}!")
-
-        truncated = TruncatedDiscrete(dist, low=0)
-
-        with numpyro.handlers.mask(mask=mask):
-            dist = HurdleDistribution(prob, truncated)
-            samples = numpyro.sample("demand:ignore", dist, obs=observed_demand)
-
-        if index is None:
-            return
-
-        numpyro.deterministic("gate", prob)
-        numpyro.deterministic("demand", demand)
-        numpyro.deterministic("obs", samples)
-
-        return
-
-    def predict_components(self, fh, X=None):
-        if self._is_vectorized:
-            return self._vectorize_predict_method("predict_components", X=X, fh=fh)
-
-        fh_as_index = self.fh_to_index(fh)
-
-        X_inner = self._check_X(X=X)
-        predictive_samples_ = self._get_predictive_samples_dict(fh=fh, X=X_inner)
-
-        moment_functions = {
-            "gate": np.mean,
-            "demand": np.mean,
-            "obs": np.median,
-        }
-
-        out = pd.DataFrame(
-            data={
-                site: moment_functions[site](data, axis=0).flatten()
-                for site, data in predictive_samples_.items()
-            },
-            index=self.periodindex_to_multiindex(fh_as_index),
-        ).sort_index()
-
-        return self._inv_scale_y(out)
-
-    def _predict(self, fh, X):
-        predictive_samples = self.predict_components(fh=fh, X=X)
-        mean = predictive_samples["obs"]
-
-        col_names = self._y_metadata["feature_names"]
-        y_pred = mean.to_frame(col_names[0])
-
-        return self._postprocess_output(y_pred)
+        self._delegate = _HurdleDemandForecaster(**self.get_params(deep=False))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        return {
+        params_1 = {
             "family": "negative-binomial",
             "time_varying_probability": "rw",
-            "time_varying_demand": "ar",
+            "time_varying_demand": "rw",
             "inference_engine": None,
         }
+
+        params_2 = {
+            "family": "poisson",
+            "time_varying_probability": False,
+            "time_varying_demand": False,
+            "inference_engine": None,
+        }
+
+        return params_1, params_2
