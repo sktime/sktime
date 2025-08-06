@@ -22,24 +22,6 @@ from sktime.split.base import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
 
-def _coerce_data_for_evaluate(dataset_loader):
-    """Coerce data input object to a dict to pass to forecasting evaluate."""
-    if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
-        data = dataset_loader()
-    elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
-        data = dataset_loader.load()
-    else:
-        data = dataset_loader
-
-    if isinstance(data, tuple) and len(data) == 2:
-        y, X = data
-        return {"y": y, "X": X}
-    elif isinstance(data, tuple) and len(data) == 1:
-        return {"y": data[0]}
-    else:
-        return {"y": data}
-
-
 class ForecastingBenchmark(BaseBenchmark):
     """Forecasting benchmark.
 
