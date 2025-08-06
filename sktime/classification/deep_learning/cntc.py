@@ -2,6 +2,8 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCClassifier"]
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -40,6 +42,7 @@ class CNTCClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
+    callbacks       : list of keras.callbacks, default = None,
 
     References
     ----------
@@ -80,6 +83,17 @@ class CNTCClassifier(BaseDeepClassifier):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.networks.cntc"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
+        # Run tests in a dedicated VM due to sporadic crashes and possible
+        # memory leaks (see #8518)
+        "tests:vm": True,
     }
 
     def __init__(
@@ -229,8 +243,6 @@ class CNTCClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
         y_onehot = self._convert_y_to_keras(y)
 
         check_random_state(self.random_state)
@@ -245,7 +257,7 @@ class CNTCClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -284,3 +296,52 @@ class CNTCClassifier(BaseDeepClassifier):
             probs = np.hstack([1 - probs, probs])
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param0 = {"n_epochs": 10, "batch_size": 4}
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "rnn_size": 16,
+            "lstm_size": 16,
+        }
+
+        params = [param0, param1]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("tensorflow", severity="none"):
+            from tensorflow import keras
+
+            param_callbacks = {
+                "n_epochs": 10,
+                "batch_size": 4,
+                "callbacks": [
+                    keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+                ],
+            }
+            params.append(param_callbacks)
+
+        return params
