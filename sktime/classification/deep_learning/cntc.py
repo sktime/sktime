@@ -328,13 +328,20 @@ class CNTCClassifier(BaseDeepClassifier):
             "lstm_size": 16,
         }
 
-        from tensorflow import keras
+        params = [param0, param1]
 
-        param_callbacks = {
-            "n_epochs": 10,
-            "batch_size": 4,
-            "callbacks": [
-                keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
-            ],
-        }
-        return [param0, param1, param_callbacks]
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("tensorflow", severity="none"):
+            from tensorflow import keras
+
+            param_callbacks = {
+                "n_epochs": 10,
+                "batch_size": 4,
+                "callbacks": [
+                    keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+                ],
+            }
+            params.append(param_callbacks)
+
+        return params
