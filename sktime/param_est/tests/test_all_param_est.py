@@ -29,6 +29,7 @@ class TestAllParamFitters(ParamFitterFixtureGenerator, QuickTester):
 
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params expected return."""
+
         scenario.run(estimator_instance, method_sequence=["fit"])
 
         gfp_ret = estimator_instance.get_fitted_params()

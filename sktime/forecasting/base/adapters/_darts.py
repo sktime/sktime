@@ -7,6 +7,7 @@ from typing import Optional, Union
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
@@ -115,6 +116,10 @@ class _DartsRegressionAdapter(BaseForecaster):
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": [["u8darts>=0.29", "darts>=0.29"]],
+        # darts is distributed in two packages of which exactly one must be installed
+        # either "darts" or "u8darts" - the first one has a leaner dependency set,
+        # so u8darts is preferred (first in the list)
+        #
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
@@ -123,6 +128,11 @@ class _DartsRegressionAdapter(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._darts"],
     }
 
     def __init__(
@@ -337,7 +347,21 @@ class _DartsRegressionAdapter(BaseForecaster):
         expected_index = fh.get_expected_pred_idx(self.cutoff)
         abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
 
-        endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
+        darts_ge_035 = [
+            _check_soft_dependencies("darts>=0.35", severity="none")
+            or _check_soft_dependencies("u8darts>=0.35", severity="none")
+        ]
+
+        # darts changed the name of the method converting "TimeSeries" to "DataFrame"
+        # in version 0.35, so we need to check the version
+        # also, darts is distributed as "darts" and "u8darts", so we need to check both
+        if darts_ge_035:
+            to_df_name = "to_dataframe"
+        else:
+            to_df_name = "pd_dataframe"
+
+        end_pp_to_df_method = getattr(endogenous_point_predictions, to_df_name)
+        endogenous_point_predictions = end_pp_to_df_method()
 
         if _is_int64_type(expected_index):
             if X is not None:
@@ -374,6 +398,30 @@ class _DartsRegressionAdapter(BaseForecaster):
                 "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
             ]
         return endogenous_point_predictions.loc[abs_idx]
+
+
+def _get_darts_quantiles(obj, q):
+    """Get quantiles from Darts object."""
+    # darts changed the name of the method converting "TimeSeries" to quantiles
+    # data frames multiple times in succession
+    # pre version 0.35, it was called pd_quantiles
+    # post version 0.35, on needs to call quantile_timeseries first
+    # in version 0.37, quantile_timeseries was renamed to quantiles
+    # also, darts is distributed as "darts" and "u8darts", so we need to check both
+    darts_ge_035 = [
+        _check_soft_dependencies("darts>=0.35", severity="none")
+        or _check_soft_dependencies("u8darts>=0.35", severity="none")
+    ]
+    darts_ge_037 = [
+        _check_soft_dependencies("darts>=0.37", severity="none")
+        or _check_soft_dependencies("u8darts>=0.37", severity="none")
+    ]
+    if darts_ge_037:
+        return obj.quantile(q).to_dataframe()
+    elif darts_ge_035:
+        return obj.quantile_timeseries(q).to_dataframe()
+    else:
+        return obj.pd_quantiles(q)
 
 
 class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
@@ -561,12 +609,16 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         absolute_fh = fh.to_absolute(self.cutoff)
+
         endogenous_quantile_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
             past_covariates=unknown_exogenous,
             future_covariates=known_exogenous,
             num_samples=self.num_samples,
-        ).quantiles_df(quantiles=alpha)
+        )
+        endogenous_quantile_predictions = _get_darts_quantiles(
+            endogenous_quantile_predictions, q=alpha
+        )
         variable_names = self._get_varnames()
         multi_index = pd.MultiIndex.from_product(
             [variable_names, alpha], names=["variable", "quantile"]

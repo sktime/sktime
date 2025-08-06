@@ -46,13 +46,10 @@ EXCLUDE_ESTIMATORS = [
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
-    "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
-    "FCNClassifier",
     "EditDist",
     "CNNClassifier",
-    "FCNClassifier",
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
@@ -61,7 +58,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -70,7 +66,6 @@ EXCLUDE_ESTIMATORS = [
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
-    "DartsXGBModel",
     # models with large weights
     "MomentFMForecaster",
     # Large datasets
@@ -78,7 +73,6 @@ EXCLUDE_ESTIMATORS = [
     # Test estimators
     "_TransformChangeNInstances",
     # ptf global models fail the tests, see #7997
-    "PytorchForecastingTFT",
     "PytorchForecastingNBeats",
     "PytorchForecastingNHiTS",
     "PytorchForecastingDeepAR",
@@ -144,10 +138,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    # `test_fit_idempotent` fails with `AssertionError`, see #3616
-    "ResNetClassifier": [
-        "test_fit_idempotent",
-    ],
     "ResNetRegressor": [
         "test_fit_idempotent",
     ],
@@ -155,9 +145,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "CNNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "FCNClassifier": [
         "test_fit_idempotent",
     ],
     "LSTMFCNClassifier": [
@@ -171,11 +158,6 @@ EXCLUDED_TESTS = {
     ],
     "MLPRegressor": [
         "test_fit_idempotent",
-    ],
-    "CNTCClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
     ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",
@@ -302,7 +284,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "BOSSEnsemble",
         "CAPA",
-        "CNTCClassifier",
         "CNTCNetwork",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
@@ -334,9 +315,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "IndividualBOSS",
         "IndividualTDE",
         "InformationGainSegmentation",
-        "LTSFDLinearForecaster",
-        "LTSFLinearForecaster",
-        "LTSFNLinearForecaster",
         "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",

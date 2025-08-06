@@ -3566,6 +3566,37 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "thearshkumar",
+      "name": "Arsh Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/145699183?v=4",
+      "profile": "https://github.com/thearshkumar",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "SzymonStolarski",
+      "name": "Szymon Stolarski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67345427?v=4",
+      "profile": "https://github.com/SzymonStolarski",
+      "contributions": [
+        "code",
+        "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "garar",
+      "name": "Krystian Kichewko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/220005?v=4",
+      "profile": "https://github.com/garar",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
