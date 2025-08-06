@@ -48,10 +48,8 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
-    "FCNClassifier",
     "EditDist",
     "CNNClassifier",
-    "FCNClassifier",
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
@@ -147,9 +145,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "CNNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "FCNClassifier": [
         "test_fit_idempotent",
     ],
     "LSTMFCNClassifier": [
