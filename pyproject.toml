@@ -292,7 +292,7 @@ dl = [
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
-  'huggingface-hub<0.32.0; python_version < "3.12"',
+  'huggingface_hub<0.32.0; python_version < "3.12"',
   'accelerate',
   'tqdm',
   'hydra-core; python_version < "3.13"',
