@@ -13,7 +13,7 @@ from sktime.tests.test_switch import run_test_for_class
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("family", ["poisson", "negative-binomial"])
-@pytest.mark.parametrize("time_varying", [True, False])
+@pytest.mark.parametrize("time_varying", [False, "rw"])
 @pytest.mark.parametrize(
     "engine",
     [
