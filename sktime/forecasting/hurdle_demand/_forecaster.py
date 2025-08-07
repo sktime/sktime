@@ -107,6 +107,7 @@ class HurdleDemandForecaster(_DelegatedForecaster):
         "enforce_index_type": None,
         "fit_is_empty": False,
         "capability:categorical_in_X": True,
+        "tests:vm": True,
     }
 
     _delegate_name = "_delegate"
