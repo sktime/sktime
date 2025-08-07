@@ -101,6 +101,17 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         super().__init__()
 
+        # Import the the list of supported distances
+        from sktime.dists_kernels.base.adapters._sklearn import DISTANCES_SUPPORTED
+
+        # Input check for supported distance strings, as in _BaseKnnTimeSeriesEstimator
+        if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
+            raise ValueError(
+                f"Unrecognised distance measure string: {distance}. "
+                f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
+                "Alternatively, pass a callable distance measure into the constructor."
+            )
+
         if isinstance(distance, BasePairwiseTransformerPanel):
             tags_to_clone = [
                 "capability:multivariate",
@@ -120,6 +131,16 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         self.dbscan_ = None
 
+        # internal import to avoid circular imports
+        from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistanceAdapter
+
+        self._dist_adapt = _SklearnDistanceAdapter(
+            distance=self.distance,
+            distance_params=None,  # distance_params isn't a param for TimeSeriesDBSCAN
+            n_vars=None,
+            is_equal_length=None,
+        )
+
     def _fit(self, X, y=None):
         """Fit time series clusterer to training data.
 
@@ -136,8 +157,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         self._X = X
 
-        distance = self.distance
-        distmat = distance(X)
+        # uses adapter's _distance method to handle string-based and callable distances.
+        distmat = self._dist_adapt._distance(X)
 
         deleg_param_dict = {key: getattr(self, key) for key in self.DELEGATED_PARAMS}
 
