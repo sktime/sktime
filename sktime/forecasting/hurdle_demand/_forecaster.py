@@ -1,11 +1,8 @@
 from typing import Literal
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 0.39.0: update upper and lower bounds when Prophetverse 0.9.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.9.0")
 class HurdleDemandForecaster(_DelegatedForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
 
@@ -71,19 +68,21 @@ class HurdleDemandForecaster(_DelegatedForecaster):
     >>> data.index = data.index.to_timestamp() + pd.tseries.offsets.MonthEnd(0)
     >>>
     >>> y_train, y_test = train_test_split(data, test_size=0.3, shuffle=False)
-    >>> engine = MCMCInferenceEngine(
+    >>> engine = MCMCInferenceEngine( # doctest: +SKIP
     >>>    num_samples=1_000,
     >>>    num_warmup=5_000,
     >>>    num_chains=4,
     >>>    r_hat=1.1,
     >>>    dense_mass=[("probability/beta",), ("demand/beta",)],
     >>> )
-    >>> model = HurdleDemandForecaster(
+    >>> model = HurdleDemandForecaster( # doctest: +SKIP
     >>>     time_varying_demand="ar",
     >>>     time_varying_probability="rw",
     >>>     inference_engine=engine,
     >>> )
-    >>> model.fit(y_train)
+    >>> model.fit(y_train) # doctest: +SKIP
+    HurdleDemandForecaster(...)
+    >>> y_pred = model.predict(fh=[1, 2, 3]) # doctest: +SKIP
 
     See also the notebook under
     `examples/forecasting/probabilistic_intermittent_demand.ipynb`.
