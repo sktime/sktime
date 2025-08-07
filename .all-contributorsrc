@@ -3556,6 +3556,16 @@
       ]
     },
     {
+      "login": "akshathmangudi",
+      "name": "Akshath",
+      "avatar_url": "https://avatars.githubusercontent.com/akshathmangudi",
+      "profile": "https://github.com/akshathmangudi",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
       "login": "thearshkumar",
       "name": "Arsh Kumar",
       "avatar_url": "https://avatars.githubusercontent.com/u/145699183?v=4",
@@ -3573,6 +3583,16 @@
       "contributions": [
         "code",
         "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "garar",
+      "name": "Krystian Kichewko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/220005?v=4",
+      "profile": "https://github.com/garar",
+      "contributions": [
+        "code",
         "bug"
       ]
     },
