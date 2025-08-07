@@ -124,7 +124,7 @@ class MomentFMClassifier(BaseClassifier):
         "python_dependencies": [
             "torch",
             "tqdm",
-            "huggingface-hub",
+            "huggingface-hub<0.32.0",
             # "momentfm",
             "accelerate",
             "transformers",
@@ -156,7 +156,6 @@ class MomentFMClassifier(BaseClassifier):
         config=None,
         to_cpu_after_fit=False,
     ):
-        super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.head_dropout = head_dropout
         self.batch_size = batch_size
@@ -170,6 +169,7 @@ class MomentFMClassifier(BaseClassifier):
         self.config = config
         self._config = config if config is not None else {}
         self.to_cpu_after_fit = to_cpu_after_fit
+        super().__init__()
 
     def _fit(self, X, y):
         """MomentFMClassifier fit method.
@@ -390,6 +390,17 @@ class MomentFMClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        # import platform
+
+        # os = platform.system()
+        # if os == "Darwin":
+        #     if _check_soft_dependencies("torch", severity="none"):
+        #         import torch
+
+        #         torch.backends.mps.is_available = lambda: False
+        #     else:
+        #         pass
+
         params_set = []
         params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "batch_size": 64}
         params_set.append(params1)
