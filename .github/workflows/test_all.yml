@@ -32,7 +32,7 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
