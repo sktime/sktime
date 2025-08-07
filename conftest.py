@@ -26,6 +26,7 @@ i.e., intersection of estimators satisfying the conditions
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["fkiraly"]
 
@@ -61,7 +62,10 @@ def pytest_configure(config):
         _config.ONLY_CHANGED_MODULES = True
 
 
-@pytest.fixture(autouse=True)
-def disable_mps(monkeypatch):
-    """Disable MPS for all tests."""
-    monkeypatch.setattr("torch._C._mps_is_available", lambda: False)
+if _check_soft_dependencies("torch", severity="none"):
+    # if torch is installed, disable MPS for all tests
+    # to avoid issues with MPS not being available in some environments
+    @pytest.fixture(autouse=True)
+    def disable_mps(monkeypatch):
+        """Disable MPS for all tests."""
+        monkeypatch.setattr("torch._C._mps_is_available", lambda: False)
