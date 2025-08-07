@@ -69,17 +69,17 @@ class HurdleDemandForecaster(_DelegatedForecaster):
     >>>
     >>> y_train, y_test = train_test_split(data, test_size=0.3, shuffle=False)
     >>> engine = MCMCInferenceEngine( # doctest: +SKIP
-    >>>    num_samples=1_000,
-    >>>    num_warmup=5_000,
-    >>>    num_chains=4,
-    >>>    r_hat=1.1,
-    >>>    dense_mass=[("probability/beta",), ("demand/beta",)],
-    >>> )
+    ...    num_samples=1_000,
+    ...    num_warmup=5_000,
+    ...    num_chains=4,
+    ...    r_hat=1.1,
+    ...    dense_mass=[("probability/beta",), ("demand/beta",)]
+    ... )
     >>> model = HurdleDemandForecaster( # doctest: +SKIP
-    >>>     time_varying_demand="ar",
-    >>>     time_varying_probability="rw",
-    >>>     inference_engine=engine,
-    >>> )
+    ...     time_varying_demand="ar",
+    ...     time_varying_probability="rw",
+    ...     inference_engine=engine
+    ... )
     >>> model.fit(y_train) # doctest: +SKIP
     HurdleDemandForecaster(...)
     >>> y_pred = model.predict(fh=[1, 2, 3]) # doctest: +SKIP
