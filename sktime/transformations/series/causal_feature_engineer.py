@@ -195,20 +195,21 @@ class CausalFeatureEngineer(BaseTransformer):
 
     _tags = {
         "authors": ["Aheli"],
-        "python_dependencies": "pgmpy>=0.1.20;",
+        "python_dependencies": "pgmpy>=0.1.20",
         "python_version": ">=3.10,<3.14",
+        "tests:vm": True,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame", "None"],
+        "X_inner_mtype": ["pd.DataFrame"],
+        "y_inner_mtype": ["pd.DataFrame"],
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
         "univariate-only": False,
         "capability:missing_values": True,
-        "tests:vm": True,
     }
+
 
     def __init__(
         self,
@@ -367,10 +368,6 @@ class CausalFeatureEngineer(BaseTransformer):
 
         from pgmpy.estimators.ExpertKnowledge import ExpertKnowledge
 
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        _check_soft_dependencies("pgmpy>=0.1.20", obj=self)
-
         ek = ExpertKnowledge()
 
         try:
@@ -406,10 +403,6 @@ class CausalFeatureEngineer(BaseTransformer):
         """Discover causal structure from time series data."""
         from pgmpy.estimators import PC, HillClimbSearch
         from pgmpy.estimators.CITests import chi_square, pearsonr
-
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        _check_soft_dependencies("pgmpy>=0.1.20", obj=self)
 
         if self.causal_method == "pc":
             # Use PC algorithm (constraint based)
