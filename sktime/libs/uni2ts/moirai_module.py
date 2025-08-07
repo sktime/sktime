@@ -26,7 +26,7 @@ else:
         pass
 
 
-if _check_soft_dependencies("huggingface-hub", severity="none"):
+if _check_soft_dependencies(["huggingface-hub", "torch"], severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
 else:
     # Create Dummy class
