@@ -195,7 +195,8 @@ class CausalFeatureEngineer(BaseTransformer):
 
     _tags = {
         "authors": ["Aheli"],
-        "python_dependencies": "pgmpy>=0.1.20;python_version>='3.10',<'3.14'",
+        "python_dependencies": "pgmpy>=0.1.20;",
+        "python_version": ">=3.10,<3.14",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
