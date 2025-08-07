@@ -222,7 +222,6 @@ transformations = [
   'holidays>=0.29,<0.59; python_version < "3.13"',
   'mne>=1.5,<1.9; python_version < "3.13"',
   'numba<0.62,>=0.53; python_version < "3.13"',
-  'pgmpy>=0.1.20; python_version < "3.13"',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
