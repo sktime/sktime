@@ -210,7 +210,6 @@ class CausalFeatureEngineer(BaseTransformer):
         "capability:missing_values": True,
     }
 
-
     def __init__(
         self,
         causal_method: str = "pc",
