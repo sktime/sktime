@@ -32,7 +32,6 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
           - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
@@ -66,7 +65,6 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
           - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
@@ -111,7 +109,6 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
           - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
