@@ -422,6 +422,7 @@ def evaluate(
     return_model: bool = False,
     cv_global=None,
     cv_global_temporal=None,
+    score_across_windows: bool = False,  
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -603,6 +604,14 @@ def evaluate(
             Has to be a SingleWindowSplitter.
             cv is applied on the test set of the combined application of
             cv_global and cv_global_temporal.
+        
+         score_across_windows : bool, optional (default=False)
+    If True, calculates metrics across all CV windows combined as additional results.
+    Requires `return_data=True`. Adds a row with fold="all" containing:
+    - Metrics calculated on concatenated test windows
+    - NaN values for model-specific columns
+
+    Note: Differs from averaged per-window metrics for non-linear metrics (e.g., RMSE).
 
     Returns
     -------
@@ -814,21 +823,70 @@ def evaluate(
             backend_params=backend_params,
         )
 
-    # final formatting of dask dataframes
-    if backend in ["dask", "dask_lazy"] and not not_parallel:
-        import dask.dataframe as dd
-
-        metadata = _get_column_order_and_datatype(
-            scoring, return_data, cutoff_dtype, return_model=return_model
-        )
-
-        results = dd.from_delayed(results, meta=metadata)
-        if backend == "dask":
-            results = results.compute()
-    else:
-        results = pd.concat(results)
-
-    # final formatting of results DataFrame
+     # Final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
+    if score_across_windows:
+    # Early validation
+     if not return_data:
+        raise ValueError("score_across_windows=True requires return_data=True to concatenate test data")
+
+    if len(results) == 0:
+        warnings.warn("Empty results DataFrame - skipping cross-window scoring")
+        return results
+
+    # Required columns check
+    required_cols = {"y_test", "y_pred"}
+    missing_cols = required_cols - set(results.columns)
+    if missing_cols:
+        raise ValueError(f"Missing required columns: {missing_cols}")
+
+    # Type and None check — filter out invalid entries safely
+    y_test_list = [x for x in results["y_test"] if isinstance(x, pd.Series)]
+    y_pred_list = [x for x in results["y_pred"] if isinstance(x, pd.Series)]
+
+    if not y_test_list or not y_pred_list:
+        warnings.warn("No valid Series found in y_test/y_pred columns — skipping scoring")
+        return results
+
+    try:
+        all_y_test = pd.concat(y_test_list, ignore_index=False)
+        all_y_pred = pd.concat(y_pred_list, ignore_index=False)
+
+        if not all_y_test.index.equals(all_y_pred.index):
+            warnings.warn("Indices of concatenated y_test and y_pred do not match")
+
+    except Exception as e:
+        raise ValueError(f"Failed to concatenate test data: {str(e)}") from e
+
+    # Metric computation
+    across_metrics = {}
+    if scoring is not None:
+        scorers = [scoring] if not isinstance(scoring, (list, tuple)) else scoring
+
+        for scorer in scorers:
+            try:
+                score_name = getattr(scorer, "name", getattr(scorer, "__name__", "custom_metric"))
+                across_metrics[f"test_{score_name}"] = scorer(all_y_test, all_y_pred)
+            except Exception as e:
+                warnings.warn(f"Failed to compute {score_name} across windows: {str(e)}")
+                across_metrics[f"test_{score_name}"] = np.nan
+
+    # Create new row matching existing results columns
+    result_cols = results.columns.tolist()
+    across_row = {col: np.nan for col in result_cols}
+    across_row.update(across_metrics)
+
+    if return_data:
+        across_row["y_test"] = all_y_test
+        across_row["y_pred"] = all_y_pred
+
+    if return_model and "fitted_forecaster" in result_cols:
+        across_row["fitted_forecaster"] = None
+
+    # Append results
+    across_df = pd.DataFrame([across_row], index=["all"])
+    results = pd.concat([results, across_df], ignore_index=False, verify_integrity=True)
+
     return results
+
