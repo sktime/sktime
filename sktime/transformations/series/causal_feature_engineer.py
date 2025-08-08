@@ -58,10 +58,14 @@ class CausalFeatureEngineer(BaseTransformer):
         Minimum causal strength required for a relationship to generate features.
 
     expert_knowledge : dict, default=None
-        Optional domain knowledge constraints:
+        Optional domain knowledge constraints. Requires pgmpy>=0.1.20 with
+        ExpertKnowledge class supporting forbidden_edges and required_edges
+        attributes:
 
         * "forbidden_edges" : List of tuples representing forbidden causal edges
         * "required_edges" : List of tuples representing required causal edges
+
+        Example: {"forbidden_edges": [("X1", "X2")], "required_edges": [("X2", "X3")]}
 
     scoring_method : str, default="auto"
         Scoring method for hill climb search. Options:
@@ -201,8 +205,8 @@ class CausalFeatureEngineer(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
-        "X_inner_mtype": ["pd.DataFrame"],
-        "y_inner_mtype": ["pd.DataFrame"],
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
@@ -223,9 +227,7 @@ class CausalFeatureEngineer(BaseTransformer):
     ):
         self.causal_method = causal_method
         self.max_lag = max_lag
-        self.feature_types = (
-            feature_types if feature_types else ["direct", "interaction", "temporal"]
-        )
+        self.feature_types = feature_types
         self.weighting_strategy = weighting_strategy
         self.significance_level = significance_level
         self.min_causal_strength = min_causal_strength
@@ -233,6 +235,13 @@ class CausalFeatureEngineer(BaseTransformer):
         self.scoring_method = scoring_method
 
         super().__init__()
+
+        # Handle default values in private attributes
+        self._feature_types = (
+            feature_types
+            if feature_types is not None
+            else ["direct", "interaction", "temporal"]
+        )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -369,32 +378,11 @@ class CausalFeatureEngineer(BaseTransformer):
 
         ek = ExpertKnowledge()
 
-        try:
-            if "forbidden_edges" in self.expert_knowledge:
-                for edge in self.expert_knowledge["forbidden_edges"]:
-                    ek.add_edge(edge[0], edge[1], constraint_type="forbidden")
+        if "forbidden_edges" in self.expert_knowledge:
+            ek.forbidden_edges = self.expert_knowledge["forbidden_edges"]
 
-            if "required_edges" in self.expert_knowledge:
-                for edge in self.expert_knowledge["required_edges"]:
-                    ek.add_edge(edge[0], edge[1], constraint_type="required")
-
-        except (AttributeError, TypeError):
-            # older pgmpy API
-            try:
-                if "forbidden_edges" in self.expert_knowledge:
-                    for edge in self.expert_knowledge["forbidden_edges"]:
-                        ek.forbid_edge(*edge)
-
-                if "required_edges" in self.expert_knowledge:
-                    for edge in self.expert_knowledge["required_edges"]:
-                        ek.require_edge(*edge)
-
-            except AttributeError:
-                warnings.warn(
-                    "Expert knowledge constraints not supported in this pgmpy version. "
-                    "Proceeding without expert knowledge constraints."
-                )
-                return None
+        if "required_edges" in self.expert_knowledge:
+            ek.required_edges = self.expert_knowledge["required_edges"]
 
         return ek
 
@@ -506,15 +494,15 @@ class CausalFeatureEngineer(BaseTransformer):
 
             parents = list(self.causal_graph_.get_parents(node))
 
-            if "direct" in self.feature_types:
+            if "direct" in self._feature_types:
                 features.extend(parents)
 
-            if "interaction" in self.feature_types and len(parents) > 1:
+            if "interaction" in self._feature_types and len(parents) > 1:
                 for i in range(len(parents)):
                     for j in range(i + 1, len(parents)):
                         features.append(f"{parents[i]}_x_{parents[j]}")
 
-            if "temporal" in self.feature_types:
+            if "temporal" in self._feature_types:
                 lagged_parents = [p for p in parents if "_lag_" in p]
                 for lag_var in lagged_parents:
                     base_var = lag_var.split("_lag_")[0]
@@ -711,97 +699,94 @@ class CausalFeatureEngineer(BaseTransformer):
             i.e., ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid
             test instance.
         """
-        if parameter_set == "default":
-            # Core algorithm coverage
-            params1 = {
-                "causal_method": "pc",
-                "max_lag": 2,
-                "feature_types": ["direct", "interaction"],
-                "significance_level": 0.1,
-                "min_causal_strength": 0.05,
-            }
+        # Core algorithm coverage
+        params1 = {
+            "causal_method": "pc",
+            "max_lag": 2,
+            "feature_types": ["direct", "interaction"],
+            "significance_level": 0.1,
+            "min_causal_strength": 0.05,
+        }
 
-            params2 = {
-                "causal_method": "hill_climb",
-                "max_lag": 3,
-                "feature_types": ["direct", "temporal"],
-                "scoring_method": "bic-g",
-                "significance_level": 0.05,
-                "min_causal_strength": 0.1,
-            }
+        params2 = {
+            "causal_method": "hill_climb",
+            "max_lag": 3,
+            "feature_types": ["direct", "temporal"],
+            "scoring_method": "bic-g",
+            "significance_level": 0.05,
+            "min_causal_strength": 0.1,
+        }
 
-            # Different feature type combinations
-            params3 = {
-                "causal_method": "pc",
-                "max_lag": 2,
-                "feature_types": ["direct", "interaction", "temporal"],
-                "weighting_strategy": "uniform",
-                "significance_level": 0.2,
-                "min_causal_strength": 0.01,
-            }
+        # Different feature type combinations
+        params3 = {
+            "causal_method": "pc",
+            "max_lag": 2,
+            "feature_types": ["direct", "interaction", "temporal"],
+            "weighting_strategy": "uniform",
+            "significance_level": 0.2,
+            "min_causal_strength": 0.01,
+        }
 
-            # Different weighting strategies
-            params4 = {
-                "causal_method": "hill_climb",
-                "max_lag": 3,
-                "feature_types": ["direct"],
-                "weighting_strategy": "inverse_lag",
-                "scoring_method": "aic-g",
-                "significance_level": 0.05,
-                "min_causal_strength": 0.3,
-            }
+        # Different weighting strategies
+        params4 = {
+            "causal_method": "hill_climb",
+            "max_lag": 3,
+            "feature_types": ["direct"],
+            "weighting_strategy": "inverse_lag",
+            "scoring_method": "aic-g",
+            "significance_level": 0.05,
+            "min_causal_strength": 0.3,
+        }
 
-            # Edge case: minimal settings
-            params5 = {
-                "causal_method": "pc",
-                "max_lag": 1,
-                "feature_types": ["direct"],
-                "significance_level": 0.5,
-                "min_causal_strength": 0.01,
-            }
+        # Edge case: minimal settings
+        params5 = {
+            "causal_method": "pc",
+            "max_lag": 1,
+            "feature_types": ["direct"],
+            "significance_level": 0.5,
+            "min_causal_strength": 0.01,
+        }
 
-            # Edge case: strict settings
-            params6 = {
-                "causal_method": "hill_climb",
-                "max_lag": 1,
-                "feature_types": ["interaction"],
-                "scoring_method": "auto",
-                "significance_level": 0.001,
-                "min_causal_strength": 0.8,
-            }
+        # Edge case: strict settings
+        params6 = {
+            "causal_method": "hill_climb",
+            "max_lag": 1,
+            "feature_types": ["interaction"],
+            "scoring_method": "auto",
+            "significance_level": 0.001,
+            "min_causal_strength": 0.8,
+        }
 
-            # Expert knowledge test
-            params7 = {
-                "causal_method": "pc",
-                "max_lag": 2,
-                "feature_types": ["direct", "temporal"],
-                "significance_level": 0.1,
-                "min_causal_strength": 0.1,
-                "expert_knowledge": {"forbidden_edges": [("X1", "X2")]},
-            }
+        # Expert knowledge test
+        params7 = {
+            "causal_method": "pc",
+            "max_lag": 2,
+            "feature_types": ["direct", "temporal"],
+            "significance_level": 0.1,
+            "min_causal_strength": 0.1,
+            "expert_knowledge": {"forbidden_edges": [("X1", "X2")]},
+        }
 
-            # Different scoring methods
-            params8 = {
-                "causal_method": "hill_climb",
-                "max_lag": 3,
-                "feature_types": ["direct", "interaction"],
-                "scoring_method": "ll-g",
-                "significance_level": 0.05,
-                "min_causal_strength": 0.2,
-            }
+        # Different scoring methods
+        params8 = {
+            "causal_method": "hill_climb",
+            "max_lag": 3,
+            "feature_types": ["direct", "interaction"],
+            "scoring_method": "ll-g",
+            "significance_level": 0.05,
+            "min_causal_strength": 0.2,
+        }
 
-            return [
-                params1,
-                params2,
-                params3,
-                params4,
-                params5,
-                params6,
-                params7,
-                params8,
-            ]
-
-        return cls.get_test_params("default")
+        return [
+            params1,
+            params2,
+            params3,
+            params4,
+            params5,
+            params6,
+            params7,
+            params8,
+        ]
 
 
 def _safe_identifier(name: str, i: int) -> str:
