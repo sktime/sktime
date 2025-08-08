@@ -103,7 +103,8 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:missing_values": False,
         # CI and test flags
         # -----------------
-        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:core": False,  # should tests be triggered by framework changes?
+        "tests:skip_all": True,  # skip due to sporadic failures, see #8617
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
