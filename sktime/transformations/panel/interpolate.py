@@ -23,6 +23,15 @@ class TSInterpolator(BaseTransformer):
     Parameters
     ----------
     length : integer, the length of time series to resize to.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.interpolate import TSInterpolator
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    >>> original_length = len(X_train.iloc[0, 0])
+    >>> interpolator = TSInterpolator(length=original_length)
+    >>> X_train_interp = interpolator.fit_transform(X_train)
     """
 
     _tags = {
