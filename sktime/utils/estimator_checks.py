@@ -204,7 +204,7 @@ def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
 
     See Also
     --------
-    check_estimator : Check if estimator adheres to sktime APi contracts.
+    check_estimator : Check if estimator adheres to sktime API contracts.
 
     Examples
     --------
