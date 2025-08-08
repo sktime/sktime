@@ -65,8 +65,11 @@ class PyPOTSImputer(BaseTransformer):
         "y_inner_mtype": "None",
         "univariate-only": False,
         "requires_y": False,
+        "capability:missing_values": True,
+        "capability:missing_values:removes": False,
         "fit_is_empty": False,
         "python_dependencies": "pypots",
+        "tests:vm": True,
     }
 
     # Define supported models
@@ -122,15 +125,7 @@ class PyPOTSImputer(BaseTransformer):
         self.patience = patience
         self.random_state = random_state
         super().__init__()
-        self._is_fitted = False
         self._imputer = None
-
-    def _check_dependencies(self):
-        """Check if pypots is installed."""
-        _check_soft_dependencies("pypots", severity="error")
-        import pypots
-
-        return pypots
 
     def _validate_model(self):
         """Validate the selected model."""
@@ -184,8 +179,7 @@ class PyPOTSImputer(BaseTransformer):
 
     def _fit(self, X, y=None):
         """Fit the imputer to the training data."""
-        # Check dependencies
-        pypots = self._check_dependencies()
+        import pypots
 
         # Validate model
         self._validate_model()
@@ -205,25 +199,13 @@ class PyPOTSImputer(BaseTransformer):
         # Initialize the model
         self._imputer = model_cls(**params)
 
-        # Skip if inside readthedocs build
-        if os.environ.get("READTHEDOCS") == "True":
-            self._is_fitted = True
-            return self
-
         # Fit the model
         train_data = {"X": X_array, "missing_mask": X_mask}
         self._imputer.fit(train_data)
-        self._is_fitted = True
         return self
 
     def _transform(self, X, y=None):
         """Transform X by imputing missing values."""
-        if not self._is_fitted:
-            raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
-
-        # Check dependencies
-        self._check_dependencies()
-
         X_array, X_mask = self._prepare_input(X)
 
         test_data = {"X": X_array, "missing_mask": X_mask}
