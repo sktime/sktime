@@ -9,6 +9,7 @@ __all__ = ["FhPlexForecaster"]
 import pandas as pd
 
 from sktime.datatypes._utilities import get_slice
+from sktime.forecasting import upto
 
 PANDAS_TS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -192,7 +193,7 @@ class FhPlexForecaster(BaseForecaster):
                 fh_i = [fh_key]
             else:
                 fh_rel = fh.to_relative(self.cutoff)
-                fh_i = range(1, fh_rel[i] + 1)
+                fh_i = upto(fh_rel[i])
 
             params_ix = self._plexfun(ix)
             f_ix = self.forecaster.clone().set_params(**params_ix)
