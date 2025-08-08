@@ -119,6 +119,29 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> forecaster.fit(y)  # doctest: +SKIP
     DynamicFactor(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    -------------------------------------------------------------
+    >>> from sktime.utils._testing.series import _make_series
+    >>> from sktime.forecasting.dynamic_factor import DynamicFactor
+    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> # Load the longley dataset
+    >>> df = load_macroeconomic()
+    >>> y_train = df.loc[:'2007Q4', ['realgdp', 'realcons', 'realinv']].copy()
+    >>> y_test = df.loc['2008Q1':, ['realgdp', 'realcons', 'realinv']].copy()
+    >>> X_train = df.loc[:'2007Q4', ['unemp', 'pop', 'infl','cpi']].copy()
+    >>> X_test = df.loc['2008Q1':, ['unemp', 'pop', 'infl','cpi']].copy()
+    >>> # Create a forecasting horizon
+    >>> fh_out = ForecastingHorizon([2, 3,4,5,6,7], is_relative=True)
+    >>> # Fit the Dynamic Factor model
+    >>> forecaster = DynamicFactor(enforce_stationarity=False)
+    >>> forecaster.fit(y_train, X=X_train)
+    >>> y_pred_out = forecaster.predict(fh=fh_out, X=X_test)
+    >>> # Create a forecasting horizon
+    >>> fh_in = ForecastingHorizon([2, 3,4,5,6,7], is_relative=False)
+    >>> y_pred_in = forecaster.predict(fh=fh_in, X=X_train)
+
     """
 
     _tags = {
@@ -138,7 +161,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "capability:insample": False,
+        "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
@@ -215,8 +238,14 @@ class DynamicFactor(_StatsModelsAdapter):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
+        if fh.is_relative:
+            start = fh.to_absolute(self.cutoff)[0]
+            end = fh.to_absolute(self.cutoff)[-1]
+        else:
+            start = fh.min()
+            end = fh.max()
+        
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
         # if y is univariate, we duplicated the column in fit,
