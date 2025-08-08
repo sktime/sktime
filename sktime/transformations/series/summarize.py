@@ -219,6 +219,10 @@ class WindowSummarizer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # move skip config from tests._config to estimator tag per #8515
+        "tests:skip_by_name": [
+            "test_methods_have_no_side_effects",
+        ],
     }
 
     def __init__(

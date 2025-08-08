@@ -107,7 +107,7 @@ EXCLUDED_TESTS = {
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
-    "WindowSummarizer": ["test_methods_have_no_side_effects"],
+    # moved to estimator tag tests:skip_by_name in WindowSummarizer (#8515)
     # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
