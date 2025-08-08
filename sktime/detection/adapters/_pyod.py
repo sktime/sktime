@@ -55,6 +55,9 @@ class PyODDetector(BaseDetector):
         "python_dependencies": "pyod",
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, estimator, labels="indicator"):

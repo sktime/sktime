@@ -1,6 +1,7 @@
 """Sklearn related utility functionality."""
 
 from sktime.utils.sklearn._adapt_df import prep_skl_df
+from sktime.utils.sklearn._metrics import _check_reg_targets
 from sktime.utils.sklearn._scitype import (
     is_sklearn_classifier,
     is_sklearn_clusterer,
