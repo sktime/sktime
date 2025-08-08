@@ -173,6 +173,7 @@ class BaseBenchmark:
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
         if None, no format is enforced on task/estimator ID
+
     backend : string, by default "None".
         Parallelization backend to use for runs.
 
