@@ -12,7 +12,7 @@ class Macroeconomic(_ForecastingDatasetFromLoader):
     Examples
     --------
     >>> from sktime.datasets.forecasting import Macroeconomic
-    >>> y = Macroeconomic().load("y")
+    >>> y = Macroeconomic().load("y")  # doctest: +SKIP
 
     Notes
     -----

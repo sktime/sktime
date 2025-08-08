@@ -20,6 +20,7 @@ jobs:
           - macos-13
           - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
         exclude:
           - operating-system: macos-latest
@@ -62,6 +63,7 @@ jobs:
           - macos-13
           - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
         exclude:
           - operating-system: macos-latest

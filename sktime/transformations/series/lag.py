@@ -136,9 +136,12 @@ class Lag(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -458,7 +461,7 @@ class ReducerTransform(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
     }
 

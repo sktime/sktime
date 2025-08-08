@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: wheels
           path: wheelhouse
@@ -76,7 +76,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: wheels
           path: wheelhouse
@@ -98,8 +98,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_wheels,test_unix_wheels,test_windows_wheels]
 
+    permissions:
+      id-token: write
+
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: wheels
           path: wheelhouse
@@ -107,5 +110,4 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: wheelhouse/

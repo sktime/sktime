@@ -75,6 +75,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         "capability:out_of_sample": False,
         "capability:predict": True,
         "capability:predict_proba": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
@@ -196,11 +199,12 @@ class TimeSeriesDBSCAN(BaseClusterer):
         """
         from sktime.dists_kernels import AggrDist, DtwDist, EditDist
 
-        params1 = {"distance": DtwDist()}
-        params2 = {"distance": EditDist()}
-
         # distance capable of unequal length
+        # also has no soft dependencies
         dist = AggrDist.create_test_instance()
-        params3 = {"distance": dist}
+        params1 = {"distance": dist}
+
+        params2 = {"distance": DtwDist()}
+        params3 = {"distance": EditDist()}
 
         return [params1, params2, params3]

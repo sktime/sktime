@@ -100,7 +100,10 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
@@ -420,10 +423,10 @@ class ThetaModularForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["GuzalBulatova", "fkiraly"],
-        "univariate-only": False,
+        "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "python_version": ">3.7",
     }
 

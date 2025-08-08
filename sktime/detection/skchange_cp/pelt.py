@@ -4,7 +4,7 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.change_detectors.pelt")
+@_placeholder_record(["skchange.change_detectors", "skchange.change_detectors.pelt"])
 class PELT(BaseDetector):
     """Pruned exact linear time changepoint detection, from skchange.
 

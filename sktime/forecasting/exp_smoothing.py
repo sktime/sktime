@@ -1,6 +1,6 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Holt-Winters exponential smoothing."""
+"""Holt-Winters exponential smoothing forecaster."""
 
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]

@@ -4,7 +4,9 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.anomaly_detectors.circular_binseg")
+@_placeholder_record(
+    ["skchange.anomaly_detectors", "skchange.anomaly_detectors.circular_binseg"]
+)
 class CircularBinarySegmentation(BaseDetector):
     """Circular binary segmentation algorithm for anomalous segment detection, skchange.
 
@@ -20,7 +22,7 @@ class CircularBinarySegmentation(BaseDetector):
     is stationary, while the alternative hypothesis is that there is a collective
     anomaly within the outer interval.
 
-    Efficently implemented using numba.
+    Efficiently implemented using numba.
 
     Parameters
     ----------

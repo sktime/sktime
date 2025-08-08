@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.annotation.plotting.utils import (
+from sktime.detection.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
 )

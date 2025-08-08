@@ -71,10 +71,10 @@ class EAgglo(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4],
     ... random_state = 10)
-    >>> from sktime.annotation.eagglo import EAgglo
+    >>> from sktime.detection.eagglo import EAgglo
     >>> model = EAgglo()
     >>> model.fit_transform(X)
     array([0, 0, 0, 1, 1, 1, 1])

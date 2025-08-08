@@ -24,6 +24,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, estimators, verbose=False):

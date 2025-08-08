@@ -100,7 +100,7 @@ class ClearSky(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         "capability:unequal_length:removes": True,  # ?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": True,
     }
 

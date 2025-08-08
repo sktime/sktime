@@ -55,7 +55,7 @@ def test_load_from_tsfile_to_dataframe():
         with os.fdopen(fd, "w") as tmp_file:
             # Write the contents of the file
             file_contents = (
-                "@problemName Test Problem\n@timeStamps " "true\n@univariate true\n"
+                "@problemName Test Problem\n@timeStamps true\n@univariate true\n"
             )
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -85,8 +85,7 @@ def test_load_from_tsfile_to_dataframe():
         with os.fdopen(fd, "w") as tmp_file:
             # Write the contents of the file
             file_contents = (
-                "@problemName\n@timeStamps\n@univariate "
-                "true\n@classLabel false\n@data"
+                "@problemName\n@timeStamps\n@univariate true\n@classLabel false\n@data"
             )
             tmp_file.write(file_contents)
             tmp_file.flush()

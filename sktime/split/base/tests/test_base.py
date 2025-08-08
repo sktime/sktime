@@ -115,9 +115,9 @@ def test_windowbase_splitter_get_n_split_hierarchical(
     y = TEST_Y_PANEL_HIERARCHICAL[0]  # hierarchical data
     if _inputs_are_supported([fh, window_length, step_length]):
         cv = CV(fh, window_length, step_length)
-        assert cv.get_n_splits(y) == len(
-            list(cv.split(y))
-        ), "get_n_splits does not equal the number of splits in the output."
+        assert cv.get_n_splits(y) == len(list(cv.split(y))), (
+            "get_n_splits does not equal the number of splits in the output."
+        )
 
 
 @pytest.mark.parametrize("y", TEST_Y_PANEL_HIERARCHICAL)
@@ -127,6 +127,6 @@ def test_windowbase_splitter_get_n_split_unequal_series(y, CV):
     y_unequal.iloc[:3, :] = None  # make the first series shorter than the rest
     y_unequal.dropna(inplace=True)
     cv = CV([1], 24, 1)
-    assert cv.get_n_splits(y_unequal) == len(
-        list(cv.split(y_unequal))
-    ), "get_n_splits does not equal the number of splits in the output."
+    assert cv.get_n_splits(y_unequal) == len(list(cv.split(y_unequal))), (
+        "get_n_splits does not equal the number of splits in the output."
+    )

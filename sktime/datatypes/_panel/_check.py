@@ -156,6 +156,7 @@ class PanelDfList(ScitypePanel):
         "name": "df-list",  # any string
         "name_python": "panel_df_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "list of pd.DataFrame",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "list",
@@ -318,6 +319,7 @@ class PanelNp3D(ScitypePanel):
         "name": "numpy3D",  # any string
         "name_python": "panel_np_3d",  # lower_snake_case
         "name_aliases": [],
+        "description": "3D np.array of format (n_instances, n_columns, n_timepoints)",
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
@@ -474,6 +476,7 @@ class PanelPdMultiIndex(ScitypePanel):
         "name": "pd-multiindex",  # any string
         "name_python": "panel_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with multi-index (instances, timepoints)",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -746,6 +749,7 @@ class PanelNestedDf(ScitypePanel):
         "name": "nested_univ",  # any string
         "name_python": "panel_pd_nested",  # lower_snake_case
         "name_aliases": [],
+        "description": "pd.DataFrame with one column per variable, pd.Series in cells",
         "python_version": None,
         "python_dependencies": "pandas",
         "python_type": "pandas.DataFrame",
@@ -895,12 +899,17 @@ class PanelNumpyFlat(ScitypePanel):
         "name": "numpyflat",  # any string
         "name_python": "panel_np_flat",  # lower_snake_case
         "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "2D np.array of format (n_instances, n_columns*n_timepoints)"
+        ),
         "python_version": None,
         "python_dependencies": "numpy",
         "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:unequally_spaced": False,
         "capability:missing_values": True,
+        "internal_only": True,
     }
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
@@ -1009,6 +1018,7 @@ class PanelDask(ScitypePanel):
         "name": "dask_panel",  # any string
         "name_python": "panel_dask",  # lower_snake_case
         "name_aliases": [],
+        "description": "dask DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "dask",
         "python_type": "dask.dataframe",
@@ -1084,6 +1094,7 @@ class PanelPolarsEager(ScitypePanel):
         "name": "polars_panel",  # any string
         "name_python": "panel_polars",  # lower_snake_case
         "name_aliases": [],
+        "description": "polars.DataFrame based panel of time series",
         "python_version": None,
         "python_dependencies": "polars",
         "python_type": "polars.DataFrame",
@@ -1277,6 +1288,7 @@ class PanelGluontsList(ScitypePanel):
         "name": "gluonts_ListDataset_panel",  # any string
         "name_python": "panel_gluonts_list",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts list based panel of time series",
         "python_version": None,
         "python_dependencies": None,
         "python_type": "list",
@@ -1428,6 +1440,7 @@ class PanelGluontsPandas(ScitypePanel):
         "name": "gluonts_PandasDataset_panel",  # any string
         "name_python": "panel_gluonts_pandas",  # lower_snake_case
         "name_aliases": [],
+        "description": "gluonts PandasDataset based panel of time series",
         "python_version": None,
         "python_dependencies": "gluonts",
         "python_type": "gluonts.PandasDataset",
@@ -1468,8 +1481,10 @@ class PanelGluontsPandas(ScitypePanel):
             return _ret(False, msg, None, return_metadata)
 
         if not hasattr(obj._data_entries.iterable, "iterable"):
-            msg = f"{var_name} must be formed with a multiindex DataFrame to "
-            +"be a valid `pandasDataset_panel`"
+            msg = (
+                f"{var_name} must be formed with a multiindex DataFrame to "
+                "be a valid `pandasDataset_panel`"
+            )
             return _ret(False, msg, None, return_metadata)
 
         # Convert to a pandas DF for easier checks
@@ -1519,3 +1534,153 @@ class PanelGluontsPandas(ScitypePanel):
             metadata["has_nans"] = False
 
         return _ret(True, None, metadata, return_metadata)
+
+
+class PanelPdWide(ScitypePanel):
+    """Data type: panel of time series in pandas wide format.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "pd-wide",  # any string
+        "name_python": "panel_pd_wide",  # lower_snake_case
+        "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "pd.DataFrame in wide format, cols = (instance*timepoints)"
+        ),
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
+        "capability:multivariate": False,
+        "capability:unequally_spaced": False,
+        "capability:missing_values": True,
+        "internal_only": True,
+        "skip_in_checks": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        # no checker defined, only used in conversions
+        pass
+
+
+class PanelPdLong(ScitypePanel):
+    """Data type: panel of time series in pandas long format.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "pd-long",  # any string
+        "name_python": "panel_pd_long",  # lower_snake_case
+        "name_aliases": [],
+        "description": (
+            "WARNING: only for internal use, not a fully supported Panel mtype. "
+            "pd.DataFrame in long format, cols = (index, time_index, column)"
+        ),
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+        "internal_only": True,
+        "skip_in_checks": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        # no checker defined, only used in conversions
+        pass

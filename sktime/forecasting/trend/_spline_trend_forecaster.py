@@ -90,7 +90,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
         "maintainers": ["jgyasu"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
     }
 

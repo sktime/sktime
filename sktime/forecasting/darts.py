@@ -115,6 +115,9 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "capability:insample": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -311,12 +314,16 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
+        "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:insample": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -543,6 +550,9 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:insample": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(

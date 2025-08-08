@@ -160,16 +160,16 @@ def test_adi_cv_extractor(
     df = transformer.fit_transform(series)
 
     assert np.round(df.loc[0, "adi"], 2) == expected_adi, (
-        f'The expected ADI '
-        f'of {expected_adi} does not match the actual ADI of {df.loc[0, "adi"]}.'
+        f"The expected ADI "
+        f"of {expected_adi} does not match the actual ADI of {df.loc[0, 'adi']}."
     )
 
     assert np.round(df.loc[0, "cv2"], 2) == expected_cv, (
-        f'The expected CV '
-        f'of {expected_cv} does not match the actual CV of {df.loc[0, "cv2"]}.'
+        f"The expected CV "
+        f"of {expected_cv} does not match the actual CV of {df.loc[0, 'cv2']}."
     )
 
     assert df.loc[0, "class"] == expected_class, (
-        f'The expected class '
-        f'of {expected_class} does not match the actual class of {df.loc[0, "class"]}.'
+        f"The expected class "
+        f"of {expected_class} does not match the actual class of {df.loc[0, 'class']}."
     )

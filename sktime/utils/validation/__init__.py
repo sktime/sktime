@@ -185,8 +185,7 @@ def check_window_length(
         # Check `n_timepoints`.
         if not is_int(n_timepoints) or n_timepoints < 2:
             raise ValueError(
-                f"`n_timepoints` must be a positive integer, but found:"
-                f" {n_timepoints}."
+                f"`n_timepoints` must be a positive integer, but found: {n_timepoints}."
             )
 
         # Compute fraction relative to `n_timepoints`.

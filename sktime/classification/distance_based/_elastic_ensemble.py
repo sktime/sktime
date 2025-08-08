@@ -136,6 +136,10 @@ class ElasticEnsemble(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
 

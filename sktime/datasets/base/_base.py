@@ -34,6 +34,9 @@ class BaseDataset(BaseObject):
         "python_dependencies": None,  # python dependencies required to load the dataset
         "python_version": None,  # python version required to load the dataset
         "n_splits": 0,  # Number of cross-validation splits, if any.
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self):
@@ -197,7 +200,7 @@ class _DatasetFromLoaderMixin:
         Parameters
         ----------
         *args: tuple of strings that specify what to load
-            "X": full panel data set of instnaces to classify
+            "X": full panel data set of instances to classify
             "y": full set of class labels
             "X_train": training instances only, for fixed single split
             "y_train": training labels only, for fixed single split

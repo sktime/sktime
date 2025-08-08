@@ -53,14 +53,18 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sktime.transformations.series.subsequence_extraction import (
-    >>>     SubsequenceExtractionTransformer
-    >>> )
+    ...     SubsequenceExtractionTransformer
+    ... )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> subseq_extract = SubsequenceExtractionTransformer(
-    >>>     aggregate_fn = np.sum, subseq_len = 3)
+    ...     aggregate_fn = np.sum,
+    ...     subseq_len = 3,
+    ... )
     >>> subseq_extract.fit(X)
+    SubsequenceExtractionTransformer(...)
     >>> X_transformed = subseq_extract.transform(X)
 
     References
@@ -81,7 +85,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length:removes": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, aggregate_fn, subseq_len, kwargs=None, selector="max"):

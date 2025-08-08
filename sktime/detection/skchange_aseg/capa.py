@@ -4,11 +4,11 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.anomaly_detectors.capa")
+@_placeholder_record(["skchange.anomaly_detectors", "skchange.anomaly_detectors.capa"])
 class CAPA(BaseDetector):
     """CAPA = Collective and point anomaly detection, from skchange.
 
-    Redirects to ``skchange.anomaly_detectors.capa``.
+    Redirects to ``skchange.anomaly_detectors.CAPA``.
 
     An efficient implementation of the CAPA algorithm [1]_ for anomaly detection.
     It is implemented using the 'savings' formulation of the problem given in [2]_ and

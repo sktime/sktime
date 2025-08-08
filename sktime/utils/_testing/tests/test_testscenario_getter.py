@@ -22,9 +22,9 @@ def test_get_scenarios_for_class(estimator_class):
     scenarios = retrieve_scenarios(obj=estimator_class)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
-    assert np.all(
-        isinstance(x, TestScenario) for x in scenarios
-    ), "return of retrieve_scenarios is not a list of scenarios"
+    assert np.all(isinstance(x, TestScenario) for x in scenarios), (
+        "return of retrieve_scenarios is not a list of scenarios"
+    )
 
     # todo: remove once fully refactored to scenarios
     # assert len(scenarios) > 0
@@ -36,9 +36,9 @@ def test_get_scenarios_for_string(scitype_string):
     scenarios = retrieve_scenarios(obj=scitype_string)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
-    assert np.all(
-        isinstance(x, TestScenario) for x in scenarios
-    ), "return of retrieve_scenarios is not a list of scenarios"
+    assert np.all(isinstance(x, TestScenario) for x in scenarios), (
+        "return of retrieve_scenarios is not a list of scenarios"
+    )
 
     # todo: remove once fully refactored to scenarios
     # assert len(scenarios) > 0

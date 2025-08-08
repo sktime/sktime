@@ -266,9 +266,7 @@ class Orchestrator:
         # Check uniqueness of strategy names
         names = [strategy.name for strategy in strategies]
         if not len(names) == len(set(names)):
-            raise ValueError(
-                f"Names of provided strategies are not unique: " f"{names}"
-            )
+            raise ValueError(f"Names of provided strategies are not unique: {names}")
 
         # Check for conflicts with estimator kwargs
         all_params = []
@@ -287,7 +285,7 @@ class Orchestrator:
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                f"Estimator names must not contain __: got " f"{invalid_names}"
+                f"Estimator names must not contain __: got {invalid_names}"
             )
 
     @staticmethod

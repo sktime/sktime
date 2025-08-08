@@ -168,13 +168,26 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
@@ -341,13 +354,26 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
@@ -514,13 +540,26 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 2,
+                "pred_len": 2,
+                "lr": 0.003,
+                "optimizer": "AdamW",
+                "batch_size": 5,
+                "num_epochs": 1,
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": True,
+            },
+            {
+                "seq_len": 2,
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            }
+                # For individual to make a difference
+                # num_channels needs to be > 1
+                "individual": False,
+            },
         ]
 
         return params
@@ -539,12 +578,12 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     ----------
     seq_len : int
         Length of the input sequence.
-        Preffered to be twice the pred_len.
+        Preferred to be twice the pred_len.
     pred_len : int
         Length of the prediction sequence.
     context_len : int, optional (default=2)
         Length of the label sequence.
-        Preffered to be same as the pred_len.
+        Preferred to be same as the pred_len.
     num_epochs : int, optional (default=16)
         Number of epochs for training.
     batch_size : int, optional (default=8)
@@ -805,7 +844,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                     "Temporal encoding has been disabled because the input data's "
                     "index is not a DatetimeIndex or PeriodIndex. Temporal encoding "
                     "only works with time-based indices. To disable this warning "
-                    "set manually temporal_encoding=False when initalizing the model."
+                    "set manually temporal_encoding=False when initializing the model."
                 )
 
             from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes

@@ -16,7 +16,6 @@ Base
     :template: class.rst
 
     BaseBenchmark
-    ForecastingHorizon
 
 .. currentmodule:: sktime.benchmarking.forecasting
 

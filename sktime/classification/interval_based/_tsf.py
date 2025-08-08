@@ -238,7 +238,12 @@ class TimeSeriesForestClassifier(
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
         else:
-            return {"n_estimators": 2}
+            param1 = {"n_estimators": 2, "min_interval": 5}
+            param2 = {
+                "n_estimators": 5,
+                "min_interval": 4,
+            }
+            return [param1, param2]
 
     def _extract_feature_importance_by_feature_type_per_tree(
         self, tree_feature_importance: np.array, feature_type: str

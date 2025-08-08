@@ -258,12 +258,12 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, " f"got {type(self.n_estimators)}."
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, " f"got {self.n_estimators}."
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
             )
 
         # Set base estimator

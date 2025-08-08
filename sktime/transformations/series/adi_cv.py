@@ -101,7 +101,10 @@ class ADICVTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

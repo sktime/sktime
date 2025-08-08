@@ -32,7 +32,7 @@ class ResNetNetwork(BaseDeepNetwork):
 
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "nilesh05apr"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
     }
 
     def __init__(self, random_state=0):

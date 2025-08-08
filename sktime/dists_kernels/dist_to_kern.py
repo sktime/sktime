@@ -51,6 +51,9 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "pwtrafo_type": "kernel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, dist, dist_diag=None):
@@ -184,6 +187,9 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "pwtrafo_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, kernel):

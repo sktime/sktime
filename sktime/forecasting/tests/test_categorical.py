@@ -16,7 +16,8 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sktime.forecasting.compose import SkforecastAutoreg
 from sktime.forecasting.compose._reduce import YfromX
 from sktime.forecasting.dummy import ForecastKnownValues
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def test_dummy_est_with_categorical_capability():
@@ -73,6 +74,11 @@ def test_skforecast_with_categorical():
     forecaster.predict(10, X_test)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting")
+    or _check_soft_dependencies("scikit-learn<1.6", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_YfromX_with_categorical():
     y_train, X_train, X_test = create_mixed_dtype_df()
 

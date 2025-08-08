@@ -101,6 +101,9 @@ Time series classification
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
 
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 

@@ -194,6 +194,6 @@ if __name__ == "__main__":
     if diff["total_commits"] != len(pulls):
         raise ValueError(
             "Something went wrong and not all PR were fetched. "
-            f'There are {len(pulls)} PRs but {diff["total_commits"]} in the diff. '
+            f"There are {len(pulls)} PRs but {diff['total_commits']} in the diff. "
             "Please verify that all PRs are included in the changelog."
         )

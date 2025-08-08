@@ -38,6 +38,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     >>>
     >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5, novelty=True)
     >>> pipeline.fit(x)
+    DetectorPipeline(...)
     >>> y_hat = pipeline.transform(x)
     """
 
@@ -48,6 +49,9 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         # estimator type
         # --------------
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

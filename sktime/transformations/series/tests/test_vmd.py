@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
-__author__ = ["fkiraly", "DaneLyttinen"]
+__author__ = ["fkiraly", "DaneLyttinen", "danferns"]
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,6 @@ def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):
         noise level
     """
     # Time Domain 0 to T
-    T = 1000
     t = np.arange(1, T + 1) / T
 
     # modes
@@ -63,3 +62,13 @@ def test_vmd_in_pipeline():
 
     pipe.fit(y, fh=[1, 2, 3])
     pipe.predict()
+
+
+@pytest.mark.parametrize("length", [1000, 1001])
+def test_vmd_sequence_length(length):
+    """Test vmd decomposition length matches input data length."""
+    y = _generate_vmd_testdata(T=length)
+
+    transformer = VmdTransformer()
+    modes = transformer.fit_transform(y)
+    assert len(modes) == length

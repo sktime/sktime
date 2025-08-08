@@ -108,7 +108,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "scitype:y": "both",
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
@@ -133,8 +133,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         # parameter estimators that are univariate do not broadcast,
         # so broadcasting needs to be done by the composite (i.e., self)
-        if param_est.get_tags()["object_type"] == "param_est":
-            if not param_est.get_tags()["capability:multivariate"]:
+        if param_est.get_tag("object_type") == "param_est":
+            if not param_est.get_tag("capability:multivariate"):
                 self.set_tags(**{"scitype:y": "univariate"})
 
         self.set_tags(**{"fit_is_empty": False})

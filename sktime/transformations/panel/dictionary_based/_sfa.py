@@ -100,7 +100,12 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        # packaging metadata
+        # ------------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator properties
+        # --------------------
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -110,7 +115,10 @@ class SFA(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
-        "python_dependencies": ["numba", "joblib"],
+        # testing configuration
+        # ---------------------
+        # SFA is non-compliant with any transformer interfaces, #2064
+        "tests:skip_all": True,
     }
 
     def __init__(

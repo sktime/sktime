@@ -14,9 +14,9 @@ class ZeroSegments(BaseDetector):
     --------
     >>> import pandas as pd
     >>> from sktime.detection.dummy import ZeroSegments
-    >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    >>> X = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> d = ZeroSegments()
-    >>> d.fit_transform(y)
+    >>> Xt = d.fit_transform(X)
     """
 
     _tags = {
@@ -26,6 +26,9 @@ class ZeroSegments(BaseDetector):
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self):

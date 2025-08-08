@@ -30,7 +30,6 @@ from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF, check_is_scitype
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 
 
 class BaseClassifier(BasePanelMixin):
@@ -62,6 +61,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
         "capability:predict_proba": False,
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
@@ -93,7 +93,6 @@ class BaseClassifier(BasePanelMixin):
         self.n_classes_ = 0  # number of unique classes in y
         self.fit_time_ = 0  # time elapsed in last fit call
         self._class_dictionary = {}
-        self._threads_to_use = 1
         self._X_metadata = []  # metadata/properties of X seen in fit
 
         # required for compatibility with some sklearn interfaces
@@ -259,14 +258,6 @@ class BaseClassifier(BasePanelMixin):
 
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X, X_mtype)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         # pass coerced and checked data to inner _fit
         self._fit(X, y)

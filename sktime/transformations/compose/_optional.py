@@ -85,6 +85,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, transformer, passthrough=False):
@@ -101,7 +104,7 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:instancewise",
             "y_inner_mtype",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",

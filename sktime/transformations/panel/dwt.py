@@ -28,7 +28,6 @@ class DWTTransformer(BaseTransformer):
     >>> from sktime.datatypes import convert
     >>>
     >>> y = load_airline()
-    >>> y = convert(y, to="Panel")
     >>> transformer = DWTTransformer(num_levels=3)
     >>> y_transformed = transformer.fit_transform(y)
     """
@@ -43,6 +42,9 @@ class DWTTransformer(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, num_levels=3):

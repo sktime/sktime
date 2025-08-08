@@ -74,7 +74,7 @@ class DilationMappingTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
     }
 
     def __init__(self, dilation=2):

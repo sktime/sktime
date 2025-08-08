@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.statsforecast import StatsForecastMSTL
+from sktime.forecasting.statsforecast import StatsForecastAutoCES, StatsForecastMSTL
 from sktime.tests.test_switch import run_test_for_class
 
 
@@ -45,3 +45,20 @@ def test_statsforecast_mstl(mock_autoets):
     fh = ForecastingHorizon(fh_index, is_relative=False)
     model.predict_interval(fh, coverage=0.95)
     predict.assert_called_with(36, X=None, level=[95.0])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(StatsForecastAutoCES),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_constant_series_prediction_with_ces() -> None:
+    """Test that StatsForecastAutoCES can predict constant series."""
+    dummy_past_data = pd.Series([2] * 10)
+
+    ces_model = StatsForecastAutoCES()
+    _ = ces_model.fit(dummy_past_data)
+
+    dummy_future_predictions = ces_model.predict(fh=range(5))
+
+    # StatsForecast switches from CES to Naive if the series is constant
+    assert np.all(dummy_future_predictions == 2)
