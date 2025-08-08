@@ -13,6 +13,7 @@ from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
 )
+from sktime.performance_metrics.forecasting._common import _accuracy_ratio
 from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
@@ -120,6 +121,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         by_index=False,
     ):
         self.sp = sp
+        self.eps = None
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
@@ -132,59 +134,46 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
 
         private _evaluate containing core logic, called from evaluate
 
-        By default this uses evaluate_by_index, taking arithmetic mean over time points.
-
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
-        y_train : pandas container, passed via `kwargs`
-            Historical (in-sample) values used to compute the scaling denominator.
-            Must have at least `sp + 1` rows.
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
-        msse : float or pandas.Series
-            If `multioutput="uniform_average"` (the default), returns a scalar float.
-            If `multioutput="raw_values"`, returns a Series indexed by column names,
-            giving one MSSE/RMSSE per series.
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
         """
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred) ** 2
 
         y_train = kwargs["y_train"]
-        differences = []
-        N = len(y_train)
-        s = self.sp
-        # compute (y[t] - y[t-s])^2 and collect these values
-        for i in range(0, N - s):
-            # y_train.iloc[i + s]: value at time t
-            # y_train.iloc[i]: value at time t - s
-            differences.append((y_train.iloc[i + s] - y_train.iloc[i]) ** 2)
-        # Stack the list of Series into a DataFrame, then take the column-wise mean
-        # This gives the in-sample naive MSE (denominator) for each series
-        seasonal_mse = pd.DataFrame(differences).mean(axis=0)
-        # Divide the raw squared forecast errors (numerator) by the
-        # seasonal MSE (denominator)
-        scaled = raw_values.divide(seasonal_mse, axis=1)
-        # apply weights
-        scaled = self._get_weighted_df(scaled, **kwargs)
+        sp = self.sp
+        denominator = y_train.diff(sp).pow(2).mean(axis=0)
+        seasonal_mse = _accuracy_ratio(
+            y_true=denominator,
+            y_pred=raw_values,
+            eps=self.eps,
+        )
+
+        scaled = self._get_weighted_df(seasonal_mse, **kwargs)
         msse = scaled.mean()
 
-        #  optional sqrt
         if self.square_root:
             msse = msse.pow(0.5)
 
-        #  aggregate across outputs
         return self._handle_multioutput(msse, multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
@@ -194,80 +183,64 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
-        y_train : pd.DataFrame, passed via `kwargs`
-            Historical in-sample values used to compute the scaling denominator.
-            Must have at least `sp + 1` rows.
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
-        msse : pd.Series or pd.DataFrame
-            Per-time-point MSSE or RMSSE pseudo-values, before time-averaging.
-            - If `multioutput="uniform_average"` (default) or array-like weights:
-                returns a pd.Series of length `h` (forecast horizon), indexed as
-                `y_true`.
-                Entry at index `i` is the MSSE (or RMSSE pseudo-value) at time `i`,
-                averaged across variables.
-            - If `multioutput="raw_values"`:
-                returns a pd.DataFrame of shape `(h, d)`, with the same index and
-                columns as `y_true`. The entry at `(i, j)` is the MSSE (or RMSSE
-                pseudo-value) for series `j` at time `i`.
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred) ** 2
 
         y_train = kwargs["y_train"]
-        differences = []
-        N = len(y_train)
-        s = self.sp
-        for i in range(0, N - s):
-            differences.append((y_train.iloc[i + s] - y_train.iloc[i]) ** 2)
+        sp = self.sp
+        denominator = y_train.diff(sp).pow(2).mean(axis=0)
 
-        seasonal_mse = pd.DataFrame(differences).mean(axis=0)
-        scaled = raw_values.divide(seasonal_mse, axis=1)
+        scaled = _accuracy_ratio(
+            y_true=denominator,
+            y_pred=raw_values,
+            eps=self.eps,
+        )
 
         if self.square_root:
             msse_full = scaled.mean(axis=0)
             rmsse_full = msse_full.pow(0.5)
 
-            # Determine the number of time points
             n = scaled.shape[0]
-            # Sum the scaled errors along time for each series
             sum_scaled = scaled.sum(axis=0)
-            # Calculate the leave-one-out (LOO) MSSE
             msse_loo = (sum_scaled - scaled) / (n - 1)
-            # Convert the leave-one-out MSSE to RMSSE by taking the square root
             rmsse_loo = msse_loo.pow(0.5)
 
-            # jackknife pseudo-values: n*full - (n-1)*loo
             pseudo = pd.DataFrame(
                 n * rmsse_full - (n - 1) * rmsse_loo,
                 index=scaled.index,
                 columns=scaled.columns,
             )
         else:
-            # for MSSE, raw scaled errors are the pseudo-values
             pseudo = scaled
 
-        #  apply weights
         pseudo = self._get_weighted_df(pseudo, **kwargs)
 
-        # aggregate across series per time point
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
                 return pseudo
-            # uniform average over series
             return pseudo.mean(axis=1)
-        # array-like weights
+
         return pseudo.dot(multioutput)
 
     @classmethod
