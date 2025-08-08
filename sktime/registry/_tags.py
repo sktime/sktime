@@ -1196,6 +1196,7 @@ class capability__class_weight(_BaseTag):
     to handle imbalanced datasets where some classes are underrepresented.
 
     Class weights can usually be provided as:
+
     - A dictionary mapping class labels to weights
     - None for uniform class weights (default behavior)
 

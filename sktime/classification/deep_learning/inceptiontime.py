@@ -2,6 +2,7 @@
 
 __all__ = ["InceptionTimeClassifier"]
 
+import warnings
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -216,16 +217,21 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         # Convert class_weight dict from label to integer encoding
         class_weight = self.class_weight
         if class_weight is not None:
-            missing_labels = [label for label in class_weight if label not in self.label_encoder.classes_]
-            if missing_labels:
-                raise ValueError(
-                    f"The following labels in class_weight do not exist in the training labels: {missing_labels}"
-                )
-            # Use label_encoder to map labels to integers
-            class_weight = {
+            valid_labels = set(self.label_encoder.classes_)
+            # keep only labels present in training data
+            filtered_class_weight = {
             self.label_encoder.transform([label])[0]: weight
             for label, weight in class_weight.items()
+            if label in valid_labels
             }
+            if len(filtered_class_weight) < len(class_weight):
+                warnings.warn(
+                    "class_weight contains labels not observed in the training data; "
+                    "these labels are ignored.",
+                    UserWarning,
+                )
+            # if nothing valid left, set to None so keras treats all equally
+            class_weight = filtered_class_weight if filtered_class_weight else None
 
         self.history = self.model_.fit(
             X,
