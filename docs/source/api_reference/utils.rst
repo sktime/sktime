@@ -135,3 +135,4 @@ Estimator Validity Checking
     :template: function.rst
 
     check_estimator
+.. autofunction:: sktime.utils.plot_windows
