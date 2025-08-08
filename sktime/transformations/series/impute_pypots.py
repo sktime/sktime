@@ -275,16 +275,3 @@ class PyPOTSImputer(BaseTransformer):
             if X.ndim == 1:
                 return imputed_data.squeeze()
             return imputed_data
-
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary of fitted parameters.
-        """
-        if not self._is_fitted:
-            raise ValueError("PyPOTSImputer is not fitted yet. Call 'fit' first.")
-
-        return {"imputer": self._imputer}
