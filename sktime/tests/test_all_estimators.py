@@ -206,10 +206,7 @@ class BaseFixtureGenerator:
         # TODO(fangelim): refactor this _all_estimators
         # to make it possible to set custom tags to filter
         # as class attributes, similar to `estimator_type_filter`
-        if CYTHON_ESTIMATORS:
-            filter_tags = {"requires_cython": True, "tests:skip_all": False}
-        else:
-            filter_tags = {"tests:skip_all": False}
+        filter_tags = {"tests:skip_all": False}
 
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
