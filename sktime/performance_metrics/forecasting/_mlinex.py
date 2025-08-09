@@ -17,11 +17,8 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     Output is non-negative floating point. Smaller values are better,
     the minimal possible value is 0.0.
 
-    The LinEx error is an asymmetric loss function 
-    side approximately exponentially. If ``a`` > 0 then negative errors
-    (over-predictions) are penalized approximately linearly and positive errors
-    (under-predictions) are penalized approximately exponentially. If ``a`` < 0
-    the reverse is true.
+    The LinEx error is an asymmetric loss function, with parameter ``a``
+    controlling the penalty for over- vs under-predictions.
 
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
