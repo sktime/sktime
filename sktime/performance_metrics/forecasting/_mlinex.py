@@ -33,7 +33,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     where :math:`e_i = y_i - \widehat{y}_i`,
     and :math:`a \neq 0, b > 0` are parameters of the metric,
     ``a`` and ``b`` in the constructor.
-  
+
     ``a`` controls the asymmetry of the penalty:
 
     - If ``a`` > 0, the penalty for over-predictions is approximately linear,
