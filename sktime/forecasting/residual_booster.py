@@ -21,12 +21,15 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     Residual boosting can be used for:
 
-    * improving forecasts from one forecaster with another
-    * adding exogenous capability to a forecaster, by fitting
-      on the residuals of an exogenous base forecaster
+    * improving forecasts from one forecaster with another, by using either
+      as ``base_forecaster`` or ``residual_forecaster``
+    * adding exogenous capability to a forecaster, by using it as 
+      ``residual_forecaster``, and fitting it
+      on the residuals of an exogenous capable ``base_forecaster``
     * adding probabilistic forecasting capability to a forecaster,
-      by fitting a probabilistic forecaster on the
-      residuals of a point-forecasting base forecaster
+      by using it as ``base_forecaster``,
+      and adding probability forecasts from a probabilistic forecaster
+      used as ``residual_forecaster``
 
     In ``fit``: fits ``base_forecaster`` to ``y`` and ``X``,
     computes in-sample residuals, and fits ``residual_forecaster``
