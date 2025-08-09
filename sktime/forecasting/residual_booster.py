@@ -9,10 +9,9 @@ Which is an easy way to turn a forecaster without exogenous capability into one 
 __all__ = ["ResidualBoostingForecaster"]
 __author__ = ["Sanchay117", "felipeangelimvieira"]
 
-import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
-from skpro.distributions import Normal
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -171,15 +170,24 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
-        p_base = self.base_future_.predict_proba(fh=fh, X=X, marginal=marginal)
+        if not _check_soft_dependencies("skpro", severity="none"):
+            from sktime.utils.warnings import warn
+
+            warn(
+                "ResidualBoostingForecaster: optional dependency 'skpro' not found. "
+                "Falling back to the default normal approximation via BaseForecaster. "
+                "Install 'skpro' to enable exact shifted-distribution composition.",
+                category=UserWarning,
+            )
+            return super()._predict_proba(fh=fh, X=X, marginal=marginal)
+
+        from skpro.distributions import MeanScale
+
+        y_base = self.base_future_.predict(fh=fh, X=X)
         p_res = self.residual_forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
-        mu_sum = p_base.mu + p_res.mu
-        var_sum = p_base.sigma**2 + p_res.sigma**2
-        sigma_sum = np.sqrt(var_sum)
-
-        return Normal(
-            mu=mu_sum, sigma=sigma_sum, index=p_base.index, columns=p_base.columns
+        return MeanScale(
+            d=p_res, mu=y_base, sigma=1, index=p_res.index, columns=p_res.columns
         )
 
     @classmethod
