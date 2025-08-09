@@ -642,6 +642,14 @@ Intermittent time series forecasters
 
     StatsForecastADIDA
 
+.. currentmodule:: sktime.forecasting.hurdle_demand._forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurdleDemandForecaster
+
 Ensembles and stacking
 ----------------------
 
