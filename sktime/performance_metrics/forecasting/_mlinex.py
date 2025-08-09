@@ -14,49 +14,47 @@ from sktime.performance_metrics.forecasting._functions import mean_linex_error
 class MeanLinexError(BaseForecastingErrorMetricFunc):
     r"""Mean Linear Exponential (LinEx) error.
 
-    Output is non-negative floating point. The best value is 0.0.
+    Output is non-negative floating point. Smaller values are better,
+    the minimal possible value is 0.0.
 
-    Many forecasting loss functions (like those discussed in [1]_) assume that
-    over- and under- predictions should receive an equal penalty. However, this
-    may not align with the actual cost faced by users' of the forecasts.
-    Asymmetric loss functions are useful when the cost of under- and over-
-    prediction are not the same.
-
-    The linex error function accounts for this by penalizing errors on one side
-    of a threshold approximately linearly, while penalizing errors on the other
+    The LinEx error is an asymmetric loss function 
     side approximately exponentially. If ``a`` > 0 then negative errors
     (over-predictions) are penalized approximately linearly and positive errors
     (under-predictions) are penalized approximately exponentially. If ``a`` < 0
     the reverse is true.
 
-    The LinEx error is calculated as:
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the mean LinEx loss:
 
     .. math::
 
-      L(e) = b \\cdot \\left( \\exp(a \\cdot e) - a \\cdot e - 1 \\right)
+      \frac{b}{n}\sum_{i=1}^n \left( \exp(a \cdot e_i) - a \cdot e_i - 1 \right)
 
-    where :math:`e = y - \\widehat{y}`, and :math:`a \\neq 0, b > 0`.
+    where :math:`e_i = y_i - \widehat{y}_i`,
+    and :math:`a \neq 0, b > 0` are parameters of the metric,
+    ``a`` and ``b`` in the constructor.
+  
+    ``a`` controls the asymmetry of the penalty:
 
-    This function penalizes underpredictions and overpredictions differently
-    based on the sign and magnitude of the error (appr. linear on one side
-    and appr. exponential on the other side).
+    - If ``a`` > 0, the penalty for over-predictions is approximately linear,
+      while the penalty for under-predictions is approximately exponential.
+    - If ``a`` < 0, the penalty for under-predictions is approximately linear,
+      while the penalty for over-predictions is approximately exponential.
+
+    ``b`` is a scale parameter that controls the overall magnitude of the penalty.
 
     ``multioutput`` and ``multilevel`` decide how results are averaged when
     there are multiple variables (multioutput) or hierarchical levels in the data.
     See below.
 
-    ``evaluate`` returns the mean LinEx loss
-    :math:`\\frac{1}{n} \\sum_{i=1}^n L(e_i)`.
-
     ``evaluate_by_index`` returns, at a time index :math:`t_i` ,
     the LinEx loss at that time index,
-    :math:`b \cdot (\\exp(a \cdot e_i) - a \cdot e_i -1)` ,
+    :math:`b \cdot (\exp(a \cdot e_i) - a \cdot e_i -1)` ,
     where :math:`e_i = y_i - \widehat{y}_i` ,
     for all time indices :math:`t_1, \dots, t_n` in the input.
-
-    In both situations, the result is a non negative floating point number.
-    Smaller values mean better predictions. The best possible value is 0.0.
-
 
     Parameters
     ----------
@@ -66,7 +64,8 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         (over-predictions) are penalized approximately linearly and positive errors
         (under-predictions) are penalized approximately exponentially. If ``a`` < 0
         the reverse is true.
-    b : int or float
+
+    b : int or float, default = 1
         Multiplicative penalty to apply to calculated errors controlled
         by scale parameter.
 
