@@ -174,10 +174,12 @@ class ResidualBoostingForecaster(BaseForecaster):
             from sktime.utils.warnings import warn
 
             warn(
-                "ResidualBoostingForecaster: optional dependency 'skpro' not found. "
+                "ResidualBoostingForecaster.predict_proba: optional "
+                "dependency 'skpro' not found. "
                 "Falling back to the default normal approximation via BaseForecaster. "
                 "Install 'skpro' to enable exact shifted-distribution composition.",
                 category=UserWarning,
+                obj=self,
             )
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
