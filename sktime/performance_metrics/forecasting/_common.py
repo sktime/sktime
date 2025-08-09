@@ -121,43 +121,45 @@ def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps
     return percentage_error
 
 
-def _accuracy_ratio(y_true, y_pred, eps=None):
-    r"""Accuracy ratio of predicted values to true values.
+def _fraction(enumerator, denominator, eps=None):
+    r"""Element-wise fraction of enumerator to denominator.
 
-    For arrays ``y_true``, ``y_pred``, writing :math:`y` for ``y_true``
-    and :math:`\widehat{y}` for ``y_pred``, this function calculates the
-    element-wise accuracy ratio, defined as
+    This function calculates the element-wise ratio of two arrays, ``enumerator``
+    and ``denominator``, while ensuring numerical stability by replacing small
+    denominator values with a specified epsilon.
 
     .. math::
-        \text{AccuracyRatio}(y, \widehat{y})
-        = \frac{\widehat{y}}{y}
+        \text{Fraction}(x, y) = \frac{x}{y}
+
+    where :math:`x` is the enumerator and :math:`y` is the denominator.
 
     The denominator is replaced by ``eps`` if it is smaller than ``eps``, entry-wise
 
     Parameters
     ----------
-    y_true : array-like of ground truth values
-        Ground truth (correct) target values.
+    enumerator : array-like
+        Numerator values for the fraction calculation.
 
-    y_pred : array-like of predicted values, must be same shape as y_true
-        Predicted values.
+    denominator : array-like, must be the same shape as enumerator
+        Denominator values for the fraction calculation.
 
     eps : float, default=None
-        Numerical epsilon used in denominator to avoid division by zero.
-        Absolute values smaller than eps are replaced by eps.
-        If None, defaults to np.finfo(np.float64).eps
+        Numerical epsilon used to avoid division by zero or instability.
+        Absolute values of the denominator smaller than ``eps`` are replaced
+        by ``eps``. If None, defaults to ``np.finfo(np.float64).eps``.
 
     Returns
     -------
-    accuracy_ratio : np.ndarray, same shape as y_true and y_pred
-        The accuracy ratio of predicted values to true values.
+    fraction : np.ndarray, same shape as enumerator and denominator
+        The element-wise fraction of enumerator to denominator, with small
+        denominator values replaced by ``eps`` for numerical stability.
     """
     if eps is None:
         eps = np.finfo(np.float64).eps
 
-    denominator = np.where(
-        y_true >= 0,
-        np.maximum(y_true, eps),
-        np.minimum(y_true, -eps),
+    safe_denominator = np.where(
+        denominator >= 0,
+        np.maximum(denominator, eps),
+        np.minimum(denominator, -eps),
     )
-    return y_pred / denominator
+    return enumerator / safe_denominator

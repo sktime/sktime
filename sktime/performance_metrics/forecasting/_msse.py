@@ -13,7 +13,7 @@ from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._common import _accuracy_ratio
+from sktime.performance_metrics.forecasting._common import _fraction
 from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
@@ -162,9 +162,9 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         y_train = kwargs["y_train"]
         sp = self.sp
         denominator = y_train.diff(sp).pow(2).mean(axis=0)
-        seasonal_mse = _accuracy_ratio(
-            y_true=denominator,
-            y_pred=raw_values,
+        seasonal_mse = _fraction(
+            enumerator=raw_values,
+            denominator=denominator,
             eps=self.eps,
         )
 
@@ -211,9 +211,9 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         sp = self.sp
         denominator = y_train.diff(sp).pow(2).mean(axis=0)
 
-        scaled = _accuracy_ratio(
-            y_true=denominator,
-            y_pred=raw_values,
+        scaled = _fraction(
+            enumerator=raw_values,
+            denominator=denominator,
             eps=self.eps,
         )
 
