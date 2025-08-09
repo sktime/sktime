@@ -17,11 +17,28 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class ResidualBoostingForecaster(BaseForecaster):
-    """
-    Residual boosting lets an endogenous forecaster act as if it were exogenous.
+    """Residual boosting forecast fitting one forecaster on residuals of another.
 
-    It is a two stage reduction: we fit an auxiliary model on the in-sample residuals
-    of the base model and add its future predictions back to the base forecasts.
+    Residual boosting can be used for:
+
+    * improving forecasts from one forecaster with another
+    * adding exogenous capability to a forecaster, by fitting
+      on the residuals of an exogenous base forecaster
+    * adding probabilistic forecasting capability to a forecaster,
+      by fitting a probabilistic forecaster on the
+      residuals of a point-forecasting base forecaster
+
+    In ``fit``: fits ``base_forecaster`` to ``y`` and ``X``,
+    computes in-sample residuals, and fits ``residual_forecaster``
+    to the residuals and ``X``.
+    
+    In ``predict``, it predicts with both ``base_forecaster``
+    and ``residual_forecaster``, and returns the sum of the two.
+
+    Probabilistic forecasts are obtained by shifting quantiles of the residuals
+    forecast by ``residual_forecaster`` by the point forecast of the
+    ``base_forecaster``. This requires ``residual_forecaster`` to support
+    probabilistic forecasts, but not ``base_forecaster``.
 
     Parameters
     ----------
