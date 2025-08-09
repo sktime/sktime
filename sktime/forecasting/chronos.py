@@ -185,8 +185,12 @@ class ChronosForecaster(BaseForecaster):
     developed by Amazon for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
-    To obtain the "exogenous capable" version of Chronos as advertised in [2]_,
-    combine this forecaster with an exogenous capable forecaster via
+    Note: vanilla Chronos is not exogenous capable despite being so advertised in [2]_.
+    The "exogenous capable" version is actually a composite forecaster rather than
+    an exogenous capable foundation model.
+
+    To obtain this "exogenous capable" version of Chronos as advertised in [2]_,
+    combine ``ChronosForecaster`` with an exogenous capable forecaster via
     ``ResidualBoostingForecaster``. The original reference uses
     tabularized linear regression, i.e., ``YtoX(LinearRegression())``,
     with ``YtoX`` from ``sktime`` and ``LinearRegression`` from ``sklearn``.
