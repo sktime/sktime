@@ -23,7 +23,7 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     * improving forecasts from one forecaster with another, by using either
       as ``base_forecaster`` or ``residual_forecaster``
-    * adding exogenous capability to a forecaster, by using it as 
+    * adding exogenous capability to a forecaster, by using it as
       ``residual_forecaster``, and fitting it
       on the residuals of an exogenous capable ``base_forecaster``
     * adding probabilistic forecasting capability to a forecaster,
@@ -34,7 +34,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     In ``fit``: fits ``base_forecaster`` to ``y`` and ``X``,
     computes in-sample residuals, and fits ``residual_forecaster``
     to the residuals and ``X``.
-    
+
     In ``predict``, it predicts with both ``base_forecaster``
     and ``residual_forecaster``, and returns the sum of the two.
 
