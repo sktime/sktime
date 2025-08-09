@@ -119,3 +119,45 @@ def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true", eps
         denominator = np.maximum(np.abs(y_true), eps)
     percentage_error = np.abs(y_true - y_pred) / denominator
     return percentage_error
+
+
+def _accuracy_ratio(y_true, y_pred, eps=None):
+    r"""Accuracy ratio of predicted values to true values.
+
+    For arrays ``y_true``, ``y_pred``, writing :math:`y` for ``y_true``
+    and :math:`\widehat{y}` for ``y_pred``, this function calculates the
+    element-wise accuracy ratio, defined as
+
+    .. math::
+        \text{AccuracyRatio}(y, \widehat{y})
+        = \frac{\widehat{y}}{y}
+
+    The denominator is replaced by ``eps`` if it is smaller than ``eps``, entry-wise
+
+    Parameters
+    ----------
+    y_true : array-like of ground truth values
+        Ground truth (correct) target values.
+
+    y_pred : array-like of predicted values, must be same shape as y_true
+        Predicted values.
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
+
+    Returns
+    -------
+    accuracy_ratio : np.ndarray, same shape as y_true and y_pred
+        The accuracy ratio of predicted values to true values.
+    """
+    if eps is None:
+        eps = np.finfo(np.float64).eps
+
+    denominator = np.where(
+        y_true >= 0,
+        np.maximum(y_true, eps),
+        np.minimum(y_true, -eps),
+    )
+    return y_pred / denominator

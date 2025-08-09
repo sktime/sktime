@@ -7,10 +7,13 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import pandas as pd
+
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
 )
+from sktime.performance_metrics.forecasting._common import _accuracy_ratio
 from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
@@ -118,12 +121,127 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         by_index=False,
     ):
         self.sp = sp
+        self.eps = None
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        y_train = kwargs["y_train"]
+        sp = self.sp
+        denominator = y_train.diff(sp).pow(2).mean(axis=0)
+        seasonal_mse = _accuracy_ratio(
+            y_true=denominator,
+            y_pred=raw_values,
+            eps=self.eps,
+        )
+
+        scaled = self._get_weighted_df(seasonal_mse, **kwargs)
+        msse = scaled.mean()
+
+        if self.square_root:
+            msse = msse.pow(0.5)
+
+        return self._handle_multioutput(msse, multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        y_train = kwargs["y_train"]
+        sp = self.sp
+        denominator = y_train.diff(sp).pow(2).mean(axis=0)
+
+        scaled = _accuracy_ratio(
+            y_true=denominator,
+            y_pred=raw_values,
+            eps=self.eps,
+        )
+
+        if self.square_root:
+            msse_full = scaled.mean(axis=0)
+            rmsse_full = msse_full.pow(0.5)
+
+            n = scaled.shape[0]
+            sum_scaled = scaled.sum(axis=0)
+            msse_loo = (sum_scaled - scaled) / (n - 1)
+            rmsse_loo = msse_loo.pow(0.5)
+
+            pseudo = pd.DataFrame(
+                n * rmsse_full - (n - 1) * rmsse_loo,
+                index=scaled.index,
+                columns=scaled.columns,
+            )
+        else:
+            pseudo = scaled
+
+        pseudo = self._get_weighted_df(pseudo, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo
+            return pseudo.mean(axis=1)
+
+        return pseudo.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
