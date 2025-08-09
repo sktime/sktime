@@ -162,34 +162,42 @@ def render_changelog(prs, assigned):
     """Render changelog."""
     # sourcery skip: use-named-expression
     LABEL_TO_SUBSECTION = {
+        "module:base-framework": "BaseObject and base framework",
+        "module:deep-learning&networks": "Other",
+        "module:detection": "Time series anomalies, changepoints, segmentation",
+        "module:distances&kernels": "Time series anomalies, changepoints, segmentation",
+        "module:datasets&loaders": "Data sets and data loaders",
+        "module:datatypes": "Datatypes, checks, conversions",
         "module:forecasting": "Forecasting",
-        "module:classification": "Time Series Classification",
+        "module:metrics&benchmarking": "Benchmarking, Metrics, Splitters",
+        "module:parameter-estimators": "Parameter estimation and hypothesis testing",
+        "module:plotting&utilities": "Other",
+        "module:probability&simulation": "Other",
+        "module:splitters&resamplers": "Benchmarking, Metrics, Splitter",
+        "module:classification": "Time series classification",
+        "module:clustering": "Time series clustering",
         "module:regression": "Time series regression",
         "module:transformations": "Transformations",
-        "module:datatypes": "Datatypes, checks, conversions",
-        "module:alignment": "Time series alignment",
-        "module:detection": "Detection",
-        "module:dataprocessing": "Data sets and data loaders",
-        "module:clustering": "Time series clustering",
-        "module:base-framework": "BaseObject and base framework",
+        "module:tests": "Test framework",
     }
-    # more can be added also
     # labels start with module
     # Subsection title comes after label
 
     MODULE_ORDER = [
         "BaseObject and base framework",
         "Benchmarking, Metrics, Splitters",
-        "Time series clustering",
         "Data sets and data loaders",
-        "Datatypes, checks and conversions",
+        "Datatypes, checks, conversions",
         "Forecasting",
-        "Time series regression",
-        "Time Series classification",
+        "Parameter estimation and hypothesis testing",
+        "Registry and search",
         "Time series alignment",
+        "Time series anomalies, changepoints, segmentation",
+        "Time series classification",
         "Time series clustering",
+        "Time series regression",
         "Transformations",
-        "Plotting & Utilities",
+        "Test framework",
         "Other",
     ]
 
@@ -203,38 +211,48 @@ def render_changelog(prs, assigned):
         pr_group = [prs[i] for i in assigned[title]]
         if not pr_group:
             continue
+        print()
         print(title)
         print("~" * len(title))
-        print()
 
         # Group PRs by module labels
-        if title in ["Enhancements", "Fixes"]:
-            subsection_map = defaultdict(list)
+        def group_prs_by_module(pr_group: list[dict]) -> dict[str, list[dict]]:
+            """Group PRs by module labels and return a dictionary."""
+            subsection_map: dict[str, list[dict]] = defaultdict(list)
+
             for pr in pr_group:
                 labels = [label["name"] for label in pr["labels"]]
                 added = False
 
                 for label in labels:
-                    # print("hello",label)
                     if label in LABEL_TO_SUBSECTION:
-                        #   print("hello")
                         subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
                         added = True
                 if not added:
                     subsection_map["Other"].append(pr)
 
+            return subsection_map
+
+        def render_subsection(subsection_map: dict[str, list[dict]]) -> None:
+            """Render subsections and their PRs in order."""
             # Render subsections
             for subsection_title in MODULE_ORDER:
                 pr_list = subsection_map.get(subsection_title, [])
                 if pr_list:
+                    print()
                     print(subsection_title)
                     print("^" * len(subsection_title))
+                    print()
                     for pr in sorted(
                         pr_list, key=lambda x: parser.parse(x["merged_at"])
                     ):
                         render_row(pr)
+
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = group_prs_by_module(pr_group)
+            render_subsection(subsection_map)
         else:
-            for pr in sorted(pr_group, key=lambda x: parser.parse(pr["merged_at"])):
+            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
                 render_row(pr)
 
 
