@@ -51,12 +51,25 @@ class DatasetDownloadStrategy(BaseObject):
 
         download_path.mkdir(parents=True, exist_ok=True)
 
-        if not download_path.exists() or force_download:
-            self._download(download_path)
+        dataset_folder_path = self._get_dataset_folder_path(download_path)
 
+        if not dataset_folder_path.exists() or force_download:
+            if force_download and dataset_folder_path.exists():
+                shutil.rmtree(dataset_folder_path)
+            self._download(download_path, force_download)
+
+        return self._get_dataset_folder_path(download_path)
+
+    def _get_dataset_folder_path(self, download_path):
+        """
+        Get the expected path to the dataset folder.
+
+        Should be overridden by subclasses that know the folder structure.
+        Default implementation returns the download_path.
+        """
         return download_path
 
-    def _download(self, download_path):
+    def _download(self, download_path, force_download=False):
         """
         Strategy-specific download implementation.
 
@@ -132,7 +145,11 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.token = token
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
-    def _download(self, download_path):
+    def _get_dataset_folder_path(self, download_path):
+        """Return the path where the dataset folder will be located."""
+        return download_path / self.folder_name
+
+    def _download(self, download_path, force_download=False):
         """
         Download a dataset from the Hugging Face Hub.
 
@@ -157,10 +174,6 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         ValueError
             If the expected dataset folder is not found in the downloaded snapshot.
         """
-        local_dataset_path = download_path / self.folder_name
-        print(local_dataset_path)
-        print(self.folder_name)
-
         if not self.available:
             raise ModuleNotFoundError
 
@@ -173,9 +186,11 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
                 repo_type=self.repo_type,
                 allow_patterns=f"{self.folder_name}/**",
                 local_dir=download_path,
-                force_download=self.force_download,
+                force_download=force_download,
                 token=self.token,
             )
+
+            local_dataset_path = download_path / self.folder_name
 
             if not local_dataset_path.exists():
                 raise ValueError(
@@ -220,10 +235,21 @@ class URLDownloader(DatasetDownloadStrategy):
 
     def __init__(self, base_urls):
         super().__init__()
-        self.base_urls = base_urls
+        self.base_urls = base_urls if isinstance(base_urls, list) else [base_urls]
         self.available = True
 
-    def _download(self, download_path):
+    def _get_dataset_folder_path(self, download_path):
+        """Return the path where the dataset folder will be located.
+
+        Since the folder name is determined from the URL during download,
+        we need to check what folder would be created from the first URL.
+        """
+        first_url = self.base_urls[0]
+        file_name = os.path.basename(first_url)
+        basename = file_name.split(".")[0]
+        return download_path / basename
+
+    def _download(self, download_path, force_download):
         """
         Download and extract a dataset from a list of URLs.
 
@@ -244,11 +270,10 @@ class URLDownloader(DatasetDownloadStrategy):
             If downloading from all provided URLs fails.
         """
         last_error = None
-        if not isinstance(self.base_urls, list):
-            self.base_urls = [self.base_urls]
+
         for url in self.base_urls:
             try:
-                self._download_and_extract(url, download_path)
+                self._download_and_extract(url, download_path, force_download)
                 return
             except Exception as e:
                 last_error = e
@@ -342,7 +367,15 @@ class DatasetDownloader(DatasetDownloadStrategy):
         ]
         self.retries = retries
 
-    def _download(self, download_path):
+    def _get_dataset_folder_path(self, download_path):
+        """Get the dataset folder path using the first available strategy."""
+        for strategy in self.strategies:
+            if strategy.available:
+                return strategy._get_dataset_folder_path(download_path)
+
+        return download_path
+
+    def _download(self, download_path, force_download):
         """
         Download dataset using a sequence of strategies.
 
@@ -380,9 +413,7 @@ class DatasetDownloader(DatasetDownloadStrategy):
 
             for attempt in range(self.retries):
                 try:
-                    strategy._download(
-                        download_path,
-                    )
+                    strategy._download(download_path, force_download)
                     return
                 except Exception as e:
                     error_msg = (
