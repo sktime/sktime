@@ -149,6 +149,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
+
         - "zero-shot": Uses pre-trained model as it is. If model path is *None*
           with this strategy, ValueError is raised.
         - "minimal": Fine-tunes only a small subset of the model parameters,
