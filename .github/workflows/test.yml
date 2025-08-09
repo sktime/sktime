@@ -358,7 +358,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.9
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -458,11 +458,6 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
-        exclude:
-          - os: macos-latest
-            python-version: "3.9"
-          - os: macos-latest
-            python-version: "3.10"
     runs-on: ${{ matrix.os }}
 
     steps:

@@ -69,11 +69,6 @@ jobs:
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
-        exclude:
-          - operating-system: macos-latest
-            python-version: "3.9"
-          - operating-system: macos-latest
-            python-version: "3.10"
         sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
     runs-on: ${{ matrix.operating-system }}
     steps:

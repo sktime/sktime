@@ -21,11 +21,6 @@ jobs:
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
-        exclude:
-          - operating-system: macos-latest
-            python-version: "3.9"
-          - operating-system: macos-latest
-            python-version: "3.10"
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
@@ -63,11 +58,6 @@ jobs:
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
-        exclude:
-          - operating-system: macos-latest
-            python-version: "3.9"
-          - operating-system: macos-latest
-            python-version: "3.10"
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
