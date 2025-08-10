@@ -14,6 +14,10 @@ from sktime.performance_metrics.forecasting._common import _percentage_error
 class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     r"""Mean absolute percentage error (MAPE) or symmetric MAPE.
 
+    Both MAPE and sMAPE are non-negative floating point,
+    is in fractional units relative to a specified denominator.
+    Lower is better, and the lowest possible value is 0.0.
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
@@ -27,8 +31,9 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     :math:`\frac{2}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
     {|y_i| + |\widehat{y}_i|}`.
 
-    Both MAPE and sMAPE output non-negative floating point which is in fractional units
-    rather than percentage. The best value is 0.0.
+    To avoid division by zero, any denominator above is replaced by ``eps``
+    if it is smaller than ``eps``; the value of ``eps`` defaults to
+    ``np.finfo(np.float64).eps`` if not specified.
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
