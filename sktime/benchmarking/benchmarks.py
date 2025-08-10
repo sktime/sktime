@@ -181,8 +181,8 @@ class BaseBenchmark:
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
-        - "dask_lazy": same as "dask",
-        but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "dask_lazy": same as "dask", but changes the return to (lazy)
+            ``dask.dataframe.DataFrame``.
         - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
