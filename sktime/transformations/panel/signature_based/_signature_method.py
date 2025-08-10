@@ -21,7 +21,7 @@ class SignatureTransformer(BaseTransformer):
 
     Parameters
     ----------
-    augmentation_list: list or tuple of strings, 
+    augmentation_list: list or tuple of strings,
         possible strings are ``['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']``
         Augmentations to apply to the data before computing the signature.
         The order of the augmentations is the order in which they are applied.
