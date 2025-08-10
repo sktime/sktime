@@ -94,10 +94,12 @@ class M5Dataset(BaseForecastingDataset):
     def _download(self):
         """Download the data."""
         url = "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
-        downloader = DatasetDownloader(hf_repo_name="tsf-datasets", fallback_urls=[url])
-        downloader.download(
-            dataset_name="m5-forecasting-accuracy", download_path=self._extract_path
+        downloader = DatasetDownloader(
+            hf_repo_name="tsf-datasets",
+            folder_name="m5-forecasting-accuracy",
+            fallback_urls=[url],
         )
+        downloader.download(download_path=self._extract_path)
 
     def _load(self, *args):
         """Load the dataset.

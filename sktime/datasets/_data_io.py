@@ -113,10 +113,12 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
                 )
 
             downloader = DatasetDownloader(
-                hf_repo_name="sktime/tsc-datasets", fallback_urls=[name_url]
+                hf_repo_name="sktime/tsc-datasets",
+                folder_name=name,
+                fallback_urls=[name_url],
             )
 
-            downloader.download(dataset_name=name, download_path=extract_path)
+            downloader.download(download_path=extract_path)
 
 
 def _mkdir_if_not_exist(*path):

@@ -1460,12 +1460,10 @@ def load_forecastingdata(
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
         forecastingdata_downloader = DatasetDownloader(
-            hf_repo_name="sktime/tsf-datasets", fallback_urls=[url]
+            hf_repo_name="sktime/tsf-datasets", folder_name=name, fallback_urls=[url]
         )
 
-        forecastingdata_downloader.download(
-            dataset_name=name, download_path=path_to_data_dir
-        )
+        forecastingdata_downloader.download(download_path=path_to_data_dir)
 
     path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
     return load_tsf_to_dataframe(
@@ -1582,11 +1580,11 @@ def load_m5(
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
             )
             m5_downloader = DatasetDownloader(
-                hf_repo_name="sktime/tsf-datasets", fallback_urls=[m5_url]
+                hf_repo_name="sktime/tsf-datasets",
+                folder_name="m5-forecasting-accuracy",
+                fallback_urls=[m5_url],
             )
-            m5_downloader.download(
-                dataset_name="m5-forecasting-accuracy", download_path=extract_path
-            )
+            m5_downloader.download(download_path=extract_path)
 
         path_to_data_dir = data_dir
 
