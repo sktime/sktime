@@ -106,7 +106,6 @@ EXCLUDED_TESTS = {
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
-    # WindowSummarizer: known side effects on multivariate arguments; see #2072
     # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
