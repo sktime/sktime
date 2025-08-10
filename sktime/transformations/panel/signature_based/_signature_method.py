@@ -66,8 +66,7 @@ class SignatureTransformer(BaseTransformer):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": ["esig", "numpy<2.0"],
-        "python_version": "<3.10",
+        "python_dependencies": ["esig"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
