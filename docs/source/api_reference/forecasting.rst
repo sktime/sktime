@@ -655,6 +655,13 @@ Ensembles and stacking
     AutoEnsembleForecaster
     StackingForecaster
 
+.. currentmodule:: sktime.forecasting.residual_booster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ResidualBoostingForecaster
 
 .. currentmodule:: sktime.forecasting.autots
 
