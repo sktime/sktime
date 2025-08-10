@@ -147,7 +147,7 @@ class Model(nn.Module):
                     local_files_only=True,
                     config=self.bert_config,
                 )
-            except OSError:  # downloads model from HF is not already done
+            except Exception:  # downloads model from HF is not already done
                 print("Local model files not found. Attempting to download...")
                 self.llm_model = BertModel.from_pretrained(
                     "google-bert/bert-base-uncased",
@@ -162,7 +162,7 @@ class Model(nn.Module):
                     trust_remote_code=True,
                     local_files_only=True,
                 )
-            except OSError:  # downloads the tokenizer from HF if not already done
+            except Exception:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Attempting to download them..")
                 self.tokenizer = BertTokenizer.from_pretrained(
                     "google-bert/bert-base-uncased",
