@@ -99,20 +99,12 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     --------
     mean_asymmetric_error
 
-    Notes
-    -----
-    Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
-    according to formula in [2]_.
-    This formula lets you control what kind of mistake you want to punish more,
-    by adjusting the `a` parameter to shift the penalty between overpredictions
-    and underpredictions.
-
     References
     ----------
     .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
        forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
-    .. [1] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+    .. [2] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
        Thomson, South-Western: Ohio, US.
 
     Examples
