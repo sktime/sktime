@@ -25,6 +25,14 @@ Base
 
     ForecastingBenchmark
 
+.. currentmodule:: sktime.benchmarking.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClassificationBenchmark
+
 .. currentmodule:: sktime.benchmarking.base
 
 .. autosummary::
