@@ -29,7 +29,6 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
-    CYTHON_ESTIMATORS,
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     MATRIXDESIGN,
