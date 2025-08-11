@@ -143,7 +143,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.folder_name = folder_name
         self.repo_type = repo_type
         self.token = token
-        self.available = _check_soft_dependencies("huggingface-hub", severity="none")
+        self.available = _check_soft_dependencies("huggingface-hub", severity="error")
 
     def _get_dataset_folder_path(self, download_path):
         """Return the path where the dataset folder will be located."""
@@ -174,8 +174,8 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         ValueError
             If the expected dataset folder is not found in the downloaded snapshot.
         """
-        if not self.available:
-            raise ModuleNotFoundError
+        # if not self.available:
+        #     raise ModuleNotFoundError
 
         from huggingface_hub import snapshot_download
         from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
