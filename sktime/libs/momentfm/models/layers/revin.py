@@ -1,10 +1,10 @@
 """Layer revin file."""
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch"], severity="none"):
-    import torch
-    from torch import nn
+    torch = _safe_import("torch")
+    nn = _safe_import("torch.nn")
 
     def nanvar(tensor, dim=None, keepdim=False):
         """Calculate the variance of all non-NaN elements."""
