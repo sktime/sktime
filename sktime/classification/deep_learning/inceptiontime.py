@@ -96,7 +96,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
-
         # capabilities
         # ------------
         "capability:class_weight": True,
@@ -117,7 +116,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
-        class_weight=None
+        class_weight=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -220,9 +219,9 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             valid_labels = set(self.label_encoder.classes_)
             # keep only labels present in training data
             filtered_class_weight = {
-            self.label_encoder.transform([label])[0]: weight
-            for label, weight in class_weight.items()
-            if label in valid_labels
+                self.label_encoder.transform([label])[0]: weight
+                for label, weight in class_weight.items()
+                if label in valid_labels
             }
             if len(filtered_class_weight) < len(class_weight):
                 warnings.warn(
