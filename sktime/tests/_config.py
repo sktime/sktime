@@ -48,10 +48,8 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
-    "FCNClassifier",
     "EditDist",
     "CNNClassifier",
-    "FCNClassifier",
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
@@ -60,7 +58,6 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    "CNTCClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -69,7 +66,6 @@ EXCLUDE_ESTIMATORS = [
     "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
-    "DartsXGBModel",
     # models with large weights
     "MomentFMForecaster",
     # Large datasets
@@ -112,11 +108,6 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
-    # tagged in issue #2490
-    "SignatureClassifier": [
-        "test_classifier_on_unit_test_data",
-        "test_classifier_on_basic_motions",
-    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -151,9 +142,6 @@ EXCLUDED_TESTS = {
     "CNNRegressor": [
         "test_fit_idempotent",
     ],
-    "FCNClassifier": [
-        "test_fit_idempotent",
-    ],
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
@@ -165,11 +153,6 @@ EXCLUDED_TESTS = {
     ],
     "MLPRegressor": [
         "test_fit_idempotent",
-    ],
-    "CNTCClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
     ],
     "InceptionTimeClassifier": [
         "test_fit_idempotent",
@@ -296,7 +279,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "BOSSEnsemble",
         "CAPA",
-        "CNTCClassifier",
         "CNTCNetwork",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
@@ -372,8 +354,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
-        "SignatureClassifier",
-        "SignatureTransformer",
         "SlidingWindowSegmenter",
         "SlopeTransformer",
         "StackingForecaster",

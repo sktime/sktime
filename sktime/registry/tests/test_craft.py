@@ -126,4 +126,4 @@ def test_imports():
 
 def test_deps_with_disjunction():
     """Check that deps retrieves the correct requirement set for disjunctions."""
-    assert deps("DartsXGBModel") == ["u8darts>=0.29"]
+    assert set(deps("DartsXGBModel")) == {"xgboost", "u8darts>=0.29"}
