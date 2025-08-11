@@ -25,8 +25,6 @@ i.e., intersection of estimators satisfying the conditions
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 __author__ = ["fkiraly"]
 
 
@@ -61,8 +59,8 @@ def pytest_configure(config):
         _config.ONLY_CHANGED_MODULES = True
 
 
-if _check_soft_dependencies("torch", severity="none"):
-    # disable mps for macos runners if torch is available
-    import torch
+# if _check_soft_dependencies("torch", severity="none"):
+# disable mps for macos runners if torch is available
+import torch
 
-    torch.backends.mps.is_available = lambda: False
+torch.backends.mps.is_available = lambda: False
