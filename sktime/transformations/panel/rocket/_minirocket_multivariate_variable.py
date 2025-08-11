@@ -298,7 +298,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 "max_dilations_per_kernel": 32,
                 "reference_length": max,
                 "pad_value_short_series": None,
-                " n_jobs": 1,
+                "n_jobs": 1,
             },
             {
                 "num_kernels": 84,
@@ -306,7 +306,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 "max_dilations_per_kernel": 32,
                 "reference_length": max,
                 "pad_value_short_series": None,
-                " n_jobs": 1,
+                "n_jobs": 1,
             },
         ]
 
