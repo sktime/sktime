@@ -198,20 +198,26 @@ class CausalFeatureEngineer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["Aheli"],
         "python_dependencies": "pgmpy>=0.1.20",
         "python_version": ">=3.10,<3.14",
-        "tests:vm": True,
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Panel", 
         "scitype:instancewise": True,
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": ["pd.DataFrame"],
+        "y_inner_mtype": ["pd.DataFrame"],
+        "univariate-only": False,
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
-        "univariate-only": False,
         "capability:missing_values": True,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -310,12 +316,28 @@ class CausalFeatureEngineer(BaseTransformer):
         # Combine X and y if both are provided
         if y is not None:
             if isinstance(X, pd.Series) and isinstance(y, pd.Series):
-                combined_data = pd.DataFrame(
-                    {X.name if X.name else "X": X, y.name if y.name else "y": y}
-                )
+                # Checks if X and y are same to avoid duplication
+                if X.equals(y):
+                    combined_data = pd.DataFrame({X.name if X.name else "X": X})
+                else:
+                    combined_data = pd.DataFrame(
+                        {X.name if X.name else "X": X, y.name if y.name else "y": y}
+                    )
             elif isinstance(X, pd.DataFrame) and isinstance(y, pd.Series):
+                # Checks if y is already in X columns to avoid duplication
                 combined_data = X.copy()
-                combined_data[y.name if y.name else "y"] = y
+                if not any(y.equals(X[col]) for col in X.columns):
+                    combined_data[y.name if y.name else "y"] = y
+            elif isinstance(X, pd.DataFrame) and isinstance(y, pd.DataFrame):
+                # Checks for duplicate columns and merges
+                if X.equals(y):
+                    combined_data = X.copy()
+                else:
+                    # Only adds columns from y that are not in X
+                    combined_data = X.copy()
+                    for col in y.columns:
+                        if col not in X.columns and not any(y[col].equals(X[xcol]) for xcol in X.columns):
+                            combined_data[col] = y[col]
             else:
                 combined_data = pd.concat([X, y], axis=1)
         else:
@@ -483,6 +505,7 @@ class CausalFeatureEngineer(BaseTransformer):
         weights = {k: v for k, v in weights.items() if v >= self.min_causal_strength}
 
         return weights
+
 
     def _define_causal_features(self):
         """Define features based on discovered causal graph."""
