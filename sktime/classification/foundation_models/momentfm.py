@@ -124,7 +124,8 @@ class MomentFMClassifier(BaseClassifier):
         "python_dependencies": [
             "torch",
             "tqdm",
-            "huggingface-hub<0.32.0",
+            "huggingface-hub",
+            "hf_xet"
             # "momentfm",
             "accelerate",
             "transformers",
