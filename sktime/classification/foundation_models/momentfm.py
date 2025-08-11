@@ -125,7 +125,7 @@ class MomentFMClassifier(BaseClassifier):
             "torch",
             "tqdm",
             "huggingface-hub",
-            "hf_xet"
+            "hf_xet",
             # "momentfm",
             "accelerate",
             "transformers",
