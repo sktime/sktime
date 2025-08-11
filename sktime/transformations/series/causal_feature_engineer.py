@@ -206,7 +206,7 @@ class CausalFeatureEngineer(BaseTransformer):
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Panel", 
+        "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
         "X_inner_mtype": ["pd.DataFrame"],
         "y_inner_mtype": ["pd.DataFrame"],
@@ -336,7 +336,9 @@ class CausalFeatureEngineer(BaseTransformer):
                     # Only adds columns from y that are not in X
                     combined_data = X.copy()
                     for col in y.columns:
-                        if col not in X.columns and not any(y[col].equals(X[xcol]) for xcol in X.columns):
+                        if col not in X.columns and not any(
+                            y[col].equals(X[xcol]) for xcol in X.columns
+                        ):
                             combined_data[col] = y[col]
             else:
                 combined_data = pd.concat([X, y], axis=1)
@@ -505,7 +507,6 @@ class CausalFeatureEngineer(BaseTransformer):
         weights = {k: v for k, v in weights.items() if v >= self.min_causal_strength}
 
         return weights
-
 
     def _define_causal_features(self):
         """Define features based on discovered causal graph."""

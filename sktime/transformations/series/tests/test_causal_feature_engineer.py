@@ -337,4 +337,3 @@ class TestCausalFeatureEngineer:
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) >= 0
         assert transformer.n_features_generated_ >= 0
-        
