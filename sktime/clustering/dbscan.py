@@ -19,9 +19,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
     ----------
     distance : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
-        its metric parameter.
+        feature array. If metric is a string or callable, you can use strings,
+        or sktime distances - like in the k-nearest neighbors classifier.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a :term:`Glossary <sparse graph>`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
