@@ -15,33 +15,68 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
     Interface to sklearn DBSCAN with sktime time series distances.
 
+    Time series distances are passed as the ``distance argument``, which can be:
+
+    * a string. This will substitute a hard-coded distance metric
+      from ``sktime.distances``. These default distances are intended to be
+      performant, but cannot deal with unequal length or multivariate series.
+    * a ``sktime`` pairwise transformer.
+      These are available in ``sktime.dists_kernels``, and can be discovered
+      via ``registry.all_estimators`` by searching for
+      ``pairwise-transformer`` type.and are composable
+      first class citizens in the ``sktime`` framework.
+      Distances dealing with unequal length or multivariate series are available,
+      these can be discovered via ``capability:unequal_length`` and
+      ``capability:multivariate`` tags.
+    * a callable. The exact signature for callables is described below.
+
     Parameters
     ----------
-    distance : str, or callable, default='euclidean'
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, you can use strings,
-        or sktime distances - like in the k-nearest neighbors classifier.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
-        case only "nonzero" elements may be considered neighbors for DBSCAN.
+    distance : str, sktime pairwise transformer, or callable, optional. default ='dtw'
+        distance measure between time series
+
+        * if str, must be one of the following strings:
+          'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
+          'lcss', 'edr', 'erp', 'msm', 'twe'
+          this will substitute a hard-coded distance metric from ``sktime.distances``
+        * if ``sktime`` pairwise transformer,
+          must implement the ``pairwise-transformer`` interface.
+          ``sktime`` transformers are available in ``sktime.dists_kernels``,
+          and discoverable via ``registry.all_estimators`` by searching for
+          ``pairwise-transformer`` type.
+        * if non-class callable, parameters can be passed via distance_params
+          Example: knn_dtw = KNeighborsTimeSeriesClassifier(
+          distance='dtw', distance_params={'epsilon':0.1})
+        * if any callable, must be of signature ``(X: Panel, X2: Panel) -> np.ndarray``.
+          The output must be mxn array if X is Panel of m Series, X2 of n Series;
+          if ``distance_mtype`` is not set, must be able to take
+          ``X``, ``X2`` which are of ``pd_multiindex`` and ``numpy3D`` mtype
+
     eps : float, default=0.5
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
         and distance function.
+
     min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
+
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
+
+    distance_params : dict, optional, default = None.
+        dictionary for distance parameters, in case that distance is a str or callable
+
     n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -89,9 +124,11 @@ class TimeSeriesDBSCAN(BaseClusterer):
         min_samples=5,
         algorithm="auto",
         leaf_size=30,
+        distance_params=None,
         n_jobs=None,
     ):
         self.distance = distance
+        self.distance_params = distance_params
         self.eps = eps
         self.min_samples = min_samples
         self.algorithm = algorithm
@@ -130,16 +167,6 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         self.dbscan_ = None
 
-        # internal import to avoid circular imports
-        from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistanceAdapter
-
-        self._dist_adapt = _SklearnDistanceAdapter(
-            distance=self.distance,
-            distance_params=None,  # distance_params isn't a param for TimeSeriesDBSCAN
-            n_vars=None,
-            is_equal_length=None,
-        )
-
     def _fit(self, X, y=None):
         """Fit time series clusterer to training data.
 
@@ -155,6 +182,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
             Fitted estimator.
         """
         self._X = X
+        # internal import to avoid circular imports
+        from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistanceAdapter
+
+        self._dist_adapt = _SklearnDistanceAdapter(
+            distance=self.distance,
+            distance_params=self.distance_params,
+            n_vars=X.shape[1],
+            is_equal_length=self._X_metadata["is_equal_length"],
+        )
 
         # uses adapter's _distance method to handle string-based and callable distances.
         distmat = self._dist_adapt._distance(X)
