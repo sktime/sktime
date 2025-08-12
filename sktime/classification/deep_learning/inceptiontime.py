@@ -2,6 +2,7 @@
 
 __all__ = ["InceptionTimeClassifier"]
 
+import warnings
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -48,6 +49,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         whether to print runtime information
     loss: str, default="categorical_crossentropy"
     metrics: optional
+    class_weight: dict, optional, default=None
+        Dictionary mapping class labels to a weight (float) value to
+        be used during model training.
+        For example, ``{"A": 1.0, "B": 2.5}`` will assign a weight of 1.0 to class "A"
+        and 2.5 to class "B".
+        This is passed directly to Keras' ``fit`` method as the ``class_weight``
+        argument after converting labels to integer encoding.
+        If None, all classes are given equal weight.
 
     Notes
     -----
@@ -87,6 +96,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
+        # capabilities
+        # ------------
+        "capability:class_weight": True,
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": ["test_fit_idempotent"],
+        "tests:libs": ["sktime.networks.inceptiontime"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -104,6 +121,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
+        class_weight=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -121,6 +139,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
+        self.class_weight = class_weight
 
         super().__init__()
 
@@ -199,6 +218,25 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         callbacks = self._check_callbacks(self.callbacks)
 
+        # Convert class_weight dict from label to integer encoding
+        class_weight = self.class_weight
+        if class_weight is not None:
+            valid_labels = set(self.label_encoder.classes_)
+            # keep only labels present in training data
+            filtered_class_weight = {
+                self.label_encoder.transform([label])[0]: weight
+                for label, weight in class_weight.items()
+                if label in valid_labels
+            }
+            if len(filtered_class_weight) < len(class_weight):
+                warnings.warn(
+                    "class_weight contains labels not observed in the training data; "
+                    "these labels are ignored.",
+                    UserWarning,
+                )
+            # if nothing valid left, set to None so keras treats all equally
+            class_weight = filtered_class_weight if filtered_class_weight else None
+
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -206,6 +244,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
+            class_weight=class_weight,
         )
         return self
 
