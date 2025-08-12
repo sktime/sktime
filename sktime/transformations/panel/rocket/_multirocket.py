@@ -265,7 +265,7 @@ class MultiRocket(BaseTransformer):
                 "max_dilations_per_kernel": 16,
                 "n_features_per_kernel": 2,
                 "normalise": True,
-                "n_jobs": -1,
+                "n_jobs": 1,
                 "random_state": 1,
             },
         ]

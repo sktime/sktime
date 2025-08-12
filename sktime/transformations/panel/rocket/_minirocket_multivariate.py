@@ -205,9 +205,9 @@ class MiniRocketMultivariate(BaseTransformer):
                 "max_dilations_per_kernel": 32,
             },
             {
-                "num_kernels": 168,
+                "num_kernels": 42,
                 "random_state": 84,
-                "n_jobs": 2,
+                "n_jobs": 1,
                 "max_dilations_per_kernel": 16,
             },
         ]

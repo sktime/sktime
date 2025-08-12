@@ -293,7 +293,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         """
         params = [
             {
-                "num_kernels": 84,
+                "num_kernels": 42,
                 "random_state": None,
                 "max_dilations_per_kernel": 32,
                 "reference_length": "min",
@@ -303,7 +303,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             {
                 "num_kernels": 84,
                 "random_state": None,
-                "max_dilations_per_kernel": 32,
+                "max_dilations_per_kernel": 16,
                 "reference_length": "max",
                 "pad_value_short_series": None,
                 "n_jobs": 1,
