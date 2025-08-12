@@ -44,9 +44,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
           ``sktime`` transformers are available in ``sktime.dists_kernels``,
           and discoverable via ``registry.all_estimators`` by searching for
           ``pairwise-transformer`` type.
-        * if non-class callable, parameters can be passed via distance_params
-          Example: knn_dtw = KNeighborsTimeSeriesClassifier(
-          distance='dtw', distance_params={'epsilon':0.1})
+        * if non-class callable, parameters can be passed via ``distance_params``
         * if any callable, must be of signature ``(X: Panel, X2: Panel) -> np.ndarray``.
           The output must be mxn array if X is Panel of m Series, X2 of n Series;
           if ``distance_mtype`` is not set, must be able to take
