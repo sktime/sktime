@@ -143,7 +143,7 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         self.folder_name = folder_name
         self.repo_type = repo_type
         self.token = token
-        self.available = _check_soft_dependencies("huggingface-hub", severity="error")
+        self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
     def _get_dataset_folder_path(self, download_path):
         """Return the path where the dataset folder will be located."""
@@ -174,32 +174,30 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         ValueError
             If the expected dataset folder is not found in the downloaded snapshot.
         """
-        # if not self.available:
-        #     raise ModuleNotFoundError
-
-        from huggingface_hub import snapshot_download
-        from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
-
-        try:
-            snapshot_download(
-                repo_id=self.hf_repo_name,
-                repo_type=self.repo_type,
-                allow_patterns=f"{self.folder_name}/**",
-                local_dir=download_path,
-                force_download=force_download,
-                token=self.token,
+        if not self.available:
+            raise ModuleNotFoundError(
+                "huggingface-hub not installed, please install it "
+                "using pip install huggingface-hub"
             )
 
-            local_dataset_path = download_path / self.folder_name
+        from huggingface_hub import snapshot_download
 
-            if not local_dataset_path.exists():
-                raise ValueError(
-                    f"Dataset folder '{self.folder_name}' not found"
-                    f" in repository '{self.hf_repo_name}'"
-                )
+        snapshot_download(
+            repo_id=self.hf_repo_name,
+            repo_type=self.repo_type,
+            allow_patterns=f"{self.folder_name}/**",
+            local_dir=download_path,
+            force_download=force_download,
+            token=self.token,
+        )
 
-        except (RepositoryNotFoundError, HfHubHTTPError, ValueError):
-            raise
+        local_dataset_path = download_path / self.folder_name
+
+        if not local_dataset_path.exists():
+            raise ValueError(
+                f"Dataset folder '{self.folder_name}' not found"
+                f" in repository '{self.hf_repo_name}'"
+            )
 
 
 class URLDownloader(DatasetDownloadStrategy):
