@@ -23,6 +23,9 @@ if multiple options are turned on, they are combined with AND,
 i.e., intersection of estimators satisfying the conditions
 """
 
+print(">>> conftest.py loaded <<<")
+
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
