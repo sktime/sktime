@@ -468,6 +468,7 @@ class BaseClusterer(BaseEstimator):
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
         )
+        self._X_metadata = X_metadata
         if not X_valid:
             raise TypeError(
                 "X must be in a sktime compatible format, of scitype: "
