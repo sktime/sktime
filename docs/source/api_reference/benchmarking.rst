@@ -6,8 +6,8 @@ Benchmarking
 
 The :mod:`sktime.benchmarking` module contains functionality to perform benchmarking.
 
-Benchmarking Framework v2
--------------------------
+Base
+----
 
 .. currentmodule:: sktime.benchmarking.benchmarks
 
@@ -24,17 +24,6 @@ Benchmarking Framework v2
     :template: class.rst
 
     ForecastingBenchmark
-
-.. currentmodule:: sktime.benchmarking.classification
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ClassificationBenchmark
-
-Benchmarking Framework v1
--------------------------
 
 .. currentmodule:: sktime.benchmarking.base
 
