@@ -107,6 +107,9 @@ class ScaledLogitTransformer(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, lower_bound=None, upper_bound=None):

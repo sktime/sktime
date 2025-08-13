@@ -83,6 +83,9 @@ class ExponentTransformer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, power=0.5, offset="auto"):

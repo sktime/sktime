@@ -102,8 +102,10 @@ class TablePdDataFrame(ScitypeTable):
         "name": "pd_DataFrame_Table",  # any string
         "name_python": "table_pd_df",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": True,
@@ -222,8 +224,10 @@ class TablePdSeries(ScitypeTable):
         "name": "pd_Series_Table",  # any string
         "name_python": "table_pd_series",  # lower_snake_case
         "name_aliases": [],
+        "description": "pandas.Series representation of a data table",
         "python_version": None,
         "python_dependencies": "pandas",
+        "python_type": "pandas.Series",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": True,
@@ -348,8 +352,10 @@ class TableNp1D(ScitypeTable):
         "name": "numpy1D",  # any string
         "name_python": "table_numpy1d",  # lower_snake_case
         "name_aliases": [],
+        "description": "1D np.narray representation of a univariate data table",
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:index": False,
@@ -472,8 +478,10 @@ class TableNp2D(ScitypeTable):
         "name": "numpy2D",  # any string
         "name_python": "table_numpy2d",  # lower_snake_case
         "name_aliases": [],
+        "description": "2D np.narray representation of a multivariate data table",
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "numpy.ndarray",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -595,8 +603,10 @@ class TableListOfDict(ScitypeTable):
         "name": "list_of_dict",  # any string
         "name_python": "table_list_of_dict",  # lower_snake_case
         "name_aliases": [],
+        "description": "list of dictionaries with primitive entries",
         "python_version": None,
         "python_dependencies": "numpy",
+        "python_type": "list",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -687,6 +697,29 @@ def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
 class TablePolarsEager(ScitypeTable):
     """Data type: eager polars DataFrame based specification of data frame table.
 
+    Name: ``"TablePolarsEager"``
+
+    Short description:
+        A specification for a data table backed by an eager Polars DataFrame,
+        supporting both univariate and multivariate data.
+
+    Long description:
+        The ``"TablePolarsEager"`` :term:`mtype` is a concrete specification
+        that implements the ``Table`` :term:`scitype`, representing a data table
+        with an eager Polars DataFrame.
+        An object ``obj: Polars DataFrame`` follows the specification iff:
+
+        * structure convention: ``obj`` is a Polars DataFrame.
+        * feature: the DataFrame can have multiple features (columns).
+        * instances: rows of the DataFrame represent individual instances.
+        * instance index: The index is implicit, with each row corresponding to
+          a unique instance (zero-indexed by default).
+
+    Capabilities:
+        * supports multivariate data with multiple features.
+        * can handle missing values (NaNs) and empty tables.
+        * includes metadata like feature names, data types, and feature kinds.
+
     Parameters are inferred by check.
 
     Parameters
@@ -716,8 +749,10 @@ class TablePolarsEager(ScitypeTable):
         "name": "polars_eager_table",  # any string
         "name_python": "table_polars_eager",  # lower_snake_case
         "name_aliases": [],
+        "description": "eager polars.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.DataFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,
@@ -781,8 +816,10 @@ class TablePolarsLazy(ScitypeTable):
         "name": "polars_lazy_table",  # any string
         "name_python": "table_polars_lazy",  # lower_snake_case
         "name_aliases": [],
+        "description": "lazy polars.DataFrame representation of a data table",
         "python_version": None,
         "python_dependencies": ["polars", "pyarrow"],
+        "python_type": "polars.LazyFrame",
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:index": False,

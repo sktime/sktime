@@ -8,7 +8,9 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 
 All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the forecaster tags API reference <forecaster_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
@@ -53,10 +55,10 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
     ForecastByLevel
-    GroupbyCategoryForecaster
-    Permute
-    HierarchyEnsembleForecaster
     TransformSelectForecaster
+    GroupbyCategoryForecaster
+    HierarchyEnsembleForecaster
+    Permute
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -283,6 +285,7 @@ Exponential smoothing based forecasters
     :template: class.rst
 
     ThetaForecaster
+    ThetaModularForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
 
@@ -460,6 +463,14 @@ Structural time series models
 
     DynamicFactor
 
+.. currentmodule:: sktime.forecasting.greykite
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GreykiteForecaster
+
 Deep learning based forecasters
 -------------------------------
 
@@ -498,6 +509,9 @@ Deep learning based forecasters
 
     NeuralForecastRNN
     NeuralForecastLSTM
+    NeuralForecastTCN
+    NeuralForecastGRU
+    NeuralForecastDilatedRNN
 
 .. currentmodule:: sktime.forecasting.pytorchforecasting
 
@@ -518,18 +532,24 @@ Deep learning based forecasters
 
     PyKANForecaster
 
-
-
-Pre-trained and foundation models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+.. currentmodule:: sktime.forecasting.rbf_forecaster
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    HFTransformersForecaster
+    RBFForecaster
+
+.. currentmodule:: sktime.forecasting.es_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ESRNNForecaster
+
+Pre-trained and foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.forecasting.chronos
 
@@ -539,6 +559,14 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
 .. autosummary::
@@ -546,6 +574,38 @@ Pre-trained and foundation models
     :template: class.rst
 
     MOIRAIForecaster
+
+.. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMForecaster
+
+.. currentmodule:: sktime.forecasting.patch_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSTForecaster
+
+.. currentmodule:: sktime.forecasting.time_llm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeLLMForecaster
+
+.. currentmodule:: sktime.forecasting.timemoe
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeMoEForecaster
 
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
@@ -574,6 +634,14 @@ Intermittent time series forecasters
 
     Croston
 
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastADIDA
+
 Ensembles and stacking
 ----------------------
 
@@ -587,10 +655,29 @@ Ensembles and stacking
     AutoEnsembleForecaster
     StackingForecaster
 
+.. currentmodule:: sktime.forecasting.residual_booster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ResidualBoostingForecaster
 
 .. currentmodule:: sktime.forecasting.autots
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     AutoTS
+
+.. currentmodule:: sktime.forecasting.mapa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MAPAForecaster
 
 Hierarchical reconciliation
 ---------------------------

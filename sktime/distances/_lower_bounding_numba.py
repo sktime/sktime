@@ -51,8 +51,7 @@ def create_shape_on_matrix(
 
     if upper_line_y_values != lower_line_y_values:
         raise ValueError(
-            "The number of upper line values must equal the number of lower line "
-            "values"
+            "The number of upper line values must equal the number of lower line values"
         )
 
     for i in range(start_val, upper_line_y_values):

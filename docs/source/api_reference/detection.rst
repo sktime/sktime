@@ -13,6 +13,12 @@ for time series detection tasks, including:
 The tasks include unsupervised and semi-supervised variants, and can batch or
 stream/online detection.
 
+All detectors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="detector"``, optionally filtered by tags.
+
+Valid tags are listed in :ref:`the detector tags API reference <detector_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
+
 Composition
 -----------
 
@@ -32,12 +38,13 @@ Change Point Detection
 .. currentmodule:: sktime.detection.skchange_cp
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    MovingWindow
-    PELT
-    SeededBinarySegmentation
+        moving_window.MovingWindow
+        pelt.PELT
+        seeded_binseg.SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -107,13 +114,14 @@ Segment anomaly detectors identify anomalous segment.
 .. currentmodule:: sktime.detection.skchange_aseg
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    StatThresholdAnomaliser
-    CircularBinarySegmentation
-    CAPA
-    MVCAPA
+    statthreshold.StatThresholdAnomaliser
+    circular_binseg.CircularBinarySegmentation
+    capa.CAPA
+    mvcapa.MVCAPA
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -209,6 +217,18 @@ Time Series Segmentation
 
     STRAY
 
+.. currentmodule:: sktime.detection.bs
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BinarySegmentation
+
+
+Reduction to clustering
+^^^^^^^^^^^^^^^^^^^^^^^
+
 .. currentmodule:: sktime.detection.clust
 
 .. autosummary::
@@ -217,13 +237,14 @@ Time Series Segmentation
 
     ClusterSegmenter
 
-.. currentmodule:: sktime.detection.bs.BinarySegmentation
+.. currentmodule:: sktime.detection.wclust
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    BinarySegmentation
+    WindowSegmenter
+
 
 Naive Baselines
 ^^^^^^^^^^^^^^^

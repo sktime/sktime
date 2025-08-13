@@ -239,18 +239,31 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         """Wrap predict_proba to call BaseRegressor.predict_proba."""
         return BaseRegressor.predict_proba(self, X=X, **kwargs)
 
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseRegressor._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseRegressor._repr_mimebundle_(self, **kwargs)
+
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, " f"got {type(self.n_estimators)}."
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, " f"got {self.n_estimators}."
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
             )
 
         # Set base estimator

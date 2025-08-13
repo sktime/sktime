@@ -66,7 +66,12 @@ MODULE = os.path.dirname(__file__)
 
 
 def load_UCR_UEA_dataset(
-    name, split=None, return_X_y=True, return_type=None, extract_path=None
+    name,
+    split=None,
+    return_X_y=True,
+    return_type=None,
+    extract_path=None,
+    y_dtype="str",
 ):
     """Load dataset from UCR UEA time series archive.
 
@@ -87,24 +92,35 @@ def load_UCR_UEA_dataset(
     split : None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By default it
         loads both into a single dataset, otherwise it looks only for files of the
-        format <name>_TRAIN.ts or <name>_TEST.ts.
+        format ``<name>_TRAIN.ts`` or ``<name>_TEST.ts``.
+
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+
     return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
         Memory data format specification to return X in, None = "nested_univ" type.
         str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        * for list of mtypes, see ``datatypes.MTYPE_REGISTER``
+        * for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
         commonly used specifications:
-            "nested_univ: nested pd.DataFrame, pd.Series in cells
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+
+        * "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+        * "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+        * "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        * "nested_univ: nested pd.DataFrame, pd.Series in cells
+
         Exception is raised if the data cannot be stored in the requested type.
+
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
         looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
-        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
+
+        e.g. ``C:/Temp`` or relative, e.g. ``Temp`` or ``./Temp``.
+    y_dtype: str, optional(default='str')
+        This dtype of the target variable.
+
 
     Returns
     -------
@@ -122,10 +138,12 @@ def load_UCR_UEA_dataset(
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
-    return _load_dataset(name, split, return_X_y, return_type, extract_path)
+    return _load_dataset(
+        name, split, return_X_y, return_type, extract_path, y_dtype=y_dtype
+    )
 
 
-def load_tecator(split=None, return_X_y=True, return_type=None):
+def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float"):
     """Load the Tecator time series regression problem and returns X and y.
 
     Parameters
@@ -146,7 +164,9 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
             "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in the requested type.
+        Exception is raised if the data cannot be stored in the requested type.\
+    y_dtype: float, optional(default='float')
+        This dtype of the target variable.
 
 
     Returns
@@ -185,7 +205,9 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
     """
     name = "Tecator"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(
+        name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
+    )
 
 
 def load_plaid(split=None, return_X_y=True, return_type=None):
@@ -227,7 +249,7 @@ def load_plaid(split=None, return_X_y=True, return_type=None):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_gunpoint(split=None, return_X_y=True, return_type=None):
@@ -295,7 +317,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_osuleaf(split=None, return_X_y=True, return_type=None):
@@ -353,7 +375,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
@@ -408,7 +430,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
@@ -536,7 +558,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_arrow_head(split=None, return_X_y=True, return_type=None):
@@ -661,7 +683,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
@@ -1250,7 +1272,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30T")
+    y = y.asfreq("30MIN")
     y = y.squeeze("columns")
     if api_version is None:
         return y
@@ -1313,7 +1335,7 @@ def load_solar(
                 return y
 
 
-def load_covid_3month(split=None, return_X_y=True):
+def load_covid_3month(split=None, return_X_y=True, y_dtype="float"):
     """Load dataset of last three months confirmed covid cases.
 
     Parameters
@@ -1325,6 +1347,8 @@ def load_covid_3month(split=None, return_X_y=True):
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
+    y_dtype: float, optional(default='float')
+        This dtype of the target variable.
 
     Returns
     -------
@@ -1357,7 +1381,7 @@ def load_covid_3month(split=None, return_X_y=True):
     =Covid3Month
     """
     name = "Covid3Month"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, y_dtype=y_dtype)
 
 
 def load_forecastingdata(
@@ -1478,7 +1502,7 @@ def load_m5(
         If `extract_path` is provided:
             - Check if the required files are present at the given `extract_path`.
             - If files are not found, check if the directory "m5-forecasting-accuracy"
-              exists within the `extract_path`. Useful when the funciton has already
+              exists within the `extract_path`. Useful when the function has already
               run previously with the same path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder in the `extract_path`.
@@ -1488,7 +1512,7 @@ def load_m5(
             - Check if the directory "m5-forecasting-accuracy" exists within the module
               level.
             - If the directory exists, takes path to current directory.
-              Useful when the funciton has already run previously without any path.
+              Useful when the function has already run previously without any path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder at the module level.
 
@@ -1523,7 +1547,7 @@ def load_m5(
             calander : pd.DataFrame
 
     Dataset Description
-    --------------------
+    -------------------
     - **Number of Rows**: Approximately 58 million rows (for the full dataset).
     - **Number of Columns**: Varies based on `include_events` parameter.
       - Without events: 9 columns.
@@ -1545,8 +1569,9 @@ def load_m5(
 
     Examples
     --------
-    >>> data = load_m5()
-    >>> data.head()
+    >>> from sktime.datasets import load_m5  # doctest: +SKIP
+    >>> data = load_m5()  # doctest: +SKIP
+    >>> data.head()  # doctest: +SKIP
     """
     required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
 
@@ -1578,7 +1603,7 @@ def load_m5(
 
             _download_and_extract(
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=path_to_data_dir,
+                extract_path=extract_path,
             )
         else:
             path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")

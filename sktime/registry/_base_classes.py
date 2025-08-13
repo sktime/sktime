@@ -305,7 +305,7 @@ class metric_forecasting(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.performance_metrics.forecasting._classes import (
+        from sktime.performance_metrics.forecasting._base import (
             BaseForecastingErrorMetric,
         )
 
@@ -514,20 +514,92 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
         return TestAllPanelTransformers
 
 
-class distribution(_BaseScitypeOfObject):
-    """Pandas-like probability distribution."""
+class dataset(_BaseScitypeOfObject):
+    """Dataset object."""
 
     _tags = {
-        "scitype_name": "distribution",
-        "short_descr": "pandas-like probability distribution",
+        "scitype_name": "dataset",
+        "short_descr": "dataset object",
         "parent_scitype": "object",
     }
 
     @classmethod
     def get_base_class(cls):
-        from sktime.proba._base import BaseDistribution
+        from sktime.datasets.base import BaseDataset
 
-        return BaseDistribution
+        return BaseDataset
+
+
+class dataset_classification(_BaseScitypeOfObject):
+    """Classification Dataset."""
+
+    _tags = {
+        "scitype_name": "dataset_classification",
+        "short_descr": "classification dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.classification._base import BaseClassificationDataset
+
+        return BaseClassificationDataset
+
+
+class dataset_forecasting(_BaseScitypeOfObject):
+    """Forecasting Dataset class."""
+
+    _tags = {
+        "scitype_name": "dataset_forecasting",
+        "short_descr": "forecasting dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.forecasting._base import BaseForecastingDataset
+
+        return BaseForecastingDataset
+
+
+class dataset_regression(_BaseScitypeOfObject):
+    """Regression Dataset class."""
+
+    _tags = {
+        "scitype_name": "dataset_regression",
+        "short_descr": "regression dataset object",
+        "parent_scitype": "dataset",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.datasets.regression._base import BaseRegressionDataset
+
+        return BaseRegressionDataset
+
+
+class reconciler(_BaseScitypeOfObject):
+    _tags = {
+        "scitype_name": "reconciler",
+        "short_descr": "time series reconciliation transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.hierarchical.reconcile._base import (
+            _ReconcilerTransformer,
+        )
+
+        return _ReconcilerTransformer
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.transformations.tests.test_all_reconcilers import (
+            TestAllReconciliationTransformers,
+        )
+
+        return TestAllReconciliationTransformers
 
 
 # ----------------------------------

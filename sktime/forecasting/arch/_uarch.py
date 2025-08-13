@@ -163,8 +163,10 @@ class ARCH(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:insample": False,
+        "capability:missing_values": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "ignores-exogeneous-X": True,
     }
 
@@ -305,9 +307,8 @@ class ARCH(BaseForecaster):
         if fh:
             self._horizon = fh
 
-        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = abs_idx[[0, -1]]
-        start = min(start, len(self._y))
+        abs_idx = self._horizon.to_absolute_int(self._y.index[-1], self.cutoff)
+        end = abs_idx[-1]
 
         if X is not None:
             x = {}
@@ -318,7 +319,7 @@ class ARCH(BaseForecaster):
 
         ArchResultObject = self._fitted_forecaster.forecast(
             x=x,
-            horizon=end - start + 1,
+            horizon=end,
             params=self.params,
             start=self.start,
             align=self.align,
@@ -328,7 +329,7 @@ class ARCH(BaseForecaster):
             random_state=self.random_state,
             reindex=self.reindex,
         )
-        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        full_range = pd.RangeIndex(start=1, stop=end + 1)
 
         return (ArchResultObject, full_range, abs_idx)
 
