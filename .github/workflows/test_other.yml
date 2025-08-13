@@ -10,7 +10,7 @@ jobs:
     outputs:
       other_change: ${{ steps.filter.outputs.other_change }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -45,14 +45,14 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: update local git tracking reference
         run: git remote set-branches origin main
       - name: update local shallow clone
