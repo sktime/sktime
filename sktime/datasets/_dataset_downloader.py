@@ -172,7 +172,6 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         force_download : bool, default=False
             If True, deletes and redownloads the dataset even if it already exists.
 
-
         Raises
         ------
         RepositoryNotFoundError
@@ -349,7 +348,6 @@ class DatasetDownloader(DatasetDownloadStrategy):
         Backup URLs to try if Hugging Face download fails.
     retries : int, default=1
         Number of retries per strategy before failing.
-
 
     Examples
     --------
