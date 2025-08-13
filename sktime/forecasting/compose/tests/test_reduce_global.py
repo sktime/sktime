@@ -17,6 +17,7 @@ from sklearn.pipeline import make_pipeline
 
 from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
+from sktime.forecasting import upto
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
@@ -392,7 +393,7 @@ def test_timezoneaware_index():
 
     np.testing.assert_almost_equal(tzaware_coef, tznaive_coef)
 
-    fh = np.arange(1, 97)
+    fh = upto(96)
     pred_tzaware = tzaware.predict(fh=fh)
     pred_tznaive = tznaive.predict(fh=fh)
 
