@@ -11,6 +11,7 @@ URL = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
 EXPECTED_FILES = ["Beef_TRAIN.ts", "Beef_TEST.ts"]
 
 
+@pytest.mark.datadownload
 @pytest.mark.parametrize(
     "strategy",
     [
