@@ -180,7 +180,8 @@ def _pseudovalues_sqrt(scaled: pd.DataFrame):
 
     where:
 
-    * :math:`\text{full} = \sqrt{\text{mean\_over\_time}(\text{scaled})}`
+    * :math:`\text{full} =
+        \sqrt{\text{mean\_over\_time}(\text{scaled})}`
       (Series of shape (d,))
     * :math:`\text{loo} =
         \sqrt{\dfrac{\text{sum\_over\_time}(\text{scaled}) - \text{scaled}}{n - 1}}`
