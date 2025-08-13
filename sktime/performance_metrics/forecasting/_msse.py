@@ -7,13 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-import pandas as pd
-
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._common import _fraction
+from sktime.performance_metrics.forecasting._common import _fraction, _pseudovalues_sqrt
 from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
@@ -218,19 +216,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         )
 
         if self.square_root:
-            msse_full = scaled.mean(axis=0)
-            rmsse_full = msse_full.pow(0.5)
-
-            n = scaled.shape[0]
-            sum_scaled = scaled.sum(axis=0)
-            msse_loo = (sum_scaled - scaled) / (n - 1)
-            rmsse_loo = msse_loo.pow(0.5)
-
-            pseudo = pd.DataFrame(
-                n * rmsse_full - (n - 1) * rmsse_loo,
-                index=scaled.index,
-                columns=scaled.columns,
-            )
+            pseudo = _pseudovalues_sqrt(scaled)
         else:
             pseudo = scaled
 

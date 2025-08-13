@@ -1,6 +1,7 @@
 """Common utilities for forecasting metrics."""
 
 import numpy as np
+import pandas as pd
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
@@ -163,3 +164,70 @@ def _fraction(enumerator, denominator, eps=None):
         np.minimum(denominator, -eps),
     )
     return enumerator / safe_denominator
+
+
+def _pseudovalues_sqrt(scaled: pd.DataFrame):
+    r"""Jackknife pseudo-values for square-root-based metrics (e.g., RMSE-like).
+
+    This function computes jackknife pseudo-values for square-root-based metrics
+    (e.g., RMSSE or RMSE) given a DataFrame of scaled squared errors.
+
+    For a DataFrame ``scaled`` of per-timepoint scaled squared errors, the pseudo-values
+    are computed as:
+
+    .. math::
+        \text{pseudo} = n \cdot \text{full} - (n - 1) \cdot \text{loo}
+
+    where:
+
+    * :math:`\text{full} = \sqrt{\text{mean\_over\_time}(\text{scaled})}`
+      (Series of shape (d,))
+    * :math:`\text{loo} =
+        \sqrt{\dfrac{\text{sum\_over\_time}(\text{scaled}) - \text{scaled}}{n - 1}}`
+      (DataFrame of shape ``(h, d)``)
+
+    Parameters
+    ----------
+    scaled : pd.DataFrame
+        DataFrame of shape (h, d) containing per-timepoint scaled squared errors.
+        Rows correspond to forecast timepoints, columns to series/outputs.
+
+    Returns
+    -------
+    pseudo : pd.DataFrame
+        DataFrame of same shape as ``scaled`` containing jackknife pseudo-values
+        for the square-root metric.
+
+    Notes
+    -----
+    - If ``scaled`` has fewer than 2 rows (n <= 1), jackknife is undefined.
+      In this case, the function returns a DataFrame filled with the ``full``
+      value repeated on every row (so averaging the pseudo-values reproduces ``full``).
+    """
+    if not isinstance(scaled, pd.DataFrame):
+        scaled = pd.DataFrame(scaled)
+
+    n = scaled.shape[0]
+    mse_full = scaled.mean(axis=0)
+    full_rms = mse_full.pow(0.5)
+
+    if n <= 1:
+        return pd.DataFrame(
+            np.tile(full_rms.values, (n, 1)),
+            index=scaled.index,
+            columns=scaled.columns,
+        )
+
+    sum_scaled = scaled.sum(axis=0)
+
+    msse_loo = (sum_scaled - scaled) / (n - 1)
+
+    rmsse_loo = msse_loo.pow(0.5)
+
+    pseudo = pd.DataFrame(
+        n * full_rms - (n - 1) * rmsse_loo,
+        index=scaled.index,
+        columns=scaled.columns,
+    )
+
+    return pseudo
