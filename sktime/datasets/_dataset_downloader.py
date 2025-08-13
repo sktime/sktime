@@ -39,6 +39,13 @@ class DatasetDownloadStrategy(BaseObject):
         force_download : bool, default=False
             If True, deletes and redownloads the dataset even if it already exists.
 
+        Side Effects
+        ------------
+        - Creates the dataset directory at:
+            `{download_path}/`
+        - If `force_download=True` and the dataset folder already exists, that folder
+        (and its contents) will be deleted before redownloading.
+
         Returns
         -------
         Path
