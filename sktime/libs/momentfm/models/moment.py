@@ -22,7 +22,7 @@ from sktime.libs.momentfm.utils.utils import (
 )
 
 if platform.system() == "Darwin":
-    os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = 4
+    os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
 
 SUPPORTED_HUGGINGFACE_MODELS = [
     "google/flan-t5-small",
