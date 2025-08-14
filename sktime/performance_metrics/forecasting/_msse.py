@@ -62,7 +62,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    sp : int, default = None
+    sp : int, default = 1
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
