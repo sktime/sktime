@@ -80,6 +80,7 @@ class MiniRocketMultivariate(BaseTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
+        "test:vm": True,
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
