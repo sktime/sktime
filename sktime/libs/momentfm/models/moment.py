@@ -1,6 +1,8 @@
 """Moment model and heads file."""
 
 import logging
+import os
+import platform
 import warnings
 from argparse import Namespace
 from copy import deepcopy
@@ -18,6 +20,9 @@ from sktime.libs.momentfm.utils.utils import (
     get_anomaly_criterion,
     get_huggingface_model_dimensions,
 )
+
+if platform.system() == "Darwin":
+    os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = 4
 
 SUPPORTED_HUGGINGFACE_MODELS = [
     "google/flan-t5-small",
