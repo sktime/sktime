@@ -16,30 +16,60 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_scale
 
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
-    """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
+    r"""Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
-    If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
-    ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
-    point. The best value is 0.0.
+    MSSE and RMSSE output is non-negative floating point. MSSE is scale-free,
+    while RMSSE is also scale-free but has the same unit as the input data.
+    Lower values are better, and the lowest possible value is 0.0.
 
-    This is a squared variant of the MASE loss metric.  Like MASE and other
-    scaled performance metrics this scale-free metric can be used to compare
-    forecast methods on a single series or between series.
+    For a univariate, non-hierarchical sample of true values
+    :math:`y_1, \dots, y_n`, predicted values
+    :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),
+    and training values :math:`y_{\text{train}, 1}, \dots, y_{\text{train}, m}`,
+    at time indices :math:`t_1, \dots, t_n`, ``evaluate`` or call returns:
 
-    This metric is also suited for intermittent-demand series because it
-    will not give infinite or undefined values unless the training data
-    is a flat timeseries. In this case the function returns a large value
-    instead of inf.
+    * if ``square_root`` is False, the Mean Squared Scaled Error (MSSE),
+      :math:`\frac{\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}
+      {\frac{1}{m-s}\sum_{j=1}^{m-s} \left(y_{\text{train}, j+s} - y_{\text{train}, j}\right)^2}`
+    * if ``square_root`` is True, the Root Mean Squared Scaled Error (RMSSE),
+      :math:`\sqrt{\frac{\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}
+      {\frac{1}{m-s}\sum_{j=1}^{m-s} \left(y_{\text{train}, j+s} - y_{\text{train}, j}\right)^2}}`
 
-    Works with multioutput (multivariate) timeseries data
-    with homogeneous seasonal periodicity.
+    MSSE and RMSSE are both non-negative floating point. Lower values are better,
+    and the lowest possible value is 0.0.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below. If ``square_root`` is True, averages are taken
+    over square roots of scaled squared errors.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the scaled squared error at that time index,
+      :math:`\frac{\left(y_i - \widehat{y}_i\right)^2}
+      {\frac{1}{m-s}\sum_{j=1}^{m-s} \left(y_{\text{train}, j+s} - y_{\text{train}, j}\right)^2}`,
+      for all time indices :math:`t_1, \dots, t_n` in the input.
+    * if ``square_root`` is True, the jackknife pseudo-value of the RMSSE
+      at that time index, :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
+      where :math:`\bar{\varepsilon}` is the RMSSE over all time indices,
+      and :math:`\varepsilon_i` is the RMSSE with the i-th time index removed,
+      i.e., using values :math:`y_1, \dots, y_{i-1}, y_{i+1}, \dots, y_n`,
+      and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.
+
+    MSSE and RMSSE are scale-free metrics, making them suitable for comparing
+    forecast methods across series. They are also robust to intermittent-demand
+    series, as they avoid infinite or undefined values unless the training data
+    is flat. In such cases, the function returns a large value instead of infinity.
 
     Parameters
     ----------
-    sp : int, default = 1
+    sp : int, default = None
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
+    eps: float, default = None
+        Numerical epsilon used to avoid division by zero or instability.
+        Absolute values of the denominator smaller than ``eps`` are replaced
+        by ``eps``. If None, defaults to ``np.finfo(np.float64).eps``.
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -106,7 +136,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     np.float64(0.17451891814894502)
-    """
+    """  # noqa: E501
 
     func = mean_squared_scaled_error
 
@@ -115,11 +145,12 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         sp=1,
+        eps=None,
         square_root=False,
         by_index=False,
     ):
         self.sp = sp
-        self.eps = None
+        self.eps = eps
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
