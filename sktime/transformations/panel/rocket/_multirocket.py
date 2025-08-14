@@ -97,7 +97,7 @@ class MultiRocket(BaseTransformer):
         # --------------
         "univariate-only": True,
         "fit_is_empty": False,
-        "test:vm": True,
+        "tests:vm": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
