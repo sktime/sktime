@@ -159,16 +159,100 @@ def render_row(pr):
 
 
 def render_changelog(prs, assigned):
-    # sourcery skip: use-named-expression
     """Render changelog."""
+    # sourcery skip: use-named-expression
+    LABEL_TO_SUBSECTION = {
+        "module:base-framework": "BaseObject and base framework",
+        "module:deep-learning&networks": "Other",
+        "module:detection": "Time series anomalies, changepoints, segmentation",
+        "module:distances&kernels": "Time series anomalies, changepoints, segmentation",
+        "module:datasets&loaders": "Data sets and data loaders",
+        "module:datatypes": "Datatypes, checks, conversions",
+        "module:forecasting": "Forecasting",
+        "module:metrics&benchmarking": "Benchmarking, Metrics, Splitters",
+        "module:parameter-estimators": "Parameter estimation and hypothesis testing",
+        "module:plotting&utilities": "Other",
+        "module:probability&simulation": "Other",
+        "module:splitters&resamplers": "Benchmarking, Metrics, Splitter",
+        "module:classification": "Time series classification",
+        "module:clustering": "Time series clustering",
+        "module:regression": "Time series regression",
+        "module:transformations": "Transformations",
+        "module:tests": "Test framework",
+    }
+    # labels start with module
+    # Subsection title comes after label
+
+    MODULE_ORDER = [
+        "BaseObject and base framework",
+        "Benchmarking, Metrics, Splitters",
+        "Data sets and data loaders",
+        "Datatypes, checks, conversions",
+        "Forecasting",
+        "Parameter estimation and hypothesis testing",
+        "Registry and search",
+        "Time series alignment",
+        "Time series anomalies, changepoints, segmentation",
+        "Time series classification",
+        "Time series clustering",
+        "Time series regression",
+        "Transformations",
+        "Test framework",
+        "Other",
+    ]
+
     from dateutil import parser
 
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
+    SECTION_ORDER = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Other"]
+    for title in SECTION_ORDER:
+        if title not in assigned:
+            continue
 
+        pr_group = [prs[i] for i in assigned[title]]
+        if not pr_group:
+            continue
+        print()
+        print(title)
+        print("~" * len(title))
+        print()
+
+        # Group PRs by module labels
+        def group_prs_by_module(pr_group: list[dict]) -> dict[str, list[dict]]:
+            """Group PRs by module labels and return a dictionary."""
+            subsection_map: dict[str, list[dict]] = defaultdict(list)
+
+            for pr in pr_group:
+                labels = [label["name"] for label in pr["labels"]]
+                added = False
+
+                for label in labels:
+                    if label in LABEL_TO_SUBSECTION:
+                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        added = True
+                if not added:
+                    subsection_map["Other"].append(pr)
+
+            return subsection_map
+
+        def render_subsection(subsection_map: dict[str, list[dict]]) -> None:
+            """Render subsections and their PRs in order."""
+            # Render subsections
+            for subsection_title in MODULE_ORDER:
+                pr_list = subsection_map.get(subsection_title, [])
+                if pr_list:
+                    print()
+                    print(subsection_title)
+                    print("^" * len(subsection_title))
+                    print()
+                    for pr in sorted(
+                        pr_list, key=lambda x: parser.parse(x["merged_at"])
+                    ):
+                        render_row(pr)
+
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = group_prs_by_module(pr_group)
+            render_subsection(subsection_map)
+        else:
             for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
                 render_row(pr)
 
@@ -176,10 +260,9 @@ def render_changelog(prs, assigned):
 if __name__ == "__main__":
     categories = [
         {"title": "Enhancements", "labels": ["feature", "enhancement"]},
-        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
-        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
-        {"title": "Refactored", "labels": ["refactor"]},
         {"title": "Documentation", "labels": ["documentation"]},
+        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
+        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
     ]
 
     pulls = fetch_pull_requests_since_last_release()
