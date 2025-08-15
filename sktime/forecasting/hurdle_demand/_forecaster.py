@@ -1,8 +1,13 @@
 from typing import Literal
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.utils.dependencies import _placeholder_record
 
 
+@_placeholder_record(
+    "prophetverse.sktime.intermittent_demand",
+    dependencies="prophetverse>=0.9.0,<0.10.0",
+)
 class HurdleDemandForecaster(_DelegatedForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
 
@@ -14,14 +19,14 @@ class HurdleDemandForecaster(_DelegatedForecaster):
             \end{cases}
     where
         .. math::
-            \begin{split}
+            \begin{cases}
                 I_t &\sim \mathcal{B}(1.0 - p_t), \\
                 \log{r_t} &= \beta_r \cdot X_t + \Phi(t, r_{t - 1}), \\
                 \sigma^{-1}(p_t) &= \beta_p \cdot X_t + \Phi \left ( t,
                 \sigma^{-1}(p_t) \right ), \\
                 \Phi_i(t, x) &= \phi_i x + \eta_{t, i}, \eta \sim \mathcal{N}(0,
                 \sigma^2_i),
-            \end{split}
+            \end{cases}
     :math:`f` denotes a density parameterized by at least a location parameter,
     :math:`X` is the exogenous variables, and :math:`\sigma^{-1}` denotes the logit
     function. The time varying component can be toggled on or off depending on the
