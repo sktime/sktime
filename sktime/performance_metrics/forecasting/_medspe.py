@@ -7,8 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
+    _percentage_error,
     median_squared_percentage_error,
 )
 
@@ -150,6 +153,54 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+        symmetric = self.symmetric
+        square_root = self.square_root
+
+        percentage_errors = _percentage_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            symmetric=symmetric,
+            relative_to=self.relative_to,
+            eps=self.eps,
+        )
+
+        squared_percentage_errors = percentage_errors**2
+
+        if square_root:
+            squared_percentage_errors = np.sqrt(squared_percentage_errors)
+
+        raw_values = self._get_weighted_df(squared_percentage_errors, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
