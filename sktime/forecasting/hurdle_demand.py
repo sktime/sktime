@@ -6,9 +6,10 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
+# TODO: fix version once prophetverse is released with the new hurdle model
 @_placeholder_record(
     "prophetverse.sktime.intermittent_demand",
-    dependencies="prophetverse>=0.8.1,<0.10.0",
+    dependencies="prophetverse>0.8.1,<0.10.0",
 )
 class HurdleDemandForecaster(_DelegatedForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
