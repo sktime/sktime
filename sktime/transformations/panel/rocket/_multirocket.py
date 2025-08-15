@@ -254,20 +254,20 @@ class MultiRocket(BaseTransformer):
         """
         params1 = [
             {
-                "num_kernels": 84,
+                "num_kernels": 42,
                 "max_dilations_per_kernel": 32,
                 "n_features_per_kernel": 4,
                 "normalise": False,
                 "n_jobs": 1,
-                "random_state": 2,
+                "random_state": None,
             },
             {
                 "num_kernels": 84,
                 "max_dilations_per_kernel": 16,
-                "n_features_per_kernel": 2,
+                "n_features_per_kernel": 4,
                 "normalise": True,
                 "n_jobs": 1,
-                "random_state": 1,
+                "random_state": None,
             },
         ]
 
