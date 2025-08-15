@@ -1,3 +1,5 @@
+"""Bayesian intermittent demand forecaster using a hurdle model."""
+
 from typing import Literal
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -6,7 +8,7 @@ from sktime.utils.dependencies import _placeholder_record
 
 @_placeholder_record(
     "prophetverse.sktime.intermittent_demand",
-    dependencies="prophetverse>=0.9.0,<0.10.0",
+    dependencies="prophetverse>=0.8.1,<0.10.0",
 )
 class HurdleDemandForecaster(_DelegatedForecaster):
     r"""Probabilistic Intermittent Demand Forecaster using a hurdle model.
@@ -136,7 +138,7 @@ class HurdleDemandForecaster(_DelegatedForecaster):
         self._delegate = _HurdleDemandForecaster(**self.get_params(deep=False))
 
     @classmethod
-    def get_test_params(cls, parameter_set="default"):
+    def get_test_params(cls, parameter_set="default"):  # noqa: D102
         params_1 = {
             "family": "negative-binomial",
             "time_varying_probability": "rw",
