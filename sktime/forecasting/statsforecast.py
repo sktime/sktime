@@ -361,6 +361,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
+        possible values: "STM", "OTM", "DSTM", "DOTM"
 
     References
     ----------
@@ -468,11 +469,11 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="ZZZ")
         Controlling state-space-equations.
-    damped : bool
+    damped : bool, optional (default=None)
         A parameter that 'dampens' the trend.
     phi : float, optional (default=None)
         Smoothing parameter for trend damping. Only used when ``damped=True``.
@@ -585,9 +586,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="Z")
         Controlling state-space-equations.
 
     References
