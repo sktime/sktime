@@ -104,7 +104,6 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "capability:unequal_length": True,
-        "tests:vm": True,
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
