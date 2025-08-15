@@ -11,8 +11,9 @@ __all__ = [
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
     "StatsForecastADIDA",
+    "StatsForecastAutoMFLES",
 ]
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
@@ -1100,3 +1101,140 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
             return params
         else:
             return [{}, {}]
+
+
+class StatsForecastAutoMFLES(_GeneralisedStatsForecastAdapter):
+    """StatsForecast MFLES model.
+
+    Direct interface to ``statsforecast.models.AutoMFLES``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Parameters
+    ----------
+    test_size : int, optional (default=None)
+        Forecast horizon used during cross validation.
+        If `None`, will use `fh.max()` (or 1) and `fh` becomes mandatory during `fit`.
+    season_length : int or list of int, optional (default=None)
+        Number of observations per unit of time. Ex: 24 Hourly data.
+    n_windows : int (default=2)
+        Number of windows used for cross validation.
+    config : dict, optional (default=None)
+        Mapping from parameter name (from the init arguments of MFLES) to a list of
+        values to try.
+        If `None`, will use defaults.
+        See [2]_ for the list of parameters.
+    step_size : int, optional (default=None)
+        Step size between each cross validation window.
+        If `None` will be set to test_size.
+    metric : str (default='smape')
+        Metric used to select the best model.
+        Possible options are: 'smape', 'mape', 'mse' and 'mae'.
+    verbose : bool (default=False)
+        Print debugging information.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#automfles
+    .. [2] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#mfles
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "tblume1992",
+            "yarnabrina",
+        ],
+        # tblume1992 for statsforecast AutoTBATS
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.7.5", "scipy<1.16"],
+    }
+
+    def __init__(
+        self,
+        test_size: Optional[int] = None,
+        season_length: Optional[Union[int, list[int]]] = None,
+        n_windows: int = 2,
+        config: Optional[dict[str, Any]] = None,
+        step_size: Optional[int] = None,
+        metric: str = "smape",
+        verbose: bool = False,
+    ):
+        self.test_size = test_size
+        self.season_length = season_length
+        self.n_windows = n_windows
+        self.config = config
+        self.step_size = step_size
+        self.metric = metric
+        self.verbose = verbose
+
+        super().__init__()
+
+        # StatsForecast needs test_size as a positional argument.
+        # To avoid positional requirement, allowing the value to be None
+        # and setting it based of `fh.max()` during `fit`.
+        # This makes `fh` mandatory during `fit` confitionally.
+        # Note 1: in case `test_size` is not None, `fh` is not mandatory.
+        # Note 2: in case `fh` is entirely in-sample, `test_size` is set as 1.
+        self.set_tags(**{"requires-fh-in-fit": self.test_size is None})
+
+        self._test_size = None
+
+    def _get_statsforecast_class(self):
+        """Create underlying forecaster instance."""
+        from statsforecast.models import AutoMFLES
+
+        return AutoMFLES
+
+    def _get_statsforecast_params(self) -> dict:
+        self._test_size = (
+            max(self._fh.max(), 1) if self.test_size is None else self.test_size
+        )
+
+        return {
+            "test_size": self._test_size,
+            "season_length": self.season_length,
+            "n_windows": self.n_windows,
+            "config": self.config,
+            "step_size": self.step_size,
+            "metric": self.metric,
+            "verbose": self.verbose,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by `vulture` etc.
+
+        params = [
+            {},
+            {"test_size": 2, "season_length": 3, "n_windows": 4},
+            {"season_length": [3, 12], "metric": "mse"},
+        ]
+
+        return params
