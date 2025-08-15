@@ -682,7 +682,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    seasonal_periods : int or list of int.
+    seasonal_periods : int or list of int. (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
@@ -733,7 +733,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]],
+        seasonal_periods: Union[int, list[int]] = 1,
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
