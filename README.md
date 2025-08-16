@@ -103,7 +103,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 For troubleshooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.8, 3.9, 3.10, 3.11, and 3.12 (only 64-bit)
+- **Python version**: Python 3.9, 3.10, 3.11, 3.12, and 3.13 (only 64-bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/

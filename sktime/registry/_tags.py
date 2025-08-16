@@ -532,7 +532,7 @@ class tests__skip_all(_BaseTag):
 
 
 class tests__skip_by_name(_BaseTag):
-    """Whether to spin up a separate VM to test the estimator.
+    """A list of test names that should be skipped for this object.
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
 
@@ -2178,7 +2178,7 @@ class inner_implements_multilevel(_BaseTag):
 
 
 class x_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the estimator can deal with internally for X.
 
     - String name: ``"X_inner_mtype"``
     - Extension developer tag
@@ -2249,7 +2249,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for y.
+    """The machine type(s) the estimator can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
