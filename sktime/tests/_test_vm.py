@@ -2,6 +2,10 @@
 
 __all__ = ["run_test_vm"]
 
+import platform
+
+from skbase.utils.dependencies import _check_soft_dependencies
+
 
 def run_test_vm(cls_name):
     """Test an estimator in its own virtual machine.
@@ -27,6 +31,13 @@ def run_test_vm(cls_name):
     from sktime.registry import craft
     from sktime.utils import check_estimator
     from sktime.utils.dependencies import _check_estimator_deps
+
+    if _check_soft_dependencies("torch", severity="none"):
+        # disable mps for macos runners if torch is available
+        if platform.system() == "Darwin":
+            import torch
+
+            torch.backends.mps.is_available = lambda: False
 
     cls = craft(cls_name)
     if _check_estimator_deps(cls, severity="none"):

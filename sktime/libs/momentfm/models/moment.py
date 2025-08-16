@@ -1,6 +1,8 @@
 """Moment model and heads file."""
 
 import logging
+import os
+import platform
 import warnings
 from argparse import Namespace
 from copy import deepcopy
@@ -28,12 +30,16 @@ SUPPORTED_HUGGINGFACE_MODELS = [
 ]
 
 if _check_soft_dependencies(
-    ["torch", "huggingface-hub", "transformers"], severity="none"
+    ["torch", "huggingface-hub", "transformers", "hf-xet"], severity="none"
 ):
     import torch
     from huggingface_hub import PyTorchModelHubMixin
     from torch import nn
     from transformers import T5Config, T5EncoderModel, T5Model
+
+    # to allow hf-xet to download models on macos runners on version `latest`
+    if platform.system() == "Darwin":
+        os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
 
     class PretrainHead(nn.Module):
         """Pretrained Head."""
