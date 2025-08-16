@@ -2,6 +2,14 @@
 
 __all__ = ["run_test_vm"]
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    # disable mps for macos runners if torch is available
+    import torch
+
+    torch.backends.mps.is_available = lambda: False
+
 
 def run_test_vm(cls_name):
     """Test an estimator in its own virtual machine.

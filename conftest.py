@@ -23,9 +23,6 @@ if multiple options are turned on, they are combined with AND,
 i.e., intersection of estimators satisfying the conditions
 """
 
-print(">>> conftest.py loaded <<<")
-
-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -60,10 +57,3 @@ def pytest_configure(config):
         _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
-
-
-# if _check_soft_dependencies("torch", severity="none"):
-# disable mps for macos runners if torch is available
-import torch
-
-torch.backends.mps.is_available = lambda: False
