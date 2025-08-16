@@ -31,8 +31,7 @@ class ForecastingHorizonSplitter(BaseSplitter):
 
     def _split(self, y: pd.Index):
         """Return train/test indices based on forecasting horizon."""
-        ix = y.index
-        fh = check_fh(self.fh, freq=ix)
+        fh = check_fh(self.fh, freq=y)
         idx = fh.to_pandas()
 
         if fh.is_relative:
@@ -48,8 +47,8 @@ class ForecastingHorizonSplitter(BaseSplitter):
         else:
             min_step, max_step = idx.min(), idx.max()
 
-            train_ix = np.where(ix < min_step)[0]
-            test_ix = np.where((ix >= min_step) & (ix <= max_step))[0]
+            train_ix = np.where(idx < min_step)[0]
+            test_ix = np.where((idx >= min_step) & (idx <= max_step))[0]
 
         yield train_ix, test_ix
 
