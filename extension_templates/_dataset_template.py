@@ -3,9 +3,9 @@ from sktime.datasets.base import BaseDataset
 
 class MyDataset(BaseDataset):
     """
-    A sample dataset class directly subclassing BaseDataset.
+    Create a sample dataset class directly subclassing BaseDataset.
 
-    Demonstrates dataset creation for classification tasks without relying on internal mixins.
+    Demonstrate dataset creation for classification tasks without relying on internal mixins.
     """
 
     def __init__(self):
@@ -19,9 +19,9 @@ class MyDataset(BaseDataset):
             "equal_length": True,
         }
 
-    def load(self, split=None):
+    def load(self, split=None, *args, **kwargs):
         """
-        Returns a small synthetic dataset.
+        Return a small synthetic dataset.
 
         Parameters
         ----------

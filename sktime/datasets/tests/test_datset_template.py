@@ -1,4 +1,4 @@
-from extension_templates._dataset_templates import MyDataset
+from extension_templates._dataset_template import MyDataset
 
 
 def test_my_dataset():
@@ -10,14 +10,15 @@ def test_my_dataset():
     assert X.shape[1] == 2, "Dataset should have 2 features"
     assert y.name == "target", "Target column should be named 'target'"
 
-    # Test split load
-    X_train, y_train, X_test, y_test = ds.load(
-        split=["X_train", "y_train", "X_test", "y_test"]
-    )
-
+    # Test TRAIN split
+    X_train, y_train = ds.load(split="TRAIN")
     assert len(X_train) == 2, "Train split should have 2 instances"
+    assert len(y_train) == 2, "Train target split should have 2 instances"
+
+    # Test TEST split
+    X_test, y_test = ds.load(split="TEST")
     assert len(X_test) == 1, "Test split should have 1 instance"
-    assert len(y_train) == 2 and len(y_test) == 1, "Target splits must match inputs"
+    assert len(y_test) == 1, "Test target split should have 1 instance"
 
     # Check types
     assert isinstance(X_train, type(X)), "X_train should match the type of X"
