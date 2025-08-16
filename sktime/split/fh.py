@@ -41,8 +41,8 @@ class ForecastingHorizonSplitter(BaseSplitter):
             max_step = idx.max()
             steps = fh.to_indexer()
 
-            train_ix = np.arange(len(y) - max_step)
-            test_ix = (np.arange(len(y) - max_step, len(y)))[steps]
+            train_ix = np.arange(len(y) - max_step - 1)
+            test_ix = (np.arange(len(y) - max_step - 1, len(y)))[steps]
 
         else:
             min_step, max_step = idx.min(), idx.max()
