@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from collections.abc import Iterator
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,6 @@ from sktime.utils.validation import (
     is_int,
 )
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
