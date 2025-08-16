@@ -14,12 +14,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_TYPE,
-    _split_by_fh,
-)
+from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_TYPE
+from sktime.split.fh import ForecastingHorizonSplitter
 
 
 def temporal_train_test_split(
@@ -27,7 +23,7 @@ def temporal_train_test_split(
     X: Optional[pd.DataFrame] = None,
     test_size: Optional[float] = None,
     train_size: Optional[float] = None,
-    fh: Optional[FORECASTING_HORIZON_TYPES] = None,
+    fh=None,
     anchor: str = "start",
 ) -> SPLIT_TYPE:
     """Split time series data containers into a single train/test split.
@@ -114,7 +110,7 @@ def temporal_train_test_split(
     """
     # the code has two disjoint branches, one for fh and one for test_size/train_size
 
-    # branch 1: fh is not None, use fh to split
+    # case 1: fh is not None, use fh to split
     # this assumes (or enforces) that test_size and train_size are None
     if fh is not None:
         if test_size is not None or train_size is not None:
@@ -122,13 +118,13 @@ def temporal_train_test_split(
                 "If `fh` is given, `test_size` and `train_size` cannot "
                 "also be specified."
             )
-        return _split_by_fh(y, fh, X=X)
-
-    # branch 2: fh is None, use test_size and train_size to split
+        temporal_splitter = ForecastingHorizonSplitter(fh=fh)
+    # case 2: fh is None, use test_size and train_size to split
     # from the above, we know that fh is None
-    temporal_splitter = TemporalTrainTestSplitter(
-        test_size=test_size, train_size=train_size, anchor=anchor
-    )
+    else:
+        temporal_splitter = TemporalTrainTestSplitter(
+            test_size=test_size, train_size=train_size, anchor=anchor
+        )
 
     y_train, y_test = list(temporal_splitter.split_series(y))[0]
 
