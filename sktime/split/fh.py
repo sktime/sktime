@@ -2,9 +2,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Forecasting horizon based train test split utility function."""
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
-from typing import Optional
 
 from sktime.split.base import BaseSplitter
 from sktime.utils.validation.forecasting import check_fh
@@ -58,7 +59,6 @@ class ForecastingHorizonSplitter(BaseSplitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the splitter."""
-        import numpy as np
         from sktime.forecasting.base import ForecastingHorizon
 
         fh_rel = ForecastingHorizon([1, 2, 3], is_relative=True)

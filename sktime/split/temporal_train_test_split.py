@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_TYPE,
+from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_TYPE
 from sktime.split.fh import ForecastingHorizonSplitter
 
 
