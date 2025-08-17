@@ -31,7 +31,7 @@ class ForecastingHorizonSplitter(BaseSplitter):
     and :math:`h_1, h_2, \ldots, h_H` are the relative forecasting horizons, i.e.,
     time offsets, then training and test sets are defined as follows:
 
-    - training set: all time points :math:`t_i` such that :math:`t_i < t_N - h_H + h_1`
+    - training set: all time points :math:`t_i` such that :math:`t_i \lneq t_N - h_H`
     - test set: if :math:`t_j` is the last time point in the training set,
       then the test set consists of the time points
       :math:`(t_j + h_1, t_j + h_2, \ldots, t_j + h_H)`.
@@ -40,7 +40,8 @@ class ForecastingHorizonSplitter(BaseSplitter):
     the union of training and test sets will not cover the entire time series.
 
     For negative relative forecasting horizons, the training set
-    will not contain all time points up to present.
+    will contain time points that are later than some time points in the test set,
+    leading to leakage - users should ensure this is intentional when requested.
 
     Parameters
     ----------
@@ -63,9 +64,10 @@ class ForecastingHorizonSplitter(BaseSplitter):
             min_step, max_step = idx.min(), idx.max()
             steps = fh.to_indexer()
 
-            first_test_ix = len(y) - max_step - 1 + min(0, min_step - 1)
+            last_train_ix_minus_one = len(y) - max_step - 1
+            first_test_ix = last_train_ix_minus_one + min(0, min_step - 1)
 
-            train_ix = np.arange(first_test_ix)
+            train_ix = np.arange(last_train_ix_minus_one)
             test_ix = (np.arange(first_test_ix, len(y)))[steps]
 
         else:
