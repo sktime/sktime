@@ -57,3 +57,6 @@ def pytest_configure(config):
         _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
+
+
+raise ValueError("test error")
