@@ -39,7 +39,7 @@ class ForecastingHorizonSplitter(BaseSplitter):
     Users should note that, for non-contiguous forecasting horizons,
     the union of training and test sets will not cover the entire time series.
 
-    For negative relative forecasting horizons, the training set
+    For zero or negative relative forecasting horizons, the training set
     will contain time points that are later than some time points in the test set,
     leading to leakage - users should ensure this is intentional when requested.
 
