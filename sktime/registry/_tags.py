@@ -1179,40 +1179,6 @@ class capability__predict_proba(_BaseTag):
     }
 
 
-class capability__class_weight(_BaseTag):
-    """Capability: the classifier can use class weights to handle imbalanced data.
-
-    - String name: ``"capability:class_weight"``
-    - Public capability tag
-    - Values: boolean, ``True`` / ``False``
-    - Example: ``True``
-    - Default: ``False``
-
-    This tag applies to classifiers only.
-
-    If the tag is ``True``, the classifier supports class weighting functionality,
-    through a ``class_weight`` parameter that allows users to assign
-    different weights to different classes during training. This is commonly used
-    to handle imbalanced datasets where some classes are underrepresented.
-
-    Class weights can usually be provided as:
-
-    - A dictionary mapping class labels to weights
-    - None for uniform class weights (default behavior)
-
-    If the tag is ``False``, the classifier does not support class weighting,
-    and any class_weight parameter will be ignored or may raise an error.
-    """
-
-    _tags = {
-        "tag_name": "capability:class_weight",
-        "parent_type": "classifier",
-        "tag_type": "bool",
-        "short_descr": "can the classifier use class weights to handle imbalanced data",
-        "user_facing": True,
-    }
-
-
 class capability__out_of_sample(_BaseTag):
     """Capability: the estimator can make out-of-sample predictions.
 

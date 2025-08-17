@@ -106,7 +106,6 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "capability:class_weight": False,  # ability to handle class weights
     }
 
     # todo: add any hyper-parameters and components to constructor
