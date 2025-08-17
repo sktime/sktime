@@ -61,6 +61,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
         from sktime.forecasting.base import ForecastingHorizon
 
         fh_rel = ForecastingHorizon([1, 2, 3], is_relative=True)
-        fh_abs = ForecastingHorizon([7, 8, 9], is_relative=False)
+        fh_abs = ForecastingHorizon([7, 8, 9], is_relative=True)
+        fh_abs_2 = ForecastingHorizon([-2, 5], is_relative=True)
 
-        return [{"fh": fh_rel}, {"fh": fh_abs}]
+        # absolute horizons are tested indirectly through
+        # testing temporal_train_test_split
+        # it is not possible via get_test_params, since
+        # the fh type must depend on the data index type
+
+        return [{"fh": fh_rel}, {"fh": fh_abs}, {"fh": fh_abs_2}]
