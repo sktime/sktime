@@ -12,9 +12,35 @@ from sktime.utils.validation.forecasting import check_fh
 
 
 class ForecastingHorizonSplitter(BaseSplitter):
-    """Splitter that creates a single train/test split based on a forecasting horizon.
+    r"""Splitter that creates a single train/test split based on a forecasting horizon.
 
     Handles both relative and absolute forecasting horizons.
+
+    For a single series and a forecasting horizon correponsing to absolute
+    time points :math:`(h_1, h_2, \ldots, h_H)`, splits into training and test set
+    as follows:
+
+    - training set: all time points strictly before :math:`h_1`
+    - test set: all time points :math:`(h_1, h_2, \ldots, h_H)`
+
+    For relative forecasting horizons, the last time point in the training set
+    is assumed to be identical with :math:`h_H`, i.e., the last time point
+    in the series to split.
+
+    More precisely, if :math:`t_1, t_2, \ldots, t_N` are the time points in the series,
+    and :math:`h_1, h_2, \ldots, h_H` are the relative forecasting horizons, i.e.,
+    time offsets, then training and test sets are defined as follows:
+
+    - training set: all time points :math:`t_i` such that :math:`t_i < t_N - h_H + h_1`
+    - test set: if :math:`t_j` is the last time point in the training set,
+      then the test set consists of the time points
+      :math:`(t_j + h_1, t_j + h_2, \ldots, t_j + h_H)`.
+
+    Users should note that, for non-contiguous forecasting horizons,
+    the union of training and test sets will not cover the entire time series.
+
+    For negative relative forecasting horizons, the training set
+    will not contain all time points up to present.
 
     Parameters
     ----------
@@ -34,14 +60,13 @@ class ForecastingHorizonSplitter(BaseSplitter):
         idx = fh.to_pandas()
 
         if fh.is_relative:
-            if not fh.is_all_out_of_sample():
-                raise ValueError("`fh` must only contain out-of-sample values")
-
-            max_step = idx.max()
+            min_step, max_step = idx.min(), idx.max()
             steps = fh.to_indexer()
 
-            train_ix = np.arange(len(y) - max_step - 1)
-            test_ix = (np.arange(len(y) - max_step - 1, len(y)))[steps]
+            first_test_ix = len(y) - max_step - 1 + min(0, min_step - 1)
+
+            train_ix = np.arange(first_test_ix)
+            test_ix = (np.arange(first_test_ix, len(y)))[steps]
 
         else:
             min_step, max_step = idx.min(), idx.max()
