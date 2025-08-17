@@ -6,7 +6,6 @@ __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 
 import numpy as np
 import pandas as pd
-import transformers
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
@@ -374,16 +373,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         if X is not None:
             # Check for categorical data in X
             if isinstance(X, pd.DataFrame):
-                categorical_cols = X.select_dtypes(include=['category', 'object']).columns
+                categorical_cols = X.select_dtypes(
+                    include=["category", "object"]
+                ).columns
                 if len(categorical_cols) > 0:
                     raise TypeError(
-                        f"TinyTimeMixerForecaster does not support categorical exogenous variables. "
+                        f"TinyTimeMixerForecaster does not support categorical \
+                          exogenous variables. "
                         f"Found categorical columns: {list(categorical_cols)}. "
                         f"Please encode categorical variables as numerical values."
                     )
-            elif isinstance(X, pd.Series) and X.dtype in ['category', 'object']:
+            elif isinstance(X, pd.Series) and X.dtype in ["category", "object"]:
                 raise TypeError(
-                    "TinyTimeMixerForecaster does not support categorical exogenous variables. "
+                    "TinyTimeMixerForecaster does not support categorical \
+                     exogenous variables. "
                     "Please encode categorical variables as numerical values."
                 )
 
