@@ -1,46 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Extension template for transformers, SIMPLE version.
 
-Contains only bare minimum of implementation requirements for a functional transformer.
-Also assumes *no composition*, i.e., no transformer or other estimator components.
-For advanced cases (inverse transform, composition, etc),
-    see full extension template in transformer.py
-
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y,
-    _converter_store_X, transformers_, _tags, _tags_dynamic
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Mandatory methods to implement:
-    fitting         - _fit(self, X, y=None)
-    transformation  - _transform(self, X, y=None)
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
 __author__ = ["oresthes"]
-
-# todo: add any necessary sktime external imports here
 
 from sktime.transformations.base import BaseTransformer
 from sktime.base import _HeterogenousMetaEstimator
@@ -48,19 +8,58 @@ from sktime.base import _HeterogenousMetaEstimator
 import pandas as pd
 import numpy as np
 
-
 class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator):
-    """Element-wise arithmetic operator for transformer outputs.
+    """
+    Applies an elementwise arithmetic operation to the outputs of multiple transformers.
 
-    Applies a user-supplied elementwise operation to the outputs of two or more transformers.
+    This transformer applies a user-supplied elementwise operation (such as addition,
+    subtraction, multiplication, division, or any custom function) to the outputs of
+    two or more transformers. The operation is performed elementwise across all
+    outputs, and the result is returned as a single DataFrame or Series.
+
+    All transformers must produce outputs with matching indexes and columns. If the
+    indexes or columns do not match, a ValueError is raised. The operation must accept
+    as many arguments as there are transformers, and should return a DataFrame or Series.
 
     Parameters
     ----------
     transformer_list : list of (str, transformer) tuples
-        List of transformers to apply to the input data.
+        List of transformers to apply to the input data. Each tuple contains a name
+        and a transformer instance. All transformers must inherit from BaseTransformer.
     operation : callable
         Function to apply elementwise to the outputs of the transformers.
         Should accept N arrays/Series/DataFrames and return a DataFrame or Series.
+        Examples include numpy ufuncs (e.g., np.add, np.divide) or custom functions.
+
+    See Also
+    --------
+    FeatureUnion : Concatenates outputs of multiple transformers.
+    sktime.transformations.series.exponent.ExponentTransformer
+
+    References
+    ----------
+    Inspired by scikit-learn's FunctionTransformer and FeatureUnion.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.series.elementwise_operator import ElementWiseArithmeticOperator
+    >>> transformer_list = [
+    ...     ("t1", ExponentTransformer(power=2)),
+    ...     ("t2", ExponentTransformer(power=1)),
+    ... ]
+    >>> op = ElementWiseArithmeticOperator(transformer_list, operation=np.divide)
+    >>> Xt = op.fit_transform(X)
+    >>> # Xt contains the elementwise ratio of squared to original values
+
+    Notes
+    -----
+    - All transformers must output DataFrames/Series with matching indexes and columns.
+    - The operation must accept as many arguments as there are transformers.
+    - Broadcasting is not supported; indexes and columns must match exactly.
+    - This transformer is useful for combining features via arithmetic or custom logic.
+
     """
 
     _steps_attr = "_transformer_list"
@@ -79,6 +78,7 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
+        "visual_block_kind": "parallel",
         "authors": ["oresthes"],
         "maintainers": ["oresthes"],
     }
