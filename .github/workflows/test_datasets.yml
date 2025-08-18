@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: update tracking reference step
         run: git remote set-branches origin main
         shell: bash
@@ -61,7 +61,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: update tracking reference step
         run: git remote set-branches origin main
         shell: bash
