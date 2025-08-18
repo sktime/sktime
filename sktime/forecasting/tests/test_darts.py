@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_longley
+from sktime.forecasting import upto
 from sktime.forecasting.darts import (
     DartsLinearRegressionModel,
     DartsRegressionModel,
@@ -113,7 +114,7 @@ def test_darts_regression_models_with_weather_dataset(model):
         kwargs=kwargs,
     )
     sktime_model.fit(target_df)
-    fh = list(range(1, 7))
+    fh = upto(6)
     pred_sktime = sktime_model.predict(fh)
     assert isinstance(pred_sktime, pd.Series)
 
@@ -186,7 +187,7 @@ def test_darts_regression_with_weather_dataset(model):
         model=RandomForestRegressor(),
     )
     sktime_model.fit(target_df)
-    fh = list(range(1, 7))
+    fh = upto(6)
     pred_sktime = sktime_model.predict(fh)
     assert isinstance(pred_sktime, pd.Series)
 

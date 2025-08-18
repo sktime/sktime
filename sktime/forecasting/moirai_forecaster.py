@@ -60,6 +60,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
     >>> import pandas as pd
     >>> import numpy as np
+    >>> from sktime.forecasting import upto
     >>> morai_forecaster = MOIRAIForecaster(
     ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
     ... )
@@ -74,7 +75,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
+    >>> forecast = morai_forecaster.predict(fh=upto(10), X=X_test)
 
     References
     ----------

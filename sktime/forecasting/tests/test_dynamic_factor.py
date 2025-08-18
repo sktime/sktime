@@ -4,6 +4,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from sktime.datasets import load_longley
+from sktime.forecasting import upto
 from sktime.forecasting.dynamic_factor import DynamicFactor
 from sktime.tests.test_switch import run_test_for_class
 
@@ -77,11 +78,9 @@ def test_DynamicFactor_without_exogenous_variables():
     )
     fitted_sktime_model = unfitted_sktime_model.fit(TRAIN_Y)
 
-    sktime_point_predictions = fitted_sktime_model.predict(
-        fh=range(1, PREDICTION_LENGTH + 1)
-    )
+    sktime_point_predictions = fitted_sktime_model.predict(fh=upto(PREDICTION_LENGTH))
     sktime_interval_predictions = fitted_sktime_model.predict_interval(
-        fh=range(1, PREDICTION_LENGTH + 1), coverage=COVERAGES
+        fh=upto(PREDICTION_LENGTH), coverage=COVERAGES
     )
 
     unfitted_statsmodels_model = _DynamicFactor(TRAIN_Y, K_FACTORS, FACTOR_ORDER)
@@ -112,10 +111,10 @@ def test_DynamicFactor_with_exogenous_variables():
     fitted_sktime_model = unfitted_sktime_model.fit(TRAIN_Y, X=TRAIN_X)
 
     sktime_point_predictions = fitted_sktime_model.predict(
-        fh=range(1, PREDICTION_LENGTH + 1), X=PREDICT_X
+        fh=upto(PREDICTION_LENGTH), X=PREDICT_X
     )
     sktime_interval_predictions = fitted_sktime_model.predict_interval(
-        fh=range(1, PREDICTION_LENGTH + 1), X=PREDICT_X, coverage=COVERAGES
+        fh=upto(PREDICTION_LENGTH), X=PREDICT_X, coverage=COVERAGES
     )
 
     unfitted_statsmodels_model = _DynamicFactor(
