@@ -3556,13 +3556,24 @@
       ]
     },
     {
+      "login": "akshathmangudi",
+      "name": "Akshath",
+      "avatar_url": "https://avatars.githubusercontent.com/akshathmangudi",
+      "profile": "https://github.com/akshathmangudi",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
       "login": "thearshkumar",
       "name": "Arsh Kumar",
       "avatar_url": "https://avatars.githubusercontent.com/u/145699183?v=4",
       "profile": "https://github.com/thearshkumar",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "doc"
       ]
     },
     {
@@ -3584,6 +3595,15 @@
       "contributions": [
         "code",
         "bug"
+      ]
+    },
+    {
+      "login": "Virgile-Foussereau",
+      "name": "Virgile Foussereau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/99748194?v=4",
+      "profile": "https://github.com/Virgile-Foussereau",
+      "contributions": [
+        "code"
       ]
     }
   ]

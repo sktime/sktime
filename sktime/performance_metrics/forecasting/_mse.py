@@ -13,6 +13,10 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 class MeanSquaredError(BaseForecastingErrorMetric):
     r"""Mean squared error (MSE) or root mean squared error (RMSE).
 
+    MSE and RMSE output is non-negative floating point.
+    MSE has units of the input data squared, while RMSE is of the same unit as
+    the input data. Lower is better, and the lowest possible value is 0.0.
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),

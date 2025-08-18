@@ -48,11 +48,8 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
-    "FCNClassifier",
     "EditDist",
     "CNNClassifier",
-    "FCNClassifier",
-    "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
     "MLPRegressor",
@@ -110,11 +107,6 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
-    # tagged in issue #2490
-    "SignatureClassifier": [
-        "test_classifier_on_unit_test_data",
-        "test_classifier_on_basic_motions",
-    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -149,9 +141,6 @@ EXCLUDED_TESTS = {
     "CNNRegressor": [
         "test_fit_idempotent",
     ],
-    "FCNClassifier": [
-        "test_fit_idempotent",
-    ],
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
@@ -162,9 +151,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MLPRegressor": [
-        "test_fit_idempotent",
-    ],
-    "InceptionTimeClassifier": [
         "test_fit_idempotent",
     ],
     "SimpleRNNClassifier": [
@@ -364,8 +350,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
-        "SignatureClassifier",
-        "SignatureTransformer",
         "SlidingWindowSegmenter",
         "SlopeTransformer",
         "StackingForecaster",
