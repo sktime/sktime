@@ -66,6 +66,14 @@ class _StatsModelsAdapter(BaseForecaster):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
+
+        if isinstance(y, pd.Series):
+            # Statsmodels, internally, add suffixes to the endog feature
+            # name. If the series name is not a string, an exception can
+            # be raised. We convert the name to a string to avoid this.
+            y = y.copy()
+            y.name = str(y.name)
+
         self._fit_forecaster(y, X)
         return self
 
@@ -92,6 +100,11 @@ class _StatsModelsAdapter(BaseForecaster):
                 )
                 if index_diff.isin(y.index).all():
                     y = y.loc[index_diff]
+
+                if isinstance(y, pd.Series):
+                    y = y.copy()
+                    y.name = str(y.name)
+
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
     def _predict(self, fh, X):
