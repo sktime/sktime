@@ -101,9 +101,7 @@ class TestCausalFeature:
 
         assert len(transformer.features_generated_) >= 0
 
-    def test_causal_feature_different_feature_types(
-        self, sample_multivariate_data
-    ):
+    def test_causal_feature_different_feature_types(self, sample_multivariate_data):
         """Test CausalFeature with different feature type configurations."""
         from sktime.transformations.series.causal_feature import (
             CausalFeature,
@@ -158,9 +156,7 @@ class TestCausalFeature:
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) >= 0
 
-    def test_causal_feature_weighting_strategies(
-        self, sample_multivariate_data
-    ):
+    def test_causal_feature_weighting_strategies(self, sample_multivariate_data):
         """Test different weighting strategies."""
         from sktime.transformations.series.causal_feature import (
             CausalFeature,
@@ -218,9 +214,7 @@ class TestCausalFeature:
         with pytest.raises(ValueError, match="Unsupported causal discovery method"):
             transformer.fit_transform(y)
 
-    def test_causal_feature_invalid_scoring_method(
-        self, sample_univariate_data
-    ):
+    def test_causal_feature_invalid_scoring_method(self, sample_univariate_data):
         """Test that invalid scoring method raises error."""
         from sktime.transformations.series.causal_feature import (
             CausalFeature,

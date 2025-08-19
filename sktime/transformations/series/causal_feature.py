@@ -7,8 +7,10 @@ __all__ = ["CausalFeature"]
 
 import warnings
 from typing import Optional
+
 import numpy as np
 import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 
 
@@ -301,7 +303,7 @@ class CausalFeature(BaseTransformer):
         Xt = self._generate_causal_features(data)
 
         if len(Xt) < len(X):
-            effective_max_lag = getattr(self, '_effective_max_lag_', self.max_lag)
+            effective_max_lag = getattr(self, "_effective_max_lag_", self.max_lag)
             warnings.warn(
                 f"Generated features have fewer observations ({len(Xt)}) than "
                 f"input data ({len(X)}) due to lags of up to {effective_max_lag}. "
@@ -313,7 +315,7 @@ class CausalFeature(BaseTransformer):
     def _prepare_data_for_causal_discovery(self, X, y=None):
         """Prepare time series data for causal discovery."""
         import warnings
-        
+
         # Combine X and y if both are provided
         if y is not None:
             # Check for duplicate columns and merge
@@ -352,7 +354,7 @@ class CausalFeature(BaseTransformer):
             effective_max_lag = max(1, len(combined_data) - 5)
         else:
             effective_max_lag = self.max_lag
-        
+
         # Store effective max_lag as fitted parameter
         self._effective_max_lag_ = effective_max_lag
 
@@ -531,7 +533,6 @@ class CausalFeature(BaseTransformer):
 
     def _prepare_data_for_feature_generation(self, X):
         """Prepare data for feature generation."""
-        
         data = X.copy()
 
         data.columns = data.columns.astype(str)
@@ -546,7 +547,7 @@ class CausalFeature(BaseTransformer):
             data = data.rename(columns=tmp_map)
 
         # Use effective max_lag from fit, fallback to max_lag
-        effective_max_lag = getattr(self, '_effective_max_lag_', self.max_lag)
+        effective_max_lag = getattr(self, "_effective_max_lag_", self.max_lag)
 
         # Vectorize to avoid DataFrame fragmentation
         lag_columns = {}
