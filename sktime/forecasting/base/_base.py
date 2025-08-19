@@ -1743,11 +1743,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                     iterate_as=iterate_as,
                     is_scitype=y_scitype,
                     iterate_cols=req_vec_because_cols,
+                    remember_data=self.get_config()["remember_data"],
                 )
             else:
                 y_inner = None
             if X is not None:
-                X_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
+                X_inner = VectorizedDF(
+                    X=X, 
+                    iterate_as=iterate_as, 
+                    is_scitype=X_scitype,
+                    remember_data=self.get_config()["remember_data"],
+                )
             else:
                 X_inner = None
 

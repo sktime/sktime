@@ -104,6 +104,10 @@ class VectorizedDF:
         self.X_mi_columns = X_multiindex.columns
         self.X_mi_index = X_multiindex.index
         if remember_data:
+            self.X = X
+            self.X_multiindex = X_multiindex
+        else:
+            # Still keep X_multiindex for functionality, but not the original X
             self.X_multiindex = X_multiindex
         self.iter_indices = self._init_iter_indices()
 
