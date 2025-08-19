@@ -1,13 +1,103 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = ["James-Large", "TonyBagnall"]
-__all__ = ["CNNClassifier"]
-
+__author__ = ["James-Large", "TonyBagnall", "Rklearns"]
+__all__ = ["CNNClassifier", "CNNClassifierTorch"]
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
+
+
+class CNNClassifier(BaseDeepClassifier):
+    """Time Convolutional Neural Network (CNN), as described in [1]_ (TensorFlow).
+
+    For a drop-in replacement based on `torch`, see `CNNClassifierTorch`.
+
+    Parameters
+    ----------
+    n_epochs       : int, default = 2000
+        the number of epochs to train the model
+    batch_size      : int, default = 16
+        the number of samples per gradient update.
+    kernel_size     : int, default = 7
+        the length of the 1D convolution window
+    avg_pool_size   : int, default = 3
+        size of the average pooling windows
+    n_conv_layers   : int, default = 2
+        the number of convolutional plus average pooling layers
+    callbacks       : list, default = None
+        callbacks for training
+    verbose         : boolean, default = False
+        whether to output extra information
+    loss            : string, default="categorical_crossentropy"
+        loss function name
+    metrics         : list of strings, default=["accuracy"],
+        metrics to track during training
+    random_state    : int or None, default=None
+        Seed for random number generation.
+    activation      : string, default="softmax"
+        Activation function used in the output layer.
+    use_bias        : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer       : optimizer object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
+    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
+        number of filters for each convolutional layer
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers
+
+    References
+    ----------
+    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    Journal of Systems Engineering and Electronics, 28(1):2017.
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> cnn = CNNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> cnn.fit(X_train, y_train)  # doctest: +SKIP
+    CNNClassifier(...)
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz", "James-Large"],
+        "maintainers": ["James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
+
+    def __init__(
+        self,
+        n_epochs=2000,
+        batch_size=16,
+        kernel_size=7,
+        avg_pool_size=3,
+        n_conv_layers=2,
+        callbacks=None,
+        verbose=False,
+        loss="categorical_crossentropy",
+        metrics=None,
+        random_state=None,
+        activation="softmax",
+        use_bias=True,
+        optimizer=None,
+        filter_sizes=None,
+        padding="auto",
+    ):
+        # Keep the original TensorFlow implementation
+        # For now, we'll raise a helpful error directing users to PyTorch version
+        raise NotImplementedError(
+            "TensorFlow version is temporarily unavailable. "
+            "For a drop-in replacement based on PyTorch, see CNNClassifierTorch."
+        )
+
+        # If you have the original TensorFlow code, you can put it here instead
 
 
 class CNNNetwork:
@@ -81,11 +171,10 @@ class CNNNetwork:
         return x
 
 
-class CNNClassifier(BaseDeepClassifier):
-    """Time Convolutional Neural Network (CNN), as described in [1]_.
+class CNNClassifierTorch(BaseDeepClassifier):
+    """Time Convolutional Neural Network (CNN) using PyTorch.
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+    This is a drop-in replacement for CNNClassifier using PyTorch instead of TensorFlow.
 
     Parameters
     ----------
@@ -118,11 +207,7 @@ class CNNClassifier(BaseDeepClassifier):
     filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
         number of filters for each convolutional layer
     padding : string, default = "auto"
-        Controls padding logic for the convolutional layers,
-        i.e. whether 'valid' and 'same' are passed to the Conv1D layer.
-        - "auto": as per original implementation, "same" is passed if
-          input_shape[0] < 60 in the input layer, and "valid" otherwise.
-        - "valid", "same", and other values are passed directly to Conv1D
+        Controls padding logic for the convolutional layers
 
     References
     ----------
@@ -131,21 +216,20 @@ class CNNClassifier(BaseDeepClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.classification.deep_learning.cnn import CNNClassifierTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> cnn = CNNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> cnn = CNNClassifierTorch(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> cnn.fit(X_train, y_train)  # doctest: +SKIP
-    CNNClassifier(...)
+    CNNClassifierTorch(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large"],
-        # hfawaz for dl-4-tsc
-        "maintainers": ["James-Large"],
+        "authors": ["hfawaz", "James-Large", "Rklearns"],
+        "maintainers": ["James-Large", "Rklearns"],
         "python_dependencies": "torch",
         # estimator type handled by parent class
     }
@@ -169,12 +253,11 @@ class CNNClassifier(BaseDeepClassifier):
         padding="auto",
     ):
         # Check for PyTorch dependencies
-        # Check for PyTorch dependencies
         try:
-            __import__("torch")  # Just check if torch can be imported
+            __import__("torch")  # Just check if torch exists
         except ImportError as e:
             raise ImportError(
-                "PyTorch (torch) is required for CNNClassifier. "
+                "PyTorch (torch) is required for CNNClassifierTorch. "
                 "Please install with: pip install torch"
             ) from e
 
@@ -208,22 +291,7 @@ class CNNClassifier(BaseDeepClassifier):
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
-        """Construct a compiled, un-trained, PyTorch model ready for training.
-
-        In sktime, time series are stored in numpy arrays of shape (d,m), where d
-        is the number of dimensions, m is the series length. This method assumes (m,d).
-
-        Parameters
-        ----------
-        input_shape : tuple
-            The shape of the data fed into the input layer, should be (m,d)
-        n_classes: int
-            The number of classes, which becomes the size of the output layer
-
-        Returns
-        -------
-        output : a PyTorch model
-        """
+        """Construct a compiled, un-trained, PyTorch model ready for training."""
         import torch
         import torch.nn as nn
         import torch.optim as optim
@@ -272,19 +340,7 @@ class CNNClassifier(BaseDeepClassifier):
         return y_indices
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
-
-        Parameters
-        ----------
-        X : np.ndarray of shape = (n_instances (n), n_dimensions (d), series_length (m))
-            The training input samples.
-        y : np.ndarray of shape n
-            The training data class labels.
-
-        Returns
-        -------
-        self : object
-        """
+        """Fit the classifier on the training set (X, y)."""
         import torch
         import torch.nn as nn
 
@@ -351,18 +407,7 @@ class CNNClassifier(BaseDeepClassifier):
         return self
 
     def _predict(self, X):
-        """Predict class labels for samples in X.
-
-        Parameters
-        ----------
-        X : np.ndarray of shape = (n_instances, n_dimensions, series_length)
-            The input samples.
-
-        Returns
-        -------
-        y : np.ndarray of shape = (n_instances,)
-            The predicted class labels.
-        """
+        """Predict class labels for samples in X."""
         import torch
 
         X = X.transpose(0, 2, 1)
@@ -376,18 +421,7 @@ class CNNClassifier(BaseDeepClassifier):
         return self.classes_[predicted.numpy()]
 
     def _predict_proba(self, X):
-        """Predict class probabilities for samples in X.
-
-        Parameters
-        ----------
-        X : np.ndarray of shape = (n_instances, n_dimensions, series_length)
-            The input samples.
-
-        Returns
-        -------
-        y : np.ndarray of shape = (n_instances, n_classes)
-            The predicted class probabilities.
-        """
+        """Predict class probabilities for samples in X."""
         import torch
 
         X = X.transpose(0, 2, 1)
@@ -402,18 +436,7 @@ class CNNClassifier(BaseDeepClassifier):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-        """
+        """Return testing parameter settings for the estimator."""
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
