@@ -81,24 +81,6 @@ class BaseParamFitter(BaseEstimator):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    # configs and default config values
-    # see set_config documentation for details
-    _config = {
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
-    }
-
-    _config_doc = {
-        "remember_data": """
-        remember_data : bool, default=True
-            whether self._X and self._y are stored in fit, and updated
-            in update. If True, self._X and self._y are stored and updated.
-            If False, self._X and self._y are not stored and updated.
-            This reduces serialization size when using save,
-            but the update will default to "do nothing" rather than
-            "refit to all data seen".
-        """,
-    }
-
     def __init__(self):
         self._is_fitted = False
 
@@ -471,9 +453,6 @@ class BaseParamFitter(BaseEstimator):
 
         Updates attribute in self_data with data.
         """
-        if not self.get_config()["remember_data"]:
-            return
-            
         X = data
         if X is not None:
             # unwrap X if VectorizedDF

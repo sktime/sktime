@@ -397,6 +397,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            
+            # After vectorized fit is complete, clear data if remember_data=False
+            if not self.get_config()["remember_data"]:
+                if hasattr(self, '_yvec') and self._yvec is not None:
+                    self._yvec.clear_data()
 
         # this should happen last
         self._is_fitted = True

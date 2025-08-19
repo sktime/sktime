@@ -103,15 +103,32 @@ class VectorizedDF:
         X_multiindex = self._init_conversion(X)
         self.X_mi_columns = X_multiindex.columns
         self.X_mi_index = X_multiindex.index
+        
+        # Always store data initially for functionality during usage phase
+        self.X_multiindex = X_multiindex
+        
+        # Only store original X if remember_data=True
         if remember_data:
             self.X = X
-            self.X_multiindex = X_multiindex
-        else:
-            # Still keep X_multiindex for functionality, but not the original X
-            self.X_multiindex = X_multiindex
+        
         self.iter_indices = self._init_iter_indices()
-
         self.shape = self._iter_shape()
+
+    def clear_data(self):
+        """Clear stored data to save memory.
+        
+        This method removes all stored data (X and X_multiindex) when remember_data=False.
+        After calling this method, most VectorizedDF functionality becomes unavailable,
+        including iteration, vectorize_est, and some reconstruction methods.
+        
+        This is intended for memory optimization after the VectorizedDF has been used
+        for its primary processing purpose.
+        """
+        if not self.remember_data:
+            if hasattr(self, 'X'):
+                delattr(self, 'X')
+            if hasattr(self, 'X_multiindex'):
+                delattr(self, 'X_multiindex')
 
     def _check_iterate_cols(self, iterate_cols):
         if iterate_cols not in [True, False]:
