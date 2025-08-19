@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 
-"""Transformers for causal feature engineering in time series data."""
+"""Transformers for causal feature in time series data."""
 
 __author__ = ["XAheli"]
-__all__ = ["CausalFeatureEngineer"]
+__all__ = ["CausalFeature"]
 
 import warnings
 from typing import Optional
-
 import numpy as np
 import pandas as pd
-
 from sktime.transformations.base import BaseTransformer
 
 
-class CausalFeatureEngineer(BaseTransformer):
+class CausalFeature(BaseTransformer):
     """Causal Feature Transformer for Time Series.
 
     This transformer discovers causal relationships in time series data
@@ -100,7 +98,7 @@ class CausalFeatureEngineer(BaseTransformer):
 
     Algorithm Details
     -----------------
-    This transformer implements a five-phase causal feature engineering pipeline:
+    This transformer implements a five-phase causal feature pipeline:
 
     **Phase 1: Temporal Data Augmentation**
 
@@ -189,11 +187,11 @@ class CausalFeatureEngineer(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.causal_feature_engineer import (
-    ...     CausalFeatureEngineer
+    >>> from sktime.transformations.series.causal_feature import (
+    ...     CausalFeature
     ... )
     >>> y = load_airline()
-    >>> transformer = CausalFeatureEngineer(max_lag=3)
+    >>> transformer = CausalFeature(max_lag=3)
     >>> Xt = transformer.fit_transform(y)
     """
 
@@ -303,9 +301,10 @@ class CausalFeatureEngineer(BaseTransformer):
         Xt = self._generate_causal_features(data)
 
         if len(Xt) < len(X):
+            effective_max_lag = getattr(self, '_effective_max_lag_', self.max_lag)
             warnings.warn(
                 f"Generated features have fewer observations ({len(Xt)}) than "
-                f"input data ({len(X)}) due to lags of up to {self.max_lag}. "
+                f"input data ({len(X)}) due to lags of up to {effective_max_lag}. "
                 f"Features are aligned with the end of the series."
             )
 
@@ -313,40 +312,23 @@ class CausalFeatureEngineer(BaseTransformer):
 
     def _prepare_data_for_causal_discovery(self, X, y=None):
         """Prepare time series data for causal discovery."""
+        import warnings
+        
         # Combine X and y if both are provided
         if y is not None:
-            if isinstance(X, pd.Series) and isinstance(y, pd.Series):
-                # Checks if X and y are same to avoid duplication
-                if X.equals(y):
-                    combined_data = pd.DataFrame({X.name if X.name else "X": X})
-                else:
-                    combined_data = pd.DataFrame(
-                        {X.name if X.name else "X": X, y.name if y.name else "y": y}
-                    )
-            elif isinstance(X, pd.DataFrame) and isinstance(y, pd.Series):
-                # Checks if y is already in X columns to avoid duplication
+            # Check for duplicate columns and merge
+            if X.equals(y):
                 combined_data = X.copy()
-                if not any(y.equals(X[col]) for col in X.columns):
-                    combined_data[y.name if y.name else "y"] = y
-            elif isinstance(X, pd.DataFrame) and isinstance(y, pd.DataFrame):
-                # Checks for duplicate columns and merges
-                if X.equals(y):
-                    combined_data = X.copy()
-                else:
-                    # Only adds columns from y that are not in X
-                    combined_data = X.copy()
-                    for col in y.columns:
-                        if col not in X.columns and not any(
-                            y[col].equals(X[xcol]) for xcol in X.columns
-                        ):
-                            combined_data[col] = y[col]
             else:
-                combined_data = pd.concat([X, y], axis=1)
+                # Only add columns from y that are not in X
+                combined_data = X.copy()
+                for col in y.columns:
+                    if col not in X.columns and not any(
+                        y[col].equals(X[xcol]) for xcol in X.columns
+                    ):
+                        combined_data[col] = y[col]
         else:
-            if isinstance(X, pd.Series):
-                combined_data = pd.DataFrame({X.name if X.name else "X": X})
-            else:
-                combined_data = X.copy()
+            combined_data = X.copy()
 
         combined_data.columns = combined_data.columns.astype(str)
 
@@ -366,14 +348,19 @@ class CausalFeatureEngineer(BaseTransformer):
                 f"{min_required_rows} rows for max_lag={self.max_lag}. "
                 f"Reducing max_lag to {max(1, len(combined_data) - 5)}."
             )
-            # Adjust max_lag for small datasets
-            self.max_lag = max(1, len(combined_data) - 5)
+            # Use private variable to avoid modifying hyperparam
+            effective_max_lag = max(1, len(combined_data) - 5)
+        else:
+            effective_max_lag = self.max_lag
+        
+        # Store effective max_lag as fitted parameter
+        self._effective_max_lag_ = effective_max_lag
 
-        # Create lagged variables up to max_lag
+        # Create lagged variables up to effective_max_lag
         # Vectorize to avoid DataFrame fragmentation
         lag_columns = {}
         for col in combined_data.columns:
-            for lag in range(1, self.max_lag + 1):
+            for lag in range(1, effective_max_lag + 1):
                 lag_columns[f"{col}_lag_{lag}"] = combined_data[col].shift(lag)
 
         lagged_data = pd.concat(
@@ -544,10 +531,8 @@ class CausalFeatureEngineer(BaseTransformer):
 
     def _prepare_data_for_feature_generation(self, X):
         """Prepare data for feature generation."""
-        if isinstance(X, pd.Series):
-            data = pd.DataFrame({X.name if X.name else "X": X})
-        else:
-            data = X.copy()
+        
+        data = X.copy()
 
         data.columns = data.columns.astype(str)
 
@@ -560,10 +545,13 @@ class CausalFeatureEngineer(BaseTransformer):
             }
             data = data.rename(columns=tmp_map)
 
+        # Use effective max_lag from fit, fallback to max_lag
+        effective_max_lag = getattr(self, '_effective_max_lag_', self.max_lag)
+
         # Vectorize to avoid DataFrame fragmentation
         lag_columns = {}
         for col in data.columns:
-            for lag in range(1, self.max_lag + 1):
+            for lag in range(1, effective_max_lag + 1):
                 lag_columns[f"{col}_lag_{lag}"] = data[col].shift(lag)
 
         data = pd.concat([data, pd.DataFrame(lag_columns, index=data.index)], axis=1)

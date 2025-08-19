@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for CausalFeatureEngineer."""
+"""Tests for CausalFeature."""
 
 __author__ = ["XAheli"]
 
@@ -48,18 +48,18 @@ def sample_multivariate_data():
     return X, y
 
 
-class TestCausalFeatureEngineer:
-    """Test class for CausalFeatureEngineer."""
+class TestCausalFeature:
+    """Test class for CausalFeature."""
 
-    def test_causal_feature_engineer_univariate(self, sample_univariate_data):
-        """Test CausalFeatureEngineer with univariate time series."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+    def test_causal_feature_univariate(self, sample_univariate_data):
+        """Test CausalFeature with univariate time series."""
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         y = sample_univariate_data
 
-        transformer = CausalFeatureEngineer(
+        transformer = CausalFeature(
             max_lag=3,
             causal_method="pc",
             significance_level=0.1,
@@ -77,15 +77,15 @@ class TestCausalFeatureEngineer:
         assert hasattr(transformer, "feature_importance_weights_")
         assert hasattr(transformer, "features_generated_")
 
-    def test_causal_feature_engineer_multivariate(self, sample_multivariate_data):
-        """Test CausalFeatureEngineer with multivariate time series."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+    def test_causal_feature_multivariate(self, sample_multivariate_data):
+        """Test CausalFeature with multivariate time series."""
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
 
-        transformer = CausalFeatureEngineer(
+        transformer = CausalFeature(
             max_lag=2,
             causal_method="hill_climb",
             significance_level=0.1,
@@ -101,12 +101,12 @@ class TestCausalFeatureEngineer:
 
         assert len(transformer.features_generated_) >= 0
 
-    def test_causal_feature_engineer_different_feature_types(
+    def test_causal_feature_different_feature_types(
         self, sample_multivariate_data
     ):
-        """Test CausalFeatureEngineer with different feature type configurations."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        """Test CausalFeature with different feature type configurations."""
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
@@ -121,7 +121,7 @@ class TestCausalFeatureEngineer:
         ]
 
         for feature_types in feature_types_to_test:
-            transformer = CausalFeatureEngineer(
+            transformer = CausalFeature(
                 max_lag=2,
                 causal_method="pc",
                 feature_types=feature_types,
@@ -133,10 +133,10 @@ class TestCausalFeatureEngineer:
             assert isinstance(Xt, pd.DataFrame)
             assert len(Xt) >= 0  # Maybe empty if no relationships found
 
-    def test_causal_feature_engineer_expert_knowledge(self, sample_multivariate_data):
-        """Test CausalFeatureEngineer with expert knowledge."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+    def test_causal_feature_expert_knowledge(self, sample_multivariate_data):
+        """Test CausalFeature with expert knowledge."""
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
@@ -146,7 +146,7 @@ class TestCausalFeatureEngineer:
             "required_edges": [("X1", "X2")],
         }
 
-        transformer = CausalFeatureEngineer(
+        transformer = CausalFeature(
             max_lag=2,
             causal_method="pc",
             expert_knowledge=expert_knowledge,
@@ -158,12 +158,12 @@ class TestCausalFeatureEngineer:
         assert isinstance(Xt, pd.DataFrame)
         assert len(Xt) >= 0
 
-    def test_causal_feature_engineer_weighting_strategies(
+    def test_causal_feature_weighting_strategies(
         self, sample_multivariate_data
     ):
         """Test different weighting strategies."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
@@ -171,7 +171,7 @@ class TestCausalFeatureEngineer:
         strategies = ["uniform", "causal_strength", "inverse_lag"]
 
         for strategy in strategies:
-            transformer = CausalFeatureEngineer(
+            transformer = CausalFeature(
                 max_lag=2,
                 causal_method="pc",
                 weighting_strategy=strategy,
@@ -183,10 +183,10 @@ class TestCausalFeatureEngineer:
             assert isinstance(Xt, pd.DataFrame)
             assert len(Xt) >= 0
 
-    def test_causal_feature_engineer_scoring_methods(self, sample_multivariate_data):
+    def test_causal_feature_scoring_methods(self, sample_multivariate_data):
         """Test different scoring methods for hill climb."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
@@ -194,7 +194,7 @@ class TestCausalFeatureEngineer:
         scoring_methods = ["auto", "bic-g", "aic-g"]
 
         for method in scoring_methods:
-            transformer = CausalFeatureEngineer(
+            transformer = CausalFeature(
                 max_lag=2,
                 causal_method="hill_climb",
                 scoring_method=method,
@@ -205,43 +205,43 @@ class TestCausalFeatureEngineer:
             assert isinstance(Xt, pd.DataFrame)
             assert len(Xt) >= 0
 
-    def test_causal_feature_engineer_invalid_method(self, sample_univariate_data):
+    def test_causal_feature_invalid_method(self, sample_univariate_data):
         """Test that invalid causal method raises error."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         y = sample_univariate_data
 
-        transformer = CausalFeatureEngineer(causal_method="invalid_method")
+        transformer = CausalFeature(causal_method="invalid_method")
 
         with pytest.raises(ValueError, match="Unsupported causal discovery method"):
             transformer.fit_transform(y)
 
-    def test_causal_feature_engineer_invalid_scoring_method(
+    def test_causal_feature_invalid_scoring_method(
         self, sample_univariate_data
     ):
         """Test that invalid scoring method raises error."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         y = sample_univariate_data
 
-        transformer = CausalFeatureEngineer(
+        transformer = CausalFeature(
             causal_method="hill_climb", scoring_method="invalid_method"
         )
 
         with pytest.raises(ValueError, match="Invalid scoring method"):
             transformer.fit_transform(y)
 
-    def test_causal_feature_engineer_get_test_params(self):
+    def test_causal_feature_get_test_params(self):
         """Test get_test_params method."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
-        params = CausalFeatureEngineer.get_test_params()
+        params = CausalFeature.get_test_params()
 
         assert isinstance(params, list)
         assert len(params) >= 2  # must return at least 2 param sets
@@ -252,10 +252,10 @@ class TestCausalFeatureEngineer:
             assert "max_lag" in param_set
             assert "feature_types" in param_set
 
-    def test_causal_feature_engineer_extreme_edge_cases(self, sample_multivariate_data):
+    def test_causal_feature_extreme_edge_cases(self, sample_multivariate_data):
         """Test extreme edge cases (too risky for default parameter set)"""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
@@ -286,7 +286,7 @@ class TestCausalFeatureEngineer:
         ]
 
         for params in extreme_params:
-            transformer = CausalFeatureEngineer(**params)
+            transformer = CausalFeature(**params)
             try:
                 Xt = transformer.fit_transform(X, y)
                 assert isinstance(Xt, pd.DataFrame)
@@ -295,15 +295,15 @@ class TestCausalFeatureEngineer:
                 # Extreme cases might legitimately fail
                 assert isinstance(e, (ValueError, RuntimeError, MemoryError))
 
-    def test_causal_feature_engineer_alignment_methods(self, sample_multivariate_data):
+    def test_causal_feature_alignment_methods(self, sample_multivariate_data):
         """Test index alignment utility methods."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         X, y = sample_multivariate_data
 
-        transformer = CausalFeatureEngineer(max_lag=3)
+        transformer = CausalFeature(max_lag=3)
         transformer.fit_transform(X, y)
 
         # Test alignment methods
@@ -316,16 +316,16 @@ class TestCausalFeatureEngineer:
             assert isinstance(safe_index, pd.Index)
             assert len(safe_index) <= len(y.index)
 
-    def test_causal_feature_engineer_empty_features(self, sample_univariate_data):
+    def test_causal_feature_empty_features(self, sample_univariate_data):
         """Test behavior when no causal relationships are found."""
-        from sktime.transformations.series.causal_feature_engineer import (
-            CausalFeatureEngineer,
+        from sktime.transformations.series.causal_feature import (
+            CausalFeature,
         )
 
         y = sample_univariate_data
 
         # Use very strict settings to likely produce no relationships
-        transformer = CausalFeatureEngineer(
+        transformer = CausalFeature(
             max_lag=1,
             significance_level=0.001,  # Very strict
             min_causal_strength=0.9,  # Very high threshold
