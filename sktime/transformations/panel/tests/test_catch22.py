@@ -1459,38 +1459,25 @@ def test_feature_names():
 def test_catch22_noncontiguous_column_indices():
     """Test for bug #5394: Catch22 with non-contiguous DataFrame column indices."""
     import pandas as pd
-    
+
     # Create DataFrame with non-contiguous integer column indices
-    df = pd.DataFrame({
-        3: [1.0, 2.0, 3.0, 4.0, 5.0],
-        5: [2.0, 3.0, 4.0, 5.0, 6.0], 
-        8: [3.0, 4.0, 5.0, 6.0, 7.0]
-    })
-    
+    df = pd.DataFrame(
+        {
+            3: [1.0, 2.0, 3.0, 4.0, 5.0],
+            5: [2.0, 3.0, 4.0, 5.0, 6.0],
+            8: [3.0, 4.0, 5.0, 6.0, 7.0],
+        }
+    )
+
     # This should not raise a KeyError
-    ext = Catch22(features=["DN_HistogramMode_5"])  # Use a single feature to speed up test
-    
+    ext = Catch22(
+        features=["DN_HistogramMode_5"]
+    )  # Use a single feature to speed up test
+
     # The main test: this should not raise a KeyError when trying to access columns
-    try:
-        # We can't actually run the full transformation without numba,
-        # but we can test that the _transform_single_feature method doesn't crash
-        # when accessing DataFrame columns with non-contiguous indices
-        result = ext._transform_single_feature(df, 0)  # feature 0
-        
-        # Check that result has expected shape - should be one value per column
-        assert len(result) == len(df.columns), f"Expected {len(df.columns)} results, got {len(result)}"
-        
-    except KeyError as e:
-        if "0" in str(e):
-            pytest.fail("Bug #5394 is still present: KeyError when accessing non-contiguous column indices")
-        else:
-            # Re-raise if it's a different KeyError
-            raise
-    except Exception as e:
-        # Other exceptions (like missing numba) are acceptable for this test
-        # as long as we didn't get the specific KeyError from the bug
-        if "numba" in str(e).lower():
-            pytest.skip("numba not available, but non-contiguous index handling should still work")
-        else:
-            # Re-raise unexpected exceptions
-            raise
+    result = ext._transform_single_feature(df, 0)  # feature 0
+
+    # Check that result has expected shape - should be one value per column
+    assert len(result) == len(df.columns), (
+        f"Expected {len(df.columns)} results, got {len(result)}"
+    )

@@ -402,7 +402,10 @@ class Catch22(BaseTransformer):
             n_instances = X.shape[1]  # number of columns
             # todo: remove Parallel in future versions, left for
             # compatibility with `CanonicalIntervalForest`
-            c22_list = [self._transform_case(X.iloc[:, i], [feature]) for i in range(n_instances)]
+            c22_list = [
+                self._transform_case(X.iloc[:, i], [feature])
+                for i in range(n_instances)
+            ]
         elif len(X.shape) > 2:
             n_instances, n_dims, series_length = X.shape
 
@@ -415,12 +418,16 @@ class Catch22(BaseTransformer):
             X = np.reshape(X, (n_instances, -1))
             # todo: remove Parallel in future versions, left for
             # compatibility with `CanonicalIntervalForest`
-            c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
+            c22_list = [
+                self._transform_case(X[i], [feature]) for i in range(n_instances)
+            ]
         else:
             n_instances, series_length = X.shape
             # todo: remove Parallel in future versions, left for
             # compatibility with `CanonicalIntervalForest`
-            c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
+            c22_list = [
+                self._transform_case(X[i], [feature]) for i in range(n_instances)
+            ]
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
