@@ -11,7 +11,6 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
@@ -394,24 +393,20 @@ class Catch22(BaseTransformer):
                 obj=self,
             )
         if isinstance(X, pd.DataFrame):
-            try:
-                X = convert_to(X, "numpy3D")
-            except (TypeError, ValueError):
-                # Handle case where DataFrame conversion failed
-                # (e.g., non-contiguous column indices)
-                # In this case, each column is a time series to be transformed
-                n_instances = X.shape[1]  # number of columns
-                # todo: remove Parallel in future versions, left for
-                # compatibility with `CanonicalIntervalForest`
-                c22_list = [
-                    self._transform_case(X.iloc[:, i], [feature])
-                    for i in range(n_instances)
-                ]
+            # DataFrame contains multiple time series as columns
+            # Process each column separately
+            n_instances = X.shape[1]  # number of columns
+            # todo: remove Parallel in future versions, left for
+            # compatibility with `CanonicalIntervalForest`
+            c22_list = [
+                self._transform_case(X.iloc[:, i], [feature])
+                for i in range(n_instances)
+            ]
 
-                if self.replace_nans:
-                    c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
+            if self.replace_nans:
+                c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
-                return np.asarray(c22_list)[:, 0, 0]
+            return np.asarray(c22_list)[:, 0, 0]
 
         if len(X.shape) > 2:
             n_instances, n_dims, series_length = X.shape
@@ -423,18 +418,12 @@ class Catch22(BaseTransformer):
                 )
 
             X = np.reshape(X, (n_instances, -1))
-            # todo: remove Parallel in future versions, left for
-            # compatibility with `CanonicalIntervalForest`
-            c22_list = [
-                self._transform_case(X[i], [feature]) for i in range(n_instances)
-            ]
         else:
             n_instances, series_length = X.shape
-            # todo: remove Parallel in future versions, left for
-            # compatibility with `CanonicalIntervalForest`
-            c22_list = [
-                self._transform_case(X[i], [feature]) for i in range(n_instances)
-            ]
+
+        # todo: remove Parallel in future versions, left for
+        # compatibility with `CanonicalIntervalForest`
+        c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
