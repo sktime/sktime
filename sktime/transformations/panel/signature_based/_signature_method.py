@@ -21,8 +21,8 @@ class SignatureTransformer(BaseTransformer):
 
     Parameters
     ----------
-    augmentation_list: list or tuple of strings, possible strings are
-        ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
+    augmentation_list: list or tuple of strings,
+        possible strings are ``['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']``
         Augmentations to apply to the data before computing the signature.
         The order of the augmentations is the order in which they are applied.
         default: ('basepoint', 'addtime')
@@ -38,15 +38,20 @@ class SignatureTransformer(BaseTransformer):
     window_step: None (default) or int
         The step of the sliding/expanding window.
         Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
+
     rescaling: None (default) or str, "pre" or "post",
-        None: No rescaling is applied.
-        "pre": rescale the path last signature term should be roughly O(1)
-        "post": Rescales the output signature by multiplying the depth-d term by d!.
-            Aim is that every term becomes ~O(1).
+
+        * None: No rescaling is applied.
+        * "pre": rescale the path last signature term should be roughly O(1)
+        * "post": Rescales the output signature by multiplying the depth-d term by d!.
+          Aim is that every term becomes ~O(1).
+
     sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
         The type of signature transform to use, plain or logarithmic.
+
     depth: int, default=4
         Signature truncation depth.
+
     backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.
         The backend to use for signature computation.
 
@@ -61,8 +66,7 @@ class SignatureTransformer(BaseTransformer):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": ["esig", "numpy<2.0"],
-        "python_version": "<3.10",
+        "python_dependencies": ["esig"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -73,6 +77,10 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.transformations.panel.signature_based"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -167,9 +175,10 @@ class SignatureTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {
+        params0 = {}
+        params1 = {
             "augmentation_list": ("basepoint", "addtime"),
             "depth": 3,
             "window_name": "global",
         }
-        return params
+        return [params0, params1]
