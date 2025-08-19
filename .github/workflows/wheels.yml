@@ -5,6 +5,32 @@ on:
     types: [published]
 
 jobs:
+  check_tag:
+    name: Check tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - shell: bash
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          GH_TAG_NAME="${TAG#v}"
+          PY_VERSION=$(python - <<'PY'
+          import pathlib, tomllib
+          data = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
+          print(data.get("project").get("version"))
+          PY
+          )
+          if [ "${GH_TAG_NAME}" != "${PY_VERSION}" ]; then
+            echo "::error::Tag (${GH_TAG_NAME}) does not match pyproject.toml version (${PY_VERSION})."
+            exit 2
+          fi
+
   build_wheels:
     name: Build wheels
     runs-on: ubuntu-latest
