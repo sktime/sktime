@@ -394,19 +394,26 @@ class Catch22(BaseTransformer):
                 obj=self,
             )
         if isinstance(X, pd.DataFrame):
-            X = convert_to(X, "numpy3D")
+            try:
+                X = convert_to(X, "numpy3D")
+            except (TypeError, ValueError):
+                # Handle case where DataFrame conversion failed
+                # (e.g., non-contiguous column indices)
+                # In this case, each column is a time series to be transformed
+                n_instances = X.shape[1]  # number of columns
+                # todo: remove Parallel in future versions, left for
+                # compatibility with `CanonicalIntervalForest`
+                c22_list = [
+                    self._transform_case(X.iloc[:, i], [feature])
+                    for i in range(n_instances)
+                ]
 
-        if isinstance(X, pd.DataFrame):
-            # Handle case where DataFrame conversion failed and X is still a DataFrame
-            # In this case, each column is a time series to be transformed
-            n_instances = X.shape[1]  # number of columns
-            # todo: remove Parallel in future versions, left for
-            # compatibility with `CanonicalIntervalForest`
-            c22_list = [
-                self._transform_case(X.iloc[:, i], [feature])
-                for i in range(n_instances)
-            ]
-        elif len(X.shape) > 2:
+                if self.replace_nans:
+                    c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
+
+                return np.asarray(c22_list)[:, 0, 0]
+
+        if len(X.shape) > 2:
             n_instances, n_dims, series_length = X.shape
 
             if n_dims > 1:
