@@ -83,6 +83,18 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
       parameters*. This approach offers maximum adaptation to the dataset but requires
       more computational resources.
 
+    **Exogenous Variables Support**
+
+    TTM supports exogenous variables (external factors) that can improve
+    forecasting accuracy. The model accepts exogenous variables that are
+    known for both the historical period and the future forecasting horizon.
+
+    When using exogenous variables:
+    - The X parameter should contain exogenous data covering both
+      past and future periods
+    - Exogenous variables must have the same index structure as the target series
+    - For prediction, exogenous data must extend into the forecasting horizon
+
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
@@ -157,18 +169,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time. Allows
           model path to be *None*.
-
-    **Exogenous Variables Support**
-
-    TTM supports exogenous variables (external factors) that can improve
-    forecasting accuracy. The model accepts exogenous variables that are
-    known for both the historical period and the future forecasting horizon.
-
-    When using exogenous variables:
-    - The X parameter should contain exogenous data covering both
-      past and future periods
-    - Exogenous variables must have the same index structure as the target series
-    - For prediction, exogenous data must extend into the forecasting horizon
 
     References
     ----------
@@ -279,7 +279,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
-        "capability:categorical_in_X": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
@@ -368,27 +367,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
             )
-
-        # Validate exogenous variables
-        if X is not None:
-            # Check for categorical data in X
-            if isinstance(X, pd.DataFrame):
-                categorical_cols = X.select_dtypes(
-                    include=["category", "object"]
-                ).columns
-                if len(categorical_cols) > 0:
-                    raise TypeError(
-                        f"TinyTimeMixerForecaster does not support categorical \
-                          exogenous variables. "
-                        f"Found categorical columns: {list(categorical_cols)}. "
-                        f"Please encode categorical variables as numerical values."
-                    )
-            elif isinstance(X, pd.Series) and X.dtype in ["category", "object"]:
-                raise TypeError(
-                    "TinyTimeMixerForecaster does not support categorical \
-                     exogenous variables. "
-                    "Please encode categorical variables as numerical values."
-                )
 
         # Initialize to self.config, then adjust accordingly
         config = self.config
@@ -546,9 +524,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         # Get the model
         self.model = trainer.model
-
-        # Store exogenous variables info for prediction
-        self._X = X
 
     def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
