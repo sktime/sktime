@@ -1,21 +1,47 @@
 # Copyright (c) NXAI GmbH.
 # This software may be used and distributed according to the terms of the NXAI Community License Agreement.
+from __future__ import annotations
 
 import logging
 import warnings
 from contextlib import redirect_stdout
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import lightning as L
-import torch
-from dacite import Config, from_dict
+if TYPE_CHECKING:
+    import torch
+    from .mixed_stack import xLSTMMixedLargeConfig, xLSTMMixedLargeBlockStack
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from ..base import PretrainedModel
-from .components import PatchedUniTokenizer, ResidualBlock, StreamToLogger
-from .mixed_stack import skip_cuda, xLSTMMixedLargeBlockStack, xLSTMMixedLargeConfig
 from .predict_utils import TensorQuantileUniPredictMixin
 
 LOGGER = logging.getLogger()
+
+try:
+    import lightning as _L
+
+    LightningModule = _L.LightningModule
+except Exception:
+
+    class LightningModule:  # fallback for CI import-time only
+        def __init__(self, *args, **kwargs) -> None: ...
+        def save_hyperparameters(self, *args, **kwargs) -> None: ...
+        def register_buffer(self, name, tensor, persistent=False) -> None:
+            setattr(self, name, tensor)
+
+        @property
+        def device(self):
+            try:
+                import torch
+
+                return torch.device("cpu")
+            except Exception:
+
+                class _Dev:
+                    type = "cpu"
+
+                return _Dev()
 
 
 @dataclass
@@ -27,8 +53,23 @@ class TiRexZeroConfig:
     input_ff_dim: int
 
 
-class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixin):
+class TiRexZero(PretrainedModel, TensorQuantileUniPredictMixin):
     def __init__(self, model_config: dict, train_ctx_len=None):
+        _check_soft_dependencies("torch", severity="error")
+        _check_soft_dependencies("lightning", severity="error")
+        _check_soft_dependencies("dacite", severity="error")
+        _check_soft_dependencies("xlstm", severity="error")
+
+        import torch
+        import lightning as L
+        from dacite import Config, from_dict
+        from .components import PatchedUniTokenizer, ResidualBlock, StreamToLogger
+        from .mixed_stack import (
+            skip_cuda,
+            xLSTMMixedLargeBlockStack,
+            xLSTMMixedLargeConfig,
+        )
+
         super().__init__()
         self.model_config: TiRexZeroConfig = from_dict(
             TiRexZeroConfig, model_config, config=Config(strict=True)
@@ -71,8 +112,15 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
         return "TiRex"
 
     def init_block(self, block_kwargs):
-        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)
-        log_redirect = StreamToLogger(LOGGER, logging.INFO)
+        from dacite import from_dict
+        from .components import StreamToLogger
+        from .mixed_stack import (
+            xLSTMMixedLargeConfig,
+            xLSTMMixedLargeBlockStack,
+        )
+
+        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)  # type: ignore
+        log_redirect = StreamToLogger(LOGGER, logging.INFO)  # type: ignore
         with redirect_stdout(
             log_redirect
         ):  # avoid excessive print statements of sLSTM compile
@@ -89,6 +137,8 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
         input_mask=None,
         rollouts=1,
     ):
+        import torch
+
         input_mask = (
             input_mask.to(input_token.dtype)
             if input_mask is not None
@@ -147,7 +197,6 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
 
         return quantile_preds, hidden_states
 
-    @torch.inference_mode()
     def _forecast_tensor(
         self,
         context: torch.Tensor,
@@ -155,6 +204,8 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
         max_context: int | None = None,
         max_accelerated_rollout_steps: int = 1,
     ) -> torch.Tensor:
+        import torch
+
         predictions = []
         if prediction_length is None:
             prediction_length = self.tokenizer.patch_size
@@ -210,7 +261,7 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
 
     def on_load_checkpoint(self, checkpoint: dict) -> None:
         state_dict = checkpoint["state_dict"]
-        load_vanilla_kernel = skip_cuda()
+        load_vanilla_kernel = skip_cuda()  # type: ignore
         if load_vanilla_kernel:
             warnings.warn(
                 "You use TiRex without sLSTM CUDA kernels! This might slow down the model considerably and might degrade forecasting results!"
@@ -248,7 +299,7 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
             checkpoint["state_dict"] = new_state_dict
 
     def after_load_from_checkpoint(self):
-        if not skip_cuda() and self.device.type != "cuda":
+        if not skip_cuda() and self.device.type != "cuda":  # type: ignore
             warnings.warn(
                 f"You use TiRex with sLSTM CUDA kernels BUT DO NOT LOAD THE DEVICE ON A CUDA DEVICE (device type is {self.device.type})!"
                 "This is not supported and calls to the model will likely lead to an error if you dont move your model to a CUDA device!"

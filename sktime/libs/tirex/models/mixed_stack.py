@@ -4,20 +4,30 @@
 
 import os
 from dataclasses import dataclass, field
+from typing import Any, Optional, Union
+from sktime.utils.dependencies import _safe_import
+from unittest.mock import MagicMock
 
-import torch
-from torch import nn
-from xlstm.blocks.slstm.layer import sLSTMLayer, sLSTMLayerConfig
-from xlstm.xlstm_large import xLSTMLargeConfig
-from xlstm.xlstm_large.components import RMSNorm
-from xlstm.xlstm_large.model import FeedForward, mLSTMBlock, mLSTMStateType
+
+nn = _safe_import("torch.nn")
+sLSTMLayer = _safe_import("xlstm.blocks.slstm.layer.sLSTMLayer", "xlstm")
+sLSTMLayerConfig = _safe_import("xlstm.blocks.slstm.layer.sLSTMLayerConfig", "xlstm")
+xLSTMLargeConfig = _safe_import("xlstm.xlstm_large.xLSTMLargeConfig", "xlstm")
+RMSNorm = _safe_import("xlstm.xlstm_large.components.RMSNorm", "xlstm")
+FeedForward = _safe_import("xlstm.xlstm_large.model.FeedForward", "xlstm")
+mLSTMBlock = _safe_import("xlstm.xlstm_large.model.mLSTMBlock", "xlstm")
+mLSTMStateType = _safe_import("xlstm.xlstm_large.model.mLSTMStateType", "xlstm")
+# from xlstm.blocks.slstm.layer import sLSTMLayer, sLSTMLayerConfig
+# from xlstm.xlstm_large import xLSTMLargeConfig
+# from xlstm.xlstm_large.components import RMSNorm
+# from xlstm.xlstm_large.model import FeedForward, mLSTMBlock, mLSTMStateType
 
 
 def skip_cuda():
     return os.getenv("TIREX_NO_CUDA", "False").lower() in ("true", "1", "t")
 
 
-def init_cell(config: xLSTMLargeConfig, block_idx, num_blocks):
+def init_cell(config: Any, block_idx, num_blocks):
     return sLSTMLayer(
         sLSTMLayerConfig(
             embedding_dim=config.embedding_dim,
@@ -40,12 +50,19 @@ def init_cell(config: xLSTMLargeConfig, block_idx, num_blocks):
     )
 
 
-sLSTMLayerStateType = tuple[torch.Tensor, torch.Tensor]
-sLSTMStateType = dict[int, sLSTMLayerStateType]
+sLSTMLayerStateType = Any
+sLSTMStateType = Any
+
+if isinstance(nn, MagicMock):
+
+    class _BaseModule:
+        def __init__(self, *args, **kwargs): ...
+else:
+    _BaseModule = nn.Module
 
 
-class sLSTMBlock(nn.Module):
-    def __init__(self, config: xLSTMLargeConfig, block_idx: int, num_blocks: int):
+class sLSTMBlock(_BaseModule):
+    def __init__(self, config: Any, block_idx: int, num_blocks: int):
         super().__init__()
         self.config = config
         self.norm_slstm = RMSNorm(
@@ -67,8 +84,8 @@ class sLSTMBlock(nn.Module):
         self.ffn = FeedForward(config)
 
     def forward(
-        self, x: torch.Tensor, state: sLSTMLayerStateType | None = None
-    ) -> tuple[torch.Tensor, sLSTMLayerStateType]:
+        self, x: Any, state: Optional[sLSTMLayerStateType] = None
+    ) -> tuple[Any, sLSTMLayerStateType]:
         x_slstm = self.norm_slstm(x)
         if state is None:
             conv_state, slstm_state = None, None
@@ -86,20 +103,38 @@ class sLSTMBlock(nn.Module):
         return x, (state["conv_state"], state["slstm_state"])
 
 
-@dataclass
-class xLSTMMixedLargeConfig(xLSTMLargeConfig):
-    slstm_at: list[int] = field(default_factory=list)
-    all_slstm: bool = True
+try:
+    _BaseConfig = xLSTMLargeConfig if isinstance(xLSTMLargeConfig, type) else object
+except Exception:
+    _BaseConfig = object
 
-    @property
-    def block_types(self):
-        return [
-            "s" if i in self.slstm_at or self.all_slstm else "m"
-            for i in range(self.num_blocks)
-        ]
+if _BaseConfig is not object:
+
+    @dataclass(frozen=True)
+    class xLSTMMixedLargeConfig(_BaseConfig):
+        slstm_at: list[int] = field(default_factory=list)
+        all_slstm: bool = True
+
+        @property
+        def block_types(self):
+            return [
+                "s" if i in self.slstm_at or self.all_slstm else "m"
+                for i in range(self.num_blocks)
+            ]
+else:
+
+    class xLSTMMixedLargeConfig(_BaseConfig):
+        def __init__(self, *args, **kwargs):
+            self.slstm_at = []
+            self.all_slstm = True
+            self.num_blocks = 0
+
+        @property
+        def block_types(self):
+            return []
 
 
-class xLSTMMixedLargeBlockStack(nn.Module):
+class xLSTMMixedLargeBlockStack(_BaseModule):
     config_class = xLSTMMixedLargeConfig
 
     def __init__(self, config: xLSTMMixedLargeConfig):
@@ -127,8 +162,10 @@ class xLSTMMixedLargeBlockStack(nn.Module):
             self.out_norm = nn.Identity()
 
     def forward(
-        self, x: torch.Tensor, state: mLSTMStateType | sLSTMStateType | None = None
-    ) -> tuple[torch.Tensor, mLSTMStateType]:
+        self,
+        x: Any,
+        state: Optional[Union[Any, sLSTMStateType]] = None,
+    ) -> tuple[Any, Any]:
         if state is None:
             state = {i: None for i in range(len(self.blocks))}
 

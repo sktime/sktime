@@ -1,11 +1,13 @@
 # Copyright (c) NXAI GmbH.
 # This software may be used and distributed according to the terms of the NXAI Community License Agreement.
 
-
+from __future__ import annotations
 import logging
 from abc import abstractmethod
+from typing import Any, Optional, TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    import torch as torch_types
 
 from ..api_adapter.forecast import ForecastModel
 
@@ -16,10 +18,10 @@ class TensorQuantileUniPredictMixin(ForecastModel):
     @abstractmethod
     def _forecast_tensor(
         self,
-        context: torch.Tensor,
+        context: Any,
         prediction_length: int | None = None,
         **predict_kwargs,
-    ) -> torch.Tensor:
+    ) -> Any:
         pass
 
     @property
@@ -29,13 +31,15 @@ class TensorQuantileUniPredictMixin(ForecastModel):
 
     def _forecast_quantiles(
         self,
-        context: torch.Tensor,
+        context: Any,
         prediction_length: int | None = None,
         quantile_levels: list[float] = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         output_device: str = "cpu",
         auto_cast: bool = False,
         **predict_kwargs,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[Any, Any]:
+        import torch
+
         with torch.autocast(device_type=self.device.type, enabled=auto_cast):
             predictions = self._forecast_tensor(
                 context=context, prediction_length=prediction_length, **predict_kwargs
