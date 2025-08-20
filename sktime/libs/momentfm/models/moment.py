@@ -1,8 +1,6 @@
 """Moment model and heads file."""
 
 import logging
-import os
-import platform
 import warnings
 from argparse import Namespace
 from copy import deepcopy
