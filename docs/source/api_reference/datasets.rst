@@ -64,55 +64,73 @@ Regression datasets
 Creating Custom Classification Datasets
 ---------------------------------------
 
-You can define your own classification dataset by subclassing ``BaseDataset`` from ``sktime.datasets._base``.
+You can define your own classification dataset by subclassing ``BaseClassificationDataset`` from ``sktime.datasets.classification._base``.
 
 Example:
 
+
 .. code-block:: python
 
-    from sktime.datasets.base import BaseDataset
-    from sktime.utils._testing.panel import make_classification_problem
+    from sktime.datasets.classification._base import BaseClassificationDataset
+    import pandas as pd
 
-    class MyClassificationDataset(BaseDataset):
+    class MyClassificationDataset(BaseClassificationDataset):
         """
-        A sample classification dataset template using sktime's classification problem generator.
+        A sample classification dataset template using sktime's classification dataset base class.
 
         This template demonstrates how to implement a custom dataset class for a classification task
-        using sktime's dataset extension interface. It uses a synthetic classification problem generator
-        as an example source.
+        using sktime's dataset extension interface. It uses a synthetic example as a source.
 
         Attributes
         ----------
         metadata : dict
-            Dictionary containing key information about the dataset such as task type, 
+            Dictionary containing key information about the dataset such as task type,
             number of classes, number of instances, and whether the data is univariate
             and of equal length.
         """
 
         def __init__(self):
-            """Initialize dataset metadata and inherit base functionality from BaseDataset."""
             super().__init__()
             self.metadata = {
                 "task": "classification",
-                "n_classes": 2,  # adjust depending on what make_classification_problem returns
-                "n_instances": 20,  # adjust based on dataset size
-                "univariate": True,
+                "n_classes": 2,
+                "n_instances": 3,
+                "univariate": False,
                 "equal_length": True,
             }
 
-        def _load(self):
+        def _load(self, *args):
             """
-            Loads the dataset.
+            Return a small synthetic dataset.
+
+            Parameters
+            ----------
+            *args: tuple of strings that specify what to load
+                Valid values: "TRAIN", "TEST", or None
 
             Returns
             -------
             X : pd.DataFrame
-                Time series features, indexed by instance and time.
+                Feature matrix.
             y : pd.Series
-                Corresponding class labels for each instance in X.
+                Target labels.
             """
-            X, y = make_classification_problem()
-            return X, y
+            X = pd.DataFrame({"feature_1": [1, 2, 3], "feature_2": [4, 5, 6]})
+            y = pd.Series([0, 1, 0], name="target")
+
+            if not args or args[0] is None:
+                return X, y
+            result = []
+            for split in args:
+                if split == "TRAIN":
+                    result.append((X.iloc[:2], y.iloc[:2]))
+                elif split == "TEST":
+                    result.append((X.iloc[2:], y.iloc[2:]))
+                else:
+                    raise ValueError(f"Invalid split '{split}'. Must be 'TRAIN', 'TEST', or None.")
+            if len(result) == 1:
+                return result[0]
+            return tuple(result)
 
 Usage:
 
