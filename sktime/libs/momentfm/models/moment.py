@@ -37,10 +37,6 @@ if _check_soft_dependencies(
     from torch import nn
     from transformers import T5Config, T5EncoderModel, T5Model
 
-    # to allow hf-xet to download models on macos runners on version `latest`
-    if platform.system() == "Darwin":
-        os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
-
     class PretrainHead(nn.Module):
         """Pretrained Head."""
 

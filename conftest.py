@@ -27,8 +27,6 @@ i.e., intersection of estimators satisfying the conditions
 
 __author__ = ["fkiraly"]
 
-import os
-
 
 def pytest_addoption(parser):
     """Pytest command line parser options adder."""
@@ -59,8 +57,3 @@ def pytest_configure(config):
         _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
-
-
-ON_GITHUB_CI = os.getenv("GITHUB_ACTIONS")
-print(ON_GITHUB_CI)
-raise ValueError("test error")

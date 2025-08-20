@@ -2,6 +2,7 @@
 
 __all__ = ["run_test_vm"]
 
+import os
 import platform
 
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -38,6 +39,11 @@ def run_test_vm(cls_name):
             import torch
 
             torch.backends.mps.is_available = lambda: False
+
+    if _check_soft_dependencies("hf-xet", severity="none"):
+        # to allow hf-xet to download models on macos runners on version `latest`
+        if platform.system() == "Darwin":
+            os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
 
     cls = craft(cls_name)
     if _check_estimator_deps(cls, severity="none"):
