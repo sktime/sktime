@@ -3,10 +3,23 @@
 
 from abc import ABC, abstractmethod
 from typing import Literal
+from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-import torch
 
 from .standard_adapter import ContextType, get_batches
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+
+if not _check_soft_dependencies("torch", severity="none"):
+
+    class nn:
+        """Dummy class if torch is unavailable."""
+
+        class Module:
+            """Dummy class if torch is unavailable."""
+
 
 try:
     from .gluon import format_gluonts_output, get_gluon_batches

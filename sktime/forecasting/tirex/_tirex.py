@@ -22,24 +22,51 @@ It does not require any training or data input.
 # todo: uncomment the following line, enter authors' GitHub IDs
 __author__ = ["sinemkilicdere"]
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 # todo: add any necessary imports here
 
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+else:
+
+    class torch:
+        """Dummy class if torch is unavailable."""
+
+        bfloat16 = None
+
+        class Tensor:
+            """Dummy class if torch is unavailable."""
+
 
 def _tirex_cache_key(model: str, device: str) -> str:
-    return f"model={model}|device={device}"
+    """Create a deterministic cache key for the TiRex model."""
+    model_str = str(model)
+    device_str = str(device)
+    cache_key = "_".join([model_str, device_str])
+    return cache_key
 
 
 @_multiton
-def _get_tirex_model(model, device):
-    _check_soft_dependencies("tirex", severity="error")
-    from sktime.libs.tirex import load_model
+class _cached_TiRex:
+    """Cached TiRex loader; ensures one memory instance per unique key."""
 
-    return load_model(model, device=device)
+    def __init__(self, key: str, model: str, device: str):
+        self.key = key
+        self.model = model
+        self.device = device
+        self._obj = None
+
+    def load(self):
+        _check_soft_dependencies("tirex", severity="error")
+        from sktime.libs.tirex.base import load_model
+
+        if self._obj is None:
+            self._obj = load_model(self.model, device=self.device)
+        return self._obj
 
 
 class TiRexForecaster(BaseForecaster):
@@ -194,8 +221,8 @@ class TiRexForecaster(BaseForecaster):
         #   but model parameters, *don't* add as arguments to fit, but treat as follows:
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
-        self.model_ = _get_tirex_model(self.model, self.device)
-
+        key = _tirex_cache_key(self.model, self.device)
+        self.model = _cached_TiRex(key=key, model=self.model, device=self.device).load()
         return self
 
     # todo: implement this, mandatory
@@ -230,8 +257,7 @@ class TiRexForecaster(BaseForecaster):
         y = self._y
         context_values = y.to_numpy()[None, :]
 
-        import torch
-
+        _check_soft_dependencies("torch", severity="error")
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)
 
         predict_len = len(fh)
