@@ -5,7 +5,10 @@ import os
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from huggingface_hub import hf_hub_download
+from sktime.utils.dependencies import _safe_import, _check_soft_dependencies
+
+hf_hub_download = _safe_import("huggingface_hub.hf_hub_download", "huggingface-hub")
+
 
 T = TypeVar("T", bound="PretrainedModel")
 

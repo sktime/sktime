@@ -5,14 +5,15 @@ import logging
 import warnings
 from contextlib import redirect_stdout
 from dataclasses import dataclass
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
-import lightning as L
-import torch
-from dacite import Config, from_dict
+if TYPE_CHECKING:
+    import torch
+    from .mixed_stack import xLSTMMixedLargeConfig, xLSTMMixedLargeBlockStack
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from ..base import PretrainedModel
-from .components import PatchedUniTokenizer, ResidualBlock, StreamToLogger
-from .mixed_stack import skip_cuda, xLSTMMixedLargeBlockStack, xLSTMMixedLargeConfig
 from .predict_utils import TensorQuantileUniPredictMixin
 
 LOGGER = logging.getLogger()
@@ -27,8 +28,23 @@ class TiRexZeroConfig:
     input_ff_dim: int
 
 
-class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixin):
+class TiRexZero(PretrainedModel, TensorQuantileUniPredictMixin):
     def __init__(self, model_config: dict, train_ctx_len=None):
+        _check_soft_dependencies("torch", severity="error")
+        _check_soft_dependencies("lightning", severity="error")
+        _check_soft_dependencies("dacite", severity="error")
+        _check_soft_dependencies("xlstm", severity="error")
+
+        import torch
+        import lightning as L
+        from dacite import Config, from_dict
+        from .components import PatchedUniTokenizer, ResidualBlock, StreamToLogger
+        from .mixed_stack import (
+            skip_cuda,
+            xLSTMMixedLargeBlockStack,
+            xLSTMMixedLargeConfig,
+        )
+
         super().__init__()
         self.model_config: TiRexZeroConfig = from_dict(
             TiRexZeroConfig, model_config, config=Config(strict=True)
@@ -71,8 +87,8 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
         return "TiRex"
 
     def init_block(self, block_kwargs):
-        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)
-        log_redirect = StreamToLogger(LOGGER, logging.INFO)
+        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)  # type: ignore
+        log_redirect = StreamToLogger(LOGGER, logging.INFO)  # type: ignore
         with redirect_stdout(
             log_redirect
         ):  # avoid excessive print statements of sLSTM compile
@@ -147,7 +163,6 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
 
         return quantile_preds, hidden_states
 
-    @torch.inference_mode()
     def _forecast_tensor(
         self,
         context: torch.Tensor,
@@ -155,6 +170,8 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
         max_context: int | None = None,
         max_accelerated_rollout_steps: int = 1,
     ) -> torch.Tensor:
+        import torch
+
         predictions = []
         if prediction_length is None:
             prediction_length = self.tokenizer.patch_size
@@ -210,7 +227,7 @@ class TiRexZero(L.LightningModule, PretrainedModel, TensorQuantileUniPredictMixi
 
     def on_load_checkpoint(self, checkpoint: dict) -> None:
         state_dict = checkpoint["state_dict"]
-        load_vanilla_kernel = skip_cuda()
+        load_vanilla_kernel = skip_cuda()  # type: ignore
         if load_vanilla_kernel:
             warnings.warn(
                 "You use TiRex without sLSTM CUDA kernels! This might slow down the model considerably and might degrade forecasting results!"
