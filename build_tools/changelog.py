@@ -214,7 +214,6 @@ def render_changelog(prs, assigned):
         print()
         print(title)
         print("~" * len(title))
-        print()
 
         # Group PRs by module labels
         def group_prs_by_module(pr_group: list[dict]) -> dict[str, list[dict]]:
