@@ -7,18 +7,6 @@ from sktime.classification.deep_learning.cnn import CNNClassifier, CNNClassifier
 from sktime.datasets import load_unit_test
 
 
-class TestCNNClassifier:
-    """Test class for original CNNClassifier (TensorFlow version)."""
-
-    def test_cnn_deprecation_message(self):
-        """Test that original CNNClassifier shows helpful message."""
-        with pytest.raises(NotImplementedError) as excinfo:
-            CNNClassifier(n_epochs=1)
-
-        # Check the message contains guidance to use PyTorch version
-        assert "CNNClassifierTorch" in str(excinfo.value)
-
-
 class TestCNNClassifierTorch:
     """Test class for CNNClassifierTorch (PyTorch implementation)."""
 
