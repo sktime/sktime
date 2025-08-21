@@ -13,6 +13,10 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 class MeanAbsoluteError(BaseForecastingErrorMetric):
     r"""Mean absolute error (MAE).
 
+    MAE output is non-negative floating point.
+    MAE is of the same unit as the input data.
+    Lower is better, and the lowest possible value is 0.0.
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
