@@ -119,7 +119,7 @@ def render_row(pr):
     # Process the title to handle user credits at beginning of title
     title = pr["title"]
     extra_users = []
-    
+
     # Check for prefixed user credits like &username
     if title.startswith("&"):
         parts = title.split(" ", 1)
@@ -129,187 +129,155 @@ def render_row(pr):
             # Extract username without the & prefix
             username = user_part[1:]
             extra_users.append(username)
-    
-    # Handle dependabot PRs specially to enclose package names and versions in double backticks
+
+    # Handle dependabot PRs: enclose package names and versions in double backticks
     if "dependabot" in pr["user"]["login"].lower():
         # Match patterns like "Update package requirement from <1.0.0 to <2.0.0"
         import re
-        
+
         # Pattern to match package name and version bounds
-        pattern = r'Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)'
+        pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
         match = re.search(pattern, title)
-        
-        if match:
-            package, from_ver, to_ver = match.groups()
+
+        pattern2 = r"Bump ([\w\-/]+) from (\d+(?:\.\d+)*) to (\d+(?:\.\d+)*)"  # noqa: E501
+        match2 = re.search(pattern2, title)
+
+        if match or match2:
+            m = match if match else match2
+            package, from_ver, to_ver = m.groups()
+
+            # add double backticks if not already present
+            def add_backticks(text):
+                if not text.startswith("``") and not text.endswith("``"):
+                    return f"`{text}`"
+                return text
+
+            package = add_backticks(package)
+            from_ver = add_backticks(from_ver)
+            to_ver = add_backticks(to_ver)
+
             # Replace with proper backticks
-            title = f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
-    
+            if match:
+                title = f"Update {package} requirement from {from_ver} to {to_ver}"
+            elif match2:
+                title = f"Bump {package} from {from_ver} to {to_ver}"
+
     # Replace single backticks with double backticks
     title = title.replace("`", "``")
-    
+    # Replace quadruple backticks with double backticks,
+    # in case double backticks were already present
+    title = title.replace("````", "``")
+
     # Print the PR line
     print(
-        "*",
-        title,
-        f"(:pr:`{pr['number']}`)",
-        # Add extra credited users
-        " ".join([f":user:`{user}`" for user in extra_users]) + 
-        (", " if extra_users else ""),
-        f":user:`{pr['user']['login']}`",
+        f"* {title} "
+        f"(:pr:`{pr['number']}`)"
+        + ", ".join([f":user:`{user}`" for user in extra_users])
+        + (", " if extra_users else "")
+        + f" :user:`{pr['user']['login']}`"
     )
 
 
 def assign_prs(prs, categs: list[dict[str, list[str]]]):
     """Assign PR to categories based on labels."""
     assigned = defaultdict(list)
-    # Track module tags for each PR
-    pr_modules = {}
-    
-    # Track additional credited users for contributors list
-    additional_users = set()
 
     for i, pr in enumerate(prs):
-        pr_labels = [label["name"] for label in pr["labels"]]
-        
-        # Assign to main categories
         for cat in categs:
+            pr_labels = [label["name"] for label in pr["labels"]]
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
                 assigned[cat["title"]].append(i)
-        
-        # Track module tags for each PR
-        for label in pr_labels:
-            if label.startswith("module:"):
-                module_name = label.replace("module:", "")
-                # Fix for "base-framework" tag and benchmarking tag
-                if module_name == "base-framework":
-                    module_name = "base"
-                pr_modules[i] = module_name
-                
-        # Check for additional users in PR title
-        title = pr["title"]
-        if title.startswith("&"):
-            parts = title.split(" ", 1)
-            user_part = parts[0].strip()
-            username = user_part[1:]
-            additional_users.add(username)
+
+    #             if any(l.startswith("module") for l in pr_labels):
+    #                 print(i, pr_labels)
 
     # Assign unmatched PRs to "Other" category
     assigned["Other"] = list(
         set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
     )
 
-    return assigned, pr_modules, additional_users
+    return assigned
 
 
-def render_changelog(prs, assigned, pr_modules=None):
+def render_changelog(prs, assigned, label_to_subsection=None, module_order=None):
     """Render changelog with subsections based on module tags.
-    
+
     Parameters
     ----------
     prs : list
         List of pull requests.
     assigned : dict
         Dictionary mapping category titles to list of PR indices.
-    pr_modules : dict, optional
-        Dictionary mapping PR indices to module tags, by default None.
+    label_to_subsection : dict, optional
+        Dictionary mapping module tags to subsection titles.
+    module_order : list, optional
+        List of subsection titles in the desired order.
     """
     from dateutil import parser
 
-    # Define module mapping for subsection titles
-    module_to_title = {
-        "forecasting": "Forecasting",
-        "classification": "Time Series Classification",
-        "regression": "Time Series Regression",
-        "clustering": "Time Series Clustering",
-        "transformations": "Transformations",
-        "annotation": "Time Series Anomalies, Changepoints, Segmentation",
-        "detection": "Time Series Anomalies, Changepoints, Segmentation",
-        "base": "BaseObject and Base Framework",
-        "metrics": "Benchmarking, Metrics, Splitters",
-        "benchmarking": "Benchmarking, Metrics, Splitters",
-        "distances": "Distances, Kernels",
-        "registry": "Registry and Search",
-        "dataset": "Data Sets and Data Loaders",
-        "datatypes": "Data Types, Checks, Conversions",
-        "alignment": "Time Series Alignment",
-        "networks": "Neural Networks",
-        "tests": "Test Framework",
-        "vis": "Visualization",
-        "pipeline": "Pipelines",
-        "parameter_est": "Parameter Estimation and Hypothesis Testing",
-    }
+    SECTION_ORDER = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Other"]
+    for title in SECTION_ORDER:
+        if title not in assigned:
+            continue
 
-    # Sort categories in the preferred order
-    section_order = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Refactored", "Other"]
-    ordered_titles = sorted(assigned.keys(), key=lambda x: section_order.index(x) if x in section_order else 999)
-    
-    for title in ordered_titles:
-        pr_indices = assigned[title]
-        pr_group = [prs[i] for i in pr_indices]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
+        pr_group = [prs[i] for i in assigned[title]]
+        if not pr_group:
+            continue
+        print()
+        print(title)
+        print("~" * len(title))
 
-            # If this is a section we want to divide into subsections and we have module info
-            if title in ["Enhancements", "Fixes"] and pr_modules:
-                # Group PRs by module
-                by_module = defaultdict(list)
-                other_prs = []
-                
-                for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
-                    pr_idx = next(i for i, p in enumerate(prs) if p["number"] == pr["number"])
-                    if pr_idx in pr_modules:
-                        module_name = pr_modules[pr_idx]
-                        if module_name in module_to_title:
-                            module_title = module_to_title[module_name]
-                            by_module[module_title].append(pr)
-                        else:
-                            other_prs.append(pr)
-                    else:
-                        other_prs.append(pr)
-                
-                # Render PRs by module subsections
-                for module_title in sorted(by_module.keys()):
-                    print(f"{module_title}")
-                    print("^" * len(module_title), end="\n\n")
-                    for pr in sorted(by_module[module_title], key=lambda x: parser.parse(x["merged_at"])):
-                        render_row(pr)
-                    print()
-                
-                # Render PRs without module tags
-                if other_prs:
-                    print("Other")
-                    print("^" * 5, end="\n\n")
-                    for pr in sorted(other_prs, key=lambda x: parser.parse(x["merged_at"])):
-                        render_row(pr)
-                    print()
-            else:
-                # Regular rendering for Documentation, Maintenance, etc.
-                for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+        # Group PRs by module labels
+        def group_prs_by_module(pr_group: list[dict]) -> dict[str, list[dict]]:
+            """Group PRs by module labels and return a dictionary."""
+            subsection_map: dict[str, list[dict]] = defaultdict(list)
+
+            for pr in pr_group:
+                labels = [label["name"] for label in pr["labels"]]
+                added = False
+
+                for label in labels:
+                    if label in LABEL_TO_SUBSECTION:
+                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        added = True
+                if not added:
+                    subsection_map["Other"].append(pr)
+
+            return subsection_map
+
+        def render_subsection(subsection_map: dict[str, list[dict]]) -> None:
+            """Render subsections and their PRs in order."""
+            # Render subsections
+            for subsection_title in MODULE_ORDER:
+                pr_list = subsection_map.get(subsection_title, [])
+                if pr_list is None or not pr_list:
+                    continue
+                print()
+                print(subsection_title)
+                print("^" * len(subsection_title))
+                print()
+                for pr in sorted(pr_list, key=lambda x: parser.parse(x["merged_at"])):
                     render_row(pr)
 
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = group_prs_by_module(pr_group)
+            render_subsection(subsection_map)
+        else:
+            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+                render_row(pr)
 
-def render_contributors(prs: list, additional_users: set = None, fmt: str = "rst"):
+
+def render_contributors(prs: list, fmt: str = "rst"):
     """Find unique authors and print a list in given format.
-    
+
     Parameters
     ----------
     prs : list
         List of pull requests
-    additional_users : set, optional
-        Additional users to add to the contributors list
     fmt : str, default="rst"
         Format of the output, either "github" or "rst"
     """
-    # Get unique authors from PRs
-    authors = {pr["user"]["login"] for pr in prs}
-    
-    # Add any additional users credited in PR titles
-    if additional_users:
-        authors.update(additional_users)
-    
-    # Sort alphabetically (case insensitive)
-    authors = sorted(authors, key=lambda x: x.lower())
+    authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
     header = "Contributors"
     if fmt == "github":
@@ -322,20 +290,69 @@ def render_contributors(prs: list, additional_users: set = None, fmt: str = "rst
 
 
 if __name__ == "__main__":
+    # configuration of categories, sections, label mapping, and order
+    # ---------------------------------------------------------------
     categories = [
         {"title": "Enhancements", "labels": ["feature", "enhancement"]},
-        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
-        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
-        {"title": "Refactored", "labels": ["refactor"]},
         {"title": "Documentation", "labels": ["documentation"]},
+        {"title": "Maintenance", "labels": ["maintenance", "chore"]},
+        {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
     ]
+
+    # sourcery skip: use-named-expression
+    LABEL_TO_SUBSECTION = {
+        "module:base-framework": "BaseObject and base framework",
+        "module:deep-learning&networks": "Other",
+        "module:detection": "Time series anomalies, changepoints, segmentation",
+        "module:distances&kernels": "Time series anomalies, changepoints, segmentation",
+        "module:datasets&loaders": "Data sets and data loaders",
+        "module:datatypes": "Datatypes, checks, conversions",
+        "module:forecasting": "Forecasting",
+        "module:metrics&benchmarking": "Benchmarking, Metrics, Splitters",
+        "module:parameter-estimators": "Parameter estimation and hypothesis testing",
+        "module:plotting&utilities": "Other",
+        "module:probability&simulation": "Other",
+        "module:splitters&resamplers": "Benchmarking, Metrics, Splitter",
+        "module:classification": "Time series classification",
+        "module:clustering": "Time series clustering",
+        "module:regression": "Time series regression",
+        "module:transformations": "Transformations",
+        "module:tests": "Test framework",
+    }
+    # labels start with module
+    # Subsection title comes after label
+
+    MODULE_ORDER = [
+        "BaseObject and base framework",
+        "Benchmarking, Metrics, Splitters",
+        "Data sets and data loaders",
+        "Datatypes, checks, conversions",
+        "Forecasting",
+        "Parameter estimation and hypothesis testing",
+        "Registry and search",
+        "Time series alignment",
+        "Time series anomalies, changepoints, segmentation",
+        "Time series classification",
+        "Time series clustering",
+        "Time series regression",
+        "Transformations",
+        "Test framework",
+        "Other",
+    ]
+
+    # end configuration
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned, pr_modules, additional_users = assign_prs(pulls, categories)
-    render_changelog(pulls, assigned, pr_modules)
+    assigned = assign_prs(pulls, categories)
+    render_changelog(
+        pulls,
+        assigned,
+        label_to_subsection=LABEL_TO_SUBSECTION,
+        module_order=MODULE_ORDER,
+    )
     print()
-    render_contributors(pulls, additional_users)
+    render_contributors(pulls)
 
     release = fetch_latest_release()
     diff = github_compare_tags(release["tag_name"])
