@@ -430,7 +430,7 @@ def evaluate(
 
     The experiment run is the following:
 
-    In  case of non-global evaluation (cv_global=None):
+    In case of non-global evaluation (cv_global=None):
 
     Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
     the train/test folds produced by the generator ``cv.split_series(y)``.
