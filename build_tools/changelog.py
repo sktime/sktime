@@ -130,13 +130,13 @@ def render_row(pr):
             username = user_part[1:]
             extra_users.append(username)
 
-    # Handle dependabot PRs specially to enclose package names and versions in double backticks
+    # Handle dependabot PRs: enclose package names and versions in double backticks
     if "dependabot" in pr["user"]["login"].lower():
         # Match patterns like "Update package requirement from <1.0.0 to <2.0.0"
         import re
 
         # Pattern to match package name and version bounds
-        pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"
+        pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
         match = re.search(pattern, title)
 
         if match:
@@ -273,7 +273,6 @@ def render_contributors(prs: list, fmt: str = "rst"):
 
 
 if __name__ == "__main__":
-
     # configuration of categories, sections, label mapping, and order
     # ---------------------------------------------------------------
     categories = [
