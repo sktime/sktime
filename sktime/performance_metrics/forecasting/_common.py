@@ -166,13 +166,13 @@ def _fraction(enumerator, denominator, eps=None):
     return enumerator / safe_denominator
 
 
-def _pseudovalues_sqrt(scaled: pd.DataFrame):
-    r"""Jackknife pseudo-values for square-root-based metrics (e.g., RMSE-like).
+def _pseudovalues_sqrt(raw: pd.DataFrame):
+    r"""Jackknife pseudo-values for square root of a sum (e.g., RMSE-like).
 
     This function computes jackknife pseudo-values for square-root-based metrics
-    (e.g., RMSSE or RMSE) given a DataFrame of scaled squared errors.
+    (e.g., RMSSE or RMSE) given a DataFrame of raw errors before square root.
 
-    For a DataFrame ``scaled`` of per-timepoint scaled squared errors, the pseudo-values
+    For a DataFrame ``scaled`` of per-timepoint raw errors, the pseudo-values
     are computed as:
 
     .. math::
@@ -189,7 +189,7 @@ def _pseudovalues_sqrt(scaled: pd.DataFrame):
 
     Parameters
     ----------
-    scaled : pd.DataFrame
+    raw : pd.DataFrame
         DataFrame of shape (h, d) containing per-timepoint scaled squared errors.
         Rows correspond to forecast timepoints, columns to series/outputs.
 
@@ -201,34 +201,34 @@ def _pseudovalues_sqrt(scaled: pd.DataFrame):
 
     Notes
     -----
-    - If ``scaled`` has fewer than 2 rows (n <= 1), jackknife is undefined.
+    - If ``raw`` has fewer than 2 rows (n <= 1), jackknife is undefined.
       In this case, the function returns a DataFrame filled with the ``full``
       value repeated on every row (so averaging the pseudo-values reproduces ``full``).
     """
-    if not isinstance(scaled, pd.DataFrame):
-        scaled = pd.DataFrame(scaled)
+    if not isinstance(raw, pd.DataFrame):
+        raw = pd.DataFrame(raw)
 
-    n = scaled.shape[0]
-    mse_full = scaled.mean(axis=0)
+    n = raw.shape[0]
+    mse_full = raw.mean(axis=0)
     full_rms = mse_full.pow(0.5)
 
     if n <= 1:
         return pd.DataFrame(
             np.tile(full_rms.values, (n, 1)),
-            index=scaled.index,
-            columns=scaled.columns,
+            index=raw.index,
+            columns=raw.columns,
         )
 
-    sum_scaled = scaled.sum(axis=0)
+    sum_raw = raw.sum(axis=0)
 
-    msse_loo = (sum_scaled - scaled) / (n - 1)
+    msse_loo = (sum_raw - raw) / (n - 1)
 
     rmsse_loo = msse_loo.pow(0.5)
 
     pseudo = pd.DataFrame(
         n * full_rms - (n - 1) * rmsse_loo,
-        index=scaled.index,
-        columns=scaled.columns,
+        index=raw.index,
+        columns=raw.columns,
     )
 
     return pseudo
