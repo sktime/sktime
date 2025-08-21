@@ -51,7 +51,7 @@ class TemporianTransformer(BaseTransformer):
         # --------------
         "authors": ["ianspektor", "javiber"],
         "maintainers": ["ianspektor", "javiber"],
-        "python_dependencies": ["temporian"],
+        "python_dependencies": ["temporian>0.0"],
         "python_version": ">=3.8",
         # estimator tags
         # --------------
@@ -65,6 +65,9 @@ class TemporianTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(self, function, compile=False):

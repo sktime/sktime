@@ -19,11 +19,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting                 - _fit(self, X, y)
     predicting classes      - _predict(self, X)
 
-Optional implements:
+Optional methods to implement:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
@@ -106,6 +106,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:class_weight": False,  # ability to handle class weights
     }
 
     # todo: add any hyper-parameters and components to constructor

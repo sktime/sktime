@@ -95,13 +95,20 @@ class SignatureClassifier(BaseClassifier):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": ["esig", "numpy<2.0"],
-        "python_version": "<3.10",
+        "python_dependencies": ["esig"],
         # estimator type
         # --------------
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.transformations.panel.signature_based"],
+        "tests:skip_by_name": [  # tagged in issue #2490
+            "test_classifier_on_unit_test_data",
+            "test_classifier_on_basic_motions",
+        ],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -235,10 +242,12 @@ class SignatureClassifier(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}
-        else:
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "augmentation_list": ("basepoint", "addtime"),
-                "depth": 1,
-                "window_name": "global",
-            }
+
+        params0 = {}
+        params1 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 1,
+            "window_name": "global",
+        }
+        return [params0, params1]
