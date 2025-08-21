@@ -2,7 +2,7 @@
 
 __author__ = ["jnrusson1", "solen0id", "nilesh05apr"]
 
-__all__ = ["LSTMFCNRegressorTF"]
+__all__ = ["LSTMFCNRegressor"]
 
 from copy import deepcopy
 
@@ -12,7 +12,7 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class LSTMFCNRegressorTF(BaseDeepRegressor):
+class LSTMFCNRegressor(BaseDeepRegressor):
     """Implementation of LSTMFCNRegressor from Karim et al (2019) [1].
 
     Overview
