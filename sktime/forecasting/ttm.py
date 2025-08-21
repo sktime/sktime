@@ -240,18 +240,18 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...         "per_device_train_batch_size": 4,
     ...         "report_to": "none",
     ...     },
-    ... ) # doctest: +SKIP
+    ... )
     >>>
     >>> # Fit with exogenous variables
-    >>> forecaster.fit(y, X=X, fh=[1, 2]) # doctest: +SKIP
+    >>> forecaster.fit(y, X=X, fh=[1, 2])
     >>>
     >>> # Create future exogenous data for prediction
-    >>> future_X = X.iloc[-2:].copy() # doctest: +SKIP
+    >>> future_X = X.iloc[-2:].copy()
     >>> # Update index for future periods
-    >>> future_X.index = [y.index[-1] + 1, y.index[-1] + 2] # doctest: +SKIP
+    >>> future_X.index = [y.index[-1] + 1, y.index[-1] + 2]
     >>>
     >>> # Predict with exogenous variables
-    >>> y_pred = forecaster.predict(X=future_X) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(X=future_X)
     """
 
     _tags = {
