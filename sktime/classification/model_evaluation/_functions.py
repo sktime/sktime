@@ -370,7 +370,6 @@ def evaluate(
         - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
         - ``y_test``: pd.Series of test targets (if ``return_data=True``)
 
-
     Examples
     --------
     >>> from sktime.datasets import load_unit_test
@@ -445,8 +444,8 @@ def evaluate(
         fun=evaluate_fold_wrapper,
         iter=enumerate(yx_splits),
         meta={"_evaluate_fold_kwargs": _evaluate_fold_kwargs},
-        backend="loky",
-        backend_params={"n_jobs": -1},
+        backend=backend,
+        backend_params=backend_params,
     )
 
     # final formatting of dask dataframes

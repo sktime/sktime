@@ -3260,6 +3260,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
       "profile": "https://github.com/Sohaib-Ahmed21",
       "contributions": [
+        "bug",
         "code"
       ]
     },
@@ -3455,6 +3456,16 @@
         "code",
         "doc",
         "test"
+      ]
+    },
+    {
+      "login": "mujeeb4",
+      "name": "Muhammad Mujeeb",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70962107?v=4",
+      "profile": "https://github.com/Mujeeb4",
+      "contributions": [
+        "code",
+        "maintenance"
       ]
     },
     {
