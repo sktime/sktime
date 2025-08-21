@@ -26,7 +26,7 @@ from sktime.utils.dependencies import _check_python_version, _check_soft_depende
 # excludes estimators, only for soft dependencies used in non-estimator modules
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.benchmarking.experiments": ["tsfresh", "esig"],
+    "sktime.benchmarking.experiments": ["tsfresh"],
     "sktime.classification.deep_learning": ["tensorflow"],
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
@@ -361,7 +361,7 @@ def test_check_python_version(
     except ModuleNotFoundError as exception:
         expected_msg = (
             f"{type(dummy_object_instance).__name__} requires python version "
-            f"to be {dummy_object_instance.get_tags()['python_version']}, "
+            f"to be {dummy_object_instance.get_tag('python_version')}, "
             f"but system python version is {mock_sys.version}. "
             "This is due to the release candidate status of your system Python."
         )

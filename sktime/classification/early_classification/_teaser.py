@@ -141,6 +141,10 @@ class TEASER(BaseEarlyClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
         if self.estimator is not None and not callable(m):

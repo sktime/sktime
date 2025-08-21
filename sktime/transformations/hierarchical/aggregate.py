@@ -25,6 +25,10 @@ class Aggregator(BaseTransformer):
     flatten_single_level : boolean (default=True)
         Remove aggregate nodes, i.e. ("__total"), where there is only a single
         child to the level
+    bypass_inverse_transform : boolean (default=True)
+        If True, the inverse_transform method is skipped. If False, the
+        inverse_transform method is implemented and can be used to remove
+        aggregate levels from the data.
 
     See Also
     --------
@@ -67,7 +71,7 @@ class Aggregator(BaseTransformer):
             "pd_multiindex_hier",
         ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": False,  # does transformer have inverse
+        "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -76,10 +80,20 @@ class Aggregator(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    def __init__(self, flatten_single_levels=True):
+    def __init__(self, flatten_single_levels=True, bypass_inverse_transform=True):
         self.flatten_single_levels = flatten_single_levels
+        self.bypass_inverse_transform = bypass_inverse_transform
 
         super().__init__()
+
+        if not self.bypass_inverse_transform:
+            self.set_tags(
+                **{
+                    "skip-inverse-transform": False,
+                    "capability:inverse_transform": True,
+                    "capability:inverse_transform:exact": False,
+                }
+            )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -185,7 +199,8 @@ class Aggregator(BaseTransformer):
             )
         else:
             for i in range(X.index.nlevels - 1):
-                X = X.drop(index="__total", level=i)
+                # Ignoring since there can be totals in some levels, but not all
+                X = X.drop(index="__total", level=i, errors="ignore")
         return X
 
     @classmethod
