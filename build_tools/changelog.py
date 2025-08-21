@@ -136,13 +136,15 @@ def render_row(pr):
         import re
 
         # Pattern to match package name and version bounds
-        pattern = r'Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)'
+        pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"
         match = re.search(pattern, title)
 
         if match:
             package, from_ver, to_ver = match.groups()
             # Replace with proper backticks
-            title = f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
+            title = (
+                f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
+            )
 
     # Replace single backticks with double backticks
     title = title.replace("`", "``")
@@ -153,8 +155,8 @@ def render_row(pr):
         title,
         f"(:pr:`{pr['number']}`)",
         # Add extra credited users
-        " ".join([f":user:`{user}`" for user in extra_users]) + 
-        (", " if extra_users else ""),
+        " ".join([f":user:`{user}`" for user in extra_users])
+        + (", " if extra_users else ""),
         f":user:`{pr['user']['login']}`",
     )
 
@@ -182,7 +184,7 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
 
 def render_changelog(prs, assigned, label_to_subsection=None, module_order=None):
     """Render changelog with subsections based on module tags.
-    
+
     Parameters
     ----------
     prs : list
@@ -237,9 +239,7 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
                 print(subsection_title)
                 print("^" * len(subsection_title))
                 print()
-                for pr in sorted(
-                    pr_list, key=lambda x: parser.parse(x["merged_at"])
-                ):
+                for pr in sorted(pr_list, key=lambda x: parser.parse(x["merged_at"])):
                     render_row(pr)
 
         if title in ["Enhancements", "Fixes"]:
