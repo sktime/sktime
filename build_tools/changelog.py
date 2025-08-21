@@ -139,11 +139,12 @@ def render_row(pr):
         pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
         match = re.search(pattern, title)
 
-        pattern2 = r"Bump ([\w\-/]+) from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
+        pattern2 = r"Bump ([\w\-/]+) from (\d+(?:\.\d+)*) to (\d+(?:\.\d+)*)"  # noqa: E501
         match2 = re.search(pattern2, title)
 
         if match or match2:
-            package, from_ver, to_ver = match.groups()
+            m = match if match else match2
+            package, from_ver, to_ver = m.groups()
 
             # add double backticks if not already present
             def add_backticks(text):
