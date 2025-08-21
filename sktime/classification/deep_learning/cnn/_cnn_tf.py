@@ -9,7 +9,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNNClassifier(BaseDeepClassifier):
