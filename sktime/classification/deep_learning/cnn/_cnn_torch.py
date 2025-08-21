@@ -161,7 +161,6 @@ class CNNClassifierTorch(BaseDeepClassifier):
         filter_sizes=None,
         padding="auto",
     ):
-
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
