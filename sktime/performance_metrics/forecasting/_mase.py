@@ -18,6 +18,10 @@ from sktime.performance_metrics.forecasting._base import (
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     r"""Mean absolute scaled error (MASE).
 
+    MASE output is non-negative floating point, in fractional units
+    relative to a specified denominator.
+    Lower is better, and the lowest possible value is 0.0.
+
     For a univariate, non-hierarchical sample of
     true values :math:`y_1, \dots, y_n`,
     pred values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),
@@ -34,7 +38,9 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     where :math:`s` is the seasonal periodicity (`sp`), and
     the denominator is the in-sample mean absolute error of the seasonal naive forecast.
 
-    MASE output is non-negative floating point. The best value is 0.0.
+    To avoid division by zero, the denominator above is replaced by ``eps``
+    if it is smaller than ``eps``; the value of ``eps`` defaults to
+    ``np.finfo(np.float64).eps`` if not specified.
 
     Like other scaled performance metrics, this scale-free error metric can be
     used to compare forecast methods on a single series and also to compare
