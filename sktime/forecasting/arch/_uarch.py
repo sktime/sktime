@@ -163,10 +163,8 @@ class ARCH(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "capability:insample": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "capability:pred_int:insample": False,
         "ignores-exogeneous-X": True,
     }
 
@@ -306,9 +304,13 @@ class ARCH(BaseForecaster):
         """
         if fh:
             self._horizon = fh
+            abs_idx = self._horizon.to_absolute_int(self._y.index[-1], self.cutoff)
+            end = abs_idx[-1]
 
-        abs_idx = self._horizon.to_absolute_int(self._y.index[-1], self.cutoff)
-        end = abs_idx[-1]
+        # all fh are in sample
+        if self._horizon.is_all_in_sample(self.cutoff):
+            # horizon in arch_model must be >=1
+            end = 1
 
         if X is not None:
             x = {}
@@ -349,14 +351,22 @@ class ARCH(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        y_pred = pd.Series(
-            ArchResultObject.mean.values[-1],
-            index=full_range,
-            name=self._y.name,
-        )
-        y_pred = y_pred.loc[abs_idx.to_pandas()]
-        y_pred.index = self._horizon.to_absolute_index(self.cutoff)
+        # all out of sample
+        if fh.is_all_out_of_sample(self.cutoff):
+            y_pred = self._predict_out_of_sample(fh=fh, X=X, type="mean")
+
+        # all in sample
+        elif fh.is_all_in_sample(self.cutoff):
+            y_pred = self._predict_in_sample(fh=fh, X=X, type="mean")
+
+        # both out of sample and in sample
+        else:
+            fh_oos = fh.to_out_of_sample(self.cutoff)
+            fh_ins = fh.to_in_sample(self.cutoff)
+
+            y_pred_oos = self._predict_out_of_sample(fh=fh_oos, X=X, type="mean")
+            y_pred_ins = self._predict_in_sample(fh=fh_ins, X=X, type="mean")
+            y_pred = pd.concat((y_pred_ins, y_pred_oos), axis=0)
 
         return y_pred
 
@@ -466,16 +476,84 @@ class ARCH(BaseForecaster):
         pred_var : pd.DataFrame
             Variance forecasts
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        pred_var = pd.Series(
-            ArchResultObject.variance.values[-1],
-            index=full_range,
-            name=self._y.name,
-        )
-        pred_var = pred_var.loc[abs_idx.to_pandas()]
-        pred_var.index = self._horizon.to_absolute_index(self.cutoff)
+        # all out of sample
+        if fh.is_all_out_of_sample(self.cutoff):
+            pred_var = self._predict_out_of_sample(fh=fh, X=X, type="variance")
+
+        # all in sample
+        elif fh.is_all_in_sample(self.cutoff):
+            pred_var = self._predict_in_sample(fh=fh, X=X, type="variance")
+
+        # both out of sample and in sample
+        else:
+            fh_oos = fh.to_out_of_sample(self.cutoff)
+            fh_ins = fh.to_in_sample(self.cutoff)
+
+            pred_var_oos = self._predict_out_of_sample(fh=fh_oos, X=X, type="variance")
+            pred_var_ins = self._predict_in_sample(fh=fh_ins, X=X, type="variance")
+            pred_var = pd.concat((pred_var_ins, pred_var_oos), axis=0)
 
         return pred_var
+
+    def _predict_out_of_sample(self, fh, X=None, type="mean"):
+        """Generate out of sample predictions.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+        type : str, optional (default="mean")
+            Type of prediction to return. Can be either "mean" or "variance".
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
+        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
+        if type == "mean":
+            y_pred = pd.Series(
+                ArchResultObject.mean.values[-1],
+                index=full_range,
+                name=self._y.name,
+            )
+        elif type == "variance":
+            y_pred = pd.Series(
+                ArchResultObject.variance.values[-1],
+                index=full_range,
+                name=self._y.name,
+            )
+        y_pred = y_pred.loc[abs_idx.to_pandas()]
+        y_pred.index = fh.to_absolute_index(self.cutoff)
+
+        return y_pred
+
+    def _predict_in_sample(self, fh, X=None, type="mean"):
+        """Generate in sample predictions.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+        type : str, optional (default="mean")
+            Type of prediction to return. Can be either "mean" or "variance".
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
+        if type == "mean":
+            y_pred = self._y - self._fitted_forecaster.resid
+        if type == "variance":
+            y_pred = (self._fitted_forecaster.conditional_volatility) ** 2
+        y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
+
+        return y_pred
 
     def _get_fitted_params(self):
         """Get fitted parameters.
