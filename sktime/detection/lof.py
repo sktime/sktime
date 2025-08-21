@@ -135,6 +135,9 @@ class SubLOF(BaseDetector):
         "learning_type": "unsupervised",
         "univariate-only": False,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

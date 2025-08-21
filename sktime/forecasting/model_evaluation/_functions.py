@@ -430,7 +430,7 @@ def evaluate(
 
     The experiment run is the following:
 
-    In  case of non-global evaluation (cv_global=None):
+    In case of non-global evaluation (cv_global=None):
 
     Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
     the train/test folds produced by the generator ``cv.split_series(y)``.
@@ -533,7 +533,7 @@ def evaluate(
         Parallelization backend to use for runs.
         Runs parallel evaluate if specified and ``strategy="refit"``.
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment

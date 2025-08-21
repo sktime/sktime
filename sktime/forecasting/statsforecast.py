@@ -189,7 +189,11 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.0.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.0.0", "scipy<1.16"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -351,12 +355,13 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
 
-    decomposition_type : str, optional, default="multipliciative"
+    decomposition_type : str, optional, default="multiplicative"
         possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
+        possible values: "STM", "OTM", "DSTM", "DOTM"
 
     References
     ----------
@@ -386,7 +391,8 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.3.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.3.0", "scipy<1.16"],
     }
 
     def __init__(
@@ -463,11 +469,11 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="ZZZ")
         Controlling state-space-equations.
-    damped : bool
+    damped : bool, optional (default=None)
         A parameter that 'dampens' the trend.
     phi : float, optional (default=None)
         Smoothing parameter for trend damping. Only used when ``damped=True``.
@@ -501,7 +507,8 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.3.2"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.3.2", "scipy<1.16"],
     }
 
     def __init__(
@@ -579,9 +586,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="Z")
         Controlling state-space-equations.
 
     References
@@ -609,7 +616,8 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.1.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.1.0", "scipy<1.16"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -674,7 +682,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    seasonal_periods : int or list of int.
+    seasonal_periods : int or list of int. (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
@@ -719,12 +727,13 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.7.2"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.7.2", "scipy<1.16"],
     }
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]],
+        seasonal_periods: Union[int, list[int]] = 1,
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
@@ -863,7 +872,8 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "python_dependencies": ["statsforecast>=1.2.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.2.0", "scipy<1.16"],
     }
 
     def __init__(
@@ -1034,7 +1044,8 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.4.0"],
+        # todo 0.39.0: check whether scipy<1.16 is still needed
+        "python_dependencies": ["statsforecast>=1.4.0", "scipy<1.16"],
     }
 
     def __init__(
