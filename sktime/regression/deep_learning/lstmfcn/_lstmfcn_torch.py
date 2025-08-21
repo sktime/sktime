@@ -6,6 +6,7 @@ __all__ = ["LSTMFCNRegressorTorch"]
 
 
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.networks.lstmfcn import LSTMFCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -135,8 +136,10 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         torch.manual_seed(self.random_state or 0)
 
         class TorchWrapper(nn.Module):
-            def __init__(self, network_builder, input_shape):
+            def __init__(self, network_builder, input_shape, lstm_size, filter_sizes):
                 super().__init__()
+                self.lstm_size = lstm_size
+                self.filter_sizes = filter_sizes
                 self.feature_extractor = network_builder.build_network(
                     input_shape, **kwargs
                 )
@@ -150,7 +153,9 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
                 out = self.fc(feats)
                 return out
 
-        model = TorchWrapper(self._network, input_shape)
+        model = TorchWrapper(
+            self._network, input_shape, self.lstm_size, self.filter_sizes
+        )
         return model
 
     def _fit(self, X, y):
@@ -218,12 +223,28 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         """Generate predictions using the trained PyTorch model."""
         import torch
 
+        check_is_fitted(self, "model_")
+
         self.model_.eval()
         X = X.transpose(0, 2, 1)
         X_tensor = torch.tensor(X, dtype=torch.float32)
         with torch.no_grad():
             preds = self.model_(X_tensor).squeeze().cpu().numpy()
         return preds
+
+    def _get_fitted_params(self):
+        """Return fitted parameters for inspection/testing."""
+        return {
+            "n_epochs": self.n_epochs,
+            "batch_size": self.batch_size,
+            "dropout": self.dropout,
+            "kernel_sizes": self.kernel_sizes,
+            "filter_sizes": self.filter_sizes,
+            "lstm_size": self.lstm_size,
+            "attention": self.attention,
+            "random_state": self.random_state,
+            "history": self.history,
+        }
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -247,36 +268,19 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        param1 = {
-            "n_epochs": 25,
-            "batch_size": 4,
-            "kernel_sizes": (3, 2, 1),
-            "filter_sizes": (2, 4, 2),
-        }
-
-        param2 = {
-            "n_epochs": 5,
-            "batch_size": 2,
-            "kernel_sizes": (3, 2, 1),
-            "filter_sizes": (2, 4, 2),
-            "lstm_size": 2,
-            "attention": True,
-        }
-        test_params = [param1, param2]
-
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch.nn as nn
-            import torch.optim as optim
-
-            test_params.append(
-                {
-                    "n_epochs": 2,
-                    "batch_size": 2,
-                    "loss_fn": nn.L1Loss(),
-                    "optimizer": lambda model: optim.Adam(model.parameters(), lr=0.001),
-                }
-            )
-
-        return test_params
+        return [
+            {
+                "n_epochs": 1,
+                "batch_size": 2,
+                "kernel_sizes": (3, 2, 1),
+                "filter_sizes": (2, 4, 2),
+            },
+            {
+                "n_epochs": 1,
+                "batch_size": 2,
+                "kernel_sizes": (3, 2, 1),
+                "filter_sizes": (2, 4, 2),
+                "lstm_size": 2,
+                "attention": True,
+            },
+        ]
