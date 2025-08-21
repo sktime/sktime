@@ -159,28 +159,6 @@ def render_row(pr):
     )
 
 
-def render_contributors(prs: list, fmt: str = "rst"):
-    """Find unique authors and print a list in  given format.
-
-    Parameters
-    ----------
-    prs : list
-        List of pull requests
-    fmt : str, default="rst"
-        Format of the output, either "github" or "rst"
-    """
-    authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
-
-    header = "Contributors"
-    if fmt == "github":
-        print(f"### {header}")
-        print(", ".join(f"@{user}" for user in authors))
-    elif fmt == "rst":
-        print(header)
-        print("~" * len(header), end="\n\n")
-        print(",\n".join(f":user:`{user}`" for user in authors))
-
-
 def assign_prs(prs, categs: list[dict[str, list[str]]]):
     """Assign PR to categories based on labels."""
     assigned = defaultdict(list)
@@ -278,6 +256,28 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
         else:
             for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
                 render_row(pr)
+
+
+def render_contributors(prs: list, fmt: str = "rst"):
+    """Find unique authors and print a list in  given format.
+
+    Parameters
+    ----------
+    prs : list
+        List of pull requests
+    fmt : str, default="rst"
+        Format of the output, either "github" or "rst"
+    """
+    authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
+
+    header = "Contributors"
+    if fmt == "github":
+        print(f"### {header}")
+        print(", ".join(f"@{user}" for user in authors))
+    elif fmt == "rst":
+        print(header)
+        print("~" * len(header), end="\n\n")
+        print(",\n".join(f":user:`{user}`" for user in authors))
 
 
 if __name__ == "__main__":
