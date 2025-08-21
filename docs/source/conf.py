@@ -4,6 +4,10 @@
 import datetime
 import os
 import sys
+import warnings
+from pathlib import Path
+
+from bs4 import BeautifulSoup
 
 import sktime
 
@@ -108,7 +112,9 @@ numpydoc_show_class_members = True
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
-numpydoc_validation_checks = {"all"}
+# https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
+# Let's turn of the check for building but keep it in pre-commit hooks
+numpydoc_validation_checks = set()
 
 # generate autosummary even if no references
 autosummary_generate = True
@@ -132,7 +138,17 @@ add_function_parentheses = False
 # configuration. This ensures that MathJax processes only math, identified by the
 # dollarmath and amsmath extensions, or specified in math directives. We here silence
 # the corresponding warning that this override happens.
-suppress_warnings = ["myst.mathjax"]
+suppress_warnings = [
+    "myst.mathjax",
+    "docutils",
+    "toc.not_included",
+    "autodoc.import_object",
+    "autosectionlabel",
+    "ref",
+]
+# FIXME: Temporary solution until numpydoc issues are fixed
+warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
+show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
 issues_github_path = "sktime/sktime"
@@ -203,18 +219,13 @@ html_theme_options = {
             "icon": "fab fa-linkedin",
         },
     ],
-    "favicons": [
-        {
-            "rel": "icon",
-            "sizes": "16x16",
-            "href": "images/sktime-favicon.ico",
-        }
-    ],
     "show_prev_next": False,
     "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "show_toc_level": 2,
+    "secondary_sidebar_items": ["page-toc", "sourcelink"],
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
@@ -350,7 +361,7 @@ def _make_estimator_overview(app):
             "capability:insample",
             "capability:pred_int",
             "capability:pred_int:insample",
-            "handles-missing-data",
+            "capability:missing_values",
             "ignores-exogeneous-X",
             "scitype:y",
             "requires-fh-in-fit",
@@ -364,7 +375,7 @@ def _make_estimator_overview(app):
             "scitype:transform-output",
             "scitype:transform-labels",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "capability:missing_values:removes",
             "capability:unequal_length",
             "capability:unequal_length:removes",
@@ -414,6 +425,7 @@ def _make_estimator_overview(app):
         ],
         "classifier": [
             "capability:multivariate",
+            "capability:predict_proba",
             "capability:multioutput",
             "capability:unequal_length",
             "capability:missing_values",
@@ -518,14 +530,11 @@ def _make_estimator_overview(app):
         modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
-        clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
+        # includes part of class string
+        url = obj_class._generate_doc_link()
         # adds html link reference
-        obj_name = (
-            """<a href='#'"""
-            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
-        )
+        obj_name = f"""<a href={url}>{obj_name}</a>"""
 
         # determine the "main" object type
         # this is the first in the list that also appears in the dropdown menu
@@ -562,6 +571,32 @@ def _make_estimator_overview(app):
     # pass
 
 
+# Removes class name from method names in right sidebar, aka, page-toc.
+# For example, on the page for a forecaster, the methods are listed with
+# forecasterclass.method_name on the right sidebar. This function removes
+# forecasterclass and keeps method_name only.
+def _process_in_page_toc(app, exception):
+    if app.builder.format != "html":
+        return
+
+    for pagename in app.env.found_docs:
+        if not isinstance(pagename, str):
+            continue
+
+        with (Path(app.outdir) / f"{pagename}.html").open("r") as f:
+            # Parse HTML using BeautifulSoup html parser
+            soup = BeautifulSoup(f.read(), "html.parser")
+
+            for li in soup.find_all("li", class_="toc-h3 nav-item toc-entry"):
+                if span := li.find("span"):
+                    # Modify the toc-nav span element here
+                    span.string = span.string.split(".")[-1]
+
+        with (Path(app.outdir) / f"{pagename}.html").open("w") as f:
+            # Write back HTML
+            f.write(str(soup))
+
+
 def setup(app):
     """Set up sphinx builder.
 
@@ -577,6 +612,7 @@ def setup(app):
     adds("fields.css")  # for parameters, etc.
 
     app.connect("builder-inited", _make_estimator_overview)
+    app.connect("build-finished", _process_in_page_toc)
 
 
 # -- Extension configuration -------------------------------------------------

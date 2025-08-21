@@ -4,8 +4,14 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._hierarchical._registry import MTYPE_LIST_HIERARCHICAL
 from sktime.utils.dependencies import _check_soft_dependencies
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_HIERARCHICAL = [
+    "pd_multiindex_hier",
+    "dask_hierarchical",
+    "polars_hierarchical",
+]
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type

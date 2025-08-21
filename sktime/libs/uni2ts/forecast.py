@@ -21,6 +21,8 @@ from typing import Any, Optional
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.utils.dependencies import _safe_import
+
 if _check_soft_dependencies("lightning", severity="none"):
     import lightning as L
 
@@ -39,16 +41,19 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-if _check_soft_dependencies(["gluonts", "torch"], severity="none"):
-    from gluonts.model import Input, InputSpec
-    from gluonts.torch import PyTorchPredictor
-    from gluonts.transform import (
-        AddObservedValuesIndicator,
-        AsNumpyArray,
-        ExpandDimArray,
-        TestSplitSampler,
-    )
-    from gluonts.transform.split import TFTInstanceSplitter
+Input = _safe_import("gluonts.model.Input")
+InputSpec = _safe_import("gluonts.model.InputSpec")
+
+PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+
+AddObservedValuesIndicator = _safe_import(
+    "gluonts.transform.AddObservedValuesIndicator"
+)
+AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
+TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
+
+TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
 
 
 from sktime.libs.uni2ts.common.torch_util import safe_div

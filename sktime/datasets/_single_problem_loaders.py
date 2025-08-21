@@ -43,7 +43,6 @@ __all__ = [
 ]
 
 import os
-import zipfile
 from urllib.error import HTTPError, URLError
 from warnings import warn
 
@@ -51,12 +50,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.datasets._data_io import (
-    _download_and_extract,
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
     _reduce_memory_usage,
 )
+from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -205,7 +204,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None, y_dtype="float")
     Manuscript 1132, Danish Meat Research Institute (1993), p 1-12.
     """
     name = "Tecator"
-    return _load_dataset(
+    return _load_provided_dataset(
         name, split, return_X_y, return_type=return_type, y_dtype=y_dtype
     )
 
@@ -249,7 +248,7 @@ def load_plaid(split=None, return_X_y=True, return_type=None):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_gunpoint(split=None, return_X_y=True, return_type=None):
@@ -317,7 +316,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_osuleaf(split=None, return_X_y=True, return_type=None):
@@ -375,7 +374,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
@@ -430,7 +429,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
@@ -558,7 +557,7 @@ def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_arrow_head(split=None, return_X_y=True, return_type=None):
@@ -683,7 +682,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y, return_type=return_type)
+    return _load_provided_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
@@ -1460,19 +1459,11 @@ def load_forecastingdata(
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"
 
-        # This also tests the validity of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=path_to_data_dir,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                f"Invalid dataset name ={name} is not available on extract path ="
-                f"{extract_path}. Nor is it available on "
-                f"https://forecastingdata.org/.",
-            ) from e
+        forecastingdata_downloader = DatasetDownloader(
+            hf_repo_name="sktime/tsf-datasets", folder_name=name, fallback_urls=[url]
+        )
+
+        forecastingdata_downloader.download(download_path=path_to_data_dir)
 
     path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
     return load_tsf_to_dataframe(
@@ -1502,7 +1493,7 @@ def load_m5(
         If `extract_path` is provided:
             - Check if the required files are present at the given `extract_path`.
             - If files are not found, check if the directory "m5-forecasting-accuracy"
-              exists within the `extract_path`. Useful when the funciton has already
+              exists within the `extract_path`. Useful when the function has already
               run previously with the same path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder in the `extract_path`.
@@ -1512,7 +1503,7 @@ def load_m5(
             - Check if the directory "m5-forecasting-accuracy" exists within the module
               level.
             - If the directory exists, takes path to current directory.
-              Useful when the funciton has already run previously without any path.
+              Useful when the function has already run previously without any path.
             - If the directory does not exist, download and extract the data into
               "m5-forecasting-accuracy" folder at the module level.
 
@@ -1569,43 +1560,33 @@ def load_m5(
 
     Examples
     --------
-    >>> data = load_m5()
-    >>> data.head()
+    >>> from sktime.datasets import load_m5  # doctest: +SKIP
+    >>> data = load_m5()  # doctest: +SKIP
+    >>> data.head()  # doctest: +SKIP
     """
     required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
 
-    if extract_path is not None:
-        if all(
-            os.path.exists(os.path.join(extract_path, file)) for file in required_files
-        ):
-            # checks if the required files are present at given extract_path
-            path_to_data_dir = extract_path
+    extract_path = extract_path if extract_path is not None else MODULE
 
-        else:
-            if not os.path.exists(
-                os.path.join(extract_path, "m5-forecasting-accuracy")
-            ):
-                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
-
-                _download_and_extract(
-                    "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                    extract_path=extract_path,
-                )
-
-            else:
-                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
-
+    if required_files and all(
+        os.path.exists(os.path.join(extract_path, file)) for file in required_files
+    ):
+        path_to_data_dir = extract_path
     else:
-        extract_path = MODULE
-        if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
-            path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+        data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
-            _download_and_extract(
-                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=extract_path,
+        if not os.path.exists(data_dir):
+            m5_url = (
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
             )
-        else:
-            path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
+            m5_downloader = DatasetDownloader(
+                hf_repo_name="sktime/tsf-datasets",
+                folder_name="m5-forecasting-accuracy",
+                fallback_urls=[m5_url],
+            )
+            m5_downloader.download(download_path=extract_path)
+
+        path_to_data_dir = data_dir
 
     sales_train_validation = _reduce_memory_usage(
         pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")

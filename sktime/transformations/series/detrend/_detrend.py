@@ -87,6 +87,9 @@ class Detrender(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecaster=None, model="additive"):
