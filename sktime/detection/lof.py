@@ -169,9 +169,8 @@ class SubLOF(BaseDetector):
 
         Parameters
         ----------
-        X : pd.DataFrame, pd.Series or np.ndarray
+        X : pd.DataFrame
             Training data to fit model to (time series).
-            Will be converted to internal format.
         """
         model_params = {
             "n_neighbors": self.n_neighbors,
