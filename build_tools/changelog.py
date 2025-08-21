@@ -114,8 +114,61 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
         raise ValueError(response.text, response.status_code)
 
 
+def render_row(pr):
+    """Render a single row with PR in restructuredText format."""
+    # Process the title to handle user credits at beginning of title
+    title = pr["title"]
+    extra_users = []
+
+    # Check for prefixed user credits like &username
+    if title.startswith("&"):
+        parts = title.split(" ", 1)
+        user_part = parts[0].strip()
+        if len(parts) > 1:
+            title = parts[1].strip()
+            # Extract username without the & prefix
+            username = user_part[1:]
+            extra_users.append(username)
+
+    # Handle dependabot PRs specially to enclose package names and versions in double backticks
+    if "dependabot" in pr["user"]["login"].lower():
+        # Match patterns like "Update package requirement from <1.0.0 to <2.0.0"
+        import re
+
+        # Pattern to match package name and version bounds
+        pattern = r'Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)'
+        match = re.search(pattern, title)
+
+        if match:
+            package, from_ver, to_ver = match.groups()
+            # Replace with proper backticks
+            title = f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
+
+    # Replace single backticks with double backticks
+    title = title.replace("`", "``")
+
+    # Print the PR line
+    print(
+        "*",
+        title,
+        f"(:pr:`{pr['number']}`)",
+        # Add extra credited users
+        " ".join([f":user:`{user}`" for user in extra_users]) + 
+        (", " if extra_users else ""),
+        f":user:`{pr['user']['login']}`",
+    )
+
+
 def render_contributors(prs: list, fmt: str = "rst"):
-    """Find unique authors and print a list in  given format."""
+    """Find unique authors and print a list in  given format.
+
+    Parameters
+    ----------
+    prs : list
+        List of pull requests
+    fmt : str, default="rst"
+        Format of the output, either "github" or "rst"
+    """
     authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
     header = "Contributors"
@@ -158,49 +211,20 @@ def render_row(pr):
     )
 
 
-def render_changelog(prs, assigned):
-    """Render changelog."""
-    # sourcery skip: use-named-expression
-    LABEL_TO_SUBSECTION = {
-        "module:base-framework": "BaseObject and base framework",
-        "module:deep-learning&networks": "Other",
-        "module:detection": "Time series anomalies, changepoints, segmentation",
-        "module:distances&kernels": "Time series anomalies, changepoints, segmentation",
-        "module:datasets&loaders": "Data sets and data loaders",
-        "module:datatypes": "Datatypes, checks, conversions",
-        "module:forecasting": "Forecasting",
-        "module:metrics&benchmarking": "Benchmarking, Metrics, Splitters",
-        "module:parameter-estimators": "Parameter estimation and hypothesis testing",
-        "module:plotting&utilities": "Other",
-        "module:probability&simulation": "Other",
-        "module:splitters&resamplers": "Benchmarking, Metrics, Splitter",
-        "module:classification": "Time series classification",
-        "module:clustering": "Time series clustering",
-        "module:regression": "Time series regression",
-        "module:transformations": "Transformations",
-        "module:tests": "Test framework",
-    }
-    # labels start with module
-    # Subsection title comes after label
-
-    MODULE_ORDER = [
-        "BaseObject and base framework",
-        "Benchmarking, Metrics, Splitters",
-        "Data sets and data loaders",
-        "Datatypes, checks, conversions",
-        "Forecasting",
-        "Parameter estimation and hypothesis testing",
-        "Registry and search",
-        "Time series alignment",
-        "Time series anomalies, changepoints, segmentation",
-        "Time series classification",
-        "Time series clustering",
-        "Time series regression",
-        "Transformations",
-        "Test framework",
-        "Other",
-    ]
-
+def render_changelog(prs, assigned, label_to_subsection=None, module_order=None):
+    """Render changelog with subsections based on module tags.
+    
+    Parameters
+    ----------
+    prs : list
+        List of pull requests.
+    assigned : dict
+        Dictionary mapping category titles to list of PR indices.
+    label_to_subsection : dict, optional
+        Dictionary mapping module tags to subsection titles.
+    module_order : list, optional
+        List of subsection titles in the desired order.
+    """
     from dateutil import parser
 
     SECTION_ORDER = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Other"]
@@ -257,6 +281,9 @@ def render_changelog(prs, assigned):
 
 
 if __name__ == "__main__":
+
+    # configuration of categories, sections, label mapping, and order
+    # ---------------------------------------------------------------
     categories = [
         {"title": "Enhancements", "labels": ["feature", "enhancement"]},
         {"title": "Documentation", "labels": ["documentation"]},
@@ -264,10 +291,58 @@ if __name__ == "__main__":
         {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
     ]
 
+    # sourcery skip: use-named-expression
+    LABEL_TO_SUBSECTION = {
+        "module:base-framework": "BaseObject and base framework",
+        "module:deep-learning&networks": "Other",
+        "module:detection": "Time series anomalies, changepoints, segmentation",
+        "module:distances&kernels": "Time series anomalies, changepoints, segmentation",
+        "module:datasets&loaders": "Data sets and data loaders",
+        "module:datatypes": "Datatypes, checks, conversions",
+        "module:forecasting": "Forecasting",
+        "module:metrics&benchmarking": "Benchmarking, Metrics, Splitters",
+        "module:parameter-estimators": "Parameter estimation and hypothesis testing",
+        "module:plotting&utilities": "Other",
+        "module:probability&simulation": "Other",
+        "module:splitters&resamplers": "Benchmarking, Metrics, Splitter",
+        "module:classification": "Time series classification",
+        "module:clustering": "Time series clustering",
+        "module:regression": "Time series regression",
+        "module:transformations": "Transformations",
+        "module:tests": "Test framework",
+    }
+    # labels start with module
+    # Subsection title comes after label
+
+    MODULE_ORDER = [
+        "BaseObject and base framework",
+        "Benchmarking, Metrics, Splitters",
+        "Data sets and data loaders",
+        "Datatypes, checks, conversions",
+        "Forecasting",
+        "Parameter estimation and hypothesis testing",
+        "Registry and search",
+        "Time series alignment",
+        "Time series anomalies, changepoints, segmentation",
+        "Time series classification",
+        "Time series clustering",
+        "Time series regression",
+        "Transformations",
+        "Test framework",
+        "Other",
+    ]
+
+    # end configuration
+
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
     assigned = assign_prs(pulls, categories)
-    render_changelog(pulls, assigned)
+    render_changelog(
+        pulls,
+        assigned,
+        label_to_subsection=LABEL_TO_SUBSECTION,
+        module_order=MODULE_ORDER,
+    )
     print()
     render_contributors(pulls)
 
