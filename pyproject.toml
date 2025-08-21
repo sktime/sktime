@@ -83,7 +83,6 @@ all_extras = [
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
-  'esig==0.9.7; python_version < "3.10" and platform_machine != "aarch64"',
   'filterpy>=1.4.5; python_version < "3.11"',
   'gluonts>=0.9; python_version < "3.13"',
   'h5py; python_version < "3.12"',
@@ -126,7 +125,6 @@ all_extras_pandas2 = [
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
-  'esig==0.9.7; python_version < "3.10" and platform_machine != "aarch64"',
   'filterpy>=1.4.5; python_version < "3.11"',
   'gluonts>=0.9; python_version < "3.13"',
   'h5py; python_version < "3.12"',
@@ -178,7 +176,6 @@ annotation = [
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
-  'esig<0.10,>=0.9.7; python_version < "3.11" and platform_machine != "aarch64"',
   'numba<0.62,>=0.53; python_version < "3.13"',
   'tensorflow<2.20,>=2; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
@@ -217,7 +214,6 @@ regression = [
   'tensorflow<2.20,>=2; python_version < "3.13"',
 ]
 transformations = [
-  'esig<0.10,>=0.9.7; python_version < "3.11" and platform_machine != "aarch64"',
   'filterpy<1.5,>=1.4.5; python_version < "3.13"',
   'holidays>=0.29,<0.59; python_version < "3.13"',
   'mne>=1.5,<1.9; python_version < "3.13"',
@@ -262,7 +258,7 @@ tests = [
   "pytest>=7.4,<8.5",
   "pytest-randomly>=3.15,<3.17",
   "pytest-timeout>=2.1,<2.5",
-  "pytest-xdist>=3.3,<3.8",
+  "pytest-xdist>=3.3,<3.9",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
@@ -277,6 +273,7 @@ cython_extras = [
   "numba<0.62",
 ]
 datasets = [
+  "huggingface-hub",
   "rdata",
   "requests",
 ]
