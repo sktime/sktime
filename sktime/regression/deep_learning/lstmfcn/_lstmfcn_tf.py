@@ -2,7 +2,7 @@
 
 __author__ = ["jnrusson1", "solen0id", "nilesh05apr"]
 
-__all__ = ["LSTMFCNRegressorTorch"]
+__all__ = ["LSTMFCNRegressorTF"]
 
 from copy import deepcopy
 
@@ -12,7 +12,7 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class LSTMFCNRegressorTorch(BaseDeepRegressor):
+class LSTMFCNRegressorTF(BaseDeepRegressor):
     """Implementation of LSTMFCNRegressor from Karim et al (2019) [1].
 
     Overview
@@ -37,7 +37,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
     attention: boolean, default=False
         If True, uses custom attention LSTM layer
     callbacks: keras callbacks, default=ReduceLRonPlateau
-        (Ignored in PyTorch version) Keras callbacks to use such as learning rate reduction or saving best model
+        Keras callbacks to use such as learning rate reduction or saving best model
         based on validation error
     verbose: 'auto', 0, 1, or 2. Verbosity mode.
         0 = silent, 1 = progress bar, 2 = one line per epoch.
@@ -71,7 +71,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         # --------------
         "authors": ["jnrusson1", "solen0id"],
         "maintainers": ["jnrusson1", "solen0id", "nilesh05apr"],
-        "python_dependencies": "torch",
+        "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }
 
@@ -97,7 +97,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         self.dropout = dropout
         self.attention = attention
 
-        self.callbacks = callbacks  # kept for API compatibility, unused in torch
+        self.callbacks = callbacks
         self.random_state = random_state
         self.verbose = verbose
 
@@ -105,7 +105,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
 
         self.input_shape = None
         self.model_ = None
-        self.history = []
+        self.history = None
 
         self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
@@ -118,7 +118,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
 
     def build_model(self, input_shape, **kwargs):
         """
-        Construct a compiled, un-trained, PyTorch model that is ready for training.
+        Construct a compiled, un-trained, keras model that is ready for training.
 
         ----------
         input_shape : tuple
@@ -126,29 +126,27 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
 
         Returns
         -------
-        output : a PyTorch nn.Module
+        output : a compiled Keras Model
         """
-        import torch
-        import torch.nn as nn
+        import tensorflow as tf
+        from tensorflow import keras
 
-        # set seed for reproducibility
-        torch.manual_seed(self.random_state or 0)
+        tf.random.set_seed(self.random_state)
 
-        class TorchWrapper(nn.Module):
-            def __init__(self, network_builder, input_shape):
-                super().__init__()
-                self.feature_extractor = network_builder.build_network(input_shape, **kwargs)
-                if isinstance(self.feature_extractor, tuple):
-                    _, out = self.feature_extractor
-                    self.feature_extractor = out
-                self.fc = nn.Linear(self.lstm_size + self.filter_sizes[-1], 1)
+        input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
-            def forward(self, x):
-                feats = self.feature_extractor(x)
-                out = self.fc(feats)
-                return out
+        output_layer = keras.layers.Dense(units=1)(output_layer)
 
-        model = TorchWrapper(self._network, input_shape)
+        model = keras.models.Model(inputs=input_layers, outputs=output_layer)
+
+        model.compile(
+            loss="mean_squared_error",
+            optimizer="sgd",
+            metrics=["accuracy"],
+        )
+
+        self._callbacks = self.callbacks or None
+
         return model
 
     def _fit(self, X, y):
@@ -169,7 +167,8 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         """
         check_random_state(self.random_state)
 
-        # Transpose to conform to Conv1d input style: (batch, channels, length)
+        # Remove?
+        # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
         # ignore the number of instances, X.shape[0],
@@ -178,44 +177,19 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
 
         self.model_ = self.build_model(self.input_shape)
 
-        import torch
-        import torch.nn as nn
-        import torch.optim as optim
+        if self.verbose:
+            self.model_.summary()
 
-        criterion = nn.MSELoss()
-        optimizer = optim.SGD(self.model_.parameters(), lr=0.01)
-
-        X_tensor = torch.tensor(X, dtype=torch.float32)
-        y_tensor = torch.tensor(y, dtype=torch.float32).view(-1, 1)
-
-        dataset = torch.utils.data.TensorDataset(X_tensor, y_tensor)
-        loader = torch.utils.data.DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
-
-        self.model_.train()
-        for epoch in range(self.n_epochs):
-            epoch_loss = 0.0
-            for xb, yb in loader:
-                optimizer.zero_grad()
-                preds = self.model_(xb)
-                loss = criterion(preds, yb)
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-            self.history.append(epoch_loss / len(loader))
-            if self.verbose and (epoch % 10 == 0 or epoch == self.n_epochs - 1):
-                print(f"Epoch {epoch+1}/{self.n_epochs}, Loss: {epoch_loss/len(loader):.4f}")
+        self.history = self.model_.fit(
+            X,
+            y,
+            batch_size=self.batch_size,
+            epochs=self.n_epochs,
+            verbose=self.verbose,
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
+        )
 
         return self
-
-    def predict(self, X):
-        """Generate predictions using the trained PyTorch model."""
-        import torch
-        self.model_.eval()
-        X = X.transpose(0, 2, 1)
-        X_tensor = torch.tensor(X, dtype=torch.float32)
-        with torch.no_grad():
-            preds = self.model_(X_tensor).squeeze().cpu().numpy()
-        return preds
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -258,18 +232,14 @@ class LSTMFCNRegressorTorch(BaseDeepRegressor):
         }
         test_params = [param1, param2]
 
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch.nn as nn
-            import torch.optim as optim
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
 
             test_params.append(
                 {
                     "n_epochs": 2,
-                    "batch_size": 2,
-                    "loss_fn": nn.L1Loss(),
-                    "optimizer": lambda model: optim.Adam(model.parameters(), lr=0.001),
+                    "callbacks": [LambdaCallback()],
                 }
             )
 
         return test_params
-
