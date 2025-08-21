@@ -641,6 +641,28 @@ class capability__feature_importance(_BaseTag):
     }
 
 
+class capability__sample_weight(_BaseTag):
+    """Capability: whether the estimator can handle sample weights.
+
+    - String name: ``"capability:sample_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can handle sample weights.
+    If the tag is ``False``, the estimator cannot handle sample weights,
+    """
+
+    _tags = {
+        "tag_name": "capability:sample_weight",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle sample weights?",
+        "user_facing": True,
+    }
+
+
 class capability__contractable(_BaseTag):
     """Capability: the estimator can be asked to satisfy a maximum time contract.
 
@@ -1153,6 +1175,40 @@ class capability__predict_proba(_BaseTag):
             "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
         ),
+        "user_facing": True,
+    }
+
+
+class capability__class_weight(_BaseTag):
+    """Capability: the classifier can use class weights to handle imbalanced data.
+
+    - String name: ``"capability:class_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier supports class weighting functionality,
+    through a ``class_weight`` parameter that allows users to assign
+    different weights to different classes during training. This is commonly used
+    to handle imbalanced datasets where some classes are underrepresented.
+
+    Class weights can usually be provided as:
+
+    - A dictionary mapping class labels to weights
+    - None for uniform class weights (default behavior)
+
+    If the tag is ``False``, the classifier does not support class weighting,
+    and any class_weight parameter will be ignored or may raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:class_weight",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
@@ -1943,6 +1999,177 @@ class capability__variable_identification(_BaseTag):
         "tag_type": "bool",
         "short_descr": "Can the detector identify the variables causing each detection?",  # noqa: E501
         "user_facing": True,
+    }
+
+
+# Metrics tags
+# ------------
+
+
+class requires_y_true(_BaseTag):
+    """Behaviour flag: metric requires y_true in evaluate.
+
+    If ``y_true`` is not required, the metric is an unsupervised metric.
+
+    - String name: ``"requires_y_true"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires_y_true",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_true to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class requires_y_pred_benchmark(_BaseTag):
+    """Behaviour flag: metric requires y_pred in evaluate.
+
+    - String name: ``"requires-y-pred-benchmark"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+    - Alias: ``"requires_y_pred_benchmark"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the benchmark prediction argument
+    ``y_pred_benchmark`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    If the tag is ``False``, the metric does not require the benchmark prediction
+    argument ``y_pred_benchmark`` to be passed in the ``evaluate`` and
+    ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-pred-benchmark",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the metric require y_pred_benchmark to be passed in evaluate?"
+        ),
+        "user_facing": True,
+    }
+
+
+class requires_y_train(_BaseTag):
+    """Behaviour flag: metric requires y_train in evaluate.
+
+    - String name: ``"requires-y-train"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``"requires_y_train"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the training target data argument
+    ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the training target data
+    argument ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-train",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_train to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class lower_is_better(_BaseTag):
+    """Property: whether lower metric values are better.
+
+    - String name: ``"lower_is_better"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, lower values of the metric are considered better.
+    If the tag is ``False``, higher values of the metric are considered better.
+    """
+
+    _tags = {
+        "tag_name": "lower_is_better",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "is lower value of the metric better?",
+        "user_facing": True,
+    }
+
+
+class scitype__y_pred(_BaseTag):
+    """The scitype of the predicted target data, for probabilistic metrics.
+
+    - String name: ``"scitype:y_pred"``
+    - Public property tag
+    - Values: string, one of ``"pred_quantiles"``, ``pred_interval``, ``pred_proba``
+    - Example: ``"pred_quantiles"``
+    - Default: ``"None"``
+
+    This tag applies to metrics.
+
+    The tag specifies the scitype of the predicted target data ``y_pred``
+    for probabilistic metrics:
+
+    * ``"pred_quantiles"``: predictive quantiles in ``predict_quantiles`` format
+    * ``"pred_interval"``: predictive intervals in ``predict_interval`` format
+    * ``"pred_proba"``: predictive probabilities in ``predict_proba`` format
+    """
+
+    _tags = {
+        "tag_name": "scitype:y_pred",
+        "parent_type": "metric",
+        "tag_type": "str",
+        "short_descr": "what is the scitype of the predicted target data y_pred?",
+        "user_facing": True,
+    }
+
+
+class inner_implements_multilevel(_BaseTag):
+    """Extension tag: whether the metric implements multilevel evaluation.
+
+    - String name: ``"inner_implements_multilevel"``
+    - Extension developer tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Metrics broadcast by default over time series hierarchy indices.
+    If the tag is ``False``, the inner ``_evaluate`` and ``_evaluate_by_index``
+    methods are written for individual time series only, and the
+    boilerplate machinery is expected to handle hierarchy indices.
+
+    By setting this tag to ``False``, developers can force the hierarchical
+    time series to be passed to ``_evaluate`` and ``_evaluate_by_index``,
+    to treat the hierarchy index in deviation from the default.
+    """
+
+    _tags = {
+        "tag_name": "inner_implements_multilevel",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric implement multilevel evaluation internally?",
+        "user_facing": False,
     }
 
 
@@ -2752,42 +2979,6 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         ("str", ["full", "partial"]),
         "does aligner produce a full or partial alignment",
-    ),
-    (
-        "requires-y-train",
-        "metric",
-        "bool",
-        "does metric require y-train data to be passed?",
-    ),
-    (
-        "requires-y-pred-benchmark",
-        "metric",
-        "bool",
-        "does metric require a predictive benchmark?",
-    ),
-    (
-        "requires_y_true",
-        "metric",
-        "bool",
-        "does metric require ground truth? If False, unsupervised metric",
-    ),
-    (
-        "scitype:y_pred",
-        "metric",
-        "str",
-        "What is the scitype of y_pred: quantiles, proba, interval?",
-    ),
-    (
-        "lower_is_better",
-        "metric",
-        "bool",
-        "Is a lower value better for the metric? True=yes, False=higher is better",
-    ),
-    (
-        "inner_implements_multilevel",
-        "metric",
-        "bool",
-        "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
     ),
     (
         "remember_data",

@@ -26,7 +26,7 @@ from sktime.utils.dependencies import _check_python_version, _check_soft_depende
 # excludes estimators, only for soft dependencies used in non-estimator modules
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.benchmarking.experiments": ["tsfresh", "esig"],
+    "sktime.benchmarking.experiments": ["tsfresh"],
     "sktime.classification.deep_learning": ["tensorflow"],
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],

@@ -23,7 +23,7 @@ from sktime.forecasting.model_selection import (
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
 )
-from sktime.forecasting.model_selection._tune import BaseGridSearch
+from sktime.forecasting.model_selection._base import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_N_ITERS,
