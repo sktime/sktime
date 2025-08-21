@@ -17,9 +17,12 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_scale
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     r"""Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
-
-    MSSE and RMSSE output is non-negative floating point. MSSE is scale-free,
-    while RMSSE is also scale-free but has the same unit as the input data.
+  
+    If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
+    ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
+    point.
+  
+    Both MSSE and RMSSE are unitless metrics.
     Lower values are better, and the lowest possible value is 0.0.
 
     For a univariate, non-hierarchical sample of true values
