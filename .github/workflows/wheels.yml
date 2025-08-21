@@ -32,6 +32,7 @@ jobs:
           fi
 
   build_wheels:
+    needs: check_tag
     name: Build wheels
     runs-on: ubuntu-latest
 
