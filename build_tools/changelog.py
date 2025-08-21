@@ -180,16 +180,6 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
     return assigned
 
 
-def render_row(pr):
-    """Render a single row with PR in restructuredText format."""
-    print(
-        "*",
-        pr["title"].replace("`", "``"),
-        f"(:pr:`{pr['number']}`)",
-        f":user:`{pr['user']['login']}`",
-    )
-
-
 def render_changelog(prs, assigned, label_to_subsection=None, module_order=None):
     """Render changelog with subsections based on module tags.
     
@@ -241,15 +231,16 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
             # Render subsections
             for subsection_title in MODULE_ORDER:
                 pr_list = subsection_map.get(subsection_title, [])
-                if pr_list:
-                    print()
-                    print(subsection_title)
-                    print("^" * len(subsection_title))
-                    print()
-                    for pr in sorted(
-                        pr_list, key=lambda x: parser.parse(x["merged_at"])
-                    ):
-                        render_row(pr)
+                if pr_list is None or not pr_list:
+                    continue
+                print()
+                print(subsection_title)
+                print("^" * len(subsection_title))
+                print()
+                for pr in sorted(
+                    pr_list, key=lambda x: parser.parse(x["merged_at"])
+                ):
+                    render_row(pr)
 
         if title in ["Enhancements", "Fixes"]:
             subsection_map = group_prs_by_module(pr_group)
