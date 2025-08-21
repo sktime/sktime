@@ -81,7 +81,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
 
         if self.attention:
             x = keras.layers.Attention()([input_layer, input_layer])
-        else:          
+        else:
             x = input_layer
 
         x = keras.layers.LSTM(self.lstm_size)(x)
