@@ -40,7 +40,7 @@ class ToToForecaster(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": "None",
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
@@ -50,7 +50,7 @@ class ToToForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": True,
-        "capability:pred_int:insample": True,
+        "capability:pred_int:insample": False,
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------
@@ -69,10 +69,8 @@ class ToToForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
-        id_mask,
-        padding_mask,
-        num_samples: int,
-        samples_per_batch: int,
+        num_samples: int = 1,
+        samples_per_batch: int = 1,
         prediction_type: str = "median",
         use_memory_efficient_attention: bool = True,
         stabilize_with_global: bool = True,
@@ -91,8 +89,6 @@ class ToToForecaster(BaseForecaster):
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
-        self.id_mask = id_mask
-        self.padding_mask = padding_mask
         self.num_samples = num_samples
         self.samples_per_batch = samples_per_batch
         self.use_memory_efficient_attention = use_memory_efficient_attention
@@ -107,8 +103,6 @@ class ToToForecaster(BaseForecaster):
         self.toto_model.to(self.device)
         self.toto_model.compile()
         super().__init__()
-
-    # todo: implement this, mandatory
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -146,24 +140,46 @@ class ToToForecaster(BaseForecaster):
 
         if _check_soft_dependencies("torch", severity="error"):
             import torch
-        # self._prediction = None
-        self._y_columns = y.columns
-        input_series = torch.tensor(y.values.T, dtype=torch.float32).to(self.device)
-        self._cutoff = y.index[-1]
 
-        self.timestamp_seconds = torch.zeros_like(input_series)
-        self.time_interval_seconds = torch.full(
-            (input_series.shape[0],), 60 * 15, dtype=torch.float32
-        ).to(self.device)
-        if self.id_mask is None:
-            self.id_mask = torch.zeros_like(input_series).to(self.device)
-        if self.padding_mask is None:
+        if isinstance(y, pd.DataFrame):
+            self._y = y
+            self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+                self.device
+            )
+            self.id_mask = torch.zeros_like(self._input_series).to(self.device)
             self.padding_mask = torch.full_like(
-                input_series, True, dtype=torch.bool
+                self._input_series, True, dtype=torch.bool
             ).to(self.device)
 
+        else:
+            self._y = y.reset_index().pivot(
+                index="time_stamp", columns="variable", values="value"
+            )
+            self._y = self._y.rename_axis(None, axis=1).rename_axis(
+                "time_stamp", axis=0
+            )
+            self._input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
+                self.device
+            )
+            n, d = self._y.shape
+            self.id_mask = torch.tensor(
+                self._y.index.get_level_values("id_mask")
+            ).reshape(n, d)
+            self.padding_mask = torch.tensor(
+                self._y.index.get_level_values("padding_mask")
+            ).reshape(n, d)
+
+        self._y_columns = self._y.columns
+        self._cutoff = self._y.index[-1]
+
+        # current model does not use these two variable, might be needed in future.
+        self.timestamp_seconds = torch.zeros_like(self._input_series)
+        self.time_interval_seconds = torch.full(
+            (self._input_series.shape[0],), 60 * 15, dtype=torch.float32
+        ).to(self.device)
+
         self._series = MaskedTimeseries(
-            series=input_series,
+            series=self._input_series,
             padding_mask=self.padding_mask,
             id_mask=self.id_mask,
             timestamp_seconds=self.timestamp_seconds,
