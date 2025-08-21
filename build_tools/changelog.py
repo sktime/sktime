@@ -139,25 +139,41 @@ def render_row(pr):
         pattern = r"Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
         match = re.search(pattern, title)
 
-        if match:
+        pattern2 = r"Bump ([\w\-/]+) from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)"  # noqa: E501
+        match2 = re.search(pattern2, title)
+
+        if match or match2:
             package, from_ver, to_ver = match.groups()
+
+            # add double backticks if not already present
+            def add_backticks(text):
+                if not text.startswith("``") and not text.endswith("``"):
+                    return f"`{text}`"
+                return text
+
+            package = add_backticks(package)
+            from_ver = add_backticks(from_ver)
+            to_ver = add_backticks(to_ver)
+
             # Replace with proper backticks
-            title = (
-                f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
-            )
+            if match:
+                title = f"Update {package} requirement from {from_ver} to {to_ver}"
+            elif match2:
+                title = f"Bump {package} from {from_ver} to {to_ver}"
 
     # Replace single backticks with double backticks
     title = title.replace("`", "``")
+    # Replace quadruple backticks with double backticks,
+    # in case double backticks were already present
+    title = title.replace("````", "``")
 
     # Print the PR line
     print(
-        "*",
-        title,
-        f"(:pr:`{pr['number']}`)",
-        # Add extra credited users
-        " ".join([f":user:`{user}`" for user in extra_users])
-        + (", " if extra_users else ""),
-        f":user:`{pr['user']['login']}`",
+        f"* {title} "
+        f"(:pr:`{pr['number']}`)"
+        + ", ".join([f":user:`{user}`" for user in extra_users])
+        + (", " if extra_users else "")
+        + f" :user:`{pr['user']['login']}`"
     )
 
 
