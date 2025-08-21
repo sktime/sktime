@@ -114,9 +114,202 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
         raise ValueError(response.text, response.status_code)
 
 
-def render_contributors(prs: list, fmt: str = "rst"):
-    """Find unique authors and print a list in  given format."""
-    authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
+def render_row(pr):
+    """Render a single row with PR in restructuredText format."""
+    # Process the title to handle user credits at beginning of title
+    title = pr["title"]
+    extra_users = []
+    
+    # Check for prefixed user credits like &username
+    if title.startswith("&"):
+        parts = title.split(" ", 1)
+        user_part = parts[0].strip()
+        if len(parts) > 1:
+            title = parts[1].strip()
+            # Extract username without the & prefix
+            username = user_part[1:]
+            extra_users.append(username)
+    
+    # Handle dependabot PRs specially to enclose package names and versions in double backticks
+    if "dependabot" in pr["user"]["login"].lower():
+        # Match patterns like "Update package requirement from <1.0.0 to <2.0.0"
+        import re
+        
+        # Pattern to match package name and version bounds
+        pattern = r'Update ([\w\-\.]+) requirement from (<[\d\.]+,?>?[>=]*[\d\.]+) to ([>=]*[\d\.]+,?<[\d\.]+)'
+        match = re.search(pattern, title)
+        
+        if match:
+            package, from_ver, to_ver = match.groups()
+            # Replace with proper backticks
+            title = f"Update ``{package}`` requirement from ``{from_ver}`` to ``{to_ver}``"
+    
+    # Replace single backticks with double backticks
+    title = title.replace("`", "``")
+    
+    # Print the PR line
+    print(
+        "*",
+        title,
+        f"(:pr:`{pr['number']}`)",
+        # Add extra credited users
+        " ".join([f":user:`{user}`" for user in extra_users]) + 
+        (", " if extra_users else ""),
+        f":user:`{pr['user']['login']}`",
+    )
+
+
+def assign_prs(prs, categs: list[dict[str, list[str]]]):
+    """Assign PR to categories based on labels."""
+    assigned = defaultdict(list)
+    # Track module tags for each PR
+    pr_modules = {}
+    
+    # Track additional credited users for contributors list
+    additional_users = set()
+
+    for i, pr in enumerate(prs):
+        pr_labels = [label["name"] for label in pr["labels"]]
+        
+        # Assign to main categories
+        for cat in categs:
+            if not set(cat["labels"]).isdisjoint(set(pr_labels)):
+                assigned[cat["title"]].append(i)
+        
+        # Track module tags for each PR
+        for label in pr_labels:
+            if label.startswith("module:"):
+                module_name = label.replace("module:", "")
+                # Fix for "base-framework" tag and benchmarking tag
+                if module_name == "base-framework":
+                    module_name = "base"
+                pr_modules[i] = module_name
+                
+        # Check for additional users in PR title
+        title = pr["title"]
+        if title.startswith("&"):
+            parts = title.split(" ", 1)
+            user_part = parts[0].strip()
+            username = user_part[1:]
+            additional_users.add(username)
+
+    # Assign unmatched PRs to "Other" category
+    assigned["Other"] = list(
+        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
+    )
+
+    return assigned, pr_modules, additional_users
+
+
+def render_changelog(prs, assigned, pr_modules=None):
+    """Render changelog with subsections based on module tags.
+    
+    Parameters
+    ----------
+    prs : list
+        List of pull requests.
+    assigned : dict
+        Dictionary mapping category titles to list of PR indices.
+    pr_modules : dict, optional
+        Dictionary mapping PR indices to module tags, by default None.
+    """
+    from dateutil import parser
+
+    # Define module mapping for subsection titles
+    module_to_title = {
+        "forecasting": "Forecasting",
+        "classification": "Time Series Classification",
+        "regression": "Time Series Regression",
+        "clustering": "Time Series Clustering",
+        "transformations": "Transformations",
+        "annotation": "Time Series Anomalies, Changepoints, Segmentation",
+        "detection": "Time Series Anomalies, Changepoints, Segmentation",
+        "base": "BaseObject and Base Framework",
+        "metrics": "Benchmarking, Metrics, Splitters",
+        "benchmarking": "Benchmarking, Metrics, Splitters",
+        "distances": "Distances, Kernels",
+        "registry": "Registry and Search",
+        "dataset": "Data Sets and Data Loaders",
+        "datatypes": "Data Types, Checks, Conversions",
+        "alignment": "Time Series Alignment",
+        "networks": "Neural Networks",
+        "tests": "Test Framework",
+        "vis": "Visualization",
+        "pipeline": "Pipelines",
+        "parameter_est": "Parameter Estimation and Hypothesis Testing",
+    }
+
+    # Sort categories in the preferred order
+    section_order = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Refactored", "Other"]
+    ordered_titles = sorted(assigned.keys(), key=lambda x: section_order.index(x) if x in section_order else 999)
+    
+    for title in ordered_titles:
+        pr_indices = assigned[title]
+        pr_group = [prs[i] for i in pr_indices]
+        if pr_group:
+            print(f"\n{title}")
+            print("~" * len(title), end="\n\n")
+
+            # If this is a section we want to divide into subsections and we have module info
+            if title in ["Enhancements", "Fixes"] and pr_modules:
+                # Group PRs by module
+                by_module = defaultdict(list)
+                other_prs = []
+                
+                for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+                    pr_idx = next(i for i, p in enumerate(prs) if p["number"] == pr["number"])
+                    if pr_idx in pr_modules:
+                        module_name = pr_modules[pr_idx]
+                        if module_name in module_to_title:
+                            module_title = module_to_title[module_name]
+                            by_module[module_title].append(pr)
+                        else:
+                            other_prs.append(pr)
+                    else:
+                        other_prs.append(pr)
+                
+                # Render PRs by module subsections
+                for module_title in sorted(by_module.keys()):
+                    print(f"{module_title}")
+                    print("^" * len(module_title), end="\n\n")
+                    for pr in sorted(by_module[module_title], key=lambda x: parser.parse(x["merged_at"])):
+                        render_row(pr)
+                    print()
+                
+                # Render PRs without module tags
+                if other_prs:
+                    print("Other")
+                    print("^" * 5, end="\n\n")
+                    for pr in sorted(other_prs, key=lambda x: parser.parse(x["merged_at"])):
+                        render_row(pr)
+                    print()
+            else:
+                # Regular rendering for Documentation, Maintenance, etc.
+                for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
+                    render_row(pr)
+
+
+def render_contributors(prs: list, additional_users: set = None, fmt: str = "rst"):
+    """Find unique authors and print a list in given format.
+    
+    Parameters
+    ----------
+    prs : list
+        List of pull requests
+    additional_users : set, optional
+        Additional users to add to the contributors list
+    fmt : str, default="rst"
+        Format of the output, either "github" or "rst"
+    """
+    # Get unique authors from PRs
+    authors = {pr["user"]["login"] for pr in prs}
+    
+    # Add any additional users credited in PR titles
+    if additional_users:
+        authors.update(additional_users)
+    
+    # Sort alphabetically (case insensitive)
+    authors = sorted(authors, key=lambda x: x.lower())
 
     header = "Contributors"
     if fmt == "github":
@@ -126,51 +319,6 @@ def render_contributors(prs: list, fmt: str = "rst"):
         print(header)
         print("~" * len(header), end="\n\n")
         print(",\n".join(f":user:`{user}`" for user in authors))
-
-
-def assign_prs(prs, categs: list[dict[str, list[str]]]):
-    """Assign PR to categories based on labels."""
-    assigned = defaultdict(list)
-
-    for i, pr in enumerate(prs):
-        for cat in categs:
-            pr_labels = [label["name"] for label in pr["labels"]]
-            if not set(cat["labels"]).isdisjoint(set(pr_labels)):
-                assigned[cat["title"]].append(i)
-
-    #             if any(l.startswith("module") for l in pr_labels):
-    #                 print(i, pr_labels)
-
-    assigned["Other"] = list(
-        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
-    )
-
-    return assigned
-
-
-def render_row(pr):
-    """Render a single row with PR in restructuredText format."""
-    print(
-        "*",
-        pr["title"].replace("`", "``"),
-        f"(:pr:`{pr['number']}`)",
-        f":user:`{pr['user']['login']}`",
-    )
-
-
-def render_changelog(prs, assigned):
-    # sourcery skip: use-named-expression
-    """Render changelog."""
-    from dateutil import parser
-
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
-
-            for pr in sorted(pr_group, key=lambda x: parser.parse(x["merged_at"])):
-                render_row(pr)
 
 
 if __name__ == "__main__":
@@ -184,10 +332,10 @@ if __name__ == "__main__":
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned = assign_prs(pulls, categories)
-    render_changelog(pulls, assigned)
+    assigned, pr_modules, additional_users = assign_prs(pulls, categories)
+    render_changelog(pulls, assigned, pr_modules)
     print()
-    render_contributors(pulls)
+    render_contributors(pulls, additional_users)
 
     release = fetch_latest_release()
     diff = github_compare_tags(release["tag_name"])
