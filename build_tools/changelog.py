@@ -172,6 +172,7 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
 
+    # Assign unmatched PRs to "Other" category
     assigned["Other"] = list(
         set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
     )
@@ -259,7 +260,7 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
 
 
 def render_contributors(prs: list, fmt: str = "rst"):
-    """Find unique authors and print a list in  given format.
+    """Find unique authors and print a list in given format.
 
     Parameters
     ----------
