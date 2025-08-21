@@ -161,14 +161,6 @@ class CNNClassifierTorch(BaseDeepClassifier):
         filter_sizes=None,
         padding="auto",
     ):
-        # Check for PyTorch dependencies
-        try:
-            import torch  # noqa: F401
-        except ImportError as e:
-            raise ImportError(
-                "PyTorch (torch) is required for CNNClassifierTorch. "
-                "Please install with: pip install torch"
-            ) from e
 
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
