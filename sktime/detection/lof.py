@@ -229,8 +229,6 @@ class SubLOF(BaseDetector):
         y_pred : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
         X["__id"] = pd.RangeIndex(len(X))
 
         y_all = []
