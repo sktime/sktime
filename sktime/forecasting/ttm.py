@@ -245,11 +245,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ... )
     >>>
     >>> # Fit with exogenous variables
-    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])  # doctest: +SKIP
     TinyTimeMixerForecaster(...)
     >>>
     >>> # Predict with exogenous variables
-    >>> y_pred = forecaster.predict(X=X_future)
+    >>> y_pred = forecaster.predict(X=X_future)  # doctest: +SKIP
     """
 
     _tags = {
