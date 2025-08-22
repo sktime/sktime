@@ -517,6 +517,7 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.fit_predict(X, y=y)
+
         # Handle both pandas and numpy inputs
         if hasattr(X, 'index'):
         # X is pandas DataFrame or Series
