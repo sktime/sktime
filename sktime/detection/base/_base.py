@@ -241,8 +241,6 @@ class BaseDetector(BaseEstimator):
 
         X_inner = self._check_X(X)
 
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
-
         y = self._predict(X=X_inner)
 
         # deal with legacy return format with intervals in index
