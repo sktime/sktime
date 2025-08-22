@@ -12,12 +12,12 @@ __all__ = [
     "temporal_train_test_split",
 ]
 
-from sktime.forecasting.model_selection._tune import (
-    ForecastingGridSearchCV,
-    ForecastingOptunaSearchCV,
+from sktime.forecasting.model_selection._gridsearch import ForecastingGridSearchCV
+from sktime.forecasting.model_selection._optuna import ForecastingOptunaSearchCV
+from sktime.forecasting.model_selection._randomsearch import (
     ForecastingRandomizedSearchCV,
-    ForecastingSkoptSearchCV,
 )
+from sktime.forecasting.model_selection._skopt import ForecastingSkoptSearchCV
 
 
 # todo 1.0.0 - check whether we should remove, otherwise bump

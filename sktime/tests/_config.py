@@ -50,7 +50,6 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "EditDist",
     "CNNClassifier",
-    "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
     "MLPRegressor",
@@ -152,9 +151,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MLPRegressor": [
-        "test_fit_idempotent",
-    ],
-    "InceptionTimeClassifier": [
         "test_fit_idempotent",
     ],
     "SimpleRNNClassifier": [
@@ -320,10 +316,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MVCAPA",
         "MatrixProfile",
         "MatrixProfileTransformer",
-        "MiniRocketMultivariate",
-        "MiniRocketMultivariateVariable",
         "MovingWindow",
-        "MultiRocket",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",

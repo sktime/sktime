@@ -273,6 +273,45 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         set_num_threads(prev_threads)
         return pd.DataFrame(X_)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter sets for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = [
+            {
+                "num_kernels": 42,
+                "random_state": None,
+                "max_dilations_per_kernel": 32,
+                "reference_length": "min",
+                "pad_value_short_series": None,
+                "n_jobs": 1,
+            },
+            {
+                "num_kernels": 84,
+                "random_state": None,
+                "max_dilations_per_kernel": 16,
+                "reference_length": "max",
+                "pad_value_short_series": None,
+                "n_jobs": 1,
+            },
+        ]
+
+        return params
+
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
     X: list[pd.DataFrame], pad: Union[int, float, None] = 0
