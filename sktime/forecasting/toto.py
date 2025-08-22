@@ -14,6 +14,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 # todo: add any necessary imports here
 
@@ -78,9 +79,6 @@ class ToToForecaster(BaseForecaster):
         model_path: str = "Datadog/Toto-Open-Base-1.0",
         device=None,
     ):
-        if _check_soft_dependencies("toto-ts", severity="error"):
-            from toto.model.toto import Toto
-
         if _check_soft_dependencies("torch", severity="error"):
             import torch
 
@@ -99,10 +97,42 @@ class ToToForecaster(BaseForecaster):
         else:
             self.prediction_type = prediction_type.lower()
 
-        self.toto_model = Toto.from_pretrained(model_path)
-        self.toto_model.to(self.device)
-        self.toto_model.compile()
+        self._forecaster = _CachedToToForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self.device,
+        ).load_from_checkpoint()
+
         super().__init__()
+
+    def _get_toto_key(self):
+        """Get a unique key for the Toto model based on configuration parameters.
+
+        This key is used by the _multiton decorator to ensure only one instance
+        of a model with specific parameters exists.
+
+        Returns
+        -------
+        tuple
+            Unique identifier for this model configuration
+        """
+        # Create a unique key based on model configuration
+        # Only include parameters that affect the model identity
+        kwargs = self._get_toto_kwargs()
+        key = {
+            **kwargs,
+            "device": self.device,
+        }
+        return str(sorted(key.items()))
+
+    def _get_toto_kwargs(self):
+        """Get keyword arguments for the Toto model."""
+        return {
+            "pretrained_model_name_or_path": self.model_path,
+            "use_memory_efficient_attention": self.use_memory_efficient_attention,
+            "stabilize_with_global": self.stabilize_with_global,
+            "scale_factor_exponent": self.scale_factor_exponent,
+        }
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -136,7 +166,6 @@ class ToToForecaster(BaseForecaster):
         """
         if _check_soft_dependencies("toto-ts", severity="error"):
             from toto.data.util.dataset import MaskedTimeseries
-            from toto.inference.forecaster import TotoForecaster
 
         if _check_soft_dependencies("torch", severity="error"):
             import torch
@@ -169,6 +198,9 @@ class ToToForecaster(BaseForecaster):
                 self._y.index.get_level_values("padding_mask")
             ).reshape(n, d)
 
+        import time
+
+        self._time = time.time()
         self._y_columns = self._y.columns
         self._cutoff = self._y.index[-1]
 
@@ -185,7 +217,6 @@ class ToToForecaster(BaseForecaster):
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
         )
-        self._forecaster = TotoForecaster(self.toto_model.model)
 
         return self
 
@@ -391,3 +422,27 @@ class ToToForecaster(BaseForecaster):
         # # "default" params - always returned except for "special_param_set" value
         # params = {"est": value3, "parama": value4}
         # return params
+
+
+@_multiton
+class _CachedToToForecaster:
+    def __init__(self, key, toto_kwargs, device):
+        self.key = key
+        self.toto_kwargs = toto_kwargs
+        self.device = device
+        self.forecaster = None
+
+    def load_from_checkpoint(self):
+        if self.forecaster is not None:
+            return self.forecaster
+
+        if _check_soft_dependencies("toto-ts", severity="error"):
+            from toto.inference.forecaster import TotoForecaster
+            from toto.model.toto import Toto
+
+        toto_model = Toto.from_pretrained(**self.toto_kwargs)
+        toto_model.to(self.device)
+        toto_model.compile()
+        self.forecaster = TotoForecaster(toto_model.model)
+
+        return self.forecaster
