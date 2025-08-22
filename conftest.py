@@ -7,10 +7,6 @@ adds the following options to pytest
     "on" condition is partition/block design to ensure each estimator full tests are run
     on each operating system at least once, and on each python version at least once,
     but not necessarily on each operating system / python version combination
---only_cython_estimators : bool, default False
-    "on" = runs tests only for estimators that require cython to run
-    i.e., estimators with tag requires_cython=True
-    "off" = runs tests for all estimators that do not require cython to run
 --only_changed_modules : bool, default False
     turns on/off differential testing (for shorter runtime)
     "on" condition ensures that only estimators are tested that have changed,
