@@ -173,6 +173,7 @@ class BaseDetector(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
+        # input checks and conversions for X
         X_inner = self._check_X(X)
 
         # skip inner _fit if fit is empty
@@ -184,8 +185,6 @@ class BaseDetector(BaseEstimator):
 
         self._X = X
         self._y = y
-
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         if _method_has_arg(self._fit, "y"):
             self._fit(X=X_inner, y=y)  # X_inner is the converted X
@@ -517,7 +516,11 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.fit_predict(X, y=y)
-        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+        if isinstance(X, np.ndarray):
+            ix = pd.RangeIndex(len(X))
+        else:
+            ix = X.index
+        y_dense = self.sparse_to_dense(y_sparse, index=ix)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
