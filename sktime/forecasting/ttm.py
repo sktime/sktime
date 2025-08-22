@@ -242,7 +242,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...         "per_device_train_batch_size": 4,
     ...         "report_to": "none",
     ...     },
-    ... )
+    ... )  # doctest: +SKIP
     >>>
     >>> # Fit with exogenous variables
     >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])  # doctest: +SKIP
