@@ -22,10 +22,6 @@ from sktime.registry import ESTIMATOR_TAG_LIST
 # default is False, can be set to True by pytest --matrixdesign True flag
 MATRIXDESIGN = False
 
-# whether to test only estimators that require cython, C compiler such as gcc
-# default is False, can be set to True by pytest --only_cython_estimators True flag
-CYTHON_ESTIMATORS = False
-
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False

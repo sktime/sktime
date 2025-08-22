@@ -36,11 +36,6 @@ def pytest_addoption(parser):
         help="sub-sample estimators in tests by os/version matrix partition design",
     )
     parser.addoption(
-        "--only_cython_estimators",
-        default=False,
-        help="test only cython estimators, with tag requires_cython=True",
-    )
-    parser.addoption(
         "--only_changed_modules",
         default=False,
         help="test only estimators from modules that have changed compared to main",
@@ -53,7 +48,5 @@ def pytest_configure(config):
 
     if config.getoption("--matrixdesign") in [True, "True"]:
         _config.MATRIXDESIGN = True
-    if config.getoption("--only_cython_estimators") in [True, "True"]:
-        _config.CYTHON_ESTIMATORS = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
