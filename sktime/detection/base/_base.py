@@ -519,13 +519,12 @@ class BaseDetector(BaseEstimator):
         y_sparse = self.fit_predict(X, y=y)
 
         # Handle both pandas and numpy inputs
-        if hasattr(X, 'index'):
+        if hasattr(X, "index"):
         # X is pandas DataFrame or Series
                 index = X.index
         else:
         # X is numpy array or other array-like without index
         # Create a default integer index
-                import pandas as pd
                 index = pd.RangeIndex(len(X))
 
         y_dense = self.sparse_to_dense(y_sparse, index=index)
