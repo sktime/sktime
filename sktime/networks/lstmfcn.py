@@ -77,18 +77,14 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        from sktime.networks.lstmfcn_layers import make_attention_lstm
-
         input_layer = keras.layers.Input(shape=input_shape)
 
-        x = keras.layers.Permute((2, 1))(input_layer)
-
         if self.attention:
-            AttentionLSTM = make_attention_lstm()
-            x = AttentionLSTM(self.lstm_size)(x)
+            x = keras.layers.Attention()([input_layer, input_layer])
         else:
-            x = keras.layers.LSTM(self.lstm_size)(x)
+            x = input_layer
 
+        x = keras.layers.LSTM(self.lstm_size)(x)
         x = keras.layers.Dropout(self.dropout)(x)
 
         y = keras.layers.Conv1D(

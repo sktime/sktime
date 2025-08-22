@@ -1008,7 +1008,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
-            max_prediction_length
+            max_prediction_length, data_length=15
         )
         estimator_instance.fit(y_train, X_train, fh=fh)
 
@@ -1027,7 +1027,9 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-        X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
+        X_train, y_train, X_test, y_test = self._multiindex_data(
+            max_prediction_length, data_length=15
+        )
 
         estimator_instance.fit(y_train, X_train, fh=fh)
 
@@ -1074,7 +1076,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
-            max_prediction_length
+            max_prediction_length, data_length=15
         )
         estimator_instance.fit(y_train, X_train, fh=fh)
 
@@ -1098,7 +1100,9 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-        X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
+        X_train, y_train, X_test, y_test = self._multiindex_data(
+            max_prediction_length, data_length=15
+        )
         estimator_instance.fit(y_train, X_train, fh=fh)
 
         time_gap = pd.Timedelta(3650, "D")
@@ -1128,7 +1132,9 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-        _, y_train, _, y_test = self._multiindex_data(max_prediction_length)
+        _, y_train, _, y_test = self._multiindex_data(
+            max_prediction_length, data_length=15
+        )
 
         estimator_instance.fit(y=y_train, fh=fh)
 
@@ -1171,7 +1177,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
-            max_prediction_length
+            max_prediction_length, data_length=15
         )
 
         estimator_instance.fit(y_train, fh=fh_int_oos, X=X_train)
@@ -1218,7 +1224,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
-            max_prediction_length
+            max_prediction_length, data_length=15
         )
 
         estimator_instance.fit(y_train, fh=fh_int_oos, X=X_train)
@@ -1261,7 +1267,7 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
 
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
-            max_prediction_length
+            max_prediction_length, data_length=15
         )
 
         estimator_instance.fit(y_train, fh=fh_int_oos, X=X_train)
