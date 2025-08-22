@@ -519,12 +519,12 @@ class BaseDetector(BaseEstimator):
 
         # Handle both pandas and numpy inputs
         if hasattr(X, "index"):
-        # X is pandas DataFrame or Series
-                index = X.index
+            # X is pandas DataFrame or Series
+            index = X.index
         else:
-        # X is numpy array or other array-like without index
-        # Create a default integer index
-                index = pd.RangeIndex(len(X))
+            # X is numpy array or other array-like without index
+            # Create a default integer index
+            index = pd.RangeIndex(len(X))
 
         y_dense = self.sparse_to_dense(y_sparse, index=index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
