@@ -1,14 +1,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ToTo forecaster."""
 
+# This product includes software developed at Datadog, Copyright 2025 Datadog, Inc.
 
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-__author__ = ["JATAYU000"]
-__all__ = ["ToToForecaster"]
+__author__ = ["JATAYU000", "Datadog"]
+__all__ = ["TotoForecaster"]
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -16,18 +12,17 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
-# todo: add any necessary imports here
 
-# todo: for imports of sktime soft dependencies:
-# make sure to fill in the "python_dependencies" tag with the package import name
-# import soft dependencies only inside methods of the class, not at the top of the file
+class TotoForecaster(BaseForecaster):
+    """
+    Interface for Toto forecaster for zero-shot forecasting.
 
-
-# todo: change class name and write docstring
-class ToToForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
-
-    todo: describe your custom forecaster here
+    Toto is a foundation model for multivariate time series forecasting with a focus on
+    observability metrics. This model leverages innovative architectural designs to
+    efficiently handle the high-dimensional, complex time series that are characteristic
+    of observability data. Generate both point forecasts and uncertainty estimates using
+    a Student-T mixture model. Support for variable prediction horizons and context
+    lengths.
 
     Parameters
     ----------
@@ -38,6 +33,14 @@ class ToToForecaster(BaseForecaster):
     paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
+
+    References
+    ----------
+    .. [1] https://github.com/DataDog/toto
+
+    Examples
+    --------
+    >>> model = TotoForecaster() # needs work
     """
 
     _tags = {
@@ -52,19 +55,13 @@ class ToToForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        # ----------------------------------------------------------------------------
-        # packaging info - only required for sktime contribution or 3rd party packages
-        # ----------------------------------------------------------------------------
-        #
-        # ownership and contribution tags
+        # contribution and dependency tags
         # -------------------------------
-        # an author is anyone with significant contribution to the code at some point
-        "authors": ["JATAYU000", "DataDog"],
+        "authors": ["JATAYU000", "Datadog"],
+        # Datadog for Datadog/toto
         "maintainers": [],
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        "python_version": None,
-        "python_dependencies": ["torch", "toto-ts"],
+        "python_version": ">= 3.10",
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.4"],
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -198,9 +195,6 @@ class ToToForecaster(BaseForecaster):
                 self._y.index.get_level_values("padding_mask")
             ).reshape(n, d)
 
-        import time
-
-        self._time = time.time()
         self._y_columns = self._y.columns
         self._cutoff = self._y.index[-1]
 
