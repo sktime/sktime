@@ -208,6 +208,7 @@ class python_version(_BaseTag):
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
     - ``"env_marker"``: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
 
     The ``python_version`` tag of an object is a PEP 440 compliant version specifier
     string, specifying python version compatibility of the object.
