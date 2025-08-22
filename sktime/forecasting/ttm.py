@@ -224,7 +224,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_longley
+    >>> from sktime.split import temporal_train_test_split
     >>> y, X = load_longley()
+    >>> y_train, _, X_train, X_future = temporal_train_test_split(y, X, test_size=2)
     >>>
     >>> # Initialize forecaster
     >>> forecaster = TinyTimeMixerForecaster(
@@ -243,15 +245,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ... )
     >>>
     >>> # Fit with exogenous variables
-    >>> forecaster.fit(y, X=X, fh=[1, 2])
-    >>>
-    >>> # Create future exogenous data for prediction
-    >>> future_X = X.iloc[-2:].copy()
-    >>> # Update index for future periods
-    >>> future_X.index = [y.index[-1] + 1, y.index[-1] + 2]
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    TinyTimeMixerForecaster(...)
     >>>
     >>> # Predict with exogenous variables
-    >>> y_pred = forecaster.predict(X=future_X)
+    >>> y_pred = forecaster.predict(X=X_future)
     """
 
     _tags = {
