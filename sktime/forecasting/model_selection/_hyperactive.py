@@ -28,12 +28,14 @@ class ForecastingOptCV(_DelegatedForecaster):
 
     Formally, ``ForecastingOptCV`` does the following:
 
-    In ``fit``, wraps the ``forecaster``, ``scoring``, and other parameters
-    into a ``SktimeForecastingExperiment`` instance, which is passed to the optimizer
-    ``optimizer`` as the ``experiment`` argument.
-    Optimal parameters are then obtained from ``optimizer.solve``, and set
-    as ``best_params_`` and ``best_forecaster_`` attributes.
-    If ``refit=True``, ``best_forecaster_`` is fitted to the entire ``y`` and ``X``.
+    In ``fit``:
+
+    * wraps the ``forecaster``, ``scoring``, and other parameters
+      into a ``SktimeForecastingExperiment`` instance, which is passed to the optimizer
+      ``optimizer`` as the ``experiment`` argument.
+    * Optimal parameters are then obtained from ``optimizer.solve``, and set
+      as ``best_params_`` and ``best_forecaster_`` attributes.
+    *  If ``refit=True``, ``best_forecaster_`` is fitted to the entire ``y`` and ``X``.
 
     In ``predict`` and ``predict``-like methods, calls the respective method
     of the ``best_forecaster_`` if ``refit=True``.
