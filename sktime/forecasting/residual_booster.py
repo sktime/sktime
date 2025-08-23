@@ -14,9 +14,10 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.base._meta import _HeterogenousMetaEstimator
 
 
-class ResidualBoostingForecaster(BaseForecaster):
+class ResidualBoostingForecaster(_HeterogenousMetaEstimator,BaseForecaster):
     """Residual boosting forecast fitting one forecaster on residuals of another.
 
     Residual boosting can be used for:
@@ -47,8 +48,10 @@ class ResidualBoostingForecaster(BaseForecaster):
     ----------
     base_forecaster : sktime forecaster
         Point-forecast model that may ignore X.
-    residual_forecaster : sktime forecaster
-        Model trained on the base model's in-sample residuals.
+    residual_forecaster : sktime forecaster or list of sktime forecasters
+        Model(s) trained on the base model's in-sample residuals.
+        If a list, the forecasters are applied sequentially to the residuals
+        of the previous stage.
 
     Example
     -------
@@ -86,28 +89,39 @@ class ResidualBoostingForecaster(BaseForecaster):
         self.residual_forecaster = residual_forecaster
         super().__init__()
 
-        exog = self.base_forecaster.get_tag(
-            "ignores-exogeneous-X"
-        ) or self.residual_forecaster.get_tag("ignores-exogeneous-X")
+        base_tuple = ("base", base_forecaster)
 
-        miss = self.base_forecaster.get_tag(
-            "capability:missing_values"
-        ) and self.residual_forecaster.get_tag("capability:missing_values")
+        if isinstance(residual_forecaster, list):
+            res_list = residual_forecaster
+        else:
+            res_list = [residual_forecaster]
 
-        pred_int = self.base_forecaster.get_tag(
-            "capability:pred_int"
-        ) and self.residual_forecaster.get_tag("capability:pred_int")
+        resid_tuples = self._check_estimators(
+            res_list,
+            attr_name="residual_forecasters",
+            cls_type=BaseForecaster,
+            allow_mix=True,
+            allow_empty=False,
+            clone_ests=False,
+        )
 
-        in_sample = self.base_forecaster.get_tag(
-            "capability:insample"
-        ) or self.residual_forecaster.get_tag("capability:insample")
+        steps = [base_tuple] + resid_tuples
+        
+        names = self._get_estimator_names(steps, make_unique=True)
+        self._check_names(names)
+        ests = [est for _, est in steps]
+        self._steps = list(zip(names, ests))
 
-        cat = self.base_forecaster.get_tag(
-            "capability:categorical_in_X"
-        ) and self.residual_forecaster.get_tag("capability:categorical_in_X")
+        children = [est for _, est in self._steps]
+        residuals = children[1:]
 
-        pred_int_insample = self.residual_forecaster.get_tag(
-            "capability:pred_int:insample"
+        exog = any(est.get_tag("ignores-exogeneous-X") for est in children)
+        miss = all(est.get_tag("capability:missing_values") for est in children)
+        pred_int = all(est.get_tag("capability:pred_int") for est in children)
+        in_sample = any(est.get_tag("capability:insample") for est in children)
+        cat = all(est.get_tag("capability:categorical_in_X") for est in children)
+        pred_int_insample = bool(residuals) and all(
+            est.get_tag("capability:pred_int:insample") for est in residuals
         )
 
         self.set_tags(
@@ -120,40 +134,68 @@ class ResidualBoostingForecaster(BaseForecaster):
                 "capability:categorical_in_X": cat,
             }
         )
-
+    
     def _fit(self, y, X=None, fh=None):
         """
-        Fit base forecaster and residual forecaster.
+        Fit base forecaster and (optionally multiple) residual forecasters.
 
-        1. Fit clone A of base_forecaster to X, y, and compute in-sample
-           forecast residuals r
-        2. Fit clone B of base_forecaster to X, y, with fh
-        3. Fit clone of residual_forecaster to X, r
+        1) Fit clone A of base_forecaster on (y, X) to get ŷ_base(insample),
+        then compute residual target r0 = y - ŷ_base(insample).
+        2) Fit clone B of base_forecaster on (y, X) with final fh.
+        3) If exactly one residual forecaster: fit it on r0 (no in-sample predict).
+        If multiple residual forecasters: sequentially fit each on the current
+        residual target and update it using each stage's in-sample prediction.
+        4) Expose fitted children via `steps_`.
         """
-        # clone A: fit on (y,X) to obtain in-sample residuals
-        # 1. in-sample residuals
-        self.base_insample_ = clone(self.base_forecaster).fit(y, X, fh)
-
-        # Forecast insample
         if isinstance(y.index, pd.MultiIndex):
             time_idx = y.index.get_level_values(-1).unique()
         else:
             time_idx = y.index
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
-        insample_preds = self.base_insample_.predict(fh=insample_fh, X=X)
+        base = self._steps[0][1]
+        residual_steps = self._steps[1:]
 
-        residuals = y - insample_preds
+        # 1) base (insample) to get residual target r0
+        self.base_insample_ = clone(base).fit(y, X, fh)
+        y_base_ins = self.base_insample_.predict(fh=insample_fh, X=X)
+        resid_target = y - y_base_ins  # r0
 
-        # clone B: fit a fresh copy that knows the final fh
-        # 2. future base model with final fh
-        self.base_future_ = clone(self.base_forecaster).fit(y, X, fh)
+        # 2) base (future) aware of final fh
+        self.base_future_ = clone(base).fit(y, X, fh)
 
-        # clone C: fit residual model on errors
-        # 3. residual model
-        self.residual_forecaster_ = clone(self.residual_forecaster).fit(
-            residuals, X, fh
-        )
+        # 3) residual stages
+        self._resid_futures_ = []
+
+        if len(residual_steps) == 1:
+            # single residual: fit directly on r0, no in-sample prediction required
+            name, est = residual_steps[0]
+            est_future = clone(est).fit(resid_target, X, fh)
+            self._resid_futures_.append((name, est_future))
+        else:
+            # multi-stage: require in-sample predict capability
+            for name, est in residual_steps:
+                if not est.get_tag("capability:insample"):
+                    raise NotImplementedError(
+                        f"Residual forecaster '{name}' does not support in-sample "
+                        "prediction, which is required for multi-stage residual boosting."
+                    )
+
+            r = resid_target
+            for name, est in residual_steps:
+                est_ins = clone(est).fit(r, X, fh)
+                
+                rhat_ins = est_ins.predict(fh=insample_fh, X=X)
+                
+                # Store a fresh clone trained on the same target r for future prediction
+                est_future = clone(est).fit(r, X, fh)
+                self._resid_futures_.append((name, est_future))
+                
+                # Update residual target for next stage
+                r = r - rhat_ins
+
+        # 4) expose fitted children
+        self.steps_ = [("base", self.base_future_), *self._resid_futures_]
         return self
 
     def _predict(self, fh=None, X=None):
@@ -165,28 +207,42 @@ class ResidualBoostingForecaster(BaseForecaster):
         3. Return y_pred_base + y_pred_resid
         """
         y_base = self.base_future_.predict(fh=fh, X=X)
-        y_resid = self.residual_forecaster_.predict(fh=fh, X=X)
-        return y_base + y_resid
+        idx = y_base.index
+
+        y_hat = y_base
+        for _, f in getattr(self, "_resid_futures_", []):
+            y_add = f.predict(fh=fh, X=X)
+            y_add = y_add.reindex(idx).fillna(0)
+            y_hat = y_hat + y_add
+
+        return y_hat
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
-        i_base = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
-        i_res = self.residual_forecaster_.predict_interval(
-            fh=fh, X=X, coverage=coverage
-        )
-        return i_base + i_res
+        I = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+        idx = I.index
+        for _, f in getattr(self, "_resid_futures_", []):
+            J = f.predict_interval(fh=fh, X=X, coverage=coverage)
+            I = I.add(J.reindex(idx), fill_value=0)
+        return I
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Combine arbitrary quantile forecasts."""
-        q_base = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        return q_base + q_res
+        Q = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        idx = Q.index
+        for _, f in getattr(self, "_resid_futures_", []):
+            R = f.predict_quantiles(fh=fh, X=X, alpha=alpha)
+            Q = Q.add(R.reindex(idx), fill_value=0)
+        return Q
 
     def _predict_var(self, fh, X=None, cov=False):
         """Combine predictive variances (or full covariances)."""
-        v_base = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
-        v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
-        return v_base + v_res
+        V = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
+        idx = V.index
+        for _, f in getattr(self, "_resid_futures_", []):
+            W = f.predict_var(fh=fh, X=X, cov=cov)
+            V = V.add(W.reindex(idx), fill_value=0)
+        return V
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
@@ -206,11 +262,22 @@ class ResidualBoostingForecaster(BaseForecaster):
         from skpro.distributions import MeanScale
 
         y_base = self.base_future_.predict(fh=fh, X=X)
-        p_res = self.residual_forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
 
-        return MeanScale(
-            d=p_res, mu=y_base, sigma=1, index=p_res.index, columns=p_res.columns
-        )
+        if not getattr(self, "_resid_futures_", []):
+            return super()._predict_proba(fh=fh, X=X, marginal=marginal)
+
+        _, f = self._resid_futures_[0]
+        try:
+            p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
+        except Exception:
+            return super()._predict_proba(fh=fh, X=X, marginal=marginal)
+
+        try:
+            mu = y_base.reindex(p_res.index)
+        except Exception:
+            mu = y_base
+
+        return MeanScale(d=p_res, mu=mu, sigma=1)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -245,4 +312,12 @@ class ResidualBoostingForecaster(BaseForecaster):
             "residual_forecaster": NaiveForecaster(strategy="mean"),
         }
 
-        return [params1, params2]
+        params3 = {
+            "base_forecaster": NaiveForecaster(strategy="last"),
+            "residual_forecaster": [
+                NaiveForecaster(strategy="last", sp=7),
+                NaiveForecaster(strategy="last", sp=12),
+            ],
+        }
+
+        return [params1, params2, params3]
