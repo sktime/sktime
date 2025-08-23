@@ -11,9 +11,31 @@ from sktime.utils.dependencies import _placeholder_record
 class ForecastingOptCV(_DelegatedForecaster):
     """Tune an sktime forecaster via any optimizer in the hyperactive toolbox.
 
-    Takes an ``evaluate`` run as a single experiment run,
-    with ``forecaster`` being the estimator to tune,
-    and applies any ``hyperactive`` compatible optimizer to it.
+    ``ForecastingOptCV`` uses any available tuning engine from ``hyperactive``
+    to tune a forecaster by backtesting.
+
+    It passes backtesting results as scores to the tuning engine,
+    which identifies the best hyperparameters.
+
+    Any available tuning engine from hyperactive can be used, for example:
+    
+    * grid search - ``from hyperactive.opt import GridSearchSk as GridSearch``,
+      this results in the same algorithm as ``ForecastingGridSearchCV``
+    * hill climbing - ``from hyperactive.opt import HillClimbing``
+    * optuna parzen-tree search - ``from hyperactive.opt.optuna import TPEOptimizer``
+
+    Configuration of the tuning engine is as per the respective documentation.
+
+    Formally, ``ForecastingOptCV`` does the following:
+
+    In ``fit``, wraps the ``forecaster``, ``scoring``, and other parameters
+    into a ``SktimeForecastingExperiment`` instance, which is passed to the optimizer
+    ``optimizer`` as the ``experiment`` argument.
+    Optimal parameters are then obtained from ``optimizer.solve``, and set
+    as ``best_params_`` and ``best_forecaster_`` attributes.
+
+    In ``predict`` and ``predict``-like methods, calls the respective method
+    of the ``best_forecaster_`` if ``refit=True``.
 
     Parameters
     ----------
@@ -123,7 +145,13 @@ class ForecastingOptCV(_DelegatedForecaster):
 
     Example
     -------
-    Tuning an sktime forecaster via grid search
+    Any available tuning engine from hyperactive can be used, for example:
+
+    * grid search - ``from hyperactive.opt import GridSearchSk as GridSearch``
+    * hill climbing - ``from hyperactive.opt import HillClimbing``
+    * optuna parzen-tree search - ``from hyperactive.opt.optuna import TPEOptimizer``
+
+    For illustration, we use grid search, this can be replaced by any other optimizer.
 
     1. defining the tuned estimator:
     >>> from sktime.forecasting.naive import NaiveForecaster
