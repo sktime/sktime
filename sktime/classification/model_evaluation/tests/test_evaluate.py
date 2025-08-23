@@ -20,6 +20,9 @@ from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils.parallel import _get_parallel_test_fixtures
+
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
 @pytest.mark.skipif(
@@ -173,49 +176,43 @@ class TestEvaluate:
         assert all(result["fit_time"] > 0)
         assert all(result["pred_time"] >= 0)
 
-    def test_evaluate_parallel_backend(self):
-        """Test the parrelelization backends"""
+    @pytest.mark.parametrize(
+        "classifier", [DummyClassifier(), KNeighborsTimeSeriesClassifier()]
+    )
+    @pytest.mark.parametrize("backend", BACKENDS)
+    def test_evaluate_parallel_backends(self, classifier, backend):
+        """Test that evaluate works with parallel backends."""
         X, y = make_classification_problem()
-        n_splits = 3
-        cv = KFold(n_splits=n_splits)
+        cv = KFold(n_splits=3)
 
-        result = evaluate(
+        results = evaluate(
+            classifier=classifier,
+            cv=cv,
+            X=X,
+            y=y,
+            scoring=accuracy_score,
+            **backend,
+        )
+
+        assert isinstance(results, pd.DataFrame)
+        assert "test_accuracy_score" in results.columns
+
+    @pytest.mark.parametrize("backend", BACKENDS)
+    def test_evaluate_parallel_backends_return_data(self, backend):
+        """Test that evaluate works with parallel backends and return_data=True."""
+        X, y = make_classification_problem()
+        cv = KFold(n_splits=3)
+
+        results = evaluate(
             classifier=DummyClassifier(),
             cv=cv,
             X=X,
             y=y,
             scoring=accuracy_score,
-            error_score="raise",
-            backend="loky",
-            backend_params={"n_jobs": -1},
+            return_data=True,
+            **backend,
         )
 
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == n_splits
-
-        assert "test_accuracy_score" in result.columns
-        assert "fit_time" in result.columns
-        assert "pred_time" in result.columns
-
-    def test_evaluate_parallel_backend_none(self):
-        """Test the sequential loop if `backend="None"`"""
-        X, y = make_classification_problem()
-        n_splits = 3
-        cv = KFold(n_splits=n_splits)
-
-        result = evaluate(
-            classifier=DummyClassifier(),
-            cv=cv,
-            X=X,
-            y=y,
-            scoring=accuracy_score,
-            error_score="raise",
-            backend="None",
-        )
-
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == n_splits
-
-        assert "test_accuracy_score" in result.columns
-        assert "fit_time" in result.columns
-        assert "pred_time" in result.columns
+        assert isinstance(results, pd.DataFrame)
+        assert "test_accuracy_score" in results.columns
+        assert "y_pred" in results.columns
