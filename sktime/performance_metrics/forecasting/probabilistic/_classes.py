@@ -23,16 +23,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
+
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
+
     score_average : bool, optional, default=True
         for interval and quantile losses only
-            if True, metric/loss is averaged by upper/lower and/or quantile
-            if False, metric/loss is not averaged by upper/lower and/or quantile
+
+        * if ``True``, metric/loss is averaged by upper/lower and/or quantile
+        * if ``False``, metric/loss is not averaged by upper/lower and/or quantile
     """
 
     _tags = {
@@ -455,15 +460,15 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each quantile should be averaged.
@@ -611,15 +616,15 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -716,15 +721,15 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -826,15 +831,15 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -1031,15 +1036,15 @@ class LogLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1091,15 +1096,15 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1149,15 +1154,15 @@ class CRPS(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1217,15 +1222,15 @@ class AUCalibration(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 

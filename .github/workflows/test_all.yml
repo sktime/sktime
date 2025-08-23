@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: python environment step
         uses: actions/setup-python@v5
         with:
@@ -32,14 +32,14 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: run tests on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-base
         with:
@@ -60,7 +60,7 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
@@ -77,7 +77,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
@@ -99,14 +99,14 @@ jobs:
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: update local git tracking reference
         run: git remote set-branches origin main
       - name: update local shallow clone
