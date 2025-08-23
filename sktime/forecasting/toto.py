@@ -26,12 +26,22 @@ class TotoForecaster(BaseForecaster):
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
-        descriptive explanation of paramc
+    num_samples : int
+        Number of samples for probabilistic forecasting
+    samples_per_batch : int, optional (default=1)
+        Control memory usage during inference
+    prediction_type : string, optional (default='median')
+        Type of prediction to generate ('mean' or 'median').
+    scale_factor_exponent : int, optional (default=10)
+        Exponent for the scale factor used in the model.
+    stabilize_with_global : boolean, optional (default=True)
+        Whether to stabilize the model with global context.
+    use_memory_efficient_attention : boolean, optional (default=True)
+        Whether to use memory-efficient attention mechanisms using Xformers.
+    model_path : string, optional (default='Datadog/Toto-Open-Base-1.0')
+        Path to the pre-trained model.
+    device : string, optional (default=None)
+        Device to run the model on ('cpu' or 'cuda').
     and so on
 
     References
@@ -61,44 +71,41 @@ class TotoForecaster(BaseForecaster):
         # Datadog for Datadog/toto
         "maintainers": [],
         "python_version": ">= 3.10",
-        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.4"],
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         num_samples: int = 1,
         samples_per_batch: int = 1,
         prediction_type: str = "median",
-        use_memory_efficient_attention: bool = True,
-        stabilize_with_global: bool = True,
         scale_factor_exponent: int = 10,
+        stabilize_with_global: bool = True,
+        use_memory_efficient_attention: bool = True,
         model_path: str = "Datadog/Toto-Open-Base-1.0",
         device=None,
     ):
-        if _check_soft_dependencies("torch", severity="error"):
-            import torch
-
         self.model_path = model_path
-        if device is None:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = device
+        self.device = device
         self.num_samples = num_samples
         self.samples_per_batch = samples_per_batch
         self.use_memory_efficient_attention = use_memory_efficient_attention
+        if self.use_memory_efficient_attention:
+            if _check_soft_dependencies("xformers", severity="warning"):
+                self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
+            else:
+                raise ImportError(
+                    """
+                    xformers is required for memory efficient attention.
+                    Refer to https://github.com/facebookresearch/xformers
+                    """
+                )
         self.stabilize_with_global = stabilize_with_global
         self.scale_factor_exponent = scale_factor_exponent
         if prediction_type.lower() not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
         else:
             self.prediction_type = prediction_type.lower()
-
-        self._forecaster = _CachedToToForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self.device,
-        ).load_from_checkpoint()
 
         super().__init__()
 
@@ -118,7 +125,7 @@ class TotoForecaster(BaseForecaster):
         kwargs = self._get_toto_kwargs()
         key = {
             **kwargs,
-            "device": self.device,
+            "device": self._device,
         }
         return str(sorted(key.items()))
 
@@ -161,21 +168,29 @@ class TotoForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        if _check_soft_dependencies("toto-ts", severity="error"):
-            from toto.data.util.dataset import MaskedTimeseries
+        import torch
+        from toto.data.util.dataset import MaskedTimeseries
 
-        if _check_soft_dependencies("torch", severity="error"):
-            import torch
+        if self.device is None:
+            self._device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self._device = self.device
+
+        self._forecaster = _CachedToToForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        ).load_from_checkpoint()
 
         if isinstance(y, pd.DataFrame):
             self._y = y
             self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
-                self.device
+                self._device
             )
-            self.id_mask = torch.zeros_like(self._input_series).to(self.device)
+            self.id_mask = torch.zeros_like(self._input_series).to(self._device)
             self.padding_mask = torch.full_like(
                 self._input_series, True, dtype=torch.bool
-            ).to(self.device)
+            ).to(self._device)
 
         else:
             self._y = y.reset_index().pivot(
@@ -185,7 +200,7 @@ class TotoForecaster(BaseForecaster):
                 "time_stamp", axis=0
             )
             self._input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
-                self.device
+                self._device
             )
             n, d = self._y.shape
             self.id_mask = torch.tensor(
@@ -202,7 +217,7 @@ class TotoForecaster(BaseForecaster):
         self.timestamp_seconds = torch.zeros_like(self._input_series)
         self.time_interval_seconds = torch.full(
             (self._input_series.shape[0],), 60 * 15, dtype=torch.float32
-        ).to(self.device)
+        ).to(self._device)
 
         self._series = MaskedTimeseries(
             series=self._input_series,
@@ -241,8 +256,6 @@ class TotoForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        if min(fh) < 1:
-            raise ValueError("Forecasting horizon must contain strictly future steps.")
         prediction_length = max(fh)
 
         self._forecast = self._forecaster.forecast(
@@ -308,7 +321,7 @@ class TotoForecaster(BaseForecaster):
         relative_indices = fh.to_relative(self._cutoff) - 1
 
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
-        alpha_tensor = torch.tensor(alpha, device=self.device)
+        alpha_tensor = torch.tensor(alpha, device=self._device)
 
         quantiles = self._forecast.quantile(alpha_tensor)
         if quantiles.dim() > 3:
@@ -321,34 +334,6 @@ class TotoForecaster(BaseForecaster):
                 selected_quantiles = quantile_values[j, i, relative_indices]
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
-
-    # todo: consider implementing this, optional
-    # implement only if different from default:
-    #   default retrieves all self attributes ending in "_"
-    #   and returns them with keys that have the "_" removed
-    # if not implementing, delete the method
-    #   avoid overriding get_fitted_params
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        # implement here
-        #
-        # when this function is reached, it is already guaranteed that self is fitted
-        #   this does not need to be checked separately
-        #
-        # parameters of components should follow the sklearn convention:
-        #   separate component name from parameter name by double-underscore
-        #   e.g., componentname__paramname
 
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
