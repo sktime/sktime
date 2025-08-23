@@ -2,7 +2,7 @@
 
 """Implements Generalized Autoregressive Conditional Heteroskedasticity models."""
 
-__author__ = ["Vasudeva-bit"]
+__author__ = ["Vasudeva-bit", "SzymonStolarski"]
 __all__ = ["ARCH"]
 
 import itertools
@@ -302,13 +302,11 @@ class ARCH(BaseForecaster):
         ArchResultObject : ARCH result object, full_range, abs_idx in a tuple
             mean, variance forecasts, full_range, abs_idx
         """
-        if fh:
-            self._horizon = fh
-            abs_idx = self._horizon.to_absolute_int(self._y.index[-1], self.cutoff)
-            end = abs_idx[-1]
+        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
+        end = abs_idx[-1]
 
-        # all fh are in sample
-        if self._horizon.is_all_in_sample(self.cutoff):
+        # all fh are in-sample
+        if fh.is_all_in_sample(self.cutoff):
             # horizon in arch_model must be >=1
             end = 1
 
@@ -351,15 +349,15 @@ class ARCH(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        # all out of sample
+        # all out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
             y_pred = self._predict_out_of_sample(fh=fh, X=X, type="mean")
 
-        # all in sample
+        # all in-sample
         elif fh.is_all_in_sample(self.cutoff):
             y_pred = self._predict_in_sample(fh=fh, X=X, type="mean")
 
-        # both out of sample and in sample
+        # both out-of-sample and in-sample
         else:
             fh_oos = fh.to_out_of_sample(self.cutoff)
             fh_ins = fh.to_in_sample(self.cutoff)
@@ -404,9 +402,12 @@ class ARCH(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        std_err = np.sqrt(np.array(ArchResultObject.variance.values[-1]))
-        mean_forecast = np.array(ArchResultObject.mean.values[-1])
+        # includes already both in-sample and out-of-sample
+        std_err = np.sqrt(self._predict_var(fh=fh, X=X).values)
+        mean_forecast = self._predict(fh=fh, X=X).values
+
+        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
+        full_range = pd.RangeIndex(start=abs_idx[0], stop=abs_idx[-1] + 1)
 
         y_col_name = self._y.name
         df_list = []
@@ -458,7 +459,8 @@ class ARCH(BaseForecaster):
             df.loc[abs_idx.to_pandas()].values,
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
-        df.index = self._horizon.to_absolute_index(self.cutoff)
+        df.index = fh.to_absolute_index(self.cutoff)
+
         return df
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -476,15 +478,15 @@ class ARCH(BaseForecaster):
         pred_var : pd.DataFrame
             Variance forecasts
         """
-        # all out of sample
+        # all out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
             pred_var = self._predict_out_of_sample(fh=fh, X=X, type="variance")
 
-        # all in sample
+        # all in-sample
         elif fh.is_all_in_sample(self.cutoff):
             pred_var = self._predict_in_sample(fh=fh, X=X, type="variance")
 
-        # both out of sample and in sample
+        # both out-of-sample and in-sample
         else:
             fh_oos = fh.to_out_of_sample(self.cutoff)
             fh_ins = fh.to_in_sample(self.cutoff)
