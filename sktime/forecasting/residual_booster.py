@@ -13,11 +13,11 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.base._meta import _HeterogenousMetaEstimator
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
-class ResidualBoostingForecaster(_HeterogenousMetaEstimator,BaseForecaster):
+class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Residual boosting forecast fitting one forecaster on residuals of another.
 
     Residual boosting can be used for:
@@ -106,7 +106,7 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator,BaseForecaster):
         )
 
         steps = [base_tuple] + resid_tuples
-        
+
         names = self._get_estimator_names(steps, make_unique=True)
         self._check_names(names)
         ests = [est for _, est in steps]
@@ -134,7 +134,7 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator,BaseForecaster):
                 "capability:categorical_in_X": cat,
             }
         )
-    
+
     def _fit(self, y, X=None, fh=None):
         """
         Fit base forecaster and (optionally multiple) residual forecasters.
@@ -178,19 +178,20 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator,BaseForecaster):
                 if not est.get_tag("capability:insample"):
                     raise NotImplementedError(
                         f"Residual forecaster '{name}' does not support in-sample "
-                        "prediction, which is required for multi-stage residual boosting."
+                        "prediction, which is required for "
+                        "multi-stage residual boosting."
                     )
 
             r = resid_target
             for name, est in residual_steps:
                 est_ins = clone(est).fit(r, X, fh)
-                
+
                 rhat_ins = est_ins.predict(fh=insample_fh, X=X)
-                
+
                 # Store a fresh clone trained on the same target r for future prediction
                 est_future = clone(est).fit(r, X, fh)
                 self._resid_futures_.append((name, est_future))
-                
+
                 # Update residual target for next stage
                 r = r - rhat_ins
 
