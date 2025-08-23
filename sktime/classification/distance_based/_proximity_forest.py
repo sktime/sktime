@@ -751,7 +751,40 @@ class ProximityStump(BaseClassifier):
         self.y = None
         self.entropy = None
         self._random_object = None
+
         super().__init__()
+
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.32.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
+
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1115,7 +1148,8 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
-        # TODO, 0.32.0 remove n_jobs parameter and below logic
+
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
             self.backend_params = {"n_jobs": n_jobs}
             warn(
@@ -1146,10 +1180,6 @@ class ProximityTree(BaseClassifier):
                 UserWarning,
                 obj=self,
             )
-
-        from sktime.utils.validation import check_n_jobs
-
-        self._threads_to_use = check_n_jobs(n_jobs)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1507,7 +1537,40 @@ class ProximityForest(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
+
         super().__init__()
+
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.32.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
+
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
