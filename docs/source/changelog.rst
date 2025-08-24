@@ -109,6 +109,7 @@ Time series classification
 * [ENH] remove customized ``attentionLSTM`` layer. Replace with ``keras`` attention (:pr:`8721`) :user:`jnrusson1`
 * [ENH] add class weight to ``InceptionTimeClassifier`` and capabability tag (:pr:`8509`) :user:`Virgile-Foussereau`
 * [ENH] add tests for TSC ``evaluate`` parallelization backends  (:pr:`8737`) :user:`thisisrick25`
+* [ENH] improve classifier ``evaluate`` defaults and documentation (:pr:`8739`) :user:`fkiraly`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
