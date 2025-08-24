@@ -7,7 +7,9 @@ The :mod:`sktime.classification` module contains algorithms and composition tool
 
 All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="classifier"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the classifier tags API reference <panel_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
@@ -58,23 +60,37 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    CNTCClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    GRUClassifier
-    GRUFCNNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    MVTSTransformerClassifier
-    ResNetClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    cnn.CNNClassifier
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    lstmfcn.LSTMFCNClassifier
+    macnn.MACNNClassifier
+    mcdcnn.MCDCNNClassifier
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    tapnet.TapNetClassifier
+
+Foundation models
+-----------------
+
+.. currentmodule:: sktime.classification.foundation_models
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMClassifier
+
 
 Dictionary-based
 ----------------

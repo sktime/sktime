@@ -502,8 +502,7 @@ class ShapeletTransform(BaseTransformer):
                         if self.verbose > 0:
                             if candidate_rejected is False:
                                 print(
-                                    "Candidate finished. {:02d}:{:02} "
-                                    "remaining".format(
+                                    "Candidate finished. {:02d}:{:02} remaining".format(
                                         int(
                                             round(
                                                 self.time_contract_in_mins
@@ -535,8 +534,7 @@ class ShapeletTransform(BaseTransformer):
                                 )
                             else:
                                 print(
-                                    "Candidate rejected. {:02d}:{:02} "
-                                    "remaining".format(
+                                    "Candidate rejected. {:02d}:{:02} remaining".format(
                                         int(
                                             round(
                                                 (self.time_contract_in_mins - time_now)

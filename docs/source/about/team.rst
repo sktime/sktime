@@ -73,12 +73,16 @@ Core Developers
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Eric J Berger
+     - :user:`ericjb`
    * - Felipe Angelim Vieira
      - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
      - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
+   * - Jan Beitner
+     - :user:`jdb78`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
    * - Jonathan Bechtel
@@ -89,6 +93,8 @@ Core Developers
      - :user:`lovkush-a`
    * - Marc Rovira
      - :user:`marrov`
+   * - Mateusz Kasprowicz
+     - :user:`mateuszkasprowicz `
    * - Mirae Parker
      - :user:`miraep8`
    * - Pranav Prajapati

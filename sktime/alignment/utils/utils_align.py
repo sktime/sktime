@@ -27,6 +27,8 @@ def reindex_iloc(df, inds, copy=True):
 
     Examples
     --------
+    >>> import pandas as pd
+    >>> from sktime.alignment.utils.utils_align import reindex_iloc
     >>> X = pd.DataFrame({'a' : [1,2,3,4]}, index=[-4,7,11,14])
     >>> reindex_iloc(X, [1, 2, 6])
          a

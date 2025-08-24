@@ -211,6 +211,10 @@ class DrCIF(BaseClassifier):
         else:
             raise ValueError("DrCIF invalid base estimator given")
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         from joblib import Parallel, delayed
 

@@ -1247,7 +1247,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         - 'ResLSTM'
         - 'AttentiveLSTM'
     dilations : list of int list (default=None)
-        dilations betweem layers, by default set to ``[[1, 2], [4, 8]]``
+        dilations between layers, by default set to ``[[1, 2], [4, 8]]``
     encoder_hidden_size : int (default=200)
         units for the DilatedRNN's hidden state size
     context_size : int (default=10)

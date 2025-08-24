@@ -131,12 +131,12 @@ class BaseTransformer(BaseEstimator):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": False,
-        # does the transformer natively support categorical in exogeneous X?
+        # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -160,11 +160,12 @@ class BaseTransformer(BaseEstimator):
         # "off" - output of _transform, _inverse_transform is directly returned
         # valid mtype string - output is converted to specified mtype
         "backend:parallel": None,  # parallelization backend for broadcasting
-        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  {None, "dask", "loky", "multiprocessing", "threading","ray"}
         #  None: no parallelization
         #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         #  "joblib": uses custom joblib backend, set via `joblib_backend` tag
         #  "dask": uses `dask`, requires `dask` package in environment
+        #  "ray": uses ``ray``, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
     }
 
@@ -1303,7 +1304,7 @@ class BaseTransformer(BaseEstimator):
         #   skipped for output_scitype = "Primitives"
         #       since then the output always is a pd.DataFrame
         if case == "case 2: higher scitype supported" and output_scitype == "Series":
-            if self.get_tags()["scitype:transform-input"] == "Panel":
+            if self.get_tag("scitype:transform-input") == "Panel":
                 # Conversion from Series to Panel done for being compatible with
                 # algorithm. Thus, the returned Series should stay a Series.
                 pass
@@ -1367,9 +1368,18 @@ class BaseTransformer(BaseEstimator):
 
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
-            elif self.get_tags()["scitype:transform-input"] == "Panel":
-                # Input has always to be Panel
-                X_output_mtype = "pd.DataFrame"
+            elif self.get_tag("scitype:transform-input") == "Panel":
+                # Converting Panel to Series
+                if X_input_scitype == "Hierarchical":
+                    # Input was Hierarchical, but output has dropped one level.
+                    # One level Hierarchical should be converted to Panel, but
+                    # deeper Hierarchical should be converted to Hierarchical.
+                    # Choose the simplest structure of the two.
+                    X_output_mtype = ["pd-multiindex", "pd_multiindex_hier"]
+                    output_scitype = ["Panel", "Hierarchical"]
+                else:
+                    # Input must have been Panel, output should be Series
+                    X_output_mtype = "pd.DataFrame"
             else:
                 # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype
@@ -1394,15 +1404,26 @@ class BaseTransformer(BaseEstimator):
                 store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
+            # vectorization causes a superfluous zero level
+            # if we have a Series input that is vectorized,
+            # as in that case the index should be "0-level" (no levels)
+            # but this is not possible in pandas, so it will have a level
+            # which always has the entry 0.
+            # in this case, we need to strip this level
+            Xt_has_superfluous_zero_level = (
+                X_input_scitype != "Series"
+                and case == "case 3: requires vectorization"
+                and isinstance(Xt, (pd.DataFrame, pd.Series))
+            )
             # we ensure the output is pd_DataFrame_Table
             # & ensure the returned index is sensible
             # for return index, we need to deal with last level, constant 0
-            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+            if Xt_has_superfluous_zero_level:
                 # if index is multiindex, last level is constant 0
                 # and other levels are hierarchy
                 if isinstance(Xt.index, pd.MultiIndex):
                     Xt.index = Xt.index.droplevel(-1)
-                # else this is only zeros and should be reset to RangeIndex
+                # we have an index with only zeroes, and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
             return convert_to(
@@ -1465,11 +1486,11 @@ class BaseTransformer(BaseEstimator):
                         f"In fit, {type(self).__name__} makes one fit per instance, "
                         "and applies that fit to the instance with the same index in "
                         "transform. Vanilla use therefore requires the same number "
-                        "of instances in fit and transform, but"
+                        "of instances in fit and transform, but "
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
                         f"number of instances seen in transform: {n_trafos}. "
-                        "For fit/transforming per instance, e.g., for pre-processinng "
+                        "For fit/transforming per instance, e.g., for pre-processing "
                         "in a time series classification, regression or clustering "
                         "pipeline, wrap this transformer in "
                         "FitInTransform, from sktime.transformations.compose."

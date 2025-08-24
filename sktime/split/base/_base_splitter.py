@@ -100,6 +100,9 @@ class BaseSplitter(BaseObject):
         # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -371,7 +374,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
@@ -384,7 +387,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "

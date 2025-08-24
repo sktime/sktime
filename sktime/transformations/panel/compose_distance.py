@@ -62,11 +62,16 @@ class DistanceFeatures(BaseTransformer):
         "skip-inverse-transform": False,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:missing_values:removes": False,
         # we leave remember_data as False, since updating self._X in update
         # would increase the number of columns in the transform return
         "remember_data": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # DistanceFeatures does ont work for hierarchical data, see #8077
+        "tests:skip_all": True,
     }
 
     def __init__(self, distance=None, distance_mtype=None, flatten_hierarchy=False):

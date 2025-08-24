@@ -30,7 +30,7 @@ Each scitype is sub-typed with property fields such as ``is_univariate``
 (the time series is univariate yes/no),
 ``n_instances`` (number of instances in a panel or hierarchical collection), etc.
 
-Concerete data types in ``sktime`` are implementations of these abstract data types,
+Concrete data types in ``sktime`` are implementations of these abstract data types,
 also referred to as data :term:`mtype` (machine type) throughout the documentation.
 
 Full specifications of the abstract data types,
@@ -85,7 +85,7 @@ The ``Series`` mtype represents a single time series.
     SeriesPdDataFrame
     SeriesPdSeries
     SeriesNp2D
-    SeriesXArray
+    SeriesXarray
     SeriesDask
     SeriesPolarsEager
     SeriesGluontsList
@@ -151,9 +151,6 @@ The ``Table`` mtype represents a (non-temporal) data frame table.
     TableNp2D
     TableListOfDict
     TablePolarsEager
-    TableGluontsList
-    TableGluontsPandas
-
 
 Serialized File Format Specifications
 -------------------------------------
