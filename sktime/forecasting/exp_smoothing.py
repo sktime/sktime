@@ -10,7 +10,8 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 class ExponentialSmoothing(_StatsModelsAdapter):
     """Holt-Winters exponential smoothing forecaster.
-
+    This forecaster uses the ExponentialSmoothing model from `statsmodels`
+    to model time series with optional trend and seasonality.
     Direct interface for ``statsmodels.tsa.holtwinters``.
 
     Default settings use simple exponential smoothing without trend and
