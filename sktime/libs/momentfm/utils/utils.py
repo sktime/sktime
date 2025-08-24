@@ -5,10 +5,11 @@ import random
 from argparse import Namespace
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch", "transformers"], severity="none"):
-    import torch
+    torch = _safe_import("torch")
 
     def control_randomness(seed: int = 13):
         """Control randomness seed function."""

@@ -6,15 +6,15 @@ from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from .utils import _reduce
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch"], severity="none"):
-    import torch
-    import torch.nn.functional as F
-    from torch import Tensor
-    from torch.nn.modules.loss import _Loss
+    torch = _safe_import("torch")
+    F = _safe_import("torch.nn.functional")
+    Tensor = _safe_import("torch.Tensor")
+    _Loss = _safe_import("torch.nn.modules.loss._Loss")
+    _reduce = _safe_import("sktime.libs.momentfm.utils._reduce")
 
     class sMAPELoss(_Loss):
         """sMAPELoss class."""
@@ -36,7 +36,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             div[div == float("inf")] = 0.0
             return div
 
-        def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        def forward(self, input, target):
             """Forward function."""
             delta_y = self._abs(input - target)
             scale = self._abs(target) + self._abs(input)
