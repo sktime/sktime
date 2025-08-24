@@ -17,7 +17,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     Parameters
     ----------
-    esteimator : sktime classifier, BaseClassifier instance or interface compatible
+    estimator : sktime classifier, BaseClassifier instance or interface compatible
         The classifier to tune, must implement the sktime classifier interface.
 
     param_grid : dict or list of dictionaries
