@@ -485,6 +485,7 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "capability:missing_values": True,
     }
 
     def __init__(
@@ -771,6 +772,7 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "capability:missing_values": True,
     }
 
     def _transform(self, y, X=None):
@@ -1106,6 +1108,7 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": True,
+        "capability:missing_values": True,
     }
 
     def _transform(self, y, X=None):
@@ -1320,6 +1323,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "capability:missing_values": True,
     }
 
     def __init__(
@@ -1429,6 +1433,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "capability:missing_values": True,
     }
 
     _estimator_scitype = "time-series-regressor"
@@ -1936,7 +1941,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         or a different number of observations.
 
         * `True` : Uniform window of length (total observations - maximum
-          forecasting horizon). Note: Currently, there are no missing arising
+          forecasting horizon). Note: Currently, there are no missings arising
           from window length due to backwards imputation in
           `ReductionTransformer`. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
@@ -1953,9 +1958,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # CI and test flags
-        # -----------------
-        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
