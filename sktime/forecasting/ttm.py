@@ -7,7 +7,6 @@ __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-from skbase.utils.stderr_mute import StderrMute
 from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
@@ -524,7 +523,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             callbacks=self.callbacks,
         )
 
-        with StderrMute() as _, StdoutMute() as _:
+        with StdoutMute() as _:
             trainer.train()
 
         # Get the model
