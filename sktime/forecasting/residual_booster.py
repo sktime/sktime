@@ -268,14 +268,17 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
         _, f = self._resid_futures_[0]
-        try:
-            p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
-        except Exception:
+
+        # only proceed if residual forecaster supports predict_proba
+        if not hasattr(f, "predict_proba"):
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
-        try:
+        p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        # align base mean with residual distribution index if possible
+        if hasattr(y_base, "reindex") and not y_base.index.equals(p_res.index):
             mu = y_base.reindex(p_res.index)
-        except Exception:
+        else:
             mu = y_base
 
         return MeanScale(d=p_res, mu=mu, sigma=1)
