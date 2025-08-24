@@ -61,6 +61,87 @@ Regression datasets
 
     tecator.Tecator
 
+Creating Custom Classification Datasets
+---------------------------------------
+
+You can define your own classification dataset by subclassing ``BaseClassificationDataset`` from ``sktime.datasets.classification._base``.
+
+Example:
+
+
+.. code-block:: python
+
+    from sktime.datasets.classification._base import BaseClassificationDataset
+    import pandas as pd
+
+    class MyClassificationDataset(BaseClassificationDataset):
+        """
+        A sample classification dataset template using sktime's classification dataset base class.
+
+        This template demonstrates how to implement a custom dataset class for a classification task
+        using sktime's dataset extension interface. It uses a synthetic example as a source.
+
+        Attributes
+        ----------
+        metadata : dict
+            Dictionary containing key information about the dataset such as task type,
+            number of classes, number of instances, and whether the data is univariate
+            and of equal length.
+        """
+
+        def __init__(self):
+            super().__init__()
+            self.metadata = {
+                "task": "classification",
+                "n_classes": 2,
+                "n_instances": 3,
+                "univariate": False,
+                "equal_length": True,
+            }
+
+        def _load(self, *args):
+            """
+            Return a small synthetic dataset.
+
+            Parameters
+            ----------
+            *args: tuple of strings that specify what to load
+                Valid values: "TRAIN", "TEST", or None
+
+            Returns
+            -------
+            X : pd.DataFrame
+                Feature matrix.
+            y : pd.Series
+                Target labels.
+            """
+            X = pd.DataFrame({"feature_1": [1, 2, 3], "feature_2": [4, 5, 6]})
+            y = pd.Series([0, 1, 0], name="target")
+
+            if not args or args[0] is None:
+                return X, y
+            result = []
+            for split in args:
+                if split == "TRAIN":
+                    result.append((X.iloc[:2], y.iloc[:2]))
+                elif split == "TEST":
+                    result.append((X.iloc[2:], y.iloc[2:]))
+                else:
+                    raise ValueError(f"Invalid split '{split}'. Must be 'TRAIN', 'TEST', or None.")
+            if len(result) == 1:
+                return result[0]
+            return tuple(result)
+
+Usage:
+
+.. code-block:: python
+
+   dataset = MyClassificationDataset()
+   X, y = dataset.load()
+   X_train, y_train, X_test, y_test = dataset.load(
+       split=["X_train", "y_train", "X_test", "y_test"]
+   )
+
 Loaders
 -------
 
