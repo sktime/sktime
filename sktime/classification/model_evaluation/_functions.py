@@ -263,7 +263,7 @@ def _evaluate_fold(x, meta):
 
 def evaluate(
     classifier,
-    cv=KFold(n_splits=3, shuffle=False),
+    cv=None,
     X=None,
     y=None,
     scoring: Optional[Union[callable, list[callable]]] = None,
@@ -302,9 +302,18 @@ def evaluate(
     classifier : sktime.BaseClassifier
         Concrete sktime classifier to benchmark.
 
-    cv : sklearn.model_selection.BaseCrossValidator
-        Provides train/test indices to split data into folds.
-        Example: ``KFold`` or ``TimeSeriesSplit``.
+    cv : int, sklearn cross-validation generator or an iterable, default=3-fold CV
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None = default = ``KFold(n_splits=3, shuffle=True)``
+        - integer, number of folds folds in a ``KFold`` splitter, ``shuffle=True``
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with ``shuffle=False`` so the splits will be the same across calls.
 
     X : sktime-compatible panel data (Panel scitype)
         Panel data container. Supported formats include:
@@ -389,6 +398,18 @@ def evaluate(
             )
     scoring = _check_scores(scoring)
 
+    # default handling for cv
+    if isinstance(cv, int):
+        from sklearn.model_selection import KFold
+
+        _cv = KFold(n_splits=cv, shuffle=True)
+    elif cv is None:
+        from sklearn.model_selection import KFold
+
+        _cv = KFold(n_splits=3, shuffle=True)
+    else:
+        _cv = cv
+
     y_valid, _, y_metadata = check_is_scitype(y, scitype="Table", return_metadata=[])
     if not y_valid:
         raise TypeError(f"Expected y dtype Table. Got {type(y)} instead.")
@@ -434,10 +455,10 @@ def evaluate(
             yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
-    yx_splits = gen_y_X_train_test(y, X, cv)
+    yx_splits = gen_y_X_train_test(y, X, _cv)
 
     def evaluate_fold_wrapper(x, meta):
-        result, classifier = _evaluate_fold(x, meta["_evaluate_fold_kwargs"])
+        result, _ = _evaluate_fold(x, meta["_evaluate_fold_kwargs"])
         return result
 
     results = parallelize(
