@@ -3260,6 +3260,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
       "profile": "https://github.com/Sohaib-Ahmed21",
       "contributions": [
+        "bug",
         "code"
       ]
     },
@@ -3458,6 +3459,16 @@
       ]
     },
     {
+      "login": "mujeeb4",
+      "name": "Muhammad Mujeeb",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70962107?v=4",
+      "profile": "https://github.com/Mujeeb4",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
       "login": "tapyu",
       "name": "Rubem Pacelli",
       "avatar_url": "https://avatars.githubusercontent.com/u/22801918?v=4",
@@ -3537,6 +3548,15 @@
       ]
     },
     {
+      "login": "Rajdeep-naha",
+      "name": "Rajdeep Naha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/161390547?v=4",
+      "profile": "https://github.com/Rajdeep-naha",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "andretheronsa",
       "name": "Andre Theron",
       "avatar_url": "https://avatars.githubusercontent.com/u/33958609?v=4",
@@ -3556,13 +3576,54 @@
       ]
     },
     {
+      "login": "akshathmangudi",
+      "name": "Akshath",
+      "avatar_url": "https://avatars.githubusercontent.com/akshathmangudi",
+      "profile": "https://github.com/akshathmangudi",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
       "login": "thearshkumar",
       "name": "Arsh Kumar",
       "avatar_url": "https://avatars.githubusercontent.com/u/145699183?v=4",
       "profile": "https://github.com/thearshkumar",
       "contributions": [
         "code",
+        "bug",
+        "doc"
+      ]
+    },
+    {
+      "login": "SzymonStolarski",
+      "name": "Szymon Stolarski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67345427?v=4",
+      "profile": "https://github.com/SzymonStolarski",
+      "contributions": [
+        "code",
+        "test",
         "bug"
+      ]
+    },
+    {
+      "login": "garar",
+      "name": "Krystian Kichewko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/220005?v=4",
+      "profile": "https://github.com/garar",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "Virgile-Foussereau",
+      "name": "Virgile Foussereau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/99748194?v=4",
+      "profile": "https://github.com/Virgile-Foussereau",
+      "contributions": [
+        "code"
       ]
     }
   ]
