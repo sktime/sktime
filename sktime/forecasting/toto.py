@@ -39,10 +39,9 @@ class TotoForecaster(BaseForecaster):
     use_memory_efficient_attention : boolean, optional (default=True)
         Whether to use memory-efficient attention mechanisms using Xformers.
     model_path : string, optional (default='Datadog/Toto-Open-Base-1.0')
-        Path to the pre-trained model.
+        Path to the Toto huggingface model.
     device : string, optional (default=None)
-        Device to run the model on ('cpu' or 'cuda').
-    and so on
+        Specifies the device on which to run the model on ('cpu' or 'cuda').
 
     References
     ----------
@@ -50,7 +49,7 @@ class TotoForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> model = TotoForecaster() # needs work
+    >>> model = TotoForecaster() # needs work not completed
     """
 
     _tags = {
@@ -69,7 +68,7 @@ class TotoForecaster(BaseForecaster):
         # -------------------------------
         "authors": ["JATAYU000", "Datadog"],
         # Datadog for Datadog/toto
-        "maintainers": [],
+        "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
         "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
     }
@@ -130,7 +129,13 @@ class TotoForecaster(BaseForecaster):
         return str(sorted(key.items()))
 
     def _get_toto_kwargs(self):
-        """Get keyword arguments for the Toto model."""
+        """Get keyword arguments for the Toto model.
+
+        Returns
+        -------
+        dict
+            Keyword arguments for the Toto model.
+        """
         return {
             "pretrained_model_name_or_path": self.model_path,
             "use_memory_efficient_attention": self.use_memory_efficient_attention,
@@ -335,9 +340,6 @@ class TotoForecaster(BaseForecaster):
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -357,54 +359,23 @@ class TotoForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        # needs work not completed
+        test_params = []
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+        return test_params
 
 
 @_multiton
 class _CachedToToForecaster:
+    """Cached Toto forecaster.
+
+    Toto is a zero-shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    This caching mechanism uses the _multiton decorator to ensure
+    that models with the same configuration are reused, preventing
+    duplicate models in memory when handling multivariate data.
+    """
+
     def __init__(self, key, toto_kwargs, device):
         self.key = key
         self.toto_kwargs = toto_kwargs
