@@ -407,7 +407,6 @@ class ARCH(BaseForecaster):
         mean_forecast = self._predict(fh=fh, X=X).values
 
         abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
-        full_range = pd.RangeIndex(start=abs_idx[0], stop=abs_idx[-1] + 1)
 
         y_col_name = self._y.name
         df_list = []
@@ -419,13 +418,13 @@ class ARCH(BaseForecaster):
             lower_df = pd.DataFrame(
                 lower_int,
                 columns=[
-                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "lower"
+                    f"{y_col_name} {alpha} lower" if y_col_name else f"0 {alpha} lower"
                 ],
             )
             upper_df = pd.DataFrame(
                 upper_int,
                 columns=[
-                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "upper"
+                    f"{y_col_name} {alpha} upper" if y_col_name else f"0 {alpha} upper"
                 ],
             )
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
@@ -444,7 +443,7 @@ class ARCH(BaseForecaster):
         df = pd.DataFrame(
             df.values,
             columns=pd.MultiIndex.from_tuples([col.split(" ") for col in df]),
-            index=full_range,
+            index=abs_idx.to_pandas(),
         )
         final_columns = list(
             itertools.product(
@@ -456,7 +455,7 @@ class ARCH(BaseForecaster):
             )
         )
         df = pd.DataFrame(
-            df.loc[abs_idx.to_pandas()].values,
+            df.values,
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
         df.index = fh.to_absolute_index(self.cutoff)
