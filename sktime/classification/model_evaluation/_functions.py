@@ -12,7 +12,6 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
