@@ -456,14 +456,10 @@ def evaluate(
     # generator for y and X splits to iterate over below
     yx_splits = gen_y_X_train_test(y, X, _cv)
 
-    def evaluate_fold_wrapper(x, meta):
-        result, _ = _evaluate_fold(x, meta["_evaluate_fold_kwargs"])
-        return result
-
     results = parallelize(
-        fun=evaluate_fold_wrapper,
+        fun=_evaluate_fold,
         iter=enumerate(yx_splits),
-        meta={"_evaluate_fold_kwargs": _evaluate_fold_kwargs},
+        meta=_evaluate_fold_kwargs,
         backend=backend,
         backend_params=backend_params,
     )
