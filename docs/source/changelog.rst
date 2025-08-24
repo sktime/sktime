@@ -19,7 +19,6 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.38.5 - 2025-08-21
 ---------------------------
 
-
 Highlights
 ~~~~~~~~~~
 
@@ -34,8 +33,9 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``temporian`` has been removed from the recommended ``transformations``
-  dependency set, as it appears to be unmaintained (:pr:`8485`) :user:`fkiraly`
+  dependency set, as it appears to be unmaintained
 * ``esig`` has been removed as a soft dependency
+* ``arch`` (forecasting soft dependency) bounds have been updated to ``<7.3``
 
 
 Core interface changes
@@ -170,8 +170,6 @@ Maintenance
 * [MNT] partial revert of #7715 for ``test-cython-estimators`` job. (:pr:`8680`) :user:`fkiraly`
 * [MNT] Bump ``actions/checkout`` from ``4`` to ``5`` (:pr:`8687`) :user:`dependabot[bot]`
 * [MNT] pre-commit autoupdate (:pr:`8694`) :user:`yarnabrina`
-* [ENH] Improved changelog generator to sort by subsection (:pr:`8132`) :user:`Mujeeb4`
-* [MNT] improved changelog generator: group PRs by module labels like Forecasting and Classification (:pr:`8579`) :user:`sinemkilicdere`
 * [MNT] Check versions in wheels workflow (:pr:`8718`) :user:`szepeviktor`
 * [MNT] ensure release depends on ``check_tag`` (:pr:`8726`) :user:`fkiraly`
 * [MNT] Exclude Python 3.13 + macos-13 combo from CI to fix torch issue (#8127) (:pr:`8304`) :user:`adityagarwal15`
@@ -181,6 +179,7 @@ Maintenance
 * [MNT] Update test_vms to use ``macos-latest`` in CI and configure osx setup in github scripts to dynamically install dependencies (:pr:`8624`) :user:`julian-fong`
 * [MNT] Upgrade CI to set ``test-full`` to use ``macos-latest`` runners (:pr:`8670`) :user:`julian-fong`
 * [MNT] Turn off ``mps`` for macos runners on ``tests:vm`` estimators and fixes ``momentfm`` CI failures (:pr:`8642`) :user:`julian-fong`
+* [MNT] update ``arch`` bound to ``arch<7.3`` (:pr:`8743`) :user:`fkiraly`
 
 Fixes
 ~~~~~
