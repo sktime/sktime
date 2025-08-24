@@ -7,7 +7,7 @@ __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional
-
+from pandas.tseries.frequencies import to_offset
 import numpy as np
 import pandas as pd
 from pandas import Timedelta
@@ -917,6 +917,20 @@ def _check_cutoff(cutoff, index):
     if isinstance(index, pd.DatetimeIndex):
         assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
 
+from pandas.tseries.frequencies import to_offset
+
+def _normalize_freq_for_period(freq):
+    """Map offset strings to valid `to_period` strings."""
+    mapping = {
+        "MS": "M",   # Month Start → Month
+        "YS": "A",   # Year Start → Annual
+        "BMS": "BM", # Business Month Start → Business Month
+        "Q": "Q-DEC", # Quarter → make explicit if needed
+        # Add more as needed
+    }
+    offset_str = to_offset(freq).freqstr
+    return mapping.get(offset_str, offset_str)
+
 
 def _coerce_to_period(x, freq=None):
     """Coerce pandas time index to a alternative pandas time index.
@@ -936,13 +950,8 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
-    if isinstance(x, pd.Timestamp) and freq is None:
-        freq = x.freq
-        raise ValueError(
-            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
-        )
-    return x.to_period(freq)
-
+    norm_freq = _normalize_freq_for_period(freq)
+    return x.to_period(norm_freq)
 
 def _index_range(relative, cutoff):
     """Return Index Range relative to cutoff."""
