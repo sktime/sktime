@@ -188,7 +188,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> y = load_airline()
     >>> forecaster = TinyTimeMixerForecaster()
     >>> # performs zero-shot forecasting, as default config (unchanged) is used
-    >>> _ = forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +ELLIPSIS
+    TinyTimeMixerForecaster(...)
     >>> y_pred = forecaster.predict()
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
@@ -218,7 +219,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>>
     >>> # model initialized with random weights due to None model_path
     >>> # and trained with the full strategy.
-    >>> _ = forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +ELLIPSIS
+    TinyTimeMixerForecaster(...)
     >>> y_pred = forecaster.predict()
 
     Example with exogenous variables:
@@ -246,13 +248,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ... )
     >>>
     >>> # Fit with exogenous variables
-    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
-    TinyTimeMixerForecaster(config={'context_length': 8, 'prediction_length': 2},
-                            fit_strategy='full', model_path=None,
-                            training_args={'max_steps': 10,
-                                           'output_dir': 'test_output',
-                                           'per_device_train_batch_size': 4,
-                                           'report_to': 'none'})
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2]) # doctest: +ELLIPSIS
+    TinyTimeMixerForecaster(...)
     >>>
     >>> # Predict with exogenous variables
     >>> y_pred = forecaster.predict(X=X_future)
