@@ -258,7 +258,7 @@ def _evaluate_fold(x, meta):
     column_order = _get_column_order_and_datatype(scoring, return_data)
     result = result.reindex(columns=column_order.keys())
 
-    return result, classifier
+    return result
 
 
 def evaluate(
