@@ -86,12 +86,13 @@ Forecasting
 
 * [ENH] ``LTSFNLinearForecaster``, ``LTSFDLinearForecaster``,  and ``LTSFLinearForecaster`` ``get_test_params`` returns two sets (:pr:`8528`) :user:`thearshkumar`
 * [ENH] Added tag to ``PytorchForecastingTFT`` and removed from ``tests/_config`` (:pr:`8559`) :user:`thearshkumar`
-* [ENH] ``darts`` compatibility patch for 0.35.0 and higher (:pr:`8584`) :user:`fkiraly`
+* [ENH] ``darts`` compatibility patch for ``darts 0.35.0`` and higher (:pr:`8584`) :user:`fkiraly`
 * [ENH] ``patchtst`` deep learning model for forecasting (:pr:`6787`) :user:`julian-fong`
 * [ENH] Residual Booster Forecaster (:pr:`8582`) :user:`Sanchay117`
 * [ENH] split forecasting tuners module into individual files (:pr:`8418`) :user:`fkiraly`
 * [ENH] Exogenous Handling in ``TinyTimeMixer`` Forecaster (:pr:`8709`) :user:`akshathmangudi`
 * [ENH] Minor ``statsforecast ``updates (:pr:`8692`) :user:`yarnabrina`
+* [ENH] in-sample prediction capability for `ARCH` forecaster :user:`SzymonStolarski`
 
 Parameter estimation and hypothesis testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
