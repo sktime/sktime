@@ -186,8 +186,6 @@ class SubLOF(BaseDetector):
             "novelty": self.novelty,
             "n_jobs": self.n_jobs,
         }
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
 
         intervals = self._split_into_intervals(X.index, self.window_size)
         self.models = {
