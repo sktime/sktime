@@ -215,6 +215,7 @@ Time series classification
 * [BUG] decouple classifier, clusterer, regressor extension contract from ``n_jobs`` parameter (:pr:`8549`) :user:`fkiraly`
 * [BUG] CNTCClassifier throws error when you provide callbacks. (:pr:`8660`) :user:`garar`
 * [BUG] fix ``backend`` and ``backend_params`` in TSC ``evaluate`` being ignored (:pr:`8702`) :user:`fkiraly`
+* [BUG] fix parallelization and pickling in TSC ``evaluate`` (:pr:`8741`) :user:`fkiraly`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
