@@ -114,11 +114,12 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         children = [est for _, est in self._steps]
         residuals = children[1:]
+        last_est = children[-1]
 
         exog = any(est.get_tag("ignores-exogeneous-X") for est in children)
         miss = all(est.get_tag("capability:missing_values") for est in children)
-        pred_int = all(est.get_tag("capability:pred_int") for est in children)
-        in_sample = any(est.get_tag("capability:insample") for est in children)
+        pred_int = last_est.get_tag("capability:pred_int")
+        in_sample = last_est.get_tag("capability:insample")
         cat = all(est.get_tag("capability:categorical_in_X") for est in children)
         pred_int_insample = bool(residuals) and all(
             est.get_tag("capability:pred_int:insample") for est in residuals
@@ -199,6 +200,72 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.steps_ = [("base", self.base_future_), *self._resid_futures_]
         return self
 
+    def _align_like(self, B, A):
+        """
+        Align forecast output ``B`` to reference ``A`` so they can be added.
+
+        Why this is needed
+        ------------------
+        Different forecasters in a pipeline may return pandas objects
+        (Series/DataFrames) with structurally compatible values but *incompatible*
+        index/column metadata:
+        - mismatched index/column **names** (e.g. ``None`` vs ``['time']``)
+        - different index/column **orders**
+        - differing numbers of index levels (flat vs MultiIndex)
+
+        Pandas will refuse arithmetic (``A + B``) when index level names differ,
+        even if the labels align, raising errors like:
+        ``ValueError: cannot join with no overlapping index names``.
+
+        What this does
+        --------------
+        * If ``A`` and ``B`` have the same number of index/column levels,
+        set the names of ``B`` to match ``A``.
+        * Reindex ``B`` to the row/column labels of ``A`` (in order),
+        filling with NaN if ``B`` is missing any labels.
+        * If levels differ, skip renaming and just try to reindex on labels.
+
+        This ensures arithmetic like ``A + _align_like(B, A)`` works without
+        pandas raising alignment errors.
+
+        Notes
+        -----
+        - Does *not* force MultiIndex levels to match in number, only names.
+        - Keeps a copy of ``B`` only if metadata is mutated.
+        - Used internally in ``_predict*`` methods when combining outputs
+        from base and residual forecasters.
+        """
+        out = B
+
+        # --- ROW INDEX NAMES ---
+        if hasattr(B, "index") and hasattr(A, "index"):
+            nB = getattr(B.index, "nlevels", 1)
+            nA = getattr(A.index, "nlevels", 1)
+
+            if nB == nA and B.index.names != A.index.names:
+                out = out.copy()
+                out.index = out.index.set_names(A.index.names)
+
+            # reindex rows to A only if labels overlap
+            if not B.index.equals(A.index):
+                out = out.reindex(A.index)
+
+        # --- COLUMN INDEX NAMES ---
+        if hasattr(B, "columns") and hasattr(A, "columns"):
+            nB = getattr(B.columns, "nlevels", 1)
+            nA = getattr(A.columns, "nlevels", 1)
+
+            if nB == nA and B.columns.names != A.columns.names:
+                if out is B:
+                    out = out.copy()
+                out.columns = out.columns.set_names(A.columns.names)
+
+            # reindex cols to A only if labels overlap
+            if not B.columns.equals(A.columns):
+                out = out.reindex(columns=A.columns)
+
+        return out
+
     def _predict(self, fh=None, X=None):
         """
         Forecast = base forecast + residual forecast.
@@ -208,42 +275,53 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         3. Return y_pred_base + y_pred_resid
         """
         y_base = self.base_future_.predict(fh=fh, X=X)
-        idx = y_base.index
-
         y_hat = y_base
         for _, f in getattr(self, "_resid_futures_", []):
             y_add = f.predict(fh=fh, X=X)
-            y_add = y_add.reindex(idx).fillna(0)
+            y_add = self._align_like(y_add, y_base).fillna(0)
             y_hat = y_hat + y_add
-
         return y_hat
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
-        I = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
-        idx = I.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            J = f.predict_interval(fh=fh, X=X, coverage=coverage)
-            I = I.add(J.reindex(idx), fill_value=0)
-        return I
+        y_shift = self.base_future_.predict(fh=fh, X=X)
+        if getattr(self, "_resid_futures_", None):
+            for _, f in self._resid_futures_[:-1]:
+                y_add = f.predict(fh=fh, X=X)
+                y_shift = y_shift + self._align_like(y_add, y_shift).fillna(0)
+
+            _, f_last = self._resid_futures_[-1]
+            I_last = f_last.predict_interval(fh=fh, X=X, coverage=coverage)
+
+            # align the shift (Series/DataFrame) to the interval DataFrame
+            y_shift_aligned = self._align_like(y_shift, I_last).fillna(0)
+            return I_last + y_shift_aligned
+
+        return self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Combine arbitrary quantile forecasts."""
-        Q = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        idx = Q.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            R = f.predict_quantiles(fh=fh, X=X, alpha=alpha)
-            Q = Q.add(R.reindex(idx), fill_value=0)
-        return Q
+        y_shift = self.base_future_.predict(fh=fh, X=X)
+        if getattr(self, "_resid_futures_", None):
+            for _, f in self._resid_futures_[:-1]:
+                y_add = f.predict(fh=fh, X=X)
+                y_shift = y_shift + self._align_like(y_add, y_shift).fillna(0)
+
+            _, f_last = self._resid_futures_[-1]
+            Q_last = f_last.predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+            y_shift_aligned = self._align_like(y_shift, Q_last).fillna(0)
+            return Q_last + y_shift_aligned
+
+        return self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Combine predictive variances (or full covariances)."""
-        V = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
-        idx = V.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            W = f.predict_var(fh=fh, X=X, cov=cov)
-            V = V.add(W.reindex(idx), fill_value=0)
-        return V
+        if getattr(self, "_resid_futures_", None):
+            _, f_last = self._resid_futures_[-1]
+            V_last = f_last.predict_var(fh=fh, X=X, cov=cov)
+            return V_last
+        return self.base_future_.predict_var(fh=fh, X=X, cov=cov)
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
