@@ -3260,6 +3260,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/Sohaib-Ahmed21",
       "profile": "https://github.com/Sohaib-Ahmed21",
       "contributions": [
+        "bug",
         "code"
       ]
     },
@@ -3542,6 +3543,15 @@
       "name": "James Guana",
       "avatar_url": "https://avatars.githubusercontent.com/u/13552004?v=4",
       "profile": "https://github.com/jobs-git",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Rajdeep-naha",
+      "name": "Rajdeep Naha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/161390547?v=4",
+      "profile": "https://github.com/Rajdeep-naha",
       "contributions": [
         "code"
       ]
