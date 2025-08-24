@@ -813,6 +813,39 @@ class SeriesDask(ScitypeSeries):
 class SeriesPolarsEager(ScitypeSeries):
     """Data type: polars.DataFrame based specification of single time series.
 
+    Name: ``"pl.DataFrame"``
+
+    Short description:
+
+    a ``polars.DataFrame`` where rows are interpred as temporally ordered.
+    Optionally, a time index can be present as a single column starting with
+    ``__index__``, e.g., ``__index__0`` or ``__index__time``, or ``__index__``.
+
+    Long description:
+
+    The ``"polars.DataFrame"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: polars.DataFrame`` follows the specification iff:
+
+    * structure convention: if an ``__index__`` column is present,
+      its values must increase monotonically by row. Otherwise, no
+      additional structure is required.
+    * variables: columns of ``obj`` correspond to different variables,
+      with exception of the ``__index__`` column if present.
+    * variable names: column names ``obj.columns``
+    * time points: rows of ``obj`` correspond to different, distinct time points
+    * time index: if an ``__index__`` column is present,
+      its values are interpreted as time index. If not, the index is
+      interpreted to be a zero-indexed integer index.
+
+    Capabilities:
+
+    * can represent multivariate series
+    * can represent unequally spaced series
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
