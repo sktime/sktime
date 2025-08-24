@@ -24,6 +24,7 @@ from sktime.utils.parallel import _get_parallel_test_fixtures
 
 BACKENDS = _get_parallel_test_fixtures("estimator")
 
+
 @pytest.mark.skipif(
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
