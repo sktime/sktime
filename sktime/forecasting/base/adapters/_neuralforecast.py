@@ -7,10 +7,9 @@ from copy import deepcopy
 from inspect import signature
 from typing import Literal, Optional, Union
 
-from pkg_resources import parse_version
-
 import numpy as np
 import pandas
+from pkg_resources import parse_version
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.warnings import warn
@@ -246,7 +245,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         from neuralforecast import __version__ as nf_version
 
         if parse_version(nf_version) >= parse_version("3.0.0"):
-            # input_size is a required parameter for recurrent models in neuralforecast v3
+            # input_size is a required parameter for recurrent models in NF v3
             # TCN and DilatedRNN are now window models, not recurrent
             if self.algorithm_name in ["RNN", "LSTM", "GRU"]:
                 algorithm_instance = self.algorithm_class(
