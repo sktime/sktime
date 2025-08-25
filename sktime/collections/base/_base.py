@@ -16,6 +16,7 @@ class BaseCollection(BaseObject):
     _tags = {
         "authors": ["sktime developers"],
         "maintainers": ["sktime developers"],
+        "object_type": "collection",
         "collection_type": None,  # "dataset loader", "estimator", "metric", or "mixed"
         "info:name": "",
         "info:description": "",
