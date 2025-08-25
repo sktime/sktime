@@ -1,7 +1,6 @@
 """Common utilities for forecasting metrics."""
 
 import numpy as np
-import pandas as pd
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
@@ -166,69 +165,104 @@ def _fraction(enumerator, denominator, eps=None):
     return enumerator / safe_denominator
 
 
-def _pseudovalues_sqrt(raw: pd.DataFrame):
-    r"""Jackknife pseudo-values for square root of a sum (e.g., RMSE-like).
+def _pseudovalues_sqrt(raw: np.ndarray):
+    r"""Jackknife pseudo-values for square-root based metrics (e.g., RMSE/RMSSE).
 
     This function computes jackknife pseudo-values for square-root-based metrics
-    (e.g., RMSSE or RMSE) given a DataFrame of raw errors before square root.
+    (e.g., RMSSE or RMSE) given an array ``raw`` of per-timepoint scaled squared errors.
 
-    For a DataFrame ``scaled`` of per-timepoint raw errors, the pseudo-values
-    are computed as:
+    Let :math:`S` denote the input array ``raw`` with entries :math:`S_{i j}`,
+    where :math:`i = 1,\dots,n` indexes timepoints (rows) and
+    :math:`j = 1,\dots,d` indexes series/outputs (columns). Define
 
     .. math::
-        \text{pseudo} = n \cdot \text{full} - (n - 1) \cdot \text{loo}
+        \overline{S}_{\cdot j}
+        = \frac{1}{n}\sum_{i=1}^{n} S_{i j}
+        \quad\text{(full-sample mean for column $j$),}
 
-    where:
+    and for the leave-one-out (LOO) mean at row :math:`i`:
 
-    * :math:`\text{full} =
-        \sqrt{\text{mean\_over\_time}(\text{scaled})}`
-      (Series of shape (d,))
-    * :math:`\text{loo} =
-        \sqrt{\dfrac{\text{sum\_over\_time}(\text{scaled}) - \text{scaled}}{n - 1}}`
-      (DataFrame of shape ``(h, d)``)
+    .. math::
+        \overline{S}_{( - i), j}
+        = \frac{1}{n-1}\sum_{\substack{k=1 \\ k \ne i}}^{n} S_{k j}
+        \;=\; \frac{\sum_{k=1}^n S_{k j} - S_{i j}}{\,n-1\,}.
+
+    Then define the full and leave-one-out root-mean values as
+
+    .. math::
+        \text{full}_j &= \sqrt{\overline{S}_{\cdot j}}
+                        \quad\text{(Series of shape (d,))},\\[4pt]
+        \text{loo}_{i j} &= \sqrt{\overline{S}_{(-i), j}}
+                         \quad\text{(Array of shape (n, d)).}
+
+    The jackknife pseudo-values are computed element-wise as
+
+    .. math::
+        \text{pseudo}_{i j} = n\cdot\text{full}_{j} - (n-1)\cdot\text{loo}_{i j},
+
+    where :math:`n` is the number of rows (timepoints).
 
     Parameters
     ----------
-    raw : pd.DataFrame
-        DataFrame of shape (h, d) containing per-timepoint scaled squared errors.
-        Rows correspond to forecast timepoints, columns to series/outputs.
+    raw : np.ndarray
+        1-D or 2-D numeric array containing per-timepoint scaled squared errors.
+        Accepted shapes:
+        - ``(n,)`` for univariate series (will be treated as shape ``(n, 1)``),
+        - ``(n, d)`` for multivariate series.
 
     Returns
     -------
-    pseudo : pd.DataFrame
-        DataFrame of same shape as ``scaled`` containing jackknife pseudo-values
-        for the square-root metric.
+    pseudo : np.ndarray
+        Array of the same shape as ``raw`` (or squeezed to 1-D if input was 1-D)
+        containing jackknife pseudo-values computed as above.
 
     Notes
     -----
-    - If ``raw`` has fewer than 2 rows (n <= 1), jackknife is undefined.
-      In this case, the function returns a DataFrame filled with the ``full``
-      value repeated on every row (so averaging the pseudo-values reproduces ``full``).
+    - Reductions are *nan-safe*: the implementation uses ``np.nanmean``/``np.nansum``
+      so ``NaN`` entries in ``raw`` are ignored in the means/sums.
+    - Numerical safety: small negative values that may arise from round-off are
+      clamped to zero before taking square roots.
+    - If ``n <= 1`` (fewer than 2 rows), jackknife is undefined; the function
+      returns the ``full`` value repeated for every row (so averaging the
+      pseudo-values reproduces ``full``).
+    - The arithmetic mean of the returned pseudo-values equals the jackknife
+      estimator for the square-root statistic; for nonlinear statistics (like
+      square-root) this jackknife estimator may differ from the plain
+      full-sample square-root.
     """
-    if not isinstance(raw, pd.DataFrame):
-        raw = pd.DataFrame(raw)
+    raw = np.asarray(raw, dtype=float)
 
-    n = raw.shape[0]
-    mse_full = raw.mean(axis=0)
-    full_rms = mse_full.pow(0.5)
+    # normalize to 2D for unified processing
+    squeezed = False
+    if raw.ndim == 1:
+        raw = raw.reshape(-1, 1)
+        squeezed = True
+    elif raw.ndim != 2:
+        raise ValueError("raw must be a 1D or 2D array")
+
+    n, d = raw.shape
+
+    # Use nan-safe reductions so NaNs (if any) are ignored in mean/sum
+    mse_full = np.nanmean(raw, axis=0)  # shape (d,)
+    full_rms = np.sqrt(np.maximum(mse_full, 0.0))
 
     if n <= 1:
-        return pd.DataFrame(
-            np.tile(full_rms.values, (n, 1)),
-            index=raw.index,
-            columns=raw.columns,
-        )
+        # jackknife undefined for n <= 1: repeat full value for each row
+        out = np.tile(full_rms.reshape(1, -1), (n, 1))
+        return out.squeeze() if squeezed else out
 
-    sum_raw = raw.sum(axis=0)
+    sum_raw = np.nansum(raw, axis=0)  # shape (d,)
 
+    # Leave-one-out mean squared error: broadcasting yields (n, d)
     msse_loo = (sum_raw - raw) / (n - 1)
 
-    rmsse_loo = msse_loo.pow(0.5)
+    # Guard against tiny negative values caused by numerical noise
+    msse_loo = np.maximum(msse_loo, 0.0)
 
-    pseudo = pd.DataFrame(
-        n * full_rms - (n - 1) * rmsse_loo,
-        index=raw.index,
-        columns=raw.columns,
-    )
+    # Leave-one-out RMS (n, d)
+    rmsse_loo = np.sqrt(msse_loo)
 
-    return pseudo
+    # Jackknife pseudo-values: (n, d)
+    pseudo = (n * full_rms.reshape(1, -1)) - ((n - 1) * rmsse_loo)
+
+    return pseudo.squeeze() if squeezed else pseudo

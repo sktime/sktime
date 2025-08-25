@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import pandas as pd
+
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
@@ -17,11 +19,11 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_scale
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     r"""Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
-  
+
     If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
     ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
     point.
-  
+
     Both MSSE and RMSSE are unitless metrics.
     Lower values are better, and the lowest possible value is 0.0.
 
@@ -243,14 +245,22 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         sp = self.sp
         denominator = y_train.diff(sp).pow(2).mean(axis=0)
 
-        scaled = _fraction(
-            enumerator=raw_values,
-            denominator=denominator,
+        scaled_arr = _fraction(
+            enumerator=raw_values.values,
+            denominator=denominator.values,
             eps=self.eps,
         )
 
+        scaled = pd.DataFrame(
+            scaled_arr, index=raw_values.index, columns=raw_values.columns
+        )
+
         if self.square_root:
-            pseudo = _pseudovalues_sqrt(scaled)
+            pseudo_arr = _pseudovalues_sqrt(scaled.values)
+            # wrap back to DataFrame with same index/columns
+            pseudo = pd.DataFrame(
+                pseudo_arr, index=scaled.index, columns=scaled.columns
+            )
         else:
             pseudo = scaled
 
