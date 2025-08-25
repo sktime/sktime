@@ -7,6 +7,7 @@ __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
@@ -185,10 +186,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> forecaster = TinyTimeMixerForecaster()
     >>> # performs zero-shot forecasting, as default config (unchanged) is used
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict()
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_tecator
@@ -213,12 +215,13 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...         "output_dir": "test_output",
     ...         "per_device_train_batch_size": 32,
     ...     },
-    ... ) # doctest: +SKIP
+    ... )
     >>>
     >>> # model initialized with random weights due to None model_path
     >>> # and trained with the full strategy.
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict()
 
     Example with exogenous variables:
 
@@ -242,14 +245,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...         "per_device_train_batch_size": 4,
     ...         "report_to": "none",
     ...     },
-    ... )  # doctest: +SKIP
+    ... )
     >>>
     >>> # Fit with exogenous variables
-    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])  # doctest: +SKIP
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
     TinyTimeMixerForecaster(...)
     >>>
     >>> # Predict with exogenous variables
-    >>> y_pred = forecaster.predict(X=X_future)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(X=X_future)
     """
 
     _tags = {
@@ -517,8 +520,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             callbacks=self.callbacks,
         )
 
-        # Train the model
-        trainer.train()
+        with StdoutMute() as _:
+            trainer.train()
 
         # Get the model
         self.model = trainer.model
