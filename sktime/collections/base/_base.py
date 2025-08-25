@@ -5,7 +5,6 @@ __author__ = ["jgyasu"]
 __all__ = ["BaseCollection"]
 
 from abc import abstractmethod
-from typing import Any, dict
 
 from skbase.base import BaseObject
 
@@ -28,7 +27,7 @@ class BaseCollection(BaseObject):
         self._cached_items = None
 
     @abstractmethod
-    def _get(self) -> dict[str, Any]:
+    def _get(self):
         """Get the default items for this collection. Implemented by subclasses.
 
         Returns
@@ -38,7 +37,7 @@ class BaseCollection(BaseObject):
         """
         pass
 
-    def get(self, item_type: str = "all") -> dict[str, Any]:
+    def get(self, item_type="all"):
         """Get items from the collection based on type.
 
         Parameters
@@ -66,9 +65,7 @@ class BaseCollection(BaseObject):
         else:
             return self._filter_items_by_type(items, item_type)
 
-    def _filter_items_by_type(
-        self, items: dict[str, Any], item_type: str
-    ) -> dict[str, Any]:
+    def _filter_items_by_type(self, items, item_type):
         """Filter items by their type.
 
         Parameters
@@ -86,11 +83,11 @@ class BaseCollection(BaseObject):
         # To implement
         pass
 
-    def __len__(self) -> int:
+    def __len__(self):
         """Return the total number of items in the collection."""
         return len(self.get("all"))
 
-    def __contains__(self, name: str) -> bool:
+    def __contains__(self, name):
         """Check if an item name exists in the collection."""
         all_items = self.get("all")
         return name in all_items
