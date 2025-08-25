@@ -9,6 +9,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas
+from pkg_resources import parse_version
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.warnings import warn
