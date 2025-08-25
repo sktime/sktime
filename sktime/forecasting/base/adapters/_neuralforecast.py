@@ -9,9 +9,9 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas
-from pkg_resources import parse_version
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -252,9 +252,19 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         from neuralforecast import NeuralForecast
 
-        model = NeuralForecast(
-            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
-        )
+        # Check neuralforecast version
+        if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
+            model = NeuralForecast(
+                models=[algorithm_instance],
+                freq=self._freq,
+                scaler_type=self.local_scaler_type,
+            )
+        else:
+            model = NeuralForecast(
+                [algorithm_instance],
+                self._freq,
+                local_scaler_type=self.local_scaler_type,
+            )
 
         return model
 
