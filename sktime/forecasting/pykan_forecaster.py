@@ -59,7 +59,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch", "matplotlib"],
+        "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -73,6 +73,9 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on vm in GHA
     }
 
     def __init__(
