@@ -200,7 +200,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         transformer_backbone="google/flan-t5-large",
         criterion=None,
         config=None,
-        to_cpu_after_fit=False,
+        return_model_to_cpu=False,
     ):
         super().__init__()
         from torch.nn import MSELoss
@@ -226,7 +226,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.criterion = criterion
         self._criterion = self.criterion if self.criterion else MSELoss()
         self._moment_seq_len = 512
-        self.to_cpu_after_fit = to_cpu_after_fit
+        self.return_model_to_cpu = return_model_to_cpu
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
@@ -379,7 +379,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 val_dataloader,
             )
 
-        if self.to_cpu_after_fit:
+        if self.return_model_to_cpu:
             self.model.to("cpu")
             empty_cache()
 
@@ -491,7 +491,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         df_pred = df_pred.loc[dateindex]
         df_pred.index.names = y_index_names
 
-        if self.to_cpu_after_fit:
+        if self.return_model_to_cpu:
             self.model.to("cpu")
             empty_cache()
 
@@ -516,12 +516,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 2, "to_cpu_after_fit": True, "train_val_split": 0.0}
+        params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
         params_set.append(params1)
         params2 = {
             "batch_size": 16,
             "seq_len": 2,
-            "to_cpu_after_fit": True,
+            "return_model_to_cpu": True,
             "train_val_split": 0.0,
         }
         params_set.append(params2)
