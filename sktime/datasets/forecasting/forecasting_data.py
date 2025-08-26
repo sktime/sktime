@@ -113,6 +113,13 @@ class ForecastingData(BaseForecastingDataset):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter."""
-        params_list = [{"name": "cif_2016_dataset"}]
+        params_list = [
+            {
+                "name": "cif_2016_dataset",
+            },
+            {
+                "name": "hospital_dataset",
+            },
+        ]
 
         return params_list

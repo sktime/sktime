@@ -113,6 +113,13 @@ class UCRUEADataset(BaseClassificationDataset):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter."""
-        params_list = [{"name": "Beef"}]
+        params_list = [
+            {
+                "name": "Beef",
+            },
+            {
+                "name": "BeetleFly",
+            },
+        ]
 
         return params_list
