@@ -109,3 +109,10 @@ class ForecastingData(BaseForecastingDataset):
         if "name" in signature(self.loader_func).parameters and "name" not in kwargs:
             kwargs["name"] = self.name
         return self.loader_func(**kwargs)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter."""
+        params_list = [{"name": "cif_2016_dataset"}]
+
+        return params_list
