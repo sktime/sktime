@@ -1,6 +1,7 @@
 """Forecasting datasets."""
 
 from .airline import Airline
+from .forecasting_data import ForecastingData
 from .hierarchical_sales_toydata import HierarchicalSalesToydata
 from .longley import Longley
 from .lynx import Lynx
@@ -12,6 +13,7 @@ from .uschange import USChange
 
 __all__ = [
     "Airline",
+    "ForecastingData",
     "HierarchicalSalesToydata",
     "Longley",
     "Lynx",
