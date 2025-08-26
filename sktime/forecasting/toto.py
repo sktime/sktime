@@ -49,11 +49,12 @@ class TotoForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> from sktime.forecasting.toto import TotoForecaster
     >>> model = TotoForecaster() # needs work not completed
     """
 
     _tags = {
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd_multiindex_hier"],
         "X_inner_mtype": "None",
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
@@ -65,7 +66,6 @@ class TotoForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         # contribution and dependency tags
-        # -------------------------------
         "authors": ["JATAYU000", "Datadog"],
         # Datadog for Datadog/toto
         "maintainers": ["JATAYU000"],
@@ -80,7 +80,7 @@ class TotoForecaster(BaseForecaster):
         prediction_type: str = "median",
         scale_factor_exponent: int = 10,
         stabilize_with_global: bool = True,
-        use_memory_efficient_attention: bool = True,
+        use_memory_efficient_attention: bool = False,
         model_path: str = "Datadog/Toto-Open-Base-1.0",
         device=None,
     ):
@@ -101,10 +101,9 @@ class TotoForecaster(BaseForecaster):
                 )
         self.stabilize_with_global = stabilize_with_global
         self.scale_factor_exponent = scale_factor_exponent
-        if prediction_type.lower() not in ["mean", "median"]:
+        self.prediction_type = prediction_type
+        if prediction_type not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
-        else:
-            self.prediction_type = prediction_type.lower()
 
         super().__init__()
 
@@ -119,8 +118,6 @@ class TotoForecaster(BaseForecaster):
         tuple
             Unique identifier for this model configuration
         """
-        # Create a unique key based on model configuration
-        # Only include parameters that affect the model identity
         kwargs = self._get_toto_kwargs()
         key = {
             **kwargs,
@@ -187,33 +184,7 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
-        if isinstance(y, pd.DataFrame):
-            self._y = y
-            self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
-                self._device
-            )
-            self.id_mask = torch.zeros_like(self._input_series).to(self._device)
-            self.padding_mask = torch.full_like(
-                self._input_series, True, dtype=torch.bool
-            ).to(self._device)
-
-        else:
-            self._y = y.reset_index().pivot(
-                index="time_stamp", columns="variable", values="value"
-            )
-            self._y = self._y.rename_axis(None, axis=1).rename_axis(
-                "time_stamp", axis=0
-            )
-            self._input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
-                self._device
-            )
-            n, d = self._y.shape
-            self.id_mask = torch.tensor(
-                self._y.index.get_level_values("id_mask")
-            ).reshape(n, d)
-            self.padding_mask = torch.tensor(
-                self._y.index.get_level_values("padding_mask")
-            ).reshape(n, d)
+        self.get_series_params_from_y(y)
 
         self._y_columns = self._y.columns
         self._cutoff = self._y.index[-1]
@@ -226,13 +197,72 @@ class TotoForecaster(BaseForecaster):
 
         self._series = MaskedTimeseries(
             series=self._input_series,
-            padding_mask=self.padding_mask,
-            id_mask=self.id_mask,
+            padding_mask=self._padding_mask,
+            id_mask=self._id_mask,
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
         )
 
         return self
+
+    def get_series_params_from_y(self, y):
+        """Extract series parameters from the input DataFrame.
+
+        Extracts the input series, id mask, and padding mask from the
+        input DataFrame if it has the correct MultiIndex structure.
+        Takes default values if the input is a simple DataFrame with a PeriodIndex.
+        Writes the extracted parameters to self.
+
+        Returns
+        -------
+        None
+        """
+        import torch
+
+        from sktime.datatypes import check_is_mtype
+
+        # hier with indices id_mask,padding_mask,var_name,time_stamp
+        if check_is_mtype(y, "pd_multiindex_hier") and len(y.index.names) == 4:
+            # predict return a DataFrame
+            self._y_metadata["mtype"] = "pd.DataFrame"
+            id_mask_level, padding_level, var_level, time_level = y.index.names
+            self._y = y.reset_index().pivot(
+                index=time_level, columns=var_level, values=y.columns[0]
+            )
+            self._y = self._y.rename_axis(None, axis=1).rename_axis(time_level, axis=0)
+            self._input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            n, d = self._input_series.shape
+            self._id_mask = (
+                torch.tensor(y.index.get_level_values(id_mask_level))
+                .reshape(n, d)
+                .to(self._device)
+            )
+            self._padding_mask = (
+                torch.tensor(y.index.get_level_values(padding_level))
+                .reshape(n, d)
+                .to(self._device)
+            )
+
+        # dataframe where id_mask and padding_mask needs to be default.
+        elif isinstance(y.index, pd.PeriodIndex):
+            self._y = y
+            self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            self._id_mask = torch.zeros_like(self._input_series).to(self._device)
+            self._padding_mask = torch.full_like(
+                self._input_series, True, dtype=torch.bool
+            ).to(self._device)
+
+        # unsupported input format
+        else:
+            raise ValueError(
+                f"Unsupported input format with indicies {y.index.names}\n"
+                f"TotoForecaster supports the following MultiIndex input structure\n"
+                f"[id_mask, padding_mask, variable, time]"
+            )
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -269,7 +299,7 @@ class TotoForecaster(BaseForecaster):
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
         )
-        if self.prediction_type == "median":
+        if self.prediction_type.lower() == "median":
             all_predictions = self._forecast.median.cpu().squeeze(0).numpy().T
         else:
             all_predictions = self._forecast.mean.cpu().squeeze(0).numpy().T
@@ -316,8 +346,7 @@ class TotoForecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        if _check_soft_dependencies("torch", severity="error"):
-            import torch
+        import torch
 
         self._predict(fh)
         var_names = self._y_columns
@@ -360,7 +389,10 @@ class TotoForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # needs work not completed
-        test_params = []
+        test_params = [
+            {"num_samples": 4, "samples_per_batch": 2, "prediction_type": "median"},
+            {"num_samples": 4, "samples_per_batch": 4, "prediction_type": "mean"},
+        ]
 
         return test_params
 
@@ -386,9 +418,8 @@ class _CachedToToForecaster:
         if self.forecaster is not None:
             return self.forecaster
 
-        if _check_soft_dependencies("toto-ts", severity="error"):
-            from toto.inference.forecaster import TotoForecaster
-            from toto.model.toto import Toto
+        from toto.inference.forecaster import TotoForecaster
+        from toto.model.toto import Toto
 
         toto_model = Toto.from_pretrained(**self.toto_kwargs)
         toto_model.to(self.device)
