@@ -139,7 +139,7 @@ class SFAFast(BaseTransformer):
             "test_categorical_X_raises_error",
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
-        ]
+        ],
     }
 
     def __init__(
