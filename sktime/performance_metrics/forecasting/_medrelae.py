@@ -9,13 +9,13 @@ the lower the better.
 
 import numpy as np
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingError
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
 )
 
 
-class MedianRelativeAbsoluteError(BaseForecastingError):
+class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
