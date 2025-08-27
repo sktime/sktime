@@ -9,7 +9,6 @@ import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -239,7 +238,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             try:
                 estimator_instance.fit_transform(X, y)
             except Exception as e:
-                raise(
+                raise RuntimeError(
                     f"{estimator_instance} fails when passing categorical X, "
                     "but has the capability:categorical_in_X set to True. "
                     "Please set the tag to False if the estimator does not support "
