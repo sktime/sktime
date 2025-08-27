@@ -7,13 +7,15 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
 )
 
 
-class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -95,3 +97,72 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = median_relative_absolute_error
+
+    def _relative_absolute_error(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Calculate the element-wise relative absolute error."""
+        # Handle division by zero for the denominator
+        abs_bench_error = np.abs(y_true - y_pred_benchmark)
+
+        # Use a small epsilon to avoid division by zero
+        eps = np.finfo(np.float64).eps
+        denom = np.maximum(abs_bench_error, eps)
+
+        relative_errors = np.abs(y_true - y_pred) / denom
+        return relative_errors
+
+    def _evaluate(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Evaluate the median relative absolute error.
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame or Series
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame or Series
+            Predicted values to evaluate.
+        y_pred_benchmark : pandas.DataFrame or Series
+            Benchmark values to evaluate.
+
+        Returns
+        -------
+        loss : float or pd.Series
+            Calculated metric, aggregated over time.
+        """
+        raw_values = self._relative_absolute_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+        )
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return raw_values.median()
+
+    def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame or Series
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame or Series
+            Predicted values to evaluate.
+        y_pred_benchmark : pandas.DataFrame or Series
+            Benchmark values to evaluate.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+        """
+        multioutput = self.multioutput
+        y_pred_benchmark = kwargs.get("y_pred_benchmark")
+
+        raw_values = self._relative_absolute_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+        )
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
