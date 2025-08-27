@@ -135,7 +135,7 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
-        "capability:categorical_in_X": False,
+        "capability:categorical_in_X": True,
         # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
