@@ -9,7 +9,6 @@ import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -207,9 +206,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
         # SFAFast transformer requires nested dataframe for X.
         # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif not estimator_instance.get_tag("capability:categorical_in_X"):
+        if not estimator_instance.get_tag("capability:categorical_in_X"):
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit_transform(X, y)
 
@@ -218,13 +215,12 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
         y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
 
-        # SFAFast transformer requires nested dataframe for X.
-        # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif estimator_instance.get_tag("requires_y"):
+        if estimator_instance.get_tag("requires_y"):
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit_transform(X, y)
+        # otherwise, passing categorical y should pass (because it is ignored)
+        else:
+            estimator_instance.fit_transform(X, y)
 
     def test_categorical_X_passes(self, estimator_instance):
         """Test that error is not raised when categorical is supported in X.
@@ -235,15 +231,19 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
         y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
 
-        # SFAFast transformer requires nested dataframe for X.
-        # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif (
+        if (
             estimator_instance.get_tag("capability:categorical_in_X")
             and not estimator_instance.is_composite()
         ):
-            estimator_instance.fit_transform(X, y)
+            try:
+                estimator_instance.fit_transform(X, y)
+            except Exception as e:
+                raise RuntimeError(
+                    f"{estimator_instance} fails when passing categorical X, "
+                    "but has the capability:categorical_in_X set to True. "
+                    "Please set the tag to False if the estimator does not support "
+                    f"categorical data in X. Exception: {e}"
+                )
 
 
 # todo: add testing of inverse_transform
