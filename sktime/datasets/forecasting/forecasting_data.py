@@ -108,7 +108,29 @@ class ForecastingData(BaseForecastingDataset):
         """Call loader function with self.name included automatically."""
         if "name" in signature(self.loader_func).parameters and "name" not in kwargs:
             kwargs["name"] = self.name
-        return self.loader_func(**kwargs)
+        output = self.loader_func(**kwargs)
+        y, X = self._split_into_y_and_X(output)
+        return X, y
+
+    def _split_into_y_and_X(self, loader_output):
+        """Split the output of the loader into X and y.
+
+        Parameters
+        ----------
+        loader_output: any
+            Output of the loader function.
+
+        Returns
+        -------
+        tuple
+            Tuple containing y and X.
+        """
+        if isinstance(loader_output, tuple):
+            return loader_output
+
+        y = loader_output
+        X = None
+        return (y, X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
