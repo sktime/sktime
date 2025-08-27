@@ -13,6 +13,7 @@ __all__ = []
 
 from inspect import isclass
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -867,3 +868,30 @@ def test_series_to_primitives_hierarchical():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == ix).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_functrafo_and_default_capability_categorical_in_X():
+    """Test that FunctionTransformer and TTSA let categoricals through in X.
+
+    Indirectly also tests the default value for the tag capability:categorical_in_X,
+    in BaseTransformer.
+
+    Failure cases from #8752 and #8753.
+    """
+    from sktime.transformations.series.func_transform import FunctionTransformer
+
+    transformer = FunctionTransformer(lambda x: x)
+    X = pd.DataFrame(np.array([[0, 1], [2, 3]]).astype(str))
+    transformer.fit_transform(X)
+
+    from sklearn.preprocessing import OneHotEncoder
+
+    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    
+    transformer = TabularToSeriesAdaptor(OneHotEncoder())
+    X = pd.DataFrame([["A", "B"], ["A", "B"]])
+    transformer.fit_transform(X)
