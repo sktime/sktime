@@ -891,7 +891,7 @@ def test_functrafo_and_default_capability_categorical_in_X():
     from sklearn.preprocessing import OneHotEncoder
 
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    
+
     transformer = TabularToSeriesAdaptor(OneHotEncoder())
     X = pd.DataFrame([["A", "B"], ["A", "B"]])
     transformer.fit_transform(X)
