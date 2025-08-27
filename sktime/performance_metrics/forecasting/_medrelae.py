@@ -9,13 +9,13 @@ the lower the better.
 
 import numpy as np
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._base import BaseForecastingError
 from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
 )
 
 
-class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MedianRelativeAbsoluteError(BaseForecastingError):
     """Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -110,6 +110,33 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         relative_errors = np.abs(y_true - y_pred) / denom
         return relative_errors
 
+    def _evaluate(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Evaluate the median relative absolute error.
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame or Series
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame or Series
+            Predicted values to evaluate.
+        y_pred_benchmark : pandas.DataFrame or Series
+            Benchmark values to evaluate.
+
+        Returns
+        -------
+        loss : float or pd.Series
+            Calculated metric, aggregated over time.
+        """
+        raw_values = self._relative_absolute_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+        )
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return raw_values.median()
+
     def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -128,6 +155,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
             Calculated metric, by time point.
         """
         multioutput = self.multioutput
+        y_pred_benchmark = kwargs.get("y_pred_benchmark")
 
         raw_values = self._relative_absolute_error(
             y_true=y_true,
