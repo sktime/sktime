@@ -135,7 +135,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        return raw_values.median()
+        return np.median(raw_values)
 
     def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
         """Return the metric evaluated at each time point.
