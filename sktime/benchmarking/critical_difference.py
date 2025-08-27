@@ -69,15 +69,19 @@ def plot_critical_difference(
     textspace=2.5,
     reverse=True,
 ):
-    """Draw critical difference diagram.
+    """Compute critical difference statistics and plot critical difference diagram.
 
     Step 1 & 2: Calculate average ranks from data
+
     Step 3: Use Friedman test to check whether
     the strategy significantly affects the classification performance
+
     Step 4: Compute critical differences using Nemenyi post-hoc test.
     (How much should the average rank of two strategies differ to be
      statistically significant)
+
     Step 5: Compute statistically similar cliques of strategies
+
     Step 6: Draw the diagram
 
     See Janez Demsar, Statistical Comparisons of Classifiers over
@@ -88,25 +92,25 @@ def plot_critical_difference(
 
     Arguments
     ---------
-        scores : np.array
-            scores (either accuracies or errors) of dataset x strategy
-            (best strategy is in most left column)
-        labels : list of str
-            list with names of the strategies
-        cliques : lists of bit vectors,
-            e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
-            statistically similar cliques of strategies
-            optional (default: None, in this case cliques will be computed)
-        is_errors : bool
-            indicates whether scores are passed as errors (default) or accuracies
-        alpha : float (currently supported: 0.1, 0.05 or 0.01)
-            Alpha level for statistical tests (default: 0.05)
-        width : int
-           width in inches (default: 10)
-        textspace : int
-           space on figure sides (in inches) for the method names (default: 2.5)
-        reverse : bool
-           if set to 'True', the lowest rank is on the right (default: 'True')
+    scores : np.array
+        scores (either accuracies or errors) of dataset x strategy
+        (best strategy is in most left column)
+    labels : list of str
+        list with names of the strategies
+    cliques : lists of bit vectors,
+        e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
+        statistically similar cliques of strategies
+        optional (default: None, in this case cliques will be computed)
+    is_errors : bool
+        indicates whether scores are passed as errors (default) or accuracies
+    alpha : float (currently supported: 0.1, 0.05 or 0.01)
+        Alpha level for statistical tests (default: 0.05)
+    width : int
+        width in inches (default: 10)
+    textspace : int
+        space on figure sides (in inches) for the method names (default: 2.5)
+    reverse : bool
+        if set to 'True', the lowest rank is on the right (default: 'True')
     """
     _check_soft_dependencies("matplotlib")
 
