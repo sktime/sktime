@@ -99,6 +99,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         "authors": ["Tanuj-Taneja1"],
         "maintainers": ["Tanuj-Taneja1"],
         "tests:skip_by_name": ["test_fit_idempotent"],
+        "python_dependencies": ["torch"],
         "tests:libs": [
             "sktime.networks.convtimenet.classifier._convtimenet",
             "sktime.networks.convtimenet.classifier._dlutils",
