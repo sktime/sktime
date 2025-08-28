@@ -2,6 +2,9 @@
 
 from inspect import signature
 
+import numpy as np
+import pandas as pd
+
 from sktime.datasets import load_forecastingdata
 from sktime.datasets.forecasting._base import BaseForecastingDataset
 
@@ -23,8 +26,29 @@ class ForecastingData(BaseForecastingDataset):
     def __init__(self, name):
         super().__init__()
         self.name = name
-
         self.loader_func = load_forecastingdata
+
+        y = self.load("y")
+
+        n_columns = 1 if isinstance(y, pd.Series) else y.shape[1]
+        self.set_tags(is_univariate=n_columns == 1)
+
+        if isinstance(y, (pd.DataFrame, pd.Series)):
+            self.set_tags(
+                is_one_series=(
+                    y.index.nlevels == 1 or y.index.droplevel(-1).nunique() == 1
+                )
+            )
+        elif isinstance(y, np.ndarray):
+            self.set_tags(is_one_series=y.ndim == 1 or y.shape[1] == 1)
+        else:
+            self.set_tags(is_one_series=False)
+
+        self.set_tags(
+            n_panels=(y.index.droplevel(-1).nunique() if y.index.nlevels > 1 else 1)
+        )
+
+        self.set_tags(n_hierarchy_levels=y.index.nlevels - 1)
 
     def _encode_args(self, code):
         """Decide kwargs for the loader function."""
