@@ -52,6 +52,8 @@ __all__ = [
     "ShampooSales",
     "Solar",
     "USChange",
+    "UCRUEADataset",
+    "ForecastingData",
 ]
 
 from sktime.datasets._data_io import (
@@ -103,8 +105,12 @@ from sktime.datasets._single_problem_loaders import (
     load_uschange,
 )
 from sktime.datasets.base import BaseDataset
+from sktime.datasets.classification import (
+    UCRUEADataset,
+)
 from sktime.datasets.forecasting import (
     Airline,
+    ForecastingData,
     Longley,
     Lynx,
     Macroeconomic,
