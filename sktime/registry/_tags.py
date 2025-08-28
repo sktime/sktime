@@ -532,7 +532,7 @@ class tests__skip_all(_BaseTag):
 
 
 class tests__skip_by_name(_BaseTag):
-    """Whether to spin up a separate VM to test the estimator.
+    """A list of test names that should be skipped for this object.
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
 
@@ -1175,6 +1175,40 @@ class capability__predict_proba(_BaseTag):
             "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
         ),
+        "user_facing": True,
+    }
+
+
+class capability__class_weight(_BaseTag):
+    """Capability: the classifier can use class weights to handle imbalanced data.
+
+    - String name: ``"capability:class_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier supports class weighting functionality,
+    through a ``class_weight`` parameter that allows users to assign
+    different weights to different classes during training. This is commonly used
+    to handle imbalanced datasets where some classes are underrepresented.
+
+    Class weights can usually be provided as:
+
+    - A dictionary mapping class labels to weights
+    - None for uniform class weights (default behavior)
+
+    If the tag is ``False``, the classifier does not support class weighting,
+    and any class_weight parameter will be ignored or may raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:class_weight",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
@@ -2144,7 +2178,7 @@ class inner_implements_multilevel(_BaseTag):
 
 
 class x_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the estimator can deal with internally for X.
 
     - String name: ``"X_inner_mtype"``
     - Extension developer tag
@@ -2215,7 +2249,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for y.
+    """The machine type(s) the estimator can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
