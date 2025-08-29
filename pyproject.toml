@@ -404,6 +404,7 @@ select = [
   "RUF002", # Checks for non unicode string literals
   "RUF003", # Checks for non unicode string literals
 ]
+
 extend-select = [
   "I", # isort
   "C4", # https://pypi.org/project/flake8-comprehensions
@@ -464,6 +465,7 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
+"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
