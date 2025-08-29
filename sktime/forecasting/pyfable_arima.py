@@ -64,22 +64,21 @@ class PyFableARIMA(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.PyFableARIMA import PyFableARIMA  # doctest: +SKIP
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split \
-             # doctest: +SKIP
-    >>> airline = load_airline()  # a pandas Series with a PeriodIndex (freq='M')\
-             # doctest: +SKIP
-    >>> airline.name = "Passengers"  # Ensure the name matches your ARIMA formula\
-             # doctest: +SKIP
-    >>> train, test = temporal_train_test_split(airline, test_size=12)  \
-             # doctest: +SKIP
+    >>> from sktime.forecasting.model_selection import (  # doctest: +SKIP
+    ...     temporal_train_test_split,
+    ... )
+    >>> airline = load_airline()  # Series with PeriodIndex freq='M'  # doctest: +SKIP
+    >>> airline.name = "Passengers"  # name must match ARIMA formula  # doctest: +SKIP
+    >>> train, test = temporal_train_test_split(airline, test_size=12)  # doctest: +SKIP
     >>> best = PyFableARIMA(formula='Passengers').fit(train)  # doctest: +SKIP
     >>> print(best.report())  # doctest: +SKIP
     >>> fitted = best.predict(train.index)  # doctest: +SKIP
     >>> print(f"fitted = \n{fitted}")  # doctest: +SKIP
     >>> pred = best.predict(test.index)  # doctest: +SKIP
     >>> print(f"pred = \n{pred}")  # doctest: +SKIP
-    >>> pred_int = best.predict_interval(fh=test.index, coverage=[0.95, 0.50]) \
-             # doctest: +SKIP
+    >>> pred_int = best.predict_interval(  # doctest: +SKIP
+    ...     fh=test.index, coverage=[0.95, 0.50]
+    ... )
     >>> print(f"pred_int = \n{pred_int}")  # doctest: +SKIP
 
     References
@@ -120,8 +119,11 @@ class PyFableARIMA(BaseForecaster):
         unitroot_spec=None,
         trace=False,
         is_regular=True,
+        verbose=False,
     ):
         self.formula = formula
+        # resolved formula actually passed to R backend (may derive if None)
+        self._resolved_formula = None
         self.ic = ic
         self.selection_metric = selection_metric
         self.stepwise = stepwise
@@ -131,7 +133,24 @@ class PyFableARIMA(BaseForecaster):
         self.unitroot_spec = unitroot_spec
         self.trace = trace
         self.is_regular = is_regular
+        self.verbose = verbose
         super().__init__()
+
+    # ------------------------------------------------------------------
+    def _is_regular_index(self, index):
+        """Heuristic regularity check on a DatetimeIndex/PeriodIndex.
+
+        Returns True if successive deltas identical (after sorting) and length > 2.
+            For PeriodIndex we assume regular (has freq) and return True.
+        """
+        if isinstance(index, pd.PeriodIndex):
+            return True
+        if not isinstance(index, pd.DatetimeIndex):
+            return False
+        if len(index) < 3:
+            return True
+        deltas = index.to_series().diff().dropna().unique()
+        return len(deltas) == 1
 
     def _custom_prepare_tsibble(self, Z, is_regular=True):
         """fable::ARIMA expects an R tsibble object.
@@ -148,24 +167,23 @@ class PyFableARIMA(BaseForecaster):
         import rpy2.robjects as robjects
         from rpy2.robjects import pandas2ri
         from rpy2.robjects.conversion import localconverter
-        from rpy2.robjects.packages import importr
 
-        # Activate the automatic conversion of pandas DataFrames to R data frames
-        # pandas2ri.activate()
+        # one-time R session setup (suppress package startup chatter)
+        if not hasattr(self, "_r_session_initialized"):
+            robjects.r(
+                "suppressPackageStartupMessages({options(verbose=FALSE);library(tidyverse);library(fpp3);library(tsibble);library(dplyr);library(fabletools);library(fable)})"
+            )
+            self._r_session_initialized = True
 
-        # Import necessary R packages
-        _ = importr("tidyverse")
-        _ = importr("fpp3")
-        tsibble = importr("tsibble")
-        _ = importr("dplyr")
-        _ = importr("fabletools")
-        _ = importr("fable")
+        # Work on a copy to avoid mutating caller objects (predict side-effect tests)
+        if isinstance(Z, pd.DataFrame):
+            Z = Z.copy()
 
         if isinstance(Z.index, pd.DatetimeIndex):
             freq = Z.index.freq
             if freq is None:
                 freq = Z.index.inferred_freq
-            freq = str(freq)[0]
+            freq = str(freq)[0] if freq is not None else None
         elif isinstance(Z.index, pd.PeriodIndex):
             freq = Z.index.freqstr[0]
         else:
@@ -183,10 +201,15 @@ class PyFableARIMA(BaseForecaster):
 
             Z[date_col_name] = Z.index.to_series()
 
+        # Preserve full timestamp for sub-daily data; only coerce to date string
+        # for (sub-)annual to daily frequencies we explicitly map.
         if isinstance(Z.index, pd.PeriodIndex):
             Z[date_col_name] = Z.index.to_timestamp()
 
-        Z[date_col_name] = Z[date_col_name].dt.strftime("%Y-%m-%d")
+        # determine whether we should strip time component (for Y/Q/M/W/D)
+        strip_time = freq in {"A", "Y", "Q", "M", "W", "D"}
+        if strip_time:
+            Z[date_col_name] = Z[date_col_name].dt.strftime("%Y-%m-%d")
 
         # Convert the pandas DataFrame to an R data frame
         with localconverter(robjects.default_converter + pandas2ri.converter):
@@ -194,6 +217,7 @@ class PyFableARIMA(BaseForecaster):
 
         # Define the R script to prepare the tsibble
         if is_regular:
+            # aggregate to regular (>= daily) period indices
             freq_func_map = {
                 "A": "lubridate::year",
                 "Y": "lubridate::year",
@@ -202,22 +226,35 @@ class PyFableARIMA(BaseForecaster):
                 "W": "tsibble::yearweek",
                 "D": "as.Date",
             }
-            if freq in freq_func_map:
+            if freq in freq_func_map and freq is not None:
+                # Coarse frequency we explicitly support with aggregation helper
                 freq_func = freq_func_map[freq]
+                r_script = f"""
+                r_data <- dplyr::as_tibble(r_data) |>
+                    dplyr::mutate({date_col_name} = as.Date({date_col_name}),
+                                  idx = {freq_func}({date_col_name})) |>
+                    tsibble::as_tsibble(index = idx, regular = TRUE)
+                r_data
+                """
             else:
-                raise ValueError("Unsupported frequency")
-
-            r_script = f"""
-            r_data <- dplyr::as_tibble(r_data) |>
-                dplyr::mutate({date_col_name} = as.Date({date_col_name}),
-                              idx = {freq_func}({date_col_name})) |>
-                tsibble::as_tsibble(index = idx, regular = TRUE)
-            r_data
-            """
+                # Fallback for sub-daily/unsupported frequencies (H,T,S,etc.)
+                # Treat as irregular tsibble to avoid validate_interval issues.
+                mutate_dt = f"{date_col_name} = as.POSIXct({date_col_name})"
+                r_script = f"""
+                r_data <- dplyr::as_tibble(r_data) |>
+                    dplyr::mutate({mutate_dt}) |>
+                    tsibble::as_tsibble(index = {date_col_name}, regular = FALSE)
+                r_data
+                """
         else:
+            # irregular case - just pass through the (possibly POSIXct) timestamp
+            if strip_time:
+                date_coerce = f"{date_col_name} = as.Date({date_col_name})"
+            else:
+                date_coerce = f"{date_col_name} = as.POSIXct({date_col_name})"
             r_script = f"""
             r_data <- dplyr::as_tibble(r_data) |>
-                dplyr::mutate({date_col_name} = as.Date({date_col_name})) |>
+                dplyr::mutate({date_coerce}) |>
                 tsibble::as_tsibble(index = {date_col_name}, regular = FALSE)
             r_data
             """
@@ -303,39 +340,64 @@ class PyFableARIMA(BaseForecaster):
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
         Parameters
         ----------
-        y : sktime time series object
-        fh : ignored
-        X :  sktime time series object, optional (default=None)
-            Exogeneous time series used in fitting. Must have same index as y.
+        y : pd.Series or pd.DataFrame (single column)
+        fh : ignored (handled by base class)
+        X : pd.DataFrame, optional
+            Exogenous variables with same index as y.
 
         Returns
         -------
-        self : reference to self
+        self
         """
-        if X is None:
-            if y.name is None:
-                y = y.copy()
-                y.name = "y"
-            Z = y
-            if self.formula is None:
-                self.formula = y.name
+        # Ensure univariate y and determine external & internal target names
+        if isinstance(y, pd.DataFrame):
+            if y.shape[1] != 1:
+                raise ValueError(
+                    "PyFableARIMA currently supports only univariate y; "
+                    f"received {y.shape[1]} columns"
+                )
+            y_series = y.iloc[:, 0]
+            external_name = y.columns[0]
         else:
-            if not y.index.equals(X.index):
+            y_series = y
+            external_name = y.name
+
+        # Internal model name must be a valid R symbol; fall back if None
+        model_target_name = external_name if external_name is not None else "y"
+        self._orig_target_name = external_name
+        self._model_target_name = model_target_name
+
+        # Construct design matrix Z
+        if X is not None:
+            if not y_series.index.equals(X.index):
                 raise ValueError("y and X must have the same index")
-            Z = pd.concat([y, X], axis=1)
+            y_df = y_series.to_frame(name=model_target_name)
+            Z = pd.concat([y_df, X], axis=1)
             if self.formula is None:
-                self.formula = "y ~ " + " + ".join(str(col) for col in X.columns)
+                rhs = " + ".join(str(col) for col in X.columns)
+                expr = f"{model_target_name} ~ {rhs}" if rhs else model_target_name
+            else:
+                expr = self.formula
+        else:
+            Z = y_series.to_frame(name=model_target_name)
+            expr = model_target_name if self.formula is None else self.formula
 
+        # Regularity pre-check if user claims regular; raise early if not
+        if self.is_regular and not self._is_regular_index(y_series.index):
+            raise ValueError(
+                "PyFableARIMA: series marked is_regular=True but index is irregular. "
+                "Set is_regular=False or resample to a regular frequency."
+            )
+
+        # Fit underlying R model (only proceed if regular claim consistent)
         r_tsibble = self._custom_prepare_tsibble(Z, is_regular=self.is_regular)
-
-        self._fit_auto_arima_ = self._custom_fit_arima(r_tsibble, self.formula)
-        self._fit_index_ = y.index
-        self._y = y
+        self._fit_auto_arima_ = self._custom_fit_arima(r_tsibble, expr)
+        self._fit_index_ = y_series.index
+        self._y = y_series
+        self._resolved_formula = expr
+        return self
 
     # -------------------------------------------------------------------------
     def _predict_special(self, fh, X=None, coverage=None):
@@ -360,13 +422,14 @@ class PyFableARIMA(BaseForecaster):
         import pandas as pd
         import rpy2.robjects as robjects
 
+        # ensure ForecastingHorizon object
         if not isinstance(fh, ForecastingHorizon):
             fh = ForecastingHorizon(fh)
 
         cutoff = self._fit_index_[-1]
         l_fh_index = fh.to_absolute_index(cutoff=cutoff)
 
-        # Prepare exogenous features or dummy
+        # Prepare exogenous features (copy to avoid caller mutation) or create dummy
         if X is not None:
             l_fh_X_index = ForecastingHorizon(X.index).to_absolute_index()
             if not l_fh_index.equals(l_fh_X_index):
@@ -381,79 +444,87 @@ class PyFableARIMA(BaseForecaster):
         robjects.globalenv["fit_aut_arima"] = self._fit_auto_arima_
         robjects.globalenv["a_tsibble"] = a_tsibble
 
-        # Always compute prediction intervals - simpler R logic below
+        # Default coverage if none provided
         if not coverage:
             coverage = [0.9]
 
         level_vector = robjects.FloatVector([c * 100 for c in coverage])
         robjects.globalenv["level_vec"] = level_vector
 
-        r_script = """
-        library(fable)
-        library(dplyr)
-        library(purrr)
-        library(tibble)
+        # Build forecast call with optional warning suppression
+        if self.verbose:
+            forecast_call = "fc <- forecast(fit_aut_arima, new_data = a_tsibble)"
+        else:
+            forecast_call = (
+                "withCallingHandlers({ fc <- forecast("
+                "fit_aut_arima, new_data = a_tsibble) }, "
+                "warning=function(w){ msg <- conditionMessage(w); "
+                "if(grepl('contains no packages', msg) || "
+                "grepl('irregular time series', msg)) "
+                "invokeRestart('muffleWarning') })"
+            )
 
-        fc <- forecast(fit_aut_arima, new_data = a_tsibble)
-
-        dist_col <- names(fc)[sapply(fc, function(x) inherits(x, "distribution"))][1]
-
-        # Extract hilo intervals for each coverage level
-        intervals_all <- map(level_vec, function(lv) {
-            dists <- map(fc[[dist_col]], function(x) hilo(x, lv))
-            df <- tibble(interval = dists) %>%
-                mutate(
-                    lower = map_dbl(interval, function(x) x$lower),
-                    upper = map_dbl(interval, function(x) x$upper)
-                ) %>%
-                select(lower, upper)
-            df
-        })
-
-        names(intervals_all) <- paste0("c", as.character(level_vec))
-
-        intervals_named <- imap(intervals_all, function(df, name) {
-            rename_with(df, ~ paste0(., "_", name))
-        })
-
-        intervals_df <- bind_cols(intervals_named)
-
-        fc_tbl <- bind_cols(as_tibble(fc), intervals_df)
-        fc_tbl
-        """
+        r_script = "\n".join(
+            [
+                "# packages already loaded once",
+                forecast_call,
+                "",
+                "dist_col <- names(fc)[",
+                'sapply(fc,function(x)inherits(x,"distribution"))][1]',
+                "",
+                "intervals_all <- purrr::map(level_vec, function(lv) {",
+                "  dists <- purrr::map(fc[[dist_col]], function(x) hilo(x, lv))",
+                "  df <- tibble::tibble(interval = dists) %>%",
+                "    dplyr::mutate(",
+                "      lower = purrr::map_dbl(interval, function(x) x$lower),",
+                "      upper = purrr::map_dbl(interval, function(x) x$upper)",
+                "    ) %>%",
+                "    dplyr::select(lower, upper)",
+                "  df",
+                "})",
+                "",
+                'names(intervals_all) <- paste0("c", as.character(level_vec))',
+                "",
+                "intervals_named <- purrr::imap(intervals_all, function(df, name) {",
+                '  dplyr::rename_with(df, ~ paste0(., "_", name))',
+                "})",
+                "",
+                "intervals_df <- dplyr::bind_cols(intervals_named)",
+                "fc_tbl <- dplyr::bind_cols(tibble::as_tibble(fc), intervals_df)",
+                "fc_tbl",
+            ]
+        )
 
         forecasts = robjects.r(r_script)
         forecasts_df = robjects.pandas2ri.rpy2py(forecasts)
 
-        # Extract forecast mean
-        forecast_column = next(
-            (col for col in forecasts_df.columns if ".mean" in col), None
-        )
+        # Identify forecast mean column
+        forecast_column = next((c for c in forecasts_df.columns if ".mean" in c), None)
         if forecast_column is None:
             forecast_column = forecasts_df.select_dtypes(include="number").columns[0]
 
         forecast_values = forecasts_df[forecast_column].values
-        y_pred = pd.Series(forecast_values, index=l_fh_index, name="forecast")
+        external_name = self._orig_target_name
+        # y_pred must keep original training series name (can be None)
+        y_pred = pd.Series(forecast_values, index=l_fh_index, name=external_name)
+        # intervals require numeric 0 when original name None per estimator expectations
+        interval_variable_name = external_name if external_name is not None else 0
 
-        # Extract prediction intervals
+        # Build prediction intervals DataFrame
         intervals = {}
-        y_varname = self._y.name if hasattr(self._y, "name") and self._y.name else "y"
-
+        y_varname = interval_variable_name
         for col in forecasts_df.columns:
             col_str = str(col)
             if col_str.startswith("lower_") or col_str.startswith("upper_"):
                 parts = col_str.split("_")
-                bound = parts[0]  # "lower" or "upper"
-                level = (
-                    float(parts[1][1:]) / 100
-                )  # strip "c" prefix and convert back to [0, 1]
+                bound = parts[0]
+                level = float(parts[1][1:]) / 100  # remove leading 'c'
                 intervals[(y_varname, level, bound)] = forecasts_df[col].values
 
         pred_int = pd.DataFrame(intervals, index=l_fh_index)
         pred_int.columns = pd.MultiIndex.from_tuples(
             pred_int.columns, names=["variable", "coverage", "bound"]
         )
-
         return y_pred, pred_int
 
     # -------------------------------------------------------------------------

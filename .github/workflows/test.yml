@@ -494,3 +494,51 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
+
+  test-pyfablearima:
+    # Rudimentary dedicated job to run check_estimator on PyFableARIMA
+    # Includes installation of required R and Python dependencies for rpy2/fable
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c(\
+            "tidyverse","fable","fabletools","fpp3","tsibble","tsibbledata",\
+            "urca","feasts","lubridate","ggplot2","stringr","readr","readxl",\
+            "tidyr","distributional","patchwork","scales","anytime","timechange",\
+            "tibble","dplyr"), repos="https://cloud.r-project.org", Ncpus=2)'
+
+      - name: Install Python dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install numpy pandas scipy patsy rpy2==3.6.1
+            python -m pip install .
+
+      - name: Show Python and R session info
+        run: |
+          python -c "import sys, rpy2; import pandas; print('Python', sys.version); print('rpy2', rpy2.__version__); print('pandas', pandas.__version__)"
+          Rscript -e 'sessionInfo()'
+
+      - name: Run check_estimator on PyFableARIMA
+        run: |
+          python - <<'PY'
+          from sktime.utils import check_estimator
+          from sktime.forecasting.pyfable_arima import PyFableARIMA
+          print("Running check_estimator(PyFableARIMA)...")
+          check_estimator(PyFableARIMA, raise_exceptions=True)
+          print("check_estimator(PyFableARIMA) completed successfully.")
+          PY
