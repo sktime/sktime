@@ -75,6 +75,8 @@ class TotoForecaster(BaseForecaster):
 
     def __init__(
         self,
+        id_mask=None,
+        padding_mask=None,
         num_samples: int = 1,
         samples_per_batch: int = 1,
         prediction_type: str = "median",
@@ -104,6 +106,10 @@ class TotoForecaster(BaseForecaster):
         self.prediction_type = prediction_type
         if prediction_type not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
+
+        # Original Implementation
+        self.id_mask = id_mask
+        self.padding_mask = padding_mask
 
         super().__init__()
 
@@ -184,7 +190,25 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
-        self.get_series_params_from_y(y)
+        # self.get_series_params_from_y(y)
+
+        # -- Original Implementation --
+        self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+            self._device
+        )
+
+        if self.id_mask is None:
+            self._id_mask = torch.zeros_like(self._input_series).to(self._device)
+        else:
+            self._id_mask = self.id_mask
+
+        if self.padding_mask is None:
+            self._padding_mask = torch.full_like(
+                self._input_series, True, dtype=torch.bool
+            ).to(self._device)
+        else:
+            self._padding_mask = self.padding_mask
+        # -- End of Original Implementation --
 
         self._y_columns = self._y.columns
         self._cutoff = self._y.index[-1]
