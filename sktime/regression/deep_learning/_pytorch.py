@@ -1,16 +1,15 @@
-"""Abstract base class for the Pytorch neural network classifiers."""
+"""Abstract base class for the Pytorch neural network regressors."""
 
 __author__ = ["geetu040"]
 
 
-__all__ = ["BaseDeepClassifierPytorch"]
+__all__ = ["BaseDeepRegressorPytorch"]
 
 import abc
 
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 
-from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -30,8 +29,8 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-class BaseDeepClassifierPytorch(BaseClassifier):
-    """Abstract base class for the Pytorch neural network classifiers."""
+class BaseDeepRegressorPytorch(BaseRegressor):
+    """Abstract base class for the Pytorch neural network regressors."""
 
     _tags = {
         "authors": ["geetu040"],
@@ -69,16 +68,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             if _check_soft_dependencies("torch", severity="none"):
                 torch.manual_seed(self.random_state)
 
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
 
         # instantiate optimizers
         self.optimizers = OPTIMIZERS
 
     def _fit(self, X, y):
-        y = self._encode_y(y)
-
         self.network = self._build_network(X, y)
 
         self._criterion = self._instantiate_criterion()
@@ -134,7 +129,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 )
         else:
             # default criterion
-            return torch.nn.CrossEntropyLoss()
+            return torch.nn.MSELoss()
 
     @abc.abstractmethod
     def _build_network(self):
@@ -147,7 +142,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return DataLoader(dataset, self.batch_size)
 
     def _predict(self, X):
-        """Predict labels for sequences in X.
+        """Predict values for sequences in X.
 
         private _predict containing the core logic, called from predict
 
@@ -168,84 +163,30 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         y : should be of mtype in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
-            predicted class labels
+            predicted values
             indices correspond to instance indices in X
             if self.get_tag("capaility:multioutput") = False, should be 1D
             if self.get_tag("capaility:multioutput") = True, should be 2D
         """
-        y_pred_prob = self._predict_proba(X)
-        y_pred = np.argmax(y_pred_prob, axis=-1)
-        y_decoded = self._decode_y(y_pred)
-        return y_decoded
-
-    def _predict_proba(self, X):
-        """Predicts labels probabilities for sequences in X.
-
-        private _predict_proba containing the core logic, called from predict_proba
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-
-        Parameters
-        ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
-            pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        """
-        import torch.nn.functional as F
-        from torch import cat
-
         self.network.eval()
         dataloader = self._build_dataloader(X)
         y_pred = []
         for inputs in dataloader:
             y_pred.append(self.network(**inputs).detach())
-        y_pred = cat(y_pred, dim=0)
-        # (batch_size, num_outputs)
-        y_pred = F.softmax(y_pred, dim=-1)
+        y_pred = torch.cat(y_pred, dim=0)
         y_pred = y_pred.numpy()
         return y_pred
 
-    def _encode_y(self, y):
-        unique = np.unique(y)
-        if np.array_equal(unique, np.arange(len(unique))):
-            return y
-
-        self.label_encoder = LabelEncoder()
-        return self.label_encoder.fit_transform(y)
-
-    def _decode_y(self, y):
-        if self.label_encoder is None:
-            return y
-
-        return self.label_encoder.inverse_transform(y)
-
     def _internal_convert(self, X, y=None):
-        """Override to enforce strict 3D input validation for PyTorch classifiers.
+        """Override to enforce strict 3D input validation for PyTorch regressors.
 
-        PyTorch classifiers require 3D input and we don't allow automatic conversion
+        PyTorch regressors require 3D input and we don't allow automatic conversion
         from 2D to 3D as this can mask user errors and lead to unexpected behavior.
         """
         if isinstance(X, np.ndarray) and X.ndim != 3:
             raise ValueError(
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. PyTorch classifiers require properly formatted "
+                f"but got shape {X.shape}. PyTorch regressors require properly formatted "
                 f"3D time series data. Please reshape your data or use a supported Panel mtype."
             )
 
@@ -261,8 +202,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
+            Reserved values for regressors:
+                "results_comparison" - used for identity testing in some regressors
                     should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
@@ -277,7 +218,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
 
 class PytorchDataset(Dataset):
-    """Dataset for use in sktime deep learning classifier based on pytorch."""
+    """Dataset for use in sktime deep learning regressor based on pytorch."""
 
     def __init__(self, X, y=None):
         # X.shape = (batch_size, n_dims, n_timestamps)
@@ -302,5 +243,5 @@ class PytorchDataset(Dataset):
 
         # return y during fit
         y = self.y[i]
-        y = torch.tensor(y, dtype=torch.long)
+        y = torch.tensor(y, dtype=torch.float)
         return inputs, y
