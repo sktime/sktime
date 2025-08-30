@@ -796,7 +796,7 @@ class fit_is_empty(_BaseTag):
 
 
 class property__randomness(_BaseTag):
-    """Property: Degree of randomness vs determinism of the estimator
+    """Property: Degree of randomness vs determinism of the estimator.
 
     - String name: ``"property:randomness"``
     - Public property tag
