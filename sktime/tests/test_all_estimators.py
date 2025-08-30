@@ -1206,13 +1206,15 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # randomness = "derandomized" should be set only if random_state is available
         if randomness == "derandomized":
             assert random_state, (
-                "'capability:random_state' tag must be set to True if "
+                f"{estimator_class.__name__} must set "
+                "'capability:random_state' tag to True if "
                 "'property:randomness' tag is set to 'derandomized'"
             )
 
         # random_state tag should be set iff the parameter exists in the signature
         assert random_state == "random_state" in estimator_class.get_param_names(), (
-            "'capability:random_state' tag must be set if the "
+            f"{estimator_class.__name__} must set "
+            "'capability:random_state' tag if the "
             "random_state parameter exists in the estimator signature"
         )
 
@@ -1220,8 +1222,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # randomness should be one of "derandomized", "stochastic"
         if random_state:
             assert randomness in ["derandomized", "stochastic"], (
-                "if the 'capability:random_state' tag is set, "
-                "'property:randomness' tag must be one of 'derandomized', 'stochastic'"
+                f"{estimator_class.__name__} must set "
+                "'property:randomness' tag to one of 'derandomized', 'stochastic' if "
+                "'capability:random_state' tag is set"
             )
 
 

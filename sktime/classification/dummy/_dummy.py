@@ -83,6 +83,7 @@ class DummyClassifier(BaseClassifier):
         "capability:unequal_length": True,
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
