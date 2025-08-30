@@ -86,6 +86,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
         "sktime_version": SKTIME_VERSION,  # current sktime version
+        # default property tags
+        "property:randomness": "deterministic",
+        "capability:random_state": False,
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM

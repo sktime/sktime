@@ -1198,6 +1198,23 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
+    def test_random_tags(self, estimator_class):
+        """Check that estimator randomization tags are compatibly set."""
+        randomness = estimator_class.get_class_tag("property:randomness")
+        random_state = estimator_class.get_class_tag("capability:random_state")
+
+        # randomness = "derandomized" should be set only if random_state is available
+        if randomness == "derandomized":
+            assert random_state
+
+        # random_state tag should be set iff the parameter exists in the signature
+        assert random_state == "random_state" in estimator_class.get_param_names()
+
+        # if a random_state parameter is present,
+        # randomness should be one of "derandomized", "stochastic"
+        if random_state:
+            assert randomness in ["derandomized", "stochastic"]
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
@@ -1265,6 +1282,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_fit_idempotent(self, estimator_instance, scenario, method_nsc_arraylike):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
+
+        random_tag = estimator.get_tag("property:randomness")
+        deterministic = random_tag in ["derandomized", "deterministic"]
+
+        # if the estimator is not deterministic, we cannot guarantee idempotency
+        # this includes the case where even after setting random_state,
+        # the estimator is known to be stochastic
+        if not deterministic:
+            return None
 
         # for now, we have to skip predict_proba, since current output comparison
         #   does not work for tensorflow Distribution
