@@ -6,6 +6,7 @@
 __author__ = ["JATAYU000", "Datadog"]
 __all__ = ["TotoForecaster"]
 
+import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -75,6 +76,7 @@ class TotoForecaster(BaseForecaster):
 
     def __init__(
         self,
+        seed=None,
         id_mask=None,
         padding_mask=None,
         num_samples: int = 1,
@@ -107,6 +109,9 @@ class TotoForecaster(BaseForecaster):
         if prediction_type not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
 
+        self.seed = seed
+        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+
         # Original Implementation
         self.id_mask = id_mask
         self.padding_mask = padding_mask
@@ -128,6 +133,8 @@ class TotoForecaster(BaseForecaster):
         key = {
             **kwargs,
             "device": self._device,
+            "id_mask": self.id_mask,
+            "padding_mask": self.padding_mask,
         }
         return str(sorted(key.items()))
 
@@ -184,7 +191,7 @@ class TotoForecaster(BaseForecaster):
         else:
             self._device = self.device
 
-        self._forecaster = _CachedToToForecaster(
+        self.forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
@@ -193,34 +200,32 @@ class TotoForecaster(BaseForecaster):
         # self.get_series_params_from_y(y)
 
         # -- Original Implementation --
-        self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+        self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
             self._device
         )
+        self._y = y
 
         if self.id_mask is None:
-            self._id_mask = torch.zeros_like(self._input_series).to(self._device)
+            self._id_mask = torch.zeros_like(self.input_series).to(self._device)
         else:
             self._id_mask = self.id_mask
 
         if self.padding_mask is None:
             self._padding_mask = torch.full_like(
-                self._input_series, True, dtype=torch.bool
+                self.input_series, True, dtype=torch.bool
             ).to(self._device)
         else:
             self._padding_mask = self.padding_mask
         # -- End of Original Implementation --
 
-        self._y_columns = self._y.columns
-        self._cutoff = self._y.index[-1]
-
         # current model does not use these two variable, might be needed in future.
-        self.timestamp_seconds = torch.zeros_like(self._input_series)
+        self.timestamp_seconds = torch.zeros_like(self.input_series)
         self.time_interval_seconds = torch.full(
-            (self._input_series.shape[0],), 60 * 15, dtype=torch.float32
+            (self.input_series.shape[0],), 60 * 15, dtype=torch.float32
         ).to(self._device)
 
         self._series = MaskedTimeseries(
-            series=self._input_series,
+            series=self.input_series,
             padding_mask=self._padding_mask,
             id_mask=self._id_mask,
             timestamp_seconds=self.timestamp_seconds,
@@ -254,10 +259,10 @@ class TotoForecaster(BaseForecaster):
                 index=time_level, columns=var_level, values=y.columns[0]
             )
             self._y = self._y.rename_axis(None, axis=1).rename_axis(time_level, axis=0)
-            self._input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
+            self.input_series = torch.tensor(self._y.values.T, dtype=torch.float32).to(
                 self._device
             )
-            n, d = self._input_series.shape
+            n, d = self.input_series.shape
             self._id_mask = (
                 torch.tensor(y.index.get_level_values(id_mask_level))
                 .reshape(n, d)
@@ -272,12 +277,12 @@ class TotoForecaster(BaseForecaster):
         # dataframe where id_mask and padding_mask needs to be default.
         elif isinstance(y.index, pd.PeriodIndex):
             self._y = y
-            self._input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+            self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
                 self._device
             )
-            self._id_mask = torch.zeros_like(self._input_series).to(self._device)
+            self._id_mask = torch.zeros_like(self.input_series).to(self._device)
             self._padding_mask = torch.full_like(
-                self._input_series, True, dtype=torch.bool
+                self.input_series, True, dtype=torch.bool
             ).to(self._device)
 
         # unsupported input format
@@ -315,25 +320,30 @@ class TotoForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        prediction_length = max(fh)
+        import torch
 
-        self._forecast = self._forecaster.forecast(
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
+        prediction_length = max(fh.to_relative(self._cutoff))
+
+        forecast = self.forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
         )
         if self.prediction_type.lower() == "median":
-            all_predictions = self._forecast.median.cpu().squeeze(0).numpy().T
+            all_predictions = forecast.median.cpu().squeeze(0).numpy().T
         else:
-            all_predictions = self._forecast.mean.cpu().squeeze(0).numpy().T
+            all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
 
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
 
         y_pred = pd.DataFrame(
-            selected_predictions, index=pred_index, columns=self._y_columns
+            selected_predictions, index=pred_index, columns=self._y.columns
         )
         return y_pred
 
@@ -372,8 +382,15 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        self._predict(fh)
-        var_names = self._y_columns
+        prediction_length = max(fh.to_relative(self._cutoff))
+
+        forecast = self.forecaster.forecast(
+            self._series,
+            prediction_length=prediction_length,
+            num_samples=self.num_samples,
+            samples_per_batch=self.samples_per_batch,
+        )
+        var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
@@ -381,7 +398,7 @@ class TotoForecaster(BaseForecaster):
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
         alpha_tensor = torch.tensor(alpha, device=self._device)
 
-        quantiles = self._forecast.quantile(alpha_tensor)
+        quantiles = forecast.quantile(alpha_tensor)
         if quantiles.dim() > 3:
             quantile_values = quantiles.cpu().squeeze(1).numpy()
         else:
@@ -422,7 +439,7 @@ class TotoForecaster(BaseForecaster):
 
 
 @_multiton
-class _CachedToToForecaster:
+class _CachedTotoForecaster:
     """Cached Toto forecaster.
 
     Toto is a zero-shot model and immutable, hence there will not be
