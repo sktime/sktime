@@ -13,6 +13,9 @@ from pandas.testing import assert_frame_equal
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures
+from sktime.transformations.series.holiday.country_holidays import (
+    CountryHolidaysTransformer,
+)
 
 
 @pytest.fixture
@@ -177,3 +180,44 @@ def test_holiday_not_in_window():
     X = pd.Series(14, index=ix)
     X_transformed = holiday_transformer.fit_transform(X)
     assert X_transformed.shape[0] == X.shape[0]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(CountryHolidaysTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_country_holidays_index_preservation():
+    """Test that CountryHolidaysTransformer preserves index type."""
+    transformer = CountryHolidaysTransformer("US")
+    
+    # Test with DatetimeIndex
+    X_dt = pd.DataFrame(
+        {"value": [1, 2, 3, 4, 5]},
+        index=pd.date_range("2025-01-01", periods=5)
+    )
+    
+    result_dt = transformer.fit_transform(X_dt)
+    
+    # Check that the original DatetimeIndex is preserved
+    assert isinstance(result_dt.index, pd.DatetimeIndex), (
+        f"Expected DatetimeIndex, got {type(result_dt.index)}"
+    )
+    assert result_dt.index.equals(X_dt.index), (
+        "DatetimeIndex not preserved correctly"
+    )
+    
+    # Test with PeriodIndex  
+    X_period = pd.DataFrame(
+        {"value": [1, 2, 3, 4, 5]},
+        index=pd.period_range("2025-01-01", periods=5)
+    )
+    
+    result_period = transformer.fit_transform(X_period)
+    
+    # Check that the original PeriodIndex is preserved
+    assert isinstance(result_period.index, pd.PeriodIndex), (
+        f"Expected PeriodIndex, got {type(result_period.index)}"
+    )
+    assert result_period.index.equals(X_period.index), (
+        "PeriodIndex not preserved correctly"
+    )
