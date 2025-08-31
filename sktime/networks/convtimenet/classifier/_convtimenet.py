@@ -13,6 +13,12 @@ if _check_soft_dependencies("torch", severity="none"):
     from sktime.networks.convtimenet.classifier._dlutils import DeformablePatch
 else:
 
+    class torch:
+        """dummy class if torch is not available."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError("torch is not available. Please install torch first.")
+
     class nn:
         """dummy class if torch is not available."""
 
