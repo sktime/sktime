@@ -303,7 +303,7 @@ class ConvTimeNet_backbone(nn.Module):
         # could just be used in classifying task
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # x: [bs x nvars x q_len]
+    def forward(self, x):  # x: [bs x nvars x q_len]
         # Input encoding
         u = x
         if self.use_embed:

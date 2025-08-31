@@ -4,7 +4,10 @@ __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.networks.convtimenet.classifier._convtimenet import ConvTimeNet
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    from sktime.networks.convtimenet.classifier._convtimenet import ConvTimeNet
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -80,12 +83,12 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     ...     batch_size=8,
     ...     device="cpu",
     ...     random_state=10
-    ... )
-    >>> clf.fit(X, y)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X, y)  # doctest: +SKIP
     ConvTimeNetClassifier(...)
     >>> # Make predictions
-    >>> y_pred = clf.predict(X)
-    >>> y_proba = clf.predict_proba(X)
+    >>> y_pred = clf.predict(X)  # doctest: +SKIP
+    >>> y_proba = clf.predict_proba(X)  # doctest: +SKIP
 
     References
     ----------
