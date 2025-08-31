@@ -189,31 +189,27 @@ def test_holiday_not_in_window():
 def test_country_holidays_index_preservation():
     """Test that CountryHolidaysTransformer preserves index type."""
     transformer = CountryHolidaysTransformer("US")
-    
+
     # Test with DatetimeIndex
     X_dt = pd.DataFrame(
-        {"value": [1, 2, 3, 4, 5]},
-        index=pd.date_range("2025-01-01", periods=5)
+        {"value": [1, 2, 3, 4, 5]}, index=pd.date_range("2025-01-01", periods=5)
     )
-    
+
     result_dt = transformer.fit_transform(X_dt)
-    
+
     # Check that the original DatetimeIndex is preserved
     assert isinstance(result_dt.index, pd.DatetimeIndex), (
         f"Expected DatetimeIndex, got {type(result_dt.index)}"
     )
-    assert result_dt.index.equals(X_dt.index), (
-        "DatetimeIndex not preserved correctly"
-    )
-    
-    # Test with PeriodIndex  
+    assert result_dt.index.equals(X_dt.index), "DatetimeIndex not preserved correctly"
+
+    # Test with PeriodIndex
     X_period = pd.DataFrame(
-        {"value": [1, 2, 3, 4, 5]},
-        index=pd.period_range("2025-01-01", periods=5)
+        {"value": [1, 2, 3, 4, 5]}, index=pd.period_range("2025-01-01", periods=5)
     )
-    
+
     result_period = transformer.fit_transform(X_period)
-    
+
     # Check that the original PeriodIndex is preserved
     assert isinstance(result_period.index, pd.PeriodIndex), (
         f"Expected PeriodIndex, got {type(result_period.index)}"
