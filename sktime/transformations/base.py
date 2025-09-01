@@ -1101,9 +1101,9 @@ class BaseTransformer(BaseEstimator):
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
 
-        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
-            "capability:categorical_in_X"
-        ):
+        cat_in_X = DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+        supports_cat_in_X = self.get_tag("capability:categorical_in_X")
+        if cat_in_X and not supports_cat_in_X:
             raise TypeError(
                 f"Transformer {self} does not support categorical features in X, "
                 "but categorical data was passed."
