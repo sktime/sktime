@@ -136,6 +136,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": True,
+        "capability:categorical_in_y": True,
         # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
@@ -1104,7 +1105,8 @@ class BaseTransformer(BaseEstimator):
             "capability:categorical_in_X"
         ):
             raise TypeError(
-                f"Transformer {self} does not support categorical features in X."
+                f"Transformer {self} does not support categorical features in X, "
+                "but categorical data was passed."
             )
 
         X_scitype = X_metadata["scitype"]
@@ -1171,9 +1173,12 @@ class BaseTransformer(BaseEstimator):
                 y_scitype = y_metadata["scitype"]
                 y_mtype = y_metadata["mtype"]
 
-                if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                cat_in_y = DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+                supports_cat_in_y = self.get_tag("capability:categorical_in_y")
+                if cat_in_y and not supports_cat_in_y:
                     raise TypeError(
-                        "Transformers do not support categorical features in y."
+                        f"Transformer {self} not support categorical features in y, "
+                        "but categorical data was passed."
                     )
 
         else:

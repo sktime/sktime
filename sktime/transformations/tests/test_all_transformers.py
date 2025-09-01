@@ -216,8 +216,9 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
 
         if estimator_instance.get_tag("requires_y"):
-            with pytest.raises(TypeError, match=r"categorical"):
-                estimator_instance.fit_transform(X, y)
+            if not estimator_instance.get_tag("capability:categorical_in_y"):
+                with pytest.raises(TypeError, match=r"categorical"):
+                    estimator_instance.fit_transform(X, y)
         # otherwise, passing categorical y should pass (because it is ignored)
         else:
             estimator_instance.fit_transform(X, y)

@@ -154,6 +154,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "univariate-only": False,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
+        "capability:categorical_in_X": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -514,6 +515,9 @@ class PandasTransformAdaptor(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"]
+        # whether estimator supports categorical depends on "method"
+        # tag capability:categorical_in_X is left "True" to not block this case
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):

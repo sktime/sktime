@@ -965,7 +965,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical variables in the X argument.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -984,7 +984,32 @@ class capability__categorical_in_X(_BaseTag):
         "tag_name": "capability:categorical_in_X",
         "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
-        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator handle categorical data in X arguments?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_y(_BaseTag):
+    """Capability: If estimator can handle categorical variables in the y argument.
+
+    ``False`` = cannot handle categorical natively in y,
+    ``True`` = can handle categorical natively in y
+
+    - String name: ``"capability:categorical_in_y"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_y",
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle categorical data in y arguments?",
         "user_facing": True,
     }
 
