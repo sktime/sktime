@@ -515,7 +515,7 @@ class PandasTransformAdaptor(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_categorical_X_passes"]
+        "tests:skip_by_name": ["test_categorical_X_passes"],
         # whether estimator supports categorical depends on "method"
         # tag capability:categorical_in_X is left "True" to not block this case
     }
