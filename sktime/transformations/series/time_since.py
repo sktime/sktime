@@ -105,6 +105,9 @@ class TimeSince(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # the test_categorical_X_passes test uses RangeIndex,
+        # but this transformation requires DatetimeIndex
+        "tests:skip_by_name": ["test_categorical_X_passes"],
     }
 
     def __init__(

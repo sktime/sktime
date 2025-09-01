@@ -91,6 +91,12 @@ class FinancialHolidaysTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # the test_categorical_X_passes test uses RangeIndex,
+        # but this transformation requires DatetimeIndex
+        "tests:skip_by_name": [
+            "test_categorical_X_passes",
+            "test_categorical_y_raises_error",
+        ],
     }
 
     def __init__(self, market, years=None, expand=True, observed=True, name=None):
