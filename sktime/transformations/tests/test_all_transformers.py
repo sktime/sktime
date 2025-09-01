@@ -220,7 +220,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 with pytest.raises(TypeError, match=r"categorical"):
                     estimator_instance.fit_transform(X, y)
         # otherwise, passing categorical y should pass (because it is ignored)
-        else:
+        # we skip composites since the support for categoricals may depend on components
+        elif not estimator_instance.is_composite():
             estimator_instance.fit_transform(X, y)
 
     def test_categorical_X_passes(self, estimator_instance):
