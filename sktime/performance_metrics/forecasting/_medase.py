@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
@@ -139,6 +141,63 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+
+        y_pred : time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        y_train : time series in ``sktime`` compatible data container format
+            Training data used to calculate the naive forecasting error.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        y_train = kwargs["y_train"]
+        multioutput = self.multioutput
+        sp = self.sp
+
+        eps = self.eps
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        naive_forecast_true = y_train[sp:]
+        naive_forecast_pred = y_train[:-sp]
+        naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
+        naive_error = naive_diff.median()
+
+        raw_values = raw_values / np.maximum(naive_error, eps)
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
