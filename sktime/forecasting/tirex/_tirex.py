@@ -344,4 +344,6 @@ class TiRexForecaster(BaseForecaster):
         #           {"est": value3, "parama": value4}]
         #
         # return params
-        return {"model": "NX-AI/TiRex", "device": "cpu"}
+        params1 = {"model": "NX-AI/TiRex", "device": "cpu"}
+        params2 = {"model": "NX-AI/TiRex", "device": "cpu"}
+        return [params1, params2]

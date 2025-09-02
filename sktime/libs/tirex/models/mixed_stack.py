@@ -103,35 +103,27 @@ class sLSTMBlock(_BaseModule):
         return x, (state["conv_state"], state["slstm_state"])
 
 
-try:
-    _BaseConfig = xLSTMLargeConfig if isinstance(xLSTMLargeConfig, type) else object
-except Exception:
-    _BaseConfig = object
+@dataclass(frozen=True)
+class xLSTMMixedLargeConfig:
+    # Minimal fields actually used downstream
+    embedding_dim: int
+    num_heads: int
+    num_blocks: int
 
-if _BaseConfig is not object:
+    add_out_norm: bool = True
+    norm_eps: float = 1e-5
+    use_bias: bool = False
+    norm_reduction_force_float32: bool = True
 
-    @dataclass(frozen=True)
-    class xLSTMMixedLargeConfig(_BaseConfig):
-        slstm_at: list[int] = field(default_factory=list)
-        all_slstm: bool = True
+    slstm_at: list[int] = field(default_factory=list)
+    all_slstm: bool = True
 
-        @property
-        def block_types(self):
-            return [
-                "s" if i in self.slstm_at or self.all_slstm else "m"
-                for i in range(self.num_blocks)
-            ]
-else:
-
-    class xLSTMMixedLargeConfig(_BaseConfig):
-        def __init__(self, *args, **kwargs):
-            self.slstm_at = []
-            self.all_slstm = True
-            self.num_blocks = 0
-
-        @property
-        def block_types(self):
-            return []
+    @property
+    def block_types(self):
+        return [
+            "s" if i in self.slstm_at or self.all_slstm else "m"
+            for i in range(self.num_blocks)
+        ]
 
 
 class xLSTMMixedLargeBlockStack(_BaseModule):
