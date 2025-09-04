@@ -73,8 +73,6 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
     - The operation must accept as many arguments as there are transformers.
     - Broadcasting is not supported; indexes and columns must match exactly.
     - This transformer is useful for combining features via arithmetic or custom logic.
-
-
     """
 
     _steps_attr = "_transformer_list"
@@ -85,14 +83,14 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "None",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "univariate-only": False,
         "requires_y": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
-        "capability:missing_values": False,
+        "capability:missing_values": True,
         "visual_block_kind": "parallel",
         "authors": ["oresthes"],
         "maintainers": ["oresthes"],
@@ -170,7 +168,9 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
                     A NumPy universal function (ufunc) that performs an elementwise
                     operation.
         """
+        from sktime.transformations.compose import Id
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.series.func_transform import FunctionTransformer
 
         if parameter_set == "default":
             params1 = {
@@ -182,18 +182,10 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
             }
             params2 = {
                 "transformer_list": [
-                    ("t1", ExponentTransformer(power=3)),
-                    ("t2", ExponentTransformer(power=1)),
+                    ("linear", Id()),
+                    ("quadratic", FunctionTransformer(np.square)),
+                    ("exponential", ExponentTransformer()),
                 ],
                 "operation": np.add,
             }
             return [params1, params2]
-        else:
-            params = {
-                "transformer_list": [
-                    ("t1", ExponentTransformer(power=2)),
-                    ("t2", ExponentTransformer(power=1)),
-                ],
-                "operation": np.divide,
-            }
-            return [params]
