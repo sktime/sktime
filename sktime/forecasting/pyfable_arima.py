@@ -225,8 +225,6 @@ class PyFableARIMA(BaseForecaster):
         if isinstance(Z, pd.DataFrame):
             Z = Z.copy()
 
-        print(f"_custom_prepare_tsibble: here 1 type(Z.index) = {type(Z.index)}")
-
         if isinstance(Z.index, pd.DatetimeIndex) or isinstance(Z.index, pd.PeriodIndex):
             freq = self._letter_from_index(Z.index)
         elif pd.api.types.is_integer_dtype(getattr(Z.index, "dtype", None)):
@@ -259,10 +257,6 @@ class PyFableARIMA(BaseForecaster):
         strip_time = freq in {"A", "Y", "Q", "M", "W", "D"}
         if strip_time:
             Z[date_col_name] = Z[date_col_name].dt.strftime("%Y-%m-%d")
-
-        print(f"_custom_prepare_tsibble: here 2.1  is_regular = {is_regular}")
-        print(f"_custom_prepare_tsibble: here 2.2  freq = {freq}")
-        print(f"_custom_prepare_tsibble: here 2.3  Z = \n{Z}")
 
         # Convert the pandas DataFrame to an R data frame
         with localconverter(robjects.default_converter + pandas2ri.converter):
@@ -441,8 +435,6 @@ class PyFableARIMA(BaseForecaster):
             expr = model_target_name if self.formula is None else self.formula
 
         # Regularity pre-check if user claims regular; raise early if not
-        print(f"type(y_series.index) = {type(y_series.index)}")
-        print(f"y_series.index = \n{y_series.index}")
         if self.is_regular and not self._is_regular_index(y_series.index):
             raise ValueError(
                 "PyFableARIMA: series marked is_regular=True but index is irregular. "
@@ -455,7 +447,7 @@ class PyFableARIMA(BaseForecaster):
         self._fit_index_ = y_series.index
         if self.int_index_to_annual:
             self._fit_index_alt_ = pd.date_range(
-                start="1900-01-01", periods=len(y_series.index), freq="A"
+                start="1900-01-01", periods=len(y_series.index), freq="YE"
             )
         self._y = y_series
         self._resolved_formula = expr
@@ -484,8 +476,6 @@ class PyFableARIMA(BaseForecaster):
         import pandas as pd
         import rpy2.robjects as robjects
 
-        print(f"_predict_special: here 1.1  fh = {fh}")
-
         # ensure ForecastingHorizon object
         if not isinstance(fh, ForecastingHorizon):
             fh = ForecastingHorizon(fh)
@@ -501,14 +491,9 @@ class PyFableARIMA(BaseForecaster):
                 -1
             ]  # not really needed, but needs to be something
 
-        print(f"_predict_special: here 1.2 cutoff = {cutoff}")
-
         l_fh_index = fh.to_absolute(
             cutoff=cutoff
         ).to_pandas()  # N.B. for fh absolute cutoff is ignored
-
-        print(f"_predict_special: here 2 l_fh_index = {l_fh_index}")
-        print(f"_predict_special: here 2.1 self.is_regular = {self.is_regular}")
 
         # Prepare exogenous features (copy to avoid caller mutation) or create dummy
         if X is not None:
@@ -521,8 +506,6 @@ class PyFableARIMA(BaseForecaster):
         else:
             dummy = pd.Series(0, index=l_fh_index)
             a_tsibble = self._custom_prepare_tsibble(dummy, is_regular=self.is_regular)
-
-        print(f"_predict_special: here 3 a_tsibble = \n{a_tsibble}")
 
         robjects.globalenv["fit_aut_arima"] = self._fit_auto_arima_
         robjects.globalenv["a_tsibble"] = a_tsibble
@@ -631,34 +614,18 @@ class PyFableARIMA(BaseForecaster):
         """
         import pandas as pd
 
-        print(f"_predict: entered, fh = {fh}")
-
         if not isinstance(fh, ForecastingHorizon):
             fh = ForecastingHorizon(fh)
 
-        print(f"_predict: here 1, fh = {fh}")
-
-        print(f"_predict: here 1.1, type(fh._values) = {type(fh._values)}")
-
-        print(f"_predict: here 1.2, fh.freq = {fh.freq}")
-
         if self.int_index_to_annual:
             fh._values = fh._values - (len(self._fit_index_alt_) - 1)
-
-        print(f"_predict: here 1.2, fh = {fh}")
-
-        print(f"_predict: here 2, self._fit_index_ = {self._fit_index_}")
 
         if self.int_index_to_annual:
             cutoff = self._fit_index_alt_[-1]
         else:
             cutoff = self._fit_index_[-1]
 
-        print(f"_predict: here 3, cutoff = {cutoff}")
-
         abs_fh = fh.to_absolute_index(cutoff=cutoff)
-
-        print(f"_predict: here 4, abs_fh = {abs_fh}")
 
         # Get fitted values for in-sample support
         fitted_values = self.get_fitted_values()
@@ -677,9 +644,7 @@ class PyFableARIMA(BaseForecaster):
 
         # Out-of-sample values: use _predict_special
         if len(out_sample_index) > 0:
-            print(f"_predict: here 5, out_sample_index = {out_sample_index}")
             fh_out = ForecastingHorizon(out_sample_index, is_relative=False)
-            print(f"_predict: here 5.1, fh_out = {fh_out}")
             y_pred_out, _ = self._predict_special(fh_out, X=X)
             y_pred_parts.append(y_pred_out)
 
@@ -688,8 +653,6 @@ class PyFableARIMA(BaseForecaster):
 
         if self.int_index_to_annual:
             y_pred.index = pd.Index(y_pred.index.year - 1900, dtype="int64")
-
-        print(f"_predict: here 6, returning y_pred = {y_pred}")
 
         return y_pred
 
