@@ -189,7 +189,7 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
         naive_error = naive_diff.median()
 
-        raw_values = raw_values / np.maximum(naive_error)
+        raw_values = raw_values / np.maximum(naive_error, 1e-8)
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
