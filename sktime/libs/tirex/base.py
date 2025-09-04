@@ -33,20 +33,17 @@ class PretrainedModel(ABC):
             hf_kwargs = {}
         if ckp_kwargs is None:
             ckp_kwargs = {}
-        if hasattr(cls, "load_from_checkpoint"):
-            if os.path.exists(path):
-                print("Loading weights from local directory")
-                checkpoint_path = path
-            else:
-                repo_id = parse_hf_repo_id(path)
-                checkpoint_path = hf_hub_download(
-                    repo_id=repo_id, filename="model.ckpt", **hf_kwargs
-                )
-            model = cls.load_from_checkpoint(
-                checkpoint_path, map_location=device, **ckp_kwargs
-            )
+        if os.path.exists(path):
+            print("Loading weights from local directory")
+            checkpoint_path = path
         else:
-            model = cls(**ckp_kwargs)
+            repo_id = parse_hf_repo_id(path)
+            checkpoint_path = hf_hub_download(
+                repo_id=repo_id, filename="model.ckpt", **hf_kwargs
+            )
+        model = cls.load_from_checkpoint(
+            checkpoint_path, map_location=device, **ckp_kwargs
+        )
         model.after_load_from_checkpoint()
         return model
 

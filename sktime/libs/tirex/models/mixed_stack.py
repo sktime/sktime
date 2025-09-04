@@ -105,7 +105,6 @@ class sLSTMBlock(_BaseModule):
 
 @dataclass(frozen=True)
 class xLSTMMixedLargeConfig:
-    # Minimal fields actually used downstream
     embedding_dim: int
     num_heads: int
     num_blocks: int
