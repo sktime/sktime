@@ -6,7 +6,9 @@ __author__ = ["ericjb"]
 import io
 import sys
 
+import numpy as np
 import pandas as pd
+from pandas.tseries.frequencies import to_offset
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -134,6 +136,7 @@ class PyFableARIMA(BaseForecaster):
         self.trace = trace
         self.is_regular = is_regular
         self.verbose = verbose
+        self.int_index_to_annual = False
         super().__init__()
 
     # ------------------------------------------------------------------
@@ -143,14 +146,57 @@ class PyFableARIMA(BaseForecaster):
         Returns True if successive deltas identical (after sorting) and length > 2.
             For PeriodIndex we assume regular (has freq) and return True.
         """
-        if isinstance(index, pd.PeriodIndex):
-            return True
-        if not isinstance(index, pd.DatetimeIndex):
-            return False
         if len(index) < 3:
             return True
-        deltas = index.to_series().diff().dropna().unique()
-        return len(deltas) == 1
+        if isinstance(index, pd.PeriodIndex):
+            return True
+        if isinstance(index, pd.DatetimeIndex):
+            deltas = index.to_series().diff().dropna().unique()
+            return len(deltas) == 1
+
+        # handle integer case
+        is_int = pd.api.types.is_integer_dtype(index) and not index.hasnans
+        if not is_int:
+            return False
+        iV = index.to_numpy()
+        step = iV[1] - iV[0]
+        is_arithmetic_progression = np.array_equal(
+            iV, iV[0] + step * np.arange(len(iV))
+        )
+        return is_arithmetic_progression
+
+    @staticmethod
+    def _letter_from_index(idx) -> str | None:
+        """
+        Map DatetimeIndex/PeriodIndex frequency to one of 'A','Q','M','W','D'.
+
+        Returns None if it can't be determined.
+        """
+        # PeriodIndex: use freqstr directly (e.g., 'A-DEC','Q-DEC','M','W-SUN','D')
+        if isinstance(idx, pd.PeriodIndex):
+            base = idx.freqstr.upper()
+            # DatetimeIndex: use .freq if set, else infer, then to_offset(...).rule_code
+        elif isinstance(idx, pd.DatetimeIndex):
+            off = idx.freq or (
+                to_offset(idx.inferred_freq) if idx.inferred_freq else None
+            )
+            if off is None:
+                return None
+            base = (getattr(off, "rule_code", None) or str(off)).upper()
+        else:
+            return None
+
+        if base.startswith(("A", "AS", "Y", "YS")):
+            return "A"  # or return "Y" if you prefer that label
+        if base.startswith(("Q", "QS")):
+            return "Q"
+        if base.startswith("M"):
+            return "M"
+        if base.startswith(("W", "WE")):
+            return "W"
+        if base.startswith(("D", "B")):  # treat business day as daily if you want
+            return "D"
+        return None
 
     def _custom_prepare_tsibble(self, Z, is_regular=True):
         """fable::ARIMA expects an R tsibble object.
@@ -179,15 +225,18 @@ class PyFableARIMA(BaseForecaster):
         if isinstance(Z, pd.DataFrame):
             Z = Z.copy()
 
-        if isinstance(Z.index, pd.DatetimeIndex):
-            freq = Z.index.freq
-            if freq is None:
-                freq = Z.index.inferred_freq
-            freq = str(freq)[0] if freq is not None else None
-        elif isinstance(Z.index, pd.PeriodIndex):
-            freq = Z.index.freqstr[0]
+        print(f"_custom_prepare_tsibble: here 1 type(Z.index) = {type(Z.index)}")
+
+        if isinstance(Z.index, pd.DatetimeIndex) or isinstance(Z.index, pd.PeriodIndex):
+            freq = self._letter_from_index(Z.index)
+        elif pd.api.types.is_integer_dtype(getattr(Z.index, "dtype", None)):
+            Z.index = pd.date_range(start="1900-01-01", periods=len(Z.index), freq="YS")
+            freq = "A"
+            self.int_index_to_annual = True
         else:
-            raise ValueError("Index must be of type DatetimeIndex or PeriodIndex")
+            raise ValueError(
+                "Index must be of type DatetimeIndex or PeriodIndex (or integer)"
+            )
 
         date_col_name = "Date"
         if isinstance(Z, pd.Series):
@@ -210,6 +259,10 @@ class PyFableARIMA(BaseForecaster):
         strip_time = freq in {"A", "Y", "Q", "M", "W", "D"}
         if strip_time:
             Z[date_col_name] = Z[date_col_name].dt.strftime("%Y-%m-%d")
+
+        print(f"_custom_prepare_tsibble: here 2.1  is_regular = {is_regular}")
+        print(f"_custom_prepare_tsibble: here 2.2  freq = {freq}")
+        print(f"_custom_prepare_tsibble: here 2.3  Z = \n{Z}")
 
         # Convert the pandas DataFrame to an R data frame
         with localconverter(robjects.default_converter + pandas2ri.converter):
@@ -331,7 +384,10 @@ class PyFableARIMA(BaseForecaster):
 
         fitted_values = robjects.r["fitted"](self._fit_auto_arima_)
         fitted_values_df = robjects.pandas2ri.rpy2py(fitted_values)
-        fitted_values_df.index = self._fit_index_
+        if self.int_index_to_annual:
+            fitted_values_df.index = self._fit_index_alt_
+        else:
+            fitted_values_df.index = self._fit_index_
         series = fitted_values_df[".fitted"].squeeze()
         series.name = self._y.name
 
@@ -385,6 +441,8 @@ class PyFableARIMA(BaseForecaster):
             expr = model_target_name if self.formula is None else self.formula
 
         # Regularity pre-check if user claims regular; raise early if not
+        print(f"type(y_series.index) = {type(y_series.index)}")
+        print(f"y_series.index = \n{y_series.index}")
         if self.is_regular and not self._is_regular_index(y_series.index):
             raise ValueError(
                 "PyFableARIMA: series marked is_regular=True but index is irregular. "
@@ -395,6 +453,10 @@ class PyFableARIMA(BaseForecaster):
         r_tsibble = self._custom_prepare_tsibble(Z, is_regular=self.is_regular)
         self._fit_auto_arima_ = self._custom_fit_arima(r_tsibble, expr)
         self._fit_index_ = y_series.index
+        if self.int_index_to_annual:
+            self._fit_index_alt_ = pd.date_range(
+                start="1900-01-01", periods=len(y_series.index), freq="A"
+            )
         self._y = y_series
         self._resolved_formula = expr
         return self
@@ -422,12 +484,31 @@ class PyFableARIMA(BaseForecaster):
         import pandas as pd
         import rpy2.robjects as robjects
 
+        print(f"_predict_special: here 1.1  fh = {fh}")
+
         # ensure ForecastingHorizon object
         if not isinstance(fh, ForecastingHorizon):
             fh = ForecastingHorizon(fh)
 
-        cutoff = self._fit_index_[-1]
-        l_fh_index = fh.to_absolute_index(cutoff=cutoff)
+        if fh.is_relative:
+            if self.int_index_to_annual:
+                fh._values = fh._values - (len(self._fit_index_alt_) - 1)
+                cutoff = self._fit_index_alt_[-1]
+            else:
+                cutoff = self._fit_index_[-1]
+        else:
+            cutoff = self._fit_index_[
+                -1
+            ]  # not really needed, but needs to be something
+
+        print(f"_predict_special: here 1.2 cutoff = {cutoff}")
+
+        l_fh_index = fh.to_absolute(
+            cutoff=cutoff
+        ).to_pandas()  # N.B. for fh absolute cutoff is ignored
+
+        print(f"_predict_special: here 2 l_fh_index = {l_fh_index}")
+        print(f"_predict_special: here 2.1 self.is_regular = {self.is_regular}")
 
         # Prepare exogenous features (copy to avoid caller mutation) or create dummy
         if X is not None:
@@ -440,6 +521,8 @@ class PyFableARIMA(BaseForecaster):
         else:
             dummy = pd.Series(0, index=l_fh_index)
             a_tsibble = self._custom_prepare_tsibble(dummy, is_regular=self.is_regular)
+
+        print(f"_predict_special: here 3 a_tsibble = \n{a_tsibble}")
 
         robjects.globalenv["fit_aut_arima"] = self._fit_auto_arima_
         robjects.globalenv["a_tsibble"] = a_tsibble
@@ -548,11 +631,34 @@ class PyFableARIMA(BaseForecaster):
         """
         import pandas as pd
 
+        print(f"_predict: entered, fh = {fh}")
+
         if not isinstance(fh, ForecastingHorizon):
             fh = ForecastingHorizon(fh)
 
-        cutoff = self._fit_index_[-1]
+        print(f"_predict: here 1, fh = {fh}")
+
+        print(f"_predict: here 1.1, type(fh._values) = {type(fh._values)}")
+
+        print(f"_predict: here 1.2, fh.freq = {fh.freq}")
+
+        if self.int_index_to_annual:
+            fh._values = fh._values - (len(self._fit_index_alt_) - 1)
+
+        print(f"_predict: here 1.2, fh = {fh}")
+
+        print(f"_predict: here 2, self._fit_index_ = {self._fit_index_}")
+
+        if self.int_index_to_annual:
+            cutoff = self._fit_index_alt_[-1]
+        else:
+            cutoff = self._fit_index_[-1]
+
+        print(f"_predict: here 3, cutoff = {cutoff}")
+
         abs_fh = fh.to_absolute_index(cutoff=cutoff)
+
+        print(f"_predict: here 4, abs_fh = {abs_fh}")
 
         # Get fitted values for in-sample support
         fitted_values = self.get_fitted_values()
@@ -571,12 +677,19 @@ class PyFableARIMA(BaseForecaster):
 
         # Out-of-sample values: use _predict_special
         if len(out_sample_index) > 0:
+            print(f"_predict: here 5, out_sample_index = {out_sample_index}")
             fh_out = ForecastingHorizon(out_sample_index, is_relative=False)
+            print(f"_predict: here 5.1, fh_out = {fh_out}")
             y_pred_out, _ = self._predict_special(fh_out, X=X)
             y_pred_parts.append(y_pred_out)
 
         # Combine predictions in correct order
         y_pred = pd.concat(y_pred_parts).loc[abs_fh]
+
+        if self.int_index_to_annual:
+            y_pred.index = pd.Index(y_pred.index.year - 1900, dtype="int64")
+
+        print(f"_predict: here 6, returning y_pred = {y_pred}")
 
         return y_pred
 
@@ -619,6 +732,10 @@ class PyFableARIMA(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         _, pred_int = self._predict_special(fh, X=X, coverage=coverage)
+
+        if self.int_index_to_annual:
+            pred_int.index = pd.Index(pred_int.index.year - 1900, dtype="int64")
+
         return pred_int
 
     @classmethod

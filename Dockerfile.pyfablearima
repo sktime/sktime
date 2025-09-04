@@ -69,4 +69,6 @@ PY
 RUN Rscript -e 'sessionInfo()'
 
 # Run check_estimator on container start (single-purpose image)
-CMD ["bash","-lc","python - <<'PY'\nfrom sktime.utils import check_estimator\nfrom sktime.forecasting.pyfable_arima import PyFableARIMA\nprint('Running check_estimator(PyFableARIMA)...')\ncheck_estimator(PyFableARIMA, raise_exceptions=True)\nprint('check_estimator passed.')\nPY"]
+#CMD ["bash","-lc","python - <<'PY'\nfrom sktime.utils import check_estimator\nfrom sktime.forecasting.pyfable_arima import PyFableARIMA\nprint('Running check_estimator(PyFableARIMA)...')\ncheck_estimator(PyFableARIMA, raise_exceptions=True)\nprint('check_estimator passed.')\nPY"]
+
+CMD ["bash"]

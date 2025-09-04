@@ -1924,6 +1924,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  C. fh is optional in fit yes/no - optfh
 
         # B. no fh is passed
+        print(f"_base.py/_check_fh(): here 1 type(fh) = {type(fh)}")
         if fh is None:
             # A. strategy fitted (call of predict or similar)
             if self._is_fitted:

@@ -287,8 +287,10 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
+        print(f"forecasting.py/check_fh(): here 1a freq = {freq}")
         fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
     else:
+        print(f"forecasting.py/check_fh(): here 1b freq = {freq}")
         fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
