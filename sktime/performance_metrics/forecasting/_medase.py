@@ -181,10 +181,6 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multioutput = self.multioutput
         sp = self.sp
 
-        eps = self.eps
-        if eps is None:
-            eps = np.finfo(np.float64).eps
-
         raw_values = (y_true - y_pred).abs()
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
@@ -193,7 +189,7 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         naive_diff = (naive_forecast_true - naive_forecast_pred.values).abs()
         naive_error = naive_diff.median()
 
-        raw_values = raw_values / np.maximum(naive_error, eps)
+        raw_values = raw_values / np.maximum(naive_error)
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
