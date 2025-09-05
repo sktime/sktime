@@ -1,0 +1,450 @@
+{
+  "m1_yearly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 181,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m1_quarterly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 203,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m1_monthly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 617,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m3_yearly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 645,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m3_quarterly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 756,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m3_monthly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 1428,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m3_other_dataset": {
+    "is_univariate": false,
+    "n_dimensions": 2,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 0
+  },
+  "m4_yearly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 23000,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m4_quarterly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 24000,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m4_monthly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 48000,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m4_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 359,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m4_daily_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 4227,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "m4_hourly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 414,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "tourism_yearly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 518,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "tourism_quarterly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 427,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "tourism_monthly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 366,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "cif_2016_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 72,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "london_smart_meters_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 5560,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "london_smart_meters_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 5560,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "australian_electricity_demand_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 5,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "wind_farms_minutely_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 339,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "wind_farms_minutely_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 339,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "dominick_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 115704,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "bitcoin_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 18,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "bitcoin_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 18,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "pedestrian_counts_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 66,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "vehicle_trips_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 329,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "vehicle_trips_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 329,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "kdd_cup_2018_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 270,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "kdd_cup_2018_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 270,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "weather_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 3010,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "nn5_daily_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 111,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "nn5_daily_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 111,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "nn5_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 111,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "kaggle_web_traffic_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 145063,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "kaggle_web_traffic_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 145063,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "kaggle_web_traffic_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 145063,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "solar_10_minutes_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 137,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "solar_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 137,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "solar_4_seconds_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  },
+  "electricity_hourly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 321,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "electricity_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 321,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "car_parts_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 2674,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "car_parts_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 2674,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "fred_md_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 107,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "traffic_hourly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 862,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "traffic_weekly_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 862,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "rideshare_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 2304,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "rideshare_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 2304,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "hospital_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 767,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "covid_deaths_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": false,
+    "n_panels": 266,
+    "is_one_panel": false,
+    "n_hierarchy_levels": 1
+  },
+  "sunspot_dataset_with_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  },
+  "sunspot_dataset_without_missing_values": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  },
+  "saugeenday_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  },
+  "us_births_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  },
+  "wind_4_seconds_dataset": {
+    "is_univariate": true,
+    "n_dimensions": 1,
+    "is_one_series": true,
+    "n_panels": 1,
+    "is_one_panel": true,
+    "n_hierarchy_levels": 1
+  }
+}

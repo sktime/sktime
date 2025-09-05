@@ -54,6 +54,7 @@ __all__ = [
     "USChange",
     "UCRUEADataset",
     "ForecastingData",
+    "M5Dataset",
 ]
 
 from sktime.datasets._data_io import (
@@ -113,6 +114,7 @@ from sktime.datasets.forecasting import (
     ForecastingData,
     Longley,
     Lynx,
+    M5Dataset,
     Macroeconomic,
     ShampooSales,
     Solar,
