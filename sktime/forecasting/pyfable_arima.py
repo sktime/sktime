@@ -198,6 +198,15 @@ class PyFableARIMA(BaseForecaster):
             return "D"
         return None
 
+    @staticmethod
+    def _get_alt_date_range(n):
+        return pd.date_range(start="1900-01-01", periods=n, freq="YE")
+
+    def _get_alt_fh_values(self, fh):
+        if self._step > 0:
+            fh._values = (fh._values - self._end) // self._step
+        return fh
+
     def _custom_prepare_tsibble(self, Z, is_regular=True):
         """fable::ARIMA expects an R tsibble object.
 
@@ -228,8 +237,8 @@ class PyFableARIMA(BaseForecaster):
         if isinstance(Z.index, pd.DatetimeIndex) or isinstance(Z.index, pd.PeriodIndex):
             freq = self._letter_from_index(Z.index)
         elif pd.api.types.is_integer_dtype(getattr(Z.index, "dtype", None)):
-            Z.index = pd.date_range(start="1900-01-01", periods=len(Z.index), freq="YS")
-            freq = "A"
+            Z.index = self._get_alt_date_range(len(Z.index))
+            freq = "Y"
             self.int_index_to_annual = True
         else:
             raise ValueError(
@@ -446,10 +455,14 @@ class PyFableARIMA(BaseForecaster):
         self._fit_auto_arima_ = self._custom_fit_arima(r_tsibble, expr)
         self._fit_index_ = y_series.index
         if self.int_index_to_annual:
-            self._fit_index_alt_ = pd.date_range(
-                start="1900-01-01", periods=len(y_series.index), freq="YE"
-            )
-        self._y = y_series
+            self._fit_index_alt_ = self._get_alt_date_range(len(y_series.index))
+            self._start = y_series.index[0]
+            self._end = y_series.index[-1]
+            if len(y_series) > 1:
+                self._step = y_series.index[1] - y_series.index[0]
+            else:
+                self._step = 0
+            self._y = y_series
         self._resolved_formula = expr
         return self
 
@@ -482,7 +495,7 @@ class PyFableARIMA(BaseForecaster):
 
         if fh.is_relative:
             if self.int_index_to_annual:
-                fh._values = fh._values - (len(self._fit_index_alt_) - 1)
+                self._get_alt_fh_values(fh)  # transforms fh._values
                 cutoff = self._fit_index_alt_[-1]
             else:
                 cutoff = self._fit_index_[-1]
@@ -618,7 +631,7 @@ class PyFableARIMA(BaseForecaster):
             fh = ForecastingHorizon(fh)
 
         if self.int_index_to_annual:
-            fh._values = fh._values - (len(self._fit_index_alt_) - 1)
+            self._get_alt_fh_values(fh)  # transforms fh._values
 
         if self.int_index_to_annual:
             cutoff = self._fit_index_alt_[-1]
