@@ -9,11 +9,12 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
+
+    To shift to a PyTorch implementation, see `CNNClassifierTorch`.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
@@ -98,8 +99,6 @@ class CNNClassifier(BaseDeepClassifier):
         filter_sizes=None,
         padding="auto",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
