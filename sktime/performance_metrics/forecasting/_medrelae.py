@@ -176,13 +176,10 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
         return self._handle_multioutput(raw_values, multioutput)
 
     def _get_weighted_df(self, raw_values, **kwargs):
-        # If multioutput is needed, convert to DataFrame
-        if self.multioutput == "raw_values" and not isinstance(
-            raw_values, pd.DataFrame
-        ):
-            raw_values = pd.DataFrame(raw_values)
-        # If weights are provided, use .mul()
-        weights = kwargs.get("weights", None)
-        if weights is not None and isinstance(raw_values, pd.DataFrame):
-            raw_values = raw_values.mul(weights, axis=1)
+        weights = kwargs.get("sample_weight", None)
+        if weights is not None:
+            if isinstance(raw_values, pd.DataFrame):
+                raw_values = raw_values.mul(weights, axis=0)
+            else:
+                raw_values = raw_values * weights
         return raw_values
