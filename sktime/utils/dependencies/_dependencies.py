@@ -315,6 +315,45 @@ def _check_dl_dependencies(msg=None, severity="error"):
         return False
 
 
+def _check_torch_dependencies(msg=None, severity="error"):
+    """Check if `torch` and its dependencies are installed.
+
+    Parameters
+    ----------
+    msg : str, optional, default= default message (msg below)
+        error message to be returned in the ``ModuleNotFoundError``, overrides default
+
+    severity : str, "error" (default), "warning", "none"
+        whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
+
+    Raises
+    ------
+    ModuleNotFoundError
+        User friendly error with suggested action to install deep learning dependencies
+
+    Returns
+    -------
+    boolean - whether all packages are installed, only if no exception is raised
+    """
+    if not isinstance(msg, str):
+        msg = (
+            "PyTorch is required for deep learning functionality in `sktime`. "
+            "To install these dependencies, run: `pip install sktime[torch]` "
+            "or `pip install torch`."
+        )
+    if find_spec("torch") is not None:
+        return True
+    else:
+        _raise_at_severity(msg, severity, caller="_check_torch_dependencies")
+        return False
+
+
 def _check_mlflow_dependencies(msg=None, severity="error"):
     """Check if `mlflow` and its dependencies are installed.
 

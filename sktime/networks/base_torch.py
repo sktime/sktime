@@ -10,8 +10,8 @@ from sktime.base import BaseObject
 class BasePytorchDeepNetwork(BaseObject):
     """Abstract base class for PyTorch deep learning networks."""
 
-    # do we need to have a separate tag for TensorFlow networks and PyTorch networks?
-    # Need to ask maintainers
+    # Need to ask maintainers,
+    # do we need to have separate tags for TensorFlow & PyTorch networks?
     _tags = {"object_type": "network"}
 
     @abstractmethod
@@ -27,11 +27,11 @@ class BasePytorchDeepNetwork(BaseObject):
         -------
         output : tensor
             The output data produced by the network,
-            it could represent predictions, features, 
-            or any transformed data depending on the network's purpose 
-            (e.g., logits for classification, 
-            reconstructed data for autoencoders, etc.). 
-            The exact shape and meaning of the output tensor 
+            it could represent predictions, features,
+            or any transformed data depending on the network's purpose
+            (e.g., logits for classification,
+            reconstructed data for autoencoders, etc.).
+            The exact shape and meaning of the output tensor
             depend on the network architecture and the task.
         """
         ...
