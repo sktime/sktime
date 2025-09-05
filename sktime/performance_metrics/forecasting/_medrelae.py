@@ -147,39 +147,37 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
             return np.nan
         return np.median(flat)
 
+    def _get_weighted_df(self, raw_values, y_true=None, **kwargs):
+        weights = kwargs.get("sample_weight", None)
+        if weights is not None:
+            # Convert weights to correct shape if needed
+            weights = np.asarray(weights)
+            if isinstance(raw_values, pd.DataFrame):
+                raw_values = raw_values.mul(weights, axis=0)
+            elif isinstance(raw_values, pd.Series):
+                raw_values = raw_values * weights
+            else:
+                raw_values = raw_values * weights
+        # Set index if possible
+        if (
+            isinstance(raw_values, (pd.DataFrame, pd.Series))
+            and y_true is not None
+            and hasattr(y_true, "index")
+        ):
+            raw_values.index = y_true.index
+        return raw_values
+
     def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
-        """Return the metric evaluated at each time point.
-
-        Parameters
-        ----------
-        y_true : pandas.DataFrame or Series
-            Ground truth (correct) target values.
-        y_pred : pandas.DataFrame or Series
-            Predicted values to evaluate.
-        y_pred_benchmark : pandas.DataFrame or Series
-            Benchmark values to evaluate.
-
-        Returns
-        -------
-        loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point.
-        """
         multioutput = self.multioutput
-
         raw_values = self._relative_absolute_error(
             y_true=y_true,
             y_pred=y_pred,
             y_pred_benchmark=y_pred_benchmark,
         )
-
-        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        raw_values = self._get_weighted_df(raw_values, y_true=y_true, **kwargs)
+        # Ensure output is pandas with correct index
+        if not isinstance(raw_values, (pd.DataFrame, pd.Series)) and hasattr(
+            y_true, "index"
+        ):
+            raw_values = pd.Series(raw_values, index=y_true.index)
         return self._handle_multioutput(raw_values, multioutput)
-
-    def _get_weighted_df(self, raw_values, **kwargs):
-        weights = kwargs.get("sample_weight", None)
-        if weights is not None:
-            if isinstance(raw_values, pd.DataFrame):
-                raw_values = raw_values.mul(weights, axis=0)
-            else:
-                raw_values = raw_values * weights
-        return raw_values
