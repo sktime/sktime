@@ -10,9 +10,6 @@ the lower the better.
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
-from sktime.performance_metrics.forecasting._functions import (
-    median_relative_absolute_error,
-)
 
 
 class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
@@ -96,8 +93,6 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    func = median_relative_absolute_error
-
     def _relative_absolute_error(self, y_true, y_pred, y_pred_benchmark, **kwargs):
         """Calculate the element-wise relative absolute error."""
         # Handle division by zero for the denominator
@@ -135,7 +130,16 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        return np.median(raw_values)
+        flat = (
+            raw_values.values.flatten()
+            if hasattr(raw_values, "values")
+            else np.asarray(raw_values).flatten()
+        )
+        flat = flat[~np.isnan(flat)]
+
+        if flat.size == 0:
+            return np.nan
+        return np.median(flat)
 
     def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
         """Return the metric evaluated at each time point.
@@ -155,7 +159,6 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
             Calculated metric, by time point.
         """
         multioutput = self.multioutput
-        y_pred_benchmark = kwargs.get("y_pred_benchmark")
 
         raw_values = self._relative_absolute_error(
             y_true=y_true,
@@ -164,5 +167,4 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
         )
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
-
         return self._handle_multioutput(raw_values, multioutput)
