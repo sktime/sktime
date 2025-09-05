@@ -95,13 +95,18 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
 
     def _relative_absolute_error(self, y_true, y_pred, y_pred_benchmark, **kwargs):
         """Calculate the element-wise relative absolute error."""
-        # Handle division by zero for the denominator
-        abs_bench_error = np.abs(y_true - y_pred_benchmark)
+        print("begin MedianRelativeAbsoluteError class")
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        y_pred_benchmark = np.asarray(y_pred_benchmark)
+        mask = ~(np.isnan(y_true) | np.isnan(y_pred) | np.isnan(y_pred_benchmark))
+        y_true = y_true[mask]
+        y_pred = y_pred[mask]
+        y_pred_benchmark = y_pred_benchmark[mask]
 
-        # Use a small epsilon to avoid division by zero
+        abs_bench_error = np.abs(y_true - y_pred_benchmark)
         eps = np.finfo(np.float64).eps
         denom = np.maximum(abs_bench_error, eps)
-
         relative_errors = np.abs(y_true - y_pred) / denom
         return relative_errors
 
