@@ -8,6 +8,7 @@ the lower the better.
 """
 
 import numpy as np
+import pandas as pd
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
@@ -173,3 +174,15 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
 
         raw_values = self._get_weighted_df(raw_values, **kwargs)
         return self._handle_multioutput(raw_values, multioutput)
+
+    def _get_weighted_df(self, raw_values, **kwargs):
+        # If multioutput is needed, convert to DataFrame
+        if self.multioutput == "raw_values" and not isinstance(
+            raw_values, pd.DataFrame
+        ):
+            raw_values = pd.DataFrame(raw_values)
+        # If weights are provided, use .mul()
+        weights = kwargs.get("weights", None)
+        if weights is not None and isinstance(raw_values, pd.DataFrame):
+            raw_values = raw_values.mul(weights, axis=1)
+        return raw_values
