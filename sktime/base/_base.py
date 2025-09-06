@@ -387,6 +387,119 @@ class TagAliaserMixin(_TagAliaserMixin):
     deprecate_dict = {"handles-missing-data": "1.0.0", "ignores-exogeneous-X": "1.0.0"}
 
     @classmethod
+    def get_class_tag(cls, tag_name, tag_value_default=None):
+        """Get class tag value from class, with tag level inheritance from parents.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        The ``get_class_tag`` method is a class method,
+        and retrieves the value of a tag
+        taking into account only class-level tag values and overrides.
+
+        It returns the value of the tag with name ``tag_name`` from the object,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set in the ``_tags`` attribute of the class.
+        2. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Does not take into account dynamic tag overrides on instances,
+        set via ``set_tags`` or ``clone_tags``,
+        that are defined on instances.
+
+        To retrieve tag values with potential instance overrides, use
+        the ``get_tag`` method instead.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
+
+        Returns
+        -------
+        tag_value :
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, returns ``tag_value_default``.
+        """
+        cls._deprecate_tag_warn([tag_name])
+        alias_dict = cls.alias_dict
+
+        old_tag = ""
+        if tag_name in alias_dict:
+            old_tag = tag_name
+            tag_name = alias_dict[tag_name]
+
+        tag_val = super(TagAliaserMixin, cls).get_class_tag(
+            tag_name=tag_name, tag_value_default=tag_value_default
+        )
+        if old_tag == "ignores-exogeneous-X":
+            return not tag_val
+        return tag_val
+
+    def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
+        """Get tag value from instance, with tag level inheritance and overrides.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags.
+        Tags may be used to store metadata about the object,
+        or to control behaviour of the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object.
+
+        The ``get_tag`` method retrieves the value of a single tag
+        with name ``tag_name`` from the instance,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set via ``set_tags`` or ``clone_tags`` on the instance,
+          at construction of the instance.
+        2. Tags set in the ``_tags`` attribute of the class.
+        3. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag to be retrieved
+        tag_value_default : any type, optional; default=None
+            Default/fallback value if tag is not found
+        raise_error : bool
+            whether a ``ValueError`` is raised when the tag is not found
+
+        Returns
+        -------
+        tag_value : Any
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, raises an error if
+            ``raise_error`` is True, otherwise it returns ``tag_value_default``.
+
+        Raises
+        ------
+        ValueError, if ``raise_error`` is ``True``.
+            The ``ValueError`` is then raised if ``tag_name`` is
+            not in ``self.get_tags().keys()``.
+        """
+        self._deprecate_tag_warn([tag_name])
+        alias_dict = self.alias_dict
+
+        old_tag = ""
+        if tag_name in alias_dict:
+            old_tag = tag_name
+            tag_name = alias_dict[tag_name]
+
+        tag_val = super(TagAliaserMixin, self).get_tag(
+            tag_name=tag_name, tag_value_default=tag_value_default
+        )
+        if old_tag == "ignores-exogeneous-X":
+            return not tag_val
+        return tag_val
+
+    @classmethod
     def _complete_dict(cls, tag_dict):
         """Add all aliased and aliasing tags to the dictionary."""
         alias_dict = cls.alias_dict
@@ -449,6 +562,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     _package_name = "sktime"
 
 
+# todo 1.0.0: remove TagAliaserMixin from inheritance
+# remove redundant methods from sktime class (compare skbase)
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
