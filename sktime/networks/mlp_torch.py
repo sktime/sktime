@@ -49,7 +49,8 @@ class PyTorchMLPNetwork(nn.Module):
         # For regression: 1 output (continuous value)
         self.output_layer = nn.Linear(prev_dim, num_classes, bias=use_bias)
 
-        # Store whether this is for regression (1 output) or classification (multiple outputs)
+        # Store whether this is for regression (1 output)
+        # or classification (multiple outputs)
         self.is_regression = num_classes == 1
 
     def _get_activation(self, activation):

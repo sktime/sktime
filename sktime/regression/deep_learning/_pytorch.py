@@ -185,8 +185,9 @@ class BaseDeepRegressorPytorch(BaseRegressor):
         if isinstance(X, np.ndarray) and X.ndim != 3:
             raise ValueError(
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. PyTorch regressors require properly formatted "
-                f"3D time series data. Please reshape your data or use a supported Panel mtype."
+                f"but got shape {X.shape}. PyTorch regressors require "
+                f"properly formatted 3D time series data. "
+                "Please reshape your data or use a supported Panel mtype."
             )
 
         # Call parent method for other conversions
