@@ -14,7 +14,6 @@ from sktime.transformations.bootstrap import (
     TSBootstrapAdapter,
 )
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
