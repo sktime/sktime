@@ -52,6 +52,7 @@ __all__ = [
     "ShampooSales",
     "Solar",
     "USChange",
+    "SyntheticRetail",
 ]
 
 from sktime.datasets._data_io import (
@@ -110,5 +111,6 @@ from sktime.datasets.forecasting import (
     Macroeconomic,
     ShampooSales,
     Solar,
+    SyntheticRetail,
     USChange,
 )

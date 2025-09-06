@@ -30,6 +30,7 @@ Forecasting datasets
     shampoo_sales.ShampooSales
     solar.Solar
     uschange.USChange
+    synthetic_retail.SyntheticRetail
 
 Classification datasets
 -----------------------

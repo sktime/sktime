@@ -8,6 +8,7 @@ from .m5_competition import M5Dataset
 from .macroeconomic import Macroeconomic
 from .shampoo_sales import ShampooSales
 from .solar import Solar
+from .synthetic_retail import SyntheticRetail
 from .uschange import USChange
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "Solar",
     "USChange",
     "M5Dataset",
+    "SyntheticRetail",
 ]
