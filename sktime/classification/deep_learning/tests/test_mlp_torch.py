@@ -2,9 +2,8 @@
 
 import numpy as np
 import pytest
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-
+from sklearn.model_selection import train_test_split
 from sktime.classification.deep_learning.mlp_torch import MLPTorchClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
 

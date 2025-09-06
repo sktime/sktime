@@ -4,9 +4,8 @@ __author__ = ["Jack Russon"]
 __all__ = ["MLPTorchRegressor"]
 
 import numpy as np
-
-from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.networks.mlp_torch import PyTorchMLPNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
 
 if _check_dl_dependencies("torch", severity="none"):
