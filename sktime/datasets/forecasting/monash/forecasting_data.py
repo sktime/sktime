@@ -3,8 +3,6 @@
 __author__ = ["jgyasu"]
 __all__ = ["ForecastingData"]
 
-import json
-import os
 import warnings
 from inspect import signature
 
@@ -12,13 +10,7 @@ import pandas as pd
 
 from sktime.datasets import load_forecastingdata
 from sktime.datasets.forecasting._base import BaseForecastingDataset
-
-# tags for individual datasets are loaded from the json file
-MODULE_DIR = os.path.dirname(__file__)
-TAGS_FILE_PATH = os.path.join(MODULE_DIR, "forecasting_data_tags.json")
-
-with open(TAGS_FILE_PATH) as f:
-    DATASET_TAGS = json.load(f)
+from sktime.datasets.forecasting.monash._tags import DATASET_TAGS
 
 FORCE_RANGEINDEX = {
     "m4_daily_dataset",
