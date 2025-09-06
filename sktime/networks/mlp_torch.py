@@ -3,10 +3,9 @@
 __author__ = ["RecreationalMath"]
 
 from sktime.networks.base_torch import BasePytorchDeepNetwork
-from sktime.utils.dependencies import _check_torch_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_torch_dependencies("torch", severity="none"):
-    import torch.nn as nn
+nn = _safe_import("torch.nn")
 
 
 class PyTorchMLPNetwork(nn.Module, BasePytorchDeepNetwork):
@@ -60,7 +59,7 @@ class PyTorchMLPNetwork(nn.Module, BasePytorchDeepNetwork):
         random_state=0,
     ):
         # checking if PyTorch dependencies are missing
-        _check_torch_dependencies(severity="error")
+        _check_soft_dependencies("torch", severity="error")
 
         # initializing the base class
         super().__init__()
