@@ -4,8 +4,8 @@ __author__ = ["Jack Russon"]
 __all__ = ["MLPTorchClassifier"]
 
 import numpy as np
-from sktime.classification.deep_learning._pytorch import \
-    BaseDeepClassifierPytorch
+
+from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
 from sktime.networks.mlp_torch import PyTorchMLPNetwork
 
 

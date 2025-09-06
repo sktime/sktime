@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+
 from sktime.classification.deep_learning.mlp_torch import MLPTorchClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -42,7 +43,9 @@ class TestMLPTorchClassifier:
 
         # Create classifier
         classifier = MLPTorchClassifier(
-            num_epochs=5, batch_size=8, random_state=42  # Small number for testing
+            num_epochs=5,
+            batch_size=8,
+            random_state=42,  # Small number for testing
         )
 
         # Test that we can create the classifier

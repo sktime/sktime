@@ -8,6 +8,7 @@ __all__ = ["BaseDeepRegressorPytorch"]
 import abc
 
 import numpy as np
+
 from sktime.regression.base import BaseRegressor
 from sktime.utils.dependencies import _check_soft_dependencies
 

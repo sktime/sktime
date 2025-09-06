@@ -2,8 +2,9 @@
 
 import numpy as np
 import pytest
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+
 from sktime.regression.deep_learning.mlp_torch import MLPTorchRegressor
 from sktime.utils.dependencies import _check_soft_dependencies
 
