@@ -332,6 +332,7 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictUnivariateNoXLateFh,
     ForecasterFitPredictUnivariateWithX,
     ForecasterFitPredictUnivariateWithXLongFh,
+    ForecasterFitPredictUnivariateRangeIndex,
     ForecasterFitPredictMultivariateNoX,
     ForecasterFitPredictMultivariateWithX,
     ForecasterFitPredictPanelSimple,
