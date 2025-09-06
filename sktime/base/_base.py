@@ -433,7 +433,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             old_tag = tag_name
             tag_name = alias_dict[tag_name]
 
-        tag_val = super(TagAliaserMixin, cls).get_class_tag(
+        tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
         if old_tag == "ignores-exogeneous-X":
@@ -492,7 +492,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             old_tag = tag_name
             tag_name = alias_dict[tag_name]
 
-        tag_val = super(TagAliaserMixin, self).get_tag(
+        tag_val = super().get_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
         if old_tag == "ignores-exogeneous-X":
