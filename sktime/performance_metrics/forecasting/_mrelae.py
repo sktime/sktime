@@ -25,18 +25,18 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines how to aggregate metric for multivariate (multioutput) data.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If array-like, values used as weights to average the errors.
-        * If ``'raw_values'``,
-          returns a full set of errors in case of multioutput input.
-        * If ``'uniform_average'``,
+        * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
-        Defines how to aggregate metric for hierarchical data (with levels).
+        How to aggregate the metric for hierarchical data (with levels).
 
         * If ``'uniform_average'`` (default),
           errors are mean-averaged across levels.
@@ -46,11 +46,12 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        Determines averaging over time points in direct call to metric object.
+        Controls averaging over time points in direct call to metric object.
 
-        * If False, direct call to the metric object averages over time points,
-          equivalent to a call of the``evaluate`` method.
-        * If True, direct call to the metric object evaluates the metric at each
+        * If ``False`` (default),
+          direct call to the metric object averages over time points,
+          equivalent to a call of the ``evaluate`` method.
+        * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also

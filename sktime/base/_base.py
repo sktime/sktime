@@ -240,12 +240,15 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if ``path`` is None, returns an in-memory serialized self
-        if ``path`` is a file location, stores self at that location as a zip file
+
+        * if ``path`` is None, returns an in-memory serialized self
+        * if ``path`` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
-        _metadata - contains class of self, i.e., type(self)
-        _obj - serialized self. This class uses the default serialization (pickle).
+
+        * ``_metadata`` - contains class of self, i.e., ``type(self)``
+        * ``_obj`` - serialized self. This class uses the default serialization
+          (pickle).
 
         Parameters
         ----------

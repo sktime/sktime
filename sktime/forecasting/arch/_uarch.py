@@ -2,7 +2,7 @@
 
 """Implements Generalized Autoregressive Conditional Heteroskedasticity models."""
 
-__author__ = ["Vasudeva-bit"]
+__author__ = ["Vasudeva-bit", "SzymonStolarski"]
 __all__ = ["ARCH"]
 
 import itertools
@@ -302,12 +302,13 @@ class ARCH(BaseForecaster):
         ArchResultObject : ARCH result object, full_range, abs_idx in a tuple
             mean, variance forecasts, full_range, abs_idx
         """
-        if fh:
-            self._horizon = fh
+        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
+        end = abs_idx[-1]
 
-        abs_idx = self._horizon.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = abs_idx[[0, -1]]
-        start = min(start, len(self._y))
+        # all fh are in-sample
+        if fh.is_all_in_sample(self.cutoff):
+            # horizon in arch_model must be >=1
+            end = 1
 
         if X is not None:
             x = {}
@@ -318,7 +319,7 @@ class ARCH(BaseForecaster):
 
         ArchResultObject = self._fitted_forecaster.forecast(
             x=x,
-            horizon=end - start + 1,
+            horizon=end,
             params=self.params,
             start=self.start,
             align=self.align,
@@ -328,7 +329,7 @@ class ARCH(BaseForecaster):
             random_state=self.random_state,
             reindex=self.reindex,
         )
-        full_range = pd.RangeIndex(start=start, stop=end + 1)
+        full_range = pd.RangeIndex(start=1, stop=end + 1)
 
         return (ArchResultObject, full_range, abs_idx)
 
@@ -348,14 +349,22 @@ class ARCH(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        y_pred = pd.Series(
-            ArchResultObject.mean.values[-1],
-            index=full_range,
-            name=self._y.name,
-        )
-        y_pred = y_pred.loc[abs_idx.to_pandas()]
-        y_pred.index = self._horizon.to_absolute_index(self.cutoff)
+        # all out-of-sample
+        if fh.is_all_out_of_sample(self.cutoff):
+            y_pred = self._predict_out_of_sample(fh=fh, X=X, type="mean")
+
+        # all in-sample
+        elif fh.is_all_in_sample(self.cutoff):
+            y_pred = self._predict_in_sample(fh=fh, X=X, type="mean")
+
+        # both out-of-sample and in-sample
+        else:
+            fh_oos = fh.to_out_of_sample(self.cutoff)
+            fh_ins = fh.to_in_sample(self.cutoff)
+
+            y_pred_oos = self._predict_out_of_sample(fh=fh_oos, X=X, type="mean")
+            y_pred_ins = self._predict_in_sample(fh=fh_ins, X=X, type="mean")
+            y_pred = pd.concat((y_pred_ins, y_pred_oos), axis=0)
 
         return y_pred
 
@@ -393,9 +402,11 @@ class ARCH(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        std_err = np.sqrt(np.array(ArchResultObject.variance.values[-1]))
-        mean_forecast = np.array(ArchResultObject.mean.values[-1])
+        # includes already both in-sample and out-of-sample
+        std_err = np.sqrt(self._predict_var(fh=fh, X=X).values)
+        mean_forecast = self._predict(fh=fh, X=X).values
+
+        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
 
         y_col_name = self._y.name
         df_list = []
@@ -407,13 +418,13 @@ class ARCH(BaseForecaster):
             lower_df = pd.DataFrame(
                 lower_int,
                 columns=[
-                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "lower"
+                    f"{y_col_name} {alpha} lower" if y_col_name else f"0 {alpha} lower"
                 ],
             )
             upper_df = pd.DataFrame(
                 upper_int,
                 columns=[
-                    y_col_name if y_col_name else "0" + " " + str(alpha) + " " + "upper"
+                    f"{y_col_name} {alpha} upper" if y_col_name else f"0 {alpha} upper"
                 ],
             )
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
@@ -432,7 +443,7 @@ class ARCH(BaseForecaster):
         df = pd.DataFrame(
             df.values,
             columns=pd.MultiIndex.from_tuples([col.split(" ") for col in df]),
-            index=full_range,
+            index=abs_idx.to_pandas(),
         )
         final_columns = list(
             itertools.product(
@@ -444,10 +455,11 @@ class ARCH(BaseForecaster):
             )
         )
         df = pd.DataFrame(
-            df.loc[abs_idx.to_pandas()].values,
+            df.values,
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
-        df.index = self._horizon.to_absolute_index(self.cutoff)
+        df.index = fh.to_absolute_index(self.cutoff)
+
         return df
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -465,16 +477,84 @@ class ARCH(BaseForecaster):
         pred_var : pd.DataFrame
             Variance forecasts
         """
-        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
-        pred_var = pd.Series(
-            ArchResultObject.variance.values[-1],
-            index=full_range,
-            name=self._y.name,
-        )
-        pred_var = pred_var.loc[abs_idx.to_pandas()]
-        pred_var.index = self._horizon.to_absolute_index(self.cutoff)
+        # all out-of-sample
+        if fh.is_all_out_of_sample(self.cutoff):
+            pred_var = self._predict_out_of_sample(fh=fh, X=X, type="variance")
+
+        # all in-sample
+        elif fh.is_all_in_sample(self.cutoff):
+            pred_var = self._predict_in_sample(fh=fh, X=X, type="variance")
+
+        # both out-of-sample and in-sample
+        else:
+            fh_oos = fh.to_out_of_sample(self.cutoff)
+            fh_ins = fh.to_in_sample(self.cutoff)
+
+            pred_var_oos = self._predict_out_of_sample(fh=fh_oos, X=X, type="variance")
+            pred_var_ins = self._predict_in_sample(fh=fh_ins, X=X, type="variance")
+            pred_var = pd.concat((pred_var_ins, pred_var_oos), axis=0)
 
         return pred_var
+
+    def _predict_out_of_sample(self, fh, X=None, type="mean"):
+        """Generate out of sample predictions.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+        type : str, optional (default="mean")
+            Type of prediction to return. Can be either "mean" or "variance".
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
+        ArchResultObject, full_range, abs_idx = self._get_arch_result_object(fh=fh, X=X)
+        if type == "mean":
+            y_pred = pd.Series(
+                ArchResultObject.mean.values[-1],
+                index=full_range,
+                name=self._y.name,
+            )
+        elif type == "variance":
+            y_pred = pd.Series(
+                ArchResultObject.variance.values[-1],
+                index=full_range,
+                name=self._y.name,
+            )
+        y_pred = y_pred.loc[abs_idx.to_pandas()]
+        y_pred.index = fh.to_absolute_index(self.cutoff)
+
+        return y_pred
+
+    def _predict_in_sample(self, fh, X=None, type="mean"):
+        """Generate in sample predictions.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+        type : str, optional (default="mean")
+            Type of prediction to return. Can be either "mean" or "variance".
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
+        if type == "mean":
+            y_pred = self._y - self._fitted_forecaster.resid
+        if type == "variance":
+            y_pred = (self._fitted_forecaster.conditional_volatility) ** 2
+        y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
+
+        return y_pred
 
     def _get_fitted_params(self):
         """Get fitted parameters.

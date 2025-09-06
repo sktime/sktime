@@ -9,9 +9,9 @@ or control its behavior.
 
 Tags are key-value pairs, where the key is a string with the name of the tag.
 The value of the tag can have arbitrary type, and describes a property, capability,
-or controls behaviour of the object, depending on the value.
+or controls behaviour of the object, depending on the tag.
 
-For instance, a forecaster may have the tag ``"capability:pred_int": True`` if it can
+For instance, a forecaster has the tag ``"capability:pred_int": True`` if it can
 make probabilistic predictions.
 Users can find all forecasters that can make probabilistic predictions by filtering
 for this tag.
@@ -21,6 +21,9 @@ for their usage.
 
 To search estimators by tags on the ``sktime`` webpage, use the
 :doc:`Estimator Search Page </estimator_overview>`
+
+To search estimators by tags in a python environment, use the
+``sktime.registry.all_estimators`` utility.
 
 
 Inspecting tags, retrieving by tags
@@ -177,6 +180,30 @@ detectors.
     capability__update
     capability__multivariate
     capability__missing_values
+
+
+.. _metric_tags:
+
+Tags for metrics
+----------------
+
+This section lists tags applying to time series metrics (``"metric"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    lower_is_better
+    capability__sample_weight
+    scitype__y_pred
+    requires_y_true
+    requires_y_pred_benchmark
+    requires_y_train
+    inner_implements_multilevel
+
 
 .. _dev_common_tags:
 
