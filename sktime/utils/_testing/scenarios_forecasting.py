@@ -126,7 +126,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
 
 
 class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X, fh passed late in predict."""
+    """Fit/predict only, univariate y, no X, fh passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
@@ -186,6 +186,29 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
         y = pd.DataFrame(y_series, columns=["foo"])
 
         LONG_X = _make_series(n_columns=2, n_timepoints=30, random_state=RAND_SEED)
+        X = LONG_X.iloc[0:20]
+        X_test_short = LONG_X.iloc[20:21]
+
+        return {"fit": {"y": y, "X": X, "fh": 1}, "predict": {"X": X_test_short}}
+
+    default_method_sequence = ["fit", "predict"]
+
+
+class ForecasterFitPredictUnivariateRangeIndex(ForecasterTestScenario):
+    """Fit/predict only, univariate y, with X, with RangeIndex."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
+
+    @property
+    def args(self):
+        y_series = _make_series(
+            n_timepoints=20, random_state=RAND_SEED, index_type="range"
+        )
+        y = pd.DataFrame(y_series, columns=["foo"])
+
+        LONG_X = _make_series(
+            n_columns=2, n_timepoints=30, random_state=RAND_SEED, index_type="range"
+        )
         X = LONG_X.iloc[0:20]
         X_test_short = LONG_X.iloc[20:21]
 
