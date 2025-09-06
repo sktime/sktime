@@ -60,7 +60,7 @@ class SyntheticRetail(BaseForecastingDataset):
         "n_splits": 1,
     }
 
-    def __init__(self, mode="univariate"):
+    def __init__(self, mode="hierarchical"):
         self.mode = mode
         super().__init__()
         self._cached = False
@@ -78,7 +78,7 @@ class SyntheticRetail(BaseForecastingDataset):
                 }
             )
 
-        if mode == "panel":
+        elif mode == "panel":
             self.set_tags(
                 **{
                     "is_one_panel": False,
@@ -86,7 +86,7 @@ class SyntheticRetail(BaseForecastingDataset):
                     "n_hierarchy_levels": 1,
                 }
             )
-        if mode == "hierarchical":
+        elif mode == "hierarchical":
             self.set_tags(
                 **{
                     "is_one_panel": False,
@@ -94,6 +94,9 @@ class SyntheticRetail(BaseForecastingDataset):
                     "n_hierarchy_levels": 2,
                 }
             )
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
         self.set_tags(
             **{
                 "n_instances": self.get_tag("n_panels") * self.get_tag("n_timepoints"),
