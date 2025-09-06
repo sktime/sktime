@@ -2,10 +2,9 @@
 
 __author__ = ["Jack Russon"]
 
-from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_dl_dependencies("torch", severity="none"):
-    import torch.nn as nn
+nn = _safe_import("torch.nn")
 
 
 class PyTorchMLPNetwork(nn.Module):
