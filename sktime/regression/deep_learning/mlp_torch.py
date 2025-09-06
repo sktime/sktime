@@ -16,7 +16,7 @@ if _check_dl_dependencies("torch", severity="none"):
 
 class MLPTorchRegressor(BaseDeepRegressor):
     """Multi Layer Perceptron Network (MLP) for regression using PyTorch.
-    
+
     Parameters
     ----------
     n_epochs : int, default=2000
@@ -68,7 +68,7 @@ class MLPTorchRegressor(BaseDeepRegressor):
         # Set default hidden dimensions if not provided
         if hidden_dims is None:
             hidden_dims = [500, 500, 500]
-        
+
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.random_state = random_state
@@ -80,13 +80,13 @@ class MLPTorchRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.lr = lr
-        
+
         # Set random state for PyTorch
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
-        
+
         super().__init__()
-        
+
         self._network = None
         self._criterion = None
         self._optimizer = None
@@ -94,8 +94,8 @@ class MLPTorchRegressor(BaseDeepRegressor):
 
     def _internal_convert(self, X, y=None):
         """Override to enforce strict 3D input validation for PyTorch regressors.
-        
-        PyTorch regressors require 3D input and we don't allow automatic conversion 
+
+        PyTorch regressors require 3D input and we don't allow automatic conversion
         from 2D to 3D as this can mask user errors and lead to unexpected behavior.
         """
         if isinstance(X, np.ndarray) and X.ndim != 3:
@@ -104,18 +104,18 @@ class MLPTorchRegressor(BaseDeepRegressor):
                 f"but got shape {X.shape}. PyTorch regressors require properly formatted "
                 f"3D time series data. Please reshape your data or use a supported Panel mtype."
             )
-        
+
         # Call parent method for other conversions
         return super()._internal_convert(X, y)
 
     def build_model(self, input_shape, **kwargs):
         """Build the PyTorch MLP network for regression.
-        
+
         Parameters
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
-            
+
         Returns
         -------
         PyTorchMLPNetwork
@@ -124,17 +124,17 @@ class MLPTorchRegressor(BaseDeepRegressor):
         # For regression, we need 1 output (continuous value)
         # We'll modify the network to output 1 value instead of num_classes
         return PyTorchMLPNetwork(
-            input_shape, 
+            input_shape,
             num_classes=1,  # 1 output for regression
             hidden_dims=self.hidden_dims,
             activation=self.activation,
             dropout=self.dropout,
-            use_bias=self.use_bias
+            use_bias=self.use_bias,
         )
 
     def _fit(self, X, y):
         """Fit the PyTorch MLP regressor.
-        
+
         Parameters
         ----------
         X : np.ndarray
@@ -144,7 +144,7 @@ class MLPTorchRegressor(BaseDeepRegressor):
         """
         # Build the network
         self._network = self.build_model(X.shape[1:])
-        
+
         # Set up loss function
         if self.loss == "mean_squared_error":
             self._criterion = nn.MSELoss()
@@ -154,7 +154,7 @@ class MLPTorchRegressor(BaseDeepRegressor):
             self._criterion = nn.HuberLoss()
         else:
             self._criterion = nn.MSELoss()
-        
+
         # Set up optimizer
         if self.optimizer == "Adam":
             self._optimizer = torch.optim.Adam(self._network.parameters(), lr=self.lr)
@@ -164,41 +164,43 @@ class MLPTorchRegressor(BaseDeepRegressor):
             self._optimizer = torch.optim.AdamW(self._network.parameters(), lr=self.lr)
         else:
             self._optimizer = torch.optim.Adam(self._network.parameters(), lr=self.lr)
-        
+
         # Convert data to PyTorch tensors
         X_tensor = torch.tensor(X, dtype=torch.float32)
-        y_tensor = torch.tensor(y, dtype=torch.float32).unsqueeze(1)  # Add dimension for batch
-        
+        y_tensor = torch.tensor(y, dtype=torch.float32).unsqueeze(
+            1
+        )  # Add dimension for batch
+
         # Training loop
         self._network.train()
         losses = []
-        
+
         for epoch in range(self.n_epochs):
             # Forward pass
             y_pred = self._network(X_tensor)
             loss = self._criterion(y_pred, y_tensor)
-            
+
             # Backward pass
             self._optimizer.zero_grad()
             loss.backward()
             self._optimizer.step()
-            
+
             losses.append(loss.item())
-            
+
             if self.verbose and (epoch + 1) % 100 == 0:
                 print(f"Epoch {epoch + 1}: Loss: {loss.item():.6f}")
-        
+
         # Store training history
         self.history = {"loss": losses}
 
     def _predict(self, X):
         """Predict regression values for X.
-        
+
         Parameters
         ----------
         X : np.ndarray
             Input data of shape (n_instances, n_dims, series_length)
-            
+
         Returns
         -------
         np.ndarray
@@ -206,29 +208,29 @@ class MLPTorchRegressor(BaseDeepRegressor):
         """
         if self._network is None:
             raise ValueError("Model not fitted yet. Call fit() first.")
-        
+
         # Convert to tensor
         X_tensor = torch.tensor(X, dtype=torch.float32)
-        
+
         # Set to evaluation mode
         self._network.eval()
-        
+
         with torch.no_grad():
             y_pred = self._network(X_tensor)
-        
+
         # Convert back to numpy and squeeze
         return y_pred.numpy().squeeze()
 
     def summary(self):
         """Return training history summary.
-        
+
         Returns
         -------
         dict or None
             Dictionary containing training losses if available
         """
         return self.history
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.

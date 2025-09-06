@@ -11,7 +11,7 @@ from sktime.networks.mlp_torch import PyTorchMLPNetwork
 
 class MLPTorchClassifier(BaseDeepClassifierPytorch):
     """Multi Layer Perceptron Network (MLP) for classification.
-    
+
     Parameters
     ----------
     num_epochs : int, default=16
@@ -61,12 +61,12 @@ class MLPTorchClassifier(BaseDeepClassifierPytorch):
         # Set default hidden dimensions if not provided
         if hidden_dims is None:
             hidden_dims = [500, 500, 500]
-        
+
         self.hidden_dims = hidden_dims
         self.activation = activation
         self.dropout = dropout
         self.use_bias = use_bias
-        
+
         # Call parent constructor with the parameters it expects
         super().__init__(
             num_epochs=num_epochs,
@@ -83,7 +83,7 @@ class MLPTorchClassifier(BaseDeepClassifierPytorch):
 
     def _build_network(self, X, y):
         # Validate input shape - X should be 3D (n_instances, n_dims, series_length)
-        
+
         if len(X.shape) != 3:
             raise ValueError(
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
@@ -91,17 +91,17 @@ class MLPTorchClassifier(BaseDeepClassifierPytorch):
             )
         input_shape = X.shape[1:]  # (n_dims, series_length)
         num_classes = len(np.unique(y))
-        
+
         # Build the complete network with the correct number of output classes
         return PyTorchMLPNetwork(
-            input_shape, 
+            input_shape,
             num_classes,
             hidden_dims=self.hidden_dims,
             activation=self.activation,
             dropout=self.dropout,
-            use_bias=self.use_bias
+            use_bias=self.use_bias,
         )
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -139,4 +139,3 @@ class MLPTorchClassifier(BaseDeepClassifierPytorch):
             },
         ]
         return params
-        
