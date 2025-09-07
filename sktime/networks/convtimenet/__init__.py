@@ -1,1 +1,1 @@
-"ConvTimeNet init"
+"""ConvTimeNet init."""

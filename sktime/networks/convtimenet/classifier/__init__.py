@@ -1,1 +1,1 @@
-"ConvTimeNet Classifier init"
+"""ConvTimeNet Classifier init."""
