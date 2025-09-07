@@ -20,6 +20,7 @@ __all__ = [
 
 from sktime.classification.deep_learning.cnn import CNNClassifier
 from sktime.classification.deep_learning.cntc import CNTCClassifier
+from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
@@ -36,4 +37,3 @@ from sktime.classification.deep_learning.mvts_transformer import (
 from sktime.classification.deep_learning.resnet import ResNetClassifier
 from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
 from sktime.classification.deep_learning.tapnet import TapNetClassifier
-from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
