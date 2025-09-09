@@ -7,6 +7,7 @@ from inspect import signature
 
 from sktime.datasets import load_UCR_UEA_dataset
 from sktime.datasets.classification._base import BaseClassificationDataset
+from sktime.datatypes import convert_to
 
 
 class UCRUEADataset(BaseClassificationDataset):
@@ -111,7 +112,9 @@ class UCRUEADataset(BaseClassificationDataset):
         """Call loader function with self.name included automatically."""
         if "name" in signature(self.loader_func).parameters and "name" not in kwargs:
             kwargs["name"] = self.name
-        return self.loader_func(**kwargs)
+        X, y = self.loader_func(**kwargs)
+        X = convert_to(X, "pd-multiindex")
+        return (X, y)
 
     def list_all():
         """List all the datasets loadable via `UCRUEADataset` class."""
