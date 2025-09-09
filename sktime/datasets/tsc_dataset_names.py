@@ -368,3 +368,15 @@ multivariate_unequal_length = [
     "JapaneseVowels",
     "SpokenArabicDigits",
 ]
+
+all_datasets = list(
+    set(
+        univariate
+        + multivariate
+        + univariate_equal_length
+        + univariate_variable_length
+        + univariate_missing_values
+        + multivariate_equal_length
+        + multivariate_unequal_length
+    )
+)

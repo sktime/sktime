@@ -8,6 +8,7 @@ from inspect import signature
 from sktime.datasets import load_UCR_UEA_dataset
 from sktime.datasets.classification._base import BaseClassificationDataset
 from sktime.datasets.classification.ucr_uea_archive._tags import DATASET_TAGS
+from sktime.datasets.tsc_dataset_names import all_datasets
 from sktime.datatypes import convert_to
 
 
@@ -21,15 +22,12 @@ class UCRUEADataset(BaseClassificationDataset):
     >>> X, y = dataset.load()
     """
 
-    _tags = {
-        "n_splits": 1,
-    }
-
     def __init__(self, name, return_mtype="pd-multiindex"):
         super().__init__(return_mtype=return_mtype)
         self.name = name
         self.loader_func = load_UCR_UEA_dataset
 
+        self.set_tags(name=self.name)
         self.set_tags(**DATASET_TAGS[self.name])
 
     def _encode_args(self, code):
@@ -120,7 +118,7 @@ class UCRUEADataset(BaseClassificationDataset):
 
     def list_all():
         """List all the datasets loadable via `UCRUEADataset` class."""
-        pass
+        return all_datasets
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
