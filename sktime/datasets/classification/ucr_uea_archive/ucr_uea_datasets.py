@@ -19,6 +19,10 @@ class UCRUEADataset(BaseClassificationDataset):
     >>> X, y = dataset.load()
     """
 
+    _tags = {
+        "n_splits": 1,
+    }
+
     def __init__(self, name, return_mtype="pd-multiindex"):
         super().__init__(return_mtype=return_mtype)
         self.name = name
@@ -111,6 +115,7 @@ class UCRUEADataset(BaseClassificationDataset):
 
     def list_all():
         """List all the datasets loadable via `UCRUEADataset` class."""
+        pass
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
