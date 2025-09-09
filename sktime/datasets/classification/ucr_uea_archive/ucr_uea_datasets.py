@@ -7,6 +7,7 @@ from inspect import signature
 
 from sktime.datasets import load_UCR_UEA_dataset
 from sktime.datasets.classification._base import BaseClassificationDataset
+from sktime.datasets.classification.ucr_uea_archive._tags import DATASET_TAGS
 from sktime.datatypes import convert_to
 
 
@@ -27,8 +28,9 @@ class UCRUEADataset(BaseClassificationDataset):
     def __init__(self, name, return_mtype="pd-multiindex"):
         super().__init__(return_mtype=return_mtype)
         self.name = name
-
         self.loader_func = load_UCR_UEA_dataset
+
+        self.set_tags(**DATASET_TAGS[self.name])
 
     def _encode_args(self, code):
         """Decide kwargs for the loader function."""
