@@ -13,13 +13,35 @@ from sktime.datatypes import convert_to
 
 
 class UCRUEADataset(BaseClassificationDataset):
-    """UCR-UEA classification dataset loader.
+    """UCR-UEA time series classification dataset loader.
+
+    Generic dataset loader for problems from the UCR UEA repository.
+    Provides access to both univariate and multivariate classification
+    datasets.
 
     Examples
     --------
     >>> from sktime.datasets import UCRUEADataset
     >>> dataset = UCRUEADataset(name="Beef")
-    >>> X, y = dataset.load()
+    >>> X, y = dataset.load() # load full dataset
+    >>> X_train, y_train = dataset.load("X_train", "y_train") # load training split
+    >>> all_names = UCRUEADataset.list_all() # list all loadable datasets via this class
+
+    Notes
+    -----
+    Dimensionality:     univariate or multivariate (depends on dataset)
+    Series length:      varies across datasets
+    Train cases:        varies across datasets
+    Test cases:         varies across datasets
+    Number of classes:  varies across datasets
+
+    The UCR/UEA repository is the primary benchmark archive for time series
+    classification. It contains a wide range of datasets from domains such as
+    medicine, motion capture, sensor recordings, speech recognition, and image
+    outline analysis. Many datasets are univariate with equal-length series,
+    but the archive also includes multivariate and unequal-length problems.
+
+    Dataset details: https://timeseriesclassification.com/dataset.php
     """
 
     def __init__(self, name, return_mtype="pd-multiindex"):
