@@ -189,8 +189,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.0.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.0.0"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -391,8 +390,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.3.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.3.0"],
     }
 
     def __init__(
@@ -507,8 +505,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.3.2", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.3.2"],
     }
 
     def __init__(
@@ -616,8 +613,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.1.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.1.0"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -727,8 +723,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.7.2", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.7.2"],
     }
 
     def __init__(
@@ -872,8 +867,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.2.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
     def __init__(
@@ -1044,8 +1038,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.4.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
     def __init__(
