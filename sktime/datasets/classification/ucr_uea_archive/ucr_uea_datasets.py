@@ -18,6 +18,11 @@ class UCRUEADataset(BaseClassificationDataset):
     Provides access to both univariate and multivariate classification
     datasets.
 
+    Parameters
+    ----------
+    name: str
+        Name of the dataset to load.
+
     Examples
     --------
     >>> from sktime.datasets import UCRUEADataset
