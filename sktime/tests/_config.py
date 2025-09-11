@@ -1,4 +1,4 @@
-"""Main configuration file for test excludes.
+"""Main configuration file for tests.
 
 Also contains some other configs, these should be gradually refactored
 to registry or to individual tags, where applicable.
@@ -351,7 +351,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "TimeBinner",
-        "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",
         "UnobservedComponents",
