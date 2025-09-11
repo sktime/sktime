@@ -24,11 +24,13 @@ class ScitypeTable(BaseDatatype):
     feature_names: list of int or object
         names of variables in table
     dtypekind_dfip: list of DtypeKind enum
-        list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
+        list of DtypeKind enum values for each feature in the table,
+        following the data frame interface protocol.
+        In same order as ``feature_names``.
     feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+        list of feature-kind strings for each feature in the table,
+        coerced to ``"FLOAT"`` or ``"CATEGORICAL"`` type string.
+        In same order as ``feature_names``.
     """
 
     _tags = {
