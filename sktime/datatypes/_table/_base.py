@@ -9,6 +9,33 @@ from sktime.datatypes._base import BaseDatatype
 class ScitypeTable(BaseDatatype):
     """Data Frame or Table data type.
 
+    The ``Table`` data type is an abstract data type (= :term:`scitype`).
+
+    It represents a row- and column-indexed 2D table of data, commonly
+    referred to as "data frame".
+
+    Formally, an abstract ``Table`` object has:
+
+    * an index :math:`i_1, \dots, i_T`, with :math:`i_i` being any hashable type
+    * values :math:`x_1, \dots, x_T`, with :math:`x_i`, taking values in
+      an abstract typed data frame row domain :math:`\mathcal{Y}`,
+      i.e., vectors with entries being numbers
+      (float, integer) or categorical, always the same type at the same entry
+
+    The value :math:`x_i` is interpreted to be an "observation" or "instance"
+    at index :math:`i_i`.
+
+    The indices :math:`i_i` are assumed distinct, but not necessarily ordered.
+
+    Concrete types implementing the ``Table`` data type must specify:
+
+    * features: how the dimensions of :math:`\mathcal{Y}` are represented
+    * feature names: optional, names of the column dimensions
+    * instances: how the value "observed at" an index is represented
+    * instance index: how the instance index is represented
+
+    Concrete implementations may implement only sub-cases of the full abstract type.
+
     Parameters
     ----------
     is_univariate: bool
