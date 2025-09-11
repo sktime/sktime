@@ -1198,6 +1198,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
+    def test_right_most_superclass_inherits_from_baseobject(self, estimator_class):
+        """Check that the right most superclass is a subclass of BaseObject."""
+        test_class = estimator_class
+        msg = "The right most superclass should inherit from BaseObject"
+        while test_class is not BaseObject:
+            assert issubclass(test_class, BaseObject), msg
+            test_class = test_class.__bases__[-1]
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""

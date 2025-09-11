@@ -259,6 +259,14 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
+    # see bug report #8142
+    "GroupbyCategoryForecaster": [
+        "test_right_most_superclass_inherits_from_baseobject",
+    ],
+    # see bug report #8142
+    "TransformSelectForecaster": [
+        "test_right_most_superclass_inherits_from_baseobject",
+    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE

@@ -14,7 +14,7 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator):
+class ColumnEnsembleForecaster(_ColumnEstimator, _HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
 
     Applies different forecasters by columns.
