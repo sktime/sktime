@@ -81,7 +81,6 @@ class _WddtwDistance(NumbaDistance):
             If the value of g is not a float
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._numba_utils import is_no_python_compiled_callable
         from sktime.distances._wdtw_numba import _weighted_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
@@ -98,13 +97,6 @@ class _WddtwDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError(
                 f"The value of g must be a float. The current value is {g}"
-            )
-
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise ValueError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
             )
 
         if return_cost_matrix is True:
@@ -194,7 +186,6 @@ class _WddtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
             If the value of g is not a float
         """
-        from sktime.distances._numba_utils import is_no_python_compiled_callable
         from sktime.distances._wdtw_numba import _weighted_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
@@ -211,13 +202,6 @@ class _WddtwDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError(
                 f"The value of g must be a float. The current value is {g}"
-            )
-
-        if not is_no_python_compiled_callable(compute_derivative):
-            raise ValueError(
-                f"The derivative callable must be no_python compiled. The name"
-                f"of the callable that must be compiled is "
-                f"{compute_derivative.__name__}"
             )
 
         @njit(cache=True)
