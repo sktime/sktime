@@ -386,6 +386,15 @@ Depending on the transformer, the transformation parameters can be fitted.
 
     ScaledAsinhTransformer
 
+.. currentmodule:: sktime.transformations.series.elementwise_operator
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ElementWiseArithmeticOperator
+
+
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
