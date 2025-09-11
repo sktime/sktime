@@ -59,9 +59,9 @@ class ScitypeHierarchical(BaseDatatype):
     is_univariate: bool
         True iff table has one variable
     is_equally_spaced : bool
-        True iff series index is equally spaced
+        True iff all series in the hierarchical collection are equally spaced
     is_equal_length: bool
-        True iff all series in panel are of equal length
+        True iff all series in the hierarchical collection are of equal length
     is_empty: bool
         True iff table has no variables or no instances
     is_one_series: bool
@@ -73,9 +73,13 @@ class ScitypeHierarchical(BaseDatatype):
     has_nans: bool
         True iff the hierarchical series contains NaN values
     n_instances: int
-        number of instances in the hierarchical collection
+        number of instances, i.e., individual time series, in the hierarchical
+        collection. Formally, the number of unique hierarchy indices :math:`s_i`,
+        namely :math:`N`, in the definition above.
     n_panels: int
-        number of flat panels in the hierarchical collection
+        number of flat panels in the hierarchical collection. If the indices are
+        :math:`H`-tuples, this is the number of unique values of the
+        :math:`(H-1)`-tuples obtained by removing the last entry of each :math:`s_i`.
     n_features: int
         number of variables in the hierarchical series
     feature_names: list of int or object
