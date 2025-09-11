@@ -7,7 +7,7 @@ from sktime.datatypes._base import BaseDatatype
 
 
 class ScitypeHierarchical(BaseDatatype):
-    """Hierarchical data type. Represents a hierarchical collection of time series.
+    r"""Hierarchical data type. Represents a hierarchical collection of time series.
 
     The ``Hierarchical`` data type is an abstract data type (= :term:`scitype`).
 

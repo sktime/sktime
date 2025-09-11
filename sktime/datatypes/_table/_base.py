@@ -7,7 +7,7 @@ from sktime.datatypes._base import BaseDatatype
 
 
 class ScitypeTable(BaseDatatype):
-    """Data Frame or Table data type.
+    r"""Data Frame or Table data type.
 
     The ``Table`` data type is an abstract data type (= :term:`scitype`).
 
