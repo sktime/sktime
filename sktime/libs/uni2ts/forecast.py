@@ -19,28 +19,19 @@ from copy import deepcopy
 from typing import Any, Optional
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.libs.uni2ts.common.torch_util import safe_div
+from sktime.libs.uni2ts.loss.packed import PackedNLLLoss as _PackedNLLLoss
+from sktime.libs.uni2ts.moirai_module import MoiraiModule
 from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import lightning as L
+L = _safe_import("lightning")
 
-else:
-    # Create Dummy class
-    class L:
-        class LightningModule:
-            pass
+torch = _safe_import("torch")
 
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
-    from .moirai_module import MoiraiModule
-
-if _check_soft_dependencies("einops", severity="none"):
-    from einops import rearrange, reduce, repeat
-
+rearrange = _safe_import("einops.rearrange")
+reduce = _safe_import("einops.reduce")
+repeat = _safe_import("einops.repeat")
 Input = _safe_import("gluonts.model.Input")
 InputSpec = _safe_import("gluonts.model.InputSpec")
 
@@ -54,10 +45,6 @@ ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
 TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
 
 TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
-
-
-from sktime.libs.uni2ts.common.torch_util import safe_div
-from sktime.libs.uni2ts.loss.packed import PackedNLLLoss as _PackedNLLLoss
 
 
 class SampleNLLLoss(_PackedNLLLoss):

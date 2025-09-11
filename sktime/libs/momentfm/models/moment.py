@@ -6,8 +6,6 @@ from argparse import Namespace
 from copy import deepcopy
 from math import ceil
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 from sktime.libs.momentfm.common import TASKS
 from sktime.libs.momentfm.data.base import TimeseriesOutputs
 from sktime.libs.momentfm.models.layers.embed import PatchEmbedding, Patching
@@ -18,6 +16,7 @@ from sktime.libs.momentfm.utils.utils import (
     get_anomaly_criterion,
     get_huggingface_model_dimensions,
 )
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 SUPPORTED_HUGGINGFACE_MODELS = [
     "google/flan-t5-small",
@@ -30,10 +29,13 @@ SUPPORTED_HUGGINGFACE_MODELS = [
 if _check_soft_dependencies(
     ["torch", "huggingface-hub", "transformers", "hf-xet"], severity="none"
 ):
-    import torch
-    from huggingface_hub import PyTorchModelHubMixin
-    from torch import nn
-    from transformers import T5Config, T5EncoderModel, T5Model
+    torch = _safe_import("torch")
+    nn = _safe_import("torch.nn")
+    huggingface_hub = _safe_import("huggingface_hub")
+    T5Config = _safe_import("transformers.T5Config")
+    T5EncoderModel = _safe_import("transformers.T5EncoderModel")
+    T5Model = _safe_import("transformers.T5Model")
+    PyTorchModelHubMixin = _safe_import("huggingface_hub.PyTorchModelHubMixin")
 
     class PretrainHead(nn.Module):
         """Pretrained Head."""
@@ -82,7 +84,7 @@ if _check_soft_dependencies(
                     f"Only 'mean' and 'concat' are supported."
                 )
 
-        def forward(self, x, input_mask: torch.Tensor = None):
+        def forward(self, x, input_mask=None):
             """Forward Function."""
             x = torch.mean(x, dim=1)
             x = self.dropout(x)
@@ -103,7 +105,7 @@ if _check_soft_dependencies(
             self.dropout = nn.Dropout(head_dropout)
             self.linear = nn.Linear(head_nf, forecast_horizon)
 
-        def forward(self, x, input_mask: torch.Tensor = None):
+        def forward(self, x, input_mask=None):
             """Forward Function."""
             x = self.flatten(x)
             x = self.linear(x)
@@ -195,7 +197,7 @@ if _check_soft_dependencies(
                 warnings.warn("Patch stride length is not equal to patch length.")
             return config
 
-        def _get_head(self, task_name: str) -> nn.Module:
+        def _get_head(self, task_name: str):
             if task_name == TASKS.RECONSTRUCTION:
                 return PretrainHead(
                     self.config.d_model,
@@ -227,7 +229,7 @@ if _check_soft_dependencies(
             else:
                 raise NotImplementedError(f"Task {task_name} not implemented.")
 
-        def _get_transformer_backbone(self, config) -> nn.Module:
+        def _get_transformer_backbone(self, config):
             if config.getattr("randomly_initialize_backbone", False):
                 model_config = T5Config.from_pretrained(config.transformer_backbone)
                 transformer_backbone = T5Model(model_config)
@@ -258,8 +260,8 @@ if _check_soft_dependencies(
 
         def embed(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
             reduction: str = "mean",
             **kwargs,
         ) -> TimeseriesOutputs:
@@ -314,9 +316,9 @@ if _check_soft_dependencies(
 
         def reconstruction(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
-            mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
+            mask=None,
             **kwargs,
         ) -> TimeseriesOutputs:
             """Reconstruction Function."""
@@ -373,9 +375,9 @@ if _check_soft_dependencies(
 
         def reconstruct(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
-            mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
+            mask=None,
             **kwargs,
         ) -> TimeseriesOutputs:
             """Reconstruct Function."""
@@ -436,8 +438,8 @@ if _check_soft_dependencies(
 
         def detect_anomalies(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
             anomaly_criterion: str = "mse",
             **kwargs,
         ) -> TimeseriesOutputs:
@@ -454,9 +456,7 @@ if _check_soft_dependencies(
                 metadata={"anomaly_criterion": anomaly_criterion},
             )
 
-        def forecast(
-            self, x_enc: torch.Tensor, input_mask: torch.Tensor = None, **kwargs
-        ) -> TimeseriesOutputs:
+        def forecast(self, x_enc, input_mask=None, **kwargs) -> TimeseriesOutputs:
             """Forecast Function."""
             batch_size, n_channels, seq_len = x_enc.shape
 
@@ -487,8 +487,8 @@ if _check_soft_dependencies(
 
         def short_forecast(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
             forecast_horizon: int = 1,
             **kwargs,
         ) -> TimeseriesOutputs:
@@ -543,8 +543,8 @@ if _check_soft_dependencies(
 
         def classify(
             self,
-            x_enc: torch.Tensor,
-            input_mask: torch.Tensor = None,
+            x_enc,
+            input_mask=None,
             reduction: str = "concat",
             **kwargs,
         ) -> TimeseriesOutputs:
@@ -603,9 +603,9 @@ if _check_soft_dependencies(
 
         def forward(
             self,
-            x_enc: torch.Tensor,
-            mask: torch.Tensor = None,
-            input_mask: torch.Tensor = None,
+            x_enc,
+            mask=None,
+            input_mask=None,
             **kwargs,
         ) -> TimeseriesOutputs:
             """Forward Function."""

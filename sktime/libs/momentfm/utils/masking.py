@@ -2,10 +2,10 @@
 
 from typing import Optional
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 if _check_soft_dependencies(["torch"], severity="none"):
-    import torch
+    torch = _safe_import("torch")
 
     class Masking:
         """Masking Module."""
@@ -26,7 +26,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
 
         @staticmethod
         def convert_seq_to_patch_view(
-            mask: torch.Tensor, patch_len: int = 8, stride: Optional[int] = None
+            mask, patch_len: int = 8, stride: Optional[int] = None
         ):
             """Convert sequence to patch function.
 
@@ -42,7 +42,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
 
         @staticmethod
         def convert_patch_to_seq_view(
-            mask: torch.Tensor,
+            mask,
             patch_len: int = 8,
         ):
             """Convert patch to sequence function.
@@ -54,9 +54,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             """
             return mask.repeat_interleave(patch_len, dim=-1)
 
-        def generate_mask(
-            self, x: torch.Tensor, input_mask: Optional[torch.Tensor] = None
-        ):
+        def generate_mask(self, x, input_mask=None):
             """Generate Mask Function.
 
             Input:
