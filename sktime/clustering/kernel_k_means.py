@@ -89,6 +89,8 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
