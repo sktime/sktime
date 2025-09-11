@@ -3,7 +3,6 @@
 
 __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 
-from typing import Any, Optional, Union
 
 import pandas as pd
 
@@ -12,7 +11,7 @@ from sktime.utils.dependencies import _placeholder_record
 
 
 # TODO 0.39.0: update upper and lower bounds when Prophetverse 0.9.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.10.0")
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
@@ -118,58 +117,37 @@ class Prophetverse(_DelegatedForecaster):
 
     def __init__(
         self,
-        changepoint_interval: int = 25,
-        changepoint_range: float = 0.8,
-        changepoint_prior_scale: float = 0.001,
-        offset_prior_scale: float = 0.1,
-        feature_transformer=None,
-        capacity_prior_scale: float = 0.2,
-        capacity_prior_loc: float = 1.1,
-        noise_scale: float = 0.05,
-        trend: str = "linear",
-        mcmc_samples: int = 2000,
-        mcmc_warmup: int = 200,
-        mcmc_chains: int = 4,
-        inference_method: str = "map",
-        optimizer_name: str = "Adam",
-        optimizer_kwargs: Optional[dict[str, Any]] = None,
-        optimizer_steps: int = 100_000,
-        exogenous_effects: Optional[list] = None,
+        trend="linear",
+        exogenous_effects=None,
         default_effect=None,
-        scale: float = None,
+        feature_transformer=None,
+        noise_scale=None,
+        likelihood="normal",
+        scale=None,
         rng_key=None,
+        inference_engine=None,
+        broadcast_mode="estimator",
     ):
-        self.changepoint_interval = changepoint_interval
-        self.changepoint_range = changepoint_range
-        self.changepoint_prior_scale = changepoint_prior_scale
-        self.offset_prior_scale = offset_prior_scale
         self.noise_scale = noise_scale
         self.feature_transformer = feature_transformer
-        self.capacity_prior_scale = capacity_prior_scale
-        self.capacity_prior_loc = capacity_prior_loc
         self.trend = trend
-        self.mcmc_samples = mcmc_samples
-        self.mcmc_warmup = mcmc_warmup
-        self.mcmc_chains = mcmc_chains
-        self.inference_method = inference_method
-        self.optimizer_name = optimizer_name
-        self.optimizer_kwargs = optimizer_kwargs
-        self.optimizer_steps = optimizer_steps
         self.exogenous_effects = exogenous_effects
         self.default_effect = default_effect
         self.rng_key = rng_key
         self.scale = scale
-
+        self.likelihood = likelihood
+        self.inference_engine = inference_engine
+        self.broadcast_mode = broadcast_mode
         super().__init__()
 
         # delegation, only for prophetverse 0.2.X
-        from prophetverse.sktime import Prophet
+        from prophetverse.sktime import Prophetverse
 
-        self._delegate = Prophet(**self.get_params())
+        self._delegate = Prophetverse(**self.get_params())
 
 
 # TODO 0.40.0: update upper and lower bounds when Prophetverse 0.10.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.10.0")
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
 class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
 
@@ -308,48 +286,26 @@ class HierarchicalProphet(_DelegatedForecaster):
     def __init__(
         self,
         trend="linear",
-        changepoint_interval: int = 25,
-        changepoint_range: Union[float, int] = 0.8,
-        changepoint_prior_scale: float = 0.001,
-        offset_prior_scale: float = 0.1,
-        capacity_prior_scale: float = 0.2,
-        capacity_prior_loc: float = 1.1,
         feature_transformer=None,
-        exogenous_effects: Optional[list] = None,
+        exogenous_effects=None,
         default_effect=None,
-        shared_features: list[str] = None,
-        mcmc_samples: int = 2000,
-        mcmc_warmup: int = 200,
-        mcmc_chains: int = 4,
-        inference_method: str = "map",
-        optimizer_name: str = "Adam",
-        optimizer_kwargs: Optional[dict[str, Any]] = None,
-        optimizer_steps: int = 100_000,
-        noise_scale: float = 0.05,
-        correlation_matrix_concentration: float = 1.0,
+        shared_features=None,
+        noise_scale=0.05,
+        correlation_matrix_concentration=1.0,
         rng_key=None,
+        inference_engine=None,
+        likelihood=None,
     ):
         self.trend = trend
-        self.changepoint_interval = changepoint_interval
-        self.changepoint_range = changepoint_range
-        self.changepoint_prior_scale = changepoint_prior_scale
-        self.offset_prior_scale = offset_prior_scale
-        self.capacity_prior_scale = capacity_prior_scale
-        self.capacity_prior_loc = capacity_prior_loc
         self.feature_transformer = feature_transformer
         self.exogenous_effects = exogenous_effects
         self.default_effect = default_effect
         self.shared_features = shared_features
-        self.mcmc_samples = mcmc_samples
-        self.mcmc_warmup = mcmc_warmup
-        self.mcmc_chains = mcmc_chains
-        self.inference_method = inference_method
-        self.optimizer_name = optimizer_name
-        self.optimizer_kwargs = optimizer_kwargs
-        self.optimizer_steps = optimizer_steps
         self.noise_scale = noise_scale
         self.correlation_matrix_concentration = correlation_matrix_concentration
         self.rng_key = rng_key
+        self.inference_engine = inference_engine
+        self.likelihood = likelihood
 
         super().__init__()
 
