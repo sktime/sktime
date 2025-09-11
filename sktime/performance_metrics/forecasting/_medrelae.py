@@ -7,13 +7,13 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import (
-    median_relative_absolute_error,
-)
+import numpy as np
+import pandas as pd
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
-class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
+class MedianRelativeAbsoluteError(BaseForecastingErrorMetric):
     """Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -94,4 +94,90 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         "univariate-only": False,
     }
 
-    func = median_relative_absolute_error
+    def _relative_absolute_error(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Calculate the element-wise relative absolute error."""
+        print("begin MedianRelativeAbsoluteError class")
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        y_pred_benchmark = np.asarray(y_pred_benchmark)
+        mask = ~(np.isnan(y_true) | np.isnan(y_pred) | np.isnan(y_pred_benchmark))
+        y_true = y_true[mask]
+        y_pred = y_pred[mask]
+        y_pred_benchmark = y_pred_benchmark[mask]
+
+        abs_bench_error = np.abs(y_true - y_pred_benchmark)
+        eps = np.finfo(np.float64).eps
+        denom = np.maximum(abs_bench_error, eps)
+        relative_errors = np.abs(y_true - y_pred) / denom
+        return relative_errors
+
+    def _evaluate(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        """Evaluate the median relative absolute error.
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame or Series
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame or Series
+            Predicted values to evaluate.
+        y_pred_benchmark : pandas.DataFrame or Series
+            Benchmark values to evaluate.
+
+        Returns
+        -------
+        loss : float or pd.Series
+            Calculated metric, aggregated over time.
+        """
+        raw_values = self._relative_absolute_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+        )
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        flat = (
+            raw_values.values.flatten()
+            if hasattr(raw_values, "values")
+            else np.asarray(raw_values).flatten()
+        )
+        flat = flat[~np.isnan(flat)]
+
+        if flat.size == 0:
+            return np.nan
+        return np.median(flat)
+
+    def _get_weighted_df(self, raw_values, y_true=None, **kwargs):
+        weights = kwargs.get("sample_weight", None)
+        if weights is not None:
+            # Convert weights to correct shape if needed
+            weights = np.asarray(weights)
+            if isinstance(raw_values, pd.DataFrame):
+                raw_values = raw_values.mul(weights, axis=0)
+            elif isinstance(raw_values, pd.Series):
+                raw_values = raw_values * weights
+            else:
+                raw_values = raw_values * weights
+        # Set index if possible
+        if (
+            isinstance(raw_values, (pd.DataFrame, pd.Series))
+            and y_true is not None
+            and hasattr(y_true, "index")
+        ):
+            raw_values.index = y_true.index
+        return raw_values
+
+    def _evaluate_by_index(self, y_true, y_pred, y_pred_benchmark, **kwargs):
+        multioutput = self.multioutput
+        raw_values = self._relative_absolute_error(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+        )
+        raw_values = self._get_weighted_df(raw_values, y_true=y_true, **kwargs)
+        # Ensure output is pandas with correct index
+        if not isinstance(raw_values, (pd.DataFrame, pd.Series)) and hasattr(
+            y_true, "index"
+        ):
+            raw_values = pd.Series(raw_values, index=y_true.index)
+        return self._handle_multioutput(raw_values, multioutput)
