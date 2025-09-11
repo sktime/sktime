@@ -623,6 +623,14 @@ Pre-trained and foundation models
 
     TinyTimeMixerForecaster
 
+.. currentmodule:: sktime.forecasting.toto
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TotoForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
