@@ -7,6 +7,7 @@ import warnings
 from contextlib import redirect_stdout
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from types import SimpleNamespace
 
 if TYPE_CHECKING:
     import torch
@@ -59,7 +60,7 @@ class TiRexZeroConfig:
     input_ff_dim: int
 
 
-class TiRexZero(PretrainedModel, TensorQuantileUniPredictMixin):
+class TiRexZero(LightningModule, PretrainedModel, TensorQuantileUniPredictMixin):
     def __init__(self, model_config: dict, train_ctx_len=None):
         _check_soft_dependencies("torch", severity="error")
         _check_soft_dependencies("lightning", severity="error")
@@ -69,7 +70,7 @@ class TiRexZero(PretrainedModel, TensorQuantileUniPredictMixin):
         import torch
         import lightning as L
         from dacite import Config, from_dict
-        from .components import PatchedUniTokenizer, ResidualBlock, StreamToLogger
+        from .components import PatchedUniTokenizer, ResidualBlock
         from .mixed_stack import (
             skip_cuda,
             xLSTMMixedLargeBlockStack,
@@ -119,17 +120,15 @@ class TiRexZero(PretrainedModel, TensorQuantileUniPredictMixin):
 
     def init_block(self, block_kwargs):
         from dacite import from_dict
-        from .components import StreamToLogger
         from .mixed_stack import (
             xLSTMMixedLargeConfig,
             xLSTMMixedLargeBlockStack,
         )
 
-        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)  # type: ignore
-        log_redirect = StreamToLogger(LOGGER, logging.INFO)  # type: ignore
-        with redirect_stdout(
-            log_redirect
-        ):  # avoid excessive print statements of sLSTM compile
+        import io
+
+        config = from_dict(xLSTMMixedLargeConfig, block_kwargs)
+        with redirect_stdout(io.StringIO()):
             model = xLSTMMixedLargeBlockStack(config)
         return model, config
 
