@@ -80,9 +80,10 @@ class MatrixProfileTransformer(BaseTransformer):
             Matrix Profile of time series as output with length as
             (n_timepoints-window_length+1)
         """
+        import numpy as np
         import stumpy
 
         X = X.flatten()
         Xt = stumpy.stump(X, self.window_length)
-        Xt = Xt[:, 0].astype("float")
+        Xt = np.asarray(Xt[:, 0].astype("float"))
         return Xt
