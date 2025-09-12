@@ -128,8 +128,7 @@ class TiRexZero(LightningModule, PretrainedModel, TensorQuantileUniPredictMixin)
         import io
 
         config = from_dict(xLSTMMixedLargeConfig, block_kwargs)
-        with redirect_stdout(io.StringIO()):
-            model = xLSTMMixedLargeBlockStack(config)
+        model = xLSTMMixedLargeBlockStack(config)
         return model, config
 
     @property
