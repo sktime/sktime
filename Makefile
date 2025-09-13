@@ -109,3 +109,15 @@ nb: clean
 dockertest:
 	docker build -t sktime -f build_tools/docker/$(PYTHON_VERSION).dockerfile .
 	docker run -it --name sktime sktime bash -c "make full_test"
+
+docker-pyfablearima: ## Build and run Docker image that executes check_estimator on PyFableARIMA
+	docker build -t sktime-pyfablearima -f Dockerfile.pyfablearima .
+	docker run --rm sktime-pyfablearima
+
+docker-pyfablearima-pytest: ## Build image and run only the PyFableARIMA unit test via pytest inside container
+	docker build -t sktime-pyfablearima -f Dockerfile.pyfablearima .
+	docker run --rm -e CHECK_CMD="pytest -q sktime/forecasting/tests/test_pyfable_arima.py::test_pyfablearima_formula_immutability" sktime-pyfablearima
+
+docker-pyfablearima-shell: ## Build image and drop into interactive shell (R + Python ready)
+	docker build -t sktime-pyfablearima -f Dockerfile.pyfablearima .
+	docker run -it --rm -e CHECK_CMD="bash" sktime-pyfablearima
