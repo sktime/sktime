@@ -79,11 +79,15 @@ def check_estimator(
     Returns
     -------
     results : dict
-        dictionary of results of the tests in self
-        keys are test/fixture strings, identical as in pytest, e.g., ``test[fixture]``;
+        dictionary of results of the tests that were run
+
+        keys are test/fixture strings, identical as in pytest,
+        e.g., ``test[fixture]``;
         entries are the string ``"PASSED"`` if the test passed,
         or the exception raised if the test did not pass.
-        returned only if all tests pass, or ``raise_exceptions=False``
+
+        ``results`` is returned only if all tests pass,
+        or ``raise_exceptions=False``.
 
     Raises
     ------
