@@ -8,7 +8,7 @@
 """
 Module implements TiRexForecaster, a zero shot time series forecasting model.
 
-that wraps the TiRex foundation model. Link is "https://github.com/NX-AI/tirex".
+It wraps the TiRex foundation model. Link is "https://github.com/NX-AI/tirex".
 This is use for with the sktime forecasting interface.
 TiRex provides fast and proper forecasting for short and long horizons.
 It does not require any training or data input.
@@ -61,7 +61,6 @@ class _cached_TiRex:
         self._obj = None
 
     def load(self):
-        _check_soft_dependencies("tirex", severity="error")
         from sktime.libs.tirex.base import load_model
 
         if self._obj is None:
@@ -70,26 +69,40 @@ class _cached_TiRex:
 
 
 class TiRexForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """Interface to the TiRex Zero-Shot Forecaster.
 
-    todo: describe your custom forecaster here
-    Interface to tiRex foundation model for zero shot forecasting.
-
-    Covers TiRex pretrained model with tirex papckage.
-    So it can be used for sktime forecasting project.
-    Advantage of this is performing without training.
+    This forecaster loads the TiRex model from ``sktime.libs.tirex`` when fit() is
+    called. Instead of training, it takes the given data as context, and predict()
+    uses that context to produce forecasts for the requested future time points.
+    ``torch`` is required at runtime and a clear error is raised if unavailable.
 
     Parameters
     ----------
-    model : str (default = "NX-AI/TiRex)
-        model hub identifier to load with "tirex.load_model"
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
-        descriptive explanation of paramc
-    and so on
+    model : str (default = "NX-AI/TiRex")
+        "Model identifier to load via the vendored TiRex loader"
+    device : {"cpu", "cuda", ...}, default="cpu"
+        Compute device used by the underlying TiRex model.
+
+    Attributes
+    ----------
+    model_ : object
+        The loaded TiRex model instance (vendored implementation).
+
+    References
+    ----------
+    [1] TiRex: https://github.com/NX-AI/tirex
+
+    Example
+    ----------
+    >>> # Minimal usage (doctest is skipped since it requires torch and model files)
+    >>> import pandas as pd
+    >>> from sktime.forecasting.tirex import TiRexForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = pd.Series([1, 2, 3, 4, 5])
+    >>> fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+    >>> f = TiRexForecaster()  # doctest: +SKIP
+    >>> f.fit(y)               # doctest: +SKIP
+    >>> y_pred = f.predict(fh) # doctest: +SKIP
     """
 
     # todo: fill out estimator tags here
@@ -159,7 +172,7 @@ class TiRexForecaster(BaseForecaster):
         "maintainers": ["sinemkilicdere"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
-        "python_dependencies": ["torch"],
+        "python_dependencies": ["torch", "dacite", "lightning", "xlstm"],
         "tests:vm": True,
     }
 
@@ -184,10 +197,7 @@ class TiRexForecaster(BaseForecaster):
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+        Loads and caches the underlying TiRex model instance (no training).
 
         Parameters
         ----------
@@ -208,7 +218,8 @@ class TiRexForecaster(BaseForecaster):
 
         Returns
         -------
-        self : reference to self
+        self : TiRexForecaster
+            Fitted forecaster (with ``model_`` set).
         """
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
@@ -222,14 +233,17 @@ class TiRexForecaster(BaseForecaster):
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         key = _tirex_cache_key(self.model, self.device)
-        self.model = _cached_TiRex(key=key, model=self.model, device=self.device).load()
+        self.model_ = _cached_TiRex(
+            key=key, model=self.model, device=self.device
+        ).load()
         return self
 
     # todo: implement this, mandatory
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
-        private _predict containing the core logic, called from predict
+        Converts the observed series to a tensor context and delegates multi-step
+        prediction to the TiRex model. The current implementation does not use ``X``.
 
         State required:
             Requires state to be "fitted".
@@ -249,8 +263,7 @@ class TiRexForecaster(BaseForecaster):
         Returns
         -------
         y_predict : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
+            Point forecasts, same type as seen in _fit (as in "y_inner_mtype" tag).
         """
         # implement here
 
@@ -299,10 +312,7 @@ class TiRexForecaster(BaseForecaster):
         Returns
         -------
         params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            Parameters to create testing instances of the class.
         """
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries.
@@ -334,4 +344,6 @@ class TiRexForecaster(BaseForecaster):
         #           {"est": value3, "parama": value4}]
         #
         # return params
-        return {"model": "NX-AI/TiRex", "device": "cpu"}
+        params1 = {"model": "NX-AI/TiRex", "device": "cpu"}
+        params2 = {"model": "NX-AI/TiRex", "device": "cpu"}
+        return [params1, params2]

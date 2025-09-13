@@ -3,11 +3,17 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional, TYPE_CHECKING
+from sktime.utils.dependencies import _safe_import
 
-import torch
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+
 
 SCALER_STATE = "scaler_state"
+
+if TYPE_CHECKING:
+    import torch
 
 
 class ResidualBlock(torch.nn.Module):
@@ -25,7 +31,7 @@ class ResidualBlock(torch.nn.Module):
         self.residual_layer = torch.nn.Linear(in_dim, out_dim)
         self.act = torch.nn.ReLU()
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Any):
         hid = self.act(self.hidden_layer(x))
         out = self.output_layer(hid)
         res = self.residual_layer(x)
@@ -40,9 +46,9 @@ class StandardScaler:
 
     def scale(
         self,
-        x: torch.Tensor,
-        loc_scale: tuple[torch.Tensor, torch.Tensor] | None = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+        x: Any,
+        loc_scale: Optional[tuple[Any, Any]] = None,
+    ) -> tuple[Any, tuple[Any, Any]]:
         if loc_scale is None:
             loc = torch.nan_to_num(
                 torch.nanmean(x, dim=-1, keepdim=True), nan=self.nan_loc
@@ -56,9 +62,7 @@ class StandardScaler:
 
         return ((x - loc) / scale), (loc, scale)
 
-    def re_scale(
-        self, x: torch.Tensor, loc_scale: tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
+    def re_scale(self, x: Any, loc_scale: tuple[Any, Any]) -> Any:
         loc, scale = loc_scale
         return x * scale + loc
 
@@ -72,7 +76,7 @@ class _Patcher:
     def __post_init__(self):
         assert self.patch_size % self.patch_stride == 0
 
-    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+    def __call__(self, x: Any) -> Any:
         assert x.ndim == 2
         length = x.shape[-1]
 
@@ -103,19 +107,19 @@ class _Patcher:
 class PatchedUniTokenizer:
     patch_size: int
     scaler: Any = field(default_factory=StandardScaler)
-    patch_stride: int | None = None
+    patch_stride: Optional[int] = None
 
     def __post_init__(self):
         if self.patch_stride is None:
             self.patch_stride = self.patch_size
         self.patcher = _Patcher(self.patch_size, self.patch_stride, left_pad=True)
 
-    def context_input_transform(self, data: torch.Tensor):
+    def context_input_transform(self, data: Any):
         assert data.ndim == 2
         data, scale_state = self.scaler.scale(data)
         return self.patcher(data), {SCALER_STATE: scale_state}
 
-    def output_transform(self, data: torch.Tensor, tokenizer_state: dict):
+    def output_transform(self, data: Any, tokenizer_state: dict):
         data_shape = data.shape
         data = self.scaler.re_scale(
             data.reshape(data_shape[0], -1), tokenizer_state[SCALER_STATE]

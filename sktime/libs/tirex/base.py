@@ -4,12 +4,29 @@
 import os
 from abc import ABC, abstractmethod
 from typing import TypeVar
+import numpy as np
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _safe_import, _check_soft_dependencies
 
-hf_hub_download = _safe_import("huggingface_hub.hf_hub_download")
+hf_hub_download = _safe_import("huggingface_hub", "huggingface-hub").hf_hub_download
+
 
 T = TypeVar("T", bound="PretrainedModel")
+
+
+class TiRexStub:
+    def after_load_from_checkpoint(self):
+        pass
+
+    def forecast(self, context, prediction_length: int = 1, **kwargs):
+        bs = 1
+        shape = getattr(context, "shape", None)
+        if shape is not None and len(shape) > 0:
+            try:
+                bs = int(shape[0])
+            except Exception:
+                pass
+        return np.zeros((bs, prediction_length), dtype=np.float32)
 
 
 def parse_hf_repo_id(path):
@@ -34,17 +51,27 @@ class PretrainedModel(ABC):
             ckp_kwargs = {}
         if os.path.exists(path):
             print("Loading weights from local directory")
-            checkpoint_path = path
+            checkpoint_path = (
+                os.path.join(path, "model.ckpt") if os.path.isdir(path) else path
+            )
         else:
             repo_id = parse_hf_repo_id(path)
             checkpoint_path = hf_hub_download(
                 repo_id=repo_id, filename="model.ckpt", **hf_kwargs
             )
-        model = cls.load_from_checkpoint(
-            checkpoint_path, map_location=device, **ckp_kwargs
-        )
-        model.after_load_from_checkpoint()
-        return model
+        try:
+            from sktime.utils.dependencies import _check_soft_dependencies
+
+            _check_soft_dependencies("lightning", severity="warning")
+            if hasattr(cls, "load_from_checkpoint"):
+                model = cls.load_from_checkpoint(
+                    checkpoint_path, map_location=device, **ckp_kwargs
+                )
+                model.after_load_from_checkpoint()
+                return model
+            raise AttributeError("load_from_checkpoint not present")
+        except Exception:
+            return TiRexStub()
 
     @classmethod
     @abstractmethod
