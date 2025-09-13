@@ -745,8 +745,8 @@ class QuickTester:
     def _make_builtin_fixture_equivalents(self, name):
         import io
         import logging
-        from pathlib import Path
         import tempfile
+        from pathlib import Path
 
         values = {}
         if "tmp_path" == name:
