@@ -4,14 +4,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from contextlib import redirect_stdout
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-from types import SimpleNamespace
-
-if TYPE_CHECKING:
-    import torch
-    from .mixed_stack import xLSTMMixedLargeConfig, xLSTMMixedLargeBlockStack
 
 from sktime.utils.dependencies import _check_soft_dependencies
 from ..base import PretrainedModel

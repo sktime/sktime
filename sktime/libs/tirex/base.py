@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TypeVar
 import numpy as np
 
-from sktime.utils.dependencies import _safe_import, _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
 hf_hub_download = _safe_import("huggingface_hub", "huggingface-hub").hf_hub_download
 

@@ -3,7 +3,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -11,9 +11,6 @@ nn = _safe_import("torch.nn")
 
 
 SCALER_STATE = "scaler_state"
-
-if TYPE_CHECKING:
-    import torch
 
 
 class ResidualBlock(torch.nn.Module):

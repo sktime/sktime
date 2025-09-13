@@ -4,10 +4,7 @@
 from __future__ import annotations
 import logging
 from abc import abstractmethod
-from typing import Any, Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import torch as torch_types
+from typing import Any, TYPE_CHECKING
 
 from ..api_adapter.forecast import ForecastModel
 
