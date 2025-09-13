@@ -82,6 +82,9 @@ class TiRexForecaster(BaseForecaster):
         "Model identifier to load via the vendored TiRex loader"
     device : {"cpu", "cuda", ...}, default="cpu"
         Compute device used by the underlying TiRex model.
+    license_accepted : bool, default=False
+        Whether the user accepts the license terms of TiRex.
+        Must be set to True to use the model.
 
     Attributes
     ----------
@@ -144,7 +147,7 @@ class TiRexForecaster(BaseForecaster):
         # --------------------------------------------
         #
         # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
         # CAVEAT: if tag is set to True, inner methods always see X=None
         #
@@ -176,22 +179,44 @@ class TiRexForecaster(BaseForecaster):
         "tests:vm": True,
     }
 
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, model="NX-AI/TiRex", device: str = "cpu"):
-        # todo: write any hyper-parameters to self
+    def __init__(
+        self,
+        model="NX-AI/TiRex",
+        device: str = "cpu",
+        license_accepted: bool = False,
+    ):
         self.model = model
         self.device = device
+        self.license_accepted = license_accepted
 
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
         self.model_ = None
 
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        if not self.license_accepted:
+            raise ValueError(
+                "Use of TiRexForecaster is subject to the license terms of TiRex, "
+                "licensed to third party vendor NXAI GmbH. "
+                "This license is not permissive, and differs from the sktime license. "
+                "You must accept the license terms of TiRex to use TiRexForecaster. "
+                "To accept the license, set the `license_accepted` parameter to True "
+                "to confirm that you have read and accepted the license terms. "
+                "To print and view the license for TiRex, "
+                "call `TiRexForecaster.print_license()`."
+            )
+
+    @classmethod
+    def print_license(self):
+        """Print the license terms of TiRex."""
+        import os
+
+        from sktime.libs.tirex import __path__ as tirex_path
+
+        license_path = os.path.join(tirex_path[0], "LICENSE")
+        with open(license_path, "r", encoding="utf-8") as f:
+            license_text = f.read()
+        print(license_text)
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
@@ -221,17 +246,6 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         key = _tirex_cache_key(self.model, self.device)
         self.model_ = _cached_TiRex(
             key=key, model=self.model, device=self.device
@@ -293,11 +307,6 @@ class TiRexForecaster(BaseForecaster):
             yhat, index=index, name=(y.name if hasattr(y, "name") else None)
         )
 
-    # IMPORTANT: avoid side effects to X, fh
-
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -314,36 +323,6 @@ class TiRexForecaster(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
         params1 = {"model": "NX-AI/TiRex", "device": "cpu"}
         params2 = {"model": "NX-AI/TiRex", "device": "cpu"}
         return [params1, params2]
