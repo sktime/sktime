@@ -605,7 +605,10 @@ class QuickTester:
 
             def print_if_verbose(msg):
                 if verbose:
-                    print(msg)  # noqa: T001, T201
+                    try:
+                        print(msg)  # noqa: T001, T201
+                    except OSError:
+                        print("error in QuickTester.run_tests: OSError in print")
 
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
