@@ -323,6 +323,6 @@ class TiRexForecaster(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-        params1 = {"model": "NX-AI/TiRex", "device": "cpu"}
-        params2 = {"model": "NX-AI/TiRex", "device": "cpu"}
+        params1 = {"model": "NX-AI/TiRex", "device": "cpu", "license_accepted": True}
+        params2 = {"model": "NX-AI/TiRex", "device": "cpu", "license_accepted": True}
         return [params1, params2]
