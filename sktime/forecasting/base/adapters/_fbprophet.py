@@ -18,7 +18,7 @@ class _ProphetAdapter(BaseForecaster):
     _tags = {
         "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
         # bletham and tcuongd for prophet/fbprophet
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,

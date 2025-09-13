@@ -228,7 +228,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -270,7 +270,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
             "capability:missing_values": True,

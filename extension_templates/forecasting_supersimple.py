@@ -85,7 +85,7 @@ class MyForecaster(BaseForecaster):
         # (look at advanced templates if you think these should change)
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
     }
 

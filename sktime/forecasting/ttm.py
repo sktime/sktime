@@ -275,7 +275,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

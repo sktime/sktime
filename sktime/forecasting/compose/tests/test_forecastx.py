@@ -267,7 +267,7 @@ def test_forecastx_flow_known_unknown_columns(
     assert hasattr(model, "forecaster_y_")
     assert model.forecaster_y_.is_fitted
 
-    if model.get_tag("ignores-exogeneous-X"):
+    if not model.get_tag("capability:exogenous"):
         assert not hasattr(model, "forecaster_X_")
     else:
         assert hasattr(model, "forecaster_X_")
