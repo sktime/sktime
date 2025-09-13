@@ -161,7 +161,12 @@ class TiRexForecaster(BaseForecaster):
         #
         # author = author(s) of th estimator
         # an author is anyone with significant contribution to the code at some point
-        "authors": ["sinemkilicdere"],
+        "authors": [
+            "martinloretzzz",
+            "apointa",
+            "superbock",
+            "sinemkilicdere",
+        ],
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
         # scope is the code, not the methodology (method is per paper citation)
