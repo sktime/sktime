@@ -21,7 +21,7 @@ repos:
     rev: v0.13.0
     hooks:
       - id: ruff-format
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
 
   - repo: https://github.com/mgedmin/check-manifest
