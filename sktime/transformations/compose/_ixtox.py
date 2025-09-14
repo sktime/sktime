@@ -48,7 +48,9 @@ class IxToX(BaseTransformer):
         ``X``
         if passed, passed on as ``level`` to ``reset_index`` internally
         if None, will convert only the time index (last level) into features
-        Note that this is different from the default of ``reset_index``
+        Note that this is different from the default of ``reset_index``.
+        You can also use ``"all_but_time"`` to get all indices but the last one, or
+        ``"all"`` to get all indices.
     ix_source : str, optional, default="X"
         which object to take the index from
         default = "X" = ``X`` as passed to ``transform``
