@@ -16,6 +16,8 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
+    For a drop-in replacement based on PyTorch, see `SimpleRNNClassifierTorch`.
+
     Parameters
     ----------
     n_epochs : int, default = 100
