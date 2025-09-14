@@ -81,9 +81,6 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "X_inner_mtype": "df-list",
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement dtaidistance
     }
 
     def __init__(
@@ -258,9 +255,6 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "X_inner_mtype": ["df-list", "numpy3D"],
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement dtaidistance
     }
 
     def __init__(

@@ -85,9 +85,6 @@ class AlignerDtwDtai(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "full",
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement dtaidistance
     }
 
     def __init__(

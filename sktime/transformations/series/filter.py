@@ -57,9 +57,6 @@ class Filter(BaseTransformer):
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement mne
     }
 
     def __init__(
