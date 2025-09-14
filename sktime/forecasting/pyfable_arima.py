@@ -5,6 +5,7 @@ __author__ = ["ericjb"]
 
 import io
 import sys
+from typing import Optional  # see _letter_from_index definition
 
 import numpy as np
 import pandas as pd
@@ -174,7 +175,7 @@ class PyFableARIMA(BaseForecaster):
         return is_arithmetic_progression
 
     @staticmethod
-    def _letter_from_index(idx) -> str | None:
+    def _letter_from_index(idx) -> Optional[str]:  # rhs was str|None
         """
         Map DatetimeIndex/PeriodIndex frequency to one of 'A','Q','M','W','D'.
 
