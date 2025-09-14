@@ -256,7 +256,7 @@ docs = [
 ]
 tests = [
   "pytest>=7.4,<8.5",
-  "pytest-randomly>=3.15,<3.17",
+  "pytest-randomly>=3.15,<4.1",
   "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.9",
 ]
@@ -404,6 +404,7 @@ select = [
   "RUF002", # Checks for non unicode string literals
   "RUF003", # Checks for non unicode string literals
 ]
+
 extend-select = [
   "I", # isort
   "C4", # https://pypi.org/project/flake8-comprehensions
@@ -464,6 +465,7 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
+"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
