@@ -69,7 +69,7 @@ class IxToX(BaseTransformer):
     """
 
     _tags = {
-        "authors": "fkiraly",
+        "authors": ["fkiraly", "RobKuebler"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,
@@ -122,7 +122,7 @@ class IxToX(BaseTransformer):
             level = X.index.names
         elif level is None:
             level = -1
-        elif isinstance(level, (list, tuple)):
+        elif isinstance(level, (list, tuple)) or isinstance(level, int):
             pass
         else:
             msg = (

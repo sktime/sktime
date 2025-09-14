@@ -436,6 +436,9 @@ def test_ixtox():
     ixtox = IxToX(level=["level_0", "level_2"])
     assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_2"]
 
+    ixtox = IxToX(level=-1)
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
     ixtox = IxToX(level="invalid")
     with pytest.raises(ValueError, match="level must be"):
         ixtox.fit_transform(X)
