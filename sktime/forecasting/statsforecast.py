@@ -12,7 +12,6 @@ __all__ = [
     "StatsForecastMSTL",
     "StatsForecastADIDA",
 ]
-from typing import Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
@@ -199,13 +198,13 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     def __init__(
         self,
         start_p: int = 2,
-        d: Optional[int] = None,
+        d: int | None = None,
         start_q: int = 2,
         max_p: int = 5,
         max_d: int = 2,
         max_q: int = 5,
         start_P: int = 1,
-        D: Optional[int] = None,
+        D: int | None = None,
         start_Q: int = 1,
         max_P: int = 2,
         max_D: int = 1,
@@ -220,15 +219,15 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         stepwise: bool = True,
         n_jobs: int = 2,
         trend: bool = True,
-        method: Optional[str] = None,
-        offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[dict] = None,
+        method: str | None = None,
+        offset_test_args: str | None = None,
+        seasonal_test_args: dict | None = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
-        approximation: Optional[bool] = None,
-        truncate: Optional[bool] = None,
-        blambda: Optional[float] = None,
+        approximation: bool | None = None,
+        truncate: bool | None = None,
+        blambda: float | None = None,
         biasadj: bool = False,
         parallel: bool = False,
     ):
@@ -399,7 +398,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         self,
         season_length: int = 1,
         decomposition_type: str = "multiplicative",
-        model: Optional[str] = None,
+        model: str | None = None,
     ):
         self.season_length = season_length
         self.decomposition_type = decomposition_type
@@ -515,8 +514,8 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         self,
         season_length: int = 1,
         model: str = "ZZZ",
-        damped: Optional[bool] = None,
-        phi: Optional[float] = None,
+        damped: bool | None = None,
+        phi: float | None = None,
     ):
         self.season_length = season_length
         self.model = model
@@ -733,10 +732,10 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]] = 1,
-        use_boxcox: Optional[bool] = None,
-        use_trend: Optional[bool] = None,
-        use_damped_trend: Optional[bool] = None,
+        seasonal_periods: int | list[int] = 1,
+        use_boxcox: bool | None = None,
+        use_trend: bool | None = None,
+        use_damped_trend: bool | None = None,
         use_arma_errors: bool = True,
         bc_lower_bound: float = 0.0,
         bc_upper_bound: float = 1.0,
@@ -878,10 +877,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        season_length: Union[int, list[int]],
+        season_length: int | list[int],
         trend_forecaster=None,
-        stl_kwargs: Optional[dict] = None,
-        pred_int_kwargs: Optional[dict] = None,
+        stl_kwargs: dict | None = None,
+        pred_int_kwargs: dict | None = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster
@@ -1050,7 +1049,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        prediction_intervals: Optional[object] = None,
+        prediction_intervals: object | None = None,
     ):
         self.prediction_intervals = prediction_intervals
 

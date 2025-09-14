@@ -3,7 +3,7 @@
 
 __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 
-from typing import Any, Optional, Union
+from typing import Any
 
 import pandas as pd
 
@@ -172,9 +172,9 @@ class Prophetverse(_DelegatedForecaster):
         mcmc_chains: int = 4,
         inference_method: str = "map",
         optimizer_name: str = "Adam",
-        optimizer_kwargs: Optional[dict[str, Any]] = None,
+        optimizer_kwargs: dict[str, Any] | None = None,
         optimizer_steps: int = 100_000,
-        exogenous_effects: Optional[list] = None,
+        exogenous_effects: list | None = None,
         default_effect=None,
         scale: float = None,
         rng_key=None,
@@ -349,13 +349,13 @@ class HierarchicalProphet(_DelegatedForecaster):
         self,
         trend="linear",
         changepoint_interval: int = 25,
-        changepoint_range: Union[float, int] = 0.8,
+        changepoint_range: float | int = 0.8,
         changepoint_prior_scale: float = 0.001,
         offset_prior_scale: float = 0.1,
         capacity_prior_scale: float = 0.2,
         capacity_prior_loc: float = 1.1,
         feature_transformer=None,
-        exogenous_effects: Optional[list] = None,
+        exogenous_effects: list | None = None,
         default_effect=None,
         shared_features: list[str] = None,
         mcmc_samples: int = 2000,
@@ -363,7 +363,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         mcmc_chains: int = 4,
         inference_method: str = "map",
         optimizer_name: str = "Adam",
-        optimizer_kwargs: Optional[dict[str, Any]] = None,
+        optimizer_kwargs: dict[str, Any] | None = None,
         optimizer_steps: int = 100_000,
         noise_scale: float = 0.05,
         correlation_matrix_concentration: float = 1.0,

@@ -4,7 +4,6 @@
 __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -139,8 +138,8 @@ class FourierFeatures(BaseTransformer):
         self,
         sp_list: list[float],
         fourier_terms_list: list[int],
-        freq: Optional[str] = None,
-        keep_original_columns: Optional[bool] = False,
+        freq: str | None = None,
+        keep_original_columns: bool | None = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list

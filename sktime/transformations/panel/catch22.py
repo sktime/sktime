@@ -6,7 +6,6 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -294,7 +293,7 @@ class Catch22(BaseTransformer):
 
     def __init__(
         self,
-        features: Union[int, str, list[Union[int, str]]] = "all",
+        features: int | str | list[int | str] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
@@ -365,7 +364,7 @@ class Catch22(BaseTransformer):
 
     # todo: remove case_id
     def _transform_single_feature(
-        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
+        self, X: pd.Series, feature: int | str, case_id="deprecated"
     ):
         """
         Transform a single feature  into a Catch22 or Catch24 feature.
@@ -501,7 +500,7 @@ class Catch22(BaseTransformer):
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, list[int], list[str]]:
+    ) -> range | list[int] | list[str]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.

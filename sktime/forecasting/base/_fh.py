@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -178,7 +177,7 @@ def _check_freq(obj):
         return None
 
 
-def _extract_freq_from_cutoff(x) -> Optional[str]:
+def _extract_freq_from_cutoff(x) -> str | None:
     """Extract frequency string from cutoff.
 
     Parameters

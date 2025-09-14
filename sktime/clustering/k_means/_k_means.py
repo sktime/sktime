@@ -2,7 +2,6 @@
 
 __author__ = ["chrisholder", "TonyBagnall"]
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -98,14 +97,14 @@ class TimeSeriesKMeans(BaseTimeSeriesLloyds):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: str | Callable = "random",
+        metric: str | Callable = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
         verbose: bool = False,
-        random_state: Union[int, RandomState] = None,
-        averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
+        random_state: int | RandomState = None,
+        averaging_method: str | Callable[[np.ndarray], np.ndarray] = "mean",
         distance_params: dict = None,
         average_params: dict = None,
     ):

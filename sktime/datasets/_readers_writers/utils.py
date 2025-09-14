@@ -12,7 +12,6 @@ __all__ = [
 import os
 import pathlib
 import textwrap
-from typing import Union
 
 
 def _alias_mtype_check(return_type):
@@ -272,7 +271,7 @@ def write_results_to_uea_format(
     file.close()
 
 
-def get_path(path: Union[str, pathlib.Path], suffix: str) -> str:
+def get_path(path: str | pathlib.Path, suffix: str) -> str:
     """Automatic inference of file ending in data loaders for single file types.
 
     This function checks if the provided path has a specified suffix. If not,

@@ -3,7 +3,6 @@
 
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-import typing
 
 import pandas as pd
 
@@ -1517,9 +1516,7 @@ class ForecastX(BaseForecaster):
         else:
             return X
 
-    def _check_unknown_exog(
-        self: "ForecastX", X: typing.Optional[pd.DataFrame]
-    ) -> bool:
+    def _check_unknown_exog(self: "ForecastX", X: pd.DataFrame | None) -> bool:
         """Check if all future-unknown exogenous columns are present.
 
         Parameters

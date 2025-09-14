@@ -8,7 +8,6 @@ __all__ = ["evaluate"]
 import time
 import warnings
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -413,12 +412,12 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, list[callable]]] = None,
+    scoring: callable | list[callable] | None = None,
     return_data: bool = False,
-    error_score: Union[str, int, float] = np.nan,
-    backend: Optional[str] = None,
+    error_score: str | int | float = np.nan,
+    backend: str | None = None,
     cv_X=None,
-    backend_params: Optional[dict] = None,
+    backend_params: dict | None = None,
     return_model: bool = False,
     cv_global=None,
     cv_global_temporal=None,

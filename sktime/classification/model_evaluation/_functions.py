@@ -8,7 +8,6 @@ __all__ = ["evaluate"]
 import inspect
 import time
 import warnings
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -265,11 +264,11 @@ def evaluate(
     cv=None,
     X=None,
     y=None,
-    scoring: Optional[Union[callable, list[callable]]] = None,
+    scoring: callable | list[callable] | None = None,
     return_data: bool = False,
-    error_score: Union[str, int, float] = np.nan,
-    backend: Optional[str] = None,
-    backend_params: Optional[dict] = None,
+    error_score: str | int | float = np.nan,
+    backend: str | None = None,
+    backend_params: dict | None = None,
 ):
     r"""
     Evaluate classifier using time series cross-validation.
