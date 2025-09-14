@@ -72,7 +72,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     _tags = {
         "authors": ["Sanchay117", "felipeangelimvieira"],
         "capability:pred_int": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
         "capability:missing_values": False,
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
@@ -87,20 +87,18 @@ class ResidualBoostingForecaster(BaseForecaster):
         super().__init__()
 
         exog = self.base_forecaster.get_tag(
-            "ignores-exogeneous-X"
-        ) or self.residual_forecaster.get_tag("ignores-exogeneous-X")
+            "capability:exogenous"
+        ) or self.residual_forecaster.get_tag("capability:exogenous")
 
         miss = self.base_forecaster.get_tag(
             "capability:missing_values"
         ) and self.residual_forecaster.get_tag("capability:missing_values")
 
-        pred_int = self.base_forecaster.get_tag(
-            "capability:pred_int"
-        ) and self.residual_forecaster.get_tag("capability:pred_int")
+        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
 
         in_sample = self.base_forecaster.get_tag(
             "capability:insample"
-        ) or self.residual_forecaster.get_tag("capability:insample")
+        ) and self.residual_forecaster.get_tag("capability:insample")
 
         cat = self.base_forecaster.get_tag(
             "capability:categorical_in_X"
@@ -112,7 +110,7 @@ class ResidualBoostingForecaster(BaseForecaster):
 
         self.set_tags(
             **{
-                "ignores-exogeneous-X": exog,
+                "capability:exogenous": exog,
                 "capability:missing_values": miss,
                 "capability:insample": in_sample,
                 "capability:pred_int:insample": pred_int_insample,

@@ -260,7 +260,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
