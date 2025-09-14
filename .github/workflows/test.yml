@@ -514,6 +514,11 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Set R env for rpy2
+        run: |
+          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(R RHOME)/lib:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
+
       - name: Install R packages
         run: |
           Rscript -e 'install.packages(c(
@@ -529,7 +534,12 @@ jobs:
             python -m pip install .
 
       - name: Show Python and R session info
+        env:
+          R_HOME: ${{ env.R_HOME }}
+          LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
         run: |
+          echo "R_HOME=$R_HOME"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           python -c "import sys, rpy2; import pandas; print('Python', sys.version); print('rpy2', rpy2.__version__); print('pandas', pandas.__version__)"
           Rscript -e 'sessionInfo()'
 
