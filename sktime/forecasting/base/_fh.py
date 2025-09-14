@@ -293,12 +293,7 @@ class ForecastingHorizon:
         # infer freq from values, if available
         # if not, infer from freq argument, if available
         if freq is not None:
-            if isinstance(freq, pd.Index) and pd.api.types.is_integer_dtype(freq.dtype):
-                self.freq = "A"  # year-end annual (alias of "A-DEC")
-            elif hasattr(freq, "freq") and getattr(freq, "freq", None) is not None:
-                self.freq = freq.freq
-            else:
-                self.freq = freq
+            self.freq = freq
         elif hasattr(values, "index") and hasattr(values.index, "freq"):
             self.freq = values.index.freq
         elif hasattr(values, "freq"):
