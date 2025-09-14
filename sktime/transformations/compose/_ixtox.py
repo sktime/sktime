@@ -114,8 +114,20 @@ class IxToX(BaseTransformer):
         if ix_source == "y" and y is not None:
             X = y
 
-        if level is None:
+        if level == "all_but_time":
+            level = X.index.names[:-1]
+        elif level == "all":
+            level = X.index.names
+        elif level is None:
             level = -1
+        elif isinstance(level, (list, tuple)):
+            pass
+        else:
+            msg = (
+                "level must be None, 'all', 'all_but_time', or list/tuple, "
+                f"found {level}"
+            )
+            raise ValueError(msg)
 
         X_only_ix = X.drop(columns=X.columns)
 
