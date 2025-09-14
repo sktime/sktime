@@ -168,7 +168,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
         # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsmodels"],
