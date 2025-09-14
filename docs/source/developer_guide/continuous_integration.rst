@@ -48,7 +48,7 @@ To install, if not already installed:
 
    .. code:: bash
 
-      pip install -e .[dev]
+      pip install -e ".[dev]"
 
    This installs an editable `development
    version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__

@@ -251,6 +251,9 @@ class Lag(BaseTransformer):
             else:
                 if hasattr(X.index, "freq") and X.index.freq is None and freq is None:
                     freq = pd.infer_freq(X.index)
+                if freq is None and isinstance(X.index, pd.DatetimeIndex):
+                    # convert to PeriodIndex and then infer freq
+                    freq = X.index[:4].to_period().freq
                 X_orig_idx_shifted = X_orig_idx.shift(periods=lag, freq=freq)
                 if isinstance(lag, int) and freq is None:
                     freq = "infer"
