@@ -17,7 +17,7 @@ __all__ = [
 
 # forked from sklearn.utils to ensure compatibility with newer sklearn versions
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute weighted percentile
+    """Compute lower weighted percentile.
 
     Computes lower weighted percentile. If `array` is a 2D array, the
     `percentile` is computed along the axis 0.
