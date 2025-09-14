@@ -219,7 +219,7 @@ class TiRexForecaster(BaseForecaster):
         from sktime.libs.tirex import __path__ as tirex_path
 
         license_path = os.path.join(tirex_path[0], "LICENSE")
-        with open(license_path, "r", encoding="utf-8") as f:
+        with open(license_path, encoding="utf-8") as f:
             license_text = f.read()
         print(license_text)
 
