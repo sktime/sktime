@@ -362,7 +362,7 @@ def _make_estimator_overview(app):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:missing_values",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
             "scitype:y",
             "requires-fh-in-fit",
             "X-y-must-have-same-index",

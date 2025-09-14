@@ -75,7 +75,7 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     _tags = {
         "authors": ["Sanchay117", "felipeangelimvieira"],
         "capability:pred_int": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
         "capability:missing_values": False,
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
@@ -89,45 +89,31 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.residual_forecaster = residual_forecaster
         super().__init__()
 
-        base_tuple = ("base", base_forecaster)
+        exog = self.base_forecaster.get_tag(
+            "capability:exogenous"
+        ) or self.residual_forecaster.get_tag("capability:exogenous")
 
-        if isinstance(residual_forecaster, list):
-            res_list = residual_forecaster
-        else:
-            res_list = [residual_forecaster]
+        miss = self.base_forecaster.get_tag(
+            "capability:missing_values"
+        ) and self.residual_forecaster.get_tag("capability:missing_values")
 
-        resid_tuples = self._check_estimators(
-            res_list,
-            attr_name="residual_forecasters",
-            cls_type=BaseForecaster,
-            allow_mix=True,
-            allow_empty=False,
-            clone_ests=False,
-        )
+        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
 
-        steps = [base_tuple] + resid_tuples
+        in_sample = self.base_forecaster.get_tag(
+            "capability:insample"
+        ) and self.residual_forecaster.get_tag("capability:insample")
 
-        names = self._get_estimator_names(steps, make_unique=True)
-        self._check_names(names)
-        ests = [est for _, est in steps]
-        self._steps = list(zip(names, ests))
+        cat = self.base_forecaster.get_tag(
+            "capability:categorical_in_X"
+        ) and self.residual_forecaster.get_tag("capability:categorical_in_X")
 
-        children = [est for _, est in self._steps]
-        residuals = children[1:]
-        last_est = children[-1]
-
-        exog = any(est.get_tag("ignores-exogeneous-X") for est in children)
-        miss = all(est.get_tag("capability:missing_values") for est in children)
-        pred_int = last_est.get_tag("capability:pred_int")
-        in_sample = last_est.get_tag("capability:insample")
-        cat = all(est.get_tag("capability:categorical_in_X") for est in children)
-        pred_int_insample = bool(residuals) and all(
-            est.get_tag("capability:pred_int:insample") for est in residuals
+        pred_int_insample = self.residual_forecaster.get_tag(
+            "capability:pred_int:insample"
         )
 
         self.set_tags(
             **{
-                "ignores-exogeneous-X": exog,
+                "capability:exogenous": exog,
                 "capability:missing_values": miss,
                 "capability:insample": in_sample,
                 "capability:pred_int:insample": pred_int_insample,
