@@ -105,8 +105,9 @@ class PyFableARIMA(BaseForecaster):
         "capability:update": False,
         "authors": ["ericjb"],
         "maintainers": ["ericjb"],
-        "python_version": None,
-        "python_dependencies": ["rpy2"],
+        "python_version": ">=3.10",
+        "env_marker": 'sys_platform == "linux"',
+        "python_dependencies": ["rpy2==3.6.1"],
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
