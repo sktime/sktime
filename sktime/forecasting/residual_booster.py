@@ -168,7 +168,7 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
-        i_base = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+        i_base = self.base_future_.predict(fh=fh, X=X)
         i_res = self.residual_forecaster_.predict_interval(
             fh=fh, X=X, coverage=coverage
         )
@@ -176,7 +176,7 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Combine arbitrary quantile forecasts."""
-        q_base = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        q_base = self.base_future_.predict(fh=fh, X=X)
         q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return q_base + q_res
 
