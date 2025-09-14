@@ -768,10 +768,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         self, estimator_instance, n_columns, update_params
     ):
         """Test update method with exogenous variables"""
-        # Skip test if forecaster ignores exogenous variables
-        if estimator_instance.get_tag("ignores-exogeneous-X"):
-            return None
-
         index = pd.date_range("2020-01-01", periods=25, freq="D")
 
         # Create y data
