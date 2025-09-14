@@ -516,10 +516,10 @@ jobs:
 
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c(\
-            "tidyverse","fable","fabletools","fpp3","tsibble","tsibbledata",\
-            "urca","feasts","lubridate","ggplot2","stringr","readr","readxl",\
-            "tidyr","distributional","patchwork","scales","anytime","timechange",\
+          Rscript -e 'install.packages(c(
+            "tidyverse","fable","fabletools","fpp3","tsibble","tsibbledata",
+            "urca","feasts","lubridate","ggplot2","stringr","readr","readxl",
+            "tidyr","distributional","patchwork","scales","anytime","timechange",
             "tibble","dplyr"), repos="https://cloud.r-project.org", Ncpus=2)'
 
       - name: Install Python dependencies
