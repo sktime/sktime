@@ -42,7 +42,7 @@ class MatrixProfileTransformer(BaseTransformer):
         # packaging info
         # --------------
         "authors": ["seanlaw", "NimaSarajpoor", "mloning"],
-        "python_dependencies": "stumpy",
+        "python_dependencies": ["stumpy", "numpy<2"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -55,6 +55,9 @@ class MatrixProfileTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
         "fit_is_empty": True,  # for unit test cases
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement stumpy
     }
 
     def __init__(self, window_length=3):
