@@ -184,9 +184,8 @@ class ResidualBoostingForecaster(BaseForecaster):
 
     def _predict_var(self, fh, X=None, cov=False):
         """Combine predictive variances (or full covariances)."""
-        v_base = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
         v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
-        return v_base + v_res
+        return v_res
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
