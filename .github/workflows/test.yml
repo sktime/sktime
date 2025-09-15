@@ -532,7 +532,7 @@ jobs:
       - name: Install Python dependencies
         run: |
             python -m pip install --upgrade pip
-            python -m pip install numpy pandas scipy patsy rpy2==3.6.1
+            python -m pip install numpy pandas scipy patsy rpy2==3.6.1 pytest
             python -m pip install .
 
       - name: Show Python and R session info
