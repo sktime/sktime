@@ -522,10 +522,12 @@ jobs:
       - name: Install R packages
         run: |
           Rscript -e 'install.packages(c(
-            "tidyverse","fable","fabletools","fpp3","tsibble","tsibbledata",
+            "fable","fabletools","fpp3","tsibble","tsibbledata",
             "urca","feasts","lubridate","ggplot2","stringr","readr","readxl",
             "tidyr","distributional","patchwork","scales","anytime","timechange",
-            "tibble","dplyr"), repos="https://cloud.r-project.org", Ncpus=2)'
+            "tibble","dplyr"),
+            repos="https://cloud.r-project.org", Ncpus=2,
+            dependencies=c("Depends","Imports","LinkingTo"))'
 
       - name: Install Python dependencies
         run: |
@@ -540,7 +542,22 @@ jobs:
         run: |
           echo "R_HOME=$R_HOME"
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-          python -c "import sys, rpy2; import pandas; print('Python', sys.version); print('rpy2', rpy2.__version__); print('pandas', pandas.__version__)"
+          python - <<'PY'
+            import sys
+            print("Python", sys.version)
+            # Try metadata first (works even if rpy2.__version__ is missing)
+            try:
+                import importlib.metadata as md
+                print("rpy2", md.version("rpy2"))
+            except Exception:
+                try:
+                    import rpy2
+                    print("rpy2", getattr(rpy2, "__version__", "unknown"))
+                except Exception as e:
+                    print("rpy2 unloadable:", e)
+            import pandas as pd
+            print("pandas", pd.__version__)
+          PY
           Rscript -e 'sessionInfo()'
 
       - name: Run check_estimator on PyFableARIMA

@@ -13,7 +13,7 @@ def test_pyfablearima_formula_immutability(monkeypatch):
 
     # monkeypatch R interaction methods to avoid requiring actual R runtime here
     def dummy_prepare(self, Z, is_regular=True):
-        return Z  # placeholder
+        return Z, Z  # placeholder
 
     def dummy_fit(self, train, expr):
         # store expr for inspection
