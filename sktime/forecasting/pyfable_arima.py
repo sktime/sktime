@@ -242,7 +242,12 @@ class PyFableARIMA(BaseForecaster):
         # one-time R session setup (suppress package startup chatter)
         if not hasattr(self, "_r_session_initialized"):
             robjects.r(
-                "suppressPackageStartupMessages({options(verbose=FALSE);library(tidyverse);library(fpp3);library(tsibble);library(dplyr);library(fabletools);library(fable)})"
+                # "suppressPackageStartupMessages(
+                #      {options(verbose=FALSE);
+                #          library(tidyverse);library(fpp3);library(tsibble);
+                #          library(dplyr);library(fabletools);library(fable)}
+                # )"
+                "suppressPackageStartupMessages({options(verbose=FALSE);library(fabletools)})"
             )
             self._r_session_initialized = True
 
