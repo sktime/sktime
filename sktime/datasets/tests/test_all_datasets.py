@@ -68,6 +68,8 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
             assert len(y.index.levels[0]) == n_instances
         elif check_is_mtype(y, "pd.Series") or check_is_mtype(y, "pd.DataFrame"):
             assert 1 == n_instances
+        elif check_is_mtype(y, "pd_multiindex_hier"):
+            assert y.index.droplevel(-1).nunique() == n_instances
         else:
             assert len(y) == n_instances
 
@@ -89,6 +91,8 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
                 y_train, "pd.DataFrame"
             ):
                 assert 1 == n_instances_train
+            elif check_is_mtype(y_train, "pd_multiindex_hier"):
+                assert y_train.index.droplevel(-1).nunique() == n_instances_train
             else:
                 assert len(y_train) == n_instances_train
 
@@ -111,6 +115,8 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
                 y_test, "pd.DataFrame"
             ):
                 assert 1 == n_instances_test
+            elif check_is_mtype(y_test, "pd_multiindex_hier"):
+                assert y_test.index.droplevel(-1).nunique() == n_instances_test
             else:
                 assert len(y_test) == n_instances_test
 

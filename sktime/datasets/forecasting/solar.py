@@ -87,7 +87,6 @@ class Solar(_ForecastingDatasetFromLoader):
         self.set_tags(
             **{
                 "n_timepoints": n_timepoints,
-                "n_instances": n_timepoints,
                 "n_dimensions": n_dimensions,
                 "is_univariate": n_dimensions == 1,
             }
