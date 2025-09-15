@@ -58,7 +58,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         # todo 0.39.0: check whether scipy<1.16 is still needed
@@ -140,7 +140,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         # todo 0.39.0: check whether scipy<1.16 is still needed

@@ -147,7 +147,7 @@ class TiRexForecaster(BaseForecaster):
         # --------------------------------------------
         #
         # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
         # CAVEAT: if tag is set to True, inner methods always see X=None
         #
