@@ -7,7 +7,6 @@ from .italy_power_demand import ItalyPowerDemand
 from .japanese_vowels import JapaneseVowels
 from .osuleaf import OSULeaf
 from .plaid import PLAID
-from .ucr_uea_archive.ucr_uea_dataset import UCRUEADataset
 
 __all__ = [
     "ArrowHead",
@@ -17,5 +16,4 @@ __all__ = [
     "JapaneseVowels",
     "OSULeaf",
     "PLAID",
-    "UCRUEADataset",
 ]
