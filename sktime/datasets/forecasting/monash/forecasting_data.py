@@ -32,15 +32,12 @@ class ForecastingData(BaseForecastingDataset):
     >>> y = dataset.load("y")
     """
 
-    _tags = {
-        "name": "forecasting_data",
-    }
-
     def __init__(self, name):
         super().__init__()
         self.name = name
         self.loader_func = load_forecastingdata
 
+        self.set_tags(name=self.name)
         self.set_tags(**DATASET_TAGS[self.name])
 
     def _encode_args(self, code):
