@@ -560,12 +560,7 @@ jobs:
           PY
           Rscript -e 'sessionInfo()'
 
-      - name: Run check_estimator on PyFableARIMA
+      - name: Run only PyFableARIMA tests (honors skip tags)
         run: |
-          python - <<'PY'
-          from sktime.utils import check_estimator
-          from sktime.forecasting.pyfable_arima import PyFableARIMA
-          print("Running check_estimator(PyFableARIMA)...")
-          check_estimator(PyFableARIMA, raise_exceptions=True)
-          print("check_estimator(PyFableARIMA) completed successfully.")
-          PY
+          # this replaces check_estimator which does not respect tags for skipping tests
+          python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('PyFableARIMA')"
