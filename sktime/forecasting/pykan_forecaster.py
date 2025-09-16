@@ -59,13 +59,13 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch", "matplotlib"],
+        "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -73,6 +73,9 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on vm in GHA
     }
 
     def __init__(
