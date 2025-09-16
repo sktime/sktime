@@ -79,7 +79,7 @@ class TotoForecaster(BaseForecaster):
         "y_inner_mtype": ["pd.DataFrame"],
         "X_inner_mtype": "None",
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
