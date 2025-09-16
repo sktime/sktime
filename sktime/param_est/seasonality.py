@@ -466,7 +466,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         "scitype:X": "Series",
         "capability:missing_values": True,
         "capability:multivariate": False,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
+        # todo 0.40.0: check whether scipy<1.16 is still needed
         "python_dependencies": ["seasonal", "scipy<1.16"],
     }
 
