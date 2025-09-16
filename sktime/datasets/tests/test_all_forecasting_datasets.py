@@ -81,11 +81,8 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         expected = estimator_instance.get_tag("n_hierarchy_levels")
         y = estimator_instance.load("y")
         n_hierarchy_levels = y.index.nlevels - 1
-        if check_is_mtype(y, "pd.Series"):
+        if check_is_mtype(y, "pd.Series") or check_is_mtype(y, "pd-multiindex"):
             n_hierarchy_levels = 0
-
-        elif check_is_mtype(y, "pd-multiindex"):
-            n_hierarchy_levels = 1
 
         elif check_is_mtype(y, "pd_multiindex_hier"):
             n_hierarchy_levels = y.index.nlevels - 1

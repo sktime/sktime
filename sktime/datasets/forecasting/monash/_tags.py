@@ -2,7 +2,7 @@ DATASET_TAGS = {
     "m1_yearly_dataset": {
         "n_instances": 181,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -10,7 +10,7 @@ DATASET_TAGS = {
     "m1_quarterly_dataset": {
         "n_instances": 203,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -18,7 +18,7 @@ DATASET_TAGS = {
     "m1_monthly_dataset": {
         "n_instances": 617,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -26,7 +26,7 @@ DATASET_TAGS = {
     "m3_yearly_dataset": {
         "n_instances": 645,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -34,7 +34,7 @@ DATASET_TAGS = {
     "m3_quarterly_dataset": {
         "n_instances": 756,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -42,7 +42,7 @@ DATASET_TAGS = {
     "m3_monthly_dataset": {
         "n_instances": 1428,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -58,7 +58,7 @@ DATASET_TAGS = {
     "m4_yearly_dataset": {
         "n_instances": 23000,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -66,7 +66,7 @@ DATASET_TAGS = {
     "m4_quarterly_dataset": {
         "n_instances": 24000,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -74,7 +74,7 @@ DATASET_TAGS = {
     "m4_monthly_dataset": {
         "n_instances": 48000,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -82,7 +82,7 @@ DATASET_TAGS = {
     "m4_weekly_dataset": {
         "n_instances": 359,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -90,7 +90,7 @@ DATASET_TAGS = {
     "m4_daily_dataset": {
         "n_instances": 4227,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -98,7 +98,7 @@ DATASET_TAGS = {
     "m4_hourly_dataset": {
         "n_instances": 414,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -106,7 +106,7 @@ DATASET_TAGS = {
     "tourism_yearly_dataset": {
         "n_instances": 518,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -114,7 +114,7 @@ DATASET_TAGS = {
     "tourism_quarterly_dataset": {
         "n_instances": 427,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -122,7 +122,7 @@ DATASET_TAGS = {
     "tourism_monthly_dataset": {
         "n_instances": 366,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -130,7 +130,7 @@ DATASET_TAGS = {
     "cif_2016_dataset": {
         "n_instances": 72,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -138,7 +138,7 @@ DATASET_TAGS = {
     "london_smart_meters_dataset_with_missing_values": {
         "n_instances": 5560,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -146,7 +146,7 @@ DATASET_TAGS = {
     "london_smart_meters_dataset_without_missing_values": {
         "n_instances": 5560,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -154,7 +154,7 @@ DATASET_TAGS = {
     "australian_electricity_demand_dataset": {
         "n_instances": 5,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -162,7 +162,7 @@ DATASET_TAGS = {
     "wind_farms_minutely_dataset_with_missing_values": {
         "n_instances": 339,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -170,7 +170,7 @@ DATASET_TAGS = {
     "wind_farms_minutely_dataset_without_missing_values": {
         "n_instances": 339,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -178,7 +178,7 @@ DATASET_TAGS = {
     "dominick_dataset": {
         "n_instances": 115704,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -186,7 +186,7 @@ DATASET_TAGS = {
     "bitcoin_dataset_with_missing_values": {
         "n_instances": 18,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -194,7 +194,7 @@ DATASET_TAGS = {
     "bitcoin_dataset_without_missing_values": {
         "n_instances": 18,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -202,7 +202,7 @@ DATASET_TAGS = {
     "pedestrian_counts_dataset": {
         "n_instances": 66,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -210,7 +210,7 @@ DATASET_TAGS = {
     "vehicle_trips_dataset_with_missing_values": {
         "n_instances": 329,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -218,7 +218,7 @@ DATASET_TAGS = {
     "vehicle_trips_dataset_without_missing_values": {
         "n_instances": 329,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -226,7 +226,7 @@ DATASET_TAGS = {
     "kdd_cup_2018_dataset_with_missing_values": {
         "n_instances": 270,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -234,7 +234,7 @@ DATASET_TAGS = {
     "kdd_cup_2018_dataset_without_missing_values": {
         "n_instances": 270,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -242,7 +242,7 @@ DATASET_TAGS = {
     "weather_dataset": {
         "n_instances": 3010,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -250,7 +250,7 @@ DATASET_TAGS = {
     "nn5_daily_dataset_with_missing_values": {
         "n_instances": 111,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -258,7 +258,7 @@ DATASET_TAGS = {
     "nn5_daily_dataset_without_missing_values": {
         "n_instances": 111,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -266,7 +266,7 @@ DATASET_TAGS = {
     "nn5_weekly_dataset": {
         "n_instances": 111,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -274,7 +274,7 @@ DATASET_TAGS = {
     "kaggle_web_traffic_dataset_with_missing_values": {
         "n_instances": 145063,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -282,7 +282,7 @@ DATASET_TAGS = {
     "kaggle_web_traffic_dataset_without_missing_values": {
         "n_instances": 145063,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -290,7 +290,7 @@ DATASET_TAGS = {
     "kaggle_web_traffic_weekly_dataset": {
         "n_instances": 145063,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -298,7 +298,7 @@ DATASET_TAGS = {
     "solar_10_minutes_dataset": {
         "n_instances": 137,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -306,7 +306,7 @@ DATASET_TAGS = {
     "solar_weekly_dataset": {
         "n_instances": 137,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -322,7 +322,7 @@ DATASET_TAGS = {
     "electricity_hourly_dataset": {
         "n_instances": 321,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -330,7 +330,7 @@ DATASET_TAGS = {
     "electricity_weekly_dataset": {
         "n_instances": 321,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -338,7 +338,7 @@ DATASET_TAGS = {
     "car_parts_dataset_with_missing_values": {
         "n_instances": 2674,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -346,7 +346,7 @@ DATASET_TAGS = {
     "car_parts_dataset_without_missing_values": {
         "n_instances": 2674,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -354,7 +354,7 @@ DATASET_TAGS = {
     "fred_md_dataset": {
         "n_instances": 107,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -362,7 +362,7 @@ DATASET_TAGS = {
     "traffic_hourly_dataset": {
         "n_instances": 862,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -370,7 +370,7 @@ DATASET_TAGS = {
     "traffic_weekly_dataset": {
         "n_instances": 862,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -378,7 +378,7 @@ DATASET_TAGS = {
     "rideshare_dataset_with_missing_values": {
         "n_instances": 2304,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -386,7 +386,7 @@ DATASET_TAGS = {
     "rideshare_dataset_without_missing_values": {
         "n_instances": 2304,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -394,7 +394,7 @@ DATASET_TAGS = {
     "hospital_dataset": {
         "n_instances": 767,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
@@ -402,7 +402,7 @@ DATASET_TAGS = {
     "covid_deaths_dataset": {
         "n_instances": 266,
         "n_panels": 1,
-        "n_hierarchy_levels": 1,
+        "n_hierarchy_levels": 0,
         "is_univariate": True,
         "is_one_series": False,
         "n_splits": 0,
