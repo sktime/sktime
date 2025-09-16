@@ -42,9 +42,9 @@ class ForecastingData(BaseForecastingDataset):
 
     Notes
     -----
-    Dimensionality:     univariate or multivariate (depends on dataset)
-    Frequency:          yearly, quarterly, monthly, daily, etc. (varies)
-    Exogenous data:     optional, available for some datasets
+    Dimensionality: univariate or multivariate (depends on dataset)
+    Frequency: yearly, quarterly, monthly, daily, etc. (varies)
+    Exogenous data: optional, available for some datasets
 
     Dataset details: https://forecastingdata.org
     """
