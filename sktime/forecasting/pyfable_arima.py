@@ -247,7 +247,7 @@ class PyFableARIMA(BaseForecaster):
                 #          library(tidyverse);library(fpp3);library(tsibble);
                 #          library(dplyr);library(fabletools);library(fable)}
                 # )"
-                "suppressPackageStartupMessages({options(verbose=FALSE);library(fabletools)})"
+                "suppressPackageStartupMessages({options(verbose=FALSE)})"
             )
             self._r_session_initialized = True
 
@@ -384,7 +384,7 @@ class PyFableARIMA(BaseForecaster):
         sys.stdout = report_output
 
         try:
-            robjects.r["report"](self._fit_auto_arima_)
+            robjects.r["fabletools::report"](self._fit_auto_arima_)
         finally:
             sys.stdout = sys_stdout
 
@@ -556,10 +556,12 @@ class PyFableARIMA(BaseForecaster):
 
         # Build forecast call with optional warning suppression
         if self.verbose:
-            forecast_call = "fc <- forecast(fit_aut_arima, new_data = a_tsibble)"
+            forecast_call = (
+                "fc <- fabletools::forecast(fit_aut_arima, new_data = a_tsibble)"
+            )
         else:
             forecast_call = (
-                "withCallingHandlers({ fc <- forecast("
+                "withCallingHandlers({ fc <- fabletools::forecast("
                 "fit_aut_arima, new_data = a_tsibble) }, "
                 "warning=function(w){ msg <- conditionMessage(w); "
                 "if(grepl('contains no packages', msg) || "
@@ -576,12 +578,13 @@ class PyFableARIMA(BaseForecaster):
                 'sapply(fc,function(x)inherits(x,"distribution"))][1]',
                 "",
                 "intervals_all <- purrr::map(level_vec, function(lv) {",
-                "  dists <- purrr::map(fc[[dist_col]], function(x) hilo(x, lv))",
-                "  df <- tibble::tibble(interval = dists) %>%",
+                "  dists <- purrr::map(fc[[dist_col]], ",
+                "                      function(x) fabletools::hilo(x, lv))",
+                "  df <- tibble::tibble(interval = dists) |>",
                 "    dplyr::mutate(",
                 "      lower = purrr::map_dbl(interval, function(x) x$lower),",
                 "      upper = purrr::map_dbl(interval, function(x) x$upper)",
-                "    ) %>%",
+                "    ) |> ",
                 "    dplyr::select(lower, upper)",
                 "  df",
                 "})",
