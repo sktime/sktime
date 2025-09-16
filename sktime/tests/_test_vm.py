@@ -2,6 +2,11 @@
 
 __all__ = ["run_test_vm"]
 
+import os
+import platform
+
+from skbase.utils.dependencies import _check_soft_dependencies
+
 
 def run_test_vm(cls_name):
     """Test an estimator in its own virtual machine.
@@ -27,6 +32,18 @@ def run_test_vm(cls_name):
     from sktime.registry import craft
     from sktime.utils import check_estimator
     from sktime.utils.dependencies import _check_estimator_deps
+
+    if _check_soft_dependencies("torch", severity="none"):
+        # disable mps for macos runners if torch is available
+        if platform.system() == "Darwin":
+            import torch
+
+            torch.backends.mps.is_available = lambda: False
+
+    if _check_soft_dependencies("hf-xet", severity="none"):
+        # to allow hf-xet to download models on macos runners on version `latest`
+        if platform.system() == "Darwin":
+            os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
 
     cls = craft(cls_name)
     if _check_estimator_deps(cls, severity="none"):

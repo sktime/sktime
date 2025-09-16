@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: python environment step
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -115,7 +115,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -147,7 +147,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -179,7 +179,7 @@ jobs:
       fail-fast: false
       matrix:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -189,7 +189,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -249,9 +249,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -270,9 +270,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -297,9 +297,9 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -325,9 +325,9 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -345,37 +345,6 @@ jobs:
       - name: Run tests
         run: make test_mlflow
 
-  test-cython-estimators:
-    needs: test-nosoftdeps
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v5
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install OSX packages
-        shell: bash
-        run: ./.github/scripts/install_osx_dependencies.sh
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev,cython_extras] --no-cache-dir
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
-
   test-lowerdeps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
@@ -387,7 +356,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -456,7 +425,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
 
@@ -468,7 +437,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -496,7 +465,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -506,7 +475,7 @@ jobs:
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
