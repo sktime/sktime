@@ -30,8 +30,9 @@ from sktime.utils.singleton import _multiton
 
 
 class TotoForecaster(BaseForecaster):
-    """
-    Interface for Toto forecaster for zero-shot forecasting.
+    """Toto foundation model forecaster for zero-shot forecasting.
+
+    Direct interface to forecaster from DataDog/toto [1]_.
 
     Toto is a foundation model for multivariate time series forecasting with a focus on
     observability metrics. This model leverages innovative architectural designs to
@@ -106,6 +107,9 @@ class TotoForecaster(BaseForecaster):
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
         "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on own VM?
     }
 
     def __init__(
