@@ -222,7 +222,6 @@ class TotoForecaster(BaseForecaster):
         self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
             self._device
         )
-        self._y = y
 
         self._id_mask = torch.zeros_like(self.input_series).to(self._device)
         self._padding_mask = torch.full_like(
