@@ -215,7 +215,9 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
         y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
 
-        if estimator_instance.get_tag("requires_y"):
+        requires_y = estimator_instance.get_tag("requires_y")
+        uses_y = estimator_instance.get_tag("y_inner_mtype") not in ["None", None]
+        if requires_y or uses_y:
             if not estimator_instance.get_tag("capability:categorical_in_y"):
                 with pytest.raises(TypeError, match=r"categorical"):
                     estimator_instance.fit_transform(X, y)

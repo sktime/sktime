@@ -83,6 +83,7 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
+                "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -260,7 +261,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     the time index of the passed series and then
     subtracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
-
 
     Parameters
     ----------
