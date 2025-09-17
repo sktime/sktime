@@ -841,42 +841,41 @@ class property__randomness(_BaseTag):
 
 
 class capability__exogeneous(_BaseTag):
-    """Capability: the forecaster can use exogeneous data.
+    """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
 
-    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
-    Exogeneous data are additional time series,
+    Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogenous data (``capability:exogenous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
-    can be used to pass exogeneous data to the forecaster.
+    can be used to pass exogenous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
     then such data must always have an index that contains that of the target series,
     i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
 
-    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    If the tag is ``False``, the forecaster does not make use of exogenous data.
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogenous",
         "parent_type": "forecaster",
         "tag_type": "bool",
-        "short_descr": "does forecaster make use of exogeneous data?",
+        "short_descr": "does forecaster make use of exogenous data?",
         "user_facing": True,
     }
 
@@ -3215,6 +3214,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "ignores-exogeneous-X",
+        "forecaster",
+        "bool",
+        "deprecated tag for exogenous capability",
     ),
 ]
 
