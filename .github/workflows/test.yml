@@ -219,6 +219,7 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+          r-version: '4.4.2'
 
       - name: Configure R paths (macOS)
         if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
@@ -247,6 +248,10 @@ jobs:
         if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
         run: |
           Rscript -e "install.packages(c('fable','fabletools','tsibble','tsibbledata','urca','feasts','lubridate','ggplot2','stringr','readr','readxl','tidyr','distributional','patchwork','scales','anytime','timechange','tibble','dplyr'), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+
+      - name: Check R version (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: Rscript -e "cat('R=', getRversion(), '\n')"
 
       - name: Ensure rpy2 present
         if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
