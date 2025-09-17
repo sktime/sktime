@@ -107,9 +107,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
           Note: passes ``y`` even if it is ``None``, or if not a named arg
         * "never": never passes ``y`` to any method.
 
-    input_type : str, one of "numpy" (default), "pandas"
+    input_type : str, one of "numpy", "pandas", optional
         type of data passed to the ``sklearn`` transformer
 
+        Default is ``"pandas"``, if ``sklearn`` version is 1.7.0 or higher,
+        otherwise ``"numpy"``.
+        
         * "numpy": 2D ``np.ndarray``
         * "pandas": ``pd.DataFrame``, with column names passed to transformer.
           column names are coerced to strings if not already,
@@ -168,7 +171,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         transformer,
         fit_in_transform=False,
         pass_y="auto",
-        input_type="numpy",
+        input_type=None,
         pooling="local",
     ):
         self.transformer = transformer
@@ -182,6 +185,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
+        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
+        sklearn_ge_17 = _check_soft_dependencies("scikit-learn>=1.7.0", severity="none")
+
+        if sklearn_ge_17 and input_type is None:
+            self._input_type = "pandas"
+        elif input_type is None:
+            self._input_type = "numpy"
+        else:
+            self._input_type = input_type
+
         if get_sklearn_tag(transformer, "capability:categorical"):
             self.set_tags(**{"capability:categorical_in_X": True})
 
@@ -189,7 +202,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
         if sklearn_ge_16:
             from sklearn.utils import get_tags
 
@@ -216,7 +228,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
-            if input_type == "numpy":
+            if self._input_type == "numpy":
                 self.set_tags(
                     **{
                         "X_inner_mtype": "np.ndarray",
@@ -224,7 +236,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
                         "capability:categorical_in_X": False,
                     }
                 )
-            elif input_type == "pandas":
+            elif self._input_type == "pandas":
                 self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
             else:
                 raise ValueError(
@@ -267,7 +279,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         The return is a dict which is passed to the method of name method.
         """
-        input_type = self.input_type
+        input_type = self._input_type
 
         if input_type == "numpy" and isinstance(X, pd.DataFrame):
             X = X.values
