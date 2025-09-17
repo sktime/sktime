@@ -2,6 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+from sktime.transformations.compose._arithmetic import Ufunc
 from sktime.transformations.compose._column import (
     ColumnEnsembleTransformer,
     ColumnwiseTransformer,
@@ -35,5 +36,6 @@ __all__ = [
     "TransformerPipeline",
     "TransformByLevel",
     "TransformIf",
+    "Ufunc",
     "YtoX",
 ]
