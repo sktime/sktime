@@ -1,7 +1,7 @@
 """
 Elementwise arithmetic operator transformer for sktime.
 
-This module provides the ElementWiseArithmeticOperator class, which applies
+This module provides the ElementwiseArithmetic class, which applies
 user-defined elementwise arithmetic operations to the outputs of multiple
 transformers, ensuring matching indexes and columns.
 """
@@ -17,9 +17,8 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
 
 
-class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator):
-    """
-    Applies an elementwise arithmetic operation to the outputs of multiple transformers.
+class Ufunc(BaseTransformer, _HeterogenousMetaEstimator):
+    """Elementwise arithmetic operation applied to the outputs of multiple transformers.
 
     This transformer applies a user-supplied elementwise operation (such as addition,
     subtraction, multiplication, division, or any custom function) to the outputs of
@@ -33,10 +32,10 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
 
     Parameters
     ----------
-    transformer_list : list of (str, transformer) tuples
+    transformers : list of (str, transformer) tuples
         List of transformers to apply to the input data. Each tuple contains a name
         and a transformer instance. All transformers must inherit from BaseTransformer.
-    operation : callable
+    op : callable of same signature as numpy ufuncs
         Function to apply elementwise to the outputs of the transformers.
         Should accept N arrays/Series/DataFrames and return a DataFrame or Series.
         Examples include numpy ufuncs (e.g., np.add, np.divide) or custom functions.
@@ -55,14 +54,12 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
     >>> import numpy as np
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.elementwise_operator import (
-    ...     ElementWiseArithmeticOperator,
-    ... )
-    >>> transformer_list = [
+    >>> from sktime.transformations.compose import Ufunc
+    >>> transformers = [
     ...     ("t1", ExponentTransformer(power=2)),
     ...     ("t2", ExponentTransformer(power=1)),
     ... ]
-    >>> op = ElementWiseArithmeticOperator(transformer_list, operation=np.divide)
+    >>> op = Ufunc(transformers, op=np.divide)
     >>> X = _make_series(n_timepoints=10, n_columns=2, random_state=42)
     >>> Xt = op.fit_transform(X)
     >>> # Xt contains the elementwise ratio of squared to original values
@@ -75,8 +72,8 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
     - This transformer is useful for combining features via arithmetic or custom logic.
     """
 
-    _steps_attr = "_transformer_list"
-    _steps_fitted_attr = "transformer_list_"
+    _steps_attr = "_transformers"
+    _steps_fitted_attr = "transformers_"
 
     _tags = {
         "scitype:transform-input": "Series",
@@ -96,33 +93,33 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         "maintainers": ["oresthes"],
     }
 
-    def __init__(self, transformer_list, operation):
-        self.transformer_list = transformer_list
-        self.operation = operation
-        self.transformer_list_ = self._check_estimators(
-            transformer_list, cls_type=BaseTransformer
+    def __init__(self, transformers, op):
+        self.transformers = transformers
+        self.op = op
+        self.transformers_ = self._check_estimators(
+            transformers, cls_type=BaseTransformer
         )
         super().__init__()
 
     @property
-    def _transformer_list(self):
-        return self._get_estimator_tuples(self.transformer_list, clone_ests=False)
+    def _transformers(self):
+        return self._get_estimator_tuples(self.transformers, clone_ests=False)
 
-    @_transformer_list.setter
-    def _transformer_list(self, value):
-        self.transformer_list = value
-        self.transformer_list_ = self._check_estimators(value, cls_type=BaseTransformer)
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers = value
+        self.transformers_ = self._check_estimators(value, cls_type=BaseTransformer)
 
     def _fit(self, X, y=None):
-        self.transformer_list_ = self._check_estimators(
-            self.transformer_list, cls_type=BaseTransformer
+        self.transformers_ = self._check_estimators(
+            self.transformers, cls_type=BaseTransformer
         )
-        for _, transformer in self.transformer_list_:
+        for _, transformer in self.transformers_:
             transformer.fit(X=X, y=y)
         return self
 
     def _transform(self, X, y=None):
-        transformers = self._get_estimator_list(self.transformer_list_)
+        transformers = self._get_estimator_list(self.transformers_)
         Xt_list = [trafo.transform(X, y) for trafo in transformers]
 
         # Ensure all outputs have matching indexes and columns
@@ -137,7 +134,7 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         # Apply the operation elementwise
         # Stack into 3D array if possible, else apply operation column-wise
         arrays = [Xt.values for Xt in Xt_list]
-        result = self.operation(*arrays)
+        result = self.op(*arrays)
         # If result is ndarray, wrap as DataFrame
         if isinstance(result, np.ndarray):
             result = pd.DataFrame(result, index=first_index, columns=first_columns)
@@ -161,7 +158,7 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         list of dict
             A list containing dictionaries with test parameters.
             Each dictionary includes:
-                - transformer_list: list of tuples
+                - transformers: list of tuples
                     A list of tuples where each tuple consists of a string key and an
                     instance of a transformer.
                 - operation: function
@@ -172,20 +169,19 @@ class ElementWiseArithmeticOperator(BaseTransformer, _HeterogenousMetaEstimator)
         from sktime.transformations.series.exponent import ExponentTransformer
         from sktime.transformations.series.func_transform import FunctionTransformer
 
-        if parameter_set == "default":
-            params1 = {
-                "transformer_list": [
-                    ("t1", ExponentTransformer(power=2)),
-                    ("t2", ExponentTransformer(power=1)),
-                ],
-                "operation": np.divide,
-            }
-            params2 = {
-                "transformer_list": [
-                    ("linear", Id()),
-                    ("quadratic", FunctionTransformer(np.square)),
-                    ("exponential", ExponentTransformer()),
-                ],
-                "operation": np.add,
-            }
-            return [params1, params2]
+        params1 = {
+            "transformers": [
+                ("t1", ExponentTransformer(power=2)),
+                ("t2", ExponentTransformer(power=1)),
+            ],
+            "op": np.divide,
+        }
+        params2 = {
+            "transformers": [
+                ("linear", Id()),
+                ("quadratic", FunctionTransformer(np.square)),
+                ("exponential", ExponentTransformer()),
+            ],
+            "op": np.add,
+        }
+        return [params1, params2]
