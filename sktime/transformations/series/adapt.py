@@ -112,7 +112,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         Default is ``"pandas"``, if ``sklearn`` version is 1.7.0 or higher,
         otherwise ``"numpy"``.
-        
+
         * "numpy": 2D ``np.ndarray``
         * "pandas": ``pd.DataFrame``, with column names passed to transformer.
           column names are coerced to strings if not already,
@@ -185,7 +185,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
         sklearn_ge_17 = _check_soft_dependencies("scikit-learn>=1.7.0", severity="none")
 
         if sklearn_ge_17 and input_type is None:
