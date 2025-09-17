@@ -107,6 +107,7 @@ class ScaledLogitTransformer(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
+        "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
