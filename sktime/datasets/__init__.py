@@ -54,6 +54,14 @@ __all__ = [
     "USChange",
     "ForecastingData",
     "M5Dataset",
+    "ArrowHead",
+    "BasicMotions",
+    "GunPoint",
+    "ItalyPowerDemand",
+    "JapaneseVowels",
+    "OSULeaf",
+    "PLAID",
+    "UCRUEADataset",
 ]
 
 from sktime.datasets._data_io import (
@@ -105,6 +113,16 @@ from sktime.datasets._single_problem_loaders import (
     load_uschange,
 )
 from sktime.datasets.base import BaseDataset
+from sktime.datasets.classification import (
+    PLAID,
+    ArrowHead,
+    BasicMotions,
+    GunPoint,
+    ItalyPowerDemand,
+    JapaneseVowels,
+    OSULeaf,
+    UCRUEADataset,
+)
 from sktime.datasets.forecasting import (
     Airline,
     ForecastingData,
