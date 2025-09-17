@@ -251,7 +251,7 @@ jobs:
 
       - name: Check R version (macOS)
         if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
-        run: Rscript -e "cat('R=', getRversion(), '\n')"
+        run: Rscript -e "cat('R=',paste(unlist(getRversion()),collapse='.'),'\n')"
 
       - name: Ensure rpy2 present
         if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
