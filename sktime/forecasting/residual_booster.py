@@ -268,46 +268,32 @@ class ResidualBoostingForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             y_hat = y_hat + y_add
         return y_hat
 
+    def _add_det_to_proba(self, y_proba, y_pred):
+        """Add multiindex columns to probabilistic forecasts."""
+        y_proba = y_proba.copy()
+        for col in y_proba.columns:
+            var = col[0]
+            y_proba[col] = y_proba[col] + y_pred[var]
+        return y_proba
+
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
-        y_shift = self.base_future_.predict(fh=fh, X=X)
-        if getattr(self, "_resid_futures_", None):
-            for _, f in self._resid_futures_[:-1]:
-                y_add = f.predict(fh=fh, X=X)
-                y_shift = y_shift + self._align_like(y_add, y_shift).fillna(0)
-
-            _, f_last = self._resid_futures_[-1]
-            I_last = f_last.predict_interval(fh=fh, X=X, coverage=coverage)
-
-            # align the shift (Series/DataFrame) to the interval DataFrame
-            y_shift_aligned = self._align_like(y_shift, I_last).fillna(0)
-            return I_last + y_shift_aligned
-
-        return self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+        i_base = self.base_future_.predict(fh=fh, X=X)
+        i_res = self.residual_forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage
+        )
+        return self._add_det_to_proba(i_res, i_base)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Combine arbitrary quantile forecasts."""
-        y_shift = self.base_future_.predict(fh=fh, X=X)
-        if getattr(self, "_resid_futures_", None):
-            for _, f in self._resid_futures_[:-1]:
-                y_add = f.predict(fh=fh, X=X)
-                y_shift = y_shift + self._align_like(y_add, y_shift).fillna(0)
-
-            _, f_last = self._resid_futures_[-1]
-            Q_last = f_last.predict_quantiles(fh=fh, X=X, alpha=alpha)
-
-            y_shift_aligned = self._align_like(y_shift, Q_last).fillna(0)
-            return Q_last + y_shift_aligned
-
-        return self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        q_base = self.base_future_.predict(fh=fh, X=X)
+        q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        return self._add_det_to_proba(q_res, q_base)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Combine predictive variances (or full covariances)."""
-        if getattr(self, "_resid_futures_", None):
-            _, f_last = self._resid_futures_[-1]
-            V_last = f_last.predict_var(fh=fh, X=X, cov=cov)
-            return V_last
-        return self.base_future_.predict_var(fh=fh, X=X, cov=cov)
+        v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
+        return v_res
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
