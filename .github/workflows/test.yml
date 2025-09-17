@@ -236,16 +236,17 @@ jobs:
           "$R_HOME\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "$R_HOME\bin\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           & Rscript.exe -e "sessionInfo()"
-      - name: Install R packages required by PyFableARIMA
-        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+
+      - name: Install R packages required by PyFableARIMA (Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'windows-latest' }}
+        shell: pwsh
         run: |
-          Rscript -e 'install.packages(c(
-            "fable","fabletools","tsibble","tsibbledata","urca","feasts",
-            "lubridate","ggplot2","stringr","readr","readxl","tidyr",
-            "distributional","patchwork","scales","anytime","timechange",
-            "tibble","dplyr"
-          ), repos="https://cloud.r-project.org", Ncpus=2,
-          dependencies=c("Depends","Imports","LinkingTo"))'
+          & Rscript.exe -e "install.packages(c('fable','fabletools','tsibble','tsibbledata','urca','feasts','lubridate','ggplot2','stringr','readr','readxl','tidyr','distributional','patchwork','scales','anytime','timechange','tibble','dplyr'), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+
+      - name: Install R packages required by PyFableARIMA (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: |
+          Rscript -e "install.packages(c('fable','fabletools','tsibble','tsibbledata','urca','feasts','lubridate','ggplot2','stringr','readr','readxl','tidyr','distributional','patchwork','scales','anytime','timechange','tibble','dplyr'), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
       - name: Ensure rpy2 present
         if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
