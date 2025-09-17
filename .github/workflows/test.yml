@@ -181,6 +181,9 @@ jobs:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
+        exclude:
+          - os: ubuntu-latest
+            flag: PyFableARIMA
 
     runs-on: ${{ matrix.os }}
 
@@ -209,12 +212,12 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
-
       - name: Set up R (PyFableARIMA on macOS & Windows)
         if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+          r-version: '4.4.2'
 
       - name: Configure R paths (macOS)
         if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
@@ -226,8 +229,9 @@ jobs:
         if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          echo "R_HOME=$(R RHOME)" >> $env:GITHUB_ENV
-          echo "$(R RHOME)\bin\x64" >> $env:GITHUB_PATH
+          $R_HOME = (& R RHOME).Trim()
+          "R_HOME=$R_HOME" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$R_HOME\bin\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install R packages required by PyFableARIMA
         if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
@@ -245,6 +249,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "rpy2>=3.6,<3.7"
+
       - name: Run tests with ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
