@@ -468,6 +468,9 @@ class SeasonalityPeriodogram(BaseParamFitter):
         "capability:multivariate": False,
         # todo 0.39.0: check whether scipy<1.16 is still needed
         "python_dependencies": ["seasonal", "scipy<1.16"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # tested on separate VM due to seasonal dependency
     }
 
     def __init__(self, min_period=4, max_period=None, thresh=0.10):
