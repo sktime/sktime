@@ -19,7 +19,7 @@ class _TbatsAdapter(BaseForecaster):
     _tags = {
         "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
         # cotterpl for tbats package
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,

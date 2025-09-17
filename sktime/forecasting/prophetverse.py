@@ -326,7 +326,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "python_dependencies": "prophetverse",
         # estimator type
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": False,
         "y_inner_mtype": [
             "pd.DataFrame",
