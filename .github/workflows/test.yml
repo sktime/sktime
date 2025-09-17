@@ -210,6 +210,41 @@ jobs:
       - name: Show dependencies
         run: python -m pip list
 
+      - name: Set up R (PyFableARIMA on macOS & Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Configure R paths (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: |
+          echo "R_HOME=$(R RHOME)" >> "$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$(R RHOME)/lib" >> "$GITHUB_ENV"
+
+      - name: Configure R paths (Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          echo "R_HOME=$(R RHOME)" >> $env:GITHUB_ENV
+          echo "$(R RHOME)\bin\x64" >> $env:GITHUB_PATH
+
+      - name: Install R packages required by PyFableARIMA
+        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+        run: |
+          Rscript -e 'install.packages(c(
+            "fable","fabletools","tsibble","tsibbledata","urca","feasts",
+            "lubridate","ggplot2","stringr","readr","readxl","tidyr",
+            "distributional","patchwork","scales","anytime","timechange",
+            "tibble","dplyr"
+          ), repos="https://cloud.r-project.org", Ncpus=2,
+          dependencies=c("Depends","Imports","LinkingTo"))'
+
+      - name: Ensure rpy2 present
+        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install "rpy2>=3.6,<3.7"
       - name: Run tests with ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
