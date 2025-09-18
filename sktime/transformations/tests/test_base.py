@@ -501,7 +501,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     This test should trigger column (variable) vectorization, but not row vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = False
@@ -521,7 +521,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformSeriesMultivariate()
@@ -546,7 +546,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     This test should trigger both column (variable) and row (hierarchy) vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = False
@@ -568,7 +568,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformHierarchicalMultivariate()
@@ -593,7 +593,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     This test should trigger column (variable) vectorization, but not row vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = True
@@ -613,7 +613,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformSeriesMultivariate()
@@ -638,7 +638,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     This test should trigger both column (variable) and row (hierarchy) vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = True
@@ -660,7 +660,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformHierarchicalMultivariate()

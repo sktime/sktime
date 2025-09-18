@@ -151,7 +151,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
         # CI and test flags
@@ -208,7 +208,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         if not self._trafo_has_X:
             self.set_tags(**{"y_inner_mtype": "None"})
-            self.set_tags(**{"univariate-only": True})
+            self.set_tags(**{"capability:multivariate": False})
 
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
@@ -506,7 +506,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,

@@ -197,7 +197,7 @@ class PeakTimeFeature(BaseTransformer):
         ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
