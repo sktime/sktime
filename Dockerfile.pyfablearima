@@ -1,0 +1,74 @@
+############################################################
+# Optimized Docker image to run check_estimator on PyFableARIMA
+# Uses rocker/r2u (R 4.4.x + precompiled CRAN binaries via apt) for speed/stability
+# Installs required R packages via apt before copying repo for maximal caching
+############################################################
+
+FROM rocker/r2u:jammy
+
+LABEL org.opencontainers.image.source="https://github.com/sktime/sktime" \
+      org.opencontainers.image.description="PyFableARIMA estimator test image" \
+      maintainer="sktime developers"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PYTHONUNBUFFERED=1
+
+# Install Python 3.10 and core build tooling
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 python3.10-venv python3.10-dev python3-pip \
+    build-essential gcc g++ gfortran make \
+    ca-certificates git curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3.10 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip + install base Python deps first for caching
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir numpy pandas scipy patsy rpy2==3.6.1
+
+# Install required R packages as binary .deb (fast, cached)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    r-cran-tidyverse \
+    r-cran-fable r-cran-fabletools r-cran-fpp3 \
+    r-cran-tsibble r-cran-tsibbledata r-cran-urca r-cran-feasts \
+    r-cran-lubridate r-cran-ggplot2 r-cran-stringr r-cran-readr r-cran-readxl \
+    r-cran-tidyr r-cran-distributional r-cran-patchwork r-cran-scales \
+    r-cran-anytime r-cran-timechange r-cran-tibble r-cran-dplyr && \
+    rm -rf /var/lib/apt/lists/*
+
+# Warm-up R packages (ensures namespaces cached)
+RUN Rscript -e 'suppressPackageStartupMessages({library(tidyverse); library(fable); library(tsibble)}); cat("R warm-up OK\n")'
+
+WORKDIR /workspace
+
+# Copy only dependency metadata first (extra caching guard)
+COPY pyproject.toml setup.cfg README.md ./
+RUN pip install --no-cache-dir build && python -m build --sdist --wheel --outdir /tmp/wheels || true
+
+# Copy full project
+COPY . /workspace
+
+# Install sktime core only (no dev extras) plus pytest (required by check_estimator)
+RUN pip install --no-cache-dir . pytest
+
+# Show versions (helpful for debugging)
+RUN python - <<'PY'
+import sys, pandas
+print('Python:', sys.version)
+try:
+    import importlib.metadata as im
+    print('rpy2:', im.version('rpy2'))
+except Exception as e:
+    print('rpy2 version lookup failed:', e)
+print('pandas:', pandas.__version__)
+PY
+RUN Rscript -e 'sessionInfo()'
+
+# Run check_estimator on container start (single-purpose image)
+#CMD ["bash","-lc","python - <<'PY'\nfrom sktime.utils import check_estimator\nfrom sktime.forecasting.pyfable_arima import PyFableARIMA\nprint('Running check_estimator(PyFableARIMA)...')\ncheck_estimator(PyFableARIMA, raise_exceptions=True)\nprint('check_estimator passed.')\nPY"]
+
+CMD ["bash"]
