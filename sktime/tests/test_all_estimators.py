@@ -1586,6 +1586,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
+        # this test compares outputs from two runs, single process and multi-process
+        # if the estimator cannot be derandomized, we cannot expect
+        # identical outputs, so we skip the test
+        randomness = estimator_instance.get_tag("property:randomness")
+        derandomizable = randomness != "stochastic"
+        if not derandomizable:
+            return None
+
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
