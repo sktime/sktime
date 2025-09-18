@@ -355,7 +355,7 @@ class ThetaForecaster(ExponentialSmoothing):
         params = [params0, params1, params2, params3]
 
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
-            des = Deseasonalizer(sp=4, model="multiplicative")
+            des = Deseasonalizer(sp=4, model="additive")
             params4 = {"deseasonalize": des}
             params.append(params4)
 
