@@ -28,7 +28,7 @@ class BaseHMMLearn(BaseDetector):
         # estimator type
         # --------------
         "capability:multivariate": False,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "python_dependencies": "hmmlearn",
         "task": "segmentation",

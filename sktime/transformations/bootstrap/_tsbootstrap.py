@@ -54,7 +54,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y

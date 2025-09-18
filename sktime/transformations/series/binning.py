@@ -58,7 +58,7 @@ class TimeBinAggregate(BaseTransformer):
     _tags = {
         "authors": "fkiraly",
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

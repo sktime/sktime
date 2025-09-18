@@ -20,7 +20,7 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:inverse_transform:range": None,
         "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
             "pd.Series",
             "pd.DataFrame",
