@@ -532,7 +532,7 @@ class tests__skip_all(_BaseTag):
 
 
 class tests__skip_by_name(_BaseTag):
-    """Whether to spin up a separate VM to test the estimator.
+    """A list of test names that should be skipped for this object.
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
 
@@ -766,42 +766,41 @@ class fit_is_empty(_BaseTag):
 
 
 class capability__exogeneous(_BaseTag):
-    """Capability: the forecaster can use exogeneous data.
+    """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
 
-    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
-    Exogeneous data are additional time series,
+    Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogenous data (``capability:exogenous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
-    can be used to pass exogeneous data to the forecaster.
+    can be used to pass exogenous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
     then such data must always have an index that contains that of the target series,
     i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
 
-    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    If the tag is ``False``, the forecaster does not make use of exogenous data.
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogenous",
         "parent_type": "forecaster",
         "tag_type": "bool",
-        "short_descr": "does forecaster make use of exogeneous data?",
+        "short_descr": "does forecaster make use of exogenous data?",
         "user_facing": True,
     }
 
@@ -1175,6 +1174,40 @@ class capability__predict_proba(_BaseTag):
             "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
         ),
+        "user_facing": True,
+    }
+
+
+class capability__class_weight(_BaseTag):
+    """Capability: the classifier can use class weights to handle imbalanced data.
+
+    - String name: ``"capability:class_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier supports class weighting functionality,
+    through a ``class_weight`` parameter that allows users to assign
+    different weights to different classes during training. This is commonly used
+    to handle imbalanced datasets where some classes are underrepresented.
+
+    Class weights can usually be provided as:
+
+    - A dictionary mapping class labels to weights
+    - None for uniform class weights (default behavior)
+
+    If the tag is ``False``, the classifier does not support class weighting,
+    and any class_weight parameter will be ignored or may raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:class_weight",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
@@ -2144,7 +2177,7 @@ class inner_implements_multilevel(_BaseTag):
 
 
 class x_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the estimator can deal with internally for X.
 
     - String name: ``"X_inner_mtype"``
     - Extension developer tag
@@ -2215,7 +2248,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for y.
+    """The machine type(s) the estimator can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
@@ -3106,6 +3139,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "ignores-exogeneous-X",
+        "forecaster",
+        "bool",
+        "deprecated tag for exogenous capability",
     ),
 ]
 

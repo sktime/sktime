@@ -15,10 +15,26 @@ def check_estimator(
 ):
     """Run all tests on one single estimator.
 
-    Tests that are run on estimator:
-        all tests in test_all_estimators
-        all interface compatibility tests from the module of estimator's scitype
-            for example, test_all_forecasters if estimator is a forecaster
+    This utility runs all tests from the unified API conformance suites
+    applying to the estimator, including tests for the specific subtype
+    and all supertypes.
+
+    If ``estimator`` is an instance, tests are run on the specific instance
+    and its class;
+    if ``estimator`` is a class, tests are run on the class, and all instances
+    constructed via its ``create_test_instances_and_names`` method.
+
+    NOTE: individual tests not in the API conformance suites are not run.
+
+    Example: if ``estimator`` is a forecaster, runs:
+
+    * tests in ``TestAllObjects``, because every ``forecaster`` is an ``object``
+    * tests in ``TestAllEstimators``, because every ``forecaster`` is an ``estimator``
+    * tests in ``TestAllForecasters``
+
+    In the example, we do not run a ``test_my_favourite_estimator`` test that is not
+    in ``TestAll[Something]``, if the
+    ``estimator`` is an instance of ``MyFavouriteEstimator``.
 
     Parameters
     ----------
