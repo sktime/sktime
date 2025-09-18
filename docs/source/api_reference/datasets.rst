@@ -48,6 +48,7 @@ Classification datasets
     japanese_vowels.JapaneseVowels
     osuleaf.OSULeaf
     plaid.PLAID
+    ucr_uea_archive.UCRUEADatasets
 
 Regression datasets
 -------------------

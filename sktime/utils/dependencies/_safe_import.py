@@ -77,7 +77,7 @@ def _safe_import(import_path, pkg_name=None):
     if _check_soft_dependencies(pkg_name, severity="none"):
         try:
             if len(path_list) == 1:
-                return importlib.import_module(pkg_name)
+                return importlib.import_module(obj_name)
             module_name, attr_name = import_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             return getattr(module, attr_name)
