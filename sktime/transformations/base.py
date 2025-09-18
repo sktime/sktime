@@ -115,7 +115,7 @@ class BaseTransformer(BaseEstimator):
         "capability:inverse_transform:range": None,
         "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -1126,7 +1126,7 @@ class BaseTransformer(BaseEstimator):
         metadata["_convert_case"] = case
 
         # checking X vs tags
-        inner_univariate = self.get_tag("univariate-only")
+        inner_univariate = not self.get_tag("capability:multivariate")
         # we remember whether we need to vectorize over columns, and at all
         req_vec_because_cols = inner_univariate and not X_metadata["is_univariate"]
         requires_vectorization = req_vec_because_rows or req_vec_because_cols

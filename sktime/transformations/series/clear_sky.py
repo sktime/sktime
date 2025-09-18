@@ -84,7 +84,7 @@ class ClearSky(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": True,  # can the transformer handle multivariate X?
+        "capability:multivariate": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
             "pd.Series",
         ],  # which mtypes do _fit/_predict support for X?
