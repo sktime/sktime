@@ -258,6 +258,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "rpy2>=3.6,<3.7"
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
       - name: Run tests with ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
@@ -494,6 +500,11 @@ jobs:
 
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime and dependencies
         shell: bash
