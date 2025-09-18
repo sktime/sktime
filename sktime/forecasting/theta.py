@@ -134,14 +134,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         super().__init__(initial_level=initial_level, sp=sp)
 
-        if isinstance(deseasonalize, bool) and deseasonalize:
-            self.deseasonalizer_ = Deseasonalizer(sp=sp, model=deseasonalize_model)
-
-        elif isinstance(deseasonalize, bool):
-            self.deseasonalizer_ = None
-        else:
-            self.deseasonalizer_ = deseasonalize
-
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -158,6 +150,15 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
+        deseasonalize = self.deseasonalize
+        if isinstance(deseasonalize, bool) and deseasonalize:
+            self.deseasonalizer_ = Deseasonalizer(sp=sp, model=deseasonalize_model)
+
+        elif isinstance(deseasonalize, bool):
+            self.deseasonalizer_ = None
+        else:
+            self.deseasonalizer_ = deseasonalize
+
         no_deseasonalizer = self.deseasonalizer_ is None
 
         sp = check_sp(self.sp)
