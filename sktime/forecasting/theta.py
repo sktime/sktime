@@ -152,7 +152,9 @@ class ThetaForecaster(ExponentialSmoothing):
         """
         deseasonalize = self.deseasonalize
         if isinstance(deseasonalize, bool) and deseasonalize:
-            self.deseasonalizer_ = Deseasonalizer(sp=sp, model=self.deseasonalize_model)
+            self.deseasonalizer_ = Deseasonalizer(
+                sp=self.sp, model=self.deseasonalize_model
+            )
 
         elif isinstance(deseasonalize, bool):
             self.deseasonalizer_ = None
