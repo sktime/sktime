@@ -181,6 +181,9 @@ jobs:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
         python-version: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
+        exclude:
+          - os: ubuntu-latest
+            flag: PyFableARIMA
 
     runs-on: ${{ matrix.os }}
 
@@ -194,6 +197,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install OSX packages
+        if: ${{ matrix.os == 'macos-latest' }}
         run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime with dev dependencies
@@ -209,6 +213,56 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Set up R (PyFableARIMA on macOS & Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+          r-version: '4.4.2'
+
+      - name: Configure R paths (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: |
+          echo "R_HOME=$(R RHOME)" >> "$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$(R RHOME)/lib" >> "$GITHUB_ENV"
+
+      - name: Configure R paths (Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          # Use Rscript.exe to avoid the PowerShell alias 'r' (Invoke-History)
+          $R_HOME = (& Rscript.exe -e "cat(normalizePath(R.home(), winslash='\\'))").Trim()
+          "R_HOME=$R_HOME" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$R_HOME\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "$R_HOME\bin\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & Rscript.exe -e "sessionInfo()"
+
+      - name: Install R packages required by PyFableARIMA (Windows)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          & Rscript.exe -e "install.packages(c('fable','fabletools','tsibble','tsibbledata','urca','feasts','lubridate','ggplot2','stringr','readr','readxl','tidyr','distributional','patchwork','scales','anytime','timechange','tibble','dplyr'), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+
+      - name: Install R packages required by PyFableARIMA (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: |
+          Rscript -e "install.packages(c('fable','fabletools','tsibble','tsibbledata','urca','feasts','lubridate','ggplot2','stringr','readr','readxl','tidyr','distributional','patchwork','scales','anytime','timechange','tibble','dplyr'), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+
+      - name: Check R version (macOS)
+        if: ${{ matrix.flag == 'PyFableARIMA' && matrix.os == 'macos-latest' }}
+        run: Rscript -e "cat('R=',paste(unlist(getRversion()),collapse='.'),'\n')"
+
+      - name: Ensure rpy2 present
+        if: ${{ matrix.flag == 'PyFableARIMA' && (matrix.os == 'macos-latest' || matrix.os == 'windows-latest') }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install "rpy2>=3.6,<3.7"
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Run tests with ${{ matrix.flag }}
         env:
@@ -447,6 +501,11 @@ jobs:
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
 
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
       - name: Install sktime and dependencies
         shell: bash
         run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
@@ -494,3 +553,73 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
+
+  test-pyfablearima:
+    # Rudimentary dedicated job to run check_estimator on PyFableARIMA
+    # Includes installation of required R and Python dependencies for rpy2/fable
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Set R env for rpy2
+        run: |
+          echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(R RHOME)/lib:${LD_LIBRARY_PATH:-}" >> $GITHUB_ENV
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c(
+            "fable","fabletools","fpp3","tsibble","tsibbledata",
+            "urca","feasts","lubridate","ggplot2","stringr","readr","readxl",
+            "tidyr","distributional","patchwork","scales","anytime","timechange",
+            "tibble","dplyr"),
+            repos="https://cloud.r-project.org", Ncpus=2,
+            dependencies=c("Depends","Imports","LinkingTo"))'
+
+      - name: Install Python dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install numpy pandas scipy patsy rpy2==3.6.1 pytest
+            python -m pip install .
+
+      - name: Show Python and R session info
+        env:
+          R_HOME: ${{ env.R_HOME }}
+          LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+        run: |
+          echo "R_HOME=$R_HOME"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+          python - <<'PY'
+          import sys
+          print("Python", sys.version)
+          # Try metadata first (works even if rpy2.__version__ is missing)
+          try:
+              import importlib.metadata as md
+              print("rpy2", md.version("rpy2"))
+          except Exception:
+              try:
+                  import rpy2
+                  print("rpy2", getattr(rpy2, "__version__", "unknown"))
+              except Exception as e:
+                  print("rpy2 unloadable:", e)
+          import pandas as pd
+          print("pandas", pd.__version__)
+          PY
+          Rscript -e 'sessionInfo()'
+
+      - name: Run only PyFableARIMA tests (honors skip tags)
+        run: |
+          # this replaces check_estimator which does not respect tags for skipping tests
+          python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('PyFableARIMA')"
