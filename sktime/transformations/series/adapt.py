@@ -201,7 +201,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        trafo_fit_in_transform = get_sklearn_tag(transformer, "fit_is_empty", False)
+        trafo_fit_in_transform = get_sklearn_tag(transformer, "fit_is_empty")
         self._skip_fit = fit_in_transform or trafo_fit_in_transform
 
         if self._skip_fit:
