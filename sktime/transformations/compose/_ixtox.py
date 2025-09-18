@@ -48,7 +48,9 @@ class IxToX(BaseTransformer):
         ``X``
         if passed, passed on as ``level`` to ``reset_index`` internally
         if None, will convert only the time index (last level) into features
-        Note that this is different from the default of ``reset_index``
+        Note that this is different from the default of ``reset_index``.
+        You can also use ``"all_but_time"`` to get all indices but the last one, or
+        ``"all"`` to get all indices.
     ix_source : str, optional, default="X"
         which object to take the index from
         default = "X" = ``X`` as passed to ``transform``
@@ -67,7 +69,7 @@ class IxToX(BaseTransformer):
     """
 
     _tags = {
-        "authors": "fkiraly",
+        "authors": ["fkiraly", "RobKuebler"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,
@@ -114,8 +116,20 @@ class IxToX(BaseTransformer):
         if ix_source == "y" and y is not None:
             X = y
 
-        if level is None:
+        if level == "all_but_time":
+            level = X.index.names[:-1]
+        elif level == "all":
+            level = X.index.names
+        elif level is None:
             level = -1
+        elif isinstance(level, (list, tuple)) or isinstance(level, int):
+            pass
+        else:
+            msg = (
+                "level must be None, 'all', 'all_but_time', or list/tuple, "
+                f"found {level}"
+            )
+            raise ValueError(msg)
 
         X_only_ix = X.drop(columns=X.columns)
 
