@@ -350,10 +350,16 @@ class ThetaForecaster(ExponentialSmoothing):
         params0 = {"deseasonalize_model": "additive"}
         params1 = {"sp": 2, "deseasonalize": True, "deseasonalize_model": "additive"}
         params2 = {"deseasonalize": False}
-        des = Deseasonalizer(sp=4, model="multiplicative")
-        params3 = {"initial_level": 0.5, "deseasonalize": des}
+        params3 = {"initial_level": 0.5, "deseasonalize_model": "additive"}
 
-        return [params0, params1, params2, params3]
+        params = [params0, params1, params2, params3]
+
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            des = Deseasonalizer(sp=4, model="multiplicative")
+            params4 = {"deseasonalize": des}
+            params.append(params4)
+
+        return params
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
