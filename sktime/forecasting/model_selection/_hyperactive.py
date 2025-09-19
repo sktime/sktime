@@ -190,6 +190,9 @@ class ForecastingOptCV(_DelegatedForecaster):
         "authors": "fkiraly",
         "maintainers": "fkiraly",
         "python_dependencies": "hyperactive>=5",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
