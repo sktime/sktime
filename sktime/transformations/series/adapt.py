@@ -106,11 +106,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
           Note: passes ``y`` even if it is ``None``, or if not a named arg
         * "never": never passes ``y`` to any method.
 
-    input_type : str, one of "numpy", "pandas", optional
+    input_type : str, one of "numpy" (default), "pandas", optional
         type of data passed to the ``sklearn`` transformer
-
-        Default is ``"pandas"``, if ``sklearn`` version is 1.7.0 or higher,
-        otherwise ``"numpy"``.
 
         * "numpy": 2D ``np.ndarray``
         * "pandas": ``pd.DataFrame``, with column names passed to transformer.
