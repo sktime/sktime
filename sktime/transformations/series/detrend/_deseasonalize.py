@@ -485,6 +485,7 @@ class STLTransformer(BaseTransformer):
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
