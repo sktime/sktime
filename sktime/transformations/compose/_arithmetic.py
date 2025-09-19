@@ -17,12 +17,15 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
 
 
-class Ufunc(BaseTransformer, _HeterogenousMetaEstimator):
-    """Elementwise arithmetic operation applied to the outputs of multiple transformers.
+class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
+    """Combination operation applied to the outputs of multiple transformers.
 
-    This transformer applies a user-supplied elementwise operation (such as addition,
+    Applies ``op`` to the result of multiple transformers,
+    obtaining ``op(output1, output2, ...)``.
+
+    This transformer applies a user-supplied combination operation (such as addition,
     subtraction, multiplication, division, or any custom function) to the outputs of
-    two or more transformers. The operation is performed elementwise across all
+    two or more transformers. The operation is performed across all
     outputs, and the result is returned as a single DataFrame or Series.
 
     All transformers must produce outputs with matching indexes and columns. If the
@@ -36,7 +39,7 @@ class Ufunc(BaseTransformer, _HeterogenousMetaEstimator):
         List of transformers to apply to the input data. Each tuple contains a name
         and a transformer instance. All transformers must inherit from BaseTransformer.
     op : callable of same signature as numpy ufuncs
-        Function to apply elementwise to the outputs of the transformers.
+        Function to apply to the outputs of the transformers.
         Should accept N arrays/Series/DataFrames and return a DataFrame or Series.
         Examples include numpy ufuncs (e.g., np.add, np.divide) or custom functions.
 

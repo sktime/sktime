@@ -127,8 +127,19 @@ Pipeline building - Logging
 
     Logger
 
+Pipeline building - Arhithmetic operations and output combination
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CombineTransformers
+
 Sklearn, pandas, numpy adapters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.reduce
 
@@ -148,13 +159,6 @@ Sklearn, pandas, numpy adapters
     TabularToSeriesAdaptor
     PandasTransformAdaptor
 
-.. currentmodule:: sktime.transformations.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Ufunc
 
 Series-to-features transformers
 -------------------------------
@@ -400,8 +404,7 @@ Depending on the transformer, the transformation parameters can be fitted.
     :toctree: auto_generated/
     :template: class.rst
 
-    Ufunc
-
+    CombineTransformers
 
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
