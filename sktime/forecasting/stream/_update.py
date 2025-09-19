@@ -203,7 +203,6 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         #   if yes: call fit, on the specified window sub-set of all observed data
         if _geq(time_since_last_fit, refit_interval) and update_params:
             if refit_window_size is not None or refit_window_lag != 0:
-                print(refit_window_size)
                 y_win = get_window(
                     _y, window_length=refit_window_size, lag=refit_window_lag
                 )
