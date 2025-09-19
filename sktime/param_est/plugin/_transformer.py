@@ -99,7 +99,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
     _tags = {
         "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "remember_data": False,  # whether all data seen is remembered as self._X
     }
@@ -127,7 +127,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "capability:inverse_transform",
             "capability:inverse_transform:range",
             "capability:inverse_transform:exact",
-            "univariate-only",
+            "capability:multivariate",
             "y_inner_mtype",
             "requires_y",
             "enforce_index_type",

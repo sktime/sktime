@@ -91,7 +91,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
     }
 
     func = median_relative_absolute_error

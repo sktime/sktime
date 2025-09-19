@@ -119,7 +119,7 @@ class VmdTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,
