@@ -185,7 +185,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.7.0", severity="none")
+        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
 
         if sklearn_ge_16 and input_type is None:
             self._input_type = "pandas"
