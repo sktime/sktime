@@ -57,12 +57,12 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     >>> import numpy as np
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.compose import Ufunc
+    >>> from sktime.transformations.compose import CombineTransformers
     >>> transformers = [
     ...     ("t1", ExponentTransformer(power=2)),
     ...     ("t2", ExponentTransformer(power=1)),
     ... ]
-    >>> op = Ufunc(transformers, op=np.divide)
+    >>> op = CombineTransformers(transformers, op=np.divide)
     >>> X = _make_series(n_timepoints=10, n_columns=2, random_state=42)
     >>> Xt = op.fit_transform(X)
     >>> # Xt contains the elementwise ratio of squared to original values
