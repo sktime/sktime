@@ -14,7 +14,6 @@ from sktime.transformations.bootstrap import (
     TSBootstrapAdapter,
 )
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -110,7 +109,7 @@ class EnbPIForecaster(BaseForecaster):
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
@@ -158,21 +157,8 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_ = bootstrap_transformer
 
         if self.bootstrap_transformer is None:
-            # todo 0.39.0: remove this warning
-            warn(
-                "The default value for the bootstrap_transformer will change to the"
-                "sktime MovingBlockBootstrap in version 0.39.0."
-                "For obtaining the current default behaviour after 0.39.0, pass "
-                "bootstrap_transformer=TSBootstrapAdapter(MovingBlockBootstrap()), "
-                "with moving block bootstrap from tsbootstrap.",
-                obj=self,
-                stacklevel=2,
-            )
-            from tsbootstrap import MovingBlockBootstrap
-
-            # todo 0.39.0: replace with Moving Block Bootstrap from sktime. And set
-            # the return_indices=True
-            self.bootstrap_transformer_ = TSBootstrapAdapter(MovingBlockBootstrap())
+            mbb = MovingBlockBootstrapTransformer(return_indices=True)
+            self.bootstrap_transformer_ = mbb
 
         bs_capable = self.bootstrap_transformer_.get_tag(
             "capability:bootstrap_index", False, raise_error=False

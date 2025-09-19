@@ -123,3 +123,11 @@ Benchmarking Framework v1
 
     PairwiseMetric
     AggregateMetric
+
+
+Post-hoc tests and utilities
+----------------------------
+
+.. currentmodule:: sktime.benchmarking.critical_difference
+
+    plot_critical_difference

@@ -230,7 +230,7 @@ class _Reducer(_BaseWindowForecaster):
             "fkiraly",
             "benheid",
         ],
-        "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
+        "capability:exogenous": True,  # reduction uses X in non-trivial way
         "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
@@ -1105,7 +1105,7 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
     }
 
     def _transform(self, y, X=None):
@@ -1950,12 +1950,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -2357,9 +2358,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -2772,7 +2776,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

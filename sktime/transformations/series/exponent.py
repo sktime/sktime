@@ -81,7 +81,7 @@ class ExponentTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
         # CI and test flags
         # -----------------

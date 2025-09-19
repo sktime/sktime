@@ -69,11 +69,11 @@ class MyTransformer(BaseTransformer):
 
     # todo: fill in univariate-only tag
     _tags = {
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
-        "univariate-only": False,
-        #   True: inner _fit, _predict, receives only single-column DataFrame
-        #   False: inner _predict gets pd.DataFrame series with any number of columns
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
+        "capability:multivariate": True,
+        # valid values: False = inner _fit, _transform receive only univariate series
+        #   True = uni- and multivariate series are passed to inner methods
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
         "authors": ["author1", "author2"],  # authors, GitHub handles
@@ -123,9 +123,9 @@ class MyTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -158,9 +158,9 @@ class MyTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

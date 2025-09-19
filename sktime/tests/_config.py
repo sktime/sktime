@@ -8,7 +8,6 @@ __all__ = [
     "EXCLUDE_ESTIMATORS",
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
-    "CYTHON_ESTIMATORS",
     "ONLY_CHANGED_MODULES",
 ]
 
@@ -21,10 +20,6 @@ from sktime.registry import ESTIMATOR_TAG_LIST
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
 MATRIXDESIGN = False
-
-# whether to test only estimators that require cython, C compiler such as gcc
-# default is False, can be set to True by pytest --only_cython_estimators True flag
-CYTHON_ESTIMATORS = False
 
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
@@ -43,7 +38,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
@@ -105,8 +99,6 @@ EXCLUDED_TESTS = {
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
-    # known side effects on multivariate arguments, #2072
-    "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -315,11 +307,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MUSE",
         "MVCAPA",
         "MatrixProfile",
-        "MatrixProfileTransformer",
-        "MiniRocketMultivariate",
-        "MiniRocketMultivariateVariable",
         "MovingWindow",
-        "MultiRocket",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",

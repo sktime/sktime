@@ -56,6 +56,8 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
+from copy import deepcopy
+
 from skbase.base import BaseEstimator as _BaseEstimator
 from skbase.base import BaseObject as _BaseObject
 from skbase.base._base import TagAliaserMixin as _TagAliaserMixin
@@ -238,12 +240,15 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if ``path`` is None, returns an in-memory serialized self
-        if ``path`` is a file location, stores self at that location as a zip file
+
+        * if ``path`` is None, returns an in-memory serialized self
+        * if ``path`` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
-        _metadata - contains class of self, i.e., type(self)
-        _obj - serialized self. This class uses the default serialization (pickle).
+
+        * ``_metadata`` - contains class of self, i.e., ``type(self)``
+        * ``_obj`` - serialized self. This class uses the default serialization
+          (pickle).
 
         Parameters
         ----------
@@ -375,13 +380,196 @@ class TagAliaserMixin(_TagAliaserMixin):
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
     """
 
-    alias_dict = {"handles-missing-data": "capability:missing_values"}
-    deprecate_dict = {"handles-missing-data": "1.0.0"}
+    alias_dict = {
+        "handles-missing-data": "capability:missing_values",
+        "ignores-exogeneous-X": "capability:exogenous",
+        "univariate-only": "capability:multivariate",
+    }
+    deprecate_dict = {
+        "handles-missing-data": "1.0.0",
+        "ignores-exogeneous-X": "1.0.0",
+        "univariate-only": "1.0.0",
+    }
+
+    @classmethod
+    def get_class_tag(cls, tag_name, tag_value_default=None):
+        """Get class tag value from class, with tag level inheritance from parents.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        The ``get_class_tag`` method is a class method,
+        and retrieves the value of a tag
+        taking into account only class-level tag values and overrides.
+
+        It returns the value of the tag with name ``tag_name`` from the object,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set in the ``_tags`` attribute of the class.
+        2. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Does not take into account dynamic tag overrides on instances,
+        set via ``set_tags`` or ``clone_tags``,
+        that are defined on instances.
+
+        To retrieve tag values with potential instance overrides, use
+        the ``get_tag`` method instead.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
+
+        Returns
+        -------
+        tag_value :
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, returns ``tag_value_default``.
+        """
+        cls._deprecate_tag_warn([tag_name])
+        alias_dict = cls.alias_dict
+
+        old_tag = ""
+        if tag_name in alias_dict:
+            old_tag = tag_name
+            tag_name = alias_dict[tag_name]
+
+        tag_val = super().get_class_tag(
+            tag_name=tag_name, tag_value_default=tag_value_default
+        )
+        if old_tag == "ignores-exogeneous-X":
+            return not tag_val
+        return tag_val
+
+    def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
+        """Get tag value from instance, with tag level inheritance and overrides.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags.
+        Tags may be used to store metadata about the object,
+        or to control behaviour of the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object.
+
+        The ``get_tag`` method retrieves the value of a single tag
+        with name ``tag_name`` from the instance,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set via ``set_tags`` or ``clone_tags`` on the instance,
+          at construction of the instance.
+        2. Tags set in the ``_tags`` attribute of the class.
+        3. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag to be retrieved
+        tag_value_default : any type, optional; default=None
+            Default/fallback value if tag is not found
+        raise_error : bool
+            whether a ``ValueError`` is raised when the tag is not found
+
+        Returns
+        -------
+        tag_value : Any
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, raises an error if
+            ``raise_error`` is True, otherwise it returns ``tag_value_default``.
+
+        Raises
+        ------
+        ValueError, if ``raise_error`` is ``True``.
+            The ``ValueError`` is then raised if ``tag_name`` is
+            not in ``self.get_tags().keys()``.
+        """
+        self._deprecate_tag_warn([tag_name])
+        alias_dict = self.alias_dict
+
+        old_tag = ""
+        if tag_name in alias_dict:
+            old_tag = tag_name
+            tag_name = alias_dict[tag_name]
+
+        tag_val = super().get_tag(
+            tag_name=tag_name, tag_value_default=tag_value_default
+        )
+        if old_tag == "ignores-exogeneous-X":
+            return not tag_val
+        return tag_val
+
+    @classmethod
+    def _complete_dict(cls, tag_dict):
+        """Add all aliased and aliasing tags to the dictionary."""
+        alias_dict = cls.alias_dict
+        deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
+        new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
+
+        if len(deprecated_tags) > 0 or len(new_tags) > 0:
+            new_tag_dict = deepcopy(tag_dict)
+            # for all tag strings being set, write the value
+            #   to all tags that could *be aliased by* the string
+            #   and all tags that could be *aliasing* the string
+            # this way we ensure upwards and downwards compatibility
+            for old_tag in alias_dict:
+                cls._translate_tags(new_tag_dict, tag_dict, old_tag)
+            return new_tag_dict
+        else:
+            return tag_dict
+
+    @classmethod
+    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag):
+        """Translate old tag to new tag.
+
+        Mutates ``new_tag_dict`` given ``old_tag_dict`` and ``old_tag``.
+
+        Parameters
+        ----------
+        new_tag_dict : dict
+            Dictionary of new tags.
+        tag_dict : dict
+            Dictionary of old tags.
+        old_tag : str
+            Name of the tag to translate.
+
+        Returns
+        -------
+        str
+            Translated tag name.
+        """
+        alias_dict = cls.alias_dict
+        new_tag = alias_dict[old_tag]
+
+        # todo 1.0.0 - removve this special case
+        # special treatment for tags that get boolean flipped:
+        # "ignores-exogeneous-X", "univariate-only"
+        # the new tag is the negation of the old tag
+        if old_tag in ["ignores-exogeneous-X", "univariate-only"]:
+            if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+                new_tag_dict[new_tag] = not tag_dict[old_tag]
+            if new_tag in tag_dict:
+                new_tag_dict[old_tag] = not tag_dict[new_tag]
+            return new_tag_dict
+
+        # standard treatment for all other tags
+        if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+            new_tag_dict[new_tag] = tag_dict[old_tag]
+        if new_tag in tag_dict:
+            new_tag_dict[old_tag] = tag_dict[new_tag]
+        return new_tag_dict
 
     # package name used for deprecation warnings
     _package_name = "sktime"
 
 
+# todo 1.0.0: remove TagAliaserMixin from inheritance
+# remove redundant methods from sktime class (compare skbase)
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
