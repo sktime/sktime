@@ -16,7 +16,6 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 import pytest
-from _pytest.outcomes import Skipped
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -429,14 +428,19 @@ class QuickTester:
     ):
         """Run all tests on one single estimator.
 
-        All tests in self are run on the following estimator type fixtures:
-            if est is a class, then estimator_class = est, and
-                estimator_instance loops over est.create_test_instance()
-            if est is an object, then estimator_class = est.__class__, and
-                estimator_instance = est
+        All tests in ``self`` are run on the following object type fixtures:
 
-        This is compatible with pytest.mark.parametrize decoration,
-            but currently only with multiple *single variable* annotations.
+        * if est is a class, then ``object_class`` = ``est``, and
+          ``object_instance`` loops over ``est.create_test_instance()``
+        * if est is an object, then ``object_class`` = ``est.__class__``, and
+          ``object_instance`` = ``est``
+
+        Compatibility with ``pytest`` fixtures:
+
+        * ``run_tests`` is compatible with ``pytest.mark.parametrize`` decoration,
+          but currently only with multiple *single variable* annotations.
+        * the following ``pytest`` reserved fixture names are supported:
+          ``tmp_path``, ``monkeypatch``, ``capsys``, ``caplog``
 
         Parameters
         ----------
@@ -465,21 +469,29 @@ class QuickTester:
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
 
-        verbose : bool, optional, default=False
-            whether to print the results of the tests as they are run
+        verbose : int or bool, optional, default=1.
+            verbosity level for printouts from tests run.
+
+            * 0 or False: no printout
+            * 1 or True (default): print summary of test run, but no print from tests
+            * 2: print all test output, including output from within the tests
 
         Returns
         -------
         results : dict of results of the tests in self
-            keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
-            entries are the string "PASSED" if the test passed,
-            or the exception raised if the test did not pass
-            returned only if all tests pass,
-            or raise_exceptions=False
+            dictionary of results of the tests that were run
+
+            keys are test/fixture strings, identical as in pytest,
+            e.g., ``test[fixture]``;
+            entries are the string ``"PASSED"`` if the test passed,
+            or the exception raised if the test did not pass.
+
+            ``results`` is returned only if all tests pass,
+            or ``raise_exceptions=False``.
 
         Raises
         ------
-        if raise_exceptions=True,
+        if ``raise_exceptions=True``,
         raises any exception produced by the tests directly
 
         Examples
@@ -496,6 +508,10 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
+        from _pytest.outcomes import Skipped
+        from skbase.utils.stderr_mute import StderrMute
+        from skbase.utils.stdout_mute import StdoutMute
+
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
@@ -566,8 +582,8 @@ class QuickTester:
             fixture_sequence = self.fixture_sequence
 
             # all arguments except the first one (self)
-            fixture_vars = getfullargspec(test_fun)[0][1:]
-            fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
+            test_fun_vars = getfullargspec(test_fun)[0][1:]
+            fixture_vars = [var for var in fixture_sequence if var in test_fun_vars]
 
             # this call retrieves the conditional fixtures
             #  for the test test_name, and the estimator
@@ -600,7 +616,7 @@ class QuickTester:
                     )
 
             def print_if_verbose(msg):
-                if verbose:
+                if int(verbose) > 0:
                     print(msg)  # noqa: T001, T201
 
             # loop B: for each test, we loop over all fixtures
@@ -612,6 +628,10 @@ class QuickTester:
                 key = f"{test_name}[{fixt_name}]"
                 args = dict(zip(fixture_vars, params))
 
+                for f in test_fun_vars:
+                    if f not in args:
+                        args[f] = self._make_builtin_fixture_equivalents(f)
+
                 # we subset to test-fixtures to run by this, if given
                 #  key is identical to the pytest test-fixture string identifier
                 if fixtures_to_run is not None and key not in fixtures_to_run:
@@ -622,7 +642,8 @@ class QuickTester:
                 print_if_verbose(f"{key}")
 
                 try:
-                    test_fun(**deepcopy(args))
+                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                        test_fun(**deepcopy(args))
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
                 except Skipped as err:
@@ -720,6 +741,48 @@ class QuickTester:
         fixture_names_return = ["-".join(x) for x in fixture_names_return]
 
         return fixture_vars_return, fixture_prod_return, fixture_names_return
+
+    def _make_builtin_fixture_equivalents(self, name):
+        import io
+        import logging
+        import tempfile
+        from pathlib import Path
+
+        values = {}
+        if "tmp_path" == name:
+            return Path(tempfile.mkdtemp())
+        if "capsys" == name:
+            # crude emulation using StringIO
+            return type(
+                "Capsys",
+                (),
+                {
+                    "out": io.StringIO(),
+                    "err": io.StringIO(),
+                    "readouterr": lambda x: (x.out.getvalue(), x.err.getvalue()),
+                },
+            )()
+
+        if "monkeypatch" == name:
+            from _pytest.monkeypatch import MonkeyPatch
+
+            return MonkeyPatch()
+
+        if "caplog" == name:
+
+            class Caplog:
+                def __init__(self):
+                    self.records = []
+                    self.handler = logging.Handler()
+                    self.handler.emit = self.records.append
+                    logging.getLogger().addHandler(self.handler)
+
+                def clear(self):
+                    self.records.clear()
+
+            return Caplog()
+
+        return values
 
 
 class TestAllObjects(BaseFixtureGenerator, QuickTester):

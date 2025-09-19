@@ -82,7 +82,7 @@ class MiniRocket(BaseTransformer):
         "python_dependencies": "numba",
         # estimator tags
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

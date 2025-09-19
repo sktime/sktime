@@ -20,6 +20,7 @@ class Prophet(_ProphetAdapter):
     naming a column ``ds`` such as in the prophet package is not necessary.
 
     Unlike vanilla ``prophet``, also supports integer/range and period index:
+
     * integer/range index is interpreted as days since Jan 1, 2000
     * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
@@ -31,19 +32,24 @@ class Prophet(_ProphetAdapter):
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
-            * name: string name of the seasonality component.
-            * period: float number of days in one period.
-            * fourier_order: int number of Fourier components to use.
-            * prior_scale: optional float prior scale for this component.
-            * mode: optional 'additive' or 'multiplicative'
-            * condition_name: string name of the seasonality condition.
+
+        * name: string name of the seasonality component.
+        * period: float number of days in one period.
+        * fourier_order: int number of Fourier components to use.
+        * prior_scale: optional float prior scale for this component.
+        * mode: optional 'additive' or 'multiplicative'
+        * condition_name: string name of the seasonality condition.
+
     add_country_holidays: dict or None, default=None
         Dict with args for Prophet.add_country_holidays().
         Dict can have the following keys/values:
-            country_name: Name of the country, like 'UnitedStates' or 'US'
+
+        * country_name: Name of the country, like 'UnitedStates' or 'US'
+
     growth: str, default="linear"
-        String 'linear' or 'logistic' to specify a linear or logistic
-        trend. If 'logistic' specified float for 'growth_cap' must be provided.
+        String ``'linear'`` or ``'logistic'`` to specify a linear or logistic
+        trend. If ``'logistic'`` specified float for ``'growth_cap'`` must be provided.
+
     growth_floor: float, default=0
         Growth saturation minimum value.
         Used only if ``growth="logistic"``, has no effect otherwise
@@ -66,13 +72,13 @@ class Prophet(_ProphetAdapter):
         ``changepoints`` is specified.
     yearly_seasonality: str or bool or int, default="auto"
         Fit yearly seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Can be ``'auto'``, True, False, or a number of Fourier terms to generate.
     weekly_seasonality: str or bool or int, default="auto"
         Fit weekly seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Can be ``'auto'``, True, False, or a number of Fourier terms to generate.
     daily_seasonality: str or bool or int, default="auto"
         Fit daily seasonality.
-        Can be 'auto', True, False, or a number of Fourier terms to generate.
+        Can be ``'auto'``, True, False, or a number of Fourier terms to generate.
     holidays: pd.DataFrame or None, default=None
         pd.DataFrame with columns holiday (string) and ds (date type)
         and optionally columns lower_window and upper_window which specify a
@@ -81,7 +87,7 @@ class Prophet(_ProphetAdapter):
         optionally can have a column prior_scale specifying the prior scale for
         that holiday.
     seasonality_mode: str, default='additive'
-        Take one of 'additive' or 'multiplicative'.
+        One of ``'additive'`` or ``'multiplicative'``.
     seasonality_prior_scale: float, default=10.0
         Parameter modulating the strength of the seasonality model.
         Larger values allow the model to fit larger seasonal
@@ -112,7 +118,7 @@ class Prophet(_ProphetAdapter):
         str as defined in StanBackendEnum. If None, will try to
         iterate over all available backends and find the working one.
     fit_kwargs: dict or None, default=None
-        Dict with args for Prophet.fit().
+        Dict with args for ``Prophet.fit()``.
         These are additional arguments passed to the optimizing or sampling
         functions in Stan.
 
@@ -126,14 +132,14 @@ class Prophet(_ProphetAdapter):
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
-    >>> forecaster = Prophet(  # doctest: +SKIP
+    >>> forecaster = Prophet(
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
     ...     add_country_holidays={'country_name': 'Germany'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     Prophet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(

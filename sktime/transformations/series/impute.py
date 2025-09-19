@@ -108,7 +108,7 @@ class Imputer(BaseTransformer):
         "capability:missing_values": True,
         "skip-inverse-transform": True,
         "capability:inverse_transform": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
         "remember_data": False,  # remember all data seen as _X
