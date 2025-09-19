@@ -11,7 +11,6 @@ from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.adapters._safe_call import _method_has_param_and_default
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
@@ -185,11 +184,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
-
-        if sklearn_ge_16 and input_type is None:
-            self._input_type = "pandas"
-        elif input_type is None:
+        if input_type is None:
             self._input_type = "numpy"
         else:
             self._input_type = input_type
