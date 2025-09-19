@@ -547,7 +547,6 @@ class DontUpdate(_DelegatedForecaster):
         return {"forecaster": forecaster}
 
 
-
 def _is_time_offset(obj):
     """Check whether obj is a pd.DateOffset.
 
