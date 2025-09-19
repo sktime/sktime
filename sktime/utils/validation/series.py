@@ -171,7 +171,7 @@ def check_series(
 
 
 def check_time_index(
-    index: pd.Index | np.array,
+    index: pd.Index | np.ndarray,
     allow_empty: bool = False,
     enforce_index_type: bool = None,
     var_name: str = "input",
