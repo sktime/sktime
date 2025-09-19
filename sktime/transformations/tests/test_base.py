@@ -893,6 +893,6 @@ def test_functrafo_and_default_capability_categorical_in_X():
 
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
-    transformer = TabularToSeriesAdaptor(OneHotEncoder())
+    transformer = TabularToSeriesAdaptor(OneHotEncoder(), input_type="pandas")
     X = pd.DataFrame([["A", "B"], ["A", "B"]])
     transformer.fit_transform(X)
