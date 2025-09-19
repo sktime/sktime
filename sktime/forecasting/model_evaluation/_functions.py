@@ -5,6 +5,7 @@
 __author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
+import collections.abc
 import time
 import warnings
 from copy import deepcopy
@@ -412,7 +413,7 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: callable | list[callable] | None = None,
+    scoring: collections.abc.Callable | list[collections.abc.Callable] | None = None,
     return_data: bool = False,
     error_score: str | int | float = np.nan,
     backend: str | None = None,

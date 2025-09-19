@@ -5,6 +5,7 @@
 __author__ = ["ksharma6", "jgyasu"]
 __all__ = ["evaluate"]
 
+import collections.abc
 import inspect
 import time
 import warnings
@@ -264,7 +265,7 @@ def evaluate(
     cv=None,
     X=None,
     y=None,
-    scoring: callable | list[callable] | None = None,
+    scoring: collections.abc.Callable | list[collections.abc.Callable] | None = None,
     return_data: bool = False,
     error_score: str | int | float = np.nan,
     backend: str | None = None,
