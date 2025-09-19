@@ -89,7 +89,7 @@ class TimeSince(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,  # is fit empty and can be skipped?

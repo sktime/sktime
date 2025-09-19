@@ -82,8 +82,8 @@ class Deseasonalizer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
         "capability:categorical_in_X": False,
+        "capability:multivariate": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -479,7 +479,7 @@ class STLTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
         "capability:inverse_transform": True,

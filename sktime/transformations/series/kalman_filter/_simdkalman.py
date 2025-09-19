@@ -83,7 +83,6 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     ``simdkalman`` documentation :
         https://simdkalman.readthedocs.io/
 
-
     Examples
     --------
         Timing example:
@@ -97,13 +96,13 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     ... )
     >>>
     >>> # Test data
-    >>> X = make_transformer_problem(  # doctest: +SKIP
+    >>> X = make_transformer_problem(
     ...     n_instances=200,
     ...     n_columns=2,
     ...     n_timepoints=500
     ... )
     >>>
-    >>> kf_params = dict(  # doctest: +SKIP
+    >>> kf_params = dict(
     ...     state_dim=2,
     ...     state_transition=np.array([[1, 1], [0, 1]]),
     ...     process_noise=np.diag([1e-6, 0.01]),
@@ -113,15 +112,15 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     ...     initial_state_covariance=np.diag([1, 1]),
     ... )
     >>>
-    >>> t0 = time.time()  # doctest: +SKIP
-    >>> kf_SIMD = KalmanFilterTransformerSIMD(**kf_params)  # doctest: +SKIP
-    >>> X_SIMD = kf_SIMD.fit_transform(X)  # doctest: +SKIP
-    >>> T_SIMD = time.time() - t0  # doctest: +SKIP
+    >>> t0 = time.time()
+    >>> kf_SIMD = KalmanFilterTransformerSIMD(**kf_params)
+    >>> X_SIMD = kf_SIMD.fit_transform(X)
+    >>> T_SIMD = time.time() - t0
     >>>
-    >>> t0 = time.time()  # doctest: +SKIP
-    >>> kf_PK = KalmanFilterTransformerPK(**kf_params)  # doctest: +SKIP
-    >>> X_PK = kf_PK.fit_transform(X)  # doctest: +SKIP
-    >>> T_PK = time.time() - t0  # doctest: +SKIP
+    >>> t0 = time.time()
+    >>> kf_PK = KalmanFilterTransformerPK(**kf_params)
+    >>> X_PK = kf_PK.fit_transform(X)
+    >>> T_PK = time.time() - t0
     >>>
     >>> print("SIMD Kalman: %.03f s" % T_SIMD)  # doctest: +SKIP
     SIMD Kalman: 0.260 s

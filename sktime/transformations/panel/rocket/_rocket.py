@@ -72,7 +72,7 @@ class Rocket(BaseTransformer):
         "python_dependencies": "numba",
         # estimator type
         # --------------
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

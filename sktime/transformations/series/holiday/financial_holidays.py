@@ -82,7 +82,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": True,
         "enforce_index_type": [pandas.DatetimeIndex, pandas.PeriodIndex],
         "capability:inverse_transform": False,

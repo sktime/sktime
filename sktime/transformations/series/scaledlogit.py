@@ -104,7 +104,7 @@ class ScaledLogitTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
         "capability:categorical_in_X": False,

@@ -1035,8 +1035,10 @@ class capability__multivariate(_BaseTag):
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
 
-    If the tag is ``False``, the estimator can only handle univariate time series,
-    and will broadcast to variables (ordinary transformers), or raise an error (others).
+    If the tag is ``False``, the estimator can only handle univariate time series
+    natively. Depending on the type of object, multivariate time series may be valid
+    inputs, in this case the estimator will broadcast to variables
+    (transformers, forecasters), or raise an error (others).
 
     This condition is specific to the main input data representation,
     target data (e.g., classifier or transformation ``y``) are not considered.
@@ -1053,13 +1055,15 @@ class capability__multivariate(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "metric",
             "param_est",
             "regressor",
+            "transformer",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
         "tag_type": "bool",
-        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "short_descr": "does the object natively support time series with 2 or more variables?",  # noqa: E501
         "user_facing": True,
     }
 
