@@ -59,7 +59,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch", "matplotlib"],
+        "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -73,6 +73,9 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on vm in GHA
     }
 
     def __init__(
@@ -139,12 +142,14 @@ class PyKANForecaster(BaseForecaster):
             ds_test = PyTorchTrainDataset(
                 y_test, self.input_layer_size, output_size, X=X_test
             )
-            input_layer_size = self.input_layer_size + X_train.shape[1] * output_size
+            self._input_layer_size = (
+                self.input_layer_size + X_train.shape[1] * output_size
+            )
         else:
             y_train, y_test = temporal_train_test_split(y, test_size=(self.val_size))
             ds_train = PyTorchTrainDataset(y_train, self.input_layer_size, output_size)
             ds_test = PyTorchTrainDataset(y_test, self.input_layer_size, output_size)
-            input_layer_size = self.input_layer_size
+            self._input_layer_size = self.input_layer_size
         train_input = [ds_train[i][0] for i in range(len(ds_train))]
         train_target = [ds_train[i][1] for i in range(len(ds_train))]
         test_input = [ds_test[i][0] for i in range(len(ds_test))]
@@ -163,7 +168,7 @@ class PyKANForecaster(BaseForecaster):
         self.train_losses = []
         self.test_losses = []
 
-        self._layer_sizes = [input_layer_size, *self.hidden_layers, output_size]
+        self._layer_sizes = [self._input_layer_size, *self.hidden_layers, output_size]
         for i in range(len(self._grids)):
             if i == 0:
                 model = KAN(
@@ -223,7 +228,7 @@ class PyKANForecaster(BaseForecaster):
         if X is not None:
             input_ = torch.cat(
                 [
-                    torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
+                    torch.from_numpy(self._y.values[-self._input_layer_size :]).reshape(
                         (1, -1)
                     ),
                     torch.from_numpy(X.values).reshape((1, -1)),
@@ -232,7 +237,7 @@ class PyKANForecaster(BaseForecaster):
             ).type(torch.float32)
         else:
             input_ = (
-                torch.from_numpy(self._y.values[-self.input_layer_size :])
+                torch.from_numpy(self._y.values[-self._input_layer_size :])
                 .reshape((1, -1))
                 .type(torch.float32)
             )
