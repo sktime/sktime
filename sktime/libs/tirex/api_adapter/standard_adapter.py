@@ -19,7 +19,7 @@ ContextType = Union[
 
 
 def _batched_slice(
-    full_batch, full_meta: Optional[list[dict]], batch_size: int
+    full_batch, full_meta: list[dict] | None, batch_size: int
 ) -> Iterator[tuple[Sequence, list[dict]]]:
     if len(full_batch) <= batch_size:
         yield (

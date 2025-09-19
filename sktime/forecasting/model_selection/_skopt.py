@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter search via scikit-optimize."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import check_cv
@@ -235,13 +233,13 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self,
         forecaster,
         cv: BaseSplitter,
-        param_distributions: Union[dict, list[dict]],
+        param_distributions: dict | list[dict],
         n_iter: int = 10,
-        n_points: Optional[int] = 1,
-        random_state: Optional[int] = None,
-        scoring: Optional[list[BaseMetric]] = None,
-        optimizer_kwargs: Optional[dict] = None,
-        strategy: Optional[str] = "refit",
+        n_points: int | None = 1,
+        random_state: int | None = None,
+        scoring: list[BaseMetric] | None = None,
+        optimizer_kwargs: dict | None = None,
+        strategy: str | None = "refit",
         refit: bool = True,
         verbose: int = 0,
         return_n_best_forecasters: int = 1,

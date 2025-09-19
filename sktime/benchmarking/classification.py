@@ -4,7 +4,7 @@ __author__ = ["jgyasu"]
 __all__ = ["ClassificationBenchmark"]
 
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import Any
 
 from sktime.benchmarking._benchmarking_dataclasses import (
     FoldResults,
@@ -79,10 +79,10 @@ class ClassificationBenchmark(BaseBenchmark):
 
     def add_task(
         self,
-        dataset_loader: Union[Callable, tuple],
+        dataset_loader: Callable | tuple,
         cv_splitter: Any,
         scorers: list,
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
         error_score: str = "raise",
     ):
         """Register a classification task to the benchmark.

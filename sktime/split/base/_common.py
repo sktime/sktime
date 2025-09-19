@@ -3,7 +3,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from collections.abc import Iterator
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -23,13 +22,12 @@ DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 
-ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
-FORECASTING_HORIZON_TYPES = Union[
-    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon
-]
-SPLIT_TYPE = Union[
-    tuple[pd.Series, pd.Series], tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
-]
+ACCEPTED_Y_TYPES = pd.Series | pd.DataFrame | np.ndarray | pd.Index
+FORECASTING_HORIZON_TYPES = VALID_FORECASTING_HORIZON_TYPES | ForecastingHorizon
+SPLIT_TYPE = (
+    tuple[pd.Series, pd.Series]
+    | tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
+)
 SPLIT_ARRAY_TYPE = tuple[np.ndarray, np.ndarray]
 SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]

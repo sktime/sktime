@@ -4,7 +4,6 @@ import abc
 import ast
 import json
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
@@ -244,7 +243,7 @@ STORAGE_HANDLERS = [
 ]
 
 
-def get_storage_backend(path: Union[str, Path]) -> BaseStorageHandler:
+def get_storage_backend(path: str | Path) -> BaseStorageHandler:
     """Get the appropriate storage backend for a given path.
 
     Parameters

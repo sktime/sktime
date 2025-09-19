@@ -3,7 +3,6 @@
 import logging
 import warnings
 from dataclasses import dataclass, field
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -24,7 +23,7 @@ def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     return False
 
 
-def _check_estimators_type(objs: Union[dict, list, BaseEstimator]) -> None:
+def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
     """Check if all estimators are initialised BaseEstimator objects.
 
     Raises
@@ -131,7 +130,7 @@ class _SktimeRegistry:
         self.entity_id_format = entity_id_format
         self.entities = {}
 
-    def register(self, entity_id, entity: Union[BaseEstimator, TaskObject]):
+    def register(self, entity_id, entity: BaseEstimator | TaskObject):
         """Register an entity.
 
         Parameters
@@ -224,7 +223,7 @@ class BaseBenchmark:
 
     def __init__(
         self,
-        id_format: Optional[str] = None,
+        id_format: str | None = None,
         backend=None,
         backend_params=None,
         return_data=False,
@@ -239,7 +238,7 @@ class BaseBenchmark:
     def add_estimator(
         self,
         estimator: BaseEstimator,
-        estimator_id: Optional[str] = None,
+        estimator_id: str | None = None,
     ):
         """Register an estimator to the benchmark.
 
@@ -261,7 +260,7 @@ class BaseBenchmark:
     def _add_estimator(
         self,
         estimator: BaseEstimator,
-        estimator_id: Optional[str] = None,
+        estimator_id: str | None = None,
     ):
         """Register a single estimator to the benchmark.
 
@@ -289,7 +288,7 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def _run(self, results_path: str, force_rerun: Union[str, list[str]] = "none"):
+    def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
 
@@ -333,7 +332,7 @@ class BaseBenchmark:
         results.save()
         return results.to_dataframe()
 
-    def run(self, output_file: str, force_rerun: Union[str, list[str]] = "none"):
+    def run(self, output_file: str, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
 

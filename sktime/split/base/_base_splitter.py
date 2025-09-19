@@ -5,7 +5,6 @@
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
 from collections.abc import Iterator
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -407,7 +406,7 @@ class BaseSplitter(BaseObject):
 
         return y_inner, y_mtype, y_inner_mtype
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -425,7 +424,7 @@ class BaseSplitter(BaseObject):
         """
         return len(list(self.split(y)))
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

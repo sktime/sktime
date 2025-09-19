@@ -84,7 +84,7 @@ class sLSTMBlock(_BaseModule):
         self.ffn = FeedForward(config)
 
     def forward(
-        self, x: Any, state: Optional[sLSTMLayerStateType] = None
+        self, x: Any, state: sLSTMLayerStateType | None = None
     ) -> tuple[Any, sLSTMLayerStateType]:
         x_slstm = self.norm_slstm(x)
         if state is None:
@@ -155,7 +155,7 @@ class xLSTMMixedLargeBlockStack(_BaseModule):
     def forward(
         self,
         x: Any,
-        state: Optional[Union[Any, sLSTMStateType]] = None,
+        state: Any | sLSTMStateType | None = None,
     ) -> tuple[Any, Any]:
         if state is None:
             state = {i: None for i in range(len(self.blocks))}

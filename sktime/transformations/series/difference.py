@@ -5,7 +5,6 @@
 __author__ = ["RNKuhns", "fkiraly", "benheid"]
 __all__ = ["Differencer"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -40,7 +39,7 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+def _diff_transform(X: pd.Series | pd.DataFrame, lags: np.array):
     """Perform differencing on Series or DataFrame.
 
     Parameters
@@ -68,7 +67,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     return Xt
 
 
-def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+def _diff_to_seq(X: pd.Series | pd.DataFrame, lags: np.array):
     """Difference a series multiple times and return intermediate results.
 
     Parameters

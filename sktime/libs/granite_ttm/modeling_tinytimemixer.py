@@ -3,7 +3,7 @@
 import copy
 import math
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 from warnings import warn
 
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
@@ -263,7 +263,7 @@ class TinyTimeMixerAttention(nn_module):
         is_decoder: bool = False,
         bias: bool = True,
         is_causal: bool = False,
-        config: Optional[TinyTimeMixerConfig] = None,
+        config: TinyTimeMixerConfig | None = None,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -1151,8 +1151,8 @@ class TinyTimeMixerEncoderOutput(ModelOutput):
             Hidden-states of the model at the output of each layer.
     """
 
-    last_hidden_state: Optional[Any] = None
-    hidden_states: Optional[Any] = None
+    last_hidden_state: Any | None = None
+    hidden_states: Any | None = None
 
 
 class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
@@ -1200,8 +1200,8 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
     def forward(
         self,
         past_values,
-        output_hidden_states: Optional[bool] = False,
-        return_dict: Optional[bool] = None,
+        output_hidden_states: bool | None = False,
+        return_dict: bool | None = None,
         freq_token=None,
     ):
         r"""
@@ -1296,11 +1296,11 @@ class TinyTimeMixerModelOutput(ModelOutput):
             enabled.
     """
 
-    last_hidden_state: Optional[Any] = None
-    hidden_states: Optional[Any] = None
-    patch_input: Optional[Any] = None
-    loc: Optional[Any] = None
-    scale: Optional[Any] = None
+    last_hidden_state: Any | None = None
+    hidden_states: Any | None = None
+    patch_input: Any | None = None
+    loc: Any | None = None
+    scale: Any | None = None
 
 
 class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
@@ -1353,8 +1353,8 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
         self,
         past_values,
         observed_mask=None,
-        output_hidden_states: Optional[bool] = False,
-        return_dict: Optional[bool] = None,
+        output_hidden_states: bool | None = False,
+        return_dict: bool | None = None,
         freq_token=None,
     ):
         r"""
@@ -1463,13 +1463,13 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
 
     """
 
-    loss: Optional[Any] = None
-    prediction_outputs: Optional[Any] = None
-    backbone_hidden_state: Optional[Any] = None
-    decoder_hidden_state: Optional[Any] = None
-    hidden_states: Optional[Any] = None
-    loc: Optional[Any] = None
-    scale: Optional[Any] = None
+    loss: Any | None = None
+    prediction_outputs: Any | None = None
+    backbone_hidden_state: Any | None = None
+    decoder_hidden_state: Any | None = None
+    hidden_states: Any | None = None
+    loc: Any | None = None
+    scale: Any | None = None
 
 
 class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):

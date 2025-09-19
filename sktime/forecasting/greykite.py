@@ -77,7 +77,7 @@ class GreykiteForecaster(BaseForecaster):
     def __init__(
         self,
         forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
-        date_format: Optional[str] = None,
+        date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):

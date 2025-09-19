@@ -1,7 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 import inspect
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 
@@ -9,7 +8,7 @@ from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
 
 def _resolve_dist_instance(
-    metric: Union[str, Callable, NumbaDistance],
+    metric: str | Callable | NumbaDistance,
     x: np.ndarray,
     y: np.ndarray,
     known_metric_dict: list[MetricInfo],
@@ -48,7 +47,7 @@ def _resolve_dist_instance(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    numba_dist_instance: Union[NumbaDistance, None] = None
+    numba_dist_instance: NumbaDistance | None = None
 
     if isinstance(metric, NumbaDistance):
         numba_dist_instance = metric
@@ -75,7 +74,7 @@ def _resolve_dist_instance(
 
 
 def _resolve_metric_to_factory(
-    metric: Union[str, Callable, NumbaDistance],
+    metric: str | Callable | NumbaDistance,
     x: np.ndarray,
     y: np.ndarray,
     known_metric_dict: list[MetricInfo],
@@ -111,7 +110,7 @@ def _resolve_metric_to_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    numba_dist_instance: Union[NumbaDistance, None] = None
+    numba_dist_instance: NumbaDistance | None = None
 
     if isinstance(metric, NumbaDistance):
         numba_dist_instance = metric

@@ -4,7 +4,6 @@
 __author__ = ["ericjb"]
 
 import calendar
-from typing import Optional
 
 import pandas as pd
 
@@ -105,9 +104,9 @@ class SeasonalDummiesOneHot(BaseTransformer):
 
     def __init__(
         self,
-        sp: Optional[int] = None,
-        freq: Optional[str] = None,
-        drop: Optional[bool] = True,
+        sp: int | None = None,
+        freq: str | None = None,
+        drop: bool | None = True,
     ):
         self.sp = sp
         self.freq = freq
