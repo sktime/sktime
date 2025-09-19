@@ -193,7 +193,7 @@ class MSTL(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,

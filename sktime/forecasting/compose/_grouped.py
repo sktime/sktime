@@ -197,15 +197,15 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> group_forecaster = GroupbyCategoryForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
     The fit function firstly passes the data through the given transformer
     to generate a given category. This category can be seen by the variable
-    self.category_.
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -226,7 +226,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -268,7 +268,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
             "capability:missing_values": True,

@@ -38,7 +38,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
@@ -308,7 +307,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MUSE",
         "MVCAPA",
         "MatrixProfile",
-        "MatrixProfileTransformer",
         "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",

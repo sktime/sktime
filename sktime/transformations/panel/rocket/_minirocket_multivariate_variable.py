@@ -98,7 +98,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     _tags = {
         "authors": ["angus924", "michaelfeil"],
         "maintainers": ["angus924", "michaelfeil"],
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",

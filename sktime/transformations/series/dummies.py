@@ -68,7 +68,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
             "pd.DataFrame",
             "pd.Series",

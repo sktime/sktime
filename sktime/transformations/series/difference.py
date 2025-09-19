@@ -247,7 +247,7 @@ class Differencer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
         # CI and test flags
         # -----------------

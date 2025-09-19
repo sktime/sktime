@@ -106,7 +106,7 @@ class MyForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:global_forecasting": True,  # (for_global)
     }
