@@ -221,3 +221,22 @@ class ForecastingOptCV(_DelegatedForecaster):
         self.backend = backend
         self.backend_params = backend_params
         super().__init__()
+
+    @classmethod
+    def get_test_params(self, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return "default" set.
+
+        Returns
+        -------
+        params : dict
+            Parameters to create testing instance of the class.
+            Instance will be created with ``estimator = ClassName(**params)``.
+        """
+        params1 = {"forecaster": None, "optimizer": None, "cv": None}
+        return params1
