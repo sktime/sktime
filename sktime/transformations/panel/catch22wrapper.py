@@ -83,7 +83,7 @@ class Catch22Wrapper(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",

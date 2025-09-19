@@ -218,7 +218,7 @@ class AutoTS(BaseForecaster):
         "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,  # TODO: add capability
+        "capability:exogenous": False,  # TODO: add capability
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability

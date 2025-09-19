@@ -122,7 +122,7 @@ class SFAFast(BaseTransformer):
 
     _tags = {
         "authors": ["patrickzib"],
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

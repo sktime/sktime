@@ -189,7 +189,7 @@ class ElbowClassSum(BaseTransformer):
         # "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
         "requires_y": True,  # does y need to be passed in fit?
@@ -355,7 +355,7 @@ class ElbowClassPairwise(BaseTransformer):
         # "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
         "requires_y": True,  # does y need to be passed in fit?

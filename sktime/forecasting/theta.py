@@ -43,13 +43,24 @@ class ThetaForecaster(ExponentialSmoothing):
     initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
         set then this will be used, otherwise it will be estimated from the data.
-    deseasonalize : bool, optional (default=True)
-        If True, data is seasonally adjusted.
+    deseasonalize : bool, optional (default=True), or sktime BaseTransformer instance
+        Whether and how to deseasonalize the data before fitting the theta model.
+
+        * If True, data is seasonally adjusted using ``sktime`` ``Deseasonalizer()``.
+        * If BaseTransformer instance, this is used to seasonally adjust the data,
+          via ``fit_transform`` in fit, and ``inverse_transform`` in predict.
+        * If False, no seasonal adjustment is done.
+
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
         multiplicative deseasonaliser, which is used if seasonality is detected in the
         training data. Ignored if a deseasonaliser transformer is provided.
         Default is 1 (no seasonality).
+    deseasonalize_model : str, optional (default="multiplicative")
+        The type of seasonal decomposition to use in the deseasonaliser.
+        Can be "additive" or "multiplicative".
+        Passed on to ``Deseasonalizer`` if ``deseasonalize=True``.
+        Only used if ``deseasonalize=True``.
 
     Attributes
     ----------
@@ -81,10 +92,10 @@ class ThetaForecaster(ExponentialSmoothing):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaForecaster(sp=12)  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster = ThetaForecaster(sp=12)
+    >>> forecaster.fit(y)
     ThetaForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
@@ -96,7 +107,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
@@ -106,14 +117,21 @@ class ThetaForecaster(ExponentialSmoothing):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, initial_level=None, deseasonalize=True, sp=1):
+    def __init__(
+        self,
+        initial_level=None,
+        deseasonalize=True,
+        sp=1,
+        deseasonalize_model="multiplicative",
+    ):
         self.sp = sp
         self.deseasonalize = deseasonalize
-        self.deseasonalizer_ = None
+        self.deseasonalize_model = deseasonalize_model
         self.trend_ = None
         self.initial_level_ = None
         self.drift_ = None
         self.se_ = None
+
         super().__init__(initial_level=initial_level, sp=sp)
 
     def _fit(self, y, X, fh):
@@ -132,15 +150,27 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
+        deseasonalize = self.deseasonalize
+        if isinstance(deseasonalize, bool) and deseasonalize:
+            self.deseasonalizer_ = Deseasonalizer(
+                sp=self.sp, model=self.deseasonalize_model
+            )
+
+        elif isinstance(deseasonalize, bool):
+            self.deseasonalizer_ = None
+        else:
+            self.deseasonalizer_ = deseasonalize.clone()
+
+        no_deseasonalizer = self.deseasonalizer_ is None
+
         sp = check_sp(self.sp)
-        if sp > 1 and not self.deseasonalize:
+        if sp > 1 and no_deseasonalizer:
             warn(
                 "`sp` in ThetaForecaster is ignored when `deseasonalise`=False",
                 obj=self,
             )
 
-        if self.deseasonalize:
-            self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
+        if not no_deseasonalizer:
             y = self.deseasonalizer_.fit_transform(y)
 
         self.initialization_method = "known" if self.initial_level else "estimated"
@@ -320,12 +350,19 @@ class ThetaForecaster(ExponentialSmoothing):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in `params
         """
-        params0 = {}
-        params1 = {"sp": 2, "deseasonalize": True}
+        params0 = {"deseasonalize_model": "additive"}
+        params1 = {"sp": 2, "deseasonalize": True, "deseasonalize_model": "additive"}
         params2 = {"deseasonalize": False}
-        params3 = {"initial_level": 0.5}
+        params3 = {"initial_level": 0.5, "deseasonalize_model": "additive"}
 
-        return [params0, params1, params2, params3]
+        params = [params0, params1, params2, params3]
+
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            des = Deseasonalizer(sp=4, model="additive")
+            params4 = {"deseasonalize": des}
+            params.append(params4)
+
+        return params
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
