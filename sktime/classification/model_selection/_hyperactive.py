@@ -192,6 +192,7 @@ class TSCOptCV(_DelegatedForecaster):
         self.backend_params = backend_params
         super().__init__()
 
+    @classmethod
     def get_test_params(self, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
