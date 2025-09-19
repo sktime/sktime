@@ -8,11 +8,11 @@ from sktime.utils.dependencies import _placeholder_record
 
 
 @_placeholder_record("hyperactive.integrations.sktime", dependencies="hyperactive>=5")
-class ForecastingOptCV(_DelegatedForecaster):
-    """Tune an sktime forecaster via any optimizer in the hyperactive toolbox.
+class TSCOptCV(_DelegatedForecaster):
+    """Tune an sktime classifier via any optimizer in the hyperactive toolbox.
 
-    ``ForecastingOptCV`` uses any available tuning engine from ``hyperactive``
-    to tune a forecaster by backtesting.
+    ``TSCOptCV`` uses any available tuning engine from ``hyperactive``
+    to tune a classifier by backtesting.
 
     It passes backtesting results as scores to the tuning engine,
     which identifies the best hyperparameters.
@@ -20,71 +20,54 @@ class ForecastingOptCV(_DelegatedForecaster):
     Any available tuning engine from hyperactive can be used, for example:
 
     * grid search - ``from hyperactive.opt import GridSearchSk as GridSearch``,
-      this results in the same algorithm as ``ForecastingGridSearchCV``
+      this results in the same algorithm as ``TSCGridSearchCV``
     * hill climbing - ``from hyperactive.opt import HillClimbing``
     * optuna parzen-tree search - ``from hyperactive.opt.optuna import TPEOptimizer``
 
     Configuration of the tuning engine is as per the respective documentation.
 
-    Formally, ``ForecastingOptCV`` does the following:
+    Formally, ``TSCOptCV`` does the following:
 
     In ``fit``:
 
-    * wraps the ``forecaster``, ``scoring``, and other parameters
-      into a ``SktimeForecastingExperiment`` instance, which is passed to the optimizer
-      ``optimizer`` as the ``experiment`` argument.
+    * wraps the ``estimator``, ``scoring``, and other parameters
+      into a ``SktimeClassificationExperiment`` instance, which is passed to the
+      optimizer ``optimizer`` as the ``experiment`` argument.
     * Optimal parameters are then obtained from ``optimizer.solve``, and set
-      as ``best_params_`` and ``best_forecaster_`` attributes.
-    *  If ``refit=True``, ``best_forecaster_`` is fitted to the entire ``y`` and ``X``.
+      as ``best_params_`` and ``best_estimator_`` attributes.
+    *  If ``refit=True``, ``best_estimator_`` is fitted to the entire ``y`` and ``X``.
 
     In ``predict`` and ``predict``-like methods, calls the respective method
-    of the ``best_forecaster_`` if ``refit=True``.
+    of the ``best_estimator_`` if ``refit=True``.
 
     Parameters
     ----------
-    forecaster : sktime forecaster, BaseForecaster instance or interface compatible
-        The forecaster to tune, must implement the sktime forecaster interface.
+    estimator : sktime classifier, BaseClassifier instance or interface compatible
+        The classifier to tune, must implement the sktime classifier interface.
 
     optimizer : hyperactive BaseOptimizer
         The optimizer to be used for hyperparameter search.
 
-    cv : sktime BaseSplitter descendant
-        determines split of ``y`` and possibly ``X`` into test and train folds
-        y is always split according to ``cv``, see above
-        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
-        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+    cv : int, sklearn cross-validation generator or an iterable, default=3-fold CV
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
 
-    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+        - None = default = ``KFold(n_splits=3, shuffle=True)``
+        - integer, number of folds folds in a ``KFold`` splitter, ``shuffle=True``
+        - An iterable yielding (train, test) splits as arrays of indices.
 
-    update_behaviour : str, optional, default = "full_refit"
-        one of {"full_refit", "inner_only", "no_update"}
-        behaviour of the forecaster when calling update
-        "full_refit" = both tuning parameters and inner estimator refit on all data seen
-        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
-        "no_update" = neither tuning parameters nor inner estimator are updated
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with ``shuffle=False`` so the splits will be the same across calls.
 
-    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
-        scoring metric to use in tuning the forecaster
+    scoring : str, callable, default=None
+        Strategy to evaluate the performance of the cross-validated model on
+        the test set. Can be:
 
-        * sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
-
-        * If callable, must have signature
-        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
-        assuming np.ndarrays being of the same length, and lower being better.
-        Metrics in sktime.performance_metrics.forecasting are all of this form.
-
-        * If str, uses registry.resolve_alias to resolve to one of the above.
-          Valid strings are valid registry.craft specs, which include
-          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
-          and keys of registry.ALIAS_DICT referring to metrics.
-
-        * If None, defaults to MeanAbsolutePercentageError()
+        - a single string resolvable to an sklearn scorer
+        - a callable that returns a single value;
+        - ``None`` = default = ``accuracy_score``
 
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
@@ -96,11 +79,6 @@ class ForecastingOptCV(_DelegatedForecaster):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-
-    cv_X : sktime BaseSplitter descendant, optional
-        determines split of ``X`` into test and train folds
-        default is ``X`` being split to identical ``loc`` indices as ``y``
-        if passed, must have same number of splits as ``cv``
 
     backend : string, by default "None".
         Parallelization backend to use for runs.
@@ -157,33 +135,34 @@ class ForecastingOptCV(_DelegatedForecaster):
     For illustration, we use grid search, this can be replaced by any other optimizer.
 
     1. defining the tuned estimator:
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.split import ExpandingWindowSplitter
-    >>> from hyperactive.integrations.sktime import ForecastingOptCV
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> from sklearn.model_selection import KFold
+    >>> from hyperactive.integrations.sktime import TSCOptCV
     >>> from hyperactive.opt import GridSearchSk as GridSearch
     >>>
-    >>> param_grid = {"strategy": ["mean", "last", "drift"]}
-    >>> tuned_naive = ForecastingOptCV(
-    ...     NaiveForecaster(),
+    >>> param_grid = {"strategy": ["most_frequent", "stratified"]}
+    >>> tuned_naive = TSCOptCV(
+    ...     DummyClassifier(),
     ...     GridSearch(param_grid),
-    ...     cv=ExpandingWindowSplitter(
-    ...         initial_window=12, step_length=3, fh=range(1, 13)
-    ...     ),
+    ...     cv=KFold(n_splits=2, shuffle=False),
     ... )
 
     2. fitting the tuned estimator:
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.split import temporal_train_test_split
-    >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(
+    ...     return_X_y=True, split="TRAIN", return_type="pd-multiindex"
+    ... )
+    >>> X_test, _ = load_unit_test(
+    ...     return_X_y=True, split="TEST", return_type="pd-multiindex"
+    ... )
     >>>
-    >>> tuned_naive.fit(y_train, fh=range(1, 13))
-    ForecastingOptCV(...)
-    >>> y_pred = tuned_naive.predict()
+    >>> tuned_naive.fit(X_train, y_train)
+    TSCOptCV(...)
+    >>> y_pred = tuned_naive.predict(X_test)
 
     3. obtaining best parameters and best estimator
     >>> best_params = tuned_naive.best_params_
-    >>> best_estimator = tuned_naive.best_forecaster_
+    >>> best_classifier = tuned_naive.best_estimator_
     """
 
     _tags = {
@@ -194,27 +173,21 @@ class ForecastingOptCV(_DelegatedForecaster):
 
     def __init__(
         self,
-        forecaster,
+        estimator,
         optimizer,
-        cv,
-        strategy="refit",
-        update_behaviour="full_refit",
+        cv=None,
         scoring=None,
         refit=True,
         error_score=np.nan,
-        cv_X=None,
         backend=None,
         backend_params=None,
     ):
-        self.forecaster = forecaster
+        self.estimator = estimator
         self.optimizer = optimizer
         self.cv = cv
-        self.strategy = strategy
-        self.update_behaviour = update_behaviour
         self.scoring = scoring
         self.refit = refit
         self.error_score = error_score
-        self.cv_X = cv_X
         self.backend = backend
         self.backend_params = backend_params
         super().__init__()
