@@ -232,8 +232,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         Not testing composites such as pipelines as they may raise error if estimators
         used within do not support categorical.
         """
-        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(12)]})
-        y = pd.DataFrame({"var_0": [i for i in range(12)]})
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_0": [i for i in range(17)]})
 
         if (
             estimator_instance.get_tag("capability:categorical_in_X")
