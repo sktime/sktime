@@ -1261,6 +1261,51 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
+    def test_random_tags(self, estimator_class):
+        """Check that estimator randomization tags are compatibly set."""
+        randomness = estimator_class.get_class_tag("property:randomness")
+        random_state = estimator_class.get_class_tag("capability:random_state")
+
+        # randomness = "derandomized" should be set only if random_state is available
+        if randomness == "derandomized":
+            assert random_state, (
+                f"{estimator_class.__name__} must set "
+                "'capability:random_state' tag to True if "
+                "'property:randomness' tag is set to 'derandomized'"
+            )
+
+        # random_state tag should be set iff the parameter exists in the signature
+        assert random_state == ("random_state" in estimator_class.get_param_names()), (
+            f"{estimator_class.__name__} must set "
+            "'capability:random_state' tag if the "
+            "random_state parameter exists in the estimator signature"
+        )
+
+        # if a random_state parameter is present,
+        # randomness should be one of "derandomized", "stochastic"
+        if random_state:
+            assert randomness in ["derandomized", "stochastic"], (
+                f"{estimator_class.__name__} must set "
+                "'property:randomness' tag to one of 'derandomized', 'stochastic' if "
+                "'capability:random_state' tag is set"
+            )
+
+    def test_obj_vs_cls_signature(self, estimator_class):
+        """Check that init signature is same for class as for instance.
+
+        Implies that constructor does not result in an object with different signature,
+        which could be caused by decorators or metaclasses.
+
+        This test is also relevant for placeholder records, to ensure that the
+        placeholder class and the actual class in the interfaced package
+        have not diverged in their constructor signature.
+        """
+        cls1 = estimator_class
+        cls2 = type(estimator_class.create_test_instance())
+
+        assert deep_equals(cls1.get_param_names(), cls2.get_param_names())
+        assert deep_equals(cls1.get_param_defaults(), cls2.get_param_defaults())
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
@@ -1328,6 +1373,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_fit_idempotent(self, estimator_instance, scenario, method_nsc_arraylike):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
+
+        random_tag = estimator.get_tag("property:randomness")
+        deterministic = random_tag in ["derandomized", "deterministic"]
+
+        # if the estimator is not deterministic, we cannot guarantee idempotency
+        # this includes the case where even after setting random_state,
+        # the estimator is known to be stochastic
+        if not deterministic:
+            return None
 
         # for now, we have to skip predict_proba, since current output comparison
         #   does not work for tensorflow Distribution
@@ -1611,6 +1665,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
+        # this test compares outputs from two runs, single process and multi-process
+        # if the estimator cannot be derandomized, we cannot expect
+        # identical outputs, so we skip the test
+        randomness = estimator_instance.get_tag("property:randomness")
+        derandomizable = randomness != "stochastic"
+        if not derandomizable:
+            return None
+
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 

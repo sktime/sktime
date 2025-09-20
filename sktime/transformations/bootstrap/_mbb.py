@@ -193,6 +193,8 @@ class STLBootstrapTransformer(BaseTransformer):
         "transform-returns-same-time-index": False,
         "capability:bootstrap_index": True,
         "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -521,6 +523,8 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "transform-returns-same-time-index": False,
         "capability:bootstrap_index": True,
         "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
