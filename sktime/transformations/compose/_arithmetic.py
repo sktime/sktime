@@ -1,8 +1,8 @@
 """
-Elementwise arithmetic operator transformer for sktime.
+Combining transformers compositor for sktime.
 
-This module provides the ElementwiseArithmetic class, which applies
-user-defined elementwise arithmetic operations to the outputs of multiple
+This module provides the CombineTransformers class, which applies
+user-defined operations to the outputs of multiple
 transformers, ensuring matching indexes and columns.
 """
 
