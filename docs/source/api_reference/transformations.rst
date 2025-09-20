@@ -127,8 +127,8 @@ Pipeline building - Logging
 
     Logger
 
-Pipeline building - Arhithmetic operations and output combination
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pipeline building - Output combination
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.compose
 
