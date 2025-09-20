@@ -356,6 +356,7 @@ class Catch22(BaseTransformer):
             number of features requested, containing Catch22 features for X.
             column index is determined by self.col_names
         """
+        X = X.astype(float)
         Xt_np = self._transform_case(X, self.f_idx)
         cols = self._prepare_output_col_names(len(self.f_idx))
 
