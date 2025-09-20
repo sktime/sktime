@@ -76,6 +76,6 @@ warn(
     "and ensure the package is installed in their environment. "
     "The sktime fork was a maintenance fork due to temporarly lapse in maintenance "
     "of pykalman. This has since been resolved, with pykalman under maintenance "
-    "by the sktime team."
+    "by the sktime team.",
     FutureWarning,
 )
