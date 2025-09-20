@@ -203,7 +203,6 @@ class DateTimeFeatures(BaseTransformer):
             "test_categorical_y_raises_error",
         ],  # these tests use RangeIndex data which is not supported
     }
-    }
 
     def __init__(
         self,
