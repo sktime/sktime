@@ -197,6 +197,7 @@ class ElbowClassSum(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, distance=None):

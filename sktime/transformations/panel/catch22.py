@@ -290,6 +290,7 @@ class Catch22(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

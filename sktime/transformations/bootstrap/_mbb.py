@@ -520,6 +520,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         "capability:bootstrap_index": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
