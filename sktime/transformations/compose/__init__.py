@@ -2,6 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+from sktime.transformations.compose._arithmetic import CombineTransformers
 from sktime.transformations.compose._column import (
     ColumnEnsembleTransformer,
     ColumnwiseTransformer,
@@ -23,6 +24,7 @@ __author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
     "ColumnEnsembleTransformer",
+    "CombineTransformers",
     "DataLog",
     "FeatureUnion",
     "FitInTransform",
