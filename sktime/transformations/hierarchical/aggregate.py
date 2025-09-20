@@ -75,6 +75,7 @@ class Aggregator(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:multivariate": True,  # can the transformer handle multivariate X?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:categorical_in_X": False,  # can the estimator handle categoricals?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,

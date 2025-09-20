@@ -61,6 +61,9 @@ class TSBootstrapAdapter(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         "capability:bootstrap_index": True,
+        # CI and test flags
+        # -----------------
+        "tests:vms": True,  # run on separate VM due to tsbootstrap dependency
     }
 
     def __init__(

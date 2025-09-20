@@ -17,13 +17,17 @@ class IntervalSegmenter(BaseTransformer):
 
     Parameters
     ----------
-    intervals : int, np.ndarray or list of np.ndarrays with one for each
-    column of input data.
-        Intervals to generate.
+    intervals : int, np.ndarray or list of np.ndarrays
+        Number or positions of intervals to generate.
+
         - If int, intervals gives the number of generated intervals.
         - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving
-        intervals, the first column giving start points,
-        and the second column giving end points of intervals
+          intervals, the first column giving start points,
+          and the second column giving end points of intervals
+        - If list of ndarrays, applied to each column of X, where
+          each entry in the list is a 2d np.ndarray
+          [n_intervals, 2] with rows giving intervals, the first column giving
+          start points, and the second column giving end points of intervals.
 
     Examples
     --------

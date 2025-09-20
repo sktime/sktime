@@ -82,6 +82,7 @@ class Deseasonalizer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
+        "capability:categorical_in_X": False,
         "capability:multivariate": False,
         # CI and test flags
         # -----------------
@@ -260,7 +261,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     the time index of the passed series and then
     subtracts them ("additive" model) from the passed series
     or divides the passed series by them ("multiplicative" model).
-
 
     Parameters
     ----------
@@ -485,6 +485,7 @@ class STLTransformer(BaseTransformer):
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
