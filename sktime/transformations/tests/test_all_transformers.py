@@ -201,8 +201,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that error is raised when categorical is not supported in X."""
-        X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
-        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_0": [i for i in range(17)]})
 
         # SFAFast transformer requires nested dataframe for X.
         # so testing all transformers apart from it.
@@ -212,8 +212,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_categorical_y_raises_error(self, estimator_instance):
         """Test that error is raised when categorical data is passed in y."""
-        X = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
-        y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        X = pd.DataFrame({"var_0": [i for i in range(17)]})
+        y = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
 
         requires_y = estimator_instance.get_tag("requires_y")
         uses_y = estimator_instance.get_tag("y_inner_mtype") not in ["None", None]
