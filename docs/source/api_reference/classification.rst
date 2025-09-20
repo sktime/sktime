@@ -79,6 +79,7 @@ Deep learning
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
     tapnet.TapNetClassifier
+    convtimenet.ConvTimeNetClassifier
 
 Foundation models
 -----------------
