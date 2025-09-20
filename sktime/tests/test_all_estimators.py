@@ -1261,6 +1261,22 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             msg = "Found invalid tag: %s" % tag
             assert tag in VALID_ESTIMATOR_TAGS, msg
 
+    def test_obj_vs_cls_signature(self, estimator_class):
+        """Check that init signature is same for class as for instance.
+
+        Implies that constructor does not result in an object with different signature,
+        which could be caused by decorators or metaclasses.
+
+        This test is also relevant for placeholder records, to ensure that the
+        placeholder class and the actual class in the interfaced package
+        have not diverged in their constructor signature.
+        """
+        cls1 = estimator_class
+        cls2 = type(estimator_class.create_test_instance())
+
+        assert deep_equals(cls1.get_param_names(), cls2.get_param_names())
+        assert deep_equals(cls1.get_param_defaults(), cls2.get_param_defaults())
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
