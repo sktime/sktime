@@ -117,9 +117,9 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> y = _make_series(n_columns=4)
     >>> forecaster = DynamicFactor()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    DynamicFactor(...)
+    >>> DynamicFactor(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    -------------------------------------------------------------
+    >>> -------------------------------------------------------------
     >>> # in-sample and out-of-sample forecasting with exogenous variables
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.forecasting.dynamic_factor import DynamicFactor
@@ -142,6 +142,40 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> # Create a forecasting horizon
     >>> fh_in = ForecastingHorizon([2, 3,4,5,6,7], is_relative=False)
     >>> y_pred_in = forecaster.predict(fh=fh_in, X=X_train)
+    >>> # in-sample prediction with relative fh
+    >>> # testing relative fh
+    >>> fh_in_sample = ForecastingHorizon([-7, -6, -5, -4, -3, -2, -1],
+    >>>                                    is_relative=True)
+    >>> sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample,
+    >>>                                                         X=X_train)
+    >>> unfitted_statsmodels_model = _DynamicFactor(
+    >>>    endog=Y_train,
+    >>>    k_factors=2,
+    >>>    factor_order=1,
+    >>>    exog=X_train,
+    >>>    enforce_stationarity=False,
+    >>> )
+    >>> fitted_statsmodels_model = unfitted_statsmodels_model.fit()
+    >>> statsmodels_predictions = fitted_statsmodels_model.predict(
+    >>>    start=Y_train.index[-8], end=Y_train.index[-2], exog=X_train
+    >>> )
+    >>> # in-sample prediction with absolute fh
+    >>> # testing absolute fh
+    >>> fh_in_sample = ForecastingHorizon([2, 3, 4, 5, 6, 7],
+    >>>                             is_relative=False)
+    >>> sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample,
+    >>>                                                         X=X_train)
+    >>> unfitted_statsmodels_model = _DynamicFactor(
+    >>>    endog=Y_train,
+    >>>    k_factors=2,
+    >>>    factor_order=1,
+    >>>    exog=X_train,
+    >>>    enforce_stationarity=False,
+    >>> )
+    >>> fitted_statsmodels_model = unfitted_statsmodels_model.fit()
+    >>> statsmodels_predictions = fitted_statsmodels_model.predict(
+    >>>    start=2, end=7, exog=X_train
+    >>> )
 
     """
 
@@ -263,8 +297,8 @@ class DynamicFactor(_StatsModelsAdapter):
             y_pred.index = np.arange(
                 start + self._y.index[0], end + self._y.index[0] + 1
             )
-        if fh.is_relative:
-            y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        # if fh.is_relative:
+        #    y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
         return y_pred
 
     def _predict_interval(self, fh, X, coverage):
