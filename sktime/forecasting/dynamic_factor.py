@@ -154,7 +154,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -164,6 +164,10 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(

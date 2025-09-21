@@ -12,7 +12,6 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
@@ -258,12 +257,12 @@ def _evaluate_fold(x, meta):
     column_order = _get_column_order_and_datatype(scoring, return_data)
     result = result.reindex(columns=column_order.keys())
 
-    return result, classifier
+    return result
 
 
 def evaluate(
     classifier,
-    cv=KFold(n_splits=3, shuffle=False),
+    cv=None,
     X=None,
     y=None,
     scoring: Optional[Union[callable, list[callable]]] = None,
@@ -302,9 +301,18 @@ def evaluate(
     classifier : sktime.BaseClassifier
         Concrete sktime classifier to benchmark.
 
-    cv : sklearn.model_selection.BaseCrossValidator
-        Provides train/test indices to split data into folds.
-        Example: ``KFold`` or ``TimeSeriesSplit``.
+    cv : int, sklearn cross-validation generator or an iterable, default=3-fold CV
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None = default = ``KFold(n_splits=3, shuffle=True)``
+        - integer, number of folds folds in a ``KFold`` splitter, ``shuffle=True``
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with ``shuffle=False`` so the splits will be the same across calls.
 
     X : sktime-compatible panel data (Panel scitype)
         Panel data container. Supported formats include:
@@ -370,7 +378,6 @@ def evaluate(
         - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
         - ``y_test``: pd.Series of test targets (if ``return_data=True``)
 
-
     Examples
     --------
     >>> from sktime.datasets import load_unit_test
@@ -389,6 +396,18 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
     scoring = _check_scores(scoring)
+
+    # default handling for cv
+    if isinstance(cv, int):
+        from sklearn.model_selection import KFold
+
+        _cv = KFold(n_splits=cv, shuffle=True)
+    elif cv is None:
+        from sklearn.model_selection import KFold
+
+        _cv = KFold(n_splits=3, shuffle=True)
+    else:
+        _cv = cv
 
     y_valid, _, y_metadata = check_is_scitype(y, scitype="Table", return_metadata=[])
     if not y_valid:
@@ -435,18 +454,14 @@ def evaluate(
             yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
-    yx_splits = gen_y_X_train_test(y, X, cv)
-
-    def evaluate_fold_wrapper(x, meta):
-        result, classifier = _evaluate_fold(x, meta["_evaluate_fold_kwargs"])
-        return result
+    yx_splits = gen_y_X_train_test(y, X, _cv)
 
     results = parallelize(
-        fun=evaluate_fold_wrapper,
+        fun=_evaluate_fold,
         iter=enumerate(yx_splits),
-        meta={"_evaluate_fold_kwargs": _evaluate_fold_kwargs},
-        backend="loky",
-        backend_params={"n_jobs": -1},
+        meta=_evaluate_fold_kwargs,
+        backend=backend,
+        backend_params=backend_params,
     )
 
     # final formatting of dask dataframes

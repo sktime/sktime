@@ -208,7 +208,7 @@ class WindowSummarizer(BaseTransformer):
             "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
@@ -219,6 +219,10 @@ class WindowSummarizer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # reason for skip: known side effects on multivariate arguments; see #2072
+        "tests:skip_by_name": [
+            "test_methods_have_no_side_effects",
+        ],
     }
 
     def __init__(

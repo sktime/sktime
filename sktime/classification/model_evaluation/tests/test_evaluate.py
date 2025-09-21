@@ -20,6 +20,9 @@ from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils.parallel import _get_parallel_test_fixtures
+
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
 @pytest.mark.skipif(
@@ -173,7 +176,8 @@ class TestEvaluate:
         assert all(result["fit_time"] > 0)
         assert all(result["pred_time"] >= 0)
 
-    def test_evaluate_parallel_backend(self):
+    @pytest.mark.parametrize("backend", BACKENDS)
+    def test_evaluate_parallel_backend(self, backend):
         """Test the parrelelization backends"""
         X, y = make_classification_problem()
         n_splits = 3
@@ -186,8 +190,7 @@ class TestEvaluate:
             y=y,
             scoring=accuracy_score,
             error_score="raise",
-            backend="loky",
-            backend_params={"n_jobs": -1},
+            **backend,
         )
 
         assert isinstance(result, pd.DataFrame)
