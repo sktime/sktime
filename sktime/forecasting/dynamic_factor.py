@@ -248,8 +248,8 @@ class DynamicFactor(_StatsModelsAdapter):
             start = fh.to_absolute(self.cutoff)[0]
             end = fh.to_absolute(self.cutoff)[-1]
         else:
-            start = self._y.index[fh.min()]
-            end = self._y.index[fh.max()]
+            start = self._y.index[fh[0]]
+            end = self._y.index[fh[-1]]
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         # if y is univariate, we duplicated the column in fit,
         # so now we need to revert this duplication
