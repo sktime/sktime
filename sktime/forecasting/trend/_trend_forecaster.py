@@ -61,9 +61,12 @@ class TrendForecaster(BaseForecaster):
     _tags = {
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "maintainers": ["tensorflow-as-tf"],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, regressor=None):

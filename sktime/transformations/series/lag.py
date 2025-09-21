@@ -127,7 +127,7 @@ class Lag(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -136,9 +136,12 @@ class Lag(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -248,6 +251,9 @@ class Lag(BaseTransformer):
             else:
                 if hasattr(X.index, "freq") and X.index.freq is None and freq is None:
                     freq = pd.infer_freq(X.index)
+                if freq is None and isinstance(X.index, pd.DatetimeIndex):
+                    # convert to PeriodIndex and then infer freq
+                    freq = X.index[:4].to_period().freq
                 X_orig_idx_shifted = X_orig_idx.shift(periods=lag, freq=freq)
                 if isinstance(lag, int) and freq is None:
                     freq = "infer"
@@ -449,7 +455,7 @@ class ReducerTransform(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -458,7 +464,7 @@ class ReducerTransform(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
     }
 

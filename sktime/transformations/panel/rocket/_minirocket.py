@@ -82,7 +82,7 @@ class MiniRocket(BaseTransformer):
         "python_dependencies": "numba",
         # estimator tags
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -91,6 +91,8 @@ class MiniRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -177,7 +179,7 @@ class MiniRocket(BaseTransformer):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter sets for the estimator."""
         return [
-            {"random_state": 0},  # Default Paramters
+            {"random_state": 0},  # Default Parameters
             {
                 "num_kernels": 84,
                 "max_dilations_per_kernel": 32,

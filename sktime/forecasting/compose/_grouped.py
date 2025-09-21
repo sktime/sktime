@@ -64,11 +64,14 @@ class ForecastByLevel(_DelegatedForecaster):
     _tags = {
         "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -156,7 +159,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
 
-        If a clusterer is used, it must suport cluster assignment,
+        If a clusterer is used, it must support cluster assignment,
         i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
@@ -196,15 +199,15 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> group_forecaster = GroupbyCategoryForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
     The fit function firstly passes the data through the given transformer
     to generate a given category. This category can be seen by the variable
-    self.category_.
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -225,7 +228,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -267,10 +270,10 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,

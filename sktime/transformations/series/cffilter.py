@@ -64,7 +64,7 @@ class CFFilter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -77,7 +77,7 @@ class CFFilter(BaseTransformer):
         # does transform return have the same time index as input X
         "capability:unequal_length": True,
         # can the transformer handle unequal length time series (if passed Panel)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
     }
 

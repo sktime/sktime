@@ -112,9 +112,9 @@ class HCrystalBallAdapter(BaseForecaster):
         "python_dependencies": "hcrystalball",
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, model):

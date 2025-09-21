@@ -24,8 +24,11 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": ["tsfresh", "scipy<1.15"],
-        # todo 0.37.0 - check and remove the scipy bound if bug is fixed, else bump todo
+        "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
+        # if tsfresh is <0.21, it is incompatible with scipy>=1.15
+        # therefore, we need to restrict the version of scipy
+        # the dependency tag translates to:
+        # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
     }
 
     def __init__(

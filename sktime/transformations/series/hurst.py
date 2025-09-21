@@ -57,12 +57,12 @@ class HurstExponentTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "authors": ["phoeenniixx"],
     }
 

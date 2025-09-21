@@ -76,16 +76,25 @@ class TestAllClusterers(ClustererFixtureGenerator, QuickTester):
         # run predict
         y_pred = scenario.run(estimator_instance, method_sequence=["predict"])
 
+        shape_msg = "Incorrect shape returned by predict"
+
         # check predict
-        assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new_instances,)
+        msg = f"Incorrect type returned by predict ({type(y_pred)})"
+        assert isinstance(y_pred, np.ndarray), msg
+        assert y_pred.shape == (X_new_instances,), shape_msg
 
         # check predict proba (all clusterers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
-        assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape[0] == X_new_instances
+        msg = f"Incorrect type returned by predict_proba ({type(y_proba)})"
+        assert isinstance(y_proba, np.ndarray), msg
+        assert y_proba.shape[0] == X_new_instances, shape_msg
 
         if hasattr(estimator_instance, "n_clusters") and estimator_instance.n_clusters:
             assert y_proba.shape[1] == estimator_instance.n_clusters
 
-        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
+        # If a sample doesn't belong to a cluster, it may not contribute to the total
+        # probability. Check that total probability in range [0,1] + rounding error
+        msg = "Total assigned probability exceeds 1"
+        assert np.all(y_proba.sum(axis=1) < 1.0001), msg
+        msg = "Total assigned probability negative"
+        assert np.all(y_proba.sum(axis=1) >= 0), msg

@@ -20,11 +20,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
-Optional implements:
+Optional methods to implement:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
@@ -110,7 +110,7 @@ class MyForecaster(BaseForecaster):
         # --------------------------------------------
         #
         # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
         # CAVEAT: if tag is set to True, inner methods always see X=None
         #
@@ -130,7 +130,7 @@ class MyForecaster(BaseForecaster):
         # if not None, raises exception if X.index, y.index level -1 is not of that type
         #
         # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
@@ -225,7 +225,7 @@ class MyForecaster(BaseForecaster):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):

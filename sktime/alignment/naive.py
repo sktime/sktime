@@ -32,6 +32,7 @@ class AlignerNaive(BaseAligner):
     >>> X_list = [pd.DataFrame({"value": ts}) for ts in X_train.iloc[:, 0]]
     >>> aligner = AlignerNaive(strategy="start-end")
     >>> aligner.fit(X_list)
+    AlignerNaive(...)
     >>> alignment = aligner.get_alignment()
     """
 
@@ -43,6 +44,9 @@ class AlignerNaive(BaseAligner):
         # --------------
         "capability:multiple-alignment": True,  # can align more than two sequences?
         "capability:unequal_length": True,  # can align sequences of unequal length?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, strategy="start-end"):

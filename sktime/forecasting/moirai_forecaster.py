@@ -69,6 +69,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> morai_forecaster.fit(y, X=X)
+    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
@@ -82,11 +83,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "python_dependencies": [
             "gluonts",

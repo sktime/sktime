@@ -285,7 +285,7 @@ class Catch22(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
@@ -495,7 +495,7 @@ class Catch22(BaseTransformer):
             return self.METHODS_DICT.get(ALL_FEATURE_NAMES[feature])
         else:
             raise TypeError(
-                "Invalide type in Catch22.__get_feature_function_int. "
+                "Invalid type in Catch22.__get_feature_function_int. "
                 f"Expected int, got {type(feature)}."
             )
 

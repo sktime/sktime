@@ -37,7 +37,7 @@ class IntervalSegmenter(BaseTransformer):
 
     _tags = {
         "authors": "mloning",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -196,7 +196,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for y?
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -412,7 +412,7 @@ class SlidingWindowSegmenter(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -516,7 +516,7 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     # check input: n_timepoints
     if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
         raise ValueError(
-            f"`n_timepoints` must be an integer, but found: " f"{type(n_timepoints)}"
+            f"`n_timepoints` must be an integer, but found: {type(n_timepoints)}"
         )
     if not n_timepoints >= 1:
         raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")

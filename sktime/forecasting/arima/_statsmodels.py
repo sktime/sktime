@@ -25,7 +25,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
 
     These are implementations of the same underlying model, (S)ARIMA(X),
     but with different
-    fitting strategies, fitted parameters, and slightly differring behaviour.
+    fitting strategies, fitted parameters, and slightly differing behaviour.
     Users should refer to the statsmodels documentation for further details:
     https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
@@ -168,10 +168,14 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
         # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsmodels"],
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(

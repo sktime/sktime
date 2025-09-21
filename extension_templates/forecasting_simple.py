@@ -25,7 +25,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
@@ -100,8 +100,8 @@ class MyForecaster(BaseForecaster):
         # --------------------------------------------
         #
         # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
+        "capability:exogenous": True,
+        # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
         # CAVEAT: if tag is set to True, inner methods always see X=None
         #
         # requires-fh-in-fit = is forecasting horizon always required in fit?

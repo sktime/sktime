@@ -84,7 +84,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
     }
@@ -118,7 +118,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         self.needs_X = self.algorithm_exogenous_support and bool(self.futr_exog_list)
 
-        self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
+        self.set_tags(**{"capability:exogenous": self.needs_X})
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -159,7 +159,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         - future exogenous columns (``futr_exog_list``) - used from ``__init__``
         - historical exogenous columns (``hist_exog_list``) - not supported
-        - statis exogenous columns (``stat_exog_list``) - not supported
+        - static exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
