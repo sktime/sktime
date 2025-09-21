@@ -182,8 +182,12 @@ class ElbowClassSum(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
         "maintainers": ["haskarb"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",
@@ -351,6 +355,13 @@ class ElbowClassPairwise(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
+        "maintainers": ["haskarb"],
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",
@@ -363,8 +374,8 @@ class ElbowClassPairwise(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
+        "capability:categorical_in_X": False,
         # can the transformer handle unequal length time series (if passed Panel)?
-        "python_dependencies": "scipy",
     }
 
     def __init__(self):

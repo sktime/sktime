@@ -59,7 +59,11 @@ class HOG1DTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["vnicholson1"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
