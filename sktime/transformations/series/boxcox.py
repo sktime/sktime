@@ -184,7 +184,7 @@ class BoxCoxTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_categorical_y_raises_error"]
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
         # test causes "bracket error", data does not seem to work with box-cox
     }
 
