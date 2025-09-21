@@ -59,8 +59,6 @@ class _TransformChangeNInstances(BaseTransformer):
         "property:randomness": "derandomized",
         # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "capability:random_state": True,
-        "property:randomness": "derandomized",
     }
 
     def __init__(self, n=1, random_state=None):
