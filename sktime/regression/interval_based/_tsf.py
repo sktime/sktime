@@ -96,6 +96,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     _base_estimator = DecisionTreeRegressor()

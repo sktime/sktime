@@ -96,6 +96,8 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
