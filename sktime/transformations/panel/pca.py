@@ -87,6 +87,8 @@ class PCATransformer(BaseTransformer):
         "capability:multivariate": True,
         "capability:categorical_in_X": False,
         "fit_is_empty": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

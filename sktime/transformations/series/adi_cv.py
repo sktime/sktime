@@ -102,6 +102,7 @@ class ADICVTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

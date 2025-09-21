@@ -46,6 +46,8 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions

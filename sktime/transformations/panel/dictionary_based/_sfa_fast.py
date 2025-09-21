@@ -132,6 +132,8 @@ class SFAFast(BaseTransformer):
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
         "python_dependencies": ["numba", "scipy"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
