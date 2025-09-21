@@ -3,7 +3,6 @@
 
 __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 
-from typing import Any
 
 import pandas as pd
 
@@ -11,8 +10,8 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 0.40.0: update upper and lower bounds when Prophetverse 0.9.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.9.0")
+# TODO 0.39.0: update upper and lower bounds when Prophetverse 0.9.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
@@ -23,93 +22,53 @@ class Prophetverse(_DelegatedForecaster):
     * logistic trend. Here, another parametrization is considered,
       and the capacity is not passed as input, but inferred from the data.
 
-    * the users can pass arbitrary ``sktime`` transformers as ``feature_transformer``,
+    * the users can pass arbitrary ``sktime`` transformers as
+      ``feature_transformer``,
       for instance ``FourierFeatures`` or ``HolidayFeatures``.
 
     * no default weekly_seasonality/yearly_seasonality, this is left to the user
       via the ``feature_transformer`` parameter
 
-    * Uses ``changepoint_interval`` instead of ``n_changepoints`` to set changepoints.
+    * Uses ``changepoint_interval`` instead of ``n_changepoints`` to set
+    changepoints.
 
-    * accepts configurations where each exogenous variable has a different function
-      relating it to its additive effect on the time series.
+    * accepts configurations where each exogenous variable has a different
+      function relating it to its additive effect on the time series.
       One can, for example, set different priors for a group of feature,
       or use a Hill function to model the effect of a feature.
 
     Parameters
     ----------
-    changepoint_interval : int, optional, default=25
-        Number of potential changepoints to sample in the history.
+    trend : Union[str, BaseEffect], optional
+        Type of trend to use. Either "linear" (default) or "logistic", or a
+        custom effect object.
 
-    changepoint_range : float or int, optional, default=0.8
-        Proportion of the history in which trend changepoints will be estimated.
+    exogenous_effects : Optional[List[BaseEffect]], optional
+        List of effect objects defining the exogenous effects.
 
-        * if float, must be between 0 and 1.
-          The range will be that proportion of the training history.
+    default_effect : Optional[BaseEffect], optional
+        The default effect for variables without a specified effect.
 
-        * if int, ca nbe positive or negative.
-          Absolute value must be less than number of training points.
-          The range will be that number of points.
-          A negative int indicates number of points
-          counting from the end of the history, a positive int from the beginning.
+    feature_transformer : sktime transformer, optional
+        Transformer object to generate additional features (e.g.,
+          Fourier terms).
 
-    changepoint_prior_scale : float, optional, default=0.001
-        Regularization parameter controlling the flexibility
-        of the automatic changepoint selection.
+    noise_scale : float, optional
+        Scale parameter for the observation noise. Must be greater than 0.
+        (default: 0.05)
 
-    offset_prior_scale : float, optional, default=0.1
-        Scale parameter for the prior distribution of the offset.
-        The offset is the constant term in the piecewise trend equation.
+    likelihood : str, optional
+        The likelihood model to use. One of "normal", "gamma", or
+         "negbinomial". (default: "normal")
 
-    feature_transformer : sktime transformer, BaseTransformer, optional, default=None
-        Transformer object to generate Fourier terms, holiday or other features.
-        If None, no additional features are used.
-        For multiple features, pass a ``FeatureUnion`` object with the transformers.
+    scale : optional
+        Scaling value inferred from the data.
 
-    capacity_prior_scale : float, optional, default=0.2
-        Scale parameter for the prior distribution of the capacity.
+    rng_key : optional
+        A jax.random.PRNGKey instance, or None.
 
-    capacity_prior_loc : float, optional, default=1.1
-        Location parameter for the prior distribution of the capacity.
-
-    noise_scale : float, optional, default=0.05
-        Scale parameter for the observation noise.
-    trend : str, optional, one of "linear" (default) or "logistic"
-        Type of trend to use. Can be "linear" or "logistic".
-
-    mcmc_samples : int, optional, default=2000
-        Number of MCMC samples to draw.
-
-    mcmc_warmup : int, optional, default=200
-        Number of MCMC warmup steps. Also known as burn-in.
-
-    mcmc_chains : int, optional, default=4
-        Number of MCMC chains to run in parallel.
-
-    inference_method : str, optional, one of "mcmc" or "map", default="map"
-        Inference method to use. Can be "mcmc" or "map".
-
-    optimizer_name : str, optional, default="Adam"
-        Name of the numpyro optimizer to use for variational inference.
-
-    optimizer_kwargs : dict, optional, default={}
-        Additional keyword arguments to pass to the numpyro optimizer.
-
-    optimizer_steps : int, optional, default=100_000
-        Number of optimization steps to perform for variational inference.
-
-    exogenous_effects : List[AbstractEffect], optional, default=None
-        A list of ``prophetverse`` ``AbstractEffect`` objects
-        defining the exogenous effects to be used in the model.
-
-    default_effect : AbstractEffectm optional, default=None
-        The default effect to be used when no effect is specified for a variable.
-
-    default_exogenous_prior : tuple, default=None
-        Default prior distribution for exogenous effects.
-
-    rng_key : jax.random.PRNGKey or None (default
-        Random number generator key.
+    inference_engine : optional
+        An inference engine for running the model.
 
     Examples
     --------
@@ -141,7 +100,7 @@ class Prophetverse(_DelegatedForecaster):
         # --------------
         "authors": "felipeangelimvieira",
         "maintainers": "felipeangelimvieira",
-        "python_dependencies": "prophetverse",
+        "python_dependencies": "prophetverse>=0.8.0",
         # estimator type
         # --------------
         "capability:pred_int": True,
@@ -149,6 +108,9 @@ class Prophetverse(_DelegatedForecaster):
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -158,58 +120,37 @@ class Prophetverse(_DelegatedForecaster):
 
     def __init__(
         self,
-        changepoint_interval: int = 25,
-        changepoint_range: float = 0.8,
-        changepoint_prior_scale: float = 0.001,
-        offset_prior_scale: float = 0.1,
-        feature_transformer=None,
-        capacity_prior_scale: float = 0.2,
-        capacity_prior_loc: float = 1.1,
-        noise_scale: float = 0.05,
-        trend: str = "linear",
-        mcmc_samples: int = 2000,
-        mcmc_warmup: int = 200,
-        mcmc_chains: int = 4,
-        inference_method: str = "map",
-        optimizer_name: str = "Adam",
-        optimizer_kwargs: dict[str, Any] | None = None,
-        optimizer_steps: int = 100_000,
-        exogenous_effects: list | None = None,
+        trend="linear",
+        exogenous_effects=None,
         default_effect=None,
-        scale: float = None,
+        feature_transformer=None,
+        noise_scale=None,
+        likelihood="normal",
+        scale=None,
         rng_key=None,
+        inference_engine=None,
+        broadcast_mode="estimator",
     ):
-        self.changepoint_interval = changepoint_interval
-        self.changepoint_range = changepoint_range
-        self.changepoint_prior_scale = changepoint_prior_scale
-        self.offset_prior_scale = offset_prior_scale
         self.noise_scale = noise_scale
         self.feature_transformer = feature_transformer
-        self.capacity_prior_scale = capacity_prior_scale
-        self.capacity_prior_loc = capacity_prior_loc
         self.trend = trend
-        self.mcmc_samples = mcmc_samples
-        self.mcmc_warmup = mcmc_warmup
-        self.mcmc_chains = mcmc_chains
-        self.inference_method = inference_method
-        self.optimizer_name = optimizer_name
-        self.optimizer_kwargs = optimizer_kwargs
-        self.optimizer_steps = optimizer_steps
         self.exogenous_effects = exogenous_effects
         self.default_effect = default_effect
         self.rng_key = rng_key
         self.scale = scale
-
+        self.likelihood = likelihood
+        self.inference_engine = inference_engine
+        self.broadcast_mode = broadcast_mode
         super().__init__()
 
         # delegation, only for prophetverse 0.2.X
-        from prophetverse.sktime import Prophet
+        from prophetverse.sktime import Prophetverse
 
-        self._delegate = Prophet(**self.get_params())
+        self._delegate = Prophetverse(**self.get_params())
 
 
-# TODO 0.40.0: update upper and lower bounds when Prophetverse 0.9.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0,<0.9.0")
+# TODO 0.40.0: update upper and lower bounds when Prophetverse 0.10.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
 class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
 
@@ -325,6 +266,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "maintainers": "felipeangelimvieira",
         "python_dependencies": "prophetverse",
         # estimator type
+        # --------------
         "scitype:y": "univariate",
         "capability:exogenous": True,
         "capability:missing_values": False,
@@ -343,53 +285,34 @@ class HierarchicalProphet(_DelegatedForecaster):
         "fit_is_empty": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
     }
 
     def __init__(
         self,
         trend="linear",
-        changepoint_interval: int = 25,
-        changepoint_range: float | int = 0.8,
-        changepoint_prior_scale: float = 0.001,
-        offset_prior_scale: float = 0.1,
-        capacity_prior_scale: float = 0.2,
-        capacity_prior_loc: float = 1.1,
         feature_transformer=None,
-        exogenous_effects: list | None = None,
+        exogenous_effects=None,
         default_effect=None,
-        shared_features: list[str] = None,
-        mcmc_samples: int = 2000,
-        mcmc_warmup: int = 200,
-        mcmc_chains: int = 4,
-        inference_method: str = "map",
-        optimizer_name: str = "Adam",
-        optimizer_kwargs: dict[str, Any] | None = None,
-        optimizer_steps: int = 100_000,
-        noise_scale: float = 0.05,
-        correlation_matrix_concentration: float = 1.0,
+        shared_features=None,
+        noise_scale=0.05,
+        correlation_matrix_concentration=1.0,
         rng_key=None,
+        inference_engine=None,
+        likelihood=None,
     ):
         self.trend = trend
-        self.changepoint_interval = changepoint_interval
-        self.changepoint_range = changepoint_range
-        self.changepoint_prior_scale = changepoint_prior_scale
-        self.offset_prior_scale = offset_prior_scale
-        self.capacity_prior_scale = capacity_prior_scale
-        self.capacity_prior_loc = capacity_prior_loc
         self.feature_transformer = feature_transformer
         self.exogenous_effects = exogenous_effects
         self.default_effect = default_effect
         self.shared_features = shared_features
-        self.mcmc_samples = mcmc_samples
-        self.mcmc_warmup = mcmc_warmup
-        self.mcmc_chains = mcmc_chains
-        self.inference_method = inference_method
-        self.optimizer_name = optimizer_name
-        self.optimizer_kwargs = optimizer_kwargs
-        self.optimizer_steps = optimizer_steps
         self.noise_scale = noise_scale
         self.correlation_matrix_concentration = correlation_matrix_concentration
         self.rng_key = rng_key
+        self.inference_engine = inference_engine
+        self.likelihood = likelihood
 
         super().__init__()
 
