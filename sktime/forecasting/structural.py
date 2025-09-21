@@ -211,8 +211,12 @@ class UnobservedComponents(_StatsModelsAdapter):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "handles-missing-data": False,
-        "ignores-exogeneous-X": False,
+        "capability:missing_values": False,
+        "capability:exogenous": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(

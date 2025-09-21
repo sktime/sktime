@@ -113,7 +113,7 @@ class HMM(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm import HMM
+    >>> from sktime.detection.hmm import HMM
     >>> from scipy.stats import norm
     >>> from numpy import asarray
     >>> # define the emission probs for our HMM model:
@@ -136,10 +136,13 @@ class HMM(BaseDetector):
         "maintainers": "miraep8",
         # estimator type
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

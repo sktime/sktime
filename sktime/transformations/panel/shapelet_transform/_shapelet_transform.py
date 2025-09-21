@@ -134,7 +134,7 @@ class ShapeletTransform(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # and for y?
         "requires_y": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "python_dependencies": "numba",
     }
@@ -502,8 +502,7 @@ class ShapeletTransform(BaseTransformer):
                         if self.verbose > 0:
                             if candidate_rejected is False:
                                 print(
-                                    "Candidate finished. {:02d}:{:02} "
-                                    "remaining".format(
+                                    "Candidate finished. {:02d}:{:02} remaining".format(
                                         int(
                                             round(
                                                 self.time_contract_in_mins
@@ -535,8 +534,7 @@ class ShapeletTransform(BaseTransformer):
                                 )
                             else:
                                 print(
-                                    "Candidate rejected. {:02d}:{:02} "
-                                    "remaining".format(
+                                    "Candidate rejected. {:02d}:{:02} remaining".format(
                                         int(
                                             round(
                                                 (self.time_contract_in_mins - time_now)
@@ -1065,7 +1063,7 @@ class RandomShapeletTransform(BaseTransformer):
         "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
         "maintainers": ["dguijo"],
         "fit_is_empty": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",

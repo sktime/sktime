@@ -207,7 +207,7 @@ class MatrixProfile(BaseTransformer):
 
     _tags = {
         "authors": "Claudia Rincon Sanchez",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

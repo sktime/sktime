@@ -89,7 +89,7 @@ class TimeSince(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,  # is fit empty and can be skipped?
@@ -100,8 +100,11 @@ class TimeSince(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

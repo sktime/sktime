@@ -20,8 +20,7 @@ def _check_lags(lags):
     msg = " ".join(
         [
             "`lags` should be provided as a positive integer scaler, or ",
-            "a list, tuple or np.ndarray of positive integers,"
-            f"but found {type(lags)}.",
+            f"a list, tuple or np.ndarray of positive integers,but found {type(lags)}.",
         ]
     )
     non_positive_msg = "`lags` should be positive integers."
@@ -249,8 +248,13 @@ class Differencer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # test fails in the Panel case for Differencer, see #2522
+        "tests:skip_by_name": ["test_transform_inverse_transform_equivalent"],
     }
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]

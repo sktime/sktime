@@ -83,6 +83,11 @@ class DummyClassifier(BaseClassifier):
         "capability:unequal_length": True,
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     VALID_STRATEGIES = ["most_frequent", "prior", "stratified", "uniform", "constant"]

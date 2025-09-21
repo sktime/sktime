@@ -65,8 +65,12 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     >>> import numpy as np
     >>> from sktime.split import ExpandingSlidingWindowSplitter
     >>> ts = np.arange(10)
-    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=1,
-        initial_window=1, max_expanding_window_length=5)
+    >>> splitter = ExpandingSlidingWindowSplitter(
+    ...     fh=[1, 2],
+    ...     step_length=3,
+    ...     initial_window=1,
+    ...     max_expanding_window_length=5,
+    ... )
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0]), array([1, 2])), (array([0, 1]), array([2, 3])),
       (array([0, 1, 2]), array([3, 4])), (array([0, 1, 2, 3]), array([4, 5])),
@@ -76,8 +80,12 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     >>> import numpy as np
     >>> from sktime.split import ExpandingSlidingWindowSplitter
     >>> ts = np.arange(10)
-    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=3,
-        initial_window=2, max_expanding_window_length=5)
+    >>> splitter = ExpandingSlidingWindowSplitter(
+    ...     fh=[1, 2],
+    ...     step_length=3,
+    ...     initial_window=2,
+    ...     max_expanding_window_length=5,
+    ... )
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1]), array([2, 3])), (array([0, 1, 2, 3, 4]), array([5, 6])),
       (array([3, 4, 5, 6, 7]), array([8, 9]))]

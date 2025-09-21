@@ -24,7 +24,7 @@ class BinarySegmentation(BaseDetector):
     min_cp_distance : int
         Minimum distance between change points.
     max_iter : int
-        Maximum number of interations before the found change points are returned.
+        Maximum number of interactions before the found change points are returned.
 
     Notes
     -----
@@ -39,7 +39,7 @@ class BinarySegmentation(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.annotation.bs import BinarySegmentation
+    >>> from sktime.detection.bs import BinarySegmentation
     >>> model = BinarySegmentation(threshold=1)
     >>> X = pd.Series([1, 1, 1, 1, 5, 5, 5, 5])
     >>> model.fit_predict(X)
@@ -60,7 +60,7 @@ class BinarySegmentation(BaseDetector):
         # estimator type
         # --------------
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "X_inner_mtype": "pd.Series",
@@ -122,7 +122,7 @@ class BinarySegmentation(BaseDetector):
         min_cp_distance : int
             Minimum distance between change points.
         max_iter : int
-            Maximum number of interations before the found change points are returned.
+            Maximum number of interactions before the found change points are returned.
 
         Returns
         -------
@@ -171,7 +171,7 @@ class BinarySegmentation(BaseDetector):
         X : pd.Series
             Timeseries on which the change points will be detected.
         Y : any
-            Unused argument. Included for compatability with sklearn.
+            Unused argument. Included for compatibility with sklearn.
 
         Returns
         -------

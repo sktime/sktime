@@ -10,6 +10,7 @@ __all__ = [
     "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
+    "StatsForecastADIDA",
 ]
 from typing import Optional, Union
 
@@ -185,10 +186,15 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.0.0"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(
@@ -350,12 +356,13 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
 
-    decomposition_type : str, optional, default="multipliciative"
+    decomposition_type : str, optional, default="multiplicative"
         possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
+        possible values: "STM", "OTM", "DSTM", "DOTM"
 
     References
     ----------
@@ -382,7 +389,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.3.0"],
@@ -462,11 +469,11 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="ZZZ")
         Controlling state-space-equations.
-    damped : bool
+    damped : bool, optional (default=None)
         A parameter that 'dampens' the trend.
     phi : float, optional (default=None)
         Smoothing parameter for trend damping. Only used when ``damped=True``.
@@ -497,7 +504,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.3.2"],
@@ -578,9 +585,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="Z")
         Controlling state-space-equations.
 
     References
@@ -605,7 +612,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
@@ -673,7 +680,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    seasonal_periods : int or list of int.
+    seasonal_periods : int or list of int. (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
@@ -715,7 +722,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.7.2"],
@@ -723,7 +730,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]],
+        seasonal_periods: Union[int, list[int]] = 1,
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
@@ -859,7 +866,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
@@ -983,3 +990,108 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             ]
 
         return params
+
+
+class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
+    """StatsForecast ADIDA (Aggregate-Disaggregate Intermittent Demand Approach) model.
+
+    Direct interface to ``statsforecast.models.ADIDA`` by Nixtla.
+
+    This estimator directly interfaces ``ADIDA``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Aggregate-Disagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been aggregated, it uses
+    the optimized SES to generate the forecasts at the new level. It then breaks down
+    the forecast to the original level using equal weights.
+
+    ADIDA specializes on sparse or intermittent series are series with very few
+    non-zero observations.They are notoriously hard to forecast, and so, different
+    methods have been developed specifically for them.
+
+    Parameters
+    ----------
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/docs/models/adida.html#introduction
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
+    >>> y = load_airline()
+    >>> model = StatsForecastADIDA()
+    >>> fitted_model = model.fit(y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AzulGarza", "yarnabrina", "vedantag17"],
+        "maintainers": ["vedantag17"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "capability:exogenous": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.4.0"],
+    }
+
+    def __init__(
+        self,
+        prediction_intervals: Optional[object] = None,
+    ):
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
+        if prediction_intervals is None:
+            self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import ADIDA
+
+        return ADIDA
+
+    def _get_statsforecast_params(self):
+        """Get the parameters for the statsforecast model."""
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        if _check_soft_dependencies("statsforecast", severity="none"):
+            from statsforecast.utils import ConformalIntervals
+
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        else:
+            return [{}, {}]

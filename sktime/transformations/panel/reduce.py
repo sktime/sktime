@@ -28,7 +28,7 @@ class Tabularizer(BaseTransformer):
     _tags = {
         "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -101,7 +101,7 @@ class TimeBinner(BaseTransformer):
         "authors": ["kcc-lion", "fkiraly"],
         "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -113,9 +113,9 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-        assert isinstance(
-            idx, pd.IntervalIndex
-        ), "idx should be of type pd.IntervalIndex"
+        assert isinstance(idx, pd.IntervalIndex), (
+            "idx should be of type pd.IntervalIndex"
+        )
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
@@ -125,7 +125,7 @@ class TimeBinner(BaseTransformer):
             )
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(

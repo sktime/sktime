@@ -82,7 +82,10 @@ class Deseasonalizer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -90,7 +93,7 @@ class Deseasonalizer(BaseTransformer):
         allowed_models = ("additive", "multiplicative")
         if model not in allowed_models:
             raise ValueError(
-                f"`model` must be one of {allowed_models}, " f"but found: {model}"
+                f"`model` must be one of {allowed_models}, but found: {model}"
             )
         self.model = model
         self._X = None
@@ -316,8 +319,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         is_seasonal = self.seasonality_test_(y, sp=self.sp)
         if not isinstance(is_seasonal, (bool, np.bool_)):
             raise ValueError(
-                f"Return type of `func` must be boolean, "
-                f"but found: {type(is_seasonal)}"
+                f"Return type of `func` must be boolean, but found: {type(is_seasonal)}"
             )
         return is_seasonal
 
@@ -477,7 +479,7 @@ class STLTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "python_dependencies": "statsmodels",
         "capability:inverse_transform": True,

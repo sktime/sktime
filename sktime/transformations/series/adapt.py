@@ -5,14 +5,15 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
 
-from inspect import signature
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.adapters._safe_call import _method_has_param_and_default
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
+from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
 
 class TabularToSeriesAdaptor(BaseTransformer):
@@ -150,9 +151,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -174,20 +178,23 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
-        if hasattr(transformer, "_get_tags"):
-            categorical_list = ["categorical", "1dlabels", "2dlabels"]
-            tag_values = transformer._get_tags()["X_types"]
-            if any(val in tag_values for val in categorical_list):
-                self.set_tags(**{"capability:categorical_in_X": True})
+        if get_sklearn_tag(transformer, "capability:categorical"):
+            self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        if hasattr(transformer, "_get_tags"):
-            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
+        if sklearn_ge_16:
+            from sklearn.utils import get_tags
+
+            trafo_fit_in_transform = not get_tags(transformer).requires_fit
         else:
-            trafo_fit_in_transform = False
+            if hasattr(transformer, "_get_tags"):
+                trafo_fit_in_transform = transformer._get_tags()["stateless"]
+            else:
+                trafo_fit_in_transform = False
 
         self._skip_fit = fit_in_transform or trafo_fit_in_transform
 
@@ -201,7 +208,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         if not self._trafo_has_X:
             self.set_tags(**{"y_inner_mtype": "None"})
-            self.set_tags(**{"univariate-only": True})
+            self.set_tags(**{"capability:multivariate": False})
 
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
@@ -249,14 +256,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             whether the parameter ``arg`` of method ``method`` has a default value
         """
         method_fun = getattr(self.transformer, method)
-        method_params = list(signature(method_fun).parameters.keys())
-        if arg in method_params:
-            param = signature(self.transformer.fit).parameters[arg]
-            default = param.default
-            has_default = default is not param.empty
-            return True, has_default
-        else:
-            return False, False
+        return _method_has_param_and_default(method_fun, arg)
 
     def _get_args(self, X, y, method="fit"):
         """Get kwargs for method, depending on pass_y and method.
@@ -423,6 +423,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
         from sklearn.feature_selection import VarianceThreshold
         from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
             "transformer": StandardScaler(),
@@ -447,6 +449,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
             "pooling": "global",
             "input_type": "numpy",
         }
+
+        # LabelEncoder has inconsistent API on older scikit-learn versions
+        if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
+            return [params1, params2, params3, params4, params6, params7, params8]
 
         return [params1, params2, params3, params4, params5, params6, params7, params8]
 
@@ -500,11 +506,14 @@ class PandasTransformAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "remember_data": False,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):
