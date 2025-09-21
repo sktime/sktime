@@ -97,8 +97,13 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["angus924", "michaelfeil"],
         "maintainers": ["angus924", "michaelfeil"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -109,7 +114,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "requires_y": False,
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
