@@ -8,6 +8,15 @@ from sktime.utils.estimator_checks import check_estimator, parametrize_with_chec
 
 class _TransformChangeNInstances(BaseTransformer):
     _tags = {
+        # dummy tags for the testing purpose
+        #
+        # packaging info
+        # --------------
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # estimator type
+        # --------------
         "object_type": "transformer",  # type of object
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -20,7 +29,7 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:inverse_transform:range": None,
         "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
             "pd.Series",
             "pd.DataFrame",
@@ -48,9 +57,8 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:categorical_in_X": False,
         # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "authors": "sktime developers",  # author(s) of the object
-        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(self, n=1, random_state=None):

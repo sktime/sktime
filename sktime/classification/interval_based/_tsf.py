@@ -113,6 +113,8 @@ class TimeSeriesForestClassifier(
         # --------------
         "capability:feature_importance": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

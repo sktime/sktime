@@ -321,6 +321,8 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -550,6 +552,8 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,

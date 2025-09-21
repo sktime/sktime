@@ -88,6 +88,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
         "sktime_version": SKTIME_VERSION,  # current sktime version
+        # default property tags
+        "property:randomness": "deterministic",
+        "capability:random_state": False,
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM
@@ -383,8 +386,13 @@ class TagAliaserMixin(_TagAliaserMixin):
     alias_dict = {
         "handles-missing-data": "capability:missing_values",
         "ignores-exogeneous-X": "capability:exogenous",
+        "univariate-only": "capability:multivariate",
     }
-    deprecate_dict = {"handles-missing-data": "1.0.0", "ignores-exogeneous-X": "1.0.0"}
+    deprecate_dict = {
+        "handles-missing-data": "1.0.0",
+        "ignores-exogeneous-X": "1.0.0",
+        "univariate-only": "1.0.0",
+    }
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -542,9 +550,10 @@ class TagAliaserMixin(_TagAliaserMixin):
         new_tag = alias_dict[old_tag]
 
         # todo 1.0.0 - removve this special case
-        # special treatment for "ignores-exogeneous-X"
+        # special treatment for tags that get boolean flipped:
+        # "ignores-exogeneous-X", "univariate-only"
         # the new tag is the negation of the old tag
-        if old_tag == "ignores-exogeneous-X":
+        if old_tag in ["ignores-exogeneous-X", "univariate-only"]:
             if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
                 new_tag_dict[new_tag] = not tag_dict[old_tag]
             if new_tag in tag_dict:
