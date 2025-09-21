@@ -264,7 +264,9 @@ class DynamicFactor(_StatsModelsAdapter):
             y_pred.index = np.arange(
                 start + self._y.index[0], end + self._y.index[0] + 1
             )
-        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        if fh.is_relative:
+            y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        return y_pred
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
