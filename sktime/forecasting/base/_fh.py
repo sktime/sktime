@@ -30,7 +30,7 @@ from sktime.utils.validation.series import (
 )
 from sktime.utils.warnings import _suppress_pd22_warning
 
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
+VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
 DELEGATED_METHODS = (
     "__sub__",
