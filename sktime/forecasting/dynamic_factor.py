@@ -120,6 +120,7 @@ class DynamicFactor(_StatsModelsAdapter):
     DynamicFactor(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     -------------------------------------------------------------
+    >>> # in-sample and out-of-sample forecasting with exogenous variables
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.forecasting.dynamic_factor import DynamicFactor
     >>> from sktime.datasets import load_macroeconomic

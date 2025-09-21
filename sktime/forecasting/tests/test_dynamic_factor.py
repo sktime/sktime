@@ -145,11 +145,16 @@ def test_DynamicFactor_in_sample_forecast():
     df = load_macroeconomic()
     Y_train = df.loc[:'2007Q4', ['realgdp', 'realcons', 'realinv']].copy()
     X_train = df.loc[:'2007Q4', ['unemp', 'pop', 'infl','cpi']].copy()
-    unfitted_sktime_model = DynamicFactor(enforce_stationarity=False, k_factors=2, factor_order=1)
-    fitted_sktime_model = unfitted_sktime_model.fit(Y_train, X=X_train)
+    unfitted_sktime_model = DynamicFactor(enforce_stationarity=False,
+                                          k_factors=2,
+                                          factor_order=1)
+    fitted_sktime_model = unfitted_sktime_model.fit(Y_train,
+                                                    X=X_train)
     # Create a forecasting horizon
-    fh_in_sample = ForecastingHorizon([2,3,4,5,6,7], is_relative=False)
-    sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
+    fh_in_sample = ForecastingHorizon([2,3,4,5,6,7], 
+                                      is_relative=False)
+    sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample,
+                                                           X=X_train)
 
     unfitted_statsmodels_model = _DynamicFactor(endog=Y_train,
                                                 k_factors=2,
