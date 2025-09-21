@@ -100,7 +100,7 @@ class BaggingForecaster(BaseForecaster):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],  # see 8832
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],  # bug 8832
     }
 
     def __init__(
