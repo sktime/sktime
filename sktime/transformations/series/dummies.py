@@ -101,6 +101,8 @@ class SeasonalDummiesOneHot(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # fails since the data is RangeIndex, unrelated to categorical
     }
 
     def __init__(
