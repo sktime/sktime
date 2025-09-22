@@ -54,6 +54,8 @@ class RandomIntervals(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:unequal_length": False,
         "fit_is_empty": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
