@@ -60,7 +60,7 @@ class RandomIntervals(BaseTransformer):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_categorical_X_passes"]
+        "tests:skip_by_name": ["test_categorical_X_passes"],
         # categoricals can be passed, but depending on transformers passed
     }
 
