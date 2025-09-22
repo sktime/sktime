@@ -13,7 +13,6 @@ Implentation derived from following library
 
 __author__ = ["poopsiclepooding"]
 
-# todo: add any necessary sktime external imports here
 import os
 import warnings
 from multiprocessing.pool import ThreadPool as Pool
@@ -26,14 +25,7 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 
 from sktime.transformations.base import BaseTransformer
 
-# todo: add any necessary sktime internal imports here
 
-# todo: for imports of sktime soft dependencies:
-# make sure to fill in the "python_dependencies" tag with the package import name
-# import soft dependencies only inside methods of the class, not at the top of the file
-
-
-# todo: change class name and write docstring
 class fABBA(BaseTransformer):
     """fABBA - An efficient symbolic aggregate approximation for temporal data.
 
@@ -365,7 +357,6 @@ class fABBA(BaseTransformer):
 
         self._start_set = [ts[0] for ts in series]
 
-        # TODO : add fillna method
         result = [p.apply_async(func=self._custom_compress, args=(ts,))
                   for ts in series]
 
@@ -742,7 +733,6 @@ class fABBA(BaseTransformer):
                               so k reduced to {self._k}""")
 
             # apply k means clustering
-            # TODO : does it make sense to add tol?
             with parallel_backend('threading', n_jobs=self.n_jobs):
                 kmeans = KMeans(n_clusters=self._k,
                                 init='k-means++',
@@ -952,7 +942,6 @@ class fABBA(BaseTransformer):
 
         start_set = [ts[0][0] for ts in series]
 
-        # TODO : add fillna method
         result = [p.apply_async(func=self._transform_single_series, args=(ts,))
                   for ts in series]
 
@@ -1154,7 +1143,6 @@ class fABBA(BaseTransformer):
                 # Remaining values
                 symbol_sequences.append(col_values[1:])
             else:
-                # TODO : Support other types
                 raise ValueError("X should be a list of DataFrames")
 
         # Start parallel inverse transform
