@@ -9,7 +9,6 @@ import pytest
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -202,29 +201,30 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that error is raised when categorical is not supported in X."""
-        X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
-        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_0": [i for i in range(17)]})
 
         # SFAFast transformer requires nested dataframe for X.
         # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif not estimator_instance.get_tag("capability:categorical_in_X"):
+        if not estimator_instance.get_tag("capability:categorical_in_X"):
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit_transform(X, y)
 
     def test_categorical_y_raises_error(self, estimator_instance):
         """Test that error is raised when categorical data is passed in y."""
-        X = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
-        y = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        X = pd.DataFrame({"var_0": [i for i in range(17)]})
+        y = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
 
-        # SFAFast transformer requires nested dataframe for X.
-        # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif estimator_instance.get_tag("requires_y"):
-            with pytest.raises(TypeError, match=r"categorical"):
-                estimator_instance.fit_transform(X, y)
+        requires_y = estimator_instance.get_tag("requires_y")
+        uses_y = estimator_instance.get_tag("y_inner_mtype") not in ["None", None]
+        if requires_y or uses_y:
+            if not estimator_instance.get_tag("capability:categorical_in_y"):
+                with pytest.raises(TypeError, match=r"categorical"):
+                    estimator_instance.fit_transform(X, y)
+        # otherwise, passing categorical y should pass (because it is ignored)
+        # we skip composites since the support for categoricals may depend on components
+        elif not estimator_instance.is_composite():
+            estimator_instance.fit_transform(X, y)
 
     def test_categorical_X_passes(self, estimator_instance):
         """Test that error is not raised when categorical is supported in X.
@@ -232,18 +232,22 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         Not testing composites such as pipelines as they may raise error if estimators
         used within do not support categorical.
         """
-        X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
-        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_1": [i for i in range(17)]})
 
-        # SFAFast transformer requires nested dataframe for X.
-        # so testing all transformers apart from it.
-        if isinstance(estimator_instance, SFAFast):
-            pass
-        elif (
+        if (
             estimator_instance.get_tag("capability:categorical_in_X")
             and not estimator_instance.is_composite()
         ):
-            estimator_instance.fit_transform(X, y)
+            try:
+                estimator_instance.fit_transform(X, y)
+            except Exception as e:
+                raise RuntimeError(
+                    f"{estimator_instance} fails when passing categorical X, "
+                    "but has the capability:categorical_in_X set to True. "
+                    "Please set the tag to False if the estimator does not support "
+                    f"categorical data in X. Exception: {e}"
+                )
 
 
 # todo: add testing of inverse_transform

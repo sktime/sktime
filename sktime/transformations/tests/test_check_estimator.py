@@ -55,10 +55,10 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": False,
-        # does the transformer natively support categorical in exogeneous X?
-        "remember_data": False,  # whether all data seen is remembered as self._X
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # does the transformer natively support categorical in exogeneous X?
+        "remember_data": False,  # whether all data seen is remembered as self._X
     }
 
     def __init__(self, n=1, random_state=None):
