@@ -1,4 +1,7 @@
-"""Deep learning network architectures."""
+"""Deep learning network architectures.
+
+Used for both classification and regression tasks.
+"""
 
 __all__ = [
     "RNNNetwork",
