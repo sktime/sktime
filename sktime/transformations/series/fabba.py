@@ -64,7 +64,7 @@ class fABBA(BaseTransformer):
 
     _tags = {
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Primitives",
+        "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "df-list",
@@ -85,6 +85,8 @@ class fABBA(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": False,
         "capability:missing_values:removes": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "authors": ["poopsiclepooding"],
         "maintainers": ["poopsiclepooding"],
         "python_version": None,
@@ -105,6 +107,7 @@ class fABBA(BaseTransformer):
         verbose=1,
         random_state=None,
         return_as_strings=False,
+        return_start_values=False,
         fillna='ffill',
         auto_digitize=False,
         alpha=0.5,
@@ -134,6 +137,7 @@ class fABBA(BaseTransformer):
         self.k = k
         self.alpha = alpha
         self.auto_digitize = auto_digitize
+        self.return_start_values = return_start_values
 
         self._k = k
         self._alpha = alpha
@@ -298,6 +302,7 @@ class fABBA(BaseTransformer):
         p = Pool(n_jobs)
 
         self._start_set = [ts[0] for ts in series]
+
         # TODO : add fillna method
         result = [p.apply_async(func=self._custom_compress, args=(ts,))
                   for ts in series]
@@ -774,7 +779,8 @@ class fABBA(BaseTransformer):
 
         Returns
         -------
-            symbols : string which represents the time series
+            symbols : list of ints or list of chars
+                symbolized time series in form of list of ints or chars
         """
         # get pieces of the series
         pieces = self._custom_compress(ts)
@@ -877,16 +883,15 @@ class fABBA(BaseTransformer):
         p.join()
         symbols = [res.get() for res in result]
 
-        # Need to send back a dataframe with columns of start and symbols
-        # each time series in df-list is mapped to a row in this df
-        rows = []
-        for i in range(len(start_set)):
-            rows.append({
-                "start": np.array([start_set[i]]),
-                "symbols": np.asarray(symbols[i]),
-            })
+        # If return start values then append start value at start of symbols list
+        if self.return_start_values:
+            for i in range(len(start_set)):
+                symbols[i].insert(0, start_set[i])
 
-        return_data = pd.DataFrame(rows)
+        # Return as list of df
+        return_data = list()
+        for i in range(len(symbols)):
+            return_data.append(pd.DataFrame({"symbols": symbols[i]}))
 
         return return_data
 
@@ -1041,7 +1046,8 @@ class fABBA(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        assert isinstance(X, list), "X should be a list"
+        if self.return_start_values is False:
+            raise ValueError("Start values are needed for inverse transform")
 
         num_series = len(X)
         start_values = list()
@@ -1050,8 +1056,8 @@ class fABBA(BaseTransformer):
         # Get symbol sequences and start values
         for item in X:
             if isinstance(item, pd.DataFrame):
-                start_values.append(item["start"].values)
-                symbol_sequences.append(item["symbols"].values)
+                start_values.append(item["symbols"].values[0])
+                symbol_sequences.append(item["symbols"].values[1:])
             else:
                 # TODO : Support other types
                 raise ValueError("X should be a list of DataFrames")
@@ -1065,7 +1071,7 @@ class fABBA(BaseTransformer):
 
         p = Pool(n_jobs)
 
-        p = [p.apply_async(
+        result = [p.apply_async(
                 func=self._inverse_transform_single_series,
                 args=(start_values[i], symbol_sequences[i],)
                 ) for i in range(num_series)]
@@ -1074,9 +1080,14 @@ class fABBA(BaseTransformer):
         p.join()
 
         # Get series fromr results
-        series = [res.get() for res in p]
+        series = [res.get() for res in result]
 
-        return series
+        # Return as a df-list
+        return_data = list()
+        for i in range(len(series)):
+            return_data.append(pd.DataFrame({"ts": series[i]}))
+
+        return return_data
 
     def _get_fitted_params(self):
         """Get fitted parameters.
