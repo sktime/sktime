@@ -94,34 +94,100 @@ class fABBA(BaseTransformer):
     }
 
     def __init__(self,
-        tolerance=0.2,
-        method="agg",
-        k=2,
-        rate=0.5,
-        sorting="norm",
-        scl=1,
-        max_iter=2,
-        partition_rate=None,
-        partition=None,
-        max_len=np.inf,
-        verbose=1,
-        random_state=None,
-        return_as_strings=False,
-        return_start_values=False,
-        fillna='ffill',
-        auto_digitize=False,
-        alpha=0.5,
-        alphabet_set=0,
-        n_jobs=-1
+        tolerance: float = 0.2,
+        method: str = "agg",
+        k: int = 2,
+        batch_size: int = 1024,
+        sorting: str | None = "norm",
+        scl: float = 1.0,
+        max_iter: int = 2,
+        partition_rate: float | None = None,
+        partition: int | None = None,
+        max_len: int | None = None,
+        random_state: int | None = None,
+        return_as_strings: bool = False,
+        return_start_values: bool = False,
+        auto_digitize: bool = False,
+        alpha: float | None = 0.5,
+        alphabet_set: int | list = 0,
+        n_jobs: int = -1
         ):
+        """Initialize fABBA transformer.
 
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initialize below
+        Parameters
+        ----------
+        tolerance : float, optional (default=0.2, greater than 0)
+            tolerance for polygonal chain approximation
 
-        # todo: write any hyper-parameters and components to self
+        method : str, optional (default="agg", {"agg", "kmeans", "mini-kmeans"})
+            clustering method to use for symbolization
+
+        k : int, optional (default=2, greater equal 2)
+            number of clusters to form, used only if method is "kmeans" or "mini-kmeans"
+
+        batch_size : int, optional (default=1024, greater equal 1)
+            number of samples per batch for MiniBatchKMeans
+            used only if method is "mini-kmeans"
+
+        sorting : str, optional (default="norm", {"norm", "pca", None})
+            sorting method to use for aggregation/clustering
+            used only if method is "agg"
+
+        scl : float, optional (default=1, greater equal 0)
+            scaling factor for length in clustering
+
+        max_iter : int, optional (default=2, greater equal 1)
+            maximum number of iterations for clustering methods
+            used only if method is "kmeans" or "mini-kmeans"
+
+        partition_rate : float, optional (default=None, greater equal 0)
+            rate to determine number of partitions for parallel processing
+            used only if input is a single series
+            if partition_rate is None, number of partitions is set to
+            number of processors
+
+        partition : int, optional (default=None, greater equal 1)
+            number of partitions for parallel processing
+            used only if input is a single series
+            if partition is None, number of partitions is set based on partition_rate
+
+        max_len : int, optional (default=np.inf, greater equal 1 or -1)
+            maximum length of segments for polygonal chain approximation
+            -1 means no limit
+
+        random_state : int, optional (default=None)
+            random state for clustering methods
+            used only if method is "kmeans" or "mini-kmeans"
+
+        return_as_strings : bool, optional (default=False)
+            whether to return symbolized series as strings or integer labels
+
+        return_start_values : bool, optional (default=False)
+            whether to return the start values of each series
+            neccessary for inverse transform
+
+        auto_digitize : bool, optional (default=False)
+            whether to automatically determine alpha for aggregation
+            used only if method is "agg"
+            if auto_digitize is True, alpha is determined automatically
+            and input alpha is ignored
+
+        alpha : float, optional (default=0.5, greater than 0)
+            distance threshold for aggregation
+            used only if method is "agg" and auto_digitize is False
+            if auto_digitize is True, alpha is determined automatically
+
+        alphabet_set : int or list, optional (default=0, {0, 1} or list of strings)
+            alphabet set to use for symbolization
+            if int 0 uses mixed case, if int 1 uses upper case then lower case
+            if list uses the provided list of strings as alphabet set
+
+        n_jobs : int, optional (default=-1)
+            number of parallel jobs to run, -1 means using all processors
+        """
         self.tolerance = tolerance
         self.method = method
-        self.rate = rate
+        self.batch_size = batch_size
         self.sorting = sorting
         self.scl = scl
         self.max_iter = max_iter
@@ -129,9 +195,7 @@ class fABBA(BaseTransformer):
         self.return_as_strings = return_as_strings
         self.partition = partition
         self.max_len = max_len
-        self.verbose = verbose
         self.random_state = random_state
-        self.fillna = fillna
         self.alphabet_set = alphabet_set
         self.n_jobs = n_jobs
         self.k = k
@@ -143,27 +207,19 @@ class fABBA(BaseTransformer):
         self._alpha = alpha
         self._auto_digitize = auto_digitize
 
-
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.paramc etc
-        # instead, write to self._paramc, self._newparam (starting with _)
-        # example of handling conditional parameters or mutable defaults:
+        if self.max_len is None:
+            self._max_len = np.inf
+        elif self.max_len == -1:
+            self._max_len = np.inf
+        else:
+            self._max_len = self.max_len
+
         if self._alpha is None:
             self._auto_digitize = True
         else:
             self._auto_digitize = auto_digitize
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     def _custom_compress(self, ts):
         """Compress Using Polynomial Chain Approximation.
@@ -183,10 +239,10 @@ class fABBA(BaseTransformer):
                 each tuple is (length, slope, error)
         """
         ts = ts.squeeze(-1)
-        if self.max_len < 0:
+        if self._max_len < 0:
             max_len = len(ts)
         else:
-            max_len = self.max_len
+            max_len = self._max_len
 
         start = 0
         end = 1
@@ -229,8 +285,14 @@ class fABBA(BaseTransformer):
         pieces : list of list of tuples
             compressed time series in form of list of list of tuples
             each tuple is (length, slope, error)
+
+        Raises
+        ------
+        ValueError
+            If X is not a list of Series or DataFrames.
         """
-        assert isinstance(X, list), "X should be a list of Series or DataFrames"
+        if not isinstance(X, list):
+            raise ValueError("X should be a list of Series or DataFrames")
 
         # Get number of processors to use
         n_jobs = self.n_jobs
@@ -432,6 +494,11 @@ class fABBA(BaseTransformer):
             symbols correspoding to each label
         alphabets : list of strings
             the alphabets used for symbolization
+
+        Raises
+        ------
+        ValueError
+            If the provided alphabet set is smaller than the number of unique clusters.
         """
         # Get number of unique labels
         unique, unique_counts = np.unique(labels, return_counts=True)
@@ -586,6 +653,11 @@ class fABBA(BaseTransformer):
         labels_sequences : list of ints
             symbolized time series in form of list of ints
             each ints is for a single time series
+
+        Raises
+        ------
+        ValueError
+            If X is not a list of dataframes
         """
         # Get num of pieces for each ts
         num_pieces = list()
@@ -640,8 +712,8 @@ class fABBA(BaseTransformer):
             centers = splist[:,3:5] * self._std / np.array([self.scl, 1])
             self._k = centers.shape[0]
 
-        # If method is f-kmeans clustering
-        elif self.method == "f-kmeans":
+        # If method is mini-kmeans clustering
+        elif self.method == "mini-kmeans":
             # check if more unique tuples than clusters
             if self._k > max_k:
                 self._k = max_k
@@ -649,9 +721,8 @@ class fABBA(BaseTransformer):
                               so k reduced to {self._k}""")
 
             with parallel_backend('threading', n_jobs=self.n_jobs):
-                # TODO : should we use this old method or this minibatchKmeans?
                 kmeans = MiniBatchKMeans(n_clusters=self._k,
-                                        batch_size=self.r * len(pieces), # % of batches
+                                        batch_size=self.batch_size, # % of batches
                                         init='k-means++',
                                         n_init="auto",
                                         max_iter=self.max_iter,
@@ -705,7 +776,7 @@ class fABBA(BaseTransformer):
 
         # Return strings if told else return labels(ints)
         if self.return_as_strings:
-            strings_sequences = self._custom_string_separation(strings, num_pieces)
+            strings_sequences = self._custom_strings_separation(strings, num_pieces)
             return strings_sequences
         else:
             labels_sequences = self._custom_labels_separation(labels, num_pieces)
@@ -808,8 +879,14 @@ class fABBA(BaseTransformer):
         -------
         X_transformed : list of strings
         transformed version of X
+
+        Raises
+        ------
+        ValueError
+            If X is not a list of Series or DataFrames.
         """
-        assert isinstance(X, list), "X should be a list of Series or DataFrames"
+        if not isinstance(X, list):
+            raise ValueError("X should be a list of Series or DataFrames")
 
         # Get number of processors to use
         n_jobs = self.n_jobs
@@ -910,20 +987,27 @@ class fABBA(BaseTransformer):
             pieces : ndarray
                 compressed version of time series
                 each row is (length, slope)
+
+        Raises
+        ------
+        ValueError
+            If symbol not in alphabet set or label not in range of cluster
         """
         pieces = list()
 
         # If string was returned then convert to labels and get pieces.
         if self.return_as_strings:
             for symbol in symbol_sequence:
-                assert symbol in self._parameter_alphabets, "Symbol not in alphabet set"
+                if symbol not in self._parameter_alphabets:
+                    raise ValueError("Symbol not in alphabet set")
                 label = self._parameter_alphabets.index(symbol)
                 pieces.append(self._parameter_centers[label, :])
 
         # else labels already given, just get pieces
         else:
             for label in symbol_sequence:
-                assert label < self._parameter_num_grp, "Label not in range of cluster"
+                if (label < 0) or (label >= self._parameter_num_grp):
+                    raise ValueError("Label not in range of clusters")
                 pieces.append(self._parameter_centers[int(label), :])
 
         return np.vstack(pieces)
@@ -1045,6 +1129,11 @@ class fABBA(BaseTransformer):
         Returns
         -------
         inverse transformed version of X
+
+        Raises
+        ------
+        ValueError
+            If self.return_start_values is False
         """
         if self.return_start_values is False:
             raise ValueError("Start values are needed for inverse transform")
