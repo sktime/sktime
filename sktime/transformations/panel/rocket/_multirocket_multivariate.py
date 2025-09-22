@@ -102,6 +102,7 @@ class MultiRocketMultivariate(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

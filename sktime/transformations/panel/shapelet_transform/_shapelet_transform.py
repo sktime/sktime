@@ -1066,8 +1066,13 @@ class RandomShapeletTransform(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
         "maintainers": ["dguijo"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "fit_is_empty": False,
         "capability:multivariate": True,
         "scitype:transform-input": "Series",
@@ -1078,7 +1083,7 @@ class RandomShapeletTransform(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # and for y?
         "requires_y": True,
-        "python_dependencies": ["numba", "joblib"],
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
