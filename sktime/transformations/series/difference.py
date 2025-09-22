@@ -249,6 +249,7 @@ class Differencer(BaseTransformer):
         "transform-returns-same-time-index": False,
         "capability:multivariate": True,
         "capability:inverse_transform": True,
+        "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

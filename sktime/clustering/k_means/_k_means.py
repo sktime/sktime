@@ -92,6 +92,8 @@ class TimeSeriesKMeans(BaseTimeSeriesLloyds):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
