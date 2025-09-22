@@ -132,7 +132,7 @@ def test_DynamicFactor_with_exogenous_variables():
     )
 
 
-def test_DynamicFactor_in_sample_forecast_non_relative_fh():
+def test_DynamicFactor_in_sample_forecast_absolute_fh():
     """Test ``DynamicFactor`` in-sample forecast, non-relative forecast horizon."""
     from statsmodels.tsa.statespace.dynamic_factor import (
         DynamicFactor as _DynamicFactor,
@@ -153,7 +153,6 @@ def test_DynamicFactor_in_sample_forecast_non_relative_fh():
     # testing absolute fh
     fh_in_sample = ForecastingHorizon([2, 3, 4, 5, 6, 7], is_relative=False)
     sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
-
     unfitted_statsmodels_model = _DynamicFactor(
         endog=Y_train,
         k_factors=2,
@@ -166,24 +165,6 @@ def test_DynamicFactor_in_sample_forecast_non_relative_fh():
     statsmodels_predictions = fitted_statsmodels_model.predict(
         start=2, end=7, exog=X_train
     )
-
-    assert_frame_equal(sktime_point_predictions, statsmodels_predictions)
-    # testing relative fh
-    fh_in_sample = ForecastingHorizon([-7, -6, -5, -4, -3, -2, -1], is_relative=True)
-    sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
-
-    unfitted_statsmodels_model = _DynamicFactor(
-        endog=Y_train,
-        k_factors=2,
-        factor_order=1,
-        exog=X_train,
-        enforce_stationarity=False,
-    )
-    fitted_statsmodels_model = unfitted_statsmodels_model.fit()
-    statsmodels_predictions = fitted_statsmodels_model.predict(
-        start=Y_train.index[-8], end=Y_train.index[-2], exog=X_train
-    )
-
     assert_frame_equal(sktime_point_predictions, statsmodels_predictions)
 
 
@@ -208,7 +189,6 @@ def test_DynamicFactor_in_sample_forecast_relative_fh():
     # testing relative fh
     fh_in_sample = ForecastingHorizon([-7, -6, -5, -4, -3, -2, -1], is_relative=True)
     sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
-
     unfitted_statsmodels_model = _DynamicFactor(
         endog=Y_train,
         k_factors=2,
