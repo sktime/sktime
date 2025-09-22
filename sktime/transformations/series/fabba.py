@@ -873,7 +873,7 @@ class fABBA(BaseTransformer):
 
         p = Pool(n_jobs)
 
-        start_set = [ts[0] for ts in series]
+        start_set = [ts[0][0] for ts in series]
 
         # TODO : add fillna method
         result = [p.apply_async(func=self._transform_single_series, args=(ts,))
@@ -924,7 +924,7 @@ class fABBA(BaseTransformer):
         else:
             for label in symbol_sequence:
                 assert label < self._parameter_num_grp, "Label not in range of cluster"
-                pieces.append(self._parameter_centers[label, :])
+                pieces.append(self._parameter_centers[int(label), :])
 
         return np.vstack(pieces)
 
@@ -1056,8 +1056,14 @@ class fABBA(BaseTransformer):
         # Get symbol sequences and start values
         for item in X:
             if isinstance(item, pd.DataFrame):
-                start_values.append(item["symbols"].values[0])
-                symbol_sequences.append(item["symbols"].values[1:])
+                # Flatten the single column to a 1D array
+                col_values = item.iloc[:, 0].values
+
+                # First value
+                start_values.append(col_values[0])
+
+                # Remaining values
+                symbol_sequences.append(col_values[1:])
             else:
                 # TODO : Support other types
                 raise ValueError("X should be a list of DataFrames")
