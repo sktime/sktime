@@ -6,11 +6,6 @@ Implentation derived from following library
 
 """
 
-# Copyright (c) 2025 poopsiclepooding. All rights reserved.
-# This is a personal implementation that utilizes the fABBA library (https://github.com/nla-group/fABBA)
-# for symbolic time series approximation and related tasks.
-# This code is not a direct contribution to sktime.
-
 __author__ = ["poopsiclepooding"]
 
 import os
@@ -29,7 +24,7 @@ from sktime.transformations.base import BaseTransformer
 class fABBA(BaseTransformer):
     """fABBA - An efficient symbolic aggregate approximation for temporal data.
 
-    fABBA[1] is a dimensionality reduction technique that works by making
+    fABBA_[1] is a dimensionality reduction technique that works by making
     symbolic approximation of temporal data, it well-suited for tasks such
     as compression, clustering, and classification. It converts time series
     data to sequence of tuples by adaptive polygonal chain approximation. It
@@ -38,13 +33,74 @@ class fABBA(BaseTransformer):
 
     Parameters
     ----------
-    alphabet_size : int, optional (default=5, greater equal 2)
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
-        descriptive explanation of paramc
-    and so on
+    tolerance : float, optional (default=0.2, greater than 0)
+        tolerance for polygonal chain approximation
+
+    method : str, optional (default="agg", {"agg", "kmeans", "mini-kmeans"})
+        clustering method to use for symbolization
+
+    k : int, optional (default=2, greater equal 2)
+        number of clusters to form, used only if method is "kmeans" or "mini-kmeans"
+
+    batch_size : int, optional (default=1024, greater equal 1)
+        number of samples per batch for MiniBatchKMeans
+        used only if method is "mini-kmeans"
+
+    sorting : str, optional (default="norm", {"norm", "pca", None})
+        sorting method to use for aggregation/clustering
+        used only if method is "agg"
+
+    scl : float, optional (default=1, greater equal 0)
+        scaling factor for length in clustering
+
+    max_iter : int, optional (default=2, greater equal 1)
+        maximum number of iterations for clustering methods
+        used only if method is "kmeans" or "mini-kmeans"
+
+    partition_rate : float, optional (default=None, greater equal 0)
+        rate to determine number of partitions for parallel processing
+        used only if input is a single series
+        if partition_rate is None, number of partitions is set to
+        number of processors
+
+    partition : int, optional (default=None, greater equal 1)
+        number of partitions for parallel processing
+        used only if input is a single series
+        if partition is None, number of partitions is set based on partition_rate
+
+    max_len : int, optional (default=np.inf, greater equal 1 or -1)
+        maximum length of segments for polygonal chain approximation
+        -1 means no limit
+
+    random_state : int, optional (default=None)
+        random state for clustering methods
+        used only if method is "kmeans" or "mini-kmeans"
+
+    return_as_strings : bool, optional (default=False)
+        whether to return symbolized series as strings or integer labels
+
+    return_start_values : bool, optional (default=False)
+        whether to return the start values of each series
+        neccessary for inverse transform
+
+    auto_digitize : bool, optional (default=False)
+        whether to automatically determine alpha for aggregation
+        used only if method is "agg"
+        if auto_digitize is True, alpha is determined automatically
+        and input alpha is ignored
+
+    alpha : float, optional (default=0.5, greater than 0)
+        distance threshold for aggregation
+        used only if method is "agg" and auto_digitize is False
+        if auto_digitize is True, alpha is determined automatically
+
+    alphabet_set : int or list, optional (default=0, {0, 1} or list of strings)
+        alphabet set to use for symbolization
+        if int 0 uses mixed case, if int 1 uses upper case then lower case
+        if list uses the provided list of strings as alphabet set
+
+    n_jobs : int, optional (default=-1)
+        number of parallel jobs to run, -1 means using all processors
 
     References
     ----------
@@ -104,79 +160,6 @@ class fABBA(BaseTransformer):
         alphabet_set: int | list = 0,
         n_jobs: int = -1
         ):
-        """Initialize fABBA transformer.
-
-        Parameters
-        ----------
-        tolerance : float, optional (default=0.2, greater than 0)
-            tolerance for polygonal chain approximation
-
-        method : str, optional (default="agg", {"agg", "kmeans", "mini-kmeans"})
-            clustering method to use for symbolization
-
-        k : int, optional (default=2, greater equal 2)
-            number of clusters to form, used only if method is "kmeans" or "mini-kmeans"
-
-        batch_size : int, optional (default=1024, greater equal 1)
-            number of samples per batch for MiniBatchKMeans
-            used only if method is "mini-kmeans"
-
-        sorting : str, optional (default="norm", {"norm", "pca", None})
-            sorting method to use for aggregation/clustering
-            used only if method is "agg"
-
-        scl : float, optional (default=1, greater equal 0)
-            scaling factor for length in clustering
-
-        max_iter : int, optional (default=2, greater equal 1)
-            maximum number of iterations for clustering methods
-            used only if method is "kmeans" or "mini-kmeans"
-
-        partition_rate : float, optional (default=None, greater equal 0)
-            rate to determine number of partitions for parallel processing
-            used only if input is a single series
-            if partition_rate is None, number of partitions is set to
-            number of processors
-
-        partition : int, optional (default=None, greater equal 1)
-            number of partitions for parallel processing
-            used only if input is a single series
-            if partition is None, number of partitions is set based on partition_rate
-
-        max_len : int, optional (default=np.inf, greater equal 1 or -1)
-            maximum length of segments for polygonal chain approximation
-            -1 means no limit
-
-        random_state : int, optional (default=None)
-            random state for clustering methods
-            used only if method is "kmeans" or "mini-kmeans"
-
-        return_as_strings : bool, optional (default=False)
-            whether to return symbolized series as strings or integer labels
-
-        return_start_values : bool, optional (default=False)
-            whether to return the start values of each series
-            neccessary for inverse transform
-
-        auto_digitize : bool, optional (default=False)
-            whether to automatically determine alpha for aggregation
-            used only if method is "agg"
-            if auto_digitize is True, alpha is determined automatically
-            and input alpha is ignored
-
-        alpha : float, optional (default=0.5, greater than 0)
-            distance threshold for aggregation
-            used only if method is "agg" and auto_digitize is False
-            if auto_digitize is True, alpha is determined automatically
-
-        alphabet_set : int or list, optional (default=0, {0, 1} or list of strings)
-            alphabet set to use for symbolization
-            if int 0 uses mixed case, if int 1 uses upper case then lower case
-            if list uses the provided list of strings as alphabet set
-
-        n_jobs : int, optional (default=-1)
-            number of parallel jobs to run, -1 means using all processors
-        """
         self.tolerance = tolerance
         self.method = method
         self.batch_size = batch_size
@@ -519,7 +502,7 @@ class fABBA(BaseTransformer):
 
         else:   # default alphabet set
             alphabets = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-                        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 
+                        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
                         'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
                         'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
                         'W', 'X', 'Y', 'Z']
@@ -753,16 +736,16 @@ class fABBA(BaseTransformer):
         # If returning strings assign symbols to the labels of clusters
         if self.return_as_strings:
             strings, alphabets = self._custom_assign_symbols(labels)
-            self._parameter_alphabets = alphabets
+            self.alphabets_ = alphabets
         else:
-            self._parameter_alphabets = None
+            self.alphabets_ = None
 
 
         # Save params of centers and their corresponding symbol
-        self._parameter_centers = centers
+        self.cluster_centers_ = centers
 
         # Save no of clusters formed
-        self._parameter_num_grp = self._parameter_centers.shape[0]
+        self.num_grps_ = self.cluster_centers_.shape[0]
 
         # Return strings if told else return labels(ints)
         if self.return_as_strings:
@@ -813,13 +796,13 @@ class fABBA(BaseTransformer):
         # convert each piece into symbol
         for piece in pieces:
             symbol = np.argmin(
-                np.linalg.norm(self._parameter_centers - piece, ord=2, axis=1)
+                np.linalg.norm(self.cluster_centers_ - piece, ord=2, axis=1)
                 )
             symbols.append(symbol)
 
         # if returning string then get alphabets
         if self.return_as_strings:
-            symbols = [self._parameter_alphabets[symbol] for symbol in symbols]
+            symbols = [self.alphabets_[symbol] for symbol in symbols]
             strings_sequences = symbols
             return strings_sequences
         # else return the label ints
@@ -910,7 +893,9 @@ class fABBA(BaseTransformer):
                 else:
                     partition = int(np.round(np.exp(1/self.partition_rate), 0))*n_jobs
                     if partition > len(single_series):
-                        warnings.warn("Partition has exceed the maximum length of series.")
+                        warnings.warn(
+                            """Partition has exceed the maximum length of series."""
+                            )
                         partition = len(single_series)
             else:
                 if self.partition < len(single_series):
@@ -987,24 +972,24 @@ class fABBA(BaseTransformer):
         # If string was returned then convert to labels and get pieces.
         if self.return_as_strings:
             for symbol in symbol_sequence:
-                if symbol not in self._parameter_alphabets:
+                if symbol not in self.alphabets_:
                     raise ValueError("Symbol not in alphabet set")
-                label = self._parameter_alphabets.index(symbol)
-                pieces.append(self._parameter_centers[label, :])
+                label = self.alphabets_.index(symbol)
+                pieces.append(self.cluster_centers_[label, :])
 
         # else labels already given, just get pieces
         else:
             for label in symbol_sequence:
-                if (label < 0) or (label >= self._parameter_num_grp):
+                if (label < 0) or (label >= self.num_grps_):
                     raise ValueError("Label not in range of clusters")
-                pieces.append(self._parameter_centers[int(label), :])
+                pieces.append(self.cluster_centers_[int(label), :])
 
         return np.vstack(pieces)
 
     def _custom_quantize_lengths(self, pieces):
         """Quantize Lengths.
 
-        Converts lengths of pieces to nearest integer. 
+        Converts lengths of pieces to nearest integer.
         Since lengths can be floats during clustering, they need to be
         quantized back to integers.
 
@@ -1026,7 +1011,7 @@ class fABBA(BaseTransformer):
         # If many pieces, round individually such that sum of lengths remain same
         else:
             for p in range(len(pieces)-1):
-                # Get correction to be applied 
+                # Get correction to be applied
                 corr = round(pieces[p,0]) - pieces[p,0]
 
                 # Add correction to current piece and subtract from next piece
@@ -1075,7 +1060,7 @@ class fABBA(BaseTransformer):
     def _inverse_transform_single_series(self, start_value, symbol_sequence):
         """Inverse Transform Single Series.
 
-        Transforms a single symbol sequence back to time series using 
+        Transforms a single symbol sequence back to time series using
         start values. Cluster cneters saved are used to get back the pieces.
         These pieces are then joined to get back the time series.
 
@@ -1172,34 +1157,6 @@ class fABBA(BaseTransformer):
 
         return return_data
 
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        fitted_params = {
-            "cluster_centers": self._parameter_centers,
-            "num_clusters": self._parameter_num_grp,
-            "alphabets": self._parameter_alphabets,
-        }
-        return fitted_params
-        # implement here
-        #
-        # when this function is reached, it is already guaranteed that self is fitted
-        #   this does not need to be checked separately
-        #
-        # parameters of components should follow the sklearn convention:
-        #   separate component name from parameter name by double-underscore
-        #   e.g., componentname__paramname
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1219,35 +1176,32 @@ class fABBA(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        if parameter_set == "default":
-                # single default-ish test config
-                params = [
-                    {
-                        "tolerance": 0.1,
-                        "method": "agg",
-                        "k": 2,
-                        "rate": 0.5,
-                        "sorting": "norm",
-                        "scl": 1,
-                        "max_iter": 1,
-                        "auto_digitize": False,
-                        "alpha": 0.5,
-                        "alphabet_set": 0,
-                        "n_jobs": 1,
-                    },
-                    {
-                        "tolerance": 0.05,
-                        "method": "kmeans",
-                        "k": 3,
-                        "rate": 0.5,
-                        "sorting": "norm",
-                        "scl": 2,
-                        "max_iter": 1,
-                        "auto_digitize": False,
-                        "alpha": 0.7,
-                        "alphabet_set": 0,
-                        "n_jobs": 1,
-                    },
-                ]
-                return params
-        return cls.get_test_params("default")
+        params = [
+            {
+                "tolerance": 0.1,
+                "method": "agg",
+                "k": 2,
+                "rate": 0.5,
+                "sorting": "norm",
+                "scl": 1,
+                "max_iter": 1,
+                "auto_digitize": False,
+                "alpha": 0.5,
+                "alphabet_set": 0,
+                "n_jobs": 1,
+            },
+            {
+                "tolerance": 0.05,
+                "method": "kmeans",
+                "k": 3,
+                "rate": 0.5,
+                "sorting": "norm",
+                "scl": 2,
+                "max_iter": 1,
+                "auto_digitize": False,
+                "alpha": 0.7,
+                "alphabet_set": 0,
+                "n_jobs": 1,
+            },
+        ]
+        return params
