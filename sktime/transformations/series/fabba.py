@@ -29,7 +29,7 @@ class fABBA(BaseTransformer):
     as compression, clustering, and classification. It converts time series
     data to sequence of tuples by adaptive polygonal chain approximation. It
     then uses clustering methods on these tuples and assigns symbols to the
-    clusters.
+    clusters. The core implementation is derived from the fABBA library_[2].
 
     Parameters
     ----------
@@ -108,6 +108,10 @@ class fABBA(BaseTransformer):
     An efficient aggregation method for the symbolic representation of temporal data.
     arXiv preprint arXiv:2201.05697 (2022).
     https://arxiv.org/abs/2201.05697
+
+    .. [2] nla-group. fABBA: Fast Adaptive Binning and Bit Allocation.
+    GitHub repository (2022).
+    https://github.com/nla-group/fABBA/tree/master
     """
 
     _tags = {
@@ -141,7 +145,8 @@ class fABBA(BaseTransformer):
         "python_dependencies": None,
     }
 
-    def __init__(self,
+    def __init__(
+        self,
         tolerance: float = 0.2,
         method: str = "agg",
         k: int = 2,
@@ -158,8 +163,8 @@ class fABBA(BaseTransformer):
         auto_digitize: bool = False,
         alpha: float | None = 0.5,
         alphabet_set: int | list = 0,
-        n_jobs: int = -1
-        ):
+        n_jobs: int = -1,
+    ):
         self.tolerance = tolerance
         self.method = method
         self.batch_size = batch_size
@@ -223,25 +228,28 @@ class fABBA(BaseTransformer):
         end = 1
         pieces = list()
         x = np.arange(0, len(ts))
-        epsilon =  np.finfo(float).eps
+        epsilon = np.finfo(float).eps
 
         # Polynomial Chain Approximation Algorithm
         while end < len(ts):
             inc = ts[end] - ts[start]
-            err = ts[start] + (inc/(end-start))*x[0:end-start+1] - ts[start:end+1]
+            err = (
+                ts[start]
+                + (inc / (end - start)) * x[0 : end - start + 1]
+                - ts[start : end + 1]
+            )
             err = np.inner(err, err)
 
-            if (
-                (err <= self.tolerance*(end-start-1) + epsilon)
-                and (end-start-1 < max_len)
+            if (err <= self.tolerance * (end - start - 1) + epsilon) and (
+                end - start - 1 < max_len
             ):
                 (lastinc, lasterr) = (inc, err)
                 end += 1
             else:
-                pieces.append([end-start-1, lastinc, lasterr])
+                pieces.append([end - start - 1, lastinc, lasterr])
                 start = end - 1
 
-        pieces.append([end-start-1, lastinc, lasterr])
+        pieces.append([end - start - 1, lastinc, lasterr])
         return pieces
 
     def _custom_parallel_compress(self, X):
@@ -273,7 +281,7 @@ class fABBA(BaseTransformer):
         n_jobs = self.n_jobs
 
         # Pool and partition doesn't take -1, need to count cpu
-        if n_jobs==-1:
+        if n_jobs == -1:
             n_jobs = os.cpu_count()
 
         # Check if only a single series or multiple
@@ -287,8 +295,8 @@ class fABBA(BaseTransformer):
             single_series = np.asarray(X[0].values)
 
             # make sure the series is float64
-            if single_series.dtype !=  'float64':
-                single_series = np.asarray(single_series).astype('float64')
+            if single_series.dtype != "float64":
+                single_series = np.asarray(single_series).astype("float64")
 
             # No point in more jobs than series len
             if n_jobs > len(single_series):
@@ -299,16 +307,18 @@ class fABBA(BaseTransformer):
                 if self.partition_rate is None:
                     partition = n_jobs
                 else:
-                    partition = int(np.round(np.exp(1/self.partition_rate), 0))*n_jobs
+                    partition = (
+                        int(np.round(np.exp(1 / self.partition_rate), 0)) * n_jobs
+                    )
                     if partition > len(single_series):
                         warnings.warn(
                             """Partition has exceed the maximum length of series."""
-                            )
+                        )
                         partition = len(single_series)
             else:
                 if self.partition < len(single_series):
                     partition = self.partition
-                    if n_jobs > partition: # to prevent useless processors
+                    if n_jobs > partition:  # to prevent useless processors
                         n_jobs = partition
                 else:
                     warnings.warn("Partition has exceed the maximum length of series.")
@@ -317,16 +327,18 @@ class fABBA(BaseTransformer):
             # Interval of partition
             interval = int(len(single_series) / partition)
             # Get series in a list of 1D ndarrays
-            series = [single_series[i*interval : (i+1)*interval]
-                      for i in range(partition)]
+            series = [
+                single_series[i * interval : (i + 1) * interval]
+                for i in range(partition)
+            ]
 
         # if multiple series then convert them to list of ndarray
         else:
             # Get series in a list of 1D ndarrays
             series = [np.asarray(X[i].values) for i in range(len(X))]
             for i in range(len(series)):
-                if series[i].dtype !=  'float64':
-                    series[i] = np.asarray(series[i]).astype('float64')
+                if series[i].dtype != "float64":
+                    series[i] = np.asarray(series[i]).astype("float64")
 
             # No point in more jobs than no of series
             if n_jobs > len(series):
@@ -340,8 +352,9 @@ class fABBA(BaseTransformer):
 
         self._start_set = [ts[0] for ts in series]
 
-        result = [p.apply_async(func=self._custom_compress, args=(ts,))
-                  for ts in series]
+        result = [
+            p.apply_async(func=self._custom_compress, args=(ts,)) for ts in series
+        ]
 
         p.close()
         p.join()
@@ -443,9 +456,11 @@ class fABBA(BaseTransformer):
 
             # update starting point list
             # it contains (start_index, label, num_points_in_group, center)
-            starting_point_list.append([int(start), int(label)]
-                                        + [int(num_points_in_group)]
-                                        + data[start, :].tolist())
+            starting_point_list.append(
+                [int(start), int(label)]
+                + [int(num_points_in_group)]
+                + data[start, :].tolist()
+            )
             # increase label
             label += 1
 
@@ -480,18 +495,116 @@ class fABBA(BaseTransformer):
 
         # Get alphabets to use
         if self.alphabet_set == 0:
-            alphabets = ['A','a','B','b','C','c','D','d','E','e',
-                        'F','f','G','g','H','h','I','i','J','j',
-                        'K','k','L','l','M','m','N','n','O','o',
-                        'P','p','Q','q','R','r','S','s','T','t',
-                        'U','u','V','v','W','w','X','x','Y','y','Z','z']
+            alphabets = [
+                "A",
+                "a",
+                "B",
+                "b",
+                "C",
+                "c",
+                "D",
+                "d",
+                "E",
+                "e",
+                "F",
+                "f",
+                "G",
+                "g",
+                "H",
+                "h",
+                "I",
+                "i",
+                "J",
+                "j",
+                "K",
+                "k",
+                "L",
+                "l",
+                "M",
+                "m",
+                "N",
+                "n",
+                "O",
+                "o",
+                "P",
+                "p",
+                "Q",
+                "q",
+                "R",
+                "r",
+                "S",
+                "s",
+                "T",
+                "t",
+                "U",
+                "u",
+                "V",
+                "v",
+                "W",
+                "w",
+                "X",
+                "x",
+                "Y",
+                "y",
+                "Z",
+                "z",
+            ]
 
         elif self.alphabet_set == 1:
-            alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-                        'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-                        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                        'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-                        'w', 'x', 'y', 'z']
+            alphabets = [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S",
+                "T",
+                "U",
+                "V",
+                "W",
+                "X",
+                "Y",
+                "Z",
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "j",
+                "k",
+                "l",
+                "m",
+                "n",
+                "o",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "u",
+                "v",
+                "w",
+                "x",
+                "y",
+                "z",
+            ]
 
         elif isinstance(self.alphabet_set, list):
             if num_unique < len(self.alphabet_set):
@@ -500,12 +613,61 @@ class fABBA(BaseTransformer):
                 raise ValueError("""Alphabet set provided is smaller than
                                  number of unique clusters.""")
 
-        else:   # default alphabet set
-            alphabets = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-                        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-                        'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                        'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                        'W', 'X', 'Y', 'Z']
+        else:  # default alphabet set
+            alphabets = [
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "j",
+                "k",
+                "l",
+                "m",
+                "n",
+                "o",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "u",
+                "v",
+                "w",
+                "x",
+                "y",
+                "z",
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S",
+                "T",
+                "U",
+                "V",
+                "W",
+                "X",
+                "Y",
+                "Z",
+            ]
 
         # If more unique labels than alphabets in set, use ASCII values
         if num_unique > len(alphabets):
@@ -643,14 +805,14 @@ class fABBA(BaseTransformer):
 
         # Find std of pieces
         self._std = np.std(pieces, axis=0)
-        if self._std[0] == 0:   # prevent zero-division
+        if self._std[0] == 0:  # prevent zero-division
             self._std[0] = 1
-        if self._std[1] == 0:   # prevent zero-division
+        if self._std[1] == 0:  # prevent zero-division
             self._std[1] = 1
 
         # If scaling of length is 0
         if self.scl == 0:
-            len_pieces = pieces[:,0]
+            len_pieces = pieces[:, 0]
 
         # Scale pieces by scl to give more importance to len in clustering
         # if scl is 0 then all len will be same and not influence clustering
@@ -674,16 +836,22 @@ class fABBA(BaseTransformer):
             # If auto_digitize is true, calculate alpha
             if self._auto_digitize:
                 self._alpha = pow(
-                        60 * sum_of_length * (
-                            np.abs(sum_of_length - max_k)) *
-                            (self.tolerance**2)/(max_k*(self.eta**2) *
-                            (3*(sum_of_length**4)+2-5*(max_k**2))
-                            ), 1/4)
+                    60
+                    * sum_of_length
+                    * (np.abs(sum_of_length - max_k))
+                    * (self.tolerance**2)
+                    / (
+                        max_k
+                        * (self.eta**2)
+                        * (3 * (sum_of_length**4) + 2 - 5 * (max_k**2))
+                    ),
+                    1 / 4,
+                )
 
             # Run aggregate clustering
             labels, splist = self._custom_aggregate(pieces)
             splist = np.array(splist)
-            centers = splist[:,3:5] * self._std / np.array([self.scl, 1])
+            centers = splist[:, 3:5] * self._std / np.array([self.scl, 1])
             self._k = centers.shape[0]
 
         # If method is mini-kmeans clustering
@@ -694,13 +862,15 @@ class fABBA(BaseTransformer):
                 warnings.warn(f"""More clusters than unique tuples,
                               so k reduced to {self._k}""")
 
-            with parallel_backend('threading', n_jobs=self.n_jobs):
-                kmeans = MiniBatchKMeans(n_clusters=self._k,
-                                        batch_size=self.batch_size, # % of batches
-                                        init='k-means++',
-                                        n_init="auto",
-                                        max_iter=self.max_iter,
-                                        random_state=self.random_state)
+            with parallel_backend("threading", n_jobs=self.n_jobs):
+                kmeans = MiniBatchKMeans(
+                    n_clusters=self._k,
+                    batch_size=self.batch_size,  # % of batches
+                    init="k-means++",
+                    n_init="auto",
+                    max_iter=self.max_iter,
+                    random_state=self.random_state,
+                )
                 kmeans.fit(pieces)
 
             # get labels and centers of clusters
@@ -716,12 +886,14 @@ class fABBA(BaseTransformer):
                               so k reduced to {self._k}""")
 
             # apply k means clustering
-            with parallel_backend('threading', n_jobs=self.n_jobs):
-                kmeans = KMeans(n_clusters=self._k,
-                                init='k-means++',
-                                n_init="auto",
-                                max_iter=self.max_iter,
-                                random_state=self.random_state)
+            with parallel_backend("threading", n_jobs=self.n_jobs):
+                kmeans = KMeans(
+                    n_clusters=self._k,
+                    init="k-means++",
+                    n_init="auto",
+                    max_iter=self.max_iter,
+                    random_state=self.random_state,
+                )
                 kmeans.fit(pieces)
 
             # get labels and centers of clusters
@@ -739,7 +911,6 @@ class fABBA(BaseTransformer):
             self.alphabets_ = alphabets
         else:
             self.alphabets_ = None
-
 
         # Save params of centers and their corresponding symbol
         self.cluster_centers_ = centers
@@ -797,7 +968,7 @@ class fABBA(BaseTransformer):
         for piece in pieces:
             symbol = np.argmin(
                 np.linalg.norm(self.cluster_centers_ - piece, ord=2, axis=1)
-                )
+            )
             symbols.append(symbol)
 
         # if returning string then get alphabets
@@ -865,7 +1036,7 @@ class fABBA(BaseTransformer):
         n_jobs = self.n_jobs
 
         # Pool and partition doesn't take -1, need to count cpu
-        if n_jobs==-1:
+        if n_jobs == -1:
             n_jobs = os.cpu_count()
 
         # Check if only a single series or multiple
@@ -879,8 +1050,8 @@ class fABBA(BaseTransformer):
             single_series = np.asarray(X[0].values)
 
             # make sure the series is float64
-            if single_series.dtype !=  'float64':
-                single_series = np.asarray(single_series).astype('float64')
+            if single_series.dtype != "float64":
+                single_series = np.asarray(single_series).astype("float64")
 
             # No point in more jobs than series len
             if n_jobs > len(single_series):
@@ -891,16 +1062,18 @@ class fABBA(BaseTransformer):
                 if self.partition_rate is None:
                     partition = n_jobs
                 else:
-                    partition = int(np.round(np.exp(1/self.partition_rate), 0))*n_jobs
+                    partition = (
+                        int(np.round(np.exp(1 / self.partition_rate), 0)) * n_jobs
+                    )
                     if partition > len(single_series):
                         warnings.warn(
                             """Partition has exceed the maximum length of series."""
-                            )
+                        )
                         partition = len(single_series)
             else:
                 if self.partition < len(single_series):
                     partition = self.partition
-                    if n_jobs > partition: # to prevent useless processors
+                    if n_jobs > partition:  # to prevent useless processors
                         n_jobs = partition
                 else:
                     warnings.warn("Partition has exceed the maximum length of series.")
@@ -910,14 +1083,16 @@ class fABBA(BaseTransformer):
             interval = int(len(single_series) / partition)
 
             # Get series in a list of 1D ndarrays
-            series = [single_series[i*interval : (i+1)*interval]
-                      for i in range(partition)]
+            series = [
+                single_series[i * interval : (i + 1) * interval]
+                for i in range(partition)
+            ]
         else:
             # Get series in a list of 1D ndarrays
             series = [np.asarray(X[i].values) for i in range(len(X))]
             for i in range(len(series)):
-                if series[i].dtype !=  'float64':
-                    series[i] = np.asarray(series[i]).astype('float64')
+                if series[i].dtype != "float64":
+                    series[i] = np.asarray(series[i]).astype("float64")
 
         # Transform each of the series into symbols
         symbols = list()
@@ -927,8 +1102,10 @@ class fABBA(BaseTransformer):
 
         start_set = [ts[0][0] for ts in series]
 
-        result = [p.apply_async(func=self._transform_single_series, args=(ts,))
-                  for ts in series]
+        result = [
+            p.apply_async(func=self._transform_single_series, args=(ts,))
+            for ts in series
+        ]
 
         p.close()
         p.join()
@@ -1007,24 +1184,24 @@ class fABBA(BaseTransformer):
         """
         # If only single piece, just round it
         if len(pieces) == 1:
-            pieces[0,0] = round(pieces[0,0])
+            pieces[0, 0] = round(pieces[0, 0])
         # If many pieces, round individually such that sum of lengths remain same
         else:
-            for p in range(len(pieces)-1):
+            for p in range(len(pieces) - 1):
                 # Get correction to be applied
-                corr = round(pieces[p,0]) - pieces[p,0]
+                corr = round(pieces[p, 0]) - pieces[p, 0]
 
                 # Add correction to current piece and subtract from next piece
-                pieces[p,0] = round(pieces[p,0] + corr)
-                pieces[p+1,0] = pieces[p+1,0] - corr
+                pieces[p, 0] = round(pieces[p, 0] + corr)
+                pieces[p + 1, 0] = pieces[p + 1, 0] - corr
 
                 # If piece length becomes 0, make it 1 and subtract 1 from next piece
-                if pieces[p,0] == 0:
-                    pieces[p,0] = 1
-                    pieces[p+1,0] -= 1
+                if pieces[p, 0] == 0:
+                    pieces[p, 0] = 1
+                    pieces[p + 1, 0] -= 1
 
             # Round the last piece
-            pieces[-1,0] = round(pieces[-1,0],0)
+            pieces[-1, 0] = round(pieces[-1, 0], 0)
 
         return pieces
 
@@ -1051,7 +1228,7 @@ class fABBA(BaseTransformer):
 
         # Stick pieces one after another
         for j in range(0, len(pieces)):
-            x = np.arange(0,pieces[j,0]+1)/(pieces[j,0])*pieces[j,1]
+            x = np.arange(0, pieces[j, 0] + 1) / (pieces[j, 0]) * pieces[j, 1]
             y = ts[-1] + x
             ts = ts + y[1:].tolist()
 
@@ -1134,15 +1311,21 @@ class fABBA(BaseTransformer):
         n_jobs = self.n_jobs
 
         # Pool doesn't take -1, need to count cpu
-        if n_jobs==-1:
+        if n_jobs == -1:
             n_jobs = os.cpu_count()
 
         p = Pool(n_jobs)
 
-        result = [p.apply_async(
+        result = [
+            p.apply_async(
                 func=self._inverse_transform_single_series,
-                args=(start_values[i], symbol_sequences[i],)
-                ) for i in range(num_series)]
+                args=(
+                    start_values[i],
+                    symbol_sequences[i],
+                ),
+            )
+            for i in range(num_series)
+        ]
 
         p.close()
         p.join()
