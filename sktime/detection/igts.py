@@ -460,48 +460,6 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         """
         return self.fit(X=X, y=y).predict(X=X, y=y)
 
-    def get_params(self, deep: bool = True) -> dict:
-        """Return initialization parameters.
-
-        Parameters
-        ----------
-        deep: bool
-            Dummy argument for compatibility with sklearn-api, not used.
-
-        Returns
-        -------
-        params: dict
-            Dictionary with the estimator's initialization parameters, with
-            keys being argument names and values being argument values.
-        """
-        params = asdict(self._adaptee)
-        params = {
-            key: value
-            for key, value in params.items()
-            if key != "intermediate_results_"
-        }
-        return params
-
-    def set_params(self, **parameters):
-        """Set the parameters of this object.
-
-        Parameters
-        ----------
-        parameters : dict
-            Initialization parameters for th estimator.
-
-        Returns
-        -------
-        self : reference to self (after parameters have been set)
-        """
-        for key, value in parameters.items():
-            setattr(self._adaptee, key, value)
-        return self
-
-    def __repr__(self) -> str:
-        """Return a string representation of the estimator."""
-        return self._adaptee.__repr__()
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
