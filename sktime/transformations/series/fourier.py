@@ -135,10 +135,10 @@ class FourierFeatures(BaseTransformer):
         # is transform result always guaranteed to contain no missing values?
         # testing configuration
         # ---------------------
-        "tests:skip_by_name":[
+        "tests:skip_by_name": [
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
-        ]  # estimator works for categorical X, but test parameters are not compatible
+        ],  # estimator works for categorical X, but test parameters are not compatible
     }
 
     def __init__(
