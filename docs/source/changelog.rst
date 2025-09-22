@@ -70,6 +70,19 @@ Core interface changes
   and suite tests will check whether they are correctly set. However,
   code will not break if these tags are not set.
 
+* the default for ``capability:categorical_in_X`` in transformation estimators
+  is now ``True``. This prevents blockage in composition cases where the tag
+  is not explicitly set, e.g., using a ``FunctionTransformer`` with a categorical
+  compatible function in a pipeline. As this default is more permissive, user code
+  will not break. Maintainers of third party estimators should set this tag
+  in their transformation estimators, if they do not support categorical data in ``X``.
+
+* a new ``capability:categorical_in_y`` tag for transformatoin estimators has been
+  added, with a default of ``True``. This tag indicates whether the transformation
+  estimator can handle categorical data in ``y``. Users whose estimators can
+  handle ``y``, but not categorical ``y``, should set this tag to ``False``.
+  All other estimators do not need to set this tag.
+
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -165,6 +178,7 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] set default for ``capability:categorical_in_X`` to ``True`` for transformation estimators (:pr:`8758`) :user:`fkiraly`
 * [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
 * [ENH] Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
 
