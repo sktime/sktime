@@ -140,6 +140,8 @@ class BOSSEnsemble(BaseClassifier):
         "capability:multithreading": True,
         "classifier_type": "dictionary",
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -559,6 +561,8 @@ class IndividualBOSS(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

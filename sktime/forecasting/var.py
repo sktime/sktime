@@ -96,6 +96,8 @@ class VAR(_StatsModelsAdapter):
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

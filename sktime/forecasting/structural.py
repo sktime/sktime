@@ -87,6 +87,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     cov_type : str, optional
         The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
+
         - 'opg' for the outer product of gradient estimator
         - 'oim' for the observed information matrix estimator, calculated
             using the method of Harvey (1989)
@@ -106,6 +107,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     cov_kwds : dict or None, optional
         A dictionary of arguments affecting covariance matrix computation.
         **opg, oim, approx, robust, robust_approx**
+
         - 'approx_complex_step' : bool, optional - If True, numerical
             approximations are computed using complex-step methods. If False,
             numerical approximations are computed using finite difference
@@ -113,9 +115,11 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'approx_centered' : bool, optional - If True, numerical
             approximations computed using finite difference methods use a
             centered approximation. Default is False.
+
     method : str, optional
         The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
+
         - 'newton' for Newton-Raphson
         - 'nm' for Nelder-Mead
         - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
@@ -124,6 +128,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'cg' for conjugate gradient
         - 'ncg' for Newton-conjugate gradient
         - 'basinhopping' for global basin-hopping solver
+
         The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
@@ -213,6 +218,8 @@ class UnobservedComponents(_StatsModelsAdapter):
         "capability:pred_int:insample": True,
         "capability:missing_values": False,
         "capability:exogenous": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_predict_time_index_with_X"],

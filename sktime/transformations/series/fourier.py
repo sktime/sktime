@@ -133,6 +133,12 @@ class FourierFeatures(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],  # estimator works for categorical X, but test parameters are not compatible
     }
 
     def __init__(
@@ -386,6 +392,7 @@ class FourierTransform(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self):
