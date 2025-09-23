@@ -102,7 +102,6 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
         "capability:missing_values": True,
         "capability:multivariate": True,
         "visual_block_kind": "parallel",
-
     }
 
     def __init__(self, transformers, op):
