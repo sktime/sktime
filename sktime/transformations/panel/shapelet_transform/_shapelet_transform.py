@@ -141,6 +141,7 @@ class ShapeletTransform(BaseTransformer):
         "requires_y": True,
         "capability:multivariate": False,
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }

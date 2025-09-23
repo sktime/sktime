@@ -1277,7 +1277,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # random_state tag should be set iff the parameter exists in the signature
         assert random_state == ("random_state" in estimator_class.get_param_names()), (
             f"{estimator_class.__name__} must set "
-            "'capability:random_state' tag if the "
+            "'capability:random_state' tag to True, if and only if the "
             "random_state parameter exists in the estimator signature"
         )
 

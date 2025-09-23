@@ -82,6 +82,7 @@ class Rocket(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:random_state": True,
+        "capability:categorical_in_X": False,
         "property:randomness": "derandomized",
     }
 
