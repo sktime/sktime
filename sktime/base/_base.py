@@ -444,7 +444,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
-        if old_tag == "ignores-exogeneous-X":
+        if old_tag in cls.FLIPPED_TAGS:
             return not tag_val
         return tag_val
 
@@ -501,9 +501,11 @@ class TagAliaserMixin(_TagAliaserMixin):
             tag_name = alias_dict[tag_name]
 
         tag_val = super().get_tag(
-            tag_name=tag_name, tag_value_default=tag_value_default
+            tag_name=tag_name,
+            tag_value_default=tag_value_default,
+            raise_error=raise_error,
         )
-        if old_tag == "ignores-exogeneous-X":
+        if old_tag in self.FLIPPED_TAGS:
             return not tag_val
         return tag_val
 
@@ -553,7 +555,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         # special treatment for tags that get boolean flipped:
         # "ignores-exogeneous-X", "univariate-only"
         # the new tag is the negation of the old tag
-        if old_tag in ["ignores-exogeneous-X", "univariate-only"]:
+        if old_tag in cls.FLIPPED_TAGS:
             if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
                 new_tag_dict[new_tag] = not tag_dict[old_tag]
             if new_tag in tag_dict:
@@ -569,6 +571,8 @@ class TagAliaserMixin(_TagAliaserMixin):
 
     # package name used for deprecation warnings
     _package_name = "sktime"
+
+    FLIPPED_TAGS = ["ignores-exogeneous-X", "univariate-only"]
 
 
 # todo 1.0.0: remove TagAliaserMixin from inheritance
