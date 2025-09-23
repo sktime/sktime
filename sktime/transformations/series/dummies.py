@@ -192,31 +192,36 @@ class SeasonalDummiesOneHot(BaseTransformer):
 
             period_index = index.to_period(freq)
 
+        # Convert freqstr to uppercase, as pandas 2.2.0
+        # deprecated some uppercase strings like "H" in
+        # favor of lowercase ones like "h"
+        freqstr = period_index.freqstr.upper()
+
         # Extract the appropriate attribute based on the frequency of the period index
-        if period_index.freqstr == "M":
+        if freqstr == "M":
             time_index = period_index.month
-        elif period_index.freqstr == "Q":
+        elif freqstr == "Q":
             time_index = period_index.quarter
-        elif period_index.freqstr == "W":
+        elif freqstr == "W":
             time_index = period_index.week
-        elif period_index.freqstr == "D":
+        elif freqstr == "D":
             time_index = period_index.day
-        elif period_index.freqstr == "H":
+        elif freqstr == "H":
             time_index = period_index.hour
         else:
-            raise ValueError(f"Unsupported frequency: {period_index.freqstr}")
+            raise ValueError(f"Unsupported frequency: {freqstr}")
 
         # Create dummy variables for the time periods
         dummies = pd.get_dummies(time_index, prefix="", prefix_sep="")
-        if period_index.freqstr == "M":
+        if freqstr == "M":
             dummies.columns = dummies.columns.map(lambda x: calendar.month_abbr[int(x)])
-        elif period_index.freqstr == "Q":
+        elif freqstr == "Q":
             dummies.columns = dummies.columns.map(lambda x: f"Q{int(x)}")
-        elif period_index.freqstr == "W":
+        elif freqstr == "W":
             dummies.columns = dummies.columns.map(lambda x: f"W{int(x)}")
-        elif period_index.freqstr == "D":
+        elif freqstr == "D":
             dummies.columns = dummies.columns.map(lambda x: f"D{int(x)}")
-        elif period_index.freqstr == "H":
+        elif freqstr == "H":
             dummies.columns = dummies.columns.map(lambda x: f"H{int(x)}")
         dummies = dummies.astype(int)  # Convert boolean values to integers
 
