@@ -83,21 +83,26 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     _steps_fitted_attr = "transformers_"
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["oresthes"],
+        "maintainers": ["oresthes"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "univariate-only": False,
         "requires_y": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
         "capability:missing_values": True,
+        "capability:multivariate": True,
         "visual_block_kind": "parallel",
-        "authors": ["oresthes"],
-        "maintainers": ["oresthes"],
+
     }
 
     def __init__(self, transformers, op):
