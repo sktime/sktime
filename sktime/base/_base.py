@@ -526,7 +526,9 @@ class TagAliaserMixin(_TagAliaserMixin):
                 return old_tag_val
 
         tag_val = super().get_tag(
-            tag_name=tag_name, tag_value_default=tag_value_default
+            tag_name=tag_name,
+            tag_value_default=tag_value_default,
+            raise_error=raise_error,
         )
         # todo 1.0.0 - remove this special case
         if old_tag in self.FLIPPED_TAGS:
