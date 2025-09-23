@@ -38,9 +38,9 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    nonlinearity : str/callable
-        The non-linearity to use. Can be either 'tanh' or 'relu'.
-        Default is 'relu'.
+    activation : str/callable
+        The activation function applied inside the RNN.
+        Can be either 'tanh' or 'relu'. Default is 'relu'.
     bias : bool
         If False, then the layer does not use bias weights, default is True.
     batch_first : bool
@@ -53,7 +53,7 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
     dropout : float
         Dropout rate to apply. default is 0.0
     fc_dropout : float
-        Dropout rate to apply to the fully connected layer. default is 0.0
+        Dropout rate to apply to the fully connected layer. Default is 0.0
     bidirectional : bool
         If True, then the GRU is bidirectional, default is False.
     random_state   : int, default = 0
@@ -74,7 +74,7 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
         input_size: int,
         hidden_dim: int = 6,
         n_layers: int = 1,
-        nonlinearity: str = "relu",
+        activation: str = "relu",
         bias: bool = False,
         batch_first: bool = False,
         num_classes: int = 2,
@@ -86,7 +86,7 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
     ):
         self.random_state = random_state
         self.hidden_dim = hidden_dim
-        self.nonlinearity = nonlinearity
+        self.activation = activation
         self.n_layers = n_layers
         self.bias = bias
         self.batch_first = batch_first
@@ -94,30 +94,28 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
         self.bidirectional = bidirectional
         super().__init__()
 
-        # checking input dimensions
-        # remove below comment before PR merge
-        # doublecheck the logic
+        # Checking input dimensions.
         if isinstance(input_size, int):
             in_features = input_size
         elif isinstance(input_size, tuple):
-            if len(input_size) in (1, 2):
+            if len(input_size) in (1, 3):
                 in_features = input_size[0]
             else:
                 raise ValueError(
-                    "If `input_shape` is a tuple, it must either be "
-                    f"of length 1 or 2. Found length of {len(input_size)}"
+                    "If `input_size` is a tuple, it must either be "
+                    f"of length 1 or 3. Found length of {len(input_size)}"
                 )
         else:
             raise TypeError(
-                "`input_shape` should either be of type int or tuple. "
+                "`input_size` should either be of type int or tuple. "
                 f"But found the type to be: {type(input_size)}"
             )
 
         self.rnn = nnRNN(
             input_size=in_features,
-            hidden_size=hidden_dim,
-            num_layers=n_layers,
-            nonlinearity=self._get_nonlinearity(self.nonlinearity),
+            hidden_size=self.hidden_dim,
+            num_layers=self.n_layers,
+            nonlinearity=self._get_activation(self.activation),
             bias=self.bias,
             batch_first=self.batch_first,
             dropout=self.dropout,
@@ -178,7 +176,7 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
             elif "bias" in name:
                 param.data.fill_(0)
 
-    def _get_nonlinearity(self, activation):
+    def _get_activation(self, activation):
         """Get callable object of the activation function to use inside each RNN cell.
 
         Parameters

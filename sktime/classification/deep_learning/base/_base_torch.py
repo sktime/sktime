@@ -19,10 +19,11 @@ if _check_soft_dependencies("torch", severity="none"):
 
     OPTIMIZERS = {
         "Adadelta": torch.optim.Adadelta,
+        "Adagrad": torch.optim.Adagrad,
         "Adam": torch.optim.Adam,
         "AdamW": torch.optim.AdamW,
+        "RMSprop": torch.optim.RMSprop,
         "SGD": torch.optim.SGD,
-        "Adagrad": torch.optim.Adagrad,
     }
 else:
 
@@ -235,6 +236,23 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             return y
 
         return self.label_encoder.inverse_transform(y)
+
+    def _internal_convert(self, X, y=None):
+        """Override to enforce strict 3D input validation for PyTorch classifiers.
+
+        PyTorch classifiers require 3D input and we don't allow automatic conversion
+        from 2D to 3D as this can mask user errors and lead to unexpected behavior.
+        """
+        if isinstance(X, np.ndarray) and X.ndim != 3:
+            raise ValueError(
+                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
+                f"but got shape {X.shape}. PyTorch classifiers require properly "
+                f"formatted 3D time series data. Please reshape your data or "
+                "use a supported Panel mtype."
+            )
+
+        # Call parent method for other conversions
+        return super()._internal_convert(X, y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
