@@ -2,11 +2,10 @@
 
 __author__ = ["RecreationalMath"]
 
-from abc import abstractmethod
 
 import numpy as np
 
-from sktime.networks.base import BaseDeepNetwork
+# from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
@@ -24,7 +23,7 @@ nnReLU = _safe_import("torch.nn.ReLU")
 nnTanh = _safe_import("torch.nn.Tanh")
 
 
-class RNNNetworkTorch(NNModule, BaseDeepNetwork):
+class RNNNetworkTorch(NNModule):
     """Establish the network structure for an RNN in PyTorch.
 
     Parameters
@@ -98,12 +97,13 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
         if isinstance(input_size, int):
             in_features = input_size
         elif isinstance(input_size, tuple):
-            if len(input_size) in (1, 3):
-                in_features = input_size[0]
+            if len(input_size) == 3:
+                in_features = input_size[1]
             else:
                 raise ValueError(
-                    "If `input_size` is a tuple, it must either be "
-                    f"of length 1 or 3. Found length of {len(input_size)}"
+                    "If `input_size` is a tuple, it must either be of length 3 and in "
+                    "format (n_instances, n_dims, series_length). "
+                    f"Found length of {len(input_size)}"
                 )
         else:
             raise TypeError(
@@ -216,39 +216,3 @@ class RNNNetworkTorch(NNModule, BaseDeepNetwork):
                 "Only 'relu' and 'tanh' are supported "
                 "as activation functions inside a RNN cell."
             )
-
-    @abstractmethod
-    def build_network(self):
-        """Build the RNN network architecture.
-
-        In PyTorch, network architecture is typically defined in the `__init__` method.
-        Hence, leaving this method unimplemented.
-        """
-        pass
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
-                    should contain parameter settings comparable to "TSC bakeoff"
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``
-        """
-        params1 = {}
-        params2 = {"hidden_size": 5}
-
-        return [params1, params2]

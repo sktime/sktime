@@ -5,9 +5,9 @@ __all__ = ["SimpleRNNClassifierTorch"]
 
 import numpy as np
 
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
-from sktime.sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
-from sktime.sktime.utils.dependencies._safe_import import _safe_import
+from sktime.utils.dependencies._safe_import import _safe_import
 
 nnCrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
 
@@ -42,7 +42,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         fully connected layer, with dropout probability equal to fc_dropout.
     bidirectional : bool, default = False
         If True, then the RNN is bidirectional.
-    n_epochs : int, optional (default=100)
+    num_epochs : int, optional (default=100)
         The number of epochs to train the model.
     optimizer : str, default = "RMSprop"
         The optimizer to use for training the model.
@@ -90,7 +90,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         fc_dropout: float = 0.0,
         bidirectional: bool = False,
         # base classifier specific
-        n_epochs: int = 100,
+        num_epochs: int = 100,
         batch_size: int = 1,
         optimizer: str = "RMSprop",
         criterion: str = "CrossEntropyLoss",
@@ -109,7 +109,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.dropout = dropout
         self.fc_dropout = fc_dropout
         self.bidirectional = bidirectional
-        self.n_epochs = n_epochs
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
@@ -124,7 +124,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.num_classes = None
 
         super().__init__(
-            n_epochs=self.n_epochs,
+            num_epochs=self.num_epochs,
             optimizer=self.optimizer,
             criterion=self.criterion,
             batch_size=self.batch_size,
@@ -155,6 +155,12 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         model : RNNNetworkTorch instance
             The constructed RNN network.
         """
+        if len(X.shape) != 3:
+            raise ValueError(
+                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
+                f"but got shape {X.shape}. Please ensure your input data is "
+                "properly formatted."
+            )
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
@@ -199,17 +205,17 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         params2 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "nonlinearity": "relu",
+            "activation": "relu",
             "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
             "fc_dropout": 0.0,
             "bidirectional": False,
-            "n_epochs": 50,
+            "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
-            "criterion": "MSELoss",
+            "criterion": "None",
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
             "lr": 0.001,
