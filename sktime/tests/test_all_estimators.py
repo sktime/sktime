@@ -1264,12 +1264,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         ALIAS_DICT = TagAliaserMixin.alias_dict
 
         for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
-            msg = (
-                f"{estimator_class} has deprecated tag: {tag!r} - "
-                f"please follow deprecation guide from sktime release notes "
-                f"and replace with {ALIAS_DICT[tag]!r}"
-            )
-            assert tag not in ALIAS_DICT, msg
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_class} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
@@ -1286,12 +1287,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         ALIAS_DICT = TagAliaserMixin.alias_dict
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
-            msg = (
-                f"{estimator_instance} has deprecated tag: {tag!r} - "
-                f"please follow deprecation guide from sktime release notes "
-                f"and replace with {ALIAS_DICT[tag]!r}"
-            )
-            assert tag not in ALIAS_DICT, msg
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_instance} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
 
     def test_random_tags(self, estimator_class):
         """Check that estimator randomization tags are compatibly set."""
