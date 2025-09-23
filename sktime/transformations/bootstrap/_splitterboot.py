@@ -109,6 +109,8 @@ class SplitterBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
