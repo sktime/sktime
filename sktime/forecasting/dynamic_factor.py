@@ -139,40 +139,6 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> # Create a forecasting horizon
     >>> fh_in = ForecastingHorizon([2, 3,4,5,6,7], is_relative=False)
     >>> y_pred_in = forecaster.predict(fh=fh_in, X=X_train)
-    >>> # in-sample prediction with relative fh
-    >>> # testing relative fh
-    >>> fh_in_sample = ForecastingHorizon([-7, -6, -5, -4, -3, -2, -1],
-    >>>                                    is_relative=True)
-    >>> sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample,
-    >>>                                                         X=X_train)
-    >>> unfitted_statsmodels_model = _DynamicFactor(
-    >>>    endog=Y_train,
-    >>>    k_factors=2,
-    >>>    factor_order=1,
-    >>>    exog=X_train,
-    >>>    enforce_stationarity=False,
-    >>> )
-    >>> fitted_statsmodels_model = unfitted_statsmodels_model.fit()
-    >>> statsmodels_predictions = fitted_statsmodels_model.predict(
-    >>>    start=Y_train.index[-8], end=Y_train.index[-2], exog=X_train
-    >>> )
-    >>> # in-sample prediction with absolute fh
-    >>> # testing absolute fh
-    >>> fh_in_sample = ForecastingHorizon([2, 3, 4, 5, 6, 7],
-    >>>                             is_relative=False)
-    >>> sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample,
-    >>>                                                         X=X_train)
-    >>> unfitted_statsmodels_model = _DynamicFactor(
-    >>>    endog=Y_train,
-    >>>    k_factors=2,
-    >>>    factor_order=1,
-    >>>    exog=X_train,
-    >>>    enforce_stationarity=False,
-    >>> )
-    >>> fitted_statsmodels_model = unfitted_statsmodels_model.fit()
-    >>> statsmodels_predictions = fitted_statsmodels_model.predict(
-    >>>    start=2, end=7, exog=X_train
-    >>> )
 
     """
 
