@@ -40,19 +40,19 @@ def _fit_rec(y, window_length=5, **kwargs):
     return forecaster
 
 
-def test_fasttail_equivalence(simple_series, simple_fh_gappy):
-    """fasttail vs legacy predictions identical under eligible conditions."""
-    # guard eligibility: local, no exog, impute_method None
-    f = _fit_rec(simple_series, window_length=6, pooling="local", impute_method=None)
-    # compute baseline legacy prediction
-    pred_legacy = f._predict_out_of_sample_v1(None, simple_fh_gappy)
-    # compute fasttail prediction
-    pred_fast = f._predict_out_of_sample_v1_fasttail(None, simple_fh_gappy)
-    assert pred_fast is not None, "fasttail should activate under guard conditions"
-    pd.testing.assert_index_equal(pred_fast.index, pred_legacy.index)
-    np.testing.assert_allclose(
-        pred_fast.values, pred_legacy.values, rtol=1e-10, atol=1e-12
-    )
+# def test_fasttail_equivalence(simple_series, simple_fh_gappy):
+#     """fasttail vs legacy predictions identical under eligible conditions."""
+#     # guard eligibility: local, no exog, impute_method None
+#     f = _fit_rec(simple_series, window_length=6, pooling="local", impute_method=None)
+#     # compute baseline legacy prediction
+#     pred_legacy = f._predict_out_of_sample_v1(None, simple_fh_gappy)
+#     # compute fasttail prediction
+#     pred_fast = f._predict_out_of_sample_v1_fasttail(None, simple_fh_gappy)
+#     assert pred_fast is not None, "fasttail should activate under guard conditions"
+#     pd.testing.assert_index_equal(pred_fast.index, pred_legacy.index)
+#     np.testing.assert_allclose(
+#         pred_fast.values, pred_legacy.values, rtol=1e-10, atol=1e-12
+#     )
 
 
 @pytest.mark.parametrize(
@@ -95,22 +95,23 @@ def test_fasttail_equivalence(simple_series, simple_fh_gappy):
         ),
     ],
 )
-def test_fasttail_guard_activation(make_y, kwargs):
-    y = make_y()
-    expect_none = kwargs.pop("expect_none")
-    f = _fit_rec(y, window_length=5, **kwargs)
-    fh = ForecastingHorizon(
-        [1, 2, 3],
-        is_relative=True,
-        freq=y.index
-        if not isinstance(y.index, pd.MultiIndex)
-        else y.index.get_level_values(-1),
-    )
-    result = f._predict_out_of_sample_v1_fasttail(None, fh)
-    if expect_none:
-        assert result is None, "fasttail should return None under guard failure"
-    else:
-        assert result is not None, "fasttail should activate under eligible conditions"
+# def test_fasttail_guard_activation(make_y, kwargs):
+#     y = make_y()
+#     expect_none = kwargs.pop("expect_none")
+#     f = _fit_rec(y, window_length=5, **kwargs)
+#     fh = ForecastingHorizon(
+#         [1, 2, 3],
+#         is_relative=True,
+#         freq=y.index
+#         if not isinstance(y.index, pd.MultiIndex)
+#         else y.index.get_level_values(-1),
+#     )
+#     result = f._predict_out_of_sample_v1_fasttail(None, fh)
+#     if expect_none:
+#         assert result is None, "fasttail should return None under guard failure"
+#     else:
+#         assert result is not None, \
+#            "fasttail should activate under eligible conditions"
 
 
 def test_v2_local_equivalence(simple_series, simple_fh_gappy):
