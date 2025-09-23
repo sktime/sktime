@@ -1,7 +1,6 @@
 """Abstract base class for the Pytorch neural network classifiers."""
 
-__author__ = ["geetu040"]
-
+__author__ = ["geetu040", "RecreationalMath"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
@@ -35,8 +34,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     """Abstract base class for the Pytorch neural network classifiers."""
 
     _tags = {
-        "authors": ["geetu040"],
-        "maintainers": ["geetu040"],
+        "authors": ["geetu040", "RecreationalMath"],
+        "maintainers": ["geetu040", "RecreationalMath"],
         "python_dependencies": ["torch"],
         "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "numpy1D",
