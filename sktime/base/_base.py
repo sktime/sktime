@@ -549,7 +549,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         alias_dict = cls.alias_dict
         new_tag = alias_dict[old_tag]
 
-        # todo 1.0.0 - removve this special case
+        # todo 1.0.0 - remove this special case
         # special treatment for tags that get boolean flipped:
         # "ignores-exogeneous-X", "univariate-only"
         # the new tag is the negation of the old tag
