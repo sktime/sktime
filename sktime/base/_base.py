@@ -448,7 +448,6 @@ class TagAliaserMixin(_TagAliaserMixin):
 
         # if we are in a situation of aliaing,
         # 1. check if the old tag exists. If yes, return its value
-        # 2. else, continue as usual with the new tag name, and return its value
         if tag_name != old_tag:
             old_tag_val = cls._get_class_flag(
                 old_tag, "__tag_not_found__", flag_attr_name="_tags"
@@ -458,7 +457,11 @@ class TagAliaserMixin(_TagAliaserMixin):
                 if old_tag in cls.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
+            elif old_tag in cls.FLIPPED_TAGS:
+                tag_value_default = not tag_value_default
 
+        # 2. else, continue as usual with tag_name, and return its value
+        # if aliasing happened, this is the new tag name
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
@@ -530,6 +533,8 @@ class TagAliaserMixin(_TagAliaserMixin):
                 if old_tag in self.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
+            elif old_tag in self.FLIPPED_TAGS:
+                tag_value_default = not tag_value_default
 
         tag_val = super().get_tag(
             tag_name=tag_name,
