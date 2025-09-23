@@ -79,7 +79,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
     """  # noqa: E501
 
-    _tags = {"python_dependencies": "scipy"}
+    _tags = {
+        "python_dependencies": "scipy",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+    }
 
     _allowed_statistics = [np.std]
 
@@ -179,25 +183,30 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     Parameters
     ----------
     n: int or float, optional (default = 1.0)
-            To specify an exact number of samples to draw, set `n` to an int value.
-            Number of samples to draw.
-            To specify the returned samples as a proportion of the given times series
-            set `n` to a float value :math:`n \in [0, 1]`.
-            By default, the same number of samples is returned as given by the input
-            time series.
+        To specify an exact number of samples to draw, set `n` to an int value.
+        Number of samples to draw.
+        To specify the returned samples as a proportion of the given times series
+        set `n` to a float value :math:`n \in [0, 1]`.
+        By default, the same number of samples is returned as given by the input
+        time series.
     without_replacement: bool, optional (default = True)
-            Whether to draw without replacement. If True, every sample of the input
-            times series `X` will appear at most once in ``Xt``.
+        Whether to draw without replacement. If True, every sample of the input
+        times series `X` will appear at most once in ``Xt``.
     random_state: None or int or ``np.random.RandomState`` instance, optional
-            "If int or RandomState, use it for drawing the random variates.
-            If None, rely on ``self.random_state``.
-            Default is None." [1]
+        "If int or RandomState, use it for drawing the random variates.
+        If None, rely on ``self.random_state``.
+        Default is None." [1]
 
     References and Footnotes
     ----------
 
         [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
     """  # noqa: E501
+
+    _tags = {
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+    }
 
     def __init__(
         self,

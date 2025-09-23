@@ -124,8 +124,13 @@ class ShapeletTransform(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
         "maintainers": ["dguijo"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -136,7 +141,8 @@ class ShapeletTransform(BaseTransformer):
         "requires_y": True,
         "capability:multivariate": False,
         "fit_is_empty": False,
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -1065,6 +1071,7 @@ class RandomShapeletTransform(BaseTransformer):
 
     _tags = {
         # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst", "jasonlines", "dguijo"],
         "maintainers": ["dguijo"],
         "python_dependencies": ["numba", "joblib"],
@@ -1082,6 +1089,7 @@ class RandomShapeletTransform(BaseTransformer):
         "requires_y": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

@@ -501,7 +501,9 @@ class TagAliaserMixin(_TagAliaserMixin):
             tag_name = alias_dict[tag_name]
 
         tag_val = super().get_tag(
-            tag_name=tag_name, tag_value_default=tag_value_default
+            tag_name=tag_name,
+            tag_value_default=tag_value_default,
+            raise_error=raise_error,
         )
         if old_tag == "ignores-exogeneous-X":
             return not tag_val

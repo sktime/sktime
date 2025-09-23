@@ -91,7 +91,12 @@ class SupervisedIntervals(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -100,7 +105,8 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
-        "python_dependencies": ["numba", "joblib"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
