@@ -33,3 +33,32 @@ def test_seasonal_dummies():
     X_expected = X_expected.astype(int)
     X_expected = X_expected.iloc[:, 1:]  # drop the first dummy
     assert X.equals(X_expected), "Test failed: X does not match X_expected."
+
+
+def test_seasonal_dummies_with_deprecated_frequency():
+    N_HOURS = 8
+    date_range = pd.date_range(start="2022-01-01", periods=N_HOURS, freq="H")
+    y = pd.Series(range(N_HOURS), index=date_range)
+
+    transformer = SeasonalDummiesOneHot(freq="H")
+    X = transformer.fit_transform(y=y, X=None)
+
+    expected_columns = [f"H{hour}" for hour in range(N_HOURS)]
+    X_expected = pd.DataFrame(
+        [
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+        ],
+        columns=expected_columns,
+        index=date_range,
+    )
+
+    X_expected = X_expected.astype(int)
+    X_expected = X_expected.iloc[:, 1:]  # drop the first dummy
+    assert X.equals(X_expected), "Test failed: X does not match X_expected."
