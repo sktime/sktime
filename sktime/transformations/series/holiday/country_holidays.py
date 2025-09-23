@@ -172,7 +172,7 @@ class CountryHolidaysTransformer(BaseTransformer):
         # but works correctly while using one at a time
         country_holidays = [date in holidays_data for date in dates]
 
-        return pandas.Series(country_holidays, name=self._name)
+        return pandas.Series(country_holidays, name=self._name, index=X.index)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
