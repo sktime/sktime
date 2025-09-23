@@ -2302,7 +2302,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         return params
 
 
-class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
+class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """Recursive reduction forecaster, incl exogeneous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
@@ -2595,38 +2595,228 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return y, X
 
     def _get_window_global(self, cutoff, window_length, y_orig):
-        start = _shift(cutoff, by=-window_length + 1)
-        cutoff = cutoff[0]
-        date_mask = (y_orig.index.get_level_values(-1) >= start) & (
-            y_orig.index.get_level_values(-1) <= cutoff
-        )
-        y = y_orig.loc[date_mask]
+        """Return last window_length values per series up to `cutoff` (inclusive).
 
-        # Fill time based features
-        all_time_series_idx = y.index.droplevel(level=-1).unique()
-        cohort_count = len(all_time_series_idx)
-        y_time_features = np.zeros((cohort_count, window_length))
-        for i, idx in enumerate(all_time_series_idx):
-            y_cur = y.loc[idx]
+        Handle case of global pooling. Robust to missing freq, scalar cutoffs,
+        and tupled time levels.
+        """
+        import numpy as np
+        import pandas as pd
 
-            # check for missing values
-            if len(y_cur) < window_length:
-                idx_full = pd.period_range(
-                    start=start,
-                    end=cutoff,
-                    freq=y_cur.index.freq,
-                    name=y_cur.index.name,
+        # ---------- ensure MultiIndex on y_orig ----------
+        idx = y_orig.index
+        if not isinstance(idx, pd.MultiIndex):
+            # case A: it's already an Index of tuples -> rewrap as a proper MultiIndex
+            if isinstance(idx, pd.Index) and all(isinstance(i, tuple) for i in idx):
+                names = None
+                if hasattr(self, "_y") and isinstance(self._y.index, pd.MultiIndex):
+                    names = self._y.index.names
+                y_orig = y_orig.copy()
+                y_orig.index = pd.MultiIndex.from_tuples(idx, names=names)
+            else:
+                # case B: a single time index
+                time_name = y_orig.index.name or getattr(self, "_time_name", "time")
+                series_name = getattr(self, "_series_name", "series")
+
+                if isinstance(y_orig, pd.DataFrame) and y_orig.shape[1] > 1:
+                    # WIDE -> LONG: stack columns into a single 'y' column
+                    y_long = y_orig.stack().to_frame("y")  # index: (time, series)
+                    y_long.index.names = [time_name, series_name]
+                    y_orig = y_long.swaplevel(
+                        0, 1
+                    ).sort_index()  # index: (series, time)
+                else:
+                    # univariate -> synthesize a single series level
+                    if isinstance(y_orig, pd.Series):
+                        y_orig = y_orig.to_frame("y")
+                    y_orig.index = pd.MultiIndex.from_product(
+                        [[series_name], y_orig.index], names=[series_name, time_name]
+                    )
+
+        if y_orig.index.has_duplicates:
+            # print("\n[get_window_global] ----- DEBUG START -----")
+            # print(
+            #     f"[get_window_global] cutoff={repr(cutoff)}, \
+            #        window_length={window_length}"
+            # )
+            # print(
+            #     f"[get_window_global] y_orig.index.names={y_orig.index.names}, \
+            #        is_multi={isinstance(y_orig.index, pd.MultiIndex)}"
+            # )
+
+            dup_idx = y_orig.index[y_orig.index.duplicated(keep=False)]
+            # count unique duplicate keys (series,time)
+            # dup_keys = list(map(tuple, dup_idx))
+            # n_keys = len(set(dup_keys))
+            # print(
+            #     f"[get_window_global] DUPLICATE (series,time) rows: \
+            #            total_rows={len(dup_idx)}, unique_keys={n_keys}"
+            # )
+            try:
+                print(
+                    "[get_window_global] First duplicate rows:\n",
+                    y_orig.loc[dup_idx].sort_index().head(20),
                 )
-                y_cur = y_cur.reindex(idx_full)
-                if self._impute_method:
-                    y_cur = self._impute_method.fit_transform(y_cur)
-                y.update(y_cur)
+            except Exception as e:
+                print(f"[get_window_global] printing duplicate rows failed: {e}")
 
-            y_time_features[i] = y_cur.to_numpy().reshape(1, -1)[
-                :, ::-1
-            ]  # reverse order of columns to match lag order
+        # ---------- helpers ----------
+        def _as_1len_index(x):
+            """Normalize cutoff to a 1-length Index matching its dtype."""
+            if isinstance(x, pd.Index):
+                return x[:1]
+            if isinstance(x, pd.Period):
+                return pd.PeriodIndex([x], freq=x.freq)
+            if isinstance(x, pd.Timestamp):
+                return pd.DatetimeIndex([x], tz=x.tz)
+            return pd.Index([x])
 
-        X = None  # TODO: should we give X_pool here?
+        def _coerce_time_index(idx_like):
+            """Ensure scalar entries; if entries are tuples, take their last element."""
+            if isinstance(idx_like, pd.MultiIndex):
+                idx_like = idx_like.get_level_values(-1)
+            if isinstance(idx_like, pd.Index) and idx_like.dtype == object:
+                vals = list(idx_like)
+                if any(isinstance(v, tuple) for v in vals):
+                    vals = [v[-1] if isinstance(v, tuple) else v for v in vals]
+                    return pd.Index(vals)
+            return pd.Index(idx_like)
+
+        # ---------- normalize cutoff & extract/clean time axis ----------
+        cutoff_idx = _as_1len_index(cutoff)
+        cutoff_val = cutoff_idx[0]
+
+        time_level_raw = y_orig.index.get_level_values(-1)
+        time_level = _coerce_time_index(time_level_raw)
+
+        # Unique times; if sorting fails (mixed types), sort by string as last resort
+        try:
+            unique_times = time_level.unique().sort_values()
+        except TypeError:
+            unique_times = pd.Index(time_level.unique()).sort_values(
+                key=lambda x: x.astype(str)
+            )
+
+        # ---------- locate cutoff position on the global time axis ----------
+        pos = unique_times.get_indexer([cutoff_val])[0]
+        if pos == -1:
+            pos = unique_times.searchsorted(cutoff_val)
+            pos = max(0, min(pos, len(unique_times) - 1))
+
+        start_pos = max(0, pos - (window_length - 1))
+        observed_window = unique_times[
+            start_pos : pos + 1
+        ]  # may be < window_length near start
+
+        # If a reliable freq is known, build a regular target window ending at cutoff;
+        # otherwise, use observed_window and pad per-series later.
+        full_idx = observed_window
+        if isinstance(time_level, pd.PeriodIndex):
+            end = (
+                cutoff_val if isinstance(cutoff_val, pd.Period) else observed_window[-1]
+            )
+            full_idx = pd.period_range(
+                end - (window_length - 1),
+                end,
+                freq=time_level.freq,
+                name=time_level.name,
+            )
+        elif isinstance(time_level, pd.DatetimeIndex):
+            freq = time_level.freq or pd.infer_freq(time_level)
+            if freq is not None:
+                end = (
+                    cutoff_val
+                    if isinstance(cutoff_val, pd.Timestamp)
+                    else observed_window[-1]
+                )
+                full_idx = pd.date_range(
+                    end=end,
+                    periods=window_length,
+                    freq=freq,
+                    tz=time_level.tz,
+                    name=time_level.name,
+                )
+
+        # ---------- build feature matrix (rows=series, cols=lags reversed) ----------
+        all_series = y_orig.index.droplevel(-1).unique()
+        y_time_features = np.zeros((len(all_series), window_length), dtype=float)
+
+        for i, s in enumerate(all_series):
+            print(f"top of loop: i / s = {i} / {s}")
+            y_s = y_orig.loc[s]
+
+            # ensure y_s is a 1D Series of target values
+            if isinstance(y_s, pd.DataFrame):
+                if y_s.shape[1] == 1:
+                    y_s = y_s.iloc[:, 0]
+                else:
+                    col = "y" if "y" in y_s.columns else y_s.columns[0]
+                    y_s = y_s[col]
+
+            # clean per-series time index (in case of tuples/objects)
+            idx_s = _coerce_time_index(y_s.index)
+            y_s = pd.Series(y_s.to_numpy(copy=False), index=idx_s)
+
+            print(f"y_s = {y_s}")
+            print(f"type(y_s) = {type(y_s)}")
+            print(f"y_s.shape = {y_s.shape}")
+
+            idx_target = full_idx if len(full_idx) == window_length else observed_window
+
+            # ---- pre-check: duplicates in y_s or idx_target ----
+            if not y_s.index.is_unique:
+                dups = y_s.index[y_s.index.duplicated(keep=False)]
+                # print("\n[get_window_global] --- DEBUG (per-series duplicates) ---")
+                # print(f"[get_window_global] series={s!r}")
+                # print(
+                #     f"[get_window_global] \
+                #        y_s.index.is_unique={y_s.index.is_unique} (n={len(y_s.index)})"
+                # )
+                try:
+                    vc = pd.Series(dups).value_counts().head(10)
+                    print(
+                        "[get_window_global] duplicated time -> counts (top 10):\n", vc
+                    )
+                    print(
+                        "[get_window_global] first rows for duplicated times:\n",
+                        y_s.loc[dups].sort_index().head(10),
+                    )
+                except Exception as ex:
+                    print("[get_window_global] failed to print dup rows:", ex)
+
+            # if not pd.Index(idx_target).is_unique:
+            #     tgt_dup = pd.Index(idx_target)[
+            #         pd.Index(idx_target).duplicated(keep=False)
+            #     ]
+            # print("\n[get_window_global] --- DEBUG (idx_target duplicates) ---")
+            # print(
+            #     f"[get_window_global] series={s!r}, \
+            #         duplicate labels in idx_target \
+            #         (first 20): {list(tgt_dup[:20])}"
+            # )
+
+            # align; if dtype mismatches, intersect then reindex
+            try:
+                y_win = y_s.reindex(idx_target)
+            except Exception:
+                y_win = y_s[y_s.index.isin(idx_target)].reindex(idx_target)
+
+            # left-pad if shorter than window_length
+            if len(y_win) < window_length:
+                pad = np.full(window_length - len(y_win), np.nan, dtype=float)
+                y_vals = np.concatenate([pad, y_win.to_numpy(dtype=float, copy=False)])
+            else:
+                y_vals = y_win.to_numpy(dtype=float, copy=False)
+
+            # optional imputation
+            if getattr(self, "_impute_method", None):
+                y_imp = self._impute_method.fit_transform(pd.Series(y_vals))
+                y_vals = np.asarray(y_imp).reshape(-1)
+
+            # reverse for lag order
+            y_time_features[i] = y_vals[::-1]
+
+        X = None  # exogenous features are not assembled here (v2 no-X path)
         return y_time_features, X
 
     def _get_window(self, cutoff=None, window_length=None, y_orig=None):
@@ -2700,17 +2890,26 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # If we cannot generate a prediction from the available data, return nan.
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
-        if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+        if np.isnan(ys).any() or np.isinf(ys).any():
             return self._create_nan_df(fh)
 
         fh_max = fh.to_relative(self.cutoff)[-1]
         relative = pd.Index(list(map(int, range(1, fh_max + 1))))
         index_range = _index_range(relative, self.cutoff)
-        if isinstance(self.cutoff, pd.DatetimeIndex):
-            if self.cutoff.tzinfo is not None:
-                index_range = index_range.tz_localize(self.cutoff.tzinfo)
+        if isinstance(self.cutoff, pd.Timestamp) and self.cutoff.tz is not None:
+            index_range = index_range.tz_localize(self.cutoff.tz)
 
         y_pred = _create_fcst_df(index_range, self._y)
+
+        orig_idx = self._y.index
+        if isinstance(orig_idx, pd.MultiIndex) and not isinstance(
+            y_pred.index, pd.MultiIndex
+        ):
+            # _create_fcst_df may return Index of tuples; rewrap as MultiIndex
+            if all(isinstance(ix, tuple) for ix in y_pred.index):
+                y_pred.index = pd.MultiIndex.from_tuples(
+                    y_pred.index, names=orig_idx.names
+                )
 
         y_last_df = self._y.copy()
         for i in range(fh_max):
@@ -2718,23 +2917,42 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             if getattr(self, "_feature_cols_", None) is not None and y_last.shape[
                 1
             ] == len(self._feature_cols_):
-                y_last_df = pd.DataFrame(y_last, columns=self._feature_cols_)
-                y_pred_vector = self.estimator_.predict(y_last_df)
+                X_last_df = pd.DataFrame(
+                    y_last, columns=self._feature_cols_
+                )  # <- new local name
+                y_pred_vector = self.estimator_.predict(X_last_df)
             else:
                 y_pred_vector = self.estimator_.predict(y_last)
             y_pred_curr = _create_fcst_df([index_range[i]], self._y, fill=y_pred_vector)
+
+            if isinstance(orig_idx, pd.MultiIndex) and not isinstance(
+                y_pred_curr.index, pd.MultiIndex
+            ):
+                if all(isinstance(ix, tuple) for ix in y_pred_curr.index):
+                    y_pred_curr.index = pd.MultiIndex.from_tuples(
+                        y_pred_curr.index, names=orig_idx.names
+                    )
+
             y_pred.update(y_pred_curr)
 
             # # Update last window with previous prediction.
             if i + 1 != fh_max:
                 # Append preds to previous df
                 # merge on index except from last
-                y_last_df = pd.concat([y_last_df, y_pred_curr]).sort_index()
-                y_last, X_last = self._get_window(
-                    cutoff=self.cutoff + i + 1,
-                    y_orig=y_last_df,
-                )
+                tmp = pd.concat([y_last_df, y_pred_curr])
+                if not isinstance(tmp.index, pd.MultiIndex):
+                    # handle rare mixed-object index; coerce if we can
+                    if all(isinstance(ix, tuple) for ix in tmp.index):
+                        tmp.index = pd.MultiIndex.from_tuples(
+                            tmp.index, names=orig_idx.names
+                        )
+                if isinstance(tmp.index, pd.MultiIndex):
+                    tmp = tmp.sort_index()
+                y_last_df = tmp
 
+                y_last, X_last = self._get_window(
+                    cutoff=index_range[i : i + 1], y_orig=y_last_df
+                )
         return y_pred
 
     def _predict_out_of_sample_v2_local(
@@ -2769,8 +2987,17 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
+        # y_last, X_last = self._get_window(self._cutoff, self.window_length, self._y)
 
-        y_last, X_last = self._get_window(self._cutoff, self.window_length, self._y)
+        # Force local window extraction even if pooling=='global' (vectorized wide case)
+        cutoff_idx = (
+            self._cutoff
+            if isinstance(self._cutoff, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex))
+            else pd.Index([self._cutoff])
+        )
+        y_last, X_last = self._get_window_local(
+            cutoff=cutoff_idx, window_length=self.window_length, y_orig=self._y
+        )
         if not self._is_predictable(y_last, self.window_length):
             return self._create_nan_df(fh)
 
@@ -2833,23 +3060,80 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return y_pred
 
     def _filter_and_adjust_predictions(self, fh, y_pred):
-        """Filter predictions based on forecasting horizon and adjusts frequency.
-
-        While the recursive strategy requires to generate predictions for all steps
-        until the furthest step in the forecasting horizon, we only return the
-        requested ones.
-        """
+        """Filter predictions to requested fh and fix freq when needed."""
         fh_idx = fh.to_indexer(self.cutoff)
+
+        # If train index was multi-level, *may* need to group by non-time levels.
         if isinstance(self._y.index, pd.MultiIndex):
-            yi_grp = self._y.index.names[0:-1]
-            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
-        elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
-            y_return = y_pred.iloc[fh_idx]
-            if hasattr(y_return.index, "freq"):
-                if y_return.index.freq != y_pred.index.freq:
-                    y_return.index.freq = None
+            yi_grp = [n for n in self._y.index.names[:-1] if n is not None]
+
+            # See where those keys live in y_pred (index levels? columns? nowhere?)
+            idx_names = list(getattr(getattr(y_pred, "index", None), "names", []))
+            cols = (
+                list(getattr(y_pred, "columns", []))
+                if isinstance(y_pred, pd.DataFrame)
+                else []
+            )
+
+            if yi_grp and all(k in idx_names for k in yi_grp):
+                # Standard long/panel case: group by series-like levels on the index.
+                y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+
+            elif (
+                yi_grp
+                and isinstance(y_pred, pd.DataFrame)
+                and all(k in cols for k in yi_grp)
+            ):
+                # Keys are in the columns (rare); group after reset_index.
+                tmp = y_pred.reset_index()
+                y_return = tmp.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+                # if we still have a time column, restore it as index
+                time_col = self._y.index.names[-1]
+                if time_col in y_return.columns:
+                    y_return = y_return.set_index(time_col)
+
+            else:
+                # Degenerate single-series case (wide vectorization):
+                #     no grouping; select rows.
+                if isinstance(y_pred, (pd.Series, pd.DataFrame)):
+                    y_return = y_pred.iloc[fh_idx]
+                else:
+                    y_return = y_pred[fh_idx]
+
+                # …and inject a series level so the vectorizer can reassemble A/B/C
+                if isinstance(y_return, (pd.Series, pd.DataFrame)) and not isinstance(
+                    y_return.index, pd.MultiIndex
+                ):
+                    ser_level_name = self._y.index.names[-2] or "series"
+                    # use the sole training column as the series label
+                    ser_label = (
+                        self._y.columns[0]
+                        if hasattr(self._y, "columns") and len(self._y.columns) == 1
+                        else "series"
+                    )
+                    y_return = y_return.copy()
+                    # make sure we have a DataFrame
+                    if not isinstance(y_return, pd.DataFrame):
+                        y_return = y_return.to_frame(
+                            self._y.columns[0] if hasattr(self._y, "columns") else "y"
+                        )
+                    y_return[ser_level_name] = ser_label
+                    y_return = y_return.set_index(ser_level_name, append=True)
+                    # reorder to (series, time)
+                    y_return.index = y_return.index.swaplevel(-1, -2)
+                    y_return = y_return.sort_index()
+
         else:
-            y_return = y_pred[fh_idx]
+            # Univariate / no-multiindex: just select rows.
+            if isinstance(y_pred, (pd.Series, pd.DataFrame)):
+                y_return = y_pred.iloc[fh_idx]
+                # keep pandas from complaining about freq mismatches
+                if hasattr(y_return.index, "freq") and hasattr(y_pred.index, "freq"):
+                    if y_return.index.freq != y_pred.index.freq:
+                        y_return.index.freq = None
+            else:
+                y_return = y_pred[fh_idx]
+
         return y_return
 
     def _generate_fh_no_gaps(self, fh):
@@ -3096,6 +3380,164 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         }
 
         return [params1, params2, params3, params4, params5, params6]
+
+
+class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
+    """Public class with wide/long auto-handling for pooling='global'.
+
+    CASE 1 (WIDE):
+        time index (one level) + multiple cols -> as multiple series.
+            Convert to LONG for _fit; remember flags; _predict then return WIDE.
+    CASE 2 (LONG): MultiIndex (series, time) -> classic global training on LONG.
+                   Normalize to single target col 'y'; _predict then return WIDE.
+
+    For pooling!='global' or univariate inputs, defer to the original _fit/_predict.
+    """
+
+    # Tell BaseForecaster we can handle multivariate & hierarchical without vectorizing
+    _tags = dict(OriginalRecursiveReductionForecaster._tags)
+    _tags.update(
+        {
+            "capability:multivariate": True,  # do not split DataFrame columns
+            "capability:hierarchical": True,  # do not split MultiIndex panels
+            # keep inner mtypes broad so our _fit/_predict see the full object
+            "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
+            "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        }
+    )
+
+    # flags remembered after _fit
+    _was_wide_input: bool = False
+    _was_long_input: bool = False
+    _orig_columns = None
+    _time_name: str = "time"
+    _series_name: str = "series"
+
+    def fit(self, y, X=None, fh=None):
+        # remember original index/columns for roundtripping
+        # (you already set these in _to_long_from_wide; keep that behavior)
+        if getattr(self, "pooling", None) == "global" and self._is_wide(y):
+            y = self._to_long_from_wide(y)
+            self._was_wide_input = True
+            self._was_long_input = False
+        else:
+            # keep state consistent
+            self._was_wide_input = False
+            self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
+
+        # IMPORTANT:
+        # call base public fit (not _fit), so BaseForecaster stores y_metadata, etc
+        return super().fit(y=y, X=X, fh=fh)
+
+    # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
+    def predict(self, fh=None, X=None):
+        y_pred = super().predict(
+            fh=fh, X=X
+        )  # will return LONG mtype because we trained on LONG
+        if getattr(self, "_was_wide_input", False):
+            # convert pooled LONG back to WIDE columns in original order
+            y_pred = self._to_wide_from_long(y_pred)
+        return y_pred
+
+    # -------- helpers --------
+    def _is_wide(self, y):
+        return (
+            isinstance(y, pd.DataFrame)
+            and not isinstance(y.index, pd.MultiIndex)
+            and y.shape[1] >= 2
+        )
+
+    def _is_long_multi(self, y):
+        return isinstance(y.index, pd.MultiIndex) and y.index.nlevels >= 2
+
+    def _to_long_from_wide(self, y_wide: pd.DataFrame) -> pd.DataFrame:
+        self._time_name = y_wide.index.name or self._time_name
+        self._orig_columns = list(y_wide.columns)
+        y_long = y_wide.stack().to_frame("y")  # (time, series)
+        y_long.index = y_long.index.set_names([self._time_name, self._series_name])
+        y_long = y_long.swaplevel(0, 1).sort_index()  # (series, time)
+        return y_long
+
+    def _to_wide_from_long(self, y_long):
+        # Accept Series or DataFrame; expect index=(series, time)
+        if isinstance(y_long, pd.Series):
+            y_long = y_long.to_frame("y")
+        if not isinstance(y_long.index, pd.MultiIndex) or y_long.index.nlevels < 2:
+            return y_long
+
+        df = y_long.copy()
+        df.index = df.index.set_names([self._series_name, self._time_name])
+        wide = df.unstack(level=0)  # columns -> (val_col, series)
+        if isinstance(
+            wide.columns, pd.MultiIndex
+        ) and "y" in wide.columns.get_level_values(0):
+            wide = wide["y"]
+
+        # restore original column order if available
+        if self._orig_columns is not None:
+            existing = [c for c in self._orig_columns if c in wide.columns]
+            missing = [c for c in wide.columns if c not in existing]
+            wide = wide[existing + missing]
+
+        return wide
+
+    # -------- core overrides --------
+    def _fit(self, y, X=None, fh=None):
+        # If not global pooling, retain legacy behavior
+        if getattr(self, "pooling", None) != "global":
+            self._was_wide_input = False
+            self._was_long_input = False
+            return OriginalRecursiveReductionForecaster._fit(self, y, X=X, fh=fh)
+
+        # CASE 1: WIDE (time index + multiple columns)
+        if self._is_wide(y):
+            y_long = self._to_long_from_wide(y)
+            self._was_wide_input = True
+            self._was_long_input = False
+            # NOTE: if you later pass X with concurrent treatment,
+            #           mirror the transform for X here.
+            ret = OriginalRecursiveReductionForecaster._fit(
+                self, y=y_long, X=None, fh=fh
+            )
+            return ret
+
+        # CASE 2: LONG (MultiIndex >=2 levels; last level should be time per spec)
+        if self._is_long_multi(y):
+            # normalize to a single target column named 'y'
+            if isinstance(y, pd.Series):
+                y_long = y.to_frame("y")
+            elif isinstance(y, pd.DataFrame):
+                if y.shape[1] == 1:
+                    y_long = (
+                        y.rename(columns={y.columns[0]: "y"})
+                        if y.columns[0] != "y"
+                        else y
+                    )
+                else:
+                    col = "y" if "y" in y.columns else y.columns[0]
+                    y_long = y[[col]].rename(columns={col: "y"})
+            else:
+                y_long = pd.DataFrame(y, columns=["y"])
+
+            # remember level names, if present
+            if isinstance(y_long.index, pd.MultiIndex):
+                names = list(y_long.index.names)
+                if names and len(names) >= 2:
+                    self._series_name = names[-2] or self._series_name
+                    self._time_name = names[-1] or self._time_name
+
+            ## self._was_wide_input = False - this is set correctly in fit() override
+            self._was_long_input = True
+            return OriginalRecursiveReductionForecaster._fit(self, y=y_long, X=X, fh=fh)
+
+        # Otherwise (univariate or other shapes): delegate to legacy
+        self._was_wide_input = False
+        self._was_long_input = False
+        return OriginalRecursiveReductionForecaster._fit(self, y=y, X=X, fh=fh)
+
+    def _predict(self, fh=None, X=None):
+        y_pred = OriginalRecursiveReductionForecaster._predict(self, fh=fh, X=X)
+        return y_pred
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
