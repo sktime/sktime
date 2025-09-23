@@ -122,8 +122,8 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
@@ -466,7 +466,7 @@ class SklearnClustererPipeline(ClustererPipeline):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally

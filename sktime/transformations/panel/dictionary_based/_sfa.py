@@ -106,7 +106,7 @@ class SFA(BaseTransformer):
         "python_dependencies": ["numba", "joblib"],
         # estimator properties
         # --------------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

@@ -113,7 +113,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:insample": False,
         # testing configuration
         # ---------------------
@@ -318,9 +318,11 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -547,9 +549,11 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,

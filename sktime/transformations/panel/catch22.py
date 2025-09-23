@@ -285,11 +285,12 @@ class Catch22(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
@@ -355,6 +356,7 @@ class Catch22(BaseTransformer):
             number of features requested, containing Catch22 features for X.
             column index is determined by self.col_names
         """
+        X = X.astype(float)
         Xt_np = self._transform_case(X, self.f_idx)
         cols = self._prepare_output_col_names(len(self.f_idx))
 

@@ -215,16 +215,22 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["HazrulAkmal"],
         "maintainers": ["HazrulAkmal"],
+        "python_dependencies": ["scikit-optimize"],
+        "python_version": ">= 3.6",
+        # estimator type
+        # --------------
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["scikit-optimize"],
-        "python_version": ">= 3.6",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run on separate VM since scikit-optimize is deprecated
