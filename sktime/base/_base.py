@@ -436,6 +436,9 @@ class TagAliaserMixin(_TagAliaserMixin):
         cls._deprecate_tag_warn([tag_name])
         alias_dict = cls.alias_dict
 
+        # check is tag is aliased or aliasing
+        # if yes, ensure that tag_name is the new tag name str
+        # and old_tag is the old tag name str
         old_tag = ""
         if tag_name in alias_dict:
             old_tag = tag_name
@@ -443,6 +446,9 @@ class TagAliaserMixin(_TagAliaserMixin):
         if tag_name in alias_dict.values():
             old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
 
+        # if we are in a situation of aliaing,
+        # 1. check if the old tag exists. If yes, return its value
+        # 2. else, continue as usual with the new tag name, and return its value
         if tag_name != old_tag:
             old_tag_val = cls._get_class_flag(
                 old_tag, "__tag_not_found__", flag_attr_name="_tags"
