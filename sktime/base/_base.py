@@ -389,9 +389,10 @@ class TagAliaserMixin(_TagAliaserMixin):
       returns the value of the new tag, no warning.
       This is the "target" state of the deprecation process.
     * if both new and old tag are present, and any of the two is requested,
-      returns the value of the old tag, and raises a warning.
+      returns the value of the old tag.
       This priority is in order to deprecate in a way that does not break existing code,
       in case the values of the two tags differ.
+      Raises a warning in addition, if the old tag was requested.
     * if only the new tag is present, and the old tag is requested,
       returns the value of the new tag, raises a warning.
     * if only the old tag is present, and the new tag is requested,
