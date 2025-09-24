@@ -202,7 +202,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that error is raised when categorical is not supported in X."""
         X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
-        y = pd.DataFrame({"var_0": [i for i in range(17)]})
+        y = pd.DataFrame({"var_0": [i + 3 for i in range(17)]})
 
         # SFAFast transformer requires nested dataframe for X.
         # so testing all transformers apart from it.
