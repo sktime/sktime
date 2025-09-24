@@ -465,31 +465,53 @@ class TagAliaserMixin(_TagAliaserMixin):
         # check is tag is aliased or aliasing
         # if yes, ensure that tag_name is the new tag name str
         # and old_tag is the old tag name str
-        old_tag = ""
+        old_tag_name = ""
+        new_tag_name = ""
         if tag_name in alias_dict:
-            old_tag = tag_name
-            tag_name = alias_dict[tag_name]
-            if old_tag in cls.FLIPPED_TAGS:
-                tag_value_default = not tag_value_default
-
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
         if tag_name in alias_dict.values():
-            old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
 
-        # if we are in a situation of aliaing,
-        # i.e., the new tag is queried and the old tag exists
-        # 1. return the value of the old tag
-        if tag_name != old_tag:
-            old_tag_val = cls._get_class_flag(
-                old_tag, "__tag_not_found__", flag_attr_name="_tags"
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
+            old_tag_val = cls._get_classflag(
+                old_tag_name,
+                "__tag_not_found__",
+                flag_attr_name="_tags",
             )
-            if old_tag_val != "__tag_not_found__":
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
                 # todo 1.0.0 - remove this special case
-                if old_tag in cls.FLIPPED_TAGS:
+                if new_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = cls._get_class_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    raise_error=False,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
 
-        # 2. else, continue as usual with tag_name, and return its value
-        # if aliasing happened, this is the new tag name
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
@@ -542,25 +564,54 @@ class TagAliaserMixin(_TagAliaserMixin):
         self._deprecate_tag_warn([tag_name])
         alias_dict = self.alias_dict
 
-        old_tag = ""
+        old_tag_name = ""
+        new_tag_name = ""
         if tag_name in alias_dict:
-            old_tag = tag_name
-            tag_name = alias_dict[tag_name]
-            if old_tag in self.FLIPPED_TAGS:
-                tag_value_default = not tag_value_default
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
         if tag_name in alias_dict.values():
-            old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
 
-        if tag_name != old_tag:
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
             old_tag_val = self._get_flag(
-                old_tag, "__tag_not_found__", raise_error=False, flag_attr_name="_tags"
+                old_tag_name,
+                "__tag_not_found__",
+                raise_error=False,
+                flag_attr_name="_tags",
             )
-            if old_tag_val != "__tag_not_found__":
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
                 # todo 1.0.0 - remove this special case
-                if old_tag in self.FLIPPED_TAGS:
+                if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = self._get_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    raise_error=False,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
 
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
         tag_val = super().get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
