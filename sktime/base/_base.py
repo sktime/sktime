@@ -398,8 +398,10 @@ class TagAliaserMixin(_TagAliaserMixin):
     * if only the old tag is present, and the new tag is requested,
       returns the value of the new tag, without a warning.
 
-    Note: all warnings above are for the user of the estimator, to use
-    the new tag.
+    Note: all warnings above are for the user of the estimator,
+    when attempting to read the old tag,
+    suggesting to use the new tag instead, which is the deprecation target state.
+
     Warnings and errors for the developer of the estimator,
     to change the old tag to new if
     the old tag is still present, are not raised by this class.
