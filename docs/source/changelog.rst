@@ -209,6 +209,7 @@ Maintenance
 * [MNT] remove some rare and outdated soft dependencies (:pr:`8804`) :user:`fkiraly`
 * [MNT] remove more rare / abandoned packages from soft dependency set (:pr:`8812`) :user:`fkiraly`
 * [MNT] 0.39.0 deprecations and change actions (:pr:`8783`) :user:`fkiraly`
+* [MNT] Update ``ruff`` linting target version to python 3.10, additional drops of 3.9 references (:pr:`8801`) :user:`yarnabrina`
 * [MNT] [Dependabot](deps): Update numba requirement from ``<0.62`` to ``<0.63`` (:pr:`8821`) :user:`dependabot[bot]`
 * [MNT] remove ``python<3.13`` bound in some dependency sets for ``numba`` (:pr:`8823`) :user:`fkiraly`
 * [MNT] deprecation of ``pykalman`` fork in ``sktime`` (:pr:`8829`) :user:`fkiraly`
@@ -258,7 +259,8 @@ Contributors
 :user:`oresthes`,
 :user:`SimonBlanke`,
 :user:`sinemkilicdere`,
-:user:`tingiskhan`
+:user:`tingiskhan`,
+:user:`yarnabrina`
 
 Version 0.38.5 - 2025-08-21
 ---------------------------
