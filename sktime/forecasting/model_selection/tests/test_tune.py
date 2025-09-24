@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly"]
 
 
 from functools import reduce
-from typing import Union
 
 import numpy as np
 import pytest
@@ -500,7 +499,7 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
     searchCV.fit(y, X)
     if return_n_best_forecasters == -1:
 
-        def calculate_total_combinations(param_grid: Union[list[dict], dict]):
+        def calculate_total_combinations(param_grid: list[dict] | dict):
             if isinstance(param_grid, dict):
                 return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
             elif isinstance(param_grid, list):

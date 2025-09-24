@@ -1,13 +1,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for transformers, SIMPLE version.
 
+For series-to-features transformations that transform a time series to a feature vector,
+e.g., summary statistics, word counts, or other tabular outputs.
+
 For series-to-series transformations, that transform a time series to another
-time series, e.g., smoothing, deseasonalization, exponentiation.
+time series, e.g., smoothing, deseasonalization, exponentiation, see
+transformer_supersimple.py instead.
 
-For transformations that transform a time series to a feature vector,
-e.g., summary statistics, word counts, see transformer_supersimple_features.py
-
-For advanced cases, e.g., transforming panels, hierarchical data, inverse transform,
+For advanced cases, e.g., transforming panels, hierarchical data,
 see extension templates in transformer.py or transformer_simple.py
 
 Contains only bare minimum of implementation requirements for a functional transformer.
@@ -97,12 +98,11 @@ class MyTransformer(BaseTransformer):
         # do not change these:
         # (look at advanced templates if you think these should change)
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
-        "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
     }
