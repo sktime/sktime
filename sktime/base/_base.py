@@ -404,7 +404,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     to change the old tag to new if
     the old tag is still present, are not raised by this class.
     These warnings should be raised separately, in API conformance tests,
-    preferably at CI time and as exceptions.    
+    preferably at CI time and as exceptions.
     """
 
     alias_dict = {
