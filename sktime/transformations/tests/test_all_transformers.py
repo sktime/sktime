@@ -212,7 +212,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_categorical_y_raises_error(self, estimator_instance):
         """Test that error is raised when categorical data is passed in y."""
-        X = pd.DataFrame({"var_0": [i for i in range(17)]})
+        X = pd.DataFrame({"var_0": [i + 3 for i in range(17)]})
         y = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
 
         requires_y = estimator_instance.get_tag("requires_y")
