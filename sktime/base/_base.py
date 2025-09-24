@@ -381,6 +381,27 @@ class TagAliaserMixin(_TagAliaserMixin):
     When removing tags, ensure to remove the removed tags from this class. If no tags
     are deprecated anymore (e.g., all deprecated tags are removed/renamed), ensure
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
+
+    Exact aliasing logic, in the situation of an "old" and "new" tag,
+    i.e., an entry ``{"old_tag": "new_tag"}`` in ``alias_dict``:
+
+    * if only the new tag is present, and the new tag is requested,
+      returns the value of the new tag, no warning. This is the "target" case.
+    * if both new and old tag are present, and any of the two is requested,
+      returns the value of the old tag, and raises a warning.
+      This is in order to deprecate in a way that does not break existing code.
+    * if only the new tag is present, and the old tag is requested,
+      returns the value of the new tag, raises a warning.
+    * if only the old tag is present, and the new tag is requested,
+      returns the value of the new tag, without a warning.
+
+    Note: all warnings above are for the user of the estimator, to use
+    the new tag.
+    Warnings and errors for the developer of the estimator,
+    to change the old tag to new if
+    the old tag is still present, are not raised by this class.
+    These warnings should be raised separately, in API conformance tests,
+    preferably at CI time and as exceptions.    
     """
 
     alias_dict = {
