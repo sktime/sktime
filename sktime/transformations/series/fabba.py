@@ -81,6 +81,7 @@ class fABBA(BaseTransformer):
 
     return_start_values : bool, optional (default=False)
         whether to return the start values of each series
+        start value is returned as first value in transformed data
         neccessary for inverse transform
 
     auto_digitize : bool, optional (default=False)
@@ -121,7 +122,6 @@ class fABBA(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "df-list",
         "y_inner_mtype": "None",
-        "univariate-only": True,
         "requires_X": True,
         "requires_y": False,
         "remember_data": False,
@@ -133,6 +133,7 @@ class fABBA(BaseTransformer):
         "capability:inverse_transform:range": None,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
+        "capability:multivariate": False,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
         "capability:missing_values": False,
@@ -1116,6 +1117,17 @@ class fABBA(BaseTransformer):
             for i in range(len(start_set)):
                 symbols[i].insert(0, start_set[i])
 
+        # Pad all symbols till max length with -1 if returning labels
+        if not self.return_as_strings:
+            max_len = max([len(symbol) for symbol in symbols])
+            for i in range(len(symbols)):
+                symbols[i] = symbols[i] + [-1] * (max_len - len(symbols[i]))
+        # Pad all symbols till max length with '' if returning strings
+        else:
+            max_len = max([len(symbol) for symbol in symbols])
+            for i in range(len(symbols)):
+                symbols[i] = symbols[i] + [""] * (max_len - len(symbols[i]))
+
         # Return as list of df
         return_data = list()
         for i in range(len(symbols)):
@@ -1298,6 +1310,13 @@ class fABBA(BaseTransformer):
             if isinstance(item, pd.DataFrame):
                 # Flatten the single column to a 1D array
                 col_values = item.iloc[:, 0].values
+
+                # Remove padding values
+                col_values = (
+                    col_values[col_values != -1]
+                    if not self.return_as_strings
+                    else col_values[col_values != ""]
+                )
 
                 # First value
                 start_values.append(col_values[0])
