@@ -3,30 +3,10 @@ __author__ = ["Tanuj-Taneja1"]
 
 import copy
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-else:
-
-    class torch:
-        """dummy class if torch is not available."""
-
-        def __init__(self, *args, **kwargs):
-            raise ImportError("torch is not available. Please install torch first.")
-
-    class nn:
-        """dummy class if torch is not available."""
-
-        class Module:
-            """dummy class if torch is not available."""
-
-            def __init__(self, *args, **kwargs):
-                raise ImportError("torch is not available. Please install torch first.")
-
-        def __init__(self, *args, **kwargs):
-            raise ImportError("torch is not available. Please install torch first.")
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 def get_activation_fn(activation):

@@ -4,10 +4,6 @@ __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    from sktime.networks.convtimenet._convtimenet import ConvTimeNet
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -154,6 +150,8 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         )
 
     def _build_network(self, X, y):
+        from sktime.networks.convtimenet._convtimenet import ConvTimeNet
+
         self.n_classes = len(set(y))
         self.enc_in = X.shape[1]
         self.seq_len = X.shape[2]
