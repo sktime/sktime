@@ -7,7 +7,7 @@ from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytor
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    from sktime.networks.convtimenet.classifier._convtimenet import ConvTimeNet
+    from sktime.networks.convtimenet._convtimenet import ConvTimeNet
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -104,9 +104,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         "tests:skip_by_name": ["test_fit_idempotent"],
         "python_dependencies": ["torch"],
         "tests:libs": [
-            "sktime.networks.convtimenet.classifier._convtimenet",
-            "sktime.networks.convtimenet.classifier._dlutils",
-            "sktime.networks.convtimenet.classifier._convtimenet_backbone",
+            "sktime.networks.convtimenet._convtimenet",
+            "sktime.networks.convtimenet._dlutils",
+            "sktime.networks.convtimenet._convtimenet_backbone",
         ],
     }
 

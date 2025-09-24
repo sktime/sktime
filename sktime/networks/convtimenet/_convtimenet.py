@@ -7,10 +7,10 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
 
-    from sktime.networks.convtimenet.classifier._convtimenet_backbone import (
+    from sktime.networks.convtimenet._convtimenet_backbone import (
         ConvTimeNet_backbone,
     )
-    from sktime.networks.convtimenet.classifier._dlutils import DeformablePatch
+    from sktime.networks.convtimenet._dlutils import DeformablePatch
 else:
 
     class torch:
