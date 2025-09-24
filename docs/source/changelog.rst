@@ -139,6 +139,7 @@ BaseObject and base framework
 * [ENH] tags for stochasticity/determinism in estimators and conditional test logic (:pr:`8765`) :user:`fkiraly`
 * [ENH] set some missing tags (:pr:`8831`) :user:`fkiraly`
 * [ENH] tag deprecation test extension to warn third party developers of deprecated tags (:pr:`8846`) :user:`fkiraly`
+* [ENH] remove dead code ``TagManager`` that was moved to ``scikit-base`` (:pr:`8850`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -196,7 +197,7 @@ Documentation
 * [DOC] Fix Install Command (:pr:`8788`) :user:`jgyasu`
 * [DOC] better documentation of time series scitypes, full mathematical documentation of ``Hierarchical`` and ``Table`` type (:pr:`8795`) :user:`fkiraly`
 * [DOC] assorted documentation fixes (:pr:`8816`) :user:`fkiraly`
-
+* [DOC] pre-filled transformer extension template for series-to-features transformers (:pr:`8834`) :user:`fkiraly`
 
 Maintenance
 ~~~~~~~~~~~
