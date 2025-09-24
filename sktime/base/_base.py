@@ -386,7 +386,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     i.e., an entry ``{"old_tag": "new_tag"}`` in ``alias_dict``:
 
     * if only the new tag is present, and the new tag is requested,
-      returns the value of the new tag, no warning. This is the "target" case.
+      returns the value of the new tag, no warning.
+      This is the "target" state of the deprecation process.
     * if both new and old tag are present, and any of the two is requested,
       returns the value of the old tag, and raises a warning.
       This is in order to deprecate in a way that does not break existing code.
