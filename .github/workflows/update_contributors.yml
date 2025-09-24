@@ -1,17 +1,17 @@
 name: Update Contributors
 
 on:
-  push:
-    branches-ignore:
-      - main
-    paths:
-      - '.all-contributorsrc'
+  schedule:
+  - cron: '0 10 * * 1'
+  workflow_dispatch:
 
 jobs:
   generate-markdown-and-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v5
@@ -25,20 +25,32 @@ jobs:
         id: generate
         run: npx all-contributors generate
 
-      - name: Commit and push if changed
+      - name: Create PR with changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41897782+github-actions[bot]@users.noreply.github.com"
 
           if ! git diff --quiet CONTRIBUTORS.md; then
+            BRANCH_NAME="update-contributors-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH_NAME"
             git add CONTRIBUTORS.md
             git commit -m "[AUTOMATED] update CONTRIBUTORS.md"
-            git push
+
+            git push origin "$BRANCH_NAME"
+            gh pr create \
+              --title "Update CONTRIBUTORS.md" \
+              --body "Automated update to CONTRIBUTORS.md based on changes to .all-contributorsrc" \
+              --head "$BRANCH_NAME" \
+              --base main
+
             echo "changes_detected=true" >> $GITHUB_ENV
+            echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
           else
             echo "No changes to commit."
             echo "changes_detected=false" >> $GITHUB_ENV
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Echo Results
         if: steps.candp.outputs.changes_detected == 'true'
