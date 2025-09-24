@@ -502,7 +502,6 @@ class TagAliaserMixin(_TagAliaserMixin):
                 new_tag_value = cls._get_class_flag(
                     new_tag_name,
                     tag_value_default,
-                    raise_error=False,
                     flag_attr_name="_tags",
                 )
                 if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
