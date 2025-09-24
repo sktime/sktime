@@ -124,27 +124,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "ResNetRegressor": [
-        "test_fit_idempotent",
-    ],
-    "CNNClassifier": [
-        "test_fit_idempotent",
-    ],
-    "CNNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "LSTMFCNClassifier": [
-        "test_fit_idempotent",
-    ],
-    "LSTMFCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "MLPClassifier": [
-        "test_fit_idempotent",
-    ],
-    "MLPRegressor": [
-        "test_fit_idempotent",
-    ],
     "SimpleRNNClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
@@ -156,15 +135,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
-    ],
-    "MCDCNNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "FCNRegressor": [
-        "test_fit_idempotent",
-    ],
-    "InceptionTimeRegressor": [
-        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -184,10 +154,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    "InformationGainSegmentation": [
-        "test_inheritance",
-        "test_create_test_instance",
-    ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
@@ -211,10 +177,6 @@ EXCLUDED_TESTS = {
     "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
     # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
     "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
-    "TimeSeriesSVRTslearn": [  # not deterministic, see 6274
-        "test_fit_idempotent",
-        "test_multiprocessing_idempotent",
-    ],
     # ShapeletLearningClassifier is non-pickleable due to DL dependencies
     "ShapeletLearningClassifierTslearn": [
         "test_persistence_via_pickle",
@@ -257,7 +219,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "TSFreshClassifier": ["test_multiprocessing_idempotent"],  # see 8150
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE

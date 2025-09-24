@@ -686,6 +686,8 @@ class ProximityStump(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
     }
 
@@ -996,6 +998,8 @@ class ProximityTree(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",
     }
 
@@ -1301,6 +1305,8 @@ class ProximityForest(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 

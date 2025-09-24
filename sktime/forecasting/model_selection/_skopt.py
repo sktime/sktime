@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter search via scikit-optimize."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import check_cv
@@ -215,16 +213,22 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["HazrulAkmal"],
         "maintainers": ["HazrulAkmal"],
+        "python_dependencies": ["scikit-optimize"],
+        "python_version": ">= 3.6",
+        # estimator type
+        # --------------
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["scikit-optimize"],
-        "python_version": ">= 3.6",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run on separate VM since scikit-optimize is deprecated
@@ -235,13 +239,13 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self,
         forecaster,
         cv: BaseSplitter,
-        param_distributions: Union[dict, list[dict]],
+        param_distributions: dict | list[dict],
         n_iter: int = 10,
-        n_points: Optional[int] = 1,
-        random_state: Optional[int] = None,
-        scoring: Optional[list[BaseMetric]] = None,
-        optimizer_kwargs: Optional[dict] = None,
-        strategy: Optional[str] = "refit",
+        n_points: int | None = 1,
+        random_state: int | None = None,
+        scoring: list[BaseMetric] | None = None,
+        optimizer_kwargs: dict | None = None,
+        strategy: str | None = "refit",
         refit: bool = True,
         verbose: int = 0,
         return_n_best_forecasters: int = 1,

@@ -33,7 +33,7 @@ class PlateauFinder(BaseTransformer):
     _tags = {
         "authors": ["mloning"],
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -198,7 +198,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
     _tags = {
         "fit_is_empty": False,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -357,7 +357,7 @@ class FittedParamExtractor(BaseTransformer):
         "authors": "mloning",
         "python_dependencies": "joblib",
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
