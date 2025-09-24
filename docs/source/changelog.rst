@@ -90,9 +90,9 @@ Deprecations and removals
 On-board libraries
 ^^^^^^^^^^^^^^^^^^
 
-* ``pykalman`` is no longer a fork in ``sktime``. The ``sktime.libs.pykalman``
-  module is deprecated and will redierct to the ``pykalman`` package from 0.42.0
-  onwards, and removed entirely in version 1.0.0.
+* The ``sktime.libs.pykalman`` module is deprecated.
+  It will redierct to the ``pykalman`` package from 0.42.0
+  onwards, and will be removed entirely in version 1.0.0.
   Users of ``pykalman`` based estimators in ``sktime`` can continue to use them,
   and the estimator API itself will not change. However, users will need
   to install ``pykalman`` separately, as it is no longer included in ``sktime``.
@@ -138,6 +138,7 @@ BaseObject and base framework
 * [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
 * [ENH] tags for stochasticity/determinism in estimators and conditional test logic (:pr:`8765`) :user:`fkiraly`
 * [ENH] set some missing tags (:pr:`8831`) :user:`fkiraly`
+* [ENH] tag deprecation test extension to warn third party developers of deprecated tags (:pr:`8846`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -232,6 +233,11 @@ Forecasting
 * [BUG] fix ``DirectReductionForecaster`` failure on newer ``pandas`` (:pr:`8782`) :user:`fkiraly`
 * [BUG] fix ``PykanForecaster`` test failures (:pr:`8764`) :user:`JATAYU000`
 * [BUG] fix ``predict_var`` of ``ResidualBoostingForecaster`` (:pr:`8806`) :user:`fkiraly`
+
+Time Series Anomalies, Changepoints, Segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[BUG] partially fix non-conformance of ``IGTS`` estimator (:pr:`8833`) :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
