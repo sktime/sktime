@@ -199,6 +199,7 @@ class MSTL(BaseTransformer):
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

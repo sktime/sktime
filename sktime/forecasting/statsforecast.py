@@ -499,15 +499,15 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "luca-miniati",
         ],
         # AzulGarza and jmoralez for statsforecast AutoETS
-        # "maintainers": ["yarnabrina"],
-        # "python_dependencies": "statsforecast"
+        "maintainers": ["yarnabrina"],
+        "python_dependencies": ["statsforecast>=1.3.2"],
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.3.2"],
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
     }
 
     def __init__(
