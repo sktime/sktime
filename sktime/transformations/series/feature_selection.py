@@ -85,6 +85,8 @@ class FeatureSelection(BaseTransformer):
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
         "capability:multivariate": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

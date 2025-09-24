@@ -154,10 +154,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    "InformationGainSegmentation": [
-        "test_inheritance",
-        "test_create_test_instance",
-    ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
