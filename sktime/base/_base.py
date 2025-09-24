@@ -568,9 +568,57 @@ class TagAliaserMixin(_TagAliaserMixin):
         )
         return tag_val
 
+    def set_tags(self, **tag_dict):
+        """Set instance level tag overrides to given values.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object. They may be used for metadata inspection,
+        or for controlling behaviour of the object.
+
+        ``set_tags`` sets dynamic tag overrides
+        to the values as specified in ``tag_dict``, with keys being the tag name,
+        and dict values being the value to set the tag to.
+
+        The ``set_tags`` method
+        should be called only in the ``__init__`` method of an object,
+        during construction, or directly after construction via ``__init__``.
+
+        Current tag values can be inspected by ``get_tags`` or ``get_tag``.
+
+        Parameters
+        ----------
+        **tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+
+        Returns
+        -------
+        Self
+            Reference to self.
+        """
+        self._deprecate_tag_warn(tag_dict.keys())
+
+        tag_dict = self._complete_dict(tag_dict, direction="old_to_new")
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
+        return self
+
     @classmethod
-    def _complete_dict(cls, tag_dict):
-        """Add all aliased and aliasing tags to the dictionary."""
+    def _complete_dict(cls, tag_dict, direction="both"):
+        """Add all aliased and aliasing tags to the dictionary.
+
+        Parameters
+        ----------
+        tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+        direction : str, one of "old_to_new", "both"
+            Direction of aliasing to complete the dictionary for.
+
+            * "old_to_new": complete only from old tags to new tags
+            * "both": complete both from old to new and from new to old
+        """
         alias_dict = cls.alias_dict
         deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
         new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
@@ -582,13 +630,13 @@ class TagAliaserMixin(_TagAliaserMixin):
             #   and all tags that could be *aliasing* the string
             # this way we ensure upwards and downwards compatibility
             for old_tag in alias_dict:
-                cls._translate_tags(new_tag_dict, tag_dict, old_tag)
+                cls._translate_tags(new_tag_dict, tag_dict, old_tag, direction)
             return new_tag_dict
         else:
             return tag_dict
 
     @classmethod
-    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag):
+    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag, direction="both"):
         """Translate old tag to new tag.
 
         Mutates ``new_tag_dict`` given ``old_tag_dict`` and ``old_tag``.
@@ -617,15 +665,19 @@ class TagAliaserMixin(_TagAliaserMixin):
         if old_tag in cls.FLIPPED_TAGS:
             if old_tag in tag_dict and new_tag != "":
                 new_tag_dict[new_tag] = not tag_dict[old_tag]
-            if new_tag in tag_dict and old_tag not in tag_dict:
+            if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
                 new_tag_dict[old_tag] = not tag_dict[new_tag]
+            if direction == "old_to_new" and old_tag in new_tag_dict:
+                del new_tag_dict[old_tag]
             return new_tag_dict
 
         # standard treatment for all other tags
         if old_tag in tag_dict and new_tag != "":
             new_tag_dict[new_tag] = tag_dict[old_tag]
-        if new_tag in tag_dict and old_tag not in tag_dict:
+        if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
             new_tag_dict[old_tag] = tag_dict[new_tag]
+        if direction == "old_to_new" and old_tag in new_tag_dict:
+            del new_tag_dict[old_tag]
         return new_tag_dict
 
     # package name used for deprecation warnings
