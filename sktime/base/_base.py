@@ -480,7 +480,7 @@ class TagAliaserMixin(_TagAliaserMixin):
 
         if tag_changed:
             # retrieve old tag value, if it exists
-            old_tag_val = cls._get_classflag(
+            old_tag_val = cls._get_class_flag(
                 old_tag_name,
                 "__tag_not_found__",
                 flag_attr_name="_tags",
