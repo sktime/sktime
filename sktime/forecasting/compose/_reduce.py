@@ -42,7 +42,6 @@ from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
-from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
@@ -216,7 +215,99 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     return yt, Xt
 
 
-class _Reducer(_BaseWindowForecaster):
+class _ReducerMixin:
+    """Common utilities for reducers."""
+
+    # def _get_expected_pred_idx(self, fh):
+    #     """Construct DataFrame Index expected in y_pred, return of _predict.
+
+    #     Parameters
+    #     ----------
+    #     fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
+
+    #     Returns
+    #     -------
+    #     fh_idx : pd.Index, expected index of y_pred returned by _predict
+    #         CAVEAT: sorted by index level -1, since reduction is applied by fh
+    #     """
+    #     if isinstance(fh, ForecastingHorizon):
+    #         fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
+    #     else:
+    #         fh_idx = pd.Index(fh)
+    #     y_index = self._y.index
+
+    #     if isinstance(y_index, pd.MultiIndex):
+    #         y_inst_idx = y_index.droplevel(-1).unique()
+    #         if isinstance(y_inst_idx, pd.MultiIndex):
+    #             tuples = [x + (y,) for x in y_inst_idx for y in fh_idx]
+    #         else:
+    #             tuples = [(x, y) for x in y_inst_idx for y in fh_idx]
+    #         fh_idx = pd.MultiIndex.from_tuples(tuples)
+
+    #     if hasattr(y_index, "names") and y_index.names is not None:
+    #         fh_idx.names = y_index.names
+
+    #     return fh_idx
+
+    def _get_expected_pred_idx(self, fh):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, or iterable coercible to pd.Index
+
+        Returns
+        -------
+        fh_idx : pd.Index
+            Expected index of y_pred returned by _predict.
+            CAVEAT: sorted by index level -1, since reduction is applied by fh.
+        """
+        # normalize fh to a pandas Index of absolute time points
+        if isinstance(fh, ForecastingHorizon):
+            fh_abs = pd.Index(fh.to_absolute_index(self.cutoff))
+        else:
+            fh_abs = pd.Index(fh)
+
+        y_index = self._y.index
+
+        # MultiIndex case: replicate all outer levels and append absolute horizon
+        if isinstance(y_index, pd.MultiIndex):
+            left = y_index.droplevel(-1).unique()
+            names = y_index.names
+
+            if isinstance(left, pd.MultiIndex):
+                # left elements are tuples of the outer levels
+                tuples = [(*lvl, t) for lvl in left for t in fh_abs]
+                fh_idx = pd.MultiIndex.from_tuples(tuples, names=names)
+            else:
+                # Use from_product so single string level not split into chars
+                fh_idx = pd.MultiIndex.from_product([left, fh_abs], names=names)
+            return fh_idx
+
+        # Single-level time index: preserve dtype/name where reasonable
+        fh_idx = fh_abs
+        if isinstance(y_index, pd.PeriodIndex):
+            try:
+                fh_idx = pd.PeriodIndex(fh_abs, freq=y_index.freq)
+            except Exception:
+                fh_idx = pd.Index(fh_abs)
+        elif isinstance(y_index, pd.DatetimeIndex):
+            try:
+                fh_idx = pd.DatetimeIndex(fh_abs, tz=y_index.tz)
+            except Exception:
+                fh_idx = pd.Index(fh_abs)
+
+        # carry over the name of the original time index if present
+        if getattr(y_index, "name", None) is not None:
+            try:
+                fh_idx.name = y_index.name
+            except Exception:
+                fh_idx.name = "y_index.name"
+
+        return fh_idx
+
+
+class _Reducer(_BaseWindowForecaster, _ReducerMixin):
     """Base class for reducing forecasting to regression."""
 
     _tags = {
@@ -420,62 +511,116 @@ class _Reducer(_BaseWindowForecaster):
         y, X: A pandas dataframe or series
             contains the y and X data prepared for the respective windows, see above.
         """
-        if hasattr(self._timepoints, "freq"):
-            if self._timepoints.freq is None:
-                freq_inferred = pd.infer_freq(self._timepoints)
-                cutoff_with_freq = self._cutoff
-                cutoff_with_freq.freq = freq_inferred
-            else:
-                cutoff_with_freq = self._cutoff
+        # if hasattr(self._timepoints, "freq"):
+        #     if self._timepoints.freq is None:
+        #         freq_inferred = pd.infer_freq(self._timepoints)
+        #         cutoff_with_freq = self._cutoff
+        #         cutoff_with_freq.freq = freq_inferred
+        #     else:
+        #         cutoff_with_freq = self._cutoff
+        # else:
+        #     cutoff_with_freq = self._cutoff
+        # cutoff = _shift(cutoff_with_freq, by=shift, return_index=True)
+
+        # relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
+        # # relative _int will give the integer indices of the window. Also contains the
+        # ## first observation after the window (what the window is summarized to).
+
+        # index_range = _index_range(relative_int, cutoff)
+        # if isinstance(cutoff, pd.DatetimeIndex):
+        #     if cutoff.tzinfo is not None:
+        #         index_range = index_range.tz_localize(cutoff.tzinfo)
+        # # index_range will convert the indices to the date format of cutoff
+
+        # y_raw = _create_fcst_df(index_range, self._y)
+        # # y_raw is a df window_length forecasting steps into the past in order to
+        # # calculate the new X from y features based on the transformer provided
+
+        # y_raw.update(self._y)
+        # # Historical values are passed here for all time steps of y_raw that lie in
+        # # the past .
+
+        # if y_update is not None:
+        #     y_raw.update(y_update)
+        # # The y_raw dataframe will is updated with recursively forecast values.
+
+        # if len(self.transformers_) == 1:
+        #     X_from_y = self.transformers_[0].fit_transform(y_raw)
+        # else:
+        #     ref = self.transformers_
+        #     feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
+        #     X_from_y = FeatureUnion(feat).fit_transform(y_raw)
+        # # After filling the empty y_raw frame with historic / forecast values
+        # # X from y features can be calculated based on the passed transformer.
+
+        # X_from_y_cut = _cut_df(X_from_y)
+        # # We are only interested in the last observation, since only that one
+        # # contains the value the window is summarized to.
+
+        # if self._X is not None:
+        #     X = _create_fcst_df([index_range[-1]], self._X)
+        #     X.update(self._X)
+        #     if X_update is not None:
+        #         X.update(X_update)
+        #     X_cut = _cut_df(X)
+        #     X = pd.concat([X_from_y_cut, X_cut], axis=1)
+        #     # X_from_y_cut is added to X df (no features need to be calculated).
+        # else:
+        #     X = X_from_y_cut
+
+        # y = _cut_df(y_raw)
+        # return y, X
+
+        # --- normalize cutoff as a 1-length Index preserving dtype & tz/freq ---
+        c = self._cutoff
+        if isinstance(c, pd.Period):
+            cutoff_idx = pd.PeriodIndex([c], freq=c.freq)
+        elif isinstance(c, pd.Timestamp):
+            cutoff_idx = pd.DatetimeIndex([c], tz=c.tz)
+        elif isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
+            cutoff_idx = c[:1]
         else:
-            cutoff_with_freq = self._cutoff
-        cutoff = _shift(cutoff_with_freq, by=shift, return_index=True)
+            cutoff_idx = pd.Index([c])
 
-        relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
-        # relative _int will give the integer indices of the window. Also contains the
-        # first observation after the window (this is what the window is summarized to).
+        # shift to the target step
+        cutoff = _shift(cutoff_idx, by=shift, return_index=True)
 
+        # integer window [-window_length+1, ..., 0, 1] (the +1 is the "summary" point)
+        relative_int = pd.Index(range(-self.window_length_ + 1, 2))
         index_range = _index_range(relative_int, cutoff)
-        if isinstance(cutoff, pd.DatetimeIndex):
-            if cutoff.tzinfo is not None:
-                index_range = index_range.tz_localize(cutoff.tzinfo)
-        # index_range will convert the indices to the date format of cutoff
 
+        # localize to tz if needed (DatetimeIndex uses .tz, not .tzinfo)
+        if isinstance(cutoff, pd.DatetimeIndex) and cutoff.tz is not None:
+            index_range = index_range.tz_localize(cutoff.tz)
+
+        # build empty frame for the window (past-to-present, last is the summary point)
         y_raw = _create_fcst_df(index_range, self._y)
-        # y_raw is a dataframe window_length forecasting steps into the past in order to
-        # calculate the new X from y features based on the transformer provided
-
         y_raw.update(self._y)
-        # Historical values are passed here for all time steps of y_raw that lie in
-        # the past .
-
         if y_update is not None:
             y_raw.update(y_update)
-        # The y_raw dataframe will is updated with recursively forecast values.
 
-        if len(self.transformers_) == 1:
-            X_from_y = self.transformers_[0].fit_transform(y_raw)
-        else:
-            ref = self.transformers_
-            feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
-            X_from_y = FeatureUnion(feat).fit_transform(y_raw)
-        # After filling the empty y_raw frame with historic / forecast values
-        # X from y features can be calculated based on the passed transformer.
-
-        X_from_y_cut = _cut_df(X_from_y)
-        # We are only interested in the last observation, since only that one
-        # contains the value the window is summarized to.
-
+        # X features at the summary point only
         if self._X is not None:
             X = _create_fcst_df([index_range[-1]], self._X)
             X.update(self._X)
             if X_update is not None:
                 X.update(X_update)
             X_cut = _cut_df(X)
+            X_from_y_cut = _cut_df(
+                self.transformers_[0].fit_transform(y_raw)
+                if len(self.transformers_) == 1
+                else FeatureUnion(
+                    [("trafo_" + str(i), t) for i, t in enumerate(self.transformers_)]
+                ).fit_transform(y_raw)
+            )
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
-            # X_from_y_cut is added to X dataframe (no features need to be calculated).
         else:
-            X = X_from_y_cut
+            if len(self.transformers_) == 1:
+                X = _cut_df(self.transformers_[0].fit_transform(y_raw))
+            else:
+                ref = self.transformers_
+                feat = [("trafo_" + str(i), t) for i, t in enumerate(ref)]
+                X = _cut_df(FeatureUnion(feat).fit_transform(y_raw))
 
         y = _cut_df(y_raw)
         return y, X
@@ -756,7 +901,8 @@ class _DirectReducer(_Reducer):
                 y_pred = pool_preds(y_preds)
 
         # coerce index and columns to expected
-        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        # index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        index = self._get_expected_pred_idx(fh)
         columns = self._get_columns(method=method, **kwargs)
         if isinstance(y_pred, pd.DataFrame):
             y_pred.index = index
@@ -1017,8 +1163,8 @@ class _RecursiveReducer(_Reducer):
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
             if isinstance(self.cutoff, pd.DatetimeIndex):
-                if self.cutoff.tzinfo is not None:
-                    index_range = index_range.tz_localize(self.cutoff.tzinfo)
+                if self.cutoff.tz is not None:
+                    index_range = index_range.tz_localize(self.cutoff.tz)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1223,6 +1369,31 @@ class _DirRecReducer(_Reducer):
             X_full[:, :, window_length + i] = y_pred[i]
 
         return y_pred
+
+
+def _asfreq_per_series_safe(y, freq, how="start"):
+    """Like apply_method_per_series(..., 'asfreq', ...), but robust to string keys."""
+    import pandas as pd
+
+    if not isinstance(y.index, pd.MultiIndex):
+        return y.asfreq(freq, how=how)
+
+    parts = []
+    names = y.index.names
+    outer = y.index.droplevel(-1).unique()
+
+    for key in outer:
+        ys = y.loc[key].asfreq(freq, how=how)
+        # Reattach outer level(s) without exploding strings like "s1" -> ('s','1')
+        if isinstance(key, tuple):
+            idx = pd.MultiIndex.from_tuples([(*key, t) for t in ys.index], names=names)
+        else:
+            idx = pd.MultiIndex.from_product([[key], ys.index], names=names)
+        ys = ys.copy()
+        ys.index = idx
+        parts.append(ys)
+
+    return pd.concat(parts).sort_index()
 
 
 class DirectTabularRegressionForecaster(_DirectReducer):
@@ -1724,52 +1895,128 @@ def _cut_df(X, n_obs=1, type="tail"):
     return X
 
 
-def _create_fcst_df(target_date, origin_df, fill=None):
-    """Create an empty multiindex dataframe from origin dataframe.
+# def _create_fcst_df(target_date, origin_df, fill=None):
+#     """Create an empty multiindex dataframe from origin dataframe.
 
-    In recursive forecasting, a new dataframe needs to be created that collects
-    all forecasting steps (even for forecasting horizons other than those of interests).
-    For example for fh =[1,2,12] we need the whole forecasting horizons from 1 to 12.
+#     In recursive forecasting, a new dataframe needs to be created that collects all
+#     forecasting steps (even for forecasting horizons other than those of interests).
+#     For example for fh =[1,2,12] we need the whole forecasting horizons from 1 to 12.
+
+#     Parameters
+#     ----------
+#     target_date : a list of dates
+#         this will be correspond to the new timepoints index to be created in the
+#         forecasting dataframe
+#     origin_df : a pandas Series or Dataframe
+#         the origin_df corresponds to the dataframe with the historic data. Useful
+#         information inferred from that df is the index of the historic df
+#         as well as the names of the original columns and the type of the object
+#         (dataframe or series)
+#     fill : a numpy.ndarray (optional)
+#         Corresponds to a numpy array of values that is used to fill up the dataframe.
+#         Useful when forecasts are returned from a forecasting models that discards
+#         the hierarchical structure of the input pandas dataframe
+
+#     Returns
+#     -------
+#     A pandas dataframe or series
+#     """
+#     if not isinstance(target_date, ForecastingHorizon):
+#         ix = pd.Index(target_date)
+#         fh = ForecastingHorizon(ix, is_relative=False)
+#     else:
+#         fh = target_date.to_absolute()
+
+#     index = fh.get_expected_pred_idx(origin_df)
+
+#     if isinstance(origin_df, pd.Series):
+#         columns = [origin_df.name]
+#     else:
+#         columns = origin_df.columns.to_list()
+
+#     if fill is None:
+#         values = 0
+#     else:
+#         values = fill
+
+#     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
+
+#     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
+#         res = res.iloc[:, 0]
+#         res.name = origin_df.name
+
+#     return res
+
+
+def _create_fcst_df(target_date, origin_df, fill=None):
+    """Create an empty forecasting frame aligned to origin_df's index structure.
 
     Parameters
     ----------
-    target_date : a list of dates
-        this will be correspond to the new timepoints index to be created in the
-        forecasting dataframe
-    origin_df : a pandas Series or Dataframe
-        the origin_df corresponds to the dataframe with the historic data. Useful
-        information inferred from that dataframe is the index of the historic dataframe
-        as well as the names of the original columns and the type of the object
-        (dataframe or series)
-    fill : a numpy.ndarray (optional)
-        Corresponds to a numpy array of values that is used to fill up the dataframe.
-        Useful when forecasts are returned from a forecasting models that discards
-        the hierarchical structure of the input pandas dataframe
+    target_date : iterable of dates or ForecastingHorizon (abs or already resolvable)
+        New timepoints for the forecast frame (last level of the index).
+    origin_df : pd.Series or pd.DataFrame
+        Provides the original index structure (including outer levels & names)
+        and the column names (for DataFrame) or name (for Series).
+    fill : scalar or array-like, optional
+        If provided, pre-fill the frame with this value; otherwise zeros.
 
     Returns
     -------
-    A pandas dataframe or series
+    pd.Series or pd.DataFrame
+        With the same outer index levels and column structure as origin_df, and
+        the last level replaced by target_date.
     """
-    if not isinstance(target_date, ForecastingHorizon):
-        ix = pd.Index(target_date)
-        fh = ForecastingHorizon(ix, is_relative=False)
+    # Normalize target_date to a pandas Index
+    if isinstance(target_date, ForecastingHorizon):
+        # Try to treat it as already absolute; fall back to a plain Index if needed
+        try:
+            td = target_date.to_absolute()
+            tgt = td.to_pandas() if hasattr(td, "to_pandas") else pd.Index(td)
+        except TypeError:
+            tgt = pd.Index(target_date)
     else:
-        fh = target_date.to_absolute()
+        tgt = pd.Index(target_date)
 
-    index = fh.get_expected_pred_idx(origin_df)
+    idx0 = origin_df.index
+    # Build the forecast index to mirror origin_df's structure
+    if isinstance(idx0, pd.MultiIndex):
+        left = idx0.droplevel(-1).unique()
+        names = idx0.names
 
-    if isinstance(origin_df, pd.Series):
-        columns = [origin_df.name]
+        if isinstance(left, pd.MultiIndex):
+            tuples = [(*lvl, t) for lvl in left for t in tgt]
+            index = pd.MultiIndex.from_tuples(tuples, names=names)
+        else:
+            index = pd.MultiIndex.from_product([left, tgt], names=names)
     else:
-        columns = origin_df.columns.to_list()
+        # Single-level time index: preserve dtype where possible
+        if isinstance(idx0, pd.PeriodIndex):
+            try:
+                tgt = pd.PeriodIndex(tgt, freq=idx0.freq)
+            except Exception:
+                tgt = pd.Index(tgt)
+        elif isinstance(idx0, pd.DatetimeIndex):
+            try:
+                tgt = pd.DatetimeIndex(tgt, tz=idx0.tz)
+            except Exception:
+                tgt = pd.Index(tgt)
+        index = tgt
+        # carry over name if present
+        if getattr(idx0, "name", None) is not None:
+            index.name = idx0.name
 
-    if fill is None:
-        values = 0
-    else:
-        values = fill
+    # Columns / values
+    columns = (
+        [origin_df.name]
+        if isinstance(origin_df, pd.Series)
+        else list(origin_df.columns)
+    )
+    values = 0 if fill is None else fill
 
     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
 
+    # If the origin was a Series and the result isn't hierarchical, return a Series
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
         res.name = origin_df.name
@@ -1815,40 +2062,6 @@ def _get_notna_idx(df):
     df_notna_bool = df.notnull().all(axis=1)
     df_notna_idx = df.index[df_notna_bool]
     return df_notna_idx
-
-
-class _ReducerMixin:
-    """Common utilities for reducers."""
-
-    def _get_expected_pred_idx(self, fh):
-        """Construct DataFrame Index expected in y_pred, return of _predict.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
-
-        Returns
-        -------
-        fh_idx : pd.Index, expected index of y_pred returned by _predict
-            CAVEAT: sorted by index level -1, since reduction is applied by fh
-        """
-        if isinstance(fh, ForecastingHorizon):
-            fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
-        else:
-            fh_idx = pd.Index(fh)
-        y_index = self._y.index
-
-        if isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
-            if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
-            else:
-                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
-
-        if hasattr(y_index, "names") and y_index.names is not None:
-            fh_idx.names = y_index.names
-
-        return fh_idx
 
 
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
@@ -2573,25 +2786,74 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    def _get_window_local(self, cutoff, window_length, y_orig):
-        start = _shift(cutoff, by=-window_length + 1)
-        cutoff = cutoff[0]
-        y = y_orig.loc[start:cutoff]
+    # def _get_window_local(self, cutoff, window_length, y_orig):
+    #     start = _shift(cutoff, by=-window_length + 1)
+    #     cutoff = cutoff[0]
+    #     y = y_orig.loc[start:cutoff]
 
-        # check for missing values
-        if len(y) < window_length:
-            idx = pd.period_range(
-                start=y.index.min(), end=y.index.max(), freq=y.index.freq
-            )
+    #     # check for missing values
+    #     if len(y) < window_length:
+    #         idx = pd.period_range(
+    #             start=y.index.min(), end=y.index.max(), freq=y.index.freq
+    #         )
+    #         y = y.reindex(idx)
+    #         if self._impute_method:
+    #             y = self._impute_method.fit_transform(y)
+
+    #     y = y.to_numpy()
+    #     X = (
+    #         self._X.loc[cutoff].to_frame().T if self._X is not None else None
+    #     )  # exoxenous
+
+    #     return y, X
+
+    def _get_window_local(self, cutoff, window_length, y_orig):
+        # Normalize cutoff to a scalar timestamp/period
+        if isinstance(cutoff, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex)):
+            cutoff_scalar = cutoff[0]
+        else:
+            cutoff_scalar = cutoff
+        # Compute scalar start with same dtype
+        start_scalar = _shift(pd.Index([cutoff_scalar]), by=-window_length + 1)[0]
+
+        # Slice y between start and cutoff on the time level
+        if isinstance(y_orig.index, pd.MultiIndex):
+            time_level = y_orig.index.get_level_values(-1)
+            mask = (time_level >= start_scalar) & (time_level <= cutoff_scalar)
+            y_slice = y_orig.loc[mask]
+            # Reduce to a single series if y is univariate (usual case for local)
+            y_series = y_slice.squeeze()
+            if isinstance(y_series.index, pd.MultiIndex):
+                y_series.index = y_series.index.get_level_values(-1)
+            y = y_series
+        else:
+            y = y_orig.loc[start_scalar:cutoff_scalar]
+
+        # If requested, impute within the window when a known freq exists
+        if (
+            len(y) < window_length
+            and hasattr(y.index, "freq")
+            and y.index.freq is not None
+        ):
+            if isinstance(y.index, pd.PeriodIndex):
+                idx = pd.period_range(
+                    start=y.index.min(), end=y.index.max(), freq=y.index.freq
+                )
+            elif isinstance(y.index, pd.DatetimeIndex):
+                idx = pd.date_range(
+                    start=y.index.min(),
+                    end=y.index.max(),
+                    freq=y.index.freq,
+                    tz=y.index.tz,
+                )
+            else:
+                idx = y.index
             y = y.reindex(idx)
-            if self._impute_method:
+            if getattr(self, "_impute_method", None):
                 y = self._impute_method.fit_transform(y)
 
-        y = y.to_numpy()
-        X = (
-            self._X.loc[cutoff].to_frame().T if self._X is not None else None
-        )  # exoxenous
-
+        y = pd.Series(y).to_numpy()
+        X = self._X.loc[cutoff_scalar].to_frame().T if self._X is not None else None
         return y, X
 
     def _get_window_global(self, cutoff, window_length, y_orig):
@@ -2742,7 +3004,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_time_features = np.zeros((len(all_series), window_length), dtype=float)
 
         for i, s in enumerate(all_series):
-            print(f"top of loop: i / s = {i} / {s}")
+            # print(f"top of loop: i / s = {i} / {s}")
             y_s = y_orig.loc[s]
 
             # ensure y_s is a 1D Series of target values
@@ -2757,9 +3019,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             idx_s = _coerce_time_index(y_s.index)
             y_s = pd.Series(y_s.to_numpy(copy=False), index=idx_s)
 
-            print(f"y_s = {y_s}")
-            print(f"type(y_s) = {type(y_s)}")
-            print(f"y_s.shape = {y_s.shape}")
+            # print(f"y_s = {y_s}")
+            # print(f"type(y_s) = {type(y_s)}")
+            # print(f"y_s.shape = {y_s.shape}")
 
             idx_target = full_idx if len(full_idx) == window_length else observed_window
 
@@ -2848,10 +3110,20 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             and np.sum(np.isinf(last_window)) == 0
         )
 
-    def _create_nan_df(self, fh):
-        """Return nan predictions for horizon fh."""
+    # def _create_nan_df(self, fh):
+    #     """Return nan predictions for horizon fh."""
+    #     index = fh.to_absolute(self.cutoff).to_pandas()
+    #     y_pred = pd.DataFrame(index=index, columns=self._y.columns)
+    #     return y_pred
+
+    def _create_fallback_df(self, fh):
+        """Return fallback predictions (constant mean if available else NaN)."""
         index = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = pd.DataFrame(index=index, columns=self._y.columns)
+        est = getattr(self, "estimator_", None)
+        if isinstance(est, pd.Series):
+            for col in y_pred.columns:
+                y_pred[col] = est[col] if col in est.index else np.nan
         return y_pred
 
     def _predict_out_of_sample_v2_global(
@@ -2891,7 +3163,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
         if np.isnan(ys).any() or np.isinf(ys).any():
-            return self._create_nan_df(fh)
+            return self._create_fallback_df(fh)
 
         fh_max = fh.to_relative(self.cutoff)[-1]
         relative = pd.Index(list(map(int, range(1, fh_max + 1))))
@@ -2999,7 +3271,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             cutoff=cutoff_idx, window_length=self.window_length, y_orig=self._y
         )
         if not self._is_predictable(y_last, self.window_length):
-            return self._create_nan_df(fh)
+            return self._create_fallback_df(fh)
 
         # Pre-allocate arrays.
         n_columns = 1
@@ -3164,6 +3436,10 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             already_filtered = True
         elif self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
+            # v2_global falls back to v1 when X is present; v1 already returns only the
+            # requested fh rows, so skip the second filtering step.
+            if (self._X is not None) or (X_pool is not None):
+                already_filtered = True
         elif self.pooling == "local" or not isinstance(self._y.index, pd.MultiIndex):
             y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)
         else:
@@ -3220,11 +3496,15 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                y_plus_preds = apply_method_per_series(
-                    y_plus_preds,
-                    "asfreq",
-                    self.fh.freq,
-                    how="start",
+                # y_plus_preds = apply_method_per_series(
+                #     y_plus_preds,
+                #     "asfreq",
+                #     self.fh.freq,
+                #     how="start",
+                # )
+
+                y_plus_preds = _asfreq_per_series_safe(
+                    y_plus_preds, self.fh.freq, how="start"
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
