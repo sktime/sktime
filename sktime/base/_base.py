@@ -443,6 +443,9 @@ class TagAliaserMixin(_TagAliaserMixin):
         if tag_name in alias_dict:
             old_tag = tag_name
             tag_name = alias_dict[tag_name]
+            if old_tag in cls.FLIPPED_TAGS:
+                tag_value_default = not tag_value_default
+
         if tag_name in alias_dict.values():
             old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
 
@@ -457,17 +460,12 @@ class TagAliaserMixin(_TagAliaserMixin):
                 if old_tag in cls.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
-            elif old_tag in cls.FLIPPED_TAGS:
-                tag_value_default = not tag_value_default
 
         # 2. else, continue as usual with tag_name, and return its value
         # if aliasing happened, this is the new tag name
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
-        # todo 1.0.0 - remove this special case
-        if old_tag in cls.FLIPPED_TAGS:
-            return not tag_val
         return tag_val
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
@@ -521,6 +519,8 @@ class TagAliaserMixin(_TagAliaserMixin):
         if tag_name in alias_dict:
             old_tag = tag_name
             tag_name = alias_dict[tag_name]
+            if old_tag in self.FLIPPED_TAGS:
+                tag_value_default = not tag_value_default
         if tag_name in alias_dict.values():
             old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
 
@@ -533,17 +533,12 @@ class TagAliaserMixin(_TagAliaserMixin):
                 if old_tag in self.FLIPPED_TAGS:
                     return not old_tag_val
                 return old_tag_val
-            elif old_tag in self.FLIPPED_TAGS:
-                tag_value_default = not tag_value_default
 
         tag_val = super().get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
             raise_error=raise_error,
         )
-        # todo 1.0.0 - remove this special case
-        if old_tag in self.FLIPPED_TAGS:
-            return not tag_val
         return tag_val
 
     @classmethod
