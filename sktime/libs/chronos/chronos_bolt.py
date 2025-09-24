@@ -12,7 +12,7 @@ import copy
 import logging
 import warnings
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from sktime.utils.dependencies import _safe_import
 
@@ -53,10 +53,10 @@ class ChronosBoltConfig:
 class ChronosBoltOutput(ModelOutput):
     """Description of the output of the model."""
 
-    loss: Optional[Any] = None
-    quantile_preds: Optional[Any] = None
-    attentions: Optional[Any] = None
-    cross_attentions: Optional[Any] = None
+    loss: Any | None = None
+    quantile_preds: Any | None = None
+    attentions: Any | None = None
+    cross_attentions: Any | None = None
 
 
 class Patch(nn.Module):
@@ -655,7 +655,7 @@ class ChronosBoltPipeline:
     def predict(  # type: ignore[override]
         self,
         context,
-        prediction_length: Optional[int] = None,
+        prediction_length: int | None = None,
         limit_prediction_length: bool = False,
     ):
         """Get forecasts for the given time series.
