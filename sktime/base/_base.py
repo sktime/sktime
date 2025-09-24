@@ -450,7 +450,8 @@ class TagAliaserMixin(_TagAliaserMixin):
             old_tag = [k for k, v in alias_dict.items() if v == tag_name][0]
 
         # if we are in a situation of aliaing,
-        # 1. check if the old tag exists. If yes, return its value
+        # i.e., the new tag is queried and the old tag exists
+        # 1. return the value of the old tag
         if tag_name != old_tag:
             old_tag_val = cls._get_class_flag(
                 old_tag, "__tag_not_found__", flag_attr_name="_tags"
