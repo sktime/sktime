@@ -129,17 +129,6 @@ class IxToX(BaseTransformer):
             level = X.index.names
         elif level is None:
             level = -1
-        elif isinstance(level, (list, tuple)) or isinstance(level, int):
-            pass
-        else:
-            msg = (
-                "Error in IxToX: "
-                "level must be None, string of level names, integer of level indices, "
-                "or list/tuple thereof, or the special strings "
-                "'__all_but_time' or '__all'; "
-                f"found {level}"
-            )
-            raise ValueError(msg)
 
         X_only_ix = X.drop(columns=X.columns)
 
