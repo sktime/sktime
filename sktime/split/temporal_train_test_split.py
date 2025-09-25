@@ -8,7 +8,6 @@ __all__ = [
 ]
 
 import math
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -20,9 +19,9 @@ from sktime.split.fh import ForecastingHorizonSplitter
 
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
-    X: Optional[pd.DataFrame] = None,
-    test_size: Optional[float] = None,
-    train_size: Optional[float] = None,
+    X: pd.DataFrame | None = None,
+    test_size: float | None = None,
+    train_size: float | None = None,
     fh=None,
     anchor: str = "start",
 ) -> SPLIT_TYPE:
@@ -234,7 +233,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
         yield y_train_ix, y_test_ix
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,

@@ -81,6 +81,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
     _tags = {
         "python_dependencies": "scipy",
+        "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }

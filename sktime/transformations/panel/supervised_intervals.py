@@ -105,6 +105,7 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
+        "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }

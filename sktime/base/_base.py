@@ -381,6 +381,32 @@ class TagAliaserMixin(_TagAliaserMixin):
     When removing tags, ensure to remove the removed tags from this class. If no tags
     are deprecated anymore (e.g., all deprecated tags are removed/renamed), ensure
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
+
+    Exact aliasing logic, in the situation of an "old" and "new" tag,
+    i.e., an entry ``{"old_tag": "new_tag"}`` in ``alias_dict``:
+
+    * if only the new tag is present, and the new tag is requested,
+      returns the value of the new tag, no warning.
+      This is the "target" state of the deprecation process.
+    * if both new and old tag are present, and any of the two is requested,
+      returns the value of the old tag.
+      This priority is in order to deprecate in a way that does not break existing code,
+      in case the values of the two tags differ.
+      Raises a warning in addition, if the old tag was requested.
+    * if only the new tag is present, and the old tag is requested,
+      returns the value of the new tag, raises a warning.
+    * if only the old tag is present, and the new tag is requested,
+      returns the value of the new tag, without a warning.
+
+    Note: all warnings above are for the user of the estimator,
+    when attempting to read the old tag,
+    suggesting to use the new tag instead, which is the deprecation target state.
+
+    Warnings and errors for the developer of the estimator,
+    to change the old tag to new if
+    the old tag is still present, are not raised by this class.
+    These warnings should be raised separately, in API conformance tests,
+    preferably at CI time and as exceptions.
     """
 
     alias_dict = {
@@ -436,16 +462,58 @@ class TagAliaserMixin(_TagAliaserMixin):
         cls._deprecate_tag_warn([tag_name])
         alias_dict = cls.alias_dict
 
-        old_tag = ""
+        # check is tag is aliased or aliasing
+        # if yes, ensure that tag_name is the new tag name str
+        # and old_tag is the old tag name str
+        old_tag_name = ""
+        new_tag_name = ""
         if tag_name in alias_dict:
-            old_tag = tag_name
-            tag_name = alias_dict[tag_name]
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
+        if tag_name in alias_dict.values():
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
 
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
+            old_tag_val = cls._get_class_flag(
+                old_tag_name,
+                "__tag_not_found__",
+                flag_attr_name="_tags",
+            )
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
+                # todo 1.0.0 - remove this special case
+                if new_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
+                    return not old_tag_val
+                return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = cls._get_class_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
+
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
-        if old_tag == "ignores-exogeneous-X":
-            return not tag_val
         return tag_val
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
@@ -495,23 +563,112 @@ class TagAliaserMixin(_TagAliaserMixin):
         self._deprecate_tag_warn([tag_name])
         alias_dict = self.alias_dict
 
-        old_tag = ""
+        old_tag_name = ""
+        new_tag_name = ""
         if tag_name in alias_dict:
-            old_tag = tag_name
-            tag_name = alias_dict[tag_name]
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
+        if tag_name in alias_dict.values():
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
 
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
+            old_tag_val = self._get_flag(
+                old_tag_name,
+                "__tag_not_found__",
+                raise_error=False,
+                flag_attr_name="_tags",
+            )
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
+                # todo 1.0.0 - remove this special case
+                if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                    return not old_tag_val
+                return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = self._get_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    raise_error=False,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
+
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
         tag_val = super().get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
             raise_error=raise_error,
         )
-        if old_tag == "ignores-exogeneous-X":
-            return not tag_val
         return tag_val
 
+    def set_tags(self, **tag_dict):
+        """Set instance level tag overrides to given values.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object. They may be used for metadata inspection,
+        or for controlling behaviour of the object.
+
+        ``set_tags`` sets dynamic tag overrides
+        to the values as specified in ``tag_dict``, with keys being the tag name,
+        and dict values being the value to set the tag to.
+
+        The ``set_tags`` method
+        should be called only in the ``__init__`` method of an object,
+        during construction, or directly after construction via ``__init__``.
+
+        Current tag values can be inspected by ``get_tags`` or ``get_tag``.
+
+        Parameters
+        ----------
+        **tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+
+        Returns
+        -------
+        Self
+            Reference to self.
+        """
+        self._deprecate_tag_warn(tag_dict.keys())
+
+        tag_dict = self._complete_dict(tag_dict, direction="old_to_new")
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
+        return self
+
     @classmethod
-    def _complete_dict(cls, tag_dict):
-        """Add all aliased and aliasing tags to the dictionary."""
+    def _complete_dict(cls, tag_dict, direction="both"):
+        """Add all aliased and aliasing tags to the dictionary.
+
+        Parameters
+        ----------
+        tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+        direction : str, one of "old_to_new", "both"
+            Direction of aliasing to complete the dictionary for.
+
+            * "old_to_new": complete only from old tags to new tags
+            * "both": complete both from old to new and from new to old
+        """
         alias_dict = cls.alias_dict
         deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
         new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
@@ -523,13 +680,13 @@ class TagAliaserMixin(_TagAliaserMixin):
             #   and all tags that could be *aliasing* the string
             # this way we ensure upwards and downwards compatibility
             for old_tag in alias_dict:
-                cls._translate_tags(new_tag_dict, tag_dict, old_tag)
+                cls._translate_tags(new_tag_dict, tag_dict, old_tag, direction)
             return new_tag_dict
         else:
             return tag_dict
 
     @classmethod
-    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag):
+    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag, direction="both"):
         """Translate old tag to new tag.
 
         Mutates ``new_tag_dict`` given ``old_tag_dict`` and ``old_tag``.
@@ -551,26 +708,32 @@ class TagAliaserMixin(_TagAliaserMixin):
         alias_dict = cls.alias_dict
         new_tag = alias_dict[old_tag]
 
-        # todo 1.0.0 - removve this special case
+        # todo 1.0.0 - remove this special case
         # special treatment for tags that get boolean flipped:
         # "ignores-exogeneous-X", "univariate-only"
         # the new tag is the negation of the old tag
-        if old_tag in ["ignores-exogeneous-X", "univariate-only"]:
-            if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+        if old_tag in cls.FLIPPED_TAGS:
+            if old_tag in tag_dict and new_tag != "":
                 new_tag_dict[new_tag] = not tag_dict[old_tag]
-            if new_tag in tag_dict:
+            if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
                 new_tag_dict[old_tag] = not tag_dict[new_tag]
+            if direction == "old_to_new" and old_tag in new_tag_dict:
+                del new_tag_dict[old_tag]
             return new_tag_dict
 
         # standard treatment for all other tags
-        if old_tag in tag_dict and new_tag != "" and new_tag not in tag_dict:
+        if old_tag in tag_dict and new_tag != "":
             new_tag_dict[new_tag] = tag_dict[old_tag]
-        if new_tag in tag_dict:
+        if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
             new_tag_dict[old_tag] = tag_dict[new_tag]
+        if direction == "old_to_new" and old_tag in new_tag_dict:
+            del new_tag_dict[old_tag]
         return new_tag_dict
 
     # package name used for deprecation warnings
     _package_name = "sktime"
+
+    FLIPPED_TAGS = ["ignores-exogeneous-X", "univariate-only"]
 
 
 # todo 1.0.0: remove TagAliaserMixin from inheritance

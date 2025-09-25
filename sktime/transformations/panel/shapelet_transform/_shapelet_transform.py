@@ -141,6 +141,7 @@ class ShapeletTransform(BaseTransformer):
         "requires_y": True,
         "capability:multivariate": False,
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
@@ -960,17 +961,21 @@ class RandomShapeletTransform(BaseTransformer):
 
     Overview: Input "n" series with "d" dimensions of length "m". Continuously extract
     candidate shapelets and filter them in batches.
-        For each candidate shapelet
-            - Extract a shapelet from an instance with random length, position and
-              dimension
-            - Using its distance to train cases, calculate the shapelets information
-              gain
-            - Abandon evaluating the shapelet if it is impossible to obtain a higher
-              information gain than the current worst
-        For each shapelet batch
-            - Add each candidate to its classes shapelet heap, removing the lowest
-              information gain shapelet if the max number of shapelets has been met
-            - Remove self-similar shapelets from the heap
+    For each candidate shapelet
+
+    - Extract a shapelet from an instance with random length, position and
+        dimension
+    - Using its distance to train cases, calculate the shapelets information
+        gain
+    - Abandon evaluating the shapelet if it is impossible to obtain a higher
+        information gain than the current worst
+
+    For each shapelet batch
+
+    - Add each candidate to its classes shapelet heap, removing the lowest
+        information gain shapelet if the max number of shapelets has been met
+    - Remove self-similar shapelets from the heap
+
     Using the final set of filtered shapelets, transform the data into a vector of
     of distances from a series to each shapelet.
 
@@ -1083,6 +1088,8 @@ class RandomShapeletTransform(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # and for y?
         "requires_y": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "capability:categorical_in_X": False,
     }
 
