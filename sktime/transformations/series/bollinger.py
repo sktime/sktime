@@ -59,8 +59,9 @@ class Bollinger(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
         "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": False,
+        "capability:categorical_in_X": False,
         "remember_data": True,
     }
 

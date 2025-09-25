@@ -5,7 +5,6 @@
 __author__ = ["ltsaprounis", "ciaran-g"]
 
 from itertools import product
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -23,7 +22,7 @@ def _make_hierarchical(
     n_columns: int = 1,
     all_positive: bool = True,
     index_type: str = None,
-    random_state: Union[int, np.random.RandomState] = None,
+    random_state: int | np.random.RandomState = None,
     add_nan: bool = False,
 ) -> pd.DataFrame:
     """Generate hierarchical multiindex mtype for testing.

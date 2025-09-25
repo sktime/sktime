@@ -5,7 +5,6 @@ __all__ = ["MiniRocketMultivariateVariable"]
 
 import multiprocessing
 import warnings
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -97,9 +96,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["angus924", "michaelfeil"],
         "maintainers": ["angus924", "michaelfeil"],
-        "univariate-only": False,
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
@@ -109,7 +113,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "requires_y": False,
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -314,7 +319,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
-    X: list[pd.DataFrame], pad: Union[int, float, None] = 0
+    X: list[pd.DataFrame], pad: int | float | None = 0
 ):
     """Convert a nested dataframe to a 2D array and a list of lengths.
 

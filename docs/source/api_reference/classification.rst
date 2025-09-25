@@ -40,6 +40,7 @@ Model selection and tuning
     :template: class.rst
 
     TSCGridSearchCV
+    TSCOptCV
 
 Ensembles
 ---------

@@ -729,6 +729,40 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class capability__random_state(_BaseTag):
+    """Capability: the estimator can be derandomized using a random_state.
+
+    - String name: ``"capability:random_state"``
+    - Public capability tag
+    - Values: bool, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be derandomized using a ``random_state``
+    parameter. If the ``random_state`` parameter is set, then the estimator will produce
+    the same results on every run,
+    up to minimal numerical precision discrepancies (1e-5 relative error).
+    If the tag is ``False``, the estimator does not have a ``random_state``
+    parameter and cannot be derandomized.
+
+    The tag may be inspected by the user to find estimators
+    that can be derandomized.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "capability:random_state",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the object have a random_state parameter for derandomization?"
+        ),
+        "user_facing": True,
+    }
+
+
 class fit_is_empty(_BaseTag):
     """Property: Whether the estimator has an empty fit method.
 
@@ -757,6 +791,47 @@ class fit_is_empty(_BaseTag):
         "parent_type": "estimator",
         "tag_type": "bool",
         "short_descr": "does the estimator have an empty fit method?",
+        "user_facing": True,
+    }
+
+
+class property__randomness(_BaseTag):
+    """Property: Degree of randomness vs determinism of the estimator.
+
+    - String name: ``"property:randomness"``
+    - Public property tag
+    - Values: str, ``"stochastic"``, ``"deterministic"``, ``"derandomized"``
+    - Example: ``"deterministic"``
+    - Default: ``"deterministic"``
+
+    * If the tag is ``"stochastic"``, the estimator is stochastic and
+      may produce different results on different runs.
+    * If the tag is ``"deterministic"``, the estimator is
+      deterministic and will produce the same results on every run,
+      up to minimal numerical precision discrepancies (1e-5 relative error).
+    * If the tag is ``"derandomized"``, the estimator can be derandomized
+      using a ``random_state`` parameter. It behaves as ``"stochastic"``
+      if the ``random_state`` parameter is not set, and it behaves as
+      ``"deterministic"`` if the ``random_state`` parameter is set.
+
+    This tag applies to instances with a given set of parameters,
+    and all computational methods of the estimator.
+
+    If at least one of the methods has stochastic behaviour, the tag should
+    be set to ``"stochastic"``, even if other methods are deterministic.
+
+    The tag may be inspected by the user to distinguish between
+    estimators with deterministic and stochastic behaviour.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "property:randomness",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "does the object behave deterministically or stochastically?",
         "user_facing": True,
     }
 
@@ -964,7 +1039,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical variables in the X argument.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -983,7 +1058,32 @@ class capability__categorical_in_X(_BaseTag):
         "tag_name": "capability:categorical_in_X",
         "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
-        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator handle categorical data in X arguments?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_y(_BaseTag):
+    """Capability: If estimator can handle categorical variables in the y argument.
+
+    ``False`` = cannot handle categorical natively in y,
+    ``True`` = can handle categorical natively in y
+
+    - String name: ``"capability:categorical_in_y"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_y",
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle categorical data in y arguments?",
         "user_facing": True,
     }
 
@@ -1010,8 +1110,10 @@ class capability__multivariate(_BaseTag):
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
 
-    If the tag is ``False``, the estimator can only handle univariate time series,
-    and will broadcast to variables (ordinary transformers), or raise an error (others).
+    If the tag is ``False``, the estimator can only handle univariate time series
+    natively. Depending on the type of object, multivariate time series may be valid
+    inputs, in this case the estimator will broadcast to variables
+    (transformers, forecasters), or raise an error (others).
 
     This condition is specific to the main input data representation,
     target data (e.g., classifier or transformation ``y``) are not considered.
@@ -1028,13 +1130,15 @@ class capability__multivariate(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "metric",
             "param_est",
             "regressor",
+            "transformer",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
         "tag_type": "bool",
-        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "short_descr": "does the object natively support time series with 2 or more variables?",  # noqa: E501
         "user_facing": True,
     }
 

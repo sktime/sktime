@@ -1,7 +1,6 @@
 """Benchmarking for forecasting estimators."""
 
 from collections.abc import Callable
-from typing import Optional, Union
 
 from sktime.benchmarking._benchmarking_dataclasses import (
     FoldResults,
@@ -79,14 +78,14 @@ class ForecastingBenchmark(BaseBenchmark):
 
     def add_task(
         self,
-        dataset_loader: Union[Callable, tuple],
+        dataset_loader: Callable | tuple,
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
-        task_id: Optional[str] = None,
-        cv_global: Optional[BaseSplitter] = None,
+        task_id: str | None = None,
+        cv_global: BaseSplitter | None = None,
         error_score: str = "raise",
         strategy: str = "refit",
-        cv_global_temporal: Optional[SingleWindowSplitter] = None,
+        cv_global_temporal: SingleWindowSplitter | None = None,
     ):
         """Register a forecasting task to the benchmark.
 
