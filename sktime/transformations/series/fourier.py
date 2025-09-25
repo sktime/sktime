@@ -4,7 +4,6 @@
 __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -133,14 +132,20 @@ class FourierFeatures(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],  # estimator works for categorical X, but test parameters are not compatible
     }
 
     def __init__(
         self,
         sp_list: list[float],
         fourier_terms_list: list[int],
-        freq: Optional[str] = None,
-        keep_original_columns: Optional[bool] = False,
+        freq: str | None = None,
+        keep_original_columns: bool | None = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
@@ -386,6 +391,7 @@ class FourierTransform(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self):
