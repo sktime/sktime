@@ -65,6 +65,7 @@ Deep learning
     :toctree: auto_generated/
     :template: class.rst
 
+    convtimenet.ConvTimeNetClassifier
     cnn.CNNClassifier
     cntc.CNTCClassifier
     fcn.FCNClassifier
@@ -79,7 +80,6 @@ Deep learning
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
     tapnet.TapNetClassifier
-    convtimenet.ConvTimeNetClassifier
 
 Foundation models
 -----------------
