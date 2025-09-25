@@ -252,6 +252,63 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     return yt, Xt
 
 
+def _assert_future_X_coverage(self, X_pool, fh):
+    """Ensure future X rows exist for all forecast indices if exo data was used."""
+    # Was this forecaster fit with exogenous data?
+    uses_exog = getattr(self, "_uses_exog", None)
+    if uses_exog is None:
+        # set during fit; be tolerant if older pickles do not have it
+        uses_exog = self._X is not None
+
+    if not uses_exog:
+        return  # no exog requirement
+
+    if X_pool is None:
+        raise MissingExogenousDataError(
+            "Forecaster was fitted with exog data, but no X was supplied to predict."
+        )
+
+    # Compute the *requested* absolute times (gappy allowed)
+    from sktime.forecasting.base import ForecastingHorizon
+
+    fh = (
+        ForecastingHorizon(fh, is_relative=True)
+        if not isinstance(fh, ForecastingHorizon)
+        else fh
+    )
+    abs_times = fh.to_absolute(self.cutoff).to_pandas()
+
+    # Build the required index we need to see in X
+    if isinstance(self._y.index, pd.MultiIndex):
+        series_level = self._y.index.get_level_values(0).unique()
+        required_idx = pd.MultiIndex.from_product(
+            [series_level, abs_times],
+            names=self._y.index.names,  # usually ['series','time']
+        )
+    else:
+        required_idx = abs_times
+
+    # Check presence
+    missing = required_idx.difference(X_pool.index)
+    if len(missing) > 0:
+        # show up to a couple missing stamps for clarity
+        sample = list(missing[:3])
+        raise MissingExogenousDataError(
+            f"Missing future X rows for forecast horizon. "
+            f"Examples: {sample} (total missing: {len(missing)})."
+        )
+
+
+class MissingExogenousDataError(RuntimeError):
+    """Future X not provided but are expected.
+
+    Raised when a forecast that requires exogenous variables is requested
+    but future X rows for the forecast horizon are not provided.
+    """
+
+    pass
+
+
 class _ReducerMixin:
     """Common utilities for reducers."""
 
@@ -3649,6 +3706,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # gappy fh index we finally want back (MultiIndex for pooled global)
         fh_idx = self._get_expected_pred_idx(fh=fh)
 
+        self._assert_future_X_coverage(X_pool, fh)
+
         # last-level time index/column names
         # time_level_name = self._y.index.names[-1]
         y_cols = (
@@ -3942,8 +4001,12 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
             self._was_long_input = False
             return OriginalRecursiveReductionForecaster._fit(self, y, X=X, fh=fh)
 
+        self._uses_exog = X is not None
+
         # CASE 1: WIDE (time index + multiple columns)
         if self._is_wide(y):
+            if X is not None:
+                raise ValueError("Wide data plus exogenous not supported")
             y_long = self._to_long_from_wide(y)
             self._was_wide_input = True
             self._was_long_input = False
