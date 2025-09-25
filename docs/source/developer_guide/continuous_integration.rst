@@ -110,21 +110,30 @@ the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
 Running docstring examples
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Running the docstring examples explicitly via ``doctest`` is not advised. Use ``pytest`` instead, which automatically runs the docstring examples as part of the test suite.
+Running docstring examples from single file:
 
-For testing single estimator, you can use ``check_estimator`` utility (see above).
+   .. code:: bash
 
-For testing all functions run from root directory:
+      python -m doctest <path_to_file>
+
+
+Running globally all the docstring examples explicitly via ``doctest`` is not advised. There are many soft dependencies specyfic for a single estimator that are not installed by default.
+
+Below solutions check for dependencies installed.
+
+- For testing single estimator, you can use ``check_estimator`` utility (see above).
+
+- For testing all functions run from root directory:
 
    .. code:: bash
 
       pytest sktime/tests/test_doctest.py
 
-Tests for packages are included in files starting with ``test_all`` e.g. ``sktime/detection/tests/test_all_detectors.py``
+- For testing a package corresponding test file which name starts with ``test_all`` e.g. ``sktime/detection/tests/test_all_detectors.py``
 
-For testing all estimators run from root directory:
+- For testing all estimators run from root directory:
 
    .. code:: bash
 
