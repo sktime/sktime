@@ -122,7 +122,7 @@ class SFAFast(BaseTransformer):
 
     _tags = {
         "authors": ["patrickzib"],
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -132,6 +132,16 @@ class SFAFast(BaseTransformer):
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
         "python_dependencies": ["numba", "scipy"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": [
+            # SFAFast transformer requires nested dataframe for X.
+            "test_categorical_X_raises_error",
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],
     }
 
     def __init__(

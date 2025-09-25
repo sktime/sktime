@@ -19,6 +19,9 @@ def get_sklearn_tag(estimator, tagname):
         ``capability:categorical : bool``
             Whether the estimator can handle categorical data.
 
+        ``fit_is_empty : bool``
+            Whether the estimator's fit method does not require any data.
+
     Returns
     -------
     value : object
@@ -48,3 +51,14 @@ def get_sklearn_tag(estimator, tagname):
             cat3 = get_tags(estimator).target_tags.two_d_labels
             return cat1 or cat2 or cat3
         return False
+
+    elif tagname == "fit_is_empty":
+        if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
+            from sklearn.utils import get_tags
+
+            return not get_tags(estimator).requires_fit
+        else:
+            if hasattr(estimator, "_get_tags"):
+                return estimator._get_tags()["stateless"]
+            else:
+                return False

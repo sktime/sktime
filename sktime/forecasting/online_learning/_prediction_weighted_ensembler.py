@@ -27,7 +27,7 @@ class _PredictionWeightedEnsembler:
         "maintainers": ["magittan"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }
@@ -112,7 +112,7 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }
@@ -145,7 +145,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }
@@ -257,7 +257,7 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }

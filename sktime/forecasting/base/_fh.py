@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,7 +30,7 @@ from sktime.utils.validation.series import (
 )
 from sktime.utils.warnings import _suppress_pd22_warning
 
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
+VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -178,7 +177,7 @@ def _check_freq(obj):
         return None
 
 
-def _extract_freq_from_cutoff(x) -> Optional[str]:
+def _extract_freq_from_cutoff(x) -> str | None:
     """Extract frequency string from cutoff.
 
     Parameters
@@ -967,7 +966,7 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.39.0:
+    # TODO: 0.40.0:
     # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #

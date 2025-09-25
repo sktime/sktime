@@ -4,7 +4,6 @@
 __author__ = ["MBristle"]
 
 import logging
-from typing import Union
 
 import pandas as pd
 from pandas.api.types import is_integer_dtype
@@ -218,7 +217,7 @@ class AutoTS(BaseForecaster):
         "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,  # TODO: add capability
+        "capability:exogenous": False,  # TODO: add capability
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability
@@ -308,8 +307,8 @@ class AutoTS(BaseForecaster):
     def _fit(
         self,
         y: pd.DataFrame,
-        fh: Union[ForecastingHorizon, None] = None,
-        X: Union[pd.DataFrame, None] = None,  # noqa: F841
+        fh: ForecastingHorizon | None = None,
+        X: pd.DataFrame | None = None,  # noqa: F841
     ):
         """Fits the model to the provided data.
 
@@ -347,7 +346,7 @@ class AutoTS(BaseForecaster):
 
     def _predict(
         self,
-        fh: Union[ForecastingHorizon, None] = None,
+        fh: ForecastingHorizon | None = None,
         X: [pd.DataFrame, None] = None,  # noqa: F841
     ):
         """Provide forecast at future horizon using fitted forecaster.

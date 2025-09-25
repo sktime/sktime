@@ -1,7 +1,5 @@
 """Synthetic data generating functions."""
 
-from typing import Union
-
 import numpy as np
 import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
@@ -10,9 +8,9 @@ from sklearn.utils.validation import check_random_state
 def piecewise_normal_multivariate(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    variances: Union[npt.ArrayLike, float] = 1.0,
+    variances: npt.ArrayLike | float = 1.0,
     covariances: npt.ArrayLike = None,
-    random_state: Union[int, np.random.RandomState] = None,
+    random_state: int | np.random.RandomState = None,
 ) -> npt.ArrayLike:
     """Generate multivariate series from segments.
 
@@ -133,8 +131,8 @@ def piecewise_normal_multivariate(
 def piecewise_normal(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    std_dev: Union[npt.ArrayLike, float] = 1.0,
-    random_state: Union[int, np.random.RandomState] = None,
+    std_dev: npt.ArrayLike | float = 1.0,
+    random_state: int | np.random.RandomState = None,
 ) -> npt.ArrayLike:
     """Generate series from segments.
 
@@ -195,7 +193,7 @@ def piecewise_multinomial(
     n_trials: int,
     lengths: npt.ArrayLike,
     p_vals: npt.ArrayLike,
-    random_state: Union[int, np.random.RandomState] = None,
+    random_state: int | np.random.RandomState = None,
 ) -> npt.ArrayLike:
     """Generate series from segments.
 
@@ -271,7 +269,7 @@ def piecewise_multinomial(
 def piecewise_poisson(
     lambdas: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    random_state: Union[int, np.random.RandomState] = None,
+    random_state: int | np.random.RandomState = None,
 ) -> npt.ArrayLike:
     """Generate series using Possion distribution.
 
@@ -328,7 +326,7 @@ def labels_with_repeats(means: npt.ArrayLike, std_dev: npt.ArrayLike) -> npt.Arr
 def label_piecewise_normal(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    std_dev: Union[npt.ArrayLike, float] = 1.0,
+    std_dev: npt.ArrayLike | float = 1.0,
     repeated_labels: bool = True,
 ) -> npt.ArrayLike:
     """Generate labels for a series composed of segments.

@@ -79,7 +79,7 @@ class IxToX(BaseTransformer):
         "authors": ["fkiraly", "RobKuebler"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",

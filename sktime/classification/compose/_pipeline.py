@@ -124,8 +124,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
