@@ -2833,7 +2833,7 @@
       "login": "ssabarwal",
       "name": "Shlok Sabarwal",
       "avatar_url": "https://gravatar.com/avatar/cbdbaac712ae282d730cd3028e862d45?s=400&d=robohash&r=x",
-      "prifle": "https://www.github.com/shlok191/",
+      "profile": "https://www.github.com/shlok191/",
       "contributions": [
         "code"
       ]
@@ -3648,6 +3648,16 @@
     {
       "login": "JATAYU000",
       "name": "Shrivaths S Nair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142079253?v=4",
+      "profile": "https://github.com/JATAYU000",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "JATAYU000-TempTest",
+      "name": "TempTest",
       "avatar_url": "https://avatars.githubusercontent.com/u/142079253?v=4",
       "profile": "https://github.com/JATAYU000",
       "contributions": [
