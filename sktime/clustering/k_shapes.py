@@ -60,6 +60,8 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # defines the name of the attribute containing the tslearn estimator
