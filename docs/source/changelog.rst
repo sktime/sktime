@@ -187,6 +187,7 @@ Transformations
 * [ENH] set default for ``capability:categorical_in_X`` to ``True`` for transformation estimators (:pr:`8758`) :user:`fkiraly`
 * [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
 * [ENH] Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
+* [ENH] Add second test parameter set for ``SAX`` (:pr:`8839`) :user:`piyushbiraje`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -263,6 +264,7 @@ Contributors
 :user:`JATAYU000`,
 :user:`jgyasu`,
 :user:`oresthes`,
+:user:`piyushbiraje`,
 :user:`SimonBlanke`,
 :user:`sinemkilicdere`,
 :user:`Tanuj-Taneja1`,
