@@ -37,6 +37,7 @@ Highlights
 * Dataset Loader Class to load Monash Forecasting Datasets from ``sktime`` ``huggingface`` repo (:pr:`8751`) :user:`jgyasu`
 * ``hyperactive`` based tuners for forecasting and time series classification (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
 * ``prophetverse`` hierarchical forecasters updated; new configurable API, intermittent/hurdle distributions (:pr:`8792`) :user:`felipeangelimvieira`, :user:`tingiskhan`
+* ``ConvTimeNet`` for time series classification (:pr:`8761`) :user:`Tanuj-Taneja1`
 * Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
 
 
@@ -164,7 +165,7 @@ Forecasting
 * [ENH] allow transformer instance as deseasonalizer in ``ThetaForecaster``, fix test cases (:pr:`8817`) :user:`fkiraly`
 * [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
 * [ENH] fix ``UpdateRefitsEvery`` and ``UpdateEvery`` stream update compositors to work with newer ``pandas`` ``DateOffset`` (:pr:`8822`) :user:`fkiraly`
-* [ENH] ``hyperactive`` based tuners for forecasting and time series classification (:pr:`8705`) :user:`fkiraly`
+* [ENH] ``hyperactive`` based tuners for forecasting (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
 * [ENH] add testing for ``PykanForecaster`` (:pr:`8733`) :user:`fkiraly`
 * [ENH] Update ``Prophetverse`` version bounds (:pr:`8792`) :user:`felipeangelimvieira`
 
@@ -177,7 +178,8 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] relax tests for ``TEASER`` estimator (:pr:`8824`) :user:`fkiraly`
-* [ENH] ``hyperactive`` based tuners for forecasting and time series classification (:pr:`8705`) :user:`fkiraly`
+* [ENH] ``hyperactive`` based tuners for time series classification (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
+* [ENH] ``ConvTimeNet`` for time series classification (:pr:`8761`) :user:`Tanuj-Taneja1`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -263,6 +265,7 @@ Contributors
 :user:`oresthes`,
 :user:`SimonBlanke`,
 :user:`sinemkilicdere`,
+:user:`Tanuj-Taneja1`,
 :user:`tingiskhan`,
 :user:`yarnabrina`
 
