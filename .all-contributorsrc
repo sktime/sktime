@@ -3654,6 +3654,17 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "poopsiclepooding",
+      "name": "poopsicle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89380897?v=4",
+      "profile": "https://github.com/poopsiclepooding",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance"
+      ]
     }
   ]
 }

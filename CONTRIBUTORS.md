@@ -6,7 +6,7 @@ Contributors
 <!-- Please add your badges to .all-contibutorsrc -->
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-360-orange.svg)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-361-orange.svg)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
@@ -448,6 +448,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xloem"><img src="?s=100" width="100px;" alt="patiently pending world peace"/><br /><sub><b>patiently pending world peace</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xloem" title="Code">💻</a></td>
     </tr>
     <tr>
+      <td align="center" valign="top" width="11.11%"><a href="https://github.com/poopsiclepooding"><img src="https://avatars.githubusercontent.com/u/89380897?v=4?s=100" width="100px;" alt="poopsicle"/><br /><sub><b>poopsicle</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=poopsiclepooding" title="Code">💻</a> <a href="https://github.com/sktime/sktime/commits?author=poopsiclepooding" title="Documentation">📖</a> <a href="#maintenance-poopsiclepooding" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/raishubham1"><img src="https://avatars3.githubusercontent.com/u/29356417?v=4?s=100" width="100px;" alt="raishubham1"/><br /><sub><b>raishubham1</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=raishubham1" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/simone-pignotti"><img src="https://avatars1.githubusercontent.com/u/44410066?v=4?s=100" width="100px;" alt="simone-pignotti"/><br /><sub><b>simone-pignotti</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=simone-pignotti" title="Code">💻</a> <a href="https://github.com/sktime/sktime/issues?q=author%3Asimone-pignotti" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/sophijka"><img src="https://avatars2.githubusercontent.com/u/47450591?v=4?s=100" width="100px;" alt="sophijka"/><br /><sub><b>sophijka</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=sophijka" title="Documentation">📖</a> <a href="#maintenance-sophijka" title="Maintenance">🚧</a></td>
@@ -456,6 +457,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vedazeren"><img src="https://avatars3.githubusercontent.com/u/63582874?v=4?s=100" width="100px;" alt="vedazeren"/><br /><sub><b>vedazeren</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vedazeren" title="Code">💻</a> <a href="https://github.com/sktime/sktime/commits?author=vedazeren" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vincent-nich12"><img src="https://avatars3.githubusercontent.com/u/36476633?v=4?s=100" width="100px;" alt="vincent-nich12"/><br /><sub><b>vincent-nich12</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vincent-nich12" title="Code">💻</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt="vollmersj"/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
     </tr>
   </tbody>
