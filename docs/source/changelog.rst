@@ -33,7 +33,8 @@ Highlights
 
 * TiRex foundation model forecaster (:pr:`8683`) :user:`sinemkilicdere`
 * Toto foundation model forecaster (:pr:`8708`) :user:`JATAYU000`
-* Dataset Loader Class to load UCR UEA Datasets from ``huggingface`` (:pr:`8786`) :user:`jgyasu`
+* Dataset Loader Class to load UCR UEA Datasets from ``sktime`` ``huggingface`` repo (:pr:`8786`) :user:`jgyasu`
+* Dataset Loader Class to load Monash Forecasting Datasets from ``sktime`` ``huggingface`` repo (:pr:`8751`) :user:`jgyasu`
 * ``hyperactive`` based tuners for forecasting and time series classification (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
 * ``prophetverse`` hierarchical forecasters updated; new configurable API, intermittent/hurdle distributions (:pr:`8792`) :user:`felipeangelimvieira`, :user:`tingiskhan`
 * Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
@@ -151,6 +152,7 @@ Data sets and data loaders
 
 * [ENH] fpp3 dataset was updated on CRAN; updated loader to use the latest (:pr:`8778`) :user:`ericjb`
 * [ENH] Dataset Loader Class for UCR UEA Datasets (:pr:`8786`) :user:`jgyasu`
+* [ENH] Dataset Loader Class for Monash Forecasting Datasets (:pr:`8751`) :user:`jgyasu`
 
 Forecasting
 ^^^^^^^^^^^
