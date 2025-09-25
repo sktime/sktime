@@ -45,6 +45,7 @@ Individual datasets distributed with ``sktime``, available without internet acce
     :template: class.rst
 
     airline.Airline
+    monash.ForecastingData
     hierarchical_sales_toydata.HierarchicalSalesToydata
     longley.Longley
     lynx.Lynx
