@@ -48,8 +48,6 @@
         "required": [
           "login",
           "name",
-          "avatar_url",
-          "profile",
           "contributions"
         ],
         "properties": {
