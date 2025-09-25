@@ -114,10 +114,17 @@ Running docstring examples
 
 Running the docstring examples explicitly via ``doctest`` is not advised. Use ``pytest`` instead, which automatically runs the docstring examples as part of the test suite.
 
-For testing single estimator, see ``check_estimator`` and :doc:`estimator development guide </developer_guide/add_estimators>` above.
+For testing single estimator, you can use ``check_estimator`` utility (see above).
 
-The specyfic test running all docstring examples is ``test_doctest_examples``.
-You can run it from root directory:
+For testing all functions run from root directory:
+
+   .. code:: bash
+
+      pytest sktime/tests/test_doctest.py
+
+Tests for packages are included in files starting with ``test_all`` e.g. ``sktime/detection/tests/test_all_detectors.py``
+
+For testing all estimators run from root directory:
 
    .. code:: bash
 
