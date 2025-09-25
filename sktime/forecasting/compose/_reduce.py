@@ -39,6 +39,7 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
+from sktime.transformations.series.lag import Lag
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
@@ -57,11 +58,46 @@ def _concat_y_X(y, X):
     return z
 
 
-def _check_fh(fh):
-    """Check fh prior to sliding-window transform."""
-    assert fh.is_relative
-    assert fh.is_all_out_of_sample()
-    return fh.to_indexer().to_numpy()
+# def _check_fh(fh):
+#     """Check fh prior to sliding-window transform."""
+#     assert fh.is_relative
+#     assert fh.is_all_out_of_sample()
+#     return fh.to_indexer().to_numpy()
+
+
+def _ensure_relative_oos_int_fh(fh, cutoff=None):
+    """Coerce fh to a 1-D NumPy array of positive *relative* integer steps.
+
+    - If fh is a ForecastingHorizon:
+        * If relative: require strictly out-of-sample, then convert to indexer.
+        * If absolute: require `cutoff` to convert to relative; then validate.
+    - If fh is array-like: treat as relative steps and validate.
+
+    Returns
+    -------
+    np.ndarray[int], shape (n,), strictly positive (>=1).
+    """
+    import numpy as np
+
+    from sktime.forecasting.base._fh import ForecastingHorizon
+
+    if isinstance(fh, ForecastingHorizon):
+        if fh.is_relative:
+            if not fh.is_all_out_of_sample():
+                raise ValueError("fh must be strictly out-of-sample (all steps >= 1).")
+            arr = np.asarray(fh.to_indexer(), dtype=int).reshape(-1)
+        else:
+            if cutoff is None:
+                raise ValueError("Absolute fh provided but no `cutoff` to convert.")
+            arr = np.asarray(fh.to_relative(cutoff), dtype=int).reshape(-1)
+            if (arr < 1).any():
+                raise ValueError("Converted relative steps must be >= 1.")
+    else:
+        # array-like -> assume relative
+        arr = np.asarray(fh, dtype=int).reshape(-1)
+        if (arr < 1).any():
+            raise ValueError("Relative steps must be >= 1.")
+    return arr
 
 
 def _sliding_window_transform(
@@ -153,8 +189,9 @@ def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
     z = _concat_y_X(y, X)
     n_timepoints, n_variables = z.shape
 
-    fh = _check_fh(fh)
-    fh_max = fh[-1]
+    # fh = _check_fh(fh)
+    fh = _ensure_relative_oos_int_fh(fh)
+    fh_max = int(np.max(fh)) if len(fh) else 0
 
     if window_length + fh_max >= n_timepoints:
         raise ValueError(
@@ -2237,7 +2274,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.series.lag import ReducerTransform
         from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
@@ -2317,7 +2354,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.series.lag import ReducerTransform
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
@@ -2396,8 +2433,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag
-
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -2656,8 +2691,6 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             A transformed dataset where lagged features are shifted to align
             with the next target value `y(t+1)`.
         """
-        from sktime.transformations.series.lag import Lag
-
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
@@ -2694,7 +2727,6 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
 
         # impute_method = self._impute_method
         X_treatment = self.X_treatment
@@ -2808,53 +2840,79 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     #     return y, X
 
     def _get_window_local(self, cutoff, window_length, y_orig):
-        # Normalize cutoff to a scalar timestamp/period
+        import warnings
+
+        import numpy as np
+        import pandas as pd
+
+        # Normalize cutoff to a scalar label
         if isinstance(cutoff, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex)):
             cutoff_scalar = cutoff[0]
         else:
             cutoff_scalar = cutoff
-        # Compute scalar start with same dtype
-        start_scalar = _shift(pd.Index([cutoff_scalar]), by=-window_length + 1)[0]
 
-        # Slice y between start and cutoff on the time level
+        # --- pick the single series (local path) and get its time index ---
         if isinstance(y_orig.index, pd.MultiIndex):
-            time_level = y_orig.index.get_level_values(-1)
-            mask = (time_level >= start_scalar) & (time_level <= cutoff_scalar)
-            y_slice = y_orig.loc[mask]
-            # Reduce to a single series if y is univariate (usual case for local)
-            y_series = y_slice.squeeze()
-            if isinstance(y_series.index, pd.MultiIndex):
-                y_series.index = y_series.index.get_level_values(-1)
-            y = y_series
+            # choose the series that actually contains the cutoff
+            inst_key = None
+            for k in y_orig.index.droplevel(-1).unique():
+                if cutoff_scalar in y_orig.xs(k, level=0).index:
+                    inst_key = k
+                    break
+            if inst_key is None:
+                # fallback: take the last series present
+                inst_key = y_orig.index.get_level_values(0)[-1]
+            y_s = y_orig.xs(inst_key, level=0)
         else:
-            y = y_orig.loc[start_scalar:cutoff_scalar]
+            y_s = y_orig
+            inst_key = None  # not used
 
-        # If requested, impute within the window when a known freq exists
-        if (
-            len(y) < window_length
-            and hasattr(y.index, "freq")
-            and y.index.freq is not None
-        ):
-            if isinstance(y.index, pd.PeriodIndex):
-                idx = pd.period_range(
-                    start=y.index.min(), end=y.index.max(), freq=y.index.freq
-                )
-            elif isinstance(y.index, pd.DatetimeIndex):
-                idx = pd.date_range(
-                    start=y.index.min(),
-                    end=y.index.max(),
-                    freq=y.index.freq,
-                    tz=y.index.tz,
-                )
-            else:
-                idx = y.index
-            y = y.reindex(idx)
-            if getattr(self, "_impute_method", None):
-                y = self._impute_method.fit_transform(y)
+        # --- find positional window [start_pos : cutoff_pos], no freq needed ---
+        try:
+            pos = y_s.index.get_loc(cutoff_scalar)
+            if not isinstance(pos, (int, np.integer)):
+                if isinstance(pos, slice):
+                    pos = pos.stop - 1
+                else:  # e.g. boolean mask / array of positions
+                    pos = np.asarray(pos).max()
+        except KeyError:
+            # cutoff not in index: take the rightmost label <= cutoff
+            pos = y_s.index.searchsorted(cutoff_scalar, side="right") - 1
 
-        y = pd.Series(y).to_numpy()
-        X = self._X.loc[cutoff_scalar].to_frame().T if self._X is not None else None
-        return y, X
+        start_pos = max(0, pos - (window_length - 1))
+        idx_segment = y_s.index[start_pos : pos + 1]
+        y_win = y_s.loc[idx_segment]
+
+        # coerce to 1D if we got a single-column DataFrame
+        if isinstance(y_win, pd.DataFrame):
+            y_win = y_win.iloc[:, 0]
+
+        # left-pad if shorter than window_length; optional imputation
+        if len(y_win) < window_length:
+            pad = np.full(window_length - len(y_win), np.nan, dtype=float)
+            y_vals = np.concatenate([pad, y_win.to_numpy(dtype=float, copy=False)])
+            if getattr(self, "_impute_method", None) is not None:
+                y_imp = self._impute_method.fit_transform(pd.Series(y_vals))
+                y_vals = np.asarray(y_imp).reshape(-1)
+        else:
+            y_vals = y_win.to_numpy(dtype=float, copy=False)
+
+        # best-effort X alignment at cutoff (not required in v2-local, but safe)
+        X = None
+        if getattr(self, "_X", None) is not None:
+            try:
+                if isinstance(self._X.index, pd.MultiIndex) and (inst_key is not None):
+                    X = self._X.xs(inst_key, level=0).loc[[cutoff_scalar]]
+                else:
+                    X = self._X.loc[[cutoff_scalar]]
+            except Exception as ex:
+                warnings.warn(
+                    "_get_window_local: could not align X at cutoff "
+                    f"{cutoff_scalar!r}: {ex}"
+                )
+                X = None
+
+        return y_vals, X
 
     def _get_window_global(self, cutoff, window_length, y_orig):
         """Return last window_length values per series up to `cutoff` (inclusive).
@@ -3408,16 +3466,44 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_return
 
-    def _generate_fh_no_gaps(self, fh):
-        """Create a forecasting horizon with no gaps for continuous indexing."""
-        fh_rel = fh.to_relative(self.cutoff)
-        y_lags = list(fh_rel)
+    # def _generate_fh_no_gaps(self, fh):
+    #     """Create a forecasting horizon with no gaps for continuous indexing."""
+    #     fh_rel = fh.to_relative(self.cutoff)
+    #     y_lags = list(fh_rel)
 
-        # Ensure all positive forecast horizons are covered
-        y_lags_no_gaps = range(1, y_lags[-1] + 1)
-        y_abs_no_gaps = ForecastingHorizon(
-            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
-        ).to_absolute_index(self._cutoff)
+    #     # Ensure all positive forecast horizons are covered
+    #     y_lags_no_gaps = range(1, y_lags[-1] + 1)
+    #     y_abs_no_gaps = ForecastingHorizon(
+    #         list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
+    #     ).to_absolute_index(self._cutoff)
+
+    #     return y_abs_no_gaps, y_lags_no_gaps
+
+    def _generate_fh_no_gaps(self, fh):
+        """Return a dense (no-gaps) absolute index.
+
+        From cutoff through max fh, plus its relative lags.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or array-like
+
+        Returns
+        -------
+        y_abs_no_gaps : pd.Index
+            Absolute (time) index from cutoff+1 through cutoff+max(fh) without gaps.
+        y_lags_no_gaps : range
+            1..max(fh) as integer relative lags.
+        """
+        fh_arr = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
+        fh_max = int(np.max(fh_arr)) if len(fh_arr) else 0
+
+        # Dense relative lags 1..fh_max
+        y_lags_no_gaps = range(1, fh_max + 1)
+
+        # Turn dense lags into absolute time index from the current cutoff
+        dense_fh = ForecastingHorizon(list(y_lags_no_gaps), is_relative=True)
+        y_abs_no_gaps = dense_fh.to_absolute_index(self.cutoff)
 
         return y_abs_no_gaps, y_lags_no_gaps
 
@@ -3475,84 +3561,171 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_return
 
+    # def _predict_out_of_sample_v1(self, X_pool, fh):
+    #     """Recursive reducer: predict out of sample (ahead of cutoff).
+
+    #     Prior state before PR 7380 - left for comparison and potential refactor.
+    #     """
+    #     # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+
+    #     fh_idx = self._get_expected_pred_idx(fh=fh)
+    #     y_cols = self._y.columns
+
+    #     lagger_y_to_X = self.lagger_y_to_X_
+
+    #     y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
+
+    #     # we will keep growing y_plus_preds recursively
+    #     y_plus_preds = self._y
+    #     y_pred_list = []
+
+    #     for _ in y_lags_no_gaps:
+    #         if hasattr(self.fh, "freq") and self.fh.freq is not None:
+    #             # y_plus_preds = apply_method_per_series(
+    #             #     y_plus_preds,
+    #             #     "asfreq",
+    #             #     self.fh.freq,
+    #             #     how="start",
+    #             # )
+
+    #             y_plus_preds = _asfreq_per_series_safe(
+    #                 y_plus_preds, self.fh.freq, how="start"
+    #             )
+    #         Xt = lagger_y_to_X.transform(y_plus_preds)
+
+    #         # column names will be kept for consistency
+    #         lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+
+    #         if self._impute_method is not None:
+    #             lag_plus = lag_plus * self._impute_method.clone()
+
+    #         Xtt = lag_plus.fit_transform(Xt)
+    #         y_plus_one = lag_plus.fit_transform(y_plus_preds)
+    #         predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
+    #         Xtt_predrow = slice_at_ix(Xtt, predict_idx)
+    #         if X_pool is not None:
+    #             # apply lag of 1 on X_pool to include predict_idx in X_pool
+    #             # otherwise it gives error
+    #             X_pool = lag_plus.fit_transform(X_pool)
+    #             Xtt_predrow = pd.concat(
+    #                 [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
+    #             )
+
+    #         Xtt_predrow = prep_skl_df(Xtt_predrow)
+
+    #         estimator = self.estimator_
+
+    #         # if = no training indices in _fit, fill in y training mean
+    #         if isinstance(estimator, pd.Series):
+    #             y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
+    #             y_pred_i.iloc[0] = estimator
+    #         # otherwise proceed as per direct reduction algorithm
+    #         else:
+    #             y_pred_i = estimator.predict(Xtt_predrow)
+
+    #         y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+    #         y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+    #         y_pred_list.append(y_pred_new)
+    #         y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
+    #     y_pred = pd.concat(y_pred_list).sort_index()
+    #     y_pred = y_pred.loc[fh_idx]
+
+    #     return y_pred
+
     def _predict_out_of_sample_v1(self, X_pool, fh):
-        """Recursive reducer: predict out of sample (ahead of cutoff).
+        """v1 recursive prediction loop; supports both local & global pooling.
 
-        Prior state before PR 7380 - left for comparison and potential refactor.
+        Notes
+        -----
+        This builds up y step-by-step and, at each step, predicts the next value.
+        With exogenous X, we align/extend X using Lag(index_out="extend") and
+        select the correct row for the current predict index across *all* series.
         """
-        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
-
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        y_cols = self._y.columns
-
-        lagger_y_to_X = self.lagger_y_to_X_
-
+        # build the no-gap absolute index & dense lags
         y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
 
-        # we will keep growing y_plus_preds recursively
+        # gappy fh index we finally want back (MultiIndex for pooled global)
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+
+        # last-level time index/column names
+        # time_level_name = self._y.index.names[-1]
+        y_cols = (
+            self._y.columns if isinstance(self._y, pd.DataFrame) else pd.Index(["y"])
+        )
+
+        # start state: observed y (possibly multi-series), no gaps enforced where needed
         y_plus_preds = self._y
+
+        # window summarizer: lags for recursion (extend index by one step per iteration)
+        lagger_y_to_X = Lag(
+            lags=list(range(self.window_length)),
+            index_out="extend",
+            keep_column_names=True,
+        )
+        lag_plus = Lag(lags=[1], index_out="extend", keep_column_names=True)
+        X_ext = X_pool
+
+        # if we have X, extend it in lock-step with y via lag_plus inside the loop
         y_pred_list = []
 
         for _ in y_lags_no_gaps:
-            if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                # y_plus_preds = apply_method_per_series(
-                #     y_plus_preds,
-                #     "asfreq",
-                #     self.fh.freq,
-                #     how="start",
-                # )
-
-                y_plus_preds = _asfreq_per_series_safe(
-                    y_plus_preds, self.fh.freq, how="start"
-                )
-            Xt = lagger_y_to_X.transform(y_plus_preds)
-
-            # column names will be kept for consistency
-            lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
-
-            if self._impute_method is not None:
-                lag_plus = lag_plus * self._impute_method.clone()
-
-            Xtt = lag_plus.fit_transform(Xt)
+            # extend y by one step to get the next predict index
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
-            predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
-            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-            if X_pool is not None:
-                # apply lag of 1 on X_pool to include predict_idx in X_pool
-                # otherwise it gives error
-                X_pool = lag_plus.fit_transform(X_pool)
-                Xtt_predrow = pd.concat(
-                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
-                )
+            predict_idx = (
+                y_plus_one.index.get_level_values(-1)[-1]
+                if isinstance(y_plus_one.index, pd.MultiIndex)
+                else y_plus_one.index[-1]
+            )
 
+            # make recursive features from y (lags 0..window_length-1)
+            Xtt = lagger_y_to_X.fit_transform(y_plus_preds)
+            # if exog present, lag/extend it to the same predict index and align columns
+            if X_ext is not None:
+                X_ext = lag_plus.fit_transform(X_ext)
+                if isinstance(X_ext.index, pd.MultiIndex):
+                    ex_pool_predrow = X_ext.xs(predict_idx, level=-1, drop_level=False)
+                else:
+                    ex_pool_predrow = X_ext.loc[[predict_idx]]
+
+                if isinstance(Xtt.index, pd.MultiIndex):
+                    Xtt_predrow = Xtt.xs(predict_idx, level=-1, drop_level=False)
+                else:
+                    Xtt_predrow = Xtt.loc[[predict_idx]]
+
+                # fill missing exogenous columns from the pool, keep ordering stable
+                Xtt_predrow = pd.concat([ex_pool_predrow, Xtt_predrow], axis=1)
+            else:
+                # no X: just take the y-derived features at predict_idx
+                if isinstance(Xtt.index, pd.MultiIndex):
+                    Xtt_predrow = Xtt.xs(predict_idx, level=-1, drop_level=False)
+                else:
+                    Xtt_predrow = Xtt.loc[[predict_idx]]
+
+            # ensure sklearn-friendly tabular
             Xtt_predrow = prep_skl_df(Xtt_predrow)
 
-            estimator = self.estimator_
+            # predict for *all* rows present (one per series if global pooling)
+            y_pred_i = self.estimator_.predict(Xtt_predrow)
+            # turn into a frame with proper index
+            y_pred_i = pd.DataFrame(y_pred_i, index=Xtt_predrow.index, columns=y_cols)
 
-            # if = no training indices in _fit, fill in y training mean
-            if isinstance(estimator, pd.Series):
-                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
-                y_pred_i.iloc[0] = estimator
-            # otherwise proceed as per direct reduction algorithm
-            else:
-                y_pred_i = estimator.predict(Xtt_predrow)
+            # append the new predictions to the running y (so next loop sees them)
+            y_plus_preds = pd.concat([y_plus_preds, y_pred_i], axis=0)
+            y_pred_list.append(y_pred_i)
 
-            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
-            y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
-
-            y_pred_list.append(y_pred_new)
-            y_plus_preds = y_plus_preds.combine_first(y_pred_new)
-
-        y_pred = pd.concat(y_pred_list).sort_index()
-        y_pred = y_pred.loc[fh_idx]
+        # stack all single-step predictions and pick only requested gappy fh indices
+        y_pred = pd.concat(y_pred_list, axis=0).sort_index()
+        # keep exactly the requested times / series (preserve order)
+        # reindex ensures we *keep* gappy items even if
+        # some steps were not emitted by the loop
+        y_pred = y_pred.reindex(fh_idx)
 
         return y_pred
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
-        from sktime.transformations.series.lag import Lag
-
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
 
