@@ -55,46 +55,46 @@ def _fit_rec(y, window_length=5, **kwargs):
 #     )
 
 
-@pytest.mark.parametrize(
-    "make_y, kwargs",
-    [
-        # MultiIndex y -> guard fail
-        (
-            lambda: pd.DataFrame(
-                {"y": np.tile(np.arange(30), 2)},
-                index=pd.MultiIndex.from_product(
-                    [["A", "B"], pd.period_range("2000-01", periods=30, freq="M")],
-                    names=["series", "time"],
-                ),
-            ),
-            dict(pooling="local", impute_method=None, expect_none=True),
-        ),
-        # global pooling -> guard fail
-        (
-            lambda: pd.DataFrame(
-                {"y": np.arange(40)},
-                index=pd.period_range("2000-01", periods=40, freq="M"),
-            ),
-            dict(pooling="global", impute_method=None, expect_none=True),
-        ),
-        # imputation active -> guard fail
-        (
-            lambda: pd.DataFrame(
-                {"y": np.arange(40)},
-                index=pd.period_range("2000-01", periods=40, freq="M"),
-            ),
-            dict(pooling="local", impute_method="pad", expect_none=True),
-        ),
-        # baseline eligible -> expect activation
-        (
-            lambda: pd.DataFrame(
-                {"y": np.arange(40)},
-                index=pd.period_range("2000-01", periods=40, freq="M"),
-            ),
-            dict(pooling="local", impute_method=None, expect_none=False),
-        ),
-    ],
-)
+# @pytest.mark.parametrize(
+#     "make_y, kwargs",
+#     [
+#         # MultiIndex y -> guard fail
+#         (
+#             lambda: pd.DataFrame(
+#                 {"y": np.tile(np.arange(30), 2)},
+#                 index=pd.MultiIndex.from_product(
+#                     [["A", "B"], pd.period_range("2000-01", periods=30, freq="M")],
+#                     names=["series", "time"],
+#                 ),
+#             ),
+#             dict(pooling="local", impute_method=None, expect_none=True),
+#         ),
+#         # global pooling -> guard fail
+#         (
+#             lambda: pd.DataFrame(
+#                 {"y": np.arange(40)},
+#                 index=pd.period_range("2000-01", periods=40, freq="M"),
+#             ),
+#             dict(pooling="global", impute_method=None, expect_none=True),
+#         ),
+#         # imputation active -> guard fail
+#         (
+#             lambda: pd.DataFrame(
+#                 {"y": np.arange(40)},
+#                 index=pd.period_range("2000-01", periods=40, freq="M"),
+#             ),
+#             dict(pooling="local", impute_method="pad", expect_none=True),
+#         ),
+#         # baseline eligible -> expect activation
+#         (
+#             lambda: pd.DataFrame(
+#                 {"y": np.arange(40)},
+#                 index=pd.period_range("2000-01", periods=40, freq="M"),
+#             ),
+#             dict(pooling="local", impute_method=None, expect_none=False),
+#         ),
+#     ],
+# )
 # def test_fasttail_guard_activation(make_y, kwargs):
 #     y = make_y()
 #     expect_none = kwargs.pop("expect_none")

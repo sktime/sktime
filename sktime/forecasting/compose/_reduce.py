@@ -252,53 +252,6 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     return yt, Xt
 
 
-def _assert_future_X_coverage(self, X_pool, fh):
-    """Ensure future X rows exist for all forecast indices if exo data was used."""
-    # Was this forecaster fit with exogenous data?
-    uses_exog = getattr(self, "_uses_exog", None)
-    if uses_exog is None:
-        # set during fit; be tolerant if older pickles do not have it
-        uses_exog = self._X is not None
-
-    if not uses_exog:
-        return  # no exog requirement
-
-    if X_pool is None:
-        raise MissingExogenousDataError(
-            "Forecaster was fitted with exog data, but no X was supplied to predict."
-        )
-
-    # Compute the *requested* absolute times (gappy allowed)
-    from sktime.forecasting.base import ForecastingHorizon
-
-    fh = (
-        ForecastingHorizon(fh, is_relative=True)
-        if not isinstance(fh, ForecastingHorizon)
-        else fh
-    )
-    abs_times = fh.to_absolute(self.cutoff).to_pandas()
-
-    # Build the required index we need to see in X
-    if isinstance(self._y.index, pd.MultiIndex):
-        series_level = self._y.index.get_level_values(0).unique()
-        required_idx = pd.MultiIndex.from_product(
-            [series_level, abs_times],
-            names=self._y.index.names,  # usually ['series','time']
-        )
-    else:
-        required_idx = abs_times
-
-    # Check presence
-    missing = required_idx.difference(X_pool.index)
-    if len(missing) > 0:
-        # show up to a couple missing stamps for clarity
-        sample = list(missing[:3])
-        raise MissingExogenousDataError(
-            f"Missing future X rows for forecast horizon. "
-            f"Examples: {sample} (total missing: {len(missing)})."
-        )
-
-
 class MissingExogenousDataError(RuntimeError):
     """Future X not provided but are expected.
 
@@ -399,6 +352,52 @@ class _ReducerMixin:
                 fh_idx.name = "y_index.name"
 
         return fh_idx
+
+    def _assert_future_X_coverage(self, X_pool, fh):
+        """Ensure future X rows exist for all forecast indices if exo data was used."""
+        # Was this forecaster fit with exogenous data?
+        uses_exog = getattr(self, "_uses_exog", None)
+        if uses_exog is None:
+            # set during fit; be tolerant if older pickles do not have it
+            uses_exog = self._X is not None
+
+        if not uses_exog:
+            return  # no exog requirement
+
+        if X_pool is None:
+            raise MissingExogenousDataError(
+                "Forecaster was fitted with exog X, but no X was supplied to predict."
+            )
+
+        # Compute the *requested* absolute times (gappy allowed)
+        from sktime.forecasting.base import ForecastingHorizon
+
+        fh = (
+            ForecastingHorizon(fh, is_relative=True)
+            if not isinstance(fh, ForecastingHorizon)
+            else fh
+        )
+        abs_times = fh.to_absolute(self.cutoff).to_pandas()
+
+        # Build the required index we need to see in X
+        if isinstance(self._y.index, pd.MultiIndex):
+            series_level = self._y.index.get_level_values(0).unique()
+            required_idx = pd.MultiIndex.from_product(
+                [series_level, abs_times],
+                names=self._y.index.names,  # usually ['series','time']
+            )
+        else:
+            required_idx = abs_times
+
+        # Check presence
+        missing = required_idx.difference(X_pool.index)
+        if len(missing) > 0:
+            # show up to a couple missing stamps for clarity
+            sample = list(missing[:3])
+            raise MissingExogenousDataError(
+                f"Missing future X rows for forecast horizon. "
+                f"Examples: {sample} (total missing: {len(missing)})."
+            )
 
 
 class _Reducer(_BaseWindowForecaster, _ReducerMixin):
@@ -3719,7 +3718,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # window summarizer: lags for recursion (extend index by one step per iteration)
         lagger_y_to_X = Lag(
-            lags=list(range(self.window_length)),
+            lags=list(range(1, self.window_length + 1)),
             index_out="extend",
             keep_column_names=True,
         )
