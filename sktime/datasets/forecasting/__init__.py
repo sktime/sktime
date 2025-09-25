@@ -6,7 +6,7 @@ from .longley import Longley
 from .lynx import Lynx
 from .m5_competition import M5Dataset
 from .macroeconomic import Macroeconomic
-from .monash.forecasting_data import ForecastingData
+from .monash._forecasting_data import ForecastingData
 from .shampoo_sales import ShampooSales
 from .solar import Solar
 from .uschange import USChange
