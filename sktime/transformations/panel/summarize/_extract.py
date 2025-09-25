@@ -110,7 +110,7 @@ class PlateauFinder(BaseTransformer):
 
 
 class DerivativeSlopeTransformer(BaseTransformer):
-    """Derivative slope transformer.
+    r"""Derivative slope transformer.
 
     Transformer that computes the derivative of a time series,
     using ``numpy.gradient``.
@@ -140,6 +140,7 @@ class DerivativeSlopeTransformer(BaseTransformer):
         "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:categorical_in_X": False,
+        "capability:multivariate": False,
     }
 
     def _transform(self, X, y=None):
