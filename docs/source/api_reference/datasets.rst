@@ -22,6 +22,7 @@ Forecasting datasets
     :template: class.rst
 
     airline.Airline
+    monash.ForecastingData
     hierarchical_sales_toydata.HierarchicalSalesToydata
     longley.Longley
     lynx.Lynx
