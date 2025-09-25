@@ -2,7 +2,7 @@ name: Update Contributors
 
 on:
   schedule:
-  - cron: '0 10 * * 1'
+  - cron: '0 15 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -28,10 +28,10 @@ jobs:
       - name: Create PR with changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41897782+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           if ! git diff --quiet CONTRIBUTORS.md; then
-            BRANCH_NAME="update-contributors-$(date +%Y%m%d-%H%M%S)"
+            BRANCH_NAME="update-contributors-$(date +%d-%m-%Y)"
             git checkout -b "$BRANCH_NAME"
             git add CONTRIBUTORS.md
             git commit -m "[AUTOMATED] update CONTRIBUTORS.md"

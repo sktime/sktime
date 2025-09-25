@@ -25,5 +25,5 @@ jobs:
       - name: Validate .all-contributorsrc with AJV CLI (stdin)
         run: |
          cat ./.all-contributorsrc > .temp.json
-         ajv validate -s ./.github/workflows/contributors_schema.json -d .temp.json
+         ajv validate -s ./.github/schema/contributors_schema.json -d .temp.json
          rm .temp.json
