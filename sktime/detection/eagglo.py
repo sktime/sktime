@@ -88,6 +88,7 @@ class EAgglo(BaseTransformer):
         # estimator type
         # --------------
         "fit_is_empty": False,
+        
     }
 
     def __init__(

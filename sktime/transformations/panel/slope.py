@@ -39,6 +39,7 @@ class SlopeTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:unequal_length:removes": True,
         # is transform result always guaranteed to be equal length (and series)?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, num_intervals=8):
