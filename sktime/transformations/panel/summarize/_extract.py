@@ -137,16 +137,16 @@ class DerivativeSlopeTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:categorical_in_X": False,
-        "capability:multivariate": False,
+        "capability:multivariate": True,
     }
 
     def _transform(self, X, y=None):
         """Transform X."""
-        X_diff = np.gradient(X)
-        return pd.Series(X_diff, index=X.index, name=X.name)
+        X_diff = np.gradient(X, axis=0)
+        return pd.DataFrame(X_diff, index=X.index, columns=X.columns)
 
 
 def _check_features(features):
