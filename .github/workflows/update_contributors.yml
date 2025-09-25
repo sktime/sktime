@@ -1,8 +1,7 @@
 name: Update Contributors
 
 on:
-  schedule:
-  - cron: '0 9 * * *'
+  pull_request:
   workflow_dispatch:
 
 jobs:
