@@ -49,6 +49,11 @@ class HurstExponentTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["phoeenniixx"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
@@ -61,7 +66,7 @@ class HurstExponentTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
-        "authors": ["phoeenniixx"],
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
