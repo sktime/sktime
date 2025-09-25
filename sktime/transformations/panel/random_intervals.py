@@ -47,6 +47,8 @@ class RandomIntervals(BaseTransformer):
 
     _tags = {
         "authors": ["MatthewMiddlehurst"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
@@ -54,6 +56,12 @@ class RandomIntervals(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:unequal_length": False,
         "fit_is_empty": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # categoricals can be passed, but depending on transformers passed
     }
 
     def __init__(

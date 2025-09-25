@@ -133,7 +133,7 @@ class SubLOF(BaseDetector):
         # --------------
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         # CI and test flags
         # -----------------

@@ -3608,6 +3608,16 @@
       ]
     },
     {
+      "login": "sinemkilicdere",
+      "name": "Sinem Kilicdere",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187651453?v=4",
+      "profile": "https://github.com/SinemKilicdere",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
       "login": "garar",
       "name": "Krystian Kichewko",
       "avatar_url": "https://avatars.githubusercontent.com/u/220005?v=4",
@@ -3624,6 +3634,25 @@
       "profile": "https://github.com/Virgile-Foussereau",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "oresthes",
+      "name": "Orest Alickolli",
+      "profile": "https://github.com/oresthes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12741634?v=4",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "JATAYU000",
+      "name": "Shrivaths S Nair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142079253?v=4",
+      "profile": "https://github.com/JATAYU000",
+      "contributions": [
+        "code",
+        "bug"
       ]
     }
   ]

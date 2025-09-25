@@ -48,7 +48,7 @@ To install, if not already installed:
 
    .. code:: bash
 
-      pip install -e .[dev]
+      pip install -e ".[dev]"
 
    This installs an editable `development
    version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
@@ -162,9 +162,6 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 | Python version | PYTHON_VERSION |
 +================+================+
-|     3.8     |      py38         |
-+----------------+----------------+
-|     3.9     |      py39         |
 +----------------+----------------+
 |     3.10    |      py310        |
 +----------------+----------------+

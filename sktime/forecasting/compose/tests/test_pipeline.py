@@ -536,16 +536,16 @@ def test_exogenousx_ignore_tag_set():
     pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * trafo_ignores_x
     pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
 
-    assert not pipe1.get_tag("ignores-exogeneous-X")
-    assert pipe2.get_tag("ignores-exogeneous-X")
-    assert not pipe3.get_tag("ignores-exogeneous-X")
-    assert not pipe4.get_tag("ignores-exogeneous-X")
-    assert not pipe5.get_tag("ignores-exogeneous-X")
-    assert not pipe6.get_tag("ignores-exogeneous-X")
-    assert not pipe7.get_tag("ignores-exogeneous-X")
-    assert not pipe8.get_tag("ignores-exogeneous-X")
-    assert not pipe9.get_tag("ignores-exogeneous-X")
-    assert pipe10.get_tag("ignores-exogeneous-X")
+    assert pipe1.get_tag("capability:exogenous")
+    assert not pipe2.get_tag("capability:exogenous")
+    assert pipe3.get_tag("capability:exogenous")
+    assert pipe4.get_tag("capability:exogenous")
+    assert pipe5.get_tag("capability:exogenous")
+    assert pipe6.get_tag("capability:exogenous")
+    assert pipe7.get_tag("capability:exogenous")
+    assert pipe8.get_tag("capability:exogenous")
+    assert pipe9.get_tag("capability:exogenous")
+    assert not pipe10.get_tag("capability:exogenous")
 
 
 @pytest.mark.skipif(
