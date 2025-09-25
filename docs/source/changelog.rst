@@ -200,6 +200,8 @@ Documentation
 * [DOC] better documentation of time series scitypes, full mathematical documentation of ``Hierarchical`` and ``Table`` type (:pr:`8795`) :user:`fkiraly`
 * [DOC] assorted documentation fixes (:pr:`8816`) :user:`fkiraly`
 * [DOC] pre-filled transformer extension template for series-to-features transformers (:pr:`8834`) :user:`fkiraly`
+* [DOC] restructure dataset docs (:pr:`8854`) :user:`fkiraly`
+* [DOC] Update developer guide on how to run doctests (:pr:`8853`) :user:`Astrael1`
 
 Maintenance
 ~~~~~~~~~~~
@@ -252,7 +254,7 @@ Transformations
 Contributors
 ~~~~~~~~~~~~
 
-:user:`dependabot[bot]`,
+:user:`Astrael1`,
 :user:`ericjb`,
 :user:`felipeangelimvieira`,
 :user:`fkiraly`,
