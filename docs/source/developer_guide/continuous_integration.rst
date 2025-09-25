@@ -112,35 +112,38 @@ via the embedded graphical user interface.
 Running docstring examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Running docstring examples from single file:
+Doctests in ``sktime`` are run automatically as part of the full test suite via ``pytest``,
+through specific ``pytest`` plugins.
+This is to allow control import of soft dependencies in doctests,
+and to only run specific doctests if dependencies are installed.
+
+The following are idiomatic ways to run doctests:
+
+- For testing a single estimator, the ``check_estimator`` utility (see above) can be used.
+  The doctest test is the test with name ``"test_doctest_examples"``.
+
+- To run doctests of all estimators, run from root directory:
+
+   .. code:: bash
+
+      pytest sktime/tests/test_all_estimators.py::TestAllObjects::test_doctest_examples
+
+- Functions are tested through the ``test_doctest`` module.
+  To run all doctests for functions, run from root directory:
+
+   .. code:: bash
+
+      pytest sktime/tests/test_doctest.py
+
+It is also possible to run doctests directly, from a single file:
 
    .. code:: bash
 
       python -m doctest <path_to_file>
 
 
-Running globally all the docstring examples explicitly via ``doctest`` is not advised. There are many soft dependencies specyfic for a single estimator that are not installed by default.
-
-Below solutions check for dependencies installed.
-
-- For testing single estimator, you can use ``check_estimator`` utility (see above).
-
-- For testing all functions run from root directory:
-
-   .. code:: bash
-
-      pytest sktime/tests/test_doctest.py
-
-- For testing a package corresponding test file which name starts with ``test_all`` e.g. ``sktime/detection/tests/test_all_detectors.py``
-
-- For testing all estimators run from root directory:
-
-   .. code:: bash
-
-      pytest sktime/tests/test_all_estimators.py::TestAllObjects::test_doctest_examples
-
-Alternative: dockerized testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternative CI setup: dockerized testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We also provide an option to execute the test suite via ``docker`` containers.
 This requires a local docker installation.
