@@ -5,7 +5,8 @@ Datasets
 
 The ``datasets`` module contains:
 
-* dataset objects, which are in-memory representations of time series datasets
+* dataset objects, which are in-memory representations of time series datasets.
+  The programmatic way to represent and access datasets in ``sktime``.
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
@@ -14,6 +15,28 @@ The ``datasets`` module contains:
 
 Forecasting datasets
 --------------------
+
+Dataset repositories
+~~~~~~~~~~~~~~~~~~~~
+
+Interfaces to dataset repositories, instances of the classes
+represent different datasets. Downloaded from the ``sktime`` ``huggingface`` space,
+cached on first use.
+
+.. currentmodule:: sktime.datasets.forecasting
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    monash.ForecastingData
+
+Individual datasets - onboard
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Individual datasets distributed with ``sktime``, available without internet access.
+
 .. currentmodule:: sktime.datasets.forecasting
 
 .. autosummary::
@@ -29,11 +52,48 @@ Forecasting datasets
     m5_competition.M5Dataset
     macroeconomic.Macroeconomic
     shampoo_sales.ShampooSales
-    solar.Solar
     uschange.USChange
+
+Individual datasets - downloaded
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Individual datasets downloadable from the ``sktime`` ``huggingface`` space,
+cached on first use.
+
+.. currentmodule:: sktime.datasets.forecasting
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    m5_competition.M5Dataset
+    solar.Solar
 
 Classification datasets
 -----------------------
+
+Dataset repositories
+~~~~~~~~~~~~~~~~~~~~
+
+Interfaces to dataset repositories, instances of the classes
+represent different datasets. Downloaded from the ``sktime`` ``huggingface`` space,
+cached on first use.
+
+
+.. currentmodule:: sktime.datasets.classification
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ucr_uea_archive.UCRUEADatasets
+
+Individual datasets - onboard
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Individual datasets distributed with ``sktime``, available without internet access.
 
 .. currentmodule:: sktime.datasets.classification
 
@@ -49,7 +109,6 @@ Classification datasets
     japanese_vowels.JapaneseVowels
     osuleaf.OSULeaf
     plaid.PLAID
-    ucr_uea_archive.UCRUEADatasets
 
 Regression datasets
 -------------------
@@ -63,8 +122,12 @@ Regression datasets
 
     tecator.Tecator
 
-Loaders
--------
+Dataset loader functions
+------------------------
+
+Loaders are raw functions which return datasets in ``sktime`` compatible formats.
+
+For programmatic access to datasets, the dataset objects above should be preferred.
 
 Loaders from dataset repositories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,10 +223,10 @@ Hierarchical time series data
     load_hierarchical_sales_toydata
 
 
-Loading from and writing to files
----------------------------------
+File format loaders and writers
+-------------------------------
 
-These utilities load and write from time series specific data formats.
+These utilities load and write from time series specific data file formats.
 
 Note: for loading/writing from formats not specific to time series,
 use common utilities such as ``pandas.read_csv``
