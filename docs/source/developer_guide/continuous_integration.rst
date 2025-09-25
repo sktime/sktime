@@ -109,50 +109,19 @@ Further, developer IDEs such as pycharm or vs code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
-Running docstring examples via ``doctest``
+Running docstring examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``sktime``'s Python modules are equipped with docstrings that include examples
-demonstrating the usage of specific classes within each module.
+Running the docstring examples explicitly via ``doctest`` is not advised. Use ``pytest`` instead, which automatically runs the docstring examples as part of the test suite.
 
-Docstring examples can be executed in bulk using ``doctest``,
-to ensure that this is indeed the case.
+For testing single estimator, see ``check_estimator`` and :doc:`estimator development guide </developer_guide/add_estimators>` above.
 
-To run doctest on all the files with ``pytest``,
-navigate to the root directory and execute the following command:
-
-  .. code:: bash
-
-      pytest --doctest-modules
-
-.. note::
-
-   Not all tests run this way will pass. Some soft dependencies are specific for a single estimator and are not installed by default.
-   The suggested way of running tests is via ``check_estimator``.
-
-To run doctest on all the files without ``pytest``,
-navigate to the root directory and execute the following command:
-
-(for ``UNIX`` based OS)
-  .. code:: bash
-
-      find . -name "*.py" -print0 | xargs -0 python -m doctest -v -o=ELLIPSIS
-
-(for windows)
-  .. code:: bash
-
-      for /r %G in (*.py) do python -m doctest -v "%G" -o=ELLIPSIS
-
-To run doctest on a specific module, navigate to the directory where the
-module is located and execute the following command:
+The specyfic test running all docstring examples is ``test_doctest_examples``.
+You can run it from root directory:
 
    .. code:: bash
 
-      python -m doctest -v -o=ELLIPSIS {filename}
-
-
-Executing this command will display the test results for all the docstrings
-contained within the module.
+      pytest sktime/tests/test_all_estimators.py::TestAllObjects::test_doctest_examples
 
 Alternative: dockerized testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
