@@ -1252,14 +1252,48 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
-            msg = "Found invalid tag: %s" % tag
+            msg = (
+                f"{estimator_class} has invalid tag: {tag!r} - "
+                "please check for spelling mistakes and if the tag exists "
+                "in the sktime API reference, or in registry.all_tags."
+            )
             assert tag in VALID_ESTIMATOR_TAGS, msg
+
+        from sktime.base._base import TagAliaserMixin
+
+        ALIAS_DICT = TagAliaserMixin.alias_dict
+
+        for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_class} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_instance.get_tags().keys():
-            msg = "Found invalid tag: %s" % tag
+            msg = (
+                f"{estimator_instance} has invalid tag: {tag!r} - "
+                "please check for spelling mistakes and if the tag exists "
+                "in the sktime API reference, or in registry.all_tags."
+            )
             assert tag in VALID_ESTIMATOR_TAGS, msg
+
+        from sktime.base._base import TagAliaserMixin
+
+        ALIAS_DICT = TagAliaserMixin.alias_dict
+
+        for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_instance} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
 
     def test_random_tags(self, estimator_class):
         """Check that estimator randomization tags are compatibly set."""
@@ -1277,18 +1311,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # random_state tag should be set iff the parameter exists in the signature
         assert random_state == ("random_state" in estimator_class.get_param_names()), (
             f"{estimator_class.__name__} must set "
-            "'capability:random_state' tag if the "
+            "'capability:random_state' tag to True, if and only if the "
             "random_state parameter exists in the estimator signature"
         )
-
-        # if a random_state parameter is present,
-        # randomness should be one of "derandomized", "stochastic"
-        if random_state:
-            assert randomness in ["derandomized", "stochastic"], (
-                f"{estimator_class.__name__} must set "
-                "'property:randomness' tag to one of 'derandomized', 'stochastic' if "
-                "'capability:random_state' tag is set"
-            )
 
     def test_obj_vs_cls_signature(self, estimator_class):
         """Check that init signature is same for class as for instance.

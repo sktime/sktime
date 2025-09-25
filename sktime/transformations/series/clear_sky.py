@@ -102,6 +102,7 @@ class ClearSky(BaseTransformer):
         "capability:unequal_length:removes": True,  # ?
         "capability:missing_values": False,
         "capability:missing_values:removes": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

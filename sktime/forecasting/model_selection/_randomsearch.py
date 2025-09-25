@@ -173,6 +173,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.model_selection._base"],

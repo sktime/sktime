@@ -64,7 +64,7 @@ class GreykiteForecaster(BaseForecaster):
     _tags = {
         "scitype:y": "univariate",  # Handles univariate targets here.
         "capability:exogenous": True,  # Can handle exogenous variables.
-        "handles-missing-data": True,  # Handles missing data.
+        "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
@@ -77,7 +77,7 @@ class GreykiteForecaster(BaseForecaster):
     def __init__(
         self,
         forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
-        date_format: Optional[str] = None,
+        date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):

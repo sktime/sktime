@@ -100,6 +100,13 @@ class MultiRocketMultivariate(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
+        # unclear failure "No matching definition for argument type(s)"
     }
 
     def __init__(

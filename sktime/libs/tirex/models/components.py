@@ -44,7 +44,7 @@ class StandardScaler:
     def scale(
         self,
         x: Any,
-        loc_scale: Optional[tuple[Any, Any]] = None,
+        loc_scale: tuple[Any, Any] | None = None,
     ) -> tuple[Any, tuple[Any, Any]]:
         if loc_scale is None:
             loc = torch.nan_to_num(
@@ -104,7 +104,7 @@ class _Patcher:
 class PatchedUniTokenizer:
     patch_size: int
     scaler: Any = field(default_factory=StandardScaler)
-    patch_stride: Optional[int] = None
+    patch_stride: int | None = None
 
     def __post_init__(self):
         if self.patch_stride is None:

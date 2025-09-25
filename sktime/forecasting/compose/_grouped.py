@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
-from typing import Union
-
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -620,7 +618,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 self.fallback_forecaster = forecaster
 
-    def _loc_group(self, df: pd.DataFrame, group: Union[pd.DataFrame, None]):
+    def _loc_group(self, df: pd.DataFrame, group: pd.DataFrame | None):
         """
         Return the indexes of the given dataframe that match the given group.
 
