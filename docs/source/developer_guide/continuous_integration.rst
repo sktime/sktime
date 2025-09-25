@@ -125,6 +125,11 @@ navigate to the root directory and execute the following command:
 
       pytest --doctest-modules
 
+.. note::
+
+   Not all tests run this way will pass. Some soft dependencies are specific for a single estimator and are not installed by default.
+   The suggested way of running tests is via ``check_estimator``.
+
 To run doctest on all the files without ``pytest``,
 navigate to the root directory and execute the following command:
 
