@@ -97,7 +97,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["Tanuj-Taneja1"],
+        "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],
         "maintainers": ["Tanuj-Taneja1"],
         "tests:skip_by_name": ["test_fit_idempotent"],
         "python_dependencies": ["torch"],
