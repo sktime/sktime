@@ -15,6 +15,7 @@ from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
+    IxToX,
     OptionalPassthrough,
     TransformerPipeline,
 )
@@ -410,3 +411,30 @@ def test_requires_tags_trafopipe():
     # should require y as input, because YtoX does
 
     pipe.fit_transform(X=None, y=X)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_ixtox():
+    index = pd.MultiIndex.from_product(
+        [["X", "Y"], ["A", "B", "C"], [1, 2, 3]],
+        names=["level_0", "level_1", "level_2"],
+    )
+    X = pd.DataFrame(index=index)
+
+    ixtox = IxToX(level="__all_but_time")
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_1"]
+
+    ixtox = IxToX(level="__all")
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_1", "level_2"]
+
+    ixtox = IxToX(level=None)
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
+    ixtox = IxToX(level=["level_0", "level_2"])
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_2"]
+
+    ixtox = IxToX(level=-1)
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
