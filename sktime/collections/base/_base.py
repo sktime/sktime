@@ -8,6 +8,12 @@ from abc import abstractmethod
 
 from skbase.base import BaseObject
 
+from sktime.classification.base import BaseClassifier
+from sktime.datasets.base import BaseDataset
+from sktime.forecasting.base import BaseForecaster
+from sktime.performance_metrics.base import BaseMetric
+from sktime.registry import craft
+
 
 class BaseCollection(BaseObject):
     """Base class for collections of sktime objects."""
@@ -32,8 +38,8 @@ class BaseCollection(BaseObject):
 
         Returns
         -------
-        dict[str, Any]
-            dictionary with item names/ids as keys and objects as values
+        list[str]
+            list of item names/ids
         """
         pass
 
@@ -53,10 +59,11 @@ class BaseCollection(BaseObject):
         Returns
         -------
         dict[str, Any]
-            dictionary with item names/ids as keys and objects as values
+            dictionary with item names/ids as keys and object instances as values
         """
         if self._cached_items is None:
-            self._cached_items = self._get()
+            names = self._get()
+            self._cached_items = {name: craft(name) for name in names}
 
         items = self._cached_items
 
@@ -80,8 +87,19 @@ class BaseCollection(BaseObject):
         dict[str, Any]
             Filtered items dictionary
         """
-        # To implement
-        pass
+        filtered = {}
+
+        for name, obj in items.items():
+            if item_type == "dataset_loaders" and isinstance(obj, BaseDataset):
+                filtered[name] = obj
+            elif item_type == "estimators" and (
+                isinstance(obj, BaseForecaster) or isinstance(obj, BaseClassifier)
+            ):
+                filtered[name] = obj
+            elif item_type == "metrics" and isinstance(obj, BaseMetric):
+                filtered[name] = obj
+
+        return filtered
 
     def __len__(self):
         """Return the total number of items in the collection."""
