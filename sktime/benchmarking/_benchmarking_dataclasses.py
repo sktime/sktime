@@ -24,8 +24,8 @@ def _coerce_data_for_evaluate(dataset_loader):
         data = dataset_loader
 
     if isinstance(data, tuple) and len(data) == 2:
-        X, y = data
-        return X, y
+        y, X = data
+        return y, X
     elif isinstance(data, tuple) and len(data) == 1:
         return data[0], None
     else:
