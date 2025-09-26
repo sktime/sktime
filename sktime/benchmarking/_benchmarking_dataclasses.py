@@ -17,6 +17,8 @@ def _coerce_data_for_evaluate(dataset_loader):
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
         data = dataset_loader()
     elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
+        data = dataset_loader().load()
+    elif hasattr(dataset_loader, "load"):
         data = dataset_loader.load()
     else:
         data = dataset_loader
