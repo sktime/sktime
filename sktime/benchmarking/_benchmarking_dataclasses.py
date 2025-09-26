@@ -17,12 +17,14 @@ def _coerce_data_for_evaluate(dataset_loader):
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
         data = dataset_loader()
     elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
+        data = dataset_loader().load()
+    elif hasattr(dataset_loader, "load"):
         data = dataset_loader.load()
     else:
         data = dataset_loader
 
     if isinstance(data, tuple) and len(data) == 2:
-        y, X = data
+        X, y = data
         return y, X
     elif isinstance(data, tuple) and len(data) == 1:
         return data[0], None
