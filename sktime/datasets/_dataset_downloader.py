@@ -355,9 +355,9 @@ class DatasetDownloader(DatasetDownloadStrategy):
     >>> hf_repo_name = "sktime/tsc-datasets"
     >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
     >>> downloader = DatasetDownloader(hf_repo_name=hf_repo_name,
-                        folder_name="Beef",
-                        fallback_urls=urls
-                    )
+    ...     folder_name="Beef",
+    ...     fallback_urls=urls
+    ... )
     >>> downloader.download()
     """
 
