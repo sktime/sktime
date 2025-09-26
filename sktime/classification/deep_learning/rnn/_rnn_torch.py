@@ -168,7 +168,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            nonlinearity=self.activation,
+            activation=self.activation,
             bias=self.bias,
             batch_first=self.batch_first,
             num_classes=self.num_classes,
