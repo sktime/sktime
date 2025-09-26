@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.benchmarking.base import BaseMetric
+from sktime.datatypes._check import check_is_scitype
 from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
@@ -25,6 +26,8 @@ def _coerce_data_for_evaluate(dataset_loader):
 
     if isinstance(data, tuple) and len(data) == 2:
         X, y = data
+        if check_is_scitype(X, scitype="Panel"):
+            return X, y
         return y, X
     elif isinstance(data, tuple) and len(data) == 1:
         return data[0], None
