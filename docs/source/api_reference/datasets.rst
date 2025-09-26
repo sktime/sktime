@@ -88,7 +88,7 @@ cached on first use.
     :toctree: auto_generated/
     :template: class.rst
 
-    ucr_uea_archive.UCRUEADatasets
+    ucr_uea_archive.UCRUEADataset
 
 Individual datasets - onboard
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
