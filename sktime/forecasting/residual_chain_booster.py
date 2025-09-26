@@ -271,14 +271,17 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
         _, f = self._resid_futures_[0]
-        try:
-            p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
-        except Exception:
+        if not hasattr(f, "predict_proba"):
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
-        try:
-            mu = y_base.reindex(p_res.index)
-        except Exception:
+        p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        if hasattr(y_base, "reindex") and hasattr(p_res, "index"):
+            if not y_base.index.equals(p_res.index):
+                mu = y_base.reindex(p_res.index)
+            else:
+                mu = y_base
+        else:
             mu = y_base
 
         return MeanScale(d=p_res, mu=mu, sigma=1)
@@ -325,9 +328,3 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
         }
 
         return [params1, params2, params3]
-
-
-if __name__ == "__main__":
-    from sktime.utils.estimator_checks import check_estimator
-
-    check_estimator(ResidualBoostingChainForecaster, raise_exceptions=True)
