@@ -91,6 +91,7 @@ class Hidalgo(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "transform-returns-same-time-index": True,
         "capability:multivariate": True,
+        "capability:categorical_in_X": False,
         "fit_is_empty": False,
     }
 

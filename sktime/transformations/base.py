@@ -48,7 +48,6 @@ __all__ = [
 ]
 
 from itertools import product
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -75,19 +74,19 @@ from sktime.utils.sklearn import (
 )
 
 # single/multiple primitives
-Primitive = Union[np.integer, int, float, str]
+Primitive = np.integer | int | float | str
 Primitives = np.ndarray
 
 # tabular/cross-sectional data
-Tabular = Union[pd.DataFrame, np.ndarray]  # 2d arrays
+Tabular = pd.DataFrame | np.ndarray  # 2d arrays
 
 # univariate/multivariate series
-UnivariateSeries = Union[pd.Series, np.ndarray]
-MultivariateSeries = Union[pd.DataFrame, np.ndarray]
-Series = Union[UnivariateSeries, MultivariateSeries]
+UnivariateSeries = pd.Series | np.ndarray
+MultivariateSeries = pd.DataFrame | np.ndarray
+Series = UnivariateSeries | MultivariateSeries
 
 # panel/longitudinal/series-as-features data
-Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
+Panel = pd.DataFrame | np.ndarray  # 3d or nested array
 
 
 def _coerce_to_list(obj):
