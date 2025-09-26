@@ -6,7 +6,6 @@ __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "Pranav
 __all__ = ["ChronosForecaster"]
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -347,7 +346,7 @@ class ChronosForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):

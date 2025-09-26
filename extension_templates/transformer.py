@@ -400,6 +400,7 @@ class MyTransformer(BaseTransformer):
     # if not implementing, delete the _inverse_transform method
     # inverse transform exists only if transform does not change scitype
     #  i.e., Series transformed to Series
+    # delete for Series-to-Primitives or Series-to-Panel transformers
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 

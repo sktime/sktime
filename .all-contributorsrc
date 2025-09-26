@@ -3164,7 +3164,8 @@
       "profile": "https://linkedin.com/in/robert-kuebler",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "test"
       ]
     },
     {
@@ -3637,6 +3638,15 @@
       ]
     },
     {
+      "login": "Tanuj-Taneja1",
+      "name": "Tanuj Taneja",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94695078?v=4",
+      "profile": "https://github.com/Tanuj-Taneja1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "oresthes",
       "name": "Orest Alickolli",
       "profile": "https://github.com/oresthes",
@@ -3653,6 +3663,15 @@
       "contributions": [
         "code",
         "bug"
+      ]
+    },
+    {
+      "login": "Astrael1",
+      "name": "Astrael",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33071364?v=4",
+      "profile": "https://github.com/Astrael1",
+      "contributions": [
+        "doc"
       ]
     },
     {

@@ -4,7 +4,6 @@
 
 __author__ = ["fkiraly", "ltsaprounis"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -108,7 +107,7 @@ class BaggingForecaster(BaseForecaster):
         bootstrap_transformer: BaseTransformer = None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: int | np.random.RandomState = None,
     ):
         self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster

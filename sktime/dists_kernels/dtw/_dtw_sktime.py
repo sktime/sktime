@@ -2,7 +2,6 @@
 
 __author__ = ["fkiraly"]
 
-from typing import Union
 
 import numpy as np
 
@@ -141,8 +140,8 @@ class DtwDist(BasePairwiseTransformerPanel):
         self,
         weighted: bool = False,
         derivative: bool = False,
-        window: Union[int, None] = None,
-        itakura_max_slope: Union[float, None] = None,
+        window: int | None = None,
+        itakura_max_slope: float | None = None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):

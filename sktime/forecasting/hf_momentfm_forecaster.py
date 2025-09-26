@@ -152,7 +152,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",

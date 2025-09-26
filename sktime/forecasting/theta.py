@@ -112,6 +112,8 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:random_state": False,
+        "property:randomness": "deterministic",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

@@ -3,7 +3,6 @@
 
 __author__ = ["ltsaprounis"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -221,7 +220,7 @@ class STLBootstrapTransformer(BaseTransformer):
         low_pass_jump: int = 1,
         inner_iter: int = None,
         outer_iter: int = None,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: int | np.random.RandomState = None,
         return_indices=False,
     ):
         self.n_series = n_series
@@ -533,7 +532,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         block_length: int = 10,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: int | np.random.RandomState = None,
         return_indices=False,
     ):
         self.n_series = n_series
@@ -657,7 +656,7 @@ def _moving_block_bootstrap(
     ts: pd.Series,
     block_length: int,
     replacement: bool = False,
-    random_state: Union[int, np.random.RandomState] = None,
+    random_state: int | np.random.RandomState = None,
     return_indices=False,
 ) -> pd.Series:
     """Create a synthetic time series using the moving block bootstrap method MBB.
@@ -716,7 +715,7 @@ def _moving_block_bootstrap(
         return mbb_series, mbb_indices
 
 
-def _get_series_name(ts: Union[pd.Series, pd.DataFrame]) -> str:
+def _get_series_name(ts: pd.Series | pd.DataFrame) -> str:
     """Get series name from Series or column name from DataFrame.
 
     Parameters
