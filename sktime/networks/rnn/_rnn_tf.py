@@ -18,6 +18,11 @@ class RNNNetwork(BaseDeepNetwork):
         seed to any needed random actions
     """
 
+    _tags = {
+        "python_dependencies": "tensorflow",
+        "capability:random_state": True,
+    }
+
     def __init__(
         self,
         units=6,
