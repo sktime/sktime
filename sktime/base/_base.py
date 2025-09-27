@@ -56,6 +56,8 @@ State:
 __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
+from copy import deepcopy
+
 from skbase.base import BaseEstimator as _BaseEstimator
 from skbase.base import BaseObject as _BaseObject
 from skbase.base._base import TagAliaserMixin as _TagAliaserMixin
@@ -86,6 +88,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
         "sktime_version": SKTIME_VERSION,  # current sktime version
+        # default property tags
+        "property:randomness": "deterministic",
+        "capability:random_state": False,
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM
@@ -238,12 +243,15 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if ``path`` is None, returns an in-memory serialized self
-        if ``path`` is a file location, stores self at that location as a zip file
+
+        * if ``path`` is None, returns an in-memory serialized self
+        * if ``path`` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
-        _metadata - contains class of self, i.e., type(self)
-        _obj - serialized self. This class uses the default serialization (pickle).
+
+        * ``_metadata`` - contains class of self, i.e., ``type(self)``
+        * ``_obj`` - serialized self. This class uses the default serialization
+          (pickle).
 
         Parameters
         ----------
@@ -373,15 +381,363 @@ class TagAliaserMixin(_TagAliaserMixin):
     When removing tags, ensure to remove the removed tags from this class. If no tags
     are deprecated anymore (e.g., all deprecated tags are removed/renamed), ensure
     to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.
+
+    Exact aliasing logic, in the situation of an "old" and "new" tag,
+    i.e., an entry ``{"old_tag": "new_tag"}`` in ``alias_dict``:
+
+    * if only the new tag is present, and the new tag is requested,
+      returns the value of the new tag, no warning.
+      This is the "target" state of the deprecation process.
+    * if both new and old tag are present, and any of the two is requested,
+      returns the value of the old tag.
+      This priority is in order to deprecate in a way that does not break existing code,
+      in case the values of the two tags differ.
+      Raises a warning in addition, if the old tag was requested.
+    * if only the new tag is present, and the old tag is requested,
+      returns the value of the new tag, raises a warning.
+    * if only the old tag is present, and the new tag is requested,
+      returns the value of the new tag, without a warning.
+
+    Note: all warnings above are for the user of the estimator,
+    when attempting to read the old tag,
+    suggesting to use the new tag instead, which is the deprecation target state.
+
+    Warnings and errors for the developer of the estimator,
+    to change the old tag to new if
+    the old tag is still present, are not raised by this class.
+    These warnings should be raised separately, in API conformance tests,
+    preferably at CI time and as exceptions.
     """
 
-    alias_dict = {"handles-missing-data": "capability:missing_values"}
-    deprecate_dict = {"handles-missing-data": "1.0.0"}
+    alias_dict = {
+        "handles-missing-data": "capability:missing_values",
+        "ignores-exogeneous-X": "capability:exogenous",
+        "univariate-only": "capability:multivariate",
+    }
+    deprecate_dict = {
+        "handles-missing-data": "1.0.0",
+        "ignores-exogeneous-X": "1.0.0",
+        "univariate-only": "1.0.0",
+    }
+
+    @classmethod
+    def get_class_tag(cls, tag_name, tag_value_default=None):
+        """Get class tag value from class, with tag level inheritance from parents.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        The ``get_class_tag`` method is a class method,
+        and retrieves the value of a tag
+        taking into account only class-level tag values and overrides.
+
+        It returns the value of the tag with name ``tag_name`` from the object,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set in the ``_tags`` attribute of the class.
+        2. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Does not take into account dynamic tag overrides on instances,
+        set via ``set_tags`` or ``clone_tags``,
+        that are defined on instances.
+
+        To retrieve tag values with potential instance overrides, use
+        the ``get_tag`` method instead.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag value.
+        tag_value_default : any type
+            Default/fallback value if tag is not found.
+
+        Returns
+        -------
+        tag_value :
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, returns ``tag_value_default``.
+        """
+        cls._deprecate_tag_warn([tag_name])
+        alias_dict = cls.alias_dict
+
+        # check is tag is aliased or aliasing
+        # if yes, ensure that tag_name is the new tag name str
+        # and old_tag is the old tag name str
+        old_tag_name = ""
+        new_tag_name = ""
+        if tag_name in alias_dict:
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
+        if tag_name in alias_dict.values():
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
+
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
+            old_tag_val = cls._get_class_flag(
+                old_tag_name,
+                "__tag_not_found__",
+                flag_attr_name="_tags",
+            )
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
+                # todo 1.0.0 - remove this special case
+                if new_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
+                    return not old_tag_val
+                return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = cls._get_class_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
+
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
+        tag_val = super().get_class_tag(
+            tag_name=tag_name, tag_value_default=tag_value_default
+        )
+        return tag_val
+
+    def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
+        """Get tag value from instance, with tag level inheritance and overrides.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags.
+        Tags may be used to store metadata about the object,
+        or to control behaviour of the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object.
+
+        The ``get_tag`` method retrieves the value of a single tag
+        with name ``tag_name`` from the instance,
+        taking into account tag overrides, in the following
+        order of descending priority:
+
+        1. Tags set via ``set_tags`` or ``clone_tags`` on the instance,
+          at construction of the instance.
+        2. Tags set in the ``_tags`` attribute of the class.
+        3. Tags set in the ``_tags`` attribute of parent classes,
+          in order of inheritance.
+
+        Parameters
+        ----------
+        tag_name : str
+            Name of tag to be retrieved
+        tag_value_default : any type, optional; default=None
+            Default/fallback value if tag is not found
+        raise_error : bool
+            whether a ``ValueError`` is raised when the tag is not found
+
+        Returns
+        -------
+        tag_value : Any
+            Value of the ``tag_name`` tag in ``self``.
+            If not found, raises an error if
+            ``raise_error`` is True, otherwise it returns ``tag_value_default``.
+
+        Raises
+        ------
+        ValueError, if ``raise_error`` is ``True``.
+            The ``ValueError`` is then raised if ``tag_name`` is
+            not in ``self.get_tags().keys()``.
+        """
+        self._deprecate_tag_warn([tag_name])
+        alias_dict = self.alias_dict
+
+        old_tag_name = ""
+        new_tag_name = ""
+        if tag_name in alias_dict:
+            old_tag_name = tag_name
+            new_tag_name = alias_dict[old_tag_name]
+        if tag_name in alias_dict.values():
+            old_tag_name = [k for k, v in alias_dict.items() if v == tag_name][0]
+            new_tag_name = tag_name
+
+        tag_changed = new_tag_name != old_tag_name
+        new_tag_queried = tag_name == new_tag_name
+        old_tag_queried = tag_name == old_tag_name and tag_changed
+
+        if tag_changed:
+            # retrieve old tag value, if it exists
+            old_tag_val = self._get_flag(
+                old_tag_name,
+                "__tag_not_found__",
+                raise_error=False,
+                flag_attr_name="_tags",
+            )
+            old_tag_present = old_tag_val != "__tag_not_found__"
+            # case 1: old tag present, and new or old tag queried
+            # then: return value of old tag
+            if old_tag_present:
+                # negate if new tag was queried and tag is in FLIPPED_TAGS
+                # todo 1.0.0 - remove this special case
+                if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                    return not old_tag_val
+                return old_tag_val
+            # case 2: old tag was queried, but old tag not present
+            # then: return value of new tag
+            # negate if tag is in FLIPPED_TAGS
+            # todo 1.0.0 - remove this special case
+            elif old_tag_queried:
+                new_tag_value = self._get_flag(
+                    new_tag_name,
+                    tag_value_default,
+                    raise_error=False,
+                    flag_attr_name="_tags",
+                )
+                if old_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                    return not new_tag_value
+                return new_tag_value
+
+        # if we reach here, then:
+        # no aliasing happened, i.e., tag_name is not in alias_dict
+        # then: return value of tag_name as usual
+        tag_val = super().get_tag(
+            tag_name=tag_name,
+            tag_value_default=tag_value_default,
+            raise_error=raise_error,
+        )
+        return tag_val
+
+    def set_tags(self, **tag_dict):
+        """Set instance level tag overrides to given values.
+
+        Every ``scikit-base`` compatible object has a dictionary of tags,
+        which are used to store metadata about the object.
+
+        Tags are key-value pairs specific to an instance ``self``,
+        they are static flags that are not changed after construction
+        of the object. They may be used for metadata inspection,
+        or for controlling behaviour of the object.
+
+        ``set_tags`` sets dynamic tag overrides
+        to the values as specified in ``tag_dict``, with keys being the tag name,
+        and dict values being the value to set the tag to.
+
+        The ``set_tags`` method
+        should be called only in the ``__init__`` method of an object,
+        during construction, or directly after construction via ``__init__``.
+
+        Current tag values can be inspected by ``get_tags`` or ``get_tag``.
+
+        Parameters
+        ----------
+        **tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+
+        Returns
+        -------
+        Self
+            Reference to self.
+        """
+        self._deprecate_tag_warn(tag_dict.keys())
+
+        tag_dict = self._complete_dict(tag_dict, direction="old_to_new")
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
+        return self
+
+    @classmethod
+    def _complete_dict(cls, tag_dict, direction="both"):
+        """Add all aliased and aliasing tags to the dictionary.
+
+        Parameters
+        ----------
+        tag_dict : dict
+            Dictionary of tag name: tag value pairs.
+        direction : str, one of "old_to_new", "both"
+            Direction of aliasing to complete the dictionary for.
+
+            * "old_to_new": complete only from old tags to new tags
+            * "both": complete both from old to new and from new to old
+        """
+        alias_dict = cls.alias_dict
+        deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
+        new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
+
+        if len(deprecated_tags) > 0 or len(new_tags) > 0:
+            new_tag_dict = deepcopy(tag_dict)
+            # for all tag strings being set, write the value
+            #   to all tags that could *be aliased by* the string
+            #   and all tags that could be *aliasing* the string
+            # this way we ensure upwards and downwards compatibility
+            for old_tag in alias_dict:
+                cls._translate_tags(new_tag_dict, tag_dict, old_tag, direction)
+            return new_tag_dict
+        else:
+            return tag_dict
+
+    @classmethod
+    def _translate_tags(cls, new_tag_dict, tag_dict, old_tag, direction="both"):
+        """Translate old tag to new tag.
+
+        Mutates ``new_tag_dict`` given ``old_tag_dict`` and ``old_tag``.
+
+        Parameters
+        ----------
+        new_tag_dict : dict
+            Dictionary of new tags.
+        tag_dict : dict
+            Dictionary of old tags.
+        old_tag : str
+            Name of the tag to translate.
+
+        Returns
+        -------
+        str
+            Translated tag name.
+        """
+        alias_dict = cls.alias_dict
+        new_tag = alias_dict[old_tag]
+
+        # todo 1.0.0 - remove this special case
+        # special treatment for tags that get boolean flipped:
+        # "ignores-exogeneous-X", "univariate-only"
+        # the new tag is the negation of the old tag
+        if old_tag in cls.FLIPPED_TAGS:
+            if old_tag in tag_dict and new_tag != "":
+                new_tag_dict[new_tag] = not tag_dict[old_tag]
+            if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
+                new_tag_dict[old_tag] = not tag_dict[new_tag]
+            if direction == "old_to_new" and old_tag in new_tag_dict:
+                del new_tag_dict[old_tag]
+            return new_tag_dict
+
+        # standard treatment for all other tags
+        if old_tag in tag_dict and new_tag != "":
+            new_tag_dict[new_tag] = tag_dict[old_tag]
+        if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
+            new_tag_dict[old_tag] = tag_dict[new_tag]
+        if direction == "old_to_new" and old_tag in new_tag_dict:
+            del new_tag_dict[old_tag]
+        return new_tag_dict
 
     # package name used for deprecation warnings
     _package_name = "sktime"
 
+    FLIPPED_TAGS = ["ignores-exogeneous-X", "univariate-only"]
 
+
+# todo 1.0.0: remove TagAliaserMixin from inheritance
+# remove redundant methods from sktime class (compare skbase)
 class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 

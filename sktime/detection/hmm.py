@@ -136,7 +136,7 @@ class HMM(BaseDetector):
         "maintainers": "miraep8",
         # estimator type
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",

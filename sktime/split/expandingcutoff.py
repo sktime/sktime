@@ -8,7 +8,6 @@ __all__ = [
     "ExpandingCutoffSplitter",
 ]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -165,7 +164,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
                 )
         return index
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

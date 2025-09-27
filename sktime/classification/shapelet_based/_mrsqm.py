@@ -52,11 +52,13 @@ class MrSQM(_DelegatedClassifier):
         # --------------
         "authors": ["lnthach", "heerme", "fkiraly"],
         "maintainers": ["lnthach", "heerme", "fkiraly"],
-        "python_dependencies": "mrsqm",
-        "requires_cython": True,
+        "python_dependencies": ["mrsqm", "numba"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(

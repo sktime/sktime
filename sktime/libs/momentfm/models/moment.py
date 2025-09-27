@@ -28,7 +28,7 @@ SUPPORTED_HUGGINGFACE_MODELS = [
 ]
 
 if _check_soft_dependencies(
-    ["torch", "huggingface-hub", "transformers"], severity="none"
+    ["torch", "huggingface-hub", "transformers", "hf-xet"], severity="none"
 ):
     import torch
     from huggingface_hub import PyTorchModelHubMixin

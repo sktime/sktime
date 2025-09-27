@@ -532,7 +532,7 @@ class tests__skip_all(_BaseTag):
 
 
 class tests__skip_by_name(_BaseTag):
-    """Whether to spin up a separate VM to test the estimator.
+    """A list of test names that should be skipped for this object.
 
     Part of packaging metadata for the object, used only in ``sktime`` CI.
 
@@ -641,6 +641,28 @@ class capability__feature_importance(_BaseTag):
     }
 
 
+class capability__sample_weight(_BaseTag):
+    """Capability: whether the estimator can handle sample weights.
+
+    - String name: ``"capability:sample_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can handle sample weights.
+    If the tag is ``False``, the estimator cannot handle sample weights,
+    """
+
+    _tags = {
+        "tag_name": "capability:sample_weight",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle sample weights?",
+        "user_facing": True,
+    }
+
+
 class capability__contractable(_BaseTag):
     """Capability: the estimator can be asked to satisfy a maximum time contract.
 
@@ -707,6 +729,40 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class capability__random_state(_BaseTag):
+    """Capability: the estimator can be derandomized using a random_state.
+
+    - String name: ``"capability:random_state"``
+    - Public capability tag
+    - Values: bool, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be derandomized using a ``random_state``
+    parameter. If the ``random_state`` parameter is set, then the estimator will produce
+    the same results on every run,
+    up to minimal numerical precision discrepancies (1e-5 relative error).
+    If the tag is ``False``, the estimator does not have a ``random_state``
+    parameter and cannot be derandomized.
+
+    The tag may be inspected by the user to find estimators
+    that can be derandomized.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "capability:random_state",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the object have a random_state parameter for derandomization?"
+        ),
+        "user_facing": True,
+    }
+
+
 class fit_is_empty(_BaseTag):
     """Property: Whether the estimator has an empty fit method.
 
@@ -739,47 +795,87 @@ class fit_is_empty(_BaseTag):
     }
 
 
+class property__randomness(_BaseTag):
+    """Property: Degree of randomness vs determinism of the estimator.
+
+    - String name: ``"property:randomness"``
+    - Public property tag
+    - Values: str, ``"stochastic"``, ``"deterministic"``, ``"derandomized"``
+    - Example: ``"deterministic"``
+    - Default: ``"deterministic"``
+
+    * If the tag is ``"stochastic"``, the estimator is stochastic and
+      may produce different results on different runs.
+    * If the tag is ``"deterministic"``, the estimator is
+      deterministic and will produce the same results on every run,
+      up to minimal numerical precision discrepancies (1e-5 relative error).
+    * If the tag is ``"derandomized"``, the estimator can be derandomized
+      using a ``random_state`` parameter. It behaves as ``"stochastic"``
+      if the ``random_state`` parameter is not set, and it behaves as
+      ``"deterministic"`` if the ``random_state`` parameter is set.
+
+    This tag applies to instances with a given set of parameters,
+    and all computational methods of the estimator.
+
+    If at least one of the methods has stochastic behaviour, the tag should
+    be set to ``"stochastic"``, even if other methods are deterministic.
+
+    The tag may be inspected by the user to distinguish between
+    estimators with deterministic and stochastic behaviour.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "property:randomness",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "does the object behave deterministically or stochastically?",
+        "user_facing": True,
+    }
+
+
 # Forecasters
 # -----------
 
 
 class capability__exogeneous(_BaseTag):
-    """Capability: the forecaster can use exogeneous data.
+    """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
 
-    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
-    Exogeneous data are additional time series,
+    Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogenous data (``capability:exogenous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
-    can be used to pass exogeneous data to the forecaster.
+    can be used to pass exogenous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
     then such data must always have an index that contains that of the target series,
     i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
 
-    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    If the tag is ``False``, the forecaster does not make use of exogenous data.
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogenous",
         "parent_type": "forecaster",
         "tag_type": "bool",
-        "short_descr": "does forecaster make use of exogeneous data?",
+        "short_descr": "does forecaster make use of exogenous data?",
         "user_facing": True,
     }
 
@@ -943,7 +1039,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical variables in the X argument.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -962,7 +1058,32 @@ class capability__categorical_in_X(_BaseTag):
         "tag_name": "capability:categorical_in_X",
         "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
-        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator handle categorical data in X arguments?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_y(_BaseTag):
+    """Capability: If estimator can handle categorical variables in the y argument.
+
+    ``False`` = cannot handle categorical natively in y,
+    ``True`` = can handle categorical natively in y
+
+    - String name: ``"capability:categorical_in_y"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_y",
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle categorical data in y arguments?",
         "user_facing": True,
     }
 
@@ -989,8 +1110,10 @@ class capability__multivariate(_BaseTag):
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
 
-    If the tag is ``False``, the estimator can only handle univariate time series,
-    and will broadcast to variables (ordinary transformers), or raise an error (others).
+    If the tag is ``False``, the estimator can only handle univariate time series
+    natively. Depending on the type of object, multivariate time series may be valid
+    inputs, in this case the estimator will broadcast to variables
+    (transformers, forecasters), or raise an error (others).
 
     This condition is specific to the main input data representation,
     target data (e.g., classifier or transformation ``y``) are not considered.
@@ -1007,13 +1130,15 @@ class capability__multivariate(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "metric",
             "param_est",
             "regressor",
+            "transformer",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
         "tag_type": "bool",
-        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "short_descr": "does the object natively support time series with 2 or more variables?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -1153,6 +1278,40 @@ class capability__predict_proba(_BaseTag):
             "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
         ),
+        "user_facing": True,
+    }
+
+
+class capability__class_weight(_BaseTag):
+    """Capability: the classifier can use class weights to handle imbalanced data.
+
+    - String name: ``"capability:class_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier supports class weighting functionality,
+    through a ``class_weight`` parameter that allows users to assign
+    different weights to different classes during training. This is commonly used
+    to handle imbalanced datasets where some classes are underrepresented.
+
+    Class weights can usually be provided as:
+
+    - A dictionary mapping class labels to weights
+    - None for uniform class weights (default behavior)
+
+    If the tag is ``False``, the classifier does not support class weighting,
+    and any class_weight parameter will be ignored or may raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:class_weight",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
@@ -1946,12 +2105,183 @@ class capability__variable_identification(_BaseTag):
     }
 
 
+# Metrics tags
+# ------------
+
+
+class requires_y_true(_BaseTag):
+    """Behaviour flag: metric requires y_true in evaluate.
+
+    If ``y_true`` is not required, the metric is an unsupervised metric.
+
+    - String name: ``"requires_y_true"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires_y_true",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_true to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class requires_y_pred_benchmark(_BaseTag):
+    """Behaviour flag: metric requires y_pred in evaluate.
+
+    - String name: ``"requires-y-pred-benchmark"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+    - Alias: ``"requires_y_pred_benchmark"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the benchmark prediction argument
+    ``y_pred_benchmark`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    If the tag is ``False``, the metric does not require the benchmark prediction
+    argument ``y_pred_benchmark`` to be passed in the ``evaluate`` and
+    ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-pred-benchmark",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the metric require y_pred_benchmark to be passed in evaluate?"
+        ),
+        "user_facing": True,
+    }
+
+
+class requires_y_train(_BaseTag):
+    """Behaviour flag: metric requires y_train in evaluate.
+
+    - String name: ``"requires-y-train"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``"requires_y_train"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the training target data argument
+    ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the training target data
+    argument ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-train",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_train to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class lower_is_better(_BaseTag):
+    """Property: whether lower metric values are better.
+
+    - String name: ``"lower_is_better"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, lower values of the metric are considered better.
+    If the tag is ``False``, higher values of the metric are considered better.
+    """
+
+    _tags = {
+        "tag_name": "lower_is_better",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "is lower value of the metric better?",
+        "user_facing": True,
+    }
+
+
+class scitype__y_pred(_BaseTag):
+    """The scitype of the predicted target data, for probabilistic metrics.
+
+    - String name: ``"scitype:y_pred"``
+    - Public property tag
+    - Values: string, one of ``"pred_quantiles"``, ``pred_interval``, ``pred_proba``
+    - Example: ``"pred_quantiles"``
+    - Default: ``"None"``
+
+    This tag applies to metrics.
+
+    The tag specifies the scitype of the predicted target data ``y_pred``
+    for probabilistic metrics:
+
+    * ``"pred_quantiles"``: predictive quantiles in ``predict_quantiles`` format
+    * ``"pred_interval"``: predictive intervals in ``predict_interval`` format
+    * ``"pred_proba"``: predictive probabilities in ``predict_proba`` format
+    """
+
+    _tags = {
+        "tag_name": "scitype:y_pred",
+        "parent_type": "metric",
+        "tag_type": "str",
+        "short_descr": "what is the scitype of the predicted target data y_pred?",
+        "user_facing": True,
+    }
+
+
+class inner_implements_multilevel(_BaseTag):
+    """Extension tag: whether the metric implements multilevel evaluation.
+
+    - String name: ``"inner_implements_multilevel"``
+    - Extension developer tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Metrics broadcast by default over time series hierarchy indices.
+    If the tag is ``False``, the inner ``_evaluate`` and ``_evaluate_by_index``
+    methods are written for individual time series only, and the
+    boilerplate machinery is expected to handle hierarchy indices.
+
+    By setting this tag to ``False``, developers can force the hierarchical
+    time series to be passed to ``_evaluate`` and ``_evaluate_by_index``,
+    to treat the hierarchy index in deviation from the default.
+    """
+
+    _tags = {
+        "tag_name": "inner_implements_multilevel",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric implement multilevel evaluation internally?",
+        "user_facing": False,
+    }
+
+
 # Developer tags
 # --------------
 
 
 class x_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the estimator can deal with internally for X.
 
     - String name: ``"X_inner_mtype"``
     - Extension developer tag
@@ -2022,7 +2352,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for y.
+    """The machine type(s) the estimator can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
@@ -2754,42 +3084,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does aligner produce a full or partial alignment",
     ),
     (
-        "requires-y-train",
-        "metric",
-        "bool",
-        "does metric require y-train data to be passed?",
-    ),
-    (
-        "requires-y-pred-benchmark",
-        "metric",
-        "bool",
-        "does metric require a predictive benchmark?",
-    ),
-    (
-        "requires_y_true",
-        "metric",
-        "bool",
-        "does metric require ground truth? If False, unsupervised metric",
-    ),
-    (
-        "scitype:y_pred",
-        "metric",
-        "str",
-        "What is the scitype of y_pred: quantiles, proba, interval?",
-    ),
-    (
-        "lower_is_better",
-        "metric",
-        "bool",
-        "Is a lower value better for the metric? True=yes, False=higher is better",
-    ),
-    (
-        "inner_implements_multilevel",
-        "metric",
-        "bool",
-        "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
-    ),
-    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
@@ -2949,6 +3243,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "ignores-exogeneous-X",
+        "forecaster",
+        "bool",
+        "deprecated tag for exogenous capability",
     ),
 ]
 
