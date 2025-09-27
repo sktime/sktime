@@ -2117,26 +2117,59 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     return res
 
 
+# def slice_at_ix(df, ix):
+#     """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
+
+#     Parameters
+#     ----------
+#     df : pd.DataFrame
+#     ix : pandas compatible index value, or iterable of index values (incl pd.Index)
+
+#     Returns
+#     -------
+#     pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
+#         all index levels are retained in the return, none are dropped
+#         CAVEAT: index is sorted by last (-1 st) level if ix is iterable
+#     """
+#     if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
+#         return pd.concat([slice_at_ix(df, x) for x in ix])
+#     if isinstance(df.index, pd.MultiIndex):
+#         return df.xs(ix, level=-1, axis=0, drop_level=False)
+#     else:
+#         return df.loc[[ix]]
+
+
 def slice_at_ix(df, ix):
-    """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
+    """Return the row(s) at ix; if ix missing, return the floor (earlier) row.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-    ix : pandas compatible index value, or iterable of index values (incl pd.Index)
-
-    Returns
-    -------
-    pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
-        all index levels are retained in the return, none are dropped
-        CAVEAT: index is sorted by last (-1 st) level if ix is iterable
+    - Simple Index: choose the greatest label <= ix (if none, choose earliest).
+    - MultiIndex: apply the rule on the last level and return all rows at that time.
     """
-    if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
-        return pd.concat([slice_at_ix(df, x) for x in ix])
+    import numpy as np
+    import pandas as pd
+
+    if isinstance(ix, (list, pd.Index)):
+        # concatenate results for each element
+        parts = [slice_at_ix(df, x) for x in ix]
+        return pd.concat([p for p in parts if p is not None and not p.empty])
+
     if isinstance(df.index, pd.MultiIndex):
-        return df.xs(ix, level=-1, axis=0, drop_level=False)
+        # floor on last level
+        last = df.index.get_level_values(-1)
+        unique_times = pd.Index(np.unique(last))
+        # use pad (floor); if below earliest, fall back to earliest
+        pos = unique_times.get_indexer([ix], method="pad")
+        if pos[0] == -1:
+            t = unique_times[0]
+        else:
+            t = unique_times[pos[0]]
+        return df.xs(t, level=-1, axis=0, drop_level=False)
     else:
-        return df.loc[[ix]]
+        # simple index: floor or earliest
+        idxer = df.index.get_indexer([ix], method="pad")
+        if idxer[0] == -1:
+            idxer = [0]
+        return df.iloc[[idxer[0]]]
 
 
 def _get_notna_idx(df):
@@ -2689,7 +2722,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self.lagger_y_to_X_ = None
-        self._lags = list(range(window_length))
+        self._lags = list(range(1, window_length + 1))
         self.X_treatment = X_treatment
         super().__init__()
 
@@ -2756,9 +2789,11 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         X_time = lagger_y_to_X.fit_transform(y)
 
-        lag_shifter = Lag(lags=1, index_out="extend")
-        X_time_aligned = lag_shifter.fit_transform(X_time)
-        return X_time_aligned
+        # lag_shifter = Lag(lags=1, index_out="extend")
+        # X_time_aligned = lag_shifter.fit_transform(X_time)
+        # return X_time_aligned
+
+        return X_time
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -2799,8 +2834,11 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         # column names will be kept for consistency
+
+        # define lag_plus for *exog* alignment (furhter below)
         lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
-        Xtt = lag_plus.fit_transform(Xt)
+        # Xtt = lag_plus.fit_transform(Xt)
+        Xtt = Xt
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
 
@@ -2817,6 +2855,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 Xtt = pd.concat([X_inner.loc[notna_idx], Xtt], axis=1)
 
             Xtt = prep_skl_df(Xtt)
+            self._feature_cols_ = list(Xtt.columns)
             yt = prep_skl_df(yt)
 
             # store feature column names (if any) to preserve during predict
@@ -3535,33 +3574,48 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     #     return y_abs_no_gaps, y_lags_no_gaps
 
+    # def _generate_fh_no_gaps(self, fh):
+    #     """Return a dense (no-gaps) absolute index.
+
+    #     From cutoff through max fh, plus its relative lags.
+
+    #     Parameters
+    #     ----------
+    #     fh : ForecastingHorizon or array-like
+
+    #     Returns
+    #     -------
+    #     y_abs_no_gaps : pd.Index
+    #         Absolute (time) index from cutoff+1 through cutoff+max(fh) without gaps.
+    #     y_lags_no_gaps : range
+    #         1..max(fh) as integer relative lags.
+    #     """
+    #     fh_arr = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
+    #     fh_max = int(np.max(fh_arr)) if len(fh_arr) else 0
+
+    #     # Dense relative lags 1..fh_max
+    #     y_lags_no_gaps = range(1, fh_max + 1)
+
+    #     # Turn dense lags into absolute time index from the current cutoff
+    #     dense_fh = ForecastingHorizon(list(y_lags_no_gaps), is_relative=True)
+    #     y_abs_no_gaps = dense_fh.to_absolute_index(self.cutoff)
+
+    #     return y_abs_no_gaps, y_lags_no_gaps
+
     def _generate_fh_no_gaps(self, fh):
-        """Return a dense (no-gaps) absolute index.
-
-        From cutoff through max fh, plus its relative lags.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon or array-like
-
-        Returns
-        -------
-        y_abs_no_gaps : pd.Index
-            Absolute (time) index from cutoff+1 through cutoff+max(fh) without gaps.
-        y_lags_no_gaps : range
-            1..max(fh) as integer relative lags.
-        """
-        fh_arr = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
-        fh_max = int(np.max(fh_arr)) if len(fh_arr) else 0
-
-        # Dense relative lags 1..fh_max
+        """Return a gapless absolute FH and the dense relative steps [1..fh_max]."""
+        # normalize to relative ints ahead of cutoff
+        fh_rel = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
+        fh_max = int(np.max(fh_rel)) if len(fh_rel) else 0
         y_lags_no_gaps = range(1, fh_max + 1)
 
-        # Turn dense lags into absolute time index from the current cutoff
-        dense_fh = ForecastingHorizon(list(y_lags_no_gaps), is_relative=True)
-        y_abs_no_gaps = dense_fh.to_absolute_index(self.cutoff)
+        # keep time type/freq consistent with training index
+        dense_fh_rel = ForecastingHorizon(
+            list(y_lags_no_gaps), is_relative=True, freq=self.cutoff
+        )
+        dense_fh_abs = dense_fh_rel.to_absolute(self.cutoff)  # <-- FH (not Index)
 
-        return y_abs_no_gaps, y_lags_no_gaps
+        return dense_fh_abs, y_lags_no_gaps
 
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
@@ -3571,6 +3625,11 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         #   local   -> optimized v2 local path
         #   panel   -> fallback to legacy v1 path for correctness (gappy fh indexing)
         #             TODO: implement optimized v2 panel path (#panel-optimization)
+
+        if isinstance(getattr(self, "estimator_", None), pd.Series):
+            # Produce a DataFrame of repeated means on the absolute fh index
+            return self._create_fallback_df(fh)
+
         already_filtered = False
         if self.pooling == "panel":
             # v1 path already returns only the requested fh rows
@@ -3709,9 +3768,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # last-level time index/column names
         # time_level_name = self._y.index.names[-1]
-        y_cols = (
-            self._y.columns if isinstance(self._y, pd.DataFrame) else pd.Index(["y"])
-        )
+        # y_cols = (
+        #    self._y.columns if isinstance(self._y, pd.DataFrame) else pd.Index(["y"])
+        # )
 
         # start state: observed y (possibly multi-series), no gaps enforced where needed
         y_plus_preds = self._y
@@ -3764,10 +3823,22 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # ensure sklearn-friendly tabular
             Xtt_predrow = prep_skl_df(Xtt_predrow)
 
-            # predict for *all* rows present (one per series if global pooling)
-            y_pred_i = self.estimator_.predict(Xtt_predrow)
-            # turn into a frame with proper index
-            y_pred_i = pd.DataFrame(y_pred_i, index=Xtt_predrow.index, columns=y_cols)
+            # # predict for *all* rows present (one per series if global pooling)
+            # y_pred_i = self.estimator_.predict(Xtt_predrow)
+            # # turn into a frame with proper index
+            # y_pred_i = pd.DataFrame(y_pred_i, index=Xtt_predrow.index, columns=y_cols)
+
+            est = self.estimator_
+            if isinstance(est, pd.Series):
+                # constant-mean fallback: repeat the mean row, correct shape/columns
+                y_pred_i = pd.DataFrame(
+                    [est.values], index=Xtt_predrow.index, columns=self._y.columns
+                )
+            else:
+                y_pred_i = est.predict(Xtt_predrow)
+                y_pred_i = pd.DataFrame(
+                    y_pred_i, index=Xtt_predrow.index, columns=self._y.columns
+                )
 
             # append the new predictions to the running y (so next loop sees them)
             y_plus_preds = pd.concat([y_plus_preds, y_pred_i], axis=0)
