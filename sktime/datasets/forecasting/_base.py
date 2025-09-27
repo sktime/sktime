@@ -115,7 +115,7 @@ class _ForecastingDatasetFromLoader(_DatasetFromLoaderMixin, BaseForecastingData
         loader_func = self.get_loader_func()
         output = loader_func(**kwargs)
         y, X = self._split_into_y_and_X(output)
-        return X, y
+        return y, X
 
     def _split_into_y_and_X(self, loader_output):
         """Split the output of the loader into X and y.
