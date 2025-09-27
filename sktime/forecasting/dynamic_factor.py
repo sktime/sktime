@@ -117,9 +117,7 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> y = _make_series(n_columns=4)
     >>> forecaster = DynamicFactor()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    DynamicFactor(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    -------------------------------------------------------------
+    >>> # in-sample and out-of-sample forecasting with exogenous variables
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.forecasting.dynamic_factor import DynamicFactor
     >>> from sktime.datasets import load_macroeconomic
@@ -247,11 +245,9 @@ class DynamicFactor(_StatsModelsAdapter):
             start = fh.to_absolute(self.cutoff)[0]
             end = fh.to_absolute(self.cutoff)[-1]
         else:
-            start = fh.min()
-            end = fh.max()
-        
+            start = self._y.index[fh[0]]
+            end = self._y.index[fh[-1]]
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
-
         # if y is univariate, we duplicated the column in fit,
         # so now we need to revert this duplication
         if self._was_univariate:
@@ -264,7 +260,9 @@ class DynamicFactor(_StatsModelsAdapter):
             y_pred.index = np.arange(
                 start + self._y.index[0], end + self._y.index[0] + 1
             )
-        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        # if fh.is_relative:
+        #    y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]
+        return y_pred
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
