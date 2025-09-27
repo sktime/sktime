@@ -96,6 +96,21 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     - Exogenous variables must have the same index structure as the target series
     - For prediction, exogenous data must extend into the forecasting horizon
 
+    **Few-Shot Learning Support**
+
+    TTM supports few-shot learning by training on a subset of the available data
+    while leveraging pre-trained weights. This is useful when you have limited
+    domain-specific data but want to adapt the model quickly.
+
+    Few-shot learning is controlled by the `few_shot_ratio` parameter:
+    - `few_shot_ratio=None` (default): Use all available training data
+    - `few_shot_ratio=0.1`: Use 10% of training data for fine-tuning
+    - `few_shot_ratio=0.5`: Use 50% of training data for fine-tuning
+
+    The model automatically samples the most recent data points to maintain
+    temporal continuity. Smaller ratios enable faster training but may
+    reduce performance. Recommended range: 0.1 to 0.5.
+
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
@@ -170,6 +185,18 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time. Allows
           model path to be *None*.
+
+    few_shot_ratio : float, optional, default=None
+        Fraction of training data to use for few-shot learning.
+        Must be between 0 and 1. If None, uses all available data.
+        Smaller values (e.g., 0.05, 0.1) enable faster training but may
+        reduce performance. Recommended range: 0.1 to 0.5.
+        The model automatically samples the most recent data points to maintain
+        temporal continuity.
+
+    few_shot_random_state : int, optional, default=42
+        Random seed for reproducible few-shot sampling.
+        Only used when few_shot_ratio is not None.
 
     References
     ----------
@@ -253,6 +280,64 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>>
     >>> # Predict with exogenous variables
     >>> y_pred = forecaster.predict(X=X_future)
+
+    Example with few-shot learning:
+
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>>
+    >>> # Few-shot learning with 20% of data
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path=None,
+    ...     fit_strategy="full",
+    ...     few_shot_ratio=0.2,
+    ...     config={
+    ...         "context_length": 8,
+    ...         "prediction_length": 2
+    ...     },
+    ...     training_args={
+    ...         "max_steps": 10,
+    ...         "output_dir": "test_output",
+    ...         "per_device_train_batch_size": 4,
+    ...         "report_to": "none",
+    ...     },
+    ... )
+    >>> forecaster.fit(y, fh=[1, 2])
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict()
+
+    Example with few-shot learning and exogenous variables:
+
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.split import temporal_train_test_split
+    >>> y, X = load_longley()
+    >>> y_train, _, X_train, X_future = temporal_train_test_split(y, X, test_size=2)
+    >>>
+    >>> # Few-shot learning with exogenous variables
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path=None,
+    ...     fit_strategy="full",
+    ...     few_shot_ratio=0.3,
+    ...     config={
+    ...         "context_length": 6,
+    ...         "prediction_length": 2
+    ...     },
+    ...     training_args={
+    ...         "max_steps": 10,
+    ...         "output_dir": "test_output",
+    ...         "per_device_train_batch_size": 4,
+    ...         "report_to": "none",
+    ...     },
+    ... )
+    >>>
+    >>> # Fit with few-shot learning and exogenous variables
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    TinyTimeMixerForecaster(...)
+    >>>
+    >>> # Predict with exogenous variables
+    >>> y_pred = forecaster.predict(X=X_future)
     """
 
     _tags = {
@@ -302,6 +387,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         broadcasting=False,
         use_source_package=False,
         fit_strategy="minimal",
+        few_shot_ratio=None,
+        few_shot_random_state=42,
     ):
         super().__init__()
         self.model_path = model_path
@@ -316,6 +403,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
+        self.few_shot_ratio = few_shot_ratio
+        self.few_shot_random_state = few_shot_random_state
+
+        # Validate few-shot learning parameters
+        if self.few_shot_ratio is not None:
+            if not isinstance(self.few_shot_ratio, (int, float)):
+                raise ValueError("few_shot_ratio must be a number")
+            if not 0 < self.few_shot_ratio <= 1:
+                raise ValueError("few_shot_ratio must be between 0 and 1")
+            if self.few_shot_ratio < 0.01:
+                warn(
+                    f"few_shot_ratio={self.few_shot_ratio} is very small, "
+                    f"may lead to poor performance"
+                )
 
         if self.broadcasting:
             self.set_tags(
@@ -490,6 +591,16 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             y_eval = None
             X_train = X
             X_eval = None
+
+        # Apply few-shot sampling if enabled
+        if self.few_shot_ratio is not None:
+            y_train, X_train = self._apply_few_shot_sampling(
+                y_train,
+                X_train,
+                self.few_shot_ratio,
+                self.few_shot_random_state,
+                config,
+            )
 
         train = PyTorchDataset(
             y=y_train,
@@ -699,6 +810,79 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         params_broadcasting = [dict(p, **{"broadcasting": True}) for p in test_params]
         test_params.extend(params_broadcasting)
         return test_params
+
+    def _apply_few_shot_sampling(self, y_train, X_train, ratio, random_state, config):
+        """
+        Apply few-shot sampling to training data while maintaining temporal order.
+
+        Parameters
+        ----------
+        y_train : pd.DataFrame or pd.Series
+            Training target data
+        X_train : pd.DataFrame or None
+            Training exogenous data
+        ratio : float
+            Fraction of data to sample (0 < ratio <= 1)
+        random_state : int
+            Random seed for reproducibility
+        config : TinyTimeMixerConfig
+            Model configuration containing context_length and prediction_length
+
+        Returns
+        -------
+        y_sampled : pd.DataFrame or pd.Series
+            Sampled target data
+        X_sampled : pd.DataFrame or None
+            Sampled exogenous data
+        """
+        # Calculate sample size
+        total_length = len(y_train)
+        sample_size = int(total_length * ratio)
+
+        # Ensure minimum sample size based on model requirements
+        min_samples = max(1, config.context_length + config.prediction_length)
+        if sample_size < min_samples:
+            warn(
+                f"few_shot_ratio={ratio} results in {sample_size} samples, "
+                f"but minimum required is {min_samples}. Using minimum size."
+            )
+            sample_size = min_samples
+
+        # If sample size is >= total length, return original data
+        if sample_size >= total_length:
+            return y_train, X_train
+
+        # Sample from the end to maintain temporal order (most recent data)
+        if not isinstance(y_train.index, pd.MultiIndex):
+            # Single index case - simple sampling from the end
+            y_sampled = y_train.iloc[-sample_size:]
+            X_sampled = X_train.iloc[-sample_size:] if X_train is not None else None
+        else:
+            # Multi-index case - sample by unique series
+            unique_series = y_train.index.get_level_values(0).unique()
+            sampled_series = []
+            sampled_X_series = []
+
+            for series_id in unique_series:
+                series_data = y_train.loc[series_id]
+                series_sample_size = int(len(series_data) * ratio)
+                series_sample_size = max(min_samples, series_sample_size)
+
+                if series_sample_size < len(series_data):
+                    sampled_series.append(series_data.iloc[-series_sample_size:])
+                    if X_train is not None:
+                        sampled_X_series.append(
+                            X_train.loc[series_id].iloc[-series_sample_size:]
+                        )
+                else:
+                    sampled_series.append(series_data)
+                    if X_train is not None:
+                        sampled_X_series.append(X_train.loc[series_id])
+
+            y_sampled = pd.concat(sampled_series)
+            X_sampled = pd.concat(sampled_X_series) if X_train is not None else None
+
+        return y_sampled, X_sampled
 
 
 def _pad_truncate(data, seq_len, pad_value=0):
