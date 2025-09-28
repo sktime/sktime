@@ -3762,7 +3762,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
 
         # gappy fh index we finally want back (MultiIndex for pooled global)
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        # fh_idx = self._get_expected_pred_idx(fh=fh)
 
         self._assert_future_X_coverage(X_pool, fh)
 
@@ -3776,18 +3776,40 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_plus_preds = self._y
 
         # window summarizer: lags for recursion (extend index by one step per iteration)
-        lagger_y_to_X = Lag(
-            lags=list(range(1, self.window_length + 1)),
-            index_out="extend",
-            keep_column_names=True,
-        )
+        # lagger_y_to_X = Lag(
+        #     lags=list(range(1, self.window_length + 1)),
+        #     index_out="extend",
+        #     keep_column_names=True,
+        # )
+        # use the pre-fitted lagger from fit
+        lagger_y_to_X = self.lagger_y_to_X_
+
         lag_plus = Lag(lags=[1], index_out="extend", keep_column_names=True)
         X_ext = X_pool
 
         # if we have X, extend it in lock-step with y via lag_plus inside the loop
-        y_pred_list = []
+        # y_pred_list = []
+
+        fh_obj = (
+            fh
+            if isinstance(fh, ForecastingHorizon)
+            else ForecastingHorizon(fh, is_relative=True)
+        )
+        # gapless absolute index covering 1..max(fh)
+        fh_abs_gapless, _ = self._generate_fh_no_gaps(fh_obj)
+        # make sure dtype/freq/tz matches training index type (like v2 does)
+        fh_abs_gapless = self._get_expected_pred_idx(fh_abs_gapless)
+
+        # empty forecast frame we will fill step-by-step
+        y_pred_full = _create_fcst_df(
+            fh_abs_gapless, self._y
+        )  # same helper used elsewhere
 
         for _ in y_lags_no_gaps:
+            if getattr(self.fh, "freq", None) is not None:
+                y_plus_preds = _asfreq_per_series_safe(
+                    y_plus_preds, self.fh.freq, how="start"
+                )
             # extend y by one step to get the next predict index
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
             predict_idx = (
@@ -3797,7 +3819,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             )
 
             # make recursive features from y (lags 0..window_length-1)
-            Xtt = lagger_y_to_X.fit_transform(y_plus_preds)
+            # Xtt = lagger_y_to_X.fit_transform(y_plus_preds)
+            Xtt = lagger_y_to_X.transform(y_plus_preds)
             # if exog present, lag/extend it to the same predict index and align columns
             if X_ext is not None:
                 X_ext = lag_plus.fit_transform(X_ext)
@@ -3831,8 +3854,10 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             est = self.estimator_
             if isinstance(est, pd.Series):
                 # constant-mean fallback: repeat the mean row, correct shape/columns
+                rows = len(Xtt_predrow.index)
+                vals = np.tile(est.values, (rows, 1))
                 y_pred_i = pd.DataFrame(
-                    [est.values], index=Xtt_predrow.index, columns=self._y.columns
+                    vals, index=Xtt_predrow.index, columns=self._y.columns
                 )
             else:
                 y_pred_i = est.predict(Xtt_predrow)
@@ -3841,15 +3866,26 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 )
 
             # append the new predictions to the running y (so next loop sees them)
-            y_plus_preds = pd.concat([y_plus_preds, y_pred_i], axis=0)
-            y_pred_list.append(y_pred_i)
+            # y_plus_preds = pd.concat([y_plus_preds, y_pred_i], axis=0)
+            y_plus_preds = y_plus_preds.combine_first(y_pred_i)
+
+            # y_pred_list.append(y_pred_i)
+            y_pred_full.update(y_pred_i)
 
         # stack all single-step predictions and pick only requested gappy fh indices
-        y_pred = pd.concat(y_pred_list, axis=0).sort_index()
+        # y_pred = pd.concat(y_pred_list, axis=0).sort_index()
         # keep exactly the requested times / series (preserve order)
         # reindex ensures we *keep* gappy items even if
         # some steps were not emitted by the loop
-        y_pred = y_pred.reindex(fh_idx)
+        # y_pred = y_pred.reindex(fh_idx)
+
+        # --- return only the requested (possibly gappy) horizons -----------------
+        fh_abs_req = fh_obj.to_absolute(self.cutoff).to_pandas()
+        # coerce dtype like v2 so Period/Timestamp + tz/freq matches
+        fh_abs_req = self._get_expected_pred_idx(fh_abs_req)
+
+        # Select by *label* (no silent NaNs) and keep expected columns
+        y_pred = y_pred_full.loc[fh_abs_req]
 
         return y_pred
 
